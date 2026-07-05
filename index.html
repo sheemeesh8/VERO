@@ -1035,22 +1035,8 @@
 
     <!-- ==================== SHOPPING CART PAGE ==================== -->
     <div id="cartView" style="display:none">
-    </div>
-    <div class="page-hero" id="cartHero" style="display:none">
-        <div class="hero-content">
-            <div class="hero-text">
-                <span class="hero-slash">/</span>
-                <h1 class="hero-title">Shopping Cart</h1>
-                <p class="hero-description">סקור את הפריטים שלך, בדוק את הסכום הכולל, ו-checkout בקליק אחד</p>
-                <button class="hero-checkout-btn" onclick="checkout()">מעבר לתשלום</button>
-            </div>
-            <div class="hero-image">🛒</div>
-        </div>
-        <div class="cart-tabs" id="cartTabs"></div>
-    </div>
-    <div id="cartContainer" style="display:none">
-        <div class="container">
-            <div class="cart-page-body" id="cartPageBody"></div>
+        <div class="container" style="padding-top: 60px; padding-bottom: 60px;">
+            <div id="cartPageBody"></div>
         </div>
     </div>
 
@@ -1229,16 +1215,14 @@
 
         // ==================== VIEW SWITCHING ====================
         function showMain() {
-            document.getElementById('cartHero').style.display = 'none';
-            document.getElementById('cartContainer').style.display = 'none';
+            document.getElementById('cartView').style.display = 'none';
             document.getElementById('mainView').style.display = 'block';
             window.scrollTo(0, 0);
         }
 
         function openCart() {
             document.getElementById('mainView').style.display = 'none';
-            document.getElementById('cartHero').style.display = 'flex';
-            document.getElementById('cartContainer').style.display = 'block';
+            document.getElementById('cartView').style.display = 'block';
             renderCartPage();
             window.scrollTo(0, 0);
         }
@@ -1250,38 +1234,31 @@
             return [...new Set(cart.map(i => i.category))];
         }
 
-        function renderCartTabs() {
-            const cats = cartCategories();
-            // if the active tab's category no longer exists in the cart, fall back to "all"
-            if (activeCartTab !== 'all' && !cats.includes(activeCartTab)) activeCartTab = 'all';
-            const tabs = ['all', ...cats];
-            document.getElementById('cartTabs').innerHTML = tabs.map(tab => {
-                const label = tab === 'all' ? 'הכל' : tab;
-                return `<button class="cart-tab${activeCartTab === tab ? ' active' : ''}" onclick="selectCartTab('${tab.replace(/'/g, "\\'")}')">${label}</button>`;
-            }).join('');
-        }
-
         function selectCartTab(tab) {
             activeCartTab = tab;
             renderCartPage();
         }
 
         function renderCartPage() {
-            const tabs = document.getElementById('cartTabs');
             const body = document.getElementById('cartPageBody');
-
-            renderCartTabs();
-            tabs.innerHTML = document.getElementById('cartTabs').innerHTML;
 
             if (cart.length === 0) {
                 body.innerHTML = '<div class="cart-empty">העגלה ריקה 🛒<br>חזור לדף הראשי והוסף מוצרים</div>';
                 return;
             }
 
+            // build tabs HTML
+            const cats = cartCategories();
+            const tabs = ['all', ...cats];
+            const tabsHtml = tabs.map(tab => {
+                const label = tab === 'all' ? 'הכל' : tab;
+                return `<button class="cart-tab${activeCartTab === tab ? ' active' : ''}" onclick="selectCartTab('${tab.replace(/'/g, "\\'")}')">${label}</button>`;
+            }).join('');
+
             // group items by category, respecting the active tab filter
-            const cats = activeCartTab === 'all' ? cartCategories() : [activeCartTab];
-            let html = '';
-            for (const cat of cats) {
+            const selectedCats = activeCartTab === 'all' ? cats : [activeCartTab];
+            let html = `<div class="cart-tabs">${tabsHtml}</div>`;
+            for (const cat of selectedCats) {
                 const items = cart.filter(i => i.category === cat);
                 if (items.length === 0) continue;
                 html += `
