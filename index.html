@@ -1016,8 +1016,9 @@
             gap: 30px;
         }
 
-        /* Cart items reuse the feed product-card design (same form & size) */
-        #cartContainer .container {
+        /* Cart & wishlist items reuse the feed product-card design (same form & size) */
+        #cartContainer .container,
+        #wishlistContainer .container {
             max-width: none;
             padding-left: 65px;
             padding-right: 65px;
@@ -1256,7 +1257,7 @@
                     <button class="toggle-btn" onclick="toggleCategory(this, 'art')">🎨 אומנות</button>
                 </div>
                 <span class="icon-wrap">
-                    <button class="icon-btn" title="Wishlist" onclick="showToast('רשימת המשאלות בקרוב 💭')">
+                    <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke: white; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;">
                             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                         </svg>
@@ -1280,7 +1281,7 @@
             </div>
             <div class="logo" onclick="showMain()" style="cursor:pointer">vero</div>
             <div class="header-left">
-                <button class="nav-button">Seller Area</button>
+                <button class="nav-button" onclick="openSellerArea()">Seller Area</button>
                 <button class="nav-button">מגזין</button>
                 <button class="nav-button">About</button>
             </div>
@@ -1340,6 +1341,14 @@
     <div id="cartContainer" style="display:none">
         <div class="container" style="padding-top: 60px; padding-bottom: 60px;">
             <div id="cartPageBody"></div>
+        </div>
+    </div>
+
+    <!-- ==================== WISHLIST PAGE ==================== -->
+    <div class="cart-hero" id="wishlistHero" style="display:none"></div>
+    <div id="wishlistContainer" style="display:none">
+        <div class="container" style="padding-top: 60px; padding-bottom: 60px;">
+            <div id="wishlistPageBody"></div>
         </div>
     </div>
 
@@ -1600,19 +1609,38 @@
         }
 
         // ==================== VIEW SWITCHING ====================
-        function showMain() {
+        function hideAllViews() {
+            document.getElementById('mainView').style.display = 'none';
             document.getElementById('cartHero').style.display = 'none';
             document.getElementById('cartContainer').style.display = 'none';
+            document.getElementById('wishlistHero').style.display = 'none';
+            document.getElementById('wishlistContainer').style.display = 'none';
+        }
+
+        function showMain() {
+            hideAllViews();
             document.getElementById('mainView').style.display = 'block';
             window.scrollTo(0, 0);
         }
 
         function openCart() {
-            document.getElementById('mainView').style.display = 'none';
+            hideAllViews();
             document.getElementById('cartHero').style.display = 'block';
             document.getElementById('cartContainer').style.display = 'block';
             renderCartPage();
             window.scrollTo(0, 0);
+        }
+
+        function openWishlist() {
+            hideAllViews();
+            document.getElementById('wishlistHero').style.display = 'block';
+            document.getElementById('wishlistContainer').style.display = 'block';
+            renderWishlistPage();
+            window.scrollTo(0, 0);
+        }
+
+        function wishlistVisible() {
+            return document.getElementById('wishlistContainer').style.display !== 'none';
         }
 
         // ==================== CART PAGE RENDER ====================
@@ -1701,6 +1729,102 @@
             renderCartPage();
         }
 
+        // ==================== WISHLIST PAGE RENDER ====================
+        let activeWishlistTab = 'all';
+
+        function wishlistCategories() {
+            return [...new Set(wishlist.map(i => i.category))];
+        }
+
+        function selectWishlistTab(tab) {
+            activeWishlistTab = tab;
+            renderWishlistPage();
+        }
+
+        function removeFromWishlist(id) {
+            wishlist = wishlist.filter(w => w.id !== id);
+            saveState();
+            updateBadges();
+            renderWishlistPage();
+        }
+
+        function moveWishlistToCart() {
+            if (wishlist.length === 0) return;
+            wishlist.forEach(item => {
+                const existing = cart.find(i => i.id === item.id);
+                if (existing) existing.qty++;
+                else cart.push({ ...item, qty: 1 });
+            });
+            const count = wishlist.length;
+            wishlist = [];
+            saveState();
+            updateBadges();
+            showToast(`${count} מוצרים הועברו לעגלה 🛒`);
+            renderWishlistPage();
+        }
+
+        function renderWishlistPage() {
+            const body = document.getElementById('wishlistPageBody');
+
+            if (wishlist.length === 0) {
+                body.innerHTML = '<div class="cart-empty">רשימת המשאלות ריקה 💭<br>חזור לדף הראשי והוסף מוצרים שאתה אוהב</div>';
+                return;
+            }
+
+            const cats = wishlistCategories();
+            const tabs = ['all', ...cats];
+            const tabsHtml = tabs.map(tab => {
+                const label = tab === 'all' ? 'הכל' : tab;
+                return `<button class="cart-tab${activeWishlistTab === tab ? ' active' : ''}" onclick="selectWishlistTab('${tab.replace(/'/g, "\\'")}')">${label}</button>`;
+            }).join('');
+
+            const items = activeWishlistTab === 'all' ? wishlist : wishlist.filter(i => i.category === activeWishlistTab);
+            let html = `<div class="cart-tabs">${tabsHtml}</div>`;
+            html += `
+                <div class="cart-group">
+                    <div class="cart-cards">
+                        ${items.map(wishlistCardHTML).join('')}
+                    </div>
+                </div>
+            `;
+
+            const total = wishlist.reduce((sum, i) => sum + priceToNum(i.price), 0);
+            html += `
+                <div class="cart-summary">
+                    <span>סה"כ ברשימה</span>
+                    <span class="cart-summary-total">₪${total.toFixed(2)}</span>
+                    <button class="cart-checkout-btn" onclick="moveWishlistToCart()">העבר הכל לעגלה</button>
+                </div>
+            `;
+            body.innerHTML = html;
+        }
+
+        function wishlistCardHTML(item) {
+            const safeId = item.id.replace(/'/g, "\\'");
+            const rating = item.rating || 4.5;
+            const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+            return `
+                <div class="product-card cart-item">
+                    <div class="product-image">${item.icon}
+                        <button class="product-icon remove" title="הסר מהמשאלות" onclick="removeFromWishlist('${safeId}')">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-seller">${item.seller || 'Vero Store'}</div>
+                        <div class="product-name-price">
+                            <div class="product-name">${item.name}</div>
+                            <div class="product-price">${item.price}</div>
+                        </div>
+                        <div class="product-rating">${stars} ${rating}</div>
+                    </div>
+                </div>
+            `;
+        }
+
         // ==================== TOASTS ====================
         function showToast(msg) {
             const container = document.getElementById('toastContainer');
@@ -1724,6 +1848,7 @@
             saveState();
             updateBadges();
             showToast(`נוסף למשאלות: ${item.name}`);
+            if (wishlistVisible()) renderWishlistPage();
         }
 
         function removeCardFromFeed(card) {
@@ -1971,6 +2096,10 @@
         function clearPromoSliders() {
             Object.values(promoState).forEach(s => clearInterval(s.timer));
             for (const k in promoState) delete promoState[k];
+        }
+
+        function openSellerArea() {
+            window.location.href = 'seller-area.html';
         }
 
         // Initialize
