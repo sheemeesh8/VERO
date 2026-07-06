@@ -1029,6 +1029,13 @@
             aspect-ratio: 3 / 4.5;
         }
 
+        /* Newly-added cart items get a green frame for 5 minutes. */
+        .cart-item.recently-added .product-image {
+            outline: 3px solid #004225;
+            outline-offset: -3px;
+            border-radius: 4px;
+        }
+
         .product-icon.remove {
             right: 18px;
         }
@@ -1562,17 +1569,23 @@
             return document.getElementById('cartView').style.display !== 'none';
         }
 
+        // How long a freshly-added cart item keeps its green frame.
+        const RECENT_MS = 5 * 60 * 1000;
+
         function addToCart(item) {
             const existing = cart.find(i => i.id === item.id);
             if (existing) {
                 existing.qty++;
+                existing.addedAt = Date.now();
             } else {
-                cart.push({ ...item, qty: 1 });
+                cart.push({ ...item, qty: 1, addedAt: Date.now() });
             }
             saveState();
             updateBadges();
             showToast(`נוסף לעגלה: ${item.name}`);
             if (cartVisible()) renderCartPage();
+            // Re-render once the frame expires so it disappears on its own.
+            setTimeout(() => { if (cartVisible()) renderCartPage(); }, RECENT_MS + 500);
         }
 
         function changeQty(id, delta) {
@@ -1697,8 +1710,9 @@
             const safeId = item.id.replace(/'/g, "\\'");
             const rating = item.rating || 4.5;
             const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+            const isRecent = item.addedAt && (Date.now() - item.addedAt < RECENT_MS);
             return `
-                <div class="product-card cart-item">
+                <div class="product-card cart-item${isRecent ? ' recently-added' : ''}">
                     <div class="product-image">${item.icon}
                         <button class="product-icon remove" title="הסר מהעגלה" onclick="removeFromCart('${safeId}')">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
