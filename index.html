@@ -1572,21 +1572,16 @@
                 return `<button class="cart-tab${activeCartTab === tab ? ' active' : ''}" onclick="selectCartTab('${tab.replace(/'/g, "\\'")}')">${label}</button>`;
             }).join('');
 
-            // group items by category, respecting the active tab filter
-            const selectedCats = activeCartTab === 'all' ? cats : [activeCartTab];
+            // 'all' shows one flat grid (5 per row, like the feed); a tab filters by category
+            const items = activeCartTab === 'all' ? cart : cart.filter(i => i.category === activeCartTab);
             let html = `<div class="cart-tabs">${tabsHtml}</div>`;
-            for (const cat of selectedCats) {
-                const items = cart.filter(i => i.category === cat);
-                if (items.length === 0) continue;
-                html += `
-                    <div class="cart-group">
-                        <h3 class="cart-group-title">${cat}</h3>
-                        <div class="cart-cards">
-                            ${items.map(cartCardHTML).join('')}
-                        </div>
+            html += `
+                <div class="cart-group">
+                    <div class="cart-cards">
+                        ${items.map(cartCardHTML).join('')}
                     </div>
-                `;
-            }
+                </div>
+            `;
 
             const total = cart.reduce((sum, i) => sum + priceToNum(i.price) * i.qty, 0);
             html += `
