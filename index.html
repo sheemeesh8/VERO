@@ -1712,6 +1712,25 @@
             }, 2600);
         }
 
+        // Second-hand marketplace: each product is a one-off. Once someone claims
+        // it (cart or wishlist), it disappears from the feed and can't be
+        // claimed again by someone else.
+        function addToWishlist(item) {
+            if (isWished(item.id)) return;
+            wishlist.push(item);
+            saveState();
+            updateBadges();
+            showToast(`נוסף למשאלות: ${item.name}`);
+        }
+
+        function removeCardFromFeed(card) {
+            if (!card.closest('#feedContainer')) return;
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.92)';
+            setTimeout(() => card.remove(), 300);
+        }
+
         // ==================== EVENT DELEGATION (product buttons) ====================
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-action]');
@@ -1727,7 +1746,14 @@
                 seller: card.dataset.seller,
                 rating: parseFloat(card.dataset.rating)
             };
-            if (btn.dataset.action === 'cart') addToCart(item);
+            const action = btn.dataset.action;
+            if (action === 'cart') {
+                addToCart(item);
+                removeCardFromFeed(card);
+            } else if (action === 'wishlist') {
+                addToWishlist(item);
+                removeCardFromFeed(card);
+            }
         });
 
         // Toggle Category
@@ -1796,28 +1822,38 @@
             if (blocksToAdd <= 0) return;
 
             for (let i = 0; i < blocksToAdd; i++) {
-                // Filter products based on category
+                // Filter products based on category, and exclude any already
+                // claimed (in cart or wishlist) so second-hand items never duplicate.
                 const products = currentCategory === 'clothing'
                     ? clothingProducts
                     : artProducts;
+                const taken = new Set([
+                    ...cart.map(i => i.id),
+                    ...wishlist.map(i => i.id)
+                ]);
+                const available = products.filter(p => !taken.has(`${p.name}|${p.price}`));
+
+                const startIdx = feedBlocksCount * 10;
+                const blockProducts = available.slice(startIdx, startIdx + 10);
+                if (blockProducts.length === 0) return;
 
                 const block = document.createElement('div');
                 block.className = 'feed-block';
 
                 let productsHtml = '';
-                for (let j = 0; j < 10; j++) {
-                    const prod = products[j % products.length];
+                for (let j = 0; j < blockProducts.length; j++) {
+                    const prod = blockProducts[j];
                     const pid = `${prod.name}|${prod.price}`;
                     const stars = '★'.repeat(Math.floor(prod.rating)) + (prod.rating % 1 >= 0.5 ? '☆' : '');
                     productsHtml += `
                         <div class="product-card" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}">
                             <div class="product-image">${prod.icon}
-                                <button class="product-icon cart">
+                                <button class="product-icon cart" data-action="cart" title="הוסף לעגלה">
                                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M9 2L6 6H2v2h1.17L4 20c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2l.83-12H23V6h-4L15 2H9zm0 2h6v2H9V4zm9 14H6L4.22 8h15.56L18 18z"/>
                                     </svg>
                                 </button>
-                                <button class="product-icon heart">
+                                <button class="product-icon heart" data-action="wishlist" title="הוסף למשאלות">
                                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                                     </svg>
