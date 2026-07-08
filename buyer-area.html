@@ -342,54 +342,6 @@
             font-weight: 500;
         }
 
-        /* Styles & brands: horizontal bars */
-        .hbars {
-            display: flex;
-            flex-direction: column;
-            gap: 34px;
-            width: 100%;
-        }
-
-        .hbar-row {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .hbar-label {
-            width: 150px;
-            flex-shrink: 0;
-            font-size: 19px;
-            font-weight: 600;
-            color: #333;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .hbar-track {
-            flex: 1;
-            height: 24px;
-            background: #e4e9e6;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .hbar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #004225 0%, #0a6b3f 100%);
-            border-radius: 12px;
-        }
-
-        .hbar-pct {
-            width: 56px;
-            flex-shrink: 0;
-            font-size: 18px;
-            font-weight: 700;
-            color: #004225;
-            text-align: left;
-        }
-
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 900px) {
             .promo-slide {
@@ -469,28 +421,36 @@
         ];
 
         // ==================== CHART BUILDERS ====================
-        function spendChartHTML() {
-            const currentMonth = new Date().getMonth(); // up to "today"
-            const data = monthlySpending.slice(0, currentMonth + 1);
-            const max = Math.max(...data);
-            return `<div class="bar-chart">` + data.map((value, i) => {
-                const height = max > 0 ? (value / max) * 100 : 0;
+        // Generic vertical bar chart; bars is [{ value, display, label }], heights scaled to the max.
+        function barChartHTML(bars) {
+            const max = Math.max(...bars.map(b => b.value));
+            return `<div class="bar-chart">` + bars.map(b => {
+                const height = max > 0 ? (b.value / max) * 100 : 0;
                 return `
                     <div class="bar-col">
-                        <div class="bar-value">₪${value.toLocaleString()}</div>
+                        <div class="bar-value">${b.display}</div>
                         <div class="bar" style="height: ${height}%"></div>
-                        <div class="bar-label">${monthNames[i]}</div>
+                        <div class="bar-label">${b.label}</div>
                     </div>`;
             }).join('') + `</div>`;
         }
 
-        function hbarsHTML(items) {
-            return `<div class="hbars">` + items.map(item => `
-                <div class="hbar-row">
-                    <div class="hbar-label">${item.name}</div>
-                    <div class="hbar-track"><div class="hbar-fill" style="width: ${item.pct}%"></div></div>
-                    <div class="hbar-pct">${item.pct}%</div>
-                </div>`).join('') + `</div>`;
+        function spendChartHTML() {
+            const currentMonth = new Date().getMonth(); // up to "today"
+            const data = monthlySpending.slice(0, currentMonth + 1);
+            return barChartHTML(data.map((value, i) => ({
+                value,
+                display: `₪${value.toLocaleString()}`,
+                label: monthNames[i]
+            })));
+        }
+
+        function pctChartHTML(items) {
+            return barChartHTML(items.map(item => ({
+                value: item.pct,
+                display: `${item.pct}%`,
+                label: item.name
+            })));
         }
 
         function spendTotal() {
@@ -511,13 +471,13 @@
                 title: 'הסגנונות המועדפים עליי',
                 desc: 'פילוח הרכישות שלך לפי סגנון לבוש — הסגנונות שאתה הכי אוהב לקנות.',
                 stat: () => `הסגנון המוביל · ${favoriteStyles[0].name}`,
-                chart: () => hbarsHTML(favoriteStyles),
+                chart: () => pctChartHTML(favoriteStyles),
             },
             {
                 title: 'החברות האהובות עליי',
                 desc: 'המותגים שמהם קנית הכי הרבה. אלה החברות שחוזרות אצלך שוב ושוב.',
                 stat: () => `המותג המוביל · ${favoriteBrands[0].name}`,
-                chart: () => hbarsHTML(favoriteBrands),
+                chart: () => pctChartHTML(favoriteBrands),
             },
         ];
 
