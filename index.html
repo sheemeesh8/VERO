@@ -2021,25 +2021,43 @@
 
         // Categories Carousel State
         let categoriesIndex = 0;
-        const CATEGORIES_PER_VIEW = 5;
+        const CATEGORIES_COUNT = 5;
         const CATEGORY_CARD_WIDTH = 20; // percentage
 
-        // Render five plain rectangles (with infinite carousel support).
+        // Render infinite carousel with repeated rectangles.
         function renderCategories() {
-            const html = Array.from({ length: 5 }, () => '<div class="category-card"></div>').join('');
+            // Create 15 rectangles (3 sets of 5) for infinite scrolling
+            const html = Array.from({ length: CATEGORIES_COUNT * 3 }, () => '<div class="category-card"></div>').join('');
             document.getElementById('categoriesGrid').innerHTML = html;
-            categoriesIndex = 0;
+            categoriesIndex = CATEGORIES_COUNT; // Start at the middle set
             updateCategoriesPosition();
         }
 
         function categoriesSlide(direction) {
+            const grid = document.getElementById('categoriesGrid');
             categoriesIndex += direction;
+            grid.classList.remove('no-transition');
             updateCategoriesPosition();
+
+            // When reaching the end, loop back seamlessly
+            if (categoriesIndex <= 0) {
+                setTimeout(() => {
+                    grid.classList.add('no-transition');
+                    categoriesIndex = CATEGORIES_COUNT;
+                    updateCategoriesPosition();
+                }, 500);
+            } else if (categoriesIndex >= CATEGORIES_COUNT * 2) {
+                setTimeout(() => {
+                    grid.classList.add('no-transition');
+                    categoriesIndex = CATEGORIES_COUNT;
+                    updateCategoriesPosition();
+                }, 500);
+            }
         }
 
         function updateCategoriesPosition() {
             const grid = document.getElementById('categoriesGrid');
-            const offset = -(categoriesIndex % 5) * (CATEGORY_CARD_WIDTH + 4.8); // 4.8% ≈ 30px gap relative to viewport
+            const offset = -categoriesIndex * (CATEGORY_CARD_WIDTH + 4.8); // 4.8% ≈ 30px gap relative to viewport
             grid.style.transform = `translateX(${offset}%)`;
         }
 
