@@ -1890,7 +1890,7 @@
 
         // ==================== EVENT DELEGATION (product cards & buttons) ====================
         document.addEventListener('click', (e) => {
-            // Check if click is on an action button
+            // Check if click is on an action button (cart or wishlist)
             const btn = e.target.closest('[data-action]');
             if (btn) {
                 e.stopPropagation();
@@ -1916,15 +1916,19 @@
                 return;
             }
 
-            // Check if click is on a product card (but not on a button)
+            // Check if click is on a product card itself (not on buttons)
             const card = e.target.closest('.product-card');
-            if (card && !btn && card.dataset.product) {
-                try {
-                    const product = JSON.parse(card.dataset.product);
-                    const productUrl = `product.html?product=${encodeURIComponent(JSON.stringify(product))}`;
-                    window.location.href = productUrl;
-                } catch (err) {
-                    console.error('Error navigating to product:', err);
+            if (card && !e.target.closest('[data-action]')) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (card.dataset.product) {
+                    try {
+                        const product = JSON.parse(card.dataset.product);
+                        const productUrl = `product.html?product=${encodeURIComponent(JSON.stringify(product))}`;
+                        window.location.href = productUrl;
+                    } catch (err) {
+                        console.error('Error navigating to product:', err);
+                    }
                 }
             }
         });
@@ -2027,8 +2031,9 @@
                         seller: prod.seller,
                         rating: prod.rating
                     });
+                    const productUrl = `product.html?product=${encodeURIComponent(productData)}`;
                     productsHtml += `
-                        <div class="product-card" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}' style="cursor: pointer;">
+                        <a href="${productUrl}" style="text-decoration: none;" class="product-card" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
                             <div class="product-image">${prod.icon}
                                 <button class="product-icon cart" data-action="cart" title="הוסף לעגלה">
                                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -2052,7 +2057,7 @@
                                     <button class="product-btn" data-action="cart">הוסף לעגלה</button>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     `;
                 }
 
