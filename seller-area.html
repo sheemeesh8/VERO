@@ -1460,8 +1460,9 @@
                 const seller = product.seller || 'My Store';
                 const rating = product.rating || 4.5;
                 const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+                const url = productPageUrl(product);
                 return `
-                <div class="inventory-product">
+                <div class="inventory-product" data-url="${url}">
                     <div class="product-image">
                         ${product.icon}
                         <div class="actions">
@@ -1492,6 +1493,30 @@
             }).join('');
 
             document.getElementById(gridId).innerHTML = html;
+        }
+
+        // Hebrew labels for each inventory subcategory (used on the product page)
+        const subcategoryLabels = {
+            casual: 'קז\'ואל', formal: 'פורמלי', vintage: 'וינטג\'',
+            jeans: 'ג\'ינס', chinos: 'צ\'ינו', trousers: 'מכנסיים',
+            bomber: 'ג\'קטים', coat: 'מעילים', hoodie: 'הודיס',
+            sneakers: 'סניקרס', boots: 'מגפיים', heels: 'עקבים',
+            'sport-tops': 'חולצות ספורט', leggings: 'טייצים', socks: 'גרביים',
+            hats: 'כובעים', bags: 'תיקים', jewelry: 'תכשיטים'
+        };
+
+        // Build the product-page URL for an inventory item (all are clothing items)
+        function productPageUrl(product) {
+            const data = {
+                name: product.name,
+                price: product.price,
+                icon: product.icon,
+                category: subcategoryLabels[product.type] || '',
+                seller: product.seller,
+                rating: product.rating,
+                type: 'clothing'
+            };
+            return `product.html?product=${encodeURIComponent(JSON.stringify(data))}`;
         }
 
         function filterInventory(category) {
@@ -1663,6 +1688,14 @@
         function backToMain() {
             window.location.href = 'index.html';
         }
+
+        // Open a product's page when its card is clicked (ignore the edit/delete buttons)
+        document.addEventListener('click', (e) => {
+            const card = e.target.closest('.inventory-product');
+            if (card && card.dataset.url && !e.target.closest('.product-action-btn')) {
+                window.location.href = card.dataset.url;
+            }
+        });
 
         // Initialize
         renderInventory('all-clothing');
