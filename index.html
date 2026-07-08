@@ -1566,6 +1566,25 @@
             return parseFloat(String(p).replace(/[^\d.]/g, '')) || 0;
         }
 
+        // Build the product-page URL for any product/cart/wishlist item.
+        // Infers art vs clothing from the item's type, or by looking up its category.
+        function productPageUrl(item) {
+            let type = item.type;
+            if (!type) {
+                type = artCategories.some(c => c.name === item.category) ? 'art' : 'clothing';
+            }
+            const data = {
+                name: item.name,
+                price: item.price,
+                icon: item.icon,
+                category: item.category,
+                seller: item.seller,
+                rating: item.rating,
+                type: type
+            };
+            return `product.html?product=${encodeURIComponent(JSON.stringify(data))}`;
+        }
+
         function isWished(id) {
             return wishlist.some(w => w.id === id);
         }
@@ -1727,9 +1746,9 @@
             const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
             const isRecent = item.addedAt && (Date.now() - item.addedAt < RECENT_MS);
             return `
-                <div class="product-card cart-item${isRecent ? ' recently-added' : ''}">
+                <a href="${productPageUrl(item)}" style="text-decoration: none;" class="product-card cart-item${isRecent ? ' recently-added' : ''}">
                     <div class="product-image">${item.icon}
-                        <button class="product-icon remove" title="הסר מהעגלה" onclick="removeFromCart('${safeId}')">
+                        <button class="product-icon remove" title="הסר מהעגלה" onclick="event.preventDefault(); removeFromCart('${safeId}')">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1744,7 +1763,7 @@
                         </div>
                         <div class="product-rating">${stars} ${rating}</div>
                     </div>
-                </div>
+                </a>
             `;
         }
 
@@ -1833,9 +1852,9 @@
             const rating = item.rating || 4.5;
             const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
             return `
-                <div class="product-card cart-item">
+                <a href="${productPageUrl(item)}" style="text-decoration: none;" class="product-card cart-item">
                     <div class="product-image">${item.icon}
-                        <button class="product-icon remove" title="הסר מהמשאלות" onclick="removeFromWishlist('${safeId}')">
+                        <button class="product-icon remove" title="הסר מהמשאלות" onclick="event.preventDefault(); removeFromWishlist('${safeId}')">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1850,7 +1869,7 @@
                         </div>
                         <div class="product-rating">${stars} ${rating}</div>
                     </div>
-                </div>
+                </a>
             `;
         }
 
@@ -2095,13 +2114,14 @@
         let promoUidCounter = 0;
 
         function promoSlideHTML(s) {
+            const url = productPageUrl(s);
             return `
                 <div class="promo-slide">
-                    <div class="promo-image">${s.icon}</div>
+                    <a href="${url}" class="promo-image" style="text-decoration: none; color: inherit;">${s.icon}</a>
                     <div class="promo-text">
                         <h2 class="promo-title">${s.name}</h2>
                         <p class="promo-desc">${s.desc}</p>
-                        <button class="promo-readmore" onclick="showToast('קרא עוד: ${s.name.replace(/'/g, "\\'")}')">
+                        <button class="promo-readmore" onclick="window.location.href='${url}'">
                             קרא עוד <span class="circle">${promoChevron('right')}</span>
                         </button>
                     </div>
