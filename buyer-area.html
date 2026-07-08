@@ -342,8 +342,157 @@
             font-weight: 500;
         }
 
+        /* ==================== COLLECTIONS ==================== */
+        .collections {
+            display: flex;
+            gap: 48px;
+            margin-top: 70px;
+            align-items: flex-start;
+        }
+
+        .collection {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .collection-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 26px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #004225;
+        }
+
+        .col-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #004225;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .col-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #004225;
+        }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 28px;
+        }
+
+        .mini-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #999;
+            font-size: 15px;
+            padding: 40px 0;
+        }
+
+        /* Product cards (match the storefront feed) */
+        .product-card {
+            background: white;
+            border: none;
+            overflow: hidden;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .product-image {
+            width: 100%;
+            aspect-ratio: 3/4;
+            background: #F0F0F0;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+            font-size: 50px;
+            color: rgba(0, 66, 37, 0.1);
+            position: relative;
+            overflow: hidden;
+            padding: 16px;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.02);
+        }
+
+        .product-info {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 5;
+        }
+
+        .product-seller {
+            font-size: 14px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 7px;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .product-name-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            width: 100%;
+            margin-bottom: 5px;
+            gap: 10px;
+        }
+
+        .product-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .product-price {
+            font-size: 17px;
+            color: #000;
+            font-weight: 700;
+            text-align: left;
+            flex-shrink: 0;
+        }
+
+        .product-rating {
+            font-size: 14px;
+            color: #666;
+            font-weight: 400;
+        }
+
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 900px) {
+            .collections {
+                flex-direction: column;
+                gap: 40px;
+            }
+
             .promo-slide {
                 grid-template-columns: 1fr;
                 gap: 30px;
@@ -395,6 +544,33 @@
                 <button class="promo-arrow next" aria-label="הבא" onclick="sliderGo(sliderIndex + 1)"></button>
                 <div class="promo-footer">
                     <div class="promo-dots" id="sliderDots"></div>
+                </div>
+            </div>
+
+            <!-- ==================== COLLECTIONS (cart right, wishlist left) ==================== -->
+            <div class="collections">
+                <div class="collection">
+                    <div class="collection-header">
+                        <span class="col-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" style="fill: white;">
+                                <path d="M9 2L6 6H2v2h1.17L4 20c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2l.83-12H23V6h-4L15 2H9zm0 2h6v2H9V4zm9 14H6L4.22 8h15.56L18 18z"/>
+                            </svg>
+                        </span>
+                        <span class="col-title">העגלה שלי</span>
+                    </div>
+                    <div class="mini-grid" id="cartGrid"></div>
+                </div>
+
+                <div class="collection">
+                    <div class="collection-header">
+                        <span class="col-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" style="fill: white;">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </span>
+                        <span class="col-title">רשימת המשאלות</span>
+                    </div>
+                    <div class="mini-grid" id="wishGrid"></div>
                 </div>
             </div>
         </div>
@@ -519,6 +695,72 @@
             sliderTimer = setInterval(() => sliderGo(sliderIndex + 1), SLIDER_INTERVAL);
         }
 
+        // ==================== COLLECTIONS (cart & wishlist) ====================
+        // Fallback samples so the grids always show six products.
+        const sampleCart = [
+            { name: 'טי-שירט לבן קלאסי', price: '₪49.90', icon: '👕', category: 'קז\'ואל', seller: 'Basics Co', rating: 4.7 },
+            { name: 'ג\'ינס סקיני כחול', price: '₪189.00', icon: '👖', category: 'ג\'ינס', seller: 'Denim House', rating: 4.6 },
+            { name: 'סניקרס לבן קלאסי', price: '₪150.00', icon: '👟', category: 'סניקרס', seller: 'Basics Co', rating: 4.8 },
+            { name: 'הודי אפור', price: '₪139.00', icon: '🧥', category: 'הודיס', seller: 'Street Style', rating: 4.6 },
+            { name: 'חולצה מכופתרת תכלת', price: '₪149.00', icon: '👔', category: 'פורמלי', seller: 'Smart Style', rating: 4.6 },
+            { name: 'כובע בייסבול', price: '₪89.90', icon: '🧢', category: 'כובעים', seller: 'Accessories Co', rating: 4.5 },
+        ];
+        const sampleWishlist = [
+            { name: 'בלייזר נייבי', price: '₪320.00', icon: '👔', category: 'פורמלי', seller: 'Smart Style', rating: 4.8 },
+            { name: 'ג\'קט עור', price: '₪450.00', icon: '🧥', category: 'ג\'קטים', seller: 'Leather Lab', rating: 4.8 },
+            { name: 'מגפיים חום', price: '₪290.00', icon: '🥾', category: 'מגפיים', seller: 'Boots Co', rating: 4.8 },
+            { name: 'סוודר צמר וינטג\'', price: '₪165.00', icon: '🧶', category: 'וינטג\'', seller: 'Vintage 90s', rating: 4.8 },
+            { name: 'תיק צד עור', price: '₪290.00', icon: '👜', category: 'תיקים', seller: 'Leather Lab', rating: 4.8 },
+            { name: 'שרשרת זהב', price: '₪120.00', icon: '⛓️', category: 'תכשיטים', seller: 'Jewelry Co', rating: 4.8 },
+        ];
+
+        function productPageUrl(item) {
+            const data = {
+                name: item.name, price: item.price, icon: item.icon,
+                category: item.category, seller: item.seller, rating: item.rating,
+                type: item.type || 'clothing'
+            };
+            return `product.html?product=${encodeURIComponent(JSON.stringify(data))}`;
+        }
+
+        function miniCardHTML(item) {
+            const rating = item.rating || 4.5;
+            const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+            return `
+                <a href="${productPageUrl(item)}" class="product-card">
+                    <div class="product-image">${item.icon}</div>
+                    <div class="product-info">
+                        <div class="product-seller">${item.seller || 'Vero Store'}</div>
+                        <div class="product-name-price">
+                            <div class="product-name">${item.name}</div>
+                            <div class="product-price">${item.price}</div>
+                        </div>
+                        <div class="product-rating">${stars} ${rating}</div>
+                    </div>
+                </a>`;
+        }
+
+        // The six most recent items from a store, padded with samples up to six.
+        function recentItems(storageKey, fallback) {
+            let items = [];
+            try { items = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch (e) { items = []; }
+            items.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+            const seen = new Set(items.map(i => i.name + '|' + i.price));
+            for (const f of fallback) {
+                if (items.length >= 6) break;
+                const key = f.name + '|' + f.price;
+                if (!seen.has(key)) { items.push(f); seen.add(key); }
+            }
+            return items.slice(0, 6);
+        }
+
+        function renderCollections() {
+            document.getElementById('cartGrid').innerHTML =
+                recentItems('vero_cart', sampleCart).map(miniCardHTML).join('');
+            document.getElementById('wishGrid').innerHTML =
+                recentItems('vero_wishlist', sampleWishlist).map(miniCardHTML).join('');
+        }
+
         // ==================== NAVIGATION ====================
         function backToMain() {
             window.location.href = 'index.html';
@@ -527,6 +769,7 @@
         // Initialize
         buildSlider();
         sliderGo(0);
+        renderCollections();
     </script>
 </body>
 </html>
