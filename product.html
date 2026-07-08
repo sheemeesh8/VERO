@@ -242,9 +242,68 @@
             background: #fff;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            gap: 16px;
-            padding: 45px 60px;
+            justify-content: flex-start;
+            gap: 14px;
+            padding: 50px 60px;
+            overflow-y: auto;
+        }
+
+        .product-banner-subtitle {
+            font-size: 18px;
+            color: #888;
+            font-weight: 500;
+            margin-top: -6px;
+        }
+
+        .product-banner-desc {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+            margin: 4px 0;
+        }
+
+        .product-banner-specs {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            padding: 18px 0;
+            margin: 4px 0;
+        }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 15px;
+        }
+
+        .spec-label {
+            color: #999;
+            font-weight: 500;
+        }
+
+        .spec-value {
+            color: #000;
+            font-weight: 600;
+        }
+
+        .product-banner-bottom {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 10px;
+            gap: 20px;
+        }
+
+        .product-banner-style {
+            font-size: 14px;
+            color: #004225;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-top: 6px;
         }
 
         .product-banner-seller {
@@ -371,9 +430,22 @@
             <div class="product-banner-info">
                 <div class="product-banner-seller" id="productSeller">Vero Store</div>
                 <div class="product-banner-name" id="productName">שם המוצר</div>
-                <div class="product-banner-rating" id="productRating">★★★★☆ 4.8</div>
-                <div class="product-banner-price" id="productPrice">₪0.00</div>
-                <button class="product-banner-btn" onclick="addProductToCart()">הוסף לעגלה</button>
+                <div class="product-banner-subtitle" id="productSubtitle">כותרת משנה</div>
+                <p class="product-banner-desc" id="productDesc">תיאור המוצר יופיע כאן</p>
+                <div class="product-banner-specs" id="productSpecs">
+                    <div class="spec-row"><span class="spec-label">סוג</span><span class="spec-value" id="specType">-</span></div>
+                    <div class="spec-row"><span class="spec-label">בד</span><span class="spec-value" id="specFabric">-</span></div>
+                    <div class="spec-row"><span class="spec-label">מידה</span><span class="spec-value" id="specSize">-</span></div>
+                    <div class="spec-row"><span class="spec-label">צבע</span><span class="spec-value" id="specColor">-</span></div>
+                    <div class="spec-row"><span class="spec-label">מצב פריט</span><span class="spec-value" id="specCondition">-</span></div>
+                </div>
+                <div class="product-banner-bottom">
+                    <div>
+                        <div class="product-banner-price" id="productPrice">₪0.00</div>
+                        <div class="product-banner-style" id="productStyle">סגנון</div>
+                    </div>
+                    <button class="product-banner-btn" onclick="addProductToCart()">הוסף לעגלה</button>
+                </div>
             </div>
             <div class="product-banner-image">
                 <div class="product-banner-icon" id="productIcon">🎨</div>
@@ -471,11 +543,22 @@
                 document.getElementById('productName').textContent = currentProduct.name;
                 document.getElementById('productPrice').textContent = currentProduct.price;
                 document.getElementById('productIcon').textContent = currentProduct.icon;
-                document.getElementById('productSeller').textContent = currentProduct.seller || 'Vero Store';
+                document.getElementById('productSeller').textContent = (currentProduct.seller || 'Vero Store').toUpperCase();
 
-                const rating = currentProduct.rating || 4.5;
-                const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
-                document.getElementById('productRating').textContent = `${stars} ${rating}`;
+                // Subtitle + description (fallbacks when data is missing)
+                document.getElementById('productSubtitle').textContent = currentProduct.category || '';
+                document.getElementById('productDesc').textContent = currentProduct.desc ||
+                    `${currentProduct.name} — פריט יד שנייה במצב מעולה, זמין כעת בחנות.`;
+
+                // Dry specs (use provided values or sensible defaults)
+                document.getElementById('specType').textContent = currentProduct.category || '-';
+                document.getElementById('specFabric').textContent = currentProduct.fabric || (currentProduct.type === 'art' ? 'קנבס' : 'כותנה');
+                document.getElementById('specSize').textContent = currentProduct.size || (currentProduct.type === 'art' ? '50×70 ס"מ' : 'M');
+                document.getElementById('specColor').textContent = currentProduct.color || 'רב-גוני';
+                document.getElementById('specCondition').textContent = currentProduct.condition || 'מצוין';
+
+                // Style
+                document.getElementById('productStyle').textContent = currentProduct.style || currentProduct.category || '';
 
                 // Set background image based on product type (art or clothing)
                 const hero = document.getElementById('productHero');
