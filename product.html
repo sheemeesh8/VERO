@@ -255,6 +255,33 @@
             margin-top: -6px;
         }
 
+        .product-banner-seller-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 8px 0;
+        }
+
+        .seller-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #004225 0%, #00654f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .seller-name {
+            font-size: 16px;
+            color: #000;
+            font-weight: 600;
+        }
+
         .product-banner-desc {
             font-size: 16px;
             color: #666;
@@ -371,6 +398,46 @@
             transform: translateX(0);
         }
 
+        /* ==================== CATEGORY BUTTONS ==================== */
+        .category-section {
+            width: 100%;
+            background: #f5f5f5;
+            padding: 24px 40px;
+        }
+
+        .category-buttons-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .category-btn {
+            background: #e8e8e8;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .category-btn:hover {
+            background: #d0d0d0;
+            transform: translateY(-2px);
+        }
+
+        .category-btn.active {
+            background: #004225;
+            color: white;
+        }
+
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 900px) {
             .product-banner {
@@ -421,6 +488,10 @@
             <div class="product-banner-info">
                 <div class="product-banner-name" id="productName">שם המוצר</div>
                 <div class="product-banner-type" id="productType">סוג</div>
+                <div class="product-banner-seller-row">
+                    <div class="seller-avatar" id="sellerAvatar">מ</div>
+                    <div class="seller-name" id="sellerName">שם המוכר</div>
+                </div>
                 <p class="product-banner-desc" id="productDesc">תיאור המוצר יופיע כאן</p>
                 <div class="product-banner-specs" id="productSpecs">
                     <div class="spec-row"><span class="spec-label">סוג</span><span class="spec-value" id="specType">-</span></div>
@@ -437,6 +508,18 @@
             <div class="product-banner-image">
                 <div class="product-banner-icon" id="productIcon">🎨</div>
             </div>
+        </div>
+    </div>
+
+    <!-- ==================== CATEGORY BUTTONS ==================== -->
+    <div class="category-section">
+        <div class="category-buttons-container">
+            <button class="category-btn active" onclick="filterCategory('all')">הכל</button>
+            <button class="category-btn" onclick="filterCategory('snacks')">חטיפות</button>
+            <button class="category-btn" onclick="filterCategory('salty')">מלחים</button>
+            <button class="category-btn" onclick="filterCategory('pants')">מכנסיים</button>
+            <button class="category-btn" onclick="filterCategory('shirts')">חולצות</button>
+            <button class="category-btn" onclick="filterCategory('jackets')">ז'קטים</button>
         </div>
     </div>
 
@@ -519,6 +602,13 @@
             window.location.href = 'index.html';
         }
 
+        function filterCategory(category) {
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            console.log('Filtered by category:', category);
+        }
+
         // Load product from URL parameter
         const params = new URLSearchParams(window.location.search);
         const productData = params.get('product');
@@ -531,8 +621,15 @@
                 const isArt = currentProduct.type === 'art';
                 document.getElementById('productName').textContent =
                     isArt ? currentProduct.name : (currentProduct.seller || 'Vero Store');
-                // Subtitle under the title: the product type/category
-                document.getElementById('productType').textContent = currentProduct.category || '';
+
+                // Product type: extract first word from product name (e.g., "טי-שירט לבן קלאסי" → "טי-שירט")
+                const productTypeName = currentProduct.name.split(' ')[0];
+                document.getElementById('productType').textContent = productTypeName;
+
+                // Seller row: name and avatar
+                document.getElementById('sellerName').textContent = currentProduct.seller || 'Vero Store';
+                const sellerInitial = (currentProduct.seller || 'V')[0].toUpperCase();
+                document.getElementById('sellerAvatar').textContent = sellerInitial;
 
                 document.getElementById('productPrice').textContent = currentProduct.price;
                 document.getElementById('productIcon').textContent = currentProduct.icon;
