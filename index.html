@@ -91,29 +91,50 @@
         }
 
         .toggle-switch {
+            position: relative;
+            width: 80px;
+            height: 43px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 21.5px;
+            padding: 3px;
+            cursor: pointer;
+            border: 2px solid white;
             display: inline-flex;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 6px;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-circle {
+            position: absolute;
+            width: 37px;
+            height: 37px;
+            background: #2196F3;
+            border-radius: 50%;
+            transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            left: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            z-index: 1;
+        }
+
+        .toggle-switch.active-clothing .toggle-circle {
+            left: 3px;
+        }
+
+        .toggle-switch.active-art .toggle-circle {
+            left: 40px;
         }
 
         .toggle-btn {
-            padding: 6px 12px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.3s;
-            border-radius: 18px;
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
+            display: none;
         }
 
         .toggle-btn.active {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
+            display: none;
         }
 
         .icon-btn {
@@ -180,7 +201,7 @@
 
         /* ==================== CATEGORIES ==================== */
         .categories-section {
-            padding: 40px 25px;
+            padding: 40px 0;
             background: white;
             border-top: 1px solid #eee;
             margin-top: 0;
@@ -199,16 +220,17 @@
         }
 
         .categories-grid {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
             gap: 30px;
-            overflow-x: auto;
-            scroll-behavior: smooth;
-            padding: 0;
-            scrollbar-width: none;
-        }
-
-        .categories-grid::-webkit-scrollbar {
-            display: none;
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            padding: 0 30px;
+            box-sizing: border-box;
         }
 
         .category-card {
@@ -223,8 +245,6 @@
             transition: transform 0.3s, background 0.3s;
             position: relative;
             overflow: hidden;
-            flex: 0 0 400px;
-            min-width: 0;
         }
 
         .category-card:hover {
@@ -1259,10 +1279,9 @@
     <header>
         <div class="header-container">
             <div class="header-right">
-                <div class="toggle-switch">
-                    <button class="toggle-btn active" onclick="toggleCategory(this, 'clothing')">👕 ביגוד</button>
-                    <button class="toggle-btn" onclick="toggleCategory(this, 'art')">🎨 אומנות</button>
-                </div>
+                <button class="toggle-switch active-clothing" id="categoryToggle" onclick="toggleSwitch()">
+                    <div class="toggle-circle">C</div>
+                </button>
                 <span class="icon-wrap">
                     <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke: white; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;">
@@ -1888,10 +1907,23 @@
             }
         });
 
-        // Toggle Category
-        function toggleCategory(btn, category) {
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        // Toggle Switch - switches between clothing and art
+        function toggleSwitch() {
+            const toggle = document.getElementById('categoryToggle');
+            if (currentCategory === 'clothing') {
+                setCategory('art');
+            } else {
+                setCategory('clothing');
+            }
+        }
+
+        // Set Category Helper
+        function setCategory(category) {
+            const toggle = document.getElementById('categoryToggle');
+            const circle = toggle.querySelector('.toggle-circle');
+            toggle.classList.remove('active-clothing', 'active-art');
+            toggle.classList.add(category === 'clothing' ? 'active-clothing' : 'active-art');
+            circle.textContent = category === 'clothing' ? 'C' : 'A';
             currentCategory = category;
 
             document.getElementById('categoryTitle').textContent =
@@ -1911,6 +1943,11 @@
 
             renderCategories();
             renderFeed();
+        }
+
+        // Toggle Category (legacy support)
+        function toggleCategory(btn, category) {
+            setCategory(category);
         }
 
         // Render five plain rectangles (replaces the old category slider).
