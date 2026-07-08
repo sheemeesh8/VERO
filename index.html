@@ -223,20 +223,32 @@
 
         .categories-wrapper {
             position: relative;
-        }
-
-        .categories-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 30px;
+            display: flex;
+            align-items: center;
             width: 100vw;
-            position: relative;
             left: 50%;
             right: 50%;
             margin-left: -50vw;
             margin-right: -50vw;
+        }
+
+        .categories-viewport {
+            overflow: hidden;
+            flex: 1;
+            margin: 0 50px;
+        }
+
+        .categories-grid {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
             padding: 0 30px;
             box-sizing: border-box;
+        }
+
+        .categories-grid.no-transition {
+            transition: none;
         }
 
         .category-card {
@@ -251,11 +263,50 @@
             transition: transform 0.3s, background 0.3s;
             position: relative;
             overflow: hidden;
+            min-width: calc(20% - 24px);
+            flex-shrink: 0;
         }
 
         .category-card:hover {
             transform: translateY(-4px);
             background: #f0f0f0;
+        }
+
+        .categories-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.85);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .categories-nav:hover {
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .categories-nav svg {
+            width: 24px;
+            height: 24px;
+            stroke: #000;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .categories-nav.prev {
+            left: 20px;
+        }
+
+        .categories-nav.next {
+            right: 20px;
         }
 
         .category-text {
@@ -1341,9 +1392,21 @@
         <div class="container">
             <h2 class="section-title" id="categoryTitle">בחר קטגוריה: ביגוד</h2>
             <div class="categories-wrapper">
-                <div class="categories-grid" id="categoriesGrid">
-                    <!-- Five plain rectangles, populated by JavaScript -->
+                <button class="categories-nav prev" onclick="categoriesSlide(-1)" aria-label="הקודם">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 6 9 12 15 18"></polyline>
+                    </svg>
+                </button>
+                <div class="categories-viewport">
+                    <div class="categories-grid" id="categoriesGrid">
+                        <!-- Five plain rectangles, populated by JavaScript -->
+                    </div>
                 </div>
+                <button class="categories-nav next" onclick="categoriesSlide(1)" aria-label="הבא">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 6 15 12 9 18"></polyline>
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
@@ -1956,10 +2019,28 @@
             setCategory(category);
         }
 
-        // Render five plain rectangles (replaces the old category slider).
+        // Categories Carousel State
+        let categoriesIndex = 0;
+        const CATEGORIES_PER_VIEW = 5;
+        const CATEGORY_CARD_WIDTH = 20; // percentage
+
+        // Render five plain rectangles (with infinite carousel support).
         function renderCategories() {
             const html = Array.from({ length: 5 }, () => '<div class="category-card"></div>').join('');
             document.getElementById('categoriesGrid').innerHTML = html;
+            categoriesIndex = 0;
+            updateCategoriesPosition();
+        }
+
+        function categoriesSlide(direction) {
+            categoriesIndex += direction;
+            updateCategoriesPosition();
+        }
+
+        function updateCategoriesPosition() {
+            const grid = document.getElementById('categoriesGrid');
+            const offset = -(categoriesIndex % 5) * (CATEGORY_CARD_WIDTH + 4.8); // 4.8% ≈ 30px gap relative to viewport
+            grid.style.transform = `translateX(${offset}%)`;
         }
 
         // Render Feed
