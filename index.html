@@ -205,6 +205,67 @@
             color: rgba(0, 66, 37, 0.08);
         }
 
+        /* Primary filter cards (women / men / kids, or art segments). */
+        .filter-card {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .filter-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .filter-card .category-image {
+            transition: transform 0.5s;
+        }
+
+        .filter-card:hover .category-image {
+            transform: scale(1.05);
+        }
+
+        .filter-label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 32px;
+            z-index: 2;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 45%);
+        }
+
+        .filter-label span {
+            color: #fff;
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            padding: 0 12px;
+        }
+
+        .filter-card.active {
+            outline: 4px solid #004225;
+            outline-offset: -4px;
+        }
+
+        .filter-card.active .filter-label span {
+            text-decoration: underline;
+            text-underline-offset: 6px;
+        }
+
+        .magazine-card {
+            position: relative;
+            background: linear-gradient(135deg, #004225 0%, #0a6b3f 100%);
+        }
+
+        .magazine-card .filter-label span {
+            font-size: 40px;
+            letter-spacing: 3px;
+        }
+
         /* ==================== CATEGORIES ==================== */
         .categories-section {
             padding: 40px 0;
@@ -1369,11 +1430,8 @@
 
     <!-- ==================== GRID ==================== -->
     <div class="container">
-        <div class="grid-section">
-            <div class="grid-item">🎨</div>
-            <div class="grid-item">🖼️</div>
-            <div class="grid-item">✨</div>
-            <div class="grid-item">👗</div>
+        <div class="grid-section" id="filterGrid">
+            <!-- Primary filter cards, populated by JavaScript -->
         </div>
     </div>
 
@@ -1728,6 +1786,7 @@
             // If we landed straight on a category page, the home feed was never
             // built — render it lazily the first time the user returns home.
             if (!document.getElementById('feedContainer').children.length) {
+                renderFilters();
                 renderCategories();
                 renderFeed();
             }
@@ -2050,6 +2109,9 @@
                 heroImage.style.backgroundSize = "cover";
             }
 
+            // Switching mode resets the primary filter.
+            currentSegment = null;
+            renderFilters();
             renderCategories();
             renderFeed();
         }
@@ -2217,11 +2279,9 @@
             if (blocksToAdd <= 0) return;
 
             for (let i = 0; i < blocksToAdd; i++) {
-                // Filter products based on category, and exclude any already
-                // claimed (in cart or wishlist) so second-hand items never duplicate.
-                const products = currentCategory === 'clothing'
-                    ? clothingProducts
-                    : artProducts;
+                // Source products from the selected primary filter (or the default
+                // feed), excluding any already claimed in cart/wishlist.
+                const products = feedSource();
                 const taken = new Set([
                     ...cart.map(i => i.id),
                     ...wishlist.map(i => i.id)
@@ -2244,7 +2304,11 @@
                 `;
 
                 // A promo slider precedes every grid (every 2 rows of products).
-                const slider = createPromoSlider();
+                // When a filter is active, promote products from that segment.
+                const slides = currentSegment
+                    ? segmentFeatured(currentCategory, currentSegment)
+                    : featuredProducts;
+                const slider = createPromoSlider(slides);
                 feedContainer.appendChild(slider);
                 promoGo(slider.dataset.uid, 0);
 
@@ -2355,6 +2419,136 @@
             art: ['Gallery Vero', 'Fine Art', 'Atelier Prime', 'Curated', 'Masters Edition']
         };
 
+        // ==================== PRIMARY FILTER (the four rectangles) ====================
+        // The three filter cards per mode, ordered right → middle → left (RTL DOM order).
+        // The fourth (magazine) card is rendered separately.
+        const filterSegments = {
+            clothing: [
+                { key: 'men', name: 'גברים', img: 'mens,fashion,man' },
+                { key: 'kids', name: 'ילדים', img: 'kids,children,fashion' },
+                { key: 'women', name: 'נשים', img: 'womens,fashion,woman' }
+            ],
+            art: [
+                { key: 'paintings', name: 'ציורים', img: 'painting,canvas,art' },
+                { key: 'sculptures', name: 'פיסולים', img: 'sculpture,statue,art' },
+                { key: 'home', name: 'מעצבים את הבית עם VERO', img: 'interior,homedecor,design' }
+            ]
+        };
+
+        // Garment / art "types" used to synthesise a segment's product feed.
+        const artSegmentTypes = {
+            paintings: [
+                { name: 'ציור אקריליק', icon: '🎨' }, { name: 'ציור שמן', icon: '🖼️' },
+                { name: 'צבעי מים', icon: '💧' }, { name: 'ציור אבסטרקט', icon: '🌀' },
+                { name: 'איור דיגיטלי', icon: '💻' }, { name: 'ציור פסטל', icon: '🌈' },
+                { name: 'ציור גואש', icon: '🖌️' }, { name: 'הדפס אמנותי', icon: '📸' }
+            ],
+            sculptures: [
+                { name: 'פסל אבן', icon: '🗿' }, { name: 'פסל מתכת', icon: '⚙️' },
+                { name: 'פסל ברונזה', icon: '🏛️' }, { name: 'קרמיקה', icon: '🏺' },
+                { name: 'פיסול עץ', icon: '🪵' }, { name: 'אמנות אפוקסי', icon: '✨' },
+                { name: 'פסל מודרני', icon: '🗿' }
+            ],
+            home: [
+                { name: 'אגרטל מעוצב', icon: '🏺' }, { name: 'כרית נוי', icon: '🛋️' },
+                { name: 'שטיח', icon: '🧶' }, { name: 'מנורת עיצוב', icon: '💡' },
+                { name: 'תמונת קיר', icon: '🖼️' }, { name: 'מראה מעוצבת', icon: '🪞' },
+                { name: 'פמוט', icon: '🕯️' }, { name: 'שעון קיר', icon: '🕰️' },
+                { name: 'כורסה', icon: '🪑' }, { name: 'צמח נוי', icon: '🪴' }
+            ]
+        };
+        const clothingSegmentSuffix = { men: 'לגברים', women: 'לנשים', kids: 'לילדים' };
+
+        // Which segment is currently selected (null = default, unfiltered feed).
+        let currentSegment = null;
+
+        // Build a large, deterministic product feed for a given segment.
+        function buildSegmentProducts(category, segKey) {
+            const sellers = catSellers[category];
+            let types, suffix = '';
+            if (category === 'clothing') {
+                types = clothingSliderCategories;
+                suffix = clothingSegmentSuffix[segKey] || '';
+            } else {
+                types = artSegmentTypes[segKey] || [];
+            }
+            if (!types.length) return [];
+            const reps = Math.max(3, Math.ceil(45 / types.length));
+            const items = [];
+            let n = 0;
+            types.forEach((t, ti) => {
+                for (let r = 0; r < reps; r++) {
+                    const adj = catAdjectives[(ti + r) % catAdjectives.length];
+                    const name = category === 'clothing'
+                        ? `${t.name} ${adj} ${suffix}`
+                        : `${t.name} ${adj}`;
+                    items.push({
+                        name,
+                        category: t.name,
+                        price: catPrice(category, n),
+                        icon: t.icon,
+                        seller: sellers[n % sellers.length],
+                        rating: parseFloat((4.4 + ((n * 3) % 6) / 10).toFixed(1)),
+                        type: category
+                    });
+                    n++;
+                }
+            });
+            return items;
+        }
+
+        // Promo slides for the active segment (falls back to the generic featured).
+        function segmentFeatured(category, segKey) {
+            const label = category === 'clothing' ? 'ביגוד' : 'אומנות';
+            const brands = catBrands[category];
+            const base = buildSegmentProducts(category, segKey).slice(0, 5);
+            if (!base.length) return featuredProducts;
+            return base.map((p, i) => ({
+                brand: brands[i % brands.length],
+                name: p.name,
+                category: `${p.category} | ${label}`,
+                desc: category === 'clothing'
+                    ? `${p.name} — פריט נבחר במצב מעולה, מהמותגים המובילים.`
+                    : `${p.name} — יצירה נבחרת שתשדרג כל חלל בבית.`,
+                price: p.price,
+                icon: p.icon,
+                type: category
+            }));
+        }
+
+        // The product list that feeds the home feed right now.
+        function feedSource() {
+            if (currentSegment) return buildSegmentProducts(currentCategory, currentSegment);
+            return currentCategory === 'clothing' ? clothingProducts : artProducts;
+        }
+
+        // Render the four primary rectangles (3 filters + magazine) for the mode.
+        function renderFilters() {
+            const grid = document.getElementById('filterGrid');
+            if (!grid) return;
+            const segs = filterSegments[currentCategory];
+            const cards = segs.map((s, i) => `
+                <div class="grid-item filter-card${currentSegment === s.key ? ' active' : ''}" onclick="selectSegment('${s.key}')">
+                    <img class="category-image" loading="lazy" alt="${s.name}"
+                         src="https://loremflickr.com/600/900/${encodeURIComponent(s.img)}?lock=${currentCategory === 'art' ? 300 + i : 400 + i}"
+                         onerror="this.remove()">
+                    <div class="filter-label"><span>${s.name}</span></div>
+                </div>`).join('');
+            const magazine = `
+                <div class="grid-item magazine-card">
+                    <div class="filter-label"><span>${currentCategory === 'art' ? 'מגזין האמנות' : 'המגזין'}</span></div>
+                </div>`;
+            grid.innerHTML = cards + magazine;
+        }
+
+        // Select (or toggle off) a primary filter; the whole feed follows.
+        function selectSegment(key) {
+            currentSegment = currentSegment === key ? null : key;
+            renderFilters();
+            renderFeed();
+            document.querySelector('.feed-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         // Look up a category's icon/keyword by name and type.
         function categoryMeta(catName, type) {
             const src = type === 'clothing' ? clothingSliderCategories : artCategories;
@@ -2461,6 +2655,7 @@
         if (catParam) {
             showCategoryPage(catParam, catParams.get('type') || 'clothing');
         } else {
+            renderFilters();
             renderCategories();
             renderFeed();
         }
