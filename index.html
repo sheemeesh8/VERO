@@ -211,6 +211,7 @@
             background: white;
             border-top: 1px solid #eee;
             margin-top: 0;
+            position: relative;
         }
 
         .section-title {
@@ -250,8 +251,8 @@
 
         .category-card {
             flex: 0 0 auto;
-            width: 260px;
-            max-width: 60vw;
+            width: 520px;
+            max-width: 85vw;
             background: #f8f8f8;
             border: none;
             border-radius: 8px;
@@ -341,11 +342,11 @@
         }
 
         .category-nav.prev {
-            left: 20px;
+            left: 16px;
         }
 
         .category-nav.next {
-            right: 20px;
+            right: 16px;
         }
 
         /* ==================== FEED ==================== */
@@ -1255,7 +1256,7 @@
             }
 
             .category-card {
-                width: 220px;
+                width: 440px;
             }
 
             .featured-product {
@@ -1353,18 +1354,18 @@
 
     <!-- ==================== CATEGORIES ==================== -->
     <div class="categories-section">
+        <button class="category-nav prev" onclick="scrollCategories(-1)" aria-label="הקודם">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button class="category-nav next" onclick="scrollCategories(1)" aria-label="הבא">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
         <div class="container">
             <h2 class="section-title" id="categoryTitle">בחר קטגוריה: ביגוד</h2>
             <div class="categories-wrapper">
-                <button class="category-nav prev" onclick="scrollCategories(-1)" aria-label="הקודם">
-                    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </button>
                 <div class="categories-grid" id="categoriesGrid">
                     <!-- Square category cards, populated by JavaScript -->
                 </div>
-                <button class="category-nav next" onclick="scrollCategories(1)" aria-label="הבא">
-                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
             </div>
         </div>
     </div>
@@ -2027,34 +2028,62 @@
             { name: 'חצאיות', icon: '👚' },
             { name: 'סריגים', icon: '🧶' },
             { name: 'חליפות', icon: '🤵' },
-            { name: 'אקססוריז', icon: '👜' }
+            { name: 'בגדי ים', icon: '👙' },
+            { name: 'תיקים', icon: '👜' },
+            { name: 'נעלי עקב', icon: '👠' },
+            { name: 'מגפיים', icon: '👢' },
+            { name: 'גרביים', icon: '🧦' },
+            { name: 'כפפות', icon: '🧤' },
+            { name: 'צעיפים', icon: '🧣' },
+            { name: 'חגורות', icon: '👔' },
+            { name: 'תכשיטים', icon: '💍' },
+            { name: 'משקפי שמש', icon: '🕶️' },
+            { name: 'פיג\'מות', icon: '🩱' }
         ];
 
-        // Render a horizontal, arrow-navigable slider of square category cards.
+        // Render the category slider as an infinite carousel: the list is repeated
+        // three times so the arrows can loop endlessly, and we start centred on the
+        // middle copy. scrollCategories() recentres invisibly when nearing an edge.
         function renderCategories() {
             const list = currentCategory === 'clothing' ? clothingSliderCategories : artCategories;
-            const cards = list.map(c => `
+            const cardHTML = c => `
                 <div class="category-card">
                     <div class="category-icon">${c.icon}</div>
                     <div class="category-text"><h3>${c.name}</h3></div>
-                </div>`).join('');
-            document.getElementById('categoriesGrid').innerHTML =
-                `<div class="categories-track" id="categoriesTrack">${cards}</div>`;
+                </div>`;
+            const cards = [...list, ...list, ...list].map(cardHTML).join('');
+            const grid = document.getElementById('categoriesGrid');
+            grid.innerHTML = `<div class="categories-track" id="categoriesTrack">${cards}</div>`;
+            const track = document.getElementById('categoriesTrack');
+            // Start in the middle copy so there is room to loop in both directions.
+            track.scrollLeft = track.scrollWidth / 3 * 1.5 * carouselDir(track);
         }
 
-        // Scroll the category slider by roughly one card. dir=1 → "next" (הבא),
-        // dir=-1 → "prev" (הקודם). The page is RTL, so a "next" step decreases
-        // scrollLeft; multiply by the layout direction to keep the arrows intuitive.
+        // Layout direction multiplier (-1 for RTL, where scrollLeft runs negative).
+        function carouselDir(track) {
+            return getComputedStyle(track).direction === 'rtl' ? -1 : 1;
+        }
+
+        // Advance the carousel by one card. dir=1 → "next" (הבא), dir=-1 → "prev".
         function scrollCategories(dir) {
             const track = document.getElementById('categoriesTrack');
             if (!track) return;
             const card = track.querySelector('.category-card');
             const step = card ? card.offsetWidth + 12 : 272;
-            const rtl = getComputedStyle(track).direction === 'rtl' ? -1 : 1;
-            const min = rtl === -1 ? -(track.scrollWidth - track.clientWidth) : 0;
-            const max = rtl === -1 ? 0 : track.scrollWidth - track.clientWidth;
-            const target = Math.max(min, Math.min(max, track.scrollLeft + dir * step * rtl));
-            smoothScrollLeft(track, target);
+            const rtl = carouselDir(track);
+            const copyW = track.scrollWidth / 3;
+            // Recentre onto the middle copy before moving; the copies are identical,
+            // so this jump is invisible and keeps the loop endless.
+            let sl = track.scrollLeft;
+            if (rtl === -1) {
+                if (sl < -2 * copyW) sl += copyW;
+                else if (sl > -copyW) sl -= copyW;
+            } else {
+                if (sl > 2 * copyW) sl -= copyW;
+                else if (sl < copyW) sl += copyW;
+            }
+            track.scrollLeft = sl;
+            smoothScrollLeft(track, sl + dir * step * rtl);
         }
 
         // Animate scrollLeft to a target. Assigning scrollLeft directly is the most
