@@ -1240,6 +1240,43 @@
             padding: 0 20px;
         }
 
+        /* Compact version of the promo slider for category pages. */
+        #categoryView .promo-slider {
+            margin: 10px 0 45px 0;
+        }
+
+        #categoryView .promo-slide {
+            gap: 40px;
+            padding: 10px 30px 24px 30px;
+        }
+
+        #categoryView .promo-image {
+            max-width: 460px;
+            font-size: 230px;
+        }
+
+        #categoryView .promo-title {
+            font-size: 40px;
+        }
+
+        #categoryView .promo-desc {
+            font-size: 18px;
+            max-width: 480px;
+        }
+
+        #categoryView .promo-readmore {
+            font-size: 15px;
+        }
+
+        #categoryView .promo-readmore .circle {
+            width: 48px;
+            height: 48px;
+        }
+
+        #categoryView .promo-footer {
+            margin-top: 22px;
+        }
+
         .cart-empty {
             text-align: center;
             color: #999;
@@ -2368,22 +2405,27 @@
         }
 
         // Generate `count` products for a category (used for the two product rows).
-        function buildCategoryItems(catName, type, count) {
+        // `offset` shifts the generator so each block shows different products.
+        function buildCategoryItems(catName, type, count, offset = 0) {
             const meta = categoryMeta(catName, type);
             const sellers = catSellers[type];
-            return Array.from({ length: count }, (_, i) => ({
-                name: `${catName} ${catAdjectives[i % catAdjectives.length]}`,
-                category: catName,
-                price: catPrice(type, i),
-                icon: meta.icon,
-                seller: sellers[i % sellers.length],
-                rating: parseFloat((4.4 + ((i * 3) % 6) / 10).toFixed(1)),
-                type
-            }));
+            return Array.from({ length: count }, (_, idx) => {
+                const i = idx + offset;
+                return {
+                    name: `${catName} ${catAdjectives[i % catAdjectives.length]}`,
+                    category: catName,
+                    price: catPrice(type, i),
+                    icon: meta.icon,
+                    seller: sellers[i % sellers.length],
+                    rating: parseFloat((4.4 + ((i * 3) % 6) / 10).toFixed(1)),
+                    type
+                };
+            });
         }
 
         // Generate the 5 promoted slides for a category's slider.
-        function buildCategoryFeatured(catName, type) {
+        // `offset` varies the slides so repeated sliders aren't identical.
+        function buildCategoryFeatured(catName, type, offset = 0) {
             const meta = categoryMeta(catName, type);
             const brands = catBrands[type];
             const label = type === 'clothing' ? 'ביגוד' : 'אומנות';
@@ -2404,10 +2446,10 @@
                 ];
             return Array.from({ length: 5 }, (_, i) => ({
                 brand: brands[i],
-                name: `${catName} ${catAdjectives[i]}`,
+                name: `${catName} ${catAdjectives[(i + offset) % catAdjectives.length]}`,
                 category: `${catName} | ${label}`,
                 desc: descs[i],
-                price: catPrice(type, i + 3),
+                price: catPrice(type, i + offset + 3),
                 icon: meta.icon,
                 type
             }));
@@ -2421,8 +2463,10 @@
             location.href = `?cat=${encodeURIComponent(name)}&type=${type}`;
         }
 
-        // Render a full category page: green hero + 5-item promo slider + two rows
-        // of five products, all reusing the feed's components so sizes match.
+        // Render a full category page: green hero, then several feed blocks — each a
+        // promo slider followed by two rows of five products — all reusing the feed's
+        // components so sizes match.
+        const CATEGORY_BLOCKS = 4;
         function showCategoryPage(catName, type) {
             document.getElementById('mainView').style.display = 'none';
             const view = document.getElementById('categoryView');
@@ -2433,17 +2477,19 @@
             const mount = document.getElementById('catFeedContainer');
             mount.innerHTML = '';
 
-            // Promoted slider (5 slides).
-            const slider = createPromoSlider(buildCategoryFeatured(catName, type));
-            mount.appendChild(slider);
-            promoGo(slider.dataset.uid, 0);
+            for (let b = 0; b < CATEGORY_BLOCKS; b++) {
+                // Promoted slider (5 slides), varied per block.
+                const slider = createPromoSlider(buildCategoryFeatured(catName, type, b * 5));
+                mount.appendChild(slider);
+                promoGo(slider.dataset.uid, 0);
 
-            // Two rows of five products.
-            const items = buildCategoryItems(catName, type, 10);
-            const block = document.createElement('div');
-            block.className = 'feed-block';
-            block.innerHTML = `<div class="products-grid">${items.map(productCardHTML).join('')}</div>`;
-            mount.appendChild(block);
+                // Two rows of five products, varied per block.
+                const items = buildCategoryItems(catName, type, 10, b * 10);
+                const block = document.createElement('div');
+                block.className = 'feed-block';
+                block.innerHTML = `<div class="products-grid">${items.map(productCardHTML).join('')}</div>`;
+                mount.appendChild(block);
+            }
         }
 
         // Initialize — either a single category page (?cat=…) or the home feed.
