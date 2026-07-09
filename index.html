@@ -283,7 +283,7 @@
         }
 
         .category-text h3 {
-            font-size: 28px;
+            font-size: 42px;
             font-weight: 800;
             margin-bottom: 0;
             color: #fff;
@@ -1223,6 +1223,23 @@
             background-attachment: fixed;
         }
 
+        .category-hero {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cat-hero-title {
+            color: #fff;
+            font-size: 96px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+            text-align: center;
+            padding: 0 20px;
+        }
+
         .cart-empty {
             text-align: center;
             color: #999;
@@ -1401,6 +1418,16 @@
     <div id="wishlistContainer" style="display:none">
         <div class="container" style="padding-top: 60px; padding-bottom: 60px;">
             <div id="wishlistPageBody"></div>
+        </div>
+    </div>
+
+    <!-- ==================== CATEGORY PAGE ==================== -->
+    <div id="categoryView" style="display:none">
+        <div class="cart-hero category-hero">
+            <h1 class="cat-hero-title" id="catHeroName"></h1>
+        </div>
+        <div class="feed-section">
+            <div class="container" id="catFeedContainer"></div>
         </div>
     </div>
 
@@ -1688,6 +1715,7 @@
         // ==================== VIEW SWITCHING ====================
         function hideAllViews() {
             document.getElementById('mainView').style.display = 'none';
+            document.getElementById('categoryView').style.display = 'none';
             document.getElementById('cartHero').style.display = 'none';
             document.getElementById('cartContainer').style.display = 'none';
             document.getElementById('wishlistHero').style.display = 'none';
@@ -1697,6 +1725,12 @@
         function showMain() {
             hideAllViews();
             document.getElementById('mainView').style.display = 'block';
+            // If we landed straight on a category page, the home feed was never
+            // built — render it lazily the first time the user returns home.
+            if (!document.getElementById('feedContainer').children.length) {
+                renderCategories();
+                renderFeed();
+            }
             window.scrollTo(0, 0);
         }
 
@@ -2053,11 +2087,13 @@
         // three times so the arrows can loop endlessly, and we start centred on the
         // middle copy. scrollCategories() recentres invisibly when nearing an edge.
         function renderCategories() {
-            const list = currentCategory === 'clothing' ? clothingSliderCategories : artCategories;
+            const type = currentCategory;
+            const list = type === 'clothing' ? clothingSliderCategories : artCategories;
             // Each card shows a matching photo pulled by keyword; the emoji stays as
-            // a fallback behind it in case an image fails to load.
+            // a fallback behind it in case an image fails to load. Clicking a card
+            // opens its dedicated category page.
             const cardHTML = (c, i) => `
-                <div class="category-card">
+                <div class="category-card" onclick="openCategory('${type}', ${i})">
                     <img class="category-image" loading="lazy" alt="${c.name}"
                          src="https://loremflickr.com/600/600/${encodeURIComponent(c.img || c.name)}?lock=${i}"
                          onerror="this.remove()">
@@ -2119,6 +2155,50 @@
             }, stepMs);
         }
 
+        // Build a single product card (shared by the home feed and category pages
+        // so both render at identical size and form).
+        function productCardHTML(prod) {
+            const pid = `${prod.name}|${prod.price}`;
+            const stars = '★'.repeat(Math.floor(prod.rating)) + (prod.rating % 1 >= 0.5 ? '☆' : '');
+            const productData = JSON.stringify({
+                name: prod.name,
+                price: prod.price,
+                icon: prod.icon,
+                category: prod.category,
+                seller: prod.seller,
+                rating: prod.rating,
+                type: prod.type || currentCategory
+            });
+            const productUrl = `product.html?product=${encodeURIComponent(productData)}`;
+            return `
+                <a href="${productUrl}" style="text-decoration: none;" class="product-card" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
+                    <div class="product-image">${prod.icon}
+                        <button class="product-icon cart" data-action="cart" title="הוסף לעגלה">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 2L6 6H2v2h1.17L4 20c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2l.83-12H23V6h-4L15 2H9zm0 2h6v2H9V4zm9 14H6L4.22 8h15.56L18 18z"/>
+                            </svg>
+                        </button>
+                        <button class="product-icon heart" data-action="wishlist" title="הוסף למשאלות">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-seller">${prod.seller}</div>
+                        <div class="product-name-price">
+                            <div class="product-name">${prod.name}</div>
+                            <div class="product-price">${prod.price}</div>
+                        </div>
+                        <div class="product-rating">${stars} ${prod.rating}</div>
+                        <div class="product-footer">
+                            <button class="product-btn" data-action="cart">הוסף לעגלה</button>
+                        </div>
+                    </div>
+                </a>
+            `;
+        }
+
         // Render Feed
         function renderFeed() {
             const feedContainer = document.getElementById('feedContainer');
@@ -2155,49 +2235,7 @@
                 const block = document.createElement('div');
                 block.className = 'feed-block';
 
-                let productsHtml = '';
-                for (let j = 0; j < blockProducts.length; j++) {
-                    const prod = blockProducts[j];
-                    const pid = `${prod.name}|${prod.price}`;
-                    const stars = '★'.repeat(Math.floor(prod.rating)) + (prod.rating % 1 >= 0.5 ? '☆' : '');
-                    const productData = JSON.stringify({
-                        name: prod.name,
-                        price: prod.price,
-                        icon: prod.icon,
-                        category: prod.category,
-                        seller: prod.seller,
-                        rating: prod.rating,
-                        type: currentCategory
-                    });
-                    const productUrl = `product.html?product=${encodeURIComponent(productData)}`;
-                    productsHtml += `
-                        <a href="${productUrl}" style="text-decoration: none;" class="product-card" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
-                            <div class="product-image">${prod.icon}
-                                <button class="product-icon cart" data-action="cart" title="הוסף לעגלה">
-                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M9 2L6 6H2v2h1.17L4 20c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2l.83-12H23V6h-4L15 2H9zm0 2h6v2H9V4zm9 14H6L4.22 8h15.56L18 18z"/>
-                                    </svg>
-                                </button>
-                                <button class="product-icon heart" data-action="wishlist" title="הוסף למשאלות">
-                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="product-info">
-                                <div class="product-seller">${prod.seller}</div>
-                                <div class="product-name-price">
-                                    <div class="product-name">${prod.name}</div>
-                                    <div class="product-price">${prod.price}</div>
-                                </div>
-                                <div class="product-rating">${stars} ${prod.rating}</div>
-                                <div class="product-footer">
-                                    <button class="product-btn" data-action="cart">הוסף לעגלה</button>
-                                </div>
-                            </div>
-                        </a>
-                    `;
-                }
+                const productsHtml = blockProducts.map(productCardHTML).join('');
 
                 block.innerHTML = `
                     <div class="products-grid">
@@ -2264,12 +2302,13 @@
         }
 
         // Build a fresh slider element (not yet mounted) and register its state.
-        function createPromoSlider() {
+        // Pass a custom slide list (e.g. per-category) or default to featuredProducts.
+        function createPromoSlider(slides = featuredProducts) {
             const uid = 'p' + (promoUidCounter++);
             const el = document.createElement('div');
             el.className = 'promo-slider';
-            el.innerHTML = promoSliderInner(uid, featuredProducts);
-            promoState[uid] = { index: 0, timer: null };
+            el.innerHTML = promoSliderInner(uid, slides);
+            promoState[uid] = { index: 0, timer: null, slides };
             el.dataset.uid = uid;
             return el;
         }
@@ -2278,7 +2317,7 @@
             const st = promoState[uid];
             const track = document.getElementById('promoTrack-' + uid);
             if (!st || !track) return;
-            const n = featuredProducts.length;
+            const n = st.slides.length;
             st.index = (i + n) % n;
             track.style.transform = `translateX(-${st.index * 100}%)`;
             document.querySelectorAll('#promoDots-' + uid + ' .promo-dot').forEach((dot, idx) => {
@@ -2304,9 +2343,118 @@
             window.location.href = 'buyer-area.html';
         }
 
-        // Initialize
-        renderCategories();
-        renderFeed();
+        // ==================== CATEGORY PAGE ====================
+        // Sellers/descriptors used to synthesise varied products per category.
+        const catSellers = {
+            clothing: ['Zara', 'H&M', 'COS', 'Mango', 'Pull&Bear', 'Levi\'s', 'Bershka', 'Nike', 'Adidas', 'Vero Moda'],
+            art: ['Modern Art', 'Classical Art', 'Studio Vero', 'Gallery One', 'Atelier', 'Print House', 'Ceramics', 'Mixed Media', 'Digital Arts', 'Deco Style']
+        };
+        const catAdjectives = ['קלאסי', 'מודרני', 'וינטג\'', 'אלגנטי', 'יוקרתי', 'מעוצב', 'בייסיק', 'פרימיום', 'אוברסייז', 'לימיטד', 'מינימליסטי', 'ספורטיבי', 'חגיגי', 'יומיומי', 'טרנדי'];
+        const catBrands = {
+            clothing: ['Vero Select', 'Urban Edit', 'Signature Line', 'Runway', 'Icon Collection'],
+            art: ['Gallery Vero', 'Fine Art', 'Atelier Prime', 'Curated', 'Masters Edition']
+        };
+
+        // Look up a category's icon/keyword by name and type.
+        function categoryMeta(catName, type) {
+            const src = type === 'clothing' ? clothingSliderCategories : artCategories;
+            return src.find(c => c.name === catName) || { icon: '🛍️', img: catName };
+        }
+
+        // Deterministic price so a category always renders the same numbers.
+        function catPrice(type, i) {
+            const base = type === 'clothing' ? 49 : 180;
+            return '₪' + (base + ((i * 47) % 420) + 0.9).toFixed(2);
+        }
+
+        // Generate `count` products for a category (used for the two product rows).
+        function buildCategoryItems(catName, type, count) {
+            const meta = categoryMeta(catName, type);
+            const sellers = catSellers[type];
+            return Array.from({ length: count }, (_, i) => ({
+                name: `${catName} ${catAdjectives[i % catAdjectives.length]}`,
+                category: catName,
+                price: catPrice(type, i),
+                icon: meta.icon,
+                seller: sellers[i % sellers.length],
+                rating: parseFloat((4.4 + ((i * 3) % 6) / 10).toFixed(1)),
+                type
+            }));
+        }
+
+        // Generate the 5 promoted slides for a category's slider.
+        function buildCategoryFeatured(catName, type) {
+            const meta = categoryMeta(catName, type);
+            const brands = catBrands[type];
+            const label = type === 'clothing' ? 'ביגוד' : 'אומנות';
+            const descs = type === 'clothing'
+                ? [
+                    `פריט ${catName} איכותי במצב מעולה, גזרה מחמיאה ובד נעים למגע.`,
+                    `${catName} בסטייל עדכני — שילוב מושלם של נוחות ואופנה יומיומית.`,
+                    `דגם ${catName} נבחר, מהמותגים המובילים, במחיר יד שנייה משתלם.`,
+                    `${catName} קלאסי שלא יוצא מהאופנה, מתאים לכל ארון בגדים.`,
+                    `${catName} ייחודי במהדורה מוגבלת — פריט סטייטמנט אמיתי.`
+                ]
+                : [
+                    `יצירת ${catName} מקורית מאת אמן מוערך, פריט אספנות ייחודי.`,
+                    `${catName} בעבודת יד, גוונים עשירים ומרקם מרהיב לכל חלל.`,
+                    `${catName} מודרני שמכניס חיים לכל קיר בבית או במשרד.`,
+                    `${catName} קלאסי בסגנון נצחי, ממוסגר ומוכן לתלייה.`,
+                    `${catName} במהדורה מוגבלת עם תעודת מקוריות מהאמן.`
+                ];
+            return Array.from({ length: 5 }, (_, i) => ({
+                brand: brands[i],
+                name: `${catName} ${catAdjectives[i]}`,
+                category: `${catName} | ${label}`,
+                desc: descs[i],
+                price: catPrice(type, i + 3),
+                icon: meta.icon,
+                type
+            }));
+        }
+
+        // Open a category page from a card click (index within its slider list).
+        function openCategory(type, i) {
+            const list = type === 'clothing' ? clothingSliderCategories : artCategories;
+            const name = (list[i] || {}).name;
+            if (!name) return;
+            location.href = `?cat=${encodeURIComponent(name)}&type=${type}`;
+        }
+
+        // Render a full category page: green hero + 5-item promo slider + two rows
+        // of five products, all reusing the feed's components so sizes match.
+        function showCategoryPage(catName, type) {
+            document.getElementById('mainView').style.display = 'none';
+            const view = document.getElementById('categoryView');
+            view.style.display = 'block';
+            document.getElementById('catHeroName').textContent = catName;
+            document.title = `${catName} | VERO`;
+
+            const mount = document.getElementById('catFeedContainer');
+            mount.innerHTML = '';
+
+            // Promoted slider (5 slides).
+            const slider = createPromoSlider(buildCategoryFeatured(catName, type));
+            mount.appendChild(slider);
+            promoGo(slider.dataset.uid, 0);
+
+            // Two rows of five products.
+            const items = buildCategoryItems(catName, type, 10);
+            const block = document.createElement('div');
+            block.className = 'feed-block';
+            block.innerHTML = `<div class="products-grid">${items.map(productCardHTML).join('')}</div>`;
+            mount.appendChild(block);
+        }
+
+        // Initialize — either a single category page (?cat=…) or the home feed.
+        const catParams = new URLSearchParams(location.search);
+        const catParam = catParams.get('cat');
+        if (catParam) {
+            showCategoryPage(catParam, catParams.get('type') || 'clothing');
+        } else {
+            renderCategories();
+            renderFeed();
+        }
         updateBadges();
     </script>
 </body>
