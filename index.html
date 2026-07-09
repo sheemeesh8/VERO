@@ -239,30 +239,27 @@
         .categories-track {
             display: flex;
             gap: 12px;
-            width: max-content;
-            animation: categories-scroll 40s linear infinite;
+            overflow-x: auto;
+            padding: 0 30px;
+            scrollbar-width: none;
         }
 
-        .categories-track:hover {
-            animation-play-state: paused;
-        }
-
-        @keyframes categories-scroll {
-            from { transform: translateX(0); }
-            to   { transform: translateX(-50%); }
+        .categories-track::-webkit-scrollbar {
+            display: none;
         }
 
         .category-card {
             flex: 0 0 auto;
-            width: 340px;
-            max-width: 40vw;
+            width: 260px;
+            max-width: 60vw;
             background: #f8f8f8;
             border: none;
             border-radius: 8px;
             padding: 0;
             display: flex;
             flex-direction: column;
-            aspect-ratio: 9 / 12;
+            aspect-ratio: 1 / 1;
+            scroll-snap-align: start;
             cursor: pointer;
             transition: transform 0.3s, background 0.3s;
             position: relative;
@@ -1359,9 +1356,15 @@
         <div class="container">
             <h2 class="section-title" id="categoryTitle">בחר קטגוריה: ביגוד</h2>
             <div class="categories-wrapper">
+                <button class="category-nav prev" onclick="scrollCategories(-1)" aria-label="הקודם">
+                    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
                 <div class="categories-grid" id="categoriesGrid">
-                    <!-- Five plain rectangles, populated by JavaScript -->
+                    <!-- Square category cards, populated by JavaScript -->
                 </div>
+                <button class="category-nav next" onclick="scrollCategories(1)" aria-label="הבא">
+                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
             </div>
         </div>
     </div>
@@ -2013,12 +2016,63 @@
             setCategory(category);
         }
 
-        // Render an infinite, auto-scrolling slider of plain rectangles.
-        // The set of cards is duplicated so the CSS marquee loops seamlessly.
+        // Garment types shown in the clothing slider (art reuses artCategories).
+        const clothingSliderCategories = [
+            { name: 'חולצות', icon: '👕' },
+            { name: 'מכנסיים', icon: '👖' },
+            { name: 'מעילים', icon: '🧥' },
+            { name: 'כובעים', icon: '🧢' },
+            { name: 'נעליים', icon: '👟' },
+            { name: 'שמלות', icon: '👗' },
+            { name: 'חצאיות', icon: '👚' },
+            { name: 'סריגים', icon: '🧶' },
+            { name: 'חליפות', icon: '🤵' },
+            { name: 'אקססוריז', icon: '👜' }
+        ];
+
+        // Render a horizontal, arrow-navigable slider of square category cards.
         function renderCategories() {
-            const cards = Array.from({ length: 6 }, () => '<div class="category-card"></div>').join('');
+            const list = currentCategory === 'clothing' ? clothingSliderCategories : artCategories;
+            const cards = list.map(c => `
+                <div class="category-card">
+                    <div class="category-icon">${c.icon}</div>
+                    <div class="category-text"><h3>${c.name}</h3></div>
+                </div>`).join('');
             document.getElementById('categoriesGrid').innerHTML =
-                `<div class="categories-track">${cards}${cards}</div>`;
+                `<div class="categories-track" id="categoriesTrack">${cards}</div>`;
+        }
+
+        // Scroll the category slider by roughly one card. dir=1 → "next" (הבא),
+        // dir=-1 → "prev" (הקודם). The page is RTL, so a "next" step decreases
+        // scrollLeft; multiply by the layout direction to keep the arrows intuitive.
+        function scrollCategories(dir) {
+            const track = document.getElementById('categoriesTrack');
+            if (!track) return;
+            const card = track.querySelector('.category-card');
+            const step = card ? card.offsetWidth + 12 : 272;
+            const rtl = getComputedStyle(track).direction === 'rtl' ? -1 : 1;
+            const min = rtl === -1 ? -(track.scrollWidth - track.clientWidth) : 0;
+            const max = rtl === -1 ? 0 : track.scrollWidth - track.clientWidth;
+            const target = Math.max(min, Math.min(max, track.scrollLeft + dir * step * rtl));
+            smoothScrollLeft(track, target);
+        }
+
+        // Animate scrollLeft to a target. Assigning scrollLeft directly is the most
+        // reliable way to move an RTL container across engines, so we drive the
+        // easing ourselves via a timer rather than relying on CSS scroll-behavior
+        // (which some engines ignore for negative RTL offsets).
+        function smoothScrollLeft(el, target) {
+            const start = el.scrollLeft;
+            const dist = target - start;
+            if (!dist) return;
+            if (el._scrollTimer) clearInterval(el._scrollTimer);
+            const duration = 300, stepMs = 16, t0 = Date.now();
+            el._scrollTimer = setInterval(() => {
+                const p = Math.min(1, (Date.now() - t0) / duration);
+                const ease = 1 - Math.pow(1 - p, 3);
+                el.scrollLeft = start + dist * ease;
+                if (p >= 1) { clearInterval(el._scrollTimer); el._scrollTimer = null; }
+            }, stepMs);
         }
 
         // Render Feed
