@@ -1710,6 +1710,77 @@
         .image-upload-area input {
             display: none;
         }
+
+        .category-selector-full {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 501;
+        }
+
+        .category-selector-full.active {
+            display: flex;
+        }
+
+        .category-half {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .category-half:hover {
+            transform: scale(1.02);
+        }
+
+        .category-half-white {
+            background: white;
+        }
+
+        .category-half-black {
+            background: #000;
+        }
+
+        .category-half h2 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .category-half-white h2 {
+            color: #000;
+        }
+
+        .category-half-black h2 {
+            color: white;
+        }
+
+        .category-half p {
+            font-size: 16px;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        .category-half-white p {
+            color: #666;
+        }
+
+        .category-half-black p {
+            color: #ccc;
+        }
+
+        .category-icon {
+            font-size: 80px;
+        }
     </style>
 </head>
 <body>
@@ -1756,7 +1827,21 @@
 
 <!-- ==================== UPLOAD PRODUCT VIEW ==================== -->
     <div id="uploadProductView">
-        <div class="upload-container">
+        <!-- INITIAL CATEGORY SELECTION FULL SCREEN -->
+        <div id="categorySelectorFull" class="category-selector-full">
+            <div class="category-half category-half-white" onclick="selectCategoryInit('clothing')">
+                <div class="category-icon">👕</div>
+                <h2>Clothing</h2>
+                <p>Fashion & Apparel</p>
+            </div>
+            <div class="category-half category-half-black" onclick="selectCategoryInit('art')">
+                <div class="category-icon">🎨</div>
+                <h2>Art</h2>
+                <p>Artwork & Collectibles</p>
+            </div>
+        </div>
+
+        <div class="upload-container" id="uploadContainer" style="display:none;">
             <!-- LEFT SIDE: Image Display -->
             <div class="upload-left">
                 <button class="upload-close-btn" onclick="closeUploadProduct()">✕</button>
@@ -3024,16 +3109,33 @@
         const artTypes = ['Painting', 'Sculpture', 'Photography', 'Digital Art', 'Drawing', 'Print'];
 
         function openUploadProduct() {
-            document.getElementById('uploadProductView').style.display = 'flex';
+            document.getElementById('uploadProductView').style.display = 'block';
+            document.getElementById('categorySelectorFull').classList.add('active');
+            document.getElementById('uploadContainer').style.display = 'none';
             currentSlide = 0;
-            updateSlideDisplay();
+            uploadFormData = {category: null, image: null, brand: null, itemType: null, gender: null, description: null, size: null, color: null, condition: null, material: null, price: null};
         }
 
         function closeUploadProduct() {
             document.getElementById('uploadProductView').style.display = 'none';
+            document.getElementById('categorySelectorFull').classList.remove('active');
+            document.getElementById('uploadContainer').style.display = 'none';
             currentSlide = 0;
             document.getElementById('uploadImageDisplay').innerHTML = '📷';
             uploadFormData = {category: null, image: null, brand: null, itemType: null, gender: null, description: null, size: null, color: null, condition: null, material: null, price: null};
+        }
+
+        function selectCategoryInit(category) {
+            uploadFormData.category = category;
+            document.getElementById('categorySelectorFull').classList.remove('active');
+            document.getElementById('uploadContainer').style.display = 'flex';
+            if (category === 'clothing') {
+                document.getElementById('genderGroup').style.display = 'flex';
+            } else {
+                document.getElementById('genderGroup').style.display = 'none';
+            }
+            updateItemTypeOptions();
+            updateSlideDisplay();
         }
 
         function selectCategory(category) {
