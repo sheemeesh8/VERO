@@ -2912,51 +2912,11 @@
             grid.innerHTML = `<div class="categories-track" id="categoriesTrack">${cards}</div>`;
         }
 
-        // Layout direction multiplier (-1 for RTL, where scrollLeft runs negative).
-        function carouselDir(track) {
-            return getComputedStyle(track).direction === 'rtl' ? -1 : 1;
-        }
-
-        // Advance the carousel by one card. dir=1 → "next" (הבא), dir=-1 → "prev".
-        function scrollCategories(dir) {
-            const track = document.getElementById('categoriesTrack');
-            if (!track) return;
-            const card = track.querySelector('.category-card');
-            const step = card ? card.offsetWidth + 12 : 272;
-            const rtl = carouselDir(track);
-            const copyW = track.scrollWidth / 3;
-            // Recentre onto the middle copy before moving; the copies are identical,
-            // so this jump is invisible and keeps the loop endless.
-            let sl = track.scrollLeft;
-            if (rtl === -1) {
-                if (sl < -2 * copyW) sl += copyW;
-                else if (sl > -copyW) sl -= copyW;
-            } else {
-                if (sl > 2 * copyW) sl -= copyW;
-                else if (sl < copyW) sl += copyW;
-            }
-            track.scrollLeft = sl;
-            smoothScrollLeft(track, sl + dir * step * rtl);
-        }
 
         // Animate scrollLeft to a target. Assigning scrollLeft directly is the most
         // reliable way to move an RTL container across engines, so we drive the
         // easing ourselves via a timer rather than relying on CSS scroll-behavior
         // (which some engines ignore for negative RTL offsets).
-        function smoothScrollLeft(el, target) {
-            const start = el.scrollLeft;
-            const dist = target - start;
-            if (!dist) return;
-            if (el._scrollTimer) clearInterval(el._scrollTimer);
-            const duration = 300, stepMs = 16, t0 = Date.now();
-            el._scrollTimer = setInterval(() => {
-                const p = Math.min(1, (Date.now() - t0) / duration);
-                const ease = 1 - Math.pow(1 - p, 3);
-                el.scrollLeft = start + dist * ease;
-                if (p >= 1) { clearInterval(el._scrollTimer); el._scrollTimer = null; }
-            }, stepMs);
-        }
-
         // Build a single product card (shared by the home feed and category pages
         // so both render at identical size and form).
         function productCardHTML(prod) {
