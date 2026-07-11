@@ -663,6 +663,52 @@
             display: none;
         }
 
+        /* ---- Rotating category headline (vanilla port of the TextRotate component) ---- */
+        .rotate-headline {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding: 44px 20px 10px;
+            font-size: 40px;
+            font-weight: 300;
+            color: #000;
+            letter-spacing: 0.5px;
+        }
+
+        .rotate-word {
+            display: inline-flex;
+            overflow: hidden;
+            color: #004225;
+            font-weight: 700;
+            white-space: pre;
+            padding-bottom: 6px;
+        }
+
+        .rotate-word .rt-char {
+            display: inline-block;
+            transform: translateY(110%);
+            opacity: 0;
+            /* springy entrance to mirror motion's spring(damping:25, stiffness:300) */
+            transition: transform 0.62s cubic-bezier(0.22, 1.2, 0.36, 1), opacity 0.5s ease;
+        }
+
+        .rotate-word .rt-char.in {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .rotate-word .rt-char.out {
+            transform: translateY(-120%);
+            opacity: 0;
+            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+        }
+
+        @media (max-width: 768px) {
+            .rotate-headline { font-size: 26px; gap: 10px; padding: 32px 16px 8px; }
+        }
+
         .categories-wrapper {
             position: relative;
         }
@@ -2365,6 +2411,10 @@
     <div class="categories-section">
         <div class="container">
             <h2 class="section-title" id="categoryTitle">Choose Category: Clothing</h2>
+            <div class="rotate-headline">
+                <span>Explore</span>
+                <span class="rotate-word" id="categoryRotate" aria-live="polite"></span>
+            </div>
             <div class="categories-wrapper">
                 <div class="categories-grid" id="categoriesGrid">
                     <!-- Square category cards, populated by JavaScript -->
@@ -3185,9 +3235,81 @@
         // Render the category slider as an infinite carousel: the list is repeated
         // three times so the arrows can loop endlessly, and we start centred on the
         // Grid layout for categories.
+        // ---- TextRotate: vanilla port of the React/motion component ----
+        // Cycles through `texts`, animating each character in/out with a staggered
+        // spring-like transition (the CSS on .rt-char provides the easing).
+        function createTextRotate(el, { staggerDuration = 25, rotationInterval = 2600 } = {}) {
+            let texts = [];
+            let index = 0;
+            let timer = null;
+
+            const splitChars = (text) => {
+                if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+                    const seg = new Intl.Segmenter('en', { granularity: 'grapheme' });
+                    return Array.from(seg.segment(text), (s) => s.segment);
+                }
+                return Array.from(text);
+            };
+
+            const paint = (word) => {
+                el.innerHTML = '';
+                const chars = splitChars(word);
+                chars.forEach((ch, i) => {
+                    const span = document.createElement('span');
+                    span.className = 'rt-char';
+                    span.textContent = ch === ' ' ? ' ' : ch;
+                    span.style.transitionDelay = (i * staggerDuration) + 'ms';
+                    el.appendChild(span);
+                });
+                return el.querySelectorAll('.rt-char');
+            };
+
+            const show = (word) => {
+                const chars = paint(word);
+                void el.offsetWidth; // reflow so the entrance transition runs
+                chars.forEach((c) => c.classList.add('in'));
+            };
+
+            const rotateTo = (next) => {
+                const current = el.querySelectorAll('.rt-char');
+                current.forEach((c, i) => {
+                    c.style.transitionDelay = (i * staggerDuration) + 'ms';
+                    c.classList.remove('in');
+                    c.classList.add('out');
+                });
+                const wait = current.length * staggerDuration + 320;
+                setTimeout(() => { index = next; show(texts[index]); }, wait);
+            };
+
+            const next = () => { if (texts.length) rotateTo((index + 1) % texts.length); };
+
+            return {
+                setTexts(list) {
+                    texts = list.slice();
+                    index = 0;
+                    if (texts.length) show(texts[0]);
+                },
+                start() {
+                    this.stop();
+                    if (texts.length > 1) timer = setInterval(next, rotationInterval);
+                },
+                stop() { if (timer) { clearInterval(timer); timer = null; } }
+            };
+        }
+
+        let categoryRotator = null;
+
         function renderCategories() {
             const type = currentCategory;
             const list = type === 'clothing' ? clothingSliderCategories : artCategories;
+
+            // Drive the rotating headline with the current mode's category names.
+            const rotateEl = document.getElementById('categoryRotate');
+            if (rotateEl) {
+                if (!categoryRotator) categoryRotator = createTextRotate(rotateEl);
+                categoryRotator.setTexts(list.map((c) => c.name));
+                categoryRotator.start();
+            }
             // Each card shows a matching photo pulled by keyword; the emoji stays as
             // a fallback behind it in case an image fails to load. Clicking a card
             // opens its dedicated category page.
