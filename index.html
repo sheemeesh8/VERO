@@ -916,6 +916,36 @@
         }
 
         /* ==================== PROMO SLIDER (Ferrari-style) ==================== */
+        /* Two feature cards shown directly under the hero segment slider */
+        .hero-promos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1400px;
+            margin: 50px auto;
+            padding: 0 50px;
+        }
+
+        .hero-promos .promo-slide {
+            min-width: 0;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 30px;
+            gap: 24px;
+        }
+
+        .hero-promos .promo-title { font-size: 40px; }
+        .hero-promos .promo-image { font-size: 150px; }
+        .hero-promos .promo-text { padding: 0 10px; }
+
+        @media (max-width: 900px) {
+            .hero-promos {
+                grid-template-columns: 1fr;
+                padding: 0 20px;
+                gap: 24px;
+            }
+        }
+
         .promo-slider {
             position: relative;
             direction: ltr;
@@ -2467,6 +2497,11 @@
         <!-- Segment hero slides, populated by JavaScript -->
     </div>
 
+    <!-- ==================== HERO PROMO CARDS (two feature cards) ==================== -->
+    <div class="hero-promos" id="heroPromos">
+        <!-- Two promo-slide cards, populated by JavaScript -->
+    </div>
+
     <!-- ==================== CATEGORIES ==================== -->
     <!-- ==================== INFINITE FEED ==================== -->
     <div class="feed-section">
@@ -3448,6 +3483,21 @@
                 </div>`;
         }
 
+        // Two feature cards under the hero — reuse the exact promo-slide markup.
+        // Picks two products matching the current mode (clothing / art).
+        function renderHeroPromos() {
+            const wrap = document.getElementById('heroPromos');
+            if (!wrap) return;
+            const picks = featuredProducts.filter((p) => p.type === currentCategory).slice(0, 2);
+            // Fallback: if fewer than two match, top up from the full list.
+            while (picks.length < 2 && featuredProducts.length) {
+                const extra = featuredProducts.find((p) => !picks.includes(p));
+                if (!extra) break;
+                picks.push(extra);
+            }
+            wrap.innerHTML = picks.map(promoSlideHTML).join('');
+        }
+
         function promoSliderInner(uid, slides) {
             return `
                 <button class="promo-arrow prev" aria-label="Previous" onclick="promoGo('${uid}', promoState['${uid}'].index - 1)">${promoChevron('left')}</button>
@@ -3855,6 +3905,7 @@
                 </div>`;
             heroGo(0);
             heroState.timer = setInterval(() => heroGo(heroState.index + 1), HERO_INTERVAL);
+            renderHeroPromos();
         }
 
         // Move the hero slider to slide `i` (wraps around) and retrigger animations.
