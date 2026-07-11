@@ -915,25 +915,35 @@
             font-weight: 400;
         }
 
-        /* ==================== HERO FEATURE CAROUSEL (3 cards per view) ==================== */
+        /* ==================== CATEGORY SLIDER (3 cards per slide, image-right) ==================== */
         .hero-promos {
-            max-width: 1400px;
-            margin: 50px auto;
-            padding: 0 60px;
+            margin: 50px 0;
+            padding: 0 70px;
             position: relative;
+            direction: ltr;   /* keep info-left / image-right despite the RTL page */
         }
 
         .hp-viewport { overflow: hidden; }
 
         .hp-track {
             display: flex;
-            gap: 24px;
             transition: transform 0.6s cubic-bezier(0.65, 0.05, 0.1, 1);
         }
 
-        .hp-card {
-            min-width: calc((100% - 48px) / 3);   /* three cards per view */
+        /* Each slide is one full-width page holding three cards across */
+        .hp-slide {
+            min-width: 100%;
             box-sizing: border-box;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        /* Card: info on the LEFT, image on the RIGHT */
+        .hp-card {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
             border: 1px solid #eee;
             border-radius: 4px;
             overflow: hidden;
@@ -941,8 +951,7 @@
             cursor: pointer;
             text-decoration: none;
             color: inherit;
-            display: flex;
-            flex-direction: column;
+            min-height: 190px;
             transition: box-shadow 0.3s, transform 0.3s;
         }
 
@@ -951,22 +960,23 @@
             box-shadow: 0 14px 30px rgba(0, 0, 0, 0.10);
         }
 
+        .hp-body {
+            flex: 1 1 50%;
+            padding: 24px 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 10px;
+        }
+
         .hp-image {
-            width: 100%;
-            aspect-ratio: 1 / 1;
+            flex: 0 0 48%;
             background: linear-gradient(135deg, #e5e0d8 0%, #efeae2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 150px;
-            color: rgba(0, 0, 0, 0.10);
-        }
-
-        .hp-body {
-            padding: 20px 22px 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            font-size: 90px;
+            color: rgba(0, 0, 0, 0.15);
         }
 
         .hp-label {
@@ -979,7 +989,7 @@
 
         .hp-title {
             font-family: Georgia, 'Times New Roman', serif;
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 700;
             text-transform: uppercase;
             line-height: 1.12;
@@ -987,15 +997,16 @@
             color: #111;
         }
 
-        .hp-price {
-            font-size: 16px;
-            font-weight: 700;
-            color: #111;
+        .hp-desc {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #7b7b7b;
+            margin: 0;
         }
 
         .hp-arrow {
             position: absolute;
-            top: 38%;
+            top: 50%;
             transform: translateY(-50%);
             background: #fff;
             border: 1px solid #e5e5e5;
@@ -1013,8 +1024,8 @@
         }
 
         .hp-arrow:hover { background: #f4f1ea; }
-        .hp-arrow.prev { left: 8px; }
-        .hp-arrow.next { right: 8px; }
+        .hp-arrow.prev { left: 12px; }
+        .hp-arrow.next { right: 12px; }
 
         .hp-dots {
             display: flex;
@@ -1037,12 +1048,8 @@
         .hp-dot.active { background: #111; transform: scale(1.3); }
 
         @media (max-width: 900px) {
-            .hero-promos { padding: 0 40px; }
-            .hp-card { min-width: calc((100% - 24px) / 2); }  /* two per view */
-        }
-
-        @media (max-width: 600px) {
-            .hp-card { min-width: 100%; }                      /* one per view */
+            .hero-promos { padding: 0 50px; }
+            .hp-slide { grid-template-columns: 1fr; }
         }
 
         .promo-slider {
@@ -3589,22 +3596,23 @@
                 </div>`;
         }
 
-        // Feature carousel under the hero — shows THREE cards per view and slides
-        // through them one card at a time (arrows + dots + autoplay).
+        // Category slider under the hero — each slide shows THREE cards across
+        // (info on the left, image on the right). Pages one slide at a time.
         let hpIndex = 0;
         let hpTimer = null;
-        const HP_INTERVAL = 4500;
+        let hpSlideCount = 1;
+        const HP_INTERVAL = 5000;
 
-        function hpCardHTML(p) {
-            const url = productPageUrl(p);
+        // One category card: info left, image (emoji) right.
+        function hpCardHTML(c, globalIndex, type) {
             return `
-                <a href="${url}" class="hp-card">
-                    <div class="hp-image">${p.icon}</div>
+                <a class="hp-card" onclick="openCategory('${type}', ${globalIndex})">
                     <div class="hp-body">
-                        <span class="hp-label">${p.brand || p.seller || 'VERO Select'}</span>
-                        <h3 class="hp-title">${p.name}</h3>
-                        <div class="hp-price">${p.price || ''}</div>
+                        <span class="hp-label">${type === 'art' ? 'Art' : 'Clothing'}</span>
+                        <h3 class="hp-title">${c.name}</h3>
+                        ${c.desc ? `<p class="hp-desc">${c.desc}</p>` : ''}
                     </div>
+                    <div class="hp-image">${c.icon}</div>
                 </a>`;
         }
 
@@ -3612,23 +3620,24 @@
             const wrap = document.getElementById('heroPromos');
             if (!wrap) return;
             if (hpTimer) clearInterval(hpTimer);
-            const picks = featuredProducts.filter((p) => p.type === currentCategory);
-            // Top up so there's enough to slide through (aim for 6).
-            for (const p of featuredProducts) {
-                if (picks.length >= 6) break;
-                if (!picks.includes(p)) picks.push(p);
+            const type = currentCategory;
+            const list = type === 'clothing' ? clothingSliderCategories : artCategories;
+            // Chunk the categories into slides of three.
+            const slides = [];
+            for (let i = 0; i < list.length; i += 3) {
+                const group = list.slice(i, i + 3);
+                const cards = group.map((c, j) => hpCardHTML(c, i + j, type)).join('');
+                slides.push(`<div class="hp-slide">${cards}</div>`);
             }
-            const cards = picks.slice(0, 6);
-            // Number of slide positions when 3 are visible (desktop).
-            const positions = Math.max(1, cards.length - 2);
+            hpSlideCount = slides.length;
             wrap.innerHTML = `
                 <button class="hp-arrow prev" aria-label="Previous" onclick="hpGo(hpIndex - 1)">&#8249;</button>
                 <div class="hp-viewport">
-                    <div class="hp-track" id="hpTrack">${cards.map(hpCardHTML).join('')}</div>
+                    <div class="hp-track" id="hpTrack">${slides.join('')}</div>
                 </div>
                 <button class="hp-arrow next" aria-label="Next" onclick="hpGo(hpIndex + 1)">&#8250;</button>
                 <div class="hp-dots" id="hpDots">
-                    ${Array.from({ length: positions }).map((_, i) => `<button class="hp-dot" aria-label="Go to ${i + 1}" onclick="hpGo(${i})"></button>`).join('')}
+                    ${slides.map((_, i) => `<button class="hp-dot" aria-label="Slide ${i + 1}" onclick="hpGo(${i})"></button>`).join('')}
                 </div>`;
             hpIndex = 0;
             hpGo(0);
@@ -3638,19 +3647,11 @@
         function hpGo(i) {
             const track = document.getElementById('hpTrack');
             if (!track) return;
-            const cards = track.children;
-            if (!cards.length) return;
-            const gap = 24;
-            const step = cards[0].getBoundingClientRect().width + gap;
-            // How many cards fit in the viewport right now (responsive).
-            const viewport = track.parentElement.getBoundingClientRect().width;
-            const visible = Math.max(1, Math.round((viewport + gap) / step));
-            const max = Math.max(0, cards.length - visible);
-            // Wrap around at both ends.
-            if (i > max) i = 0;
-            if (i < 0) i = max;
+            // Wrap around across the whole-slide pages.
+            if (i >= hpSlideCount) i = 0;
+            if (i < 0) i = hpSlideCount - 1;
             hpIndex = i;
-            track.style.transform = `translateX(-${i * step}px)`;
+            track.style.transform = `translateX(-${i * 100}%)`;
             document.querySelectorAll('#hpDots .hp-dot').forEach((dot, idx) => {
                 dot.classList.toggle('active', idx === i);
             });
