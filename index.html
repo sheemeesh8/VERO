@@ -916,39 +916,31 @@
         }
 
         /* ==================== PROMO SLIDER (Ferrari-style) ==================== */
-        /* Two feature cards shown directly under the hero segment slider */
+        /* Feature carousel shown directly under the hero segment slider */
         .hero-promos {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
             max-width: 1400px;
             margin: 50px auto;
-            padding: 0 50px;
+            padding: 0 20px;
         }
 
+        /* Larger image, text pushed to the side (image column dominates) */
         .hero-promos .promo-slide {
-            min-width: 0;
-            border: 1px solid #eee;
-            border-radius: 4px;
-            padding: 30px;
-            gap: 24px;
-            /* give the image column more room than the text column */
-            grid-template-columns: 1fr 1.4fr;
+            grid-template-columns: 0.85fr 1.15fr;
+            gap: 50px;
+            padding: 20px 40px;
         }
 
-        .hero-promos .promo-title { font-size: 40px; }
         .hero-promos .promo-image {
-            font-size: 200px;
-            aspect-ratio: 4 / 5;   /* taller box → larger image area inside the card */
+            font-size: 300px;      /* enlarge only the image */
+            aspect-ratio: 4 / 3;
         }
-        .hero-promos .promo-text { padding: 0 10px; }
 
         @media (max-width: 900px) {
-            .hero-promos {
+            .hero-promos .promo-slide {
                 grid-template-columns: 1fr;
-                padding: 0 20px;
                 gap: 24px;
             }
+            .hero-promos .promo-image { font-size: 160px; }
         }
 
         .promo-slider {
@@ -3495,19 +3487,29 @@
                 </div>`;
         }
 
-        // Two feature cards under the hero — reuse the exact promo-slide markup.
-        // Picks two products matching the current mode (clothing / art).
+        // Feature carousel under the hero — a real promo slider (arrows + dots + track).
+        // Picks three products matching the current mode (clothing / art).
+        let heroPromoUid = null;
         function renderHeroPromos() {
             const wrap = document.getElementById('heroPromos');
             if (!wrap) return;
-            const picks = featuredProducts.filter((p) => p.type === currentCategory).slice(0, 2);
-            // Fallback: if fewer than two match, top up from the full list.
-            while (picks.length < 2 && featuredProducts.length) {
-                const extra = featuredProducts.find((p) => !picks.includes(p));
-                if (!extra) break;
-                picks.push(extra);
+            // Tear down the previous instance so its autoplay timer doesn't leak.
+            if (heroPromoUid && promoState[heroPromoUid]) {
+                clearInterval(promoState[heroPromoUid].timer);
+                delete promoState[heroPromoUid];
             }
-            wrap.innerHTML = picks.map(promoSlideHTML).join('');
+            const picks = featuredProducts.filter((p) => p.type === currentCategory);
+            // Top up to at least three slides from the full list.
+            for (const p of featuredProducts) {
+                if (picks.length >= 3) break;
+                if (!picks.includes(p)) picks.push(p);
+            }
+            const slides = picks.slice(0, 3);
+            wrap.innerHTML = '';
+            const slider = createPromoSlider(slides);
+            heroPromoUid = slider.dataset.uid;
+            wrap.appendChild(slider);
+            promoGo(heroPromoUid, 0);
         }
 
         function promoSliderInner(uid, slides) {
