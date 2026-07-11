@@ -663,52 +663,6 @@
             display: none;
         }
 
-        /* ---- Rotating category headline (vanilla port of the TextRotate component) ---- */
-        .rotate-headline {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 14px;
-            padding: 44px 20px 10px;
-            font-size: 40px;
-            font-weight: 300;
-            color: #000;
-            letter-spacing: 0.5px;
-        }
-
-        .rotate-word {
-            display: inline-flex;
-            overflow: hidden;
-            color: #004225;
-            font-weight: 700;
-            white-space: pre;
-            padding-bottom: 6px;
-        }
-
-        .rotate-word .rt-char {
-            display: inline-block;
-            transform: translateY(110%);
-            opacity: 0;
-            /* springy entrance to mirror motion's spring(damping:25, stiffness:300) */
-            transition: transform 0.62s cubic-bezier(0.22, 1.2, 0.36, 1), opacity 0.5s ease;
-        }
-
-        .rotate-word .rt-char.in {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .rotate-word .rt-char.out {
-            transform: translateY(-120%);
-            opacity: 0;
-            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
-        }
-
-        @media (max-width: 768px) {
-            .rotate-headline { font-size: 26px; gap: 10px; padding: 32px 16px 8px; }
-        }
-
         .categories-wrapper {
             position: relative;
         }
@@ -1974,6 +1928,92 @@
             width: 100%;
         }
 
+        /* Slide-in transition so stepping feels like a real slider */
+        .upload-slide.slide-in-right { animation: slideInRight 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+        .upload-slide.slide-in-left  { animation: slideInLeft 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ---- Stepper (21st.dev-style) ---- */
+        .stepper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 44px;
+        }
+
+        .stepper .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 0 0 auto;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            background: #fff;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .step-circle .step-check { display: none; font-size: 16px; }
+
+        .step-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+            letter-spacing: 0.3px;
+            transition: color 0.3s ease;
+            text-align: center;
+        }
+
+        .step-line {
+            flex: 1 1 auto;
+            height: 2px;
+            max-width: 90px;
+            background: #ddd;
+            margin: 0 10px;
+            margin-bottom: 26px;
+            transition: background 0.3s ease;
+        }
+
+        /* Active step */
+        .stepper .step.active .step-circle {
+            border-color: #000;
+            background: #000;
+            color: #fff;
+            transform: scale(1.05);
+        }
+        .stepper .step.active .step-label { color: #000; }
+
+        /* Completed step */
+        .stepper .step.done .step-circle {
+            border-color: #004225;
+            background: #004225;
+            color: #fff;
+        }
+        .stepper .step.done .step-circle .step-num { display: none; }
+        .stepper .step.done .step-circle .step-check { display: inline; }
+        .stepper .step.done .step-label { color: #004225; }
+        .step-line.done { background: #004225; }
+
         .upload-form {
             display: flex;
             flex-direction: column;
@@ -2276,6 +2316,24 @@
 
             <!-- RIGHT SIDE: Form -->
             <div class="upload-right" id="uploadRight">
+                <!-- STEP INDICATOR (21st.dev-style stepper) -->
+                <div class="stepper" id="uploadStepper">
+                    <div class="step" data-step="0">
+                        <div class="step-circle"><span class="step-num">1</span><span class="step-check">✓</span></div>
+                        <div class="step-label">Photos &amp; Details</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="1">
+                        <div class="step-circle"><span class="step-num">2</span><span class="step-check">✓</span></div>
+                        <div class="step-label">Attributes</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="2">
+                        <div class="step-circle"><span class="step-num">3</span><span class="step-check">✓</span></div>
+                        <div class="step-label">Price</div>
+                    </div>
+                </div>
+
                 <!-- SLIDE 0: Details (Clothing) -->
                 <div id="slide-0" class="upload-slide" style="display:none;">
                     <div class="upload-header">
@@ -2337,14 +2395,16 @@
                         </div>
 
                         <div class="upload-form-group">
-                            <label>Condition</label>
-                            <select id="conditionSelect">
-                                <option>Select condition</option>
-                                <option>New with tag</option>
-                                <option>New without tag</option>
-                                <option>Like new</option>
-                                <option>Good</option>
-                                <option>Fair</option>
+                            <label>Style</label>
+                            <select id="styleSelect">
+                                <option>Select style</option>
+                                <option>Casual</option>
+                                <option>Formal</option>
+                                <option>Sport</option>
+                                <option>Vintage</option>
+                                <option>Streetwear</option>
+                                <option>Elegant</option>
+                                <option>Minimalist</option>
                             </select>
                         </div>
 
@@ -2411,10 +2471,6 @@
     <div class="categories-section">
         <div class="container">
             <h2 class="section-title" id="categoryTitle">Choose Category: Clothing</h2>
-            <div class="rotate-headline">
-                <span>Explore</span>
-                <span class="rotate-word" id="categoryRotate" aria-live="polite"></span>
-            </div>
             <div class="categories-wrapper">
                 <div class="categories-grid" id="categoriesGrid">
                     <!-- Square category cards, populated by JavaScript -->
@@ -3235,81 +3291,9 @@
         // Render the category slider as an infinite carousel: the list is repeated
         // three times so the arrows can loop endlessly, and we start centred on the
         // Grid layout for categories.
-        // ---- TextRotate: vanilla port of the React/motion component ----
-        // Cycles through `texts`, animating each character in/out with a staggered
-        // spring-like transition (the CSS on .rt-char provides the easing).
-        function createTextRotate(el, { staggerDuration = 25, rotationInterval = 2600 } = {}) {
-            let texts = [];
-            let index = 0;
-            let timer = null;
-
-            const splitChars = (text) => {
-                if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
-                    const seg = new Intl.Segmenter('en', { granularity: 'grapheme' });
-                    return Array.from(seg.segment(text), (s) => s.segment);
-                }
-                return Array.from(text);
-            };
-
-            const paint = (word) => {
-                el.innerHTML = '';
-                const chars = splitChars(word);
-                chars.forEach((ch, i) => {
-                    const span = document.createElement('span');
-                    span.className = 'rt-char';
-                    span.textContent = ch === ' ' ? ' ' : ch;
-                    span.style.transitionDelay = (i * staggerDuration) + 'ms';
-                    el.appendChild(span);
-                });
-                return el.querySelectorAll('.rt-char');
-            };
-
-            const show = (word) => {
-                const chars = paint(word);
-                void el.offsetWidth; // reflow so the entrance transition runs
-                chars.forEach((c) => c.classList.add('in'));
-            };
-
-            const rotateTo = (next) => {
-                const current = el.querySelectorAll('.rt-char');
-                current.forEach((c, i) => {
-                    c.style.transitionDelay = (i * staggerDuration) + 'ms';
-                    c.classList.remove('in');
-                    c.classList.add('out');
-                });
-                const wait = current.length * staggerDuration + 320;
-                setTimeout(() => { index = next; show(texts[index]); }, wait);
-            };
-
-            const next = () => { if (texts.length) rotateTo((index + 1) % texts.length); };
-
-            return {
-                setTexts(list) {
-                    texts = list.slice();
-                    index = 0;
-                    if (texts.length) show(texts[0]);
-                },
-                start() {
-                    this.stop();
-                    if (texts.length > 1) timer = setInterval(next, rotationInterval);
-                },
-                stop() { if (timer) { clearInterval(timer); timer = null; } }
-            };
-        }
-
-        let categoryRotator = null;
-
         function renderCategories() {
             const type = currentCategory;
             const list = type === 'clothing' ? clothingSliderCategories : artCategories;
-
-            // Drive the rotating headline with the current mode's category names.
-            const rotateEl = document.getElementById('categoryRotate');
-            if (rotateEl) {
-                if (!categoryRotator) categoryRotator = createTextRotate(rotateEl);
-                categoryRotator.setTexts(list.map((c) => c.name));
-                categoryRotator.start();
-            }
             // Each card shows a matching photo pulled by keyword; the emoji stays as
             // a fallback behind it in case an image fails to load. Clicking a card
             // opens its dedicated category page.
@@ -3539,10 +3523,11 @@
             description: null,
             size: null,
             color: null,
-            condition: null,
+            style: null,
             material: null,
             price: null
         };
+        let slideDirection = 'right';
 
         const clothingTypes = ['Shirts', 'Pants', 'Dresses', 'Skirts', 'Sweaters', 'Coats', 'Shoes', 'Boots', 'Jackets'];
         const artTypes = ['Painting', 'Sculpture', 'Photography', 'Digital Art', 'Drawing', 'Print'];
@@ -3552,7 +3537,7 @@
             document.getElementById('categorySelectorFull').classList.add('active');
             document.getElementById('uploadContainer').style.display = 'none';
             currentSlide = 0;
-            uploadFormData = {category: null, image: null, brand: null, itemType: null, gender: null, description: null, size: null, color: null, condition: null, material: null, price: null};
+            uploadFormData = {category: null, image: null, brand: null, itemType: null, gender: null, description: null, size: null, color: null, style: null, material: null, price: null};
         }
 
         function closeUploadProduct() {
@@ -3561,7 +3546,7 @@
             document.getElementById('uploadContainer').style.display = 'none';
             currentSlide = 0;
             document.getElementById('uploadImageDisplay').innerHTML = '📷';
-            uploadFormData = {category: null, image: null, brand: null, itemType: null, gender: null, description: null, size: null, color: null, condition: null, material: null, price: null};
+            uploadFormData = {category: null, image: null, brand: null, itemType: null, gender: null, description: null, size: null, color: null, style: null, material: null, price: null};
         }
 
         function selectCategoryInit(category) {
@@ -3629,9 +3614,10 @@
                 if (currentSlide === 1) {
                     uploadFormData.size = document.getElementById('sizeInput').value;
                     uploadFormData.color = document.getElementById('colorInput').value;
-                    uploadFormData.condition = document.getElementById('conditionSelect').value;
+                    uploadFormData.style = document.getElementById('styleSelect').value;
                     uploadFormData.material = document.getElementById('materialInput').value;
                 }
+                slideDirection = 'right';
                 currentSlide++;
                 updateSlideDisplay();
             }
@@ -3639,6 +3625,7 @@
 
         function goToPreviousSlide() {
             if (currentSlide > 0) {
+                slideDirection = 'left';
                 currentSlide--;
                 updateSlideDisplay();
             } else {
@@ -3652,9 +3639,32 @@
             for (let i = 0; i <= 2; i++) {
                 const slide = document.getElementById(`slide-${i}`);
                 if (slide) {
-                    slide.style.display = i === currentSlide ? 'flex' : 'none';
+                    const active = i === currentSlide;
+                    slide.style.display = active ? 'flex' : 'none';
+                    slide.classList.remove('slide-in-right', 'slide-in-left');
+                    if (active) {
+                        // restart the entrance animation for the direction of travel
+                        void slide.offsetWidth;
+                        slide.classList.add(slideDirection === 'left' ? 'slide-in-left' : 'slide-in-right');
+                    }
                 }
             }
+            updateStepper();
+        }
+
+        // Reflect progress on the 21st.dev-style step indicator.
+        function updateStepper() {
+            const steps = document.querySelectorAll('#uploadStepper .step');
+            const lines = document.querySelectorAll('#uploadStepper .step-line');
+            steps.forEach((step) => {
+                const n = Number(step.dataset.step);
+                step.classList.toggle('active', n === currentSlide);
+                step.classList.toggle('done', n < currentSlide);
+            });
+            lines.forEach((line, i) => {
+                // line i sits between step i and step i+1; mark done once past step i
+                line.classList.toggle('done', i < currentSlide);
+            });
         }
 
         function submitProduct() {
