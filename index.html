@@ -5079,8 +5079,8 @@
         const VCHATS = [];                 // all deal sessions (one per seller / product)
         let vchatSeeded = false;
 
-        function vchatSession(seller, name, icon, price, status, role) {
-            return {
+        function vchatSession(seller, name, icon, price, status, role, withAvailability) {
+            const s = {
                 id: 'c' + (VCHATS.length + 1),
                 seller,
                 product: { name, brand: seller, icon, original: price, current: price, currency: '₪' },
@@ -5092,6 +5092,13 @@
                 messages: [{ sender: 'SYSTEM', type: 'TEXT',
                     content: 'הצ׳אט נפתח. לרשותכם 48 שעות להשלמת העסקה במפגש.' }],
             };
+            // Checkout opens with an automatic buyer question to the seller.
+            if (withAvailability) {
+                s.messages.push({ sender: 'BUYER', type: 'TEXT',
+                    content: `היי, האם הפריט “${name}” עדיין זמין למכירה?` });
+                s.pending = { type: 'AVAILABILITY' };
+            }
+            return s;
         }
 
         const VCHAT_HOURS = 'שעות פעילות: א׳–ה׳ 10:00–19:00 · ו׳ 10:00–14:00. אפשר לתאם הגעה בטווח זה.';
@@ -5179,7 +5186,7 @@
                 const seller = it.seller || 'Vero Store';
                 if (VCHATS.some(s => s.seller === seller && s.product.name === it.name)) return;
                 const price = parseFloat(String(it.price).replace(/[^\d.]/g, '')) || 0;
-                VCHATS.push(vchatSession(seller, it.name, it.icon || '🛍️', price, 'INITIATED'));
+                VCHATS.push(vchatSession(seller, it.name, it.icon || '🛍️', price, 'INITIATED', 'buyer', true));
             });
             vchatOpenInbox();
         }
@@ -5272,6 +5279,21 @@
 
         /* ---- Seller responses ---- */
         function vchatSellerRespond(action) {
+            if (action === 'AVAILABLE') {
+                vchatAdd('SELLER', 'TEXT', 'כן, הפריט זמין וממתין לך 🙂');
+                vchatAdd('SYSTEM', 'TEXT', 'המוכר אישר את זמינות הפריט. אפשר להמשיך בתיאום המפגש.', 'good');
+                VCHAT.pending = null;
+                vchatRenderDeck();
+                return;
+            }
+            if (action === 'UNAVAILABLE') {
+                vchatAdd('SELLER', 'TEXT', 'מצטער, הפריט כבר אינו זמין.');
+                VCHAT.pending = null;
+                VCHAT.status = 'CANCELLED';
+                vchatAdd('SYSTEM', 'TEXT', 'המוכר סימן שהפריט אינו זמין — העסקה בוטלה והפריט הוסר מהפיד.', 'alert');
+                vchatRenderDeck();
+                return;
+            }
             if (action === 'LOCATION') {
                 vchatAdd('SELLER', 'LOCATION_WIDGET', {
                     addressString: 'רוטשילד 46, תל אביב',
@@ -5317,7 +5339,11 @@
                          <button class="vpill special" onclick="VCHAT.submenu=true;vchatRenderDeck()">⚠️ שאלה מיוחדת</button>`;
                 }
             } else { // seller
-                if (VCHAT.pending && VCHAT.pending.type === 'LOCATION') {
+                if (VCHAT.pending && VCHAT.pending.type === 'AVAILABILITY') {
+                    upper.innerHTML =
+                        `<button class="vpill" onclick="vchatSellerRespond('AVAILABLE')">✅ הפריט זמין — אישור זמינות</button>
+                         <button class="vpill special" onclick="vchatSellerRespond('UNAVAILABLE')">✕ הפריט אינו זמין</button>`;
+                } else if (VCHAT.pending && VCHAT.pending.type === 'LOCATION') {
                     upper.innerHTML = `<button class="vpill" onclick="vchatSellerRespond('LOCATION')">[שלח מיקום מאושר מהפרופיל]</button>`;
                 } else if (VCHAT.pending && VCHAT.pending.type === 'HOURS') {
                     upper.innerHTML = `<button class="vpill" onclick="vchatSellerRespond('HOURS')">[שלח שעות פעילות מוגדרות]</button>`;
