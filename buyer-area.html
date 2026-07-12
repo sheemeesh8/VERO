@@ -499,6 +499,149 @@
             letter-spacing: 1px;
         }
 
+        /* ==================== DATA LAYOUT (rectangles + image) ==================== */
+        .data-layout {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 40px;
+            align-items: start;
+            margin-top: 20px;
+        }
+
+        .data-rects {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Each expandable rectangle */
+        .data-rect {
+            background: white;
+            border: 2px solid #e4e4e4;
+            border-radius: 14px;
+            overflow: hidden;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .data-rect.open {
+            border-color: #004225;
+            box-shadow: 0 10px 30px rgba(0, 66, 37, 0.10);
+        }
+
+        .rect-head {
+            width: 100%;
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 22px 26px;
+            text-align: right;
+        }
+
+        .rect-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: #004225;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .rect-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #004225;
+            flex-shrink: 0;
+        }
+
+        /* Inline peek of 3 products, shown on cart/wishlist rectangles */
+        .rect-peek {
+            display: flex;
+            gap: 10px;
+            margin-right: auto;
+        }
+
+        .peek-item {
+            width: 54px;
+            height: 54px;
+            border-radius: 8px;
+            background: #efece4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .rect-chevron {
+            margin-right: 8px;
+            color: #004225;
+            transition: transform 0.35s ease;
+            display: flex;
+            flex-shrink: 0;
+        }
+
+        .data-rect.open .rect-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* When a rectangle has a peek, the chevron shouldn't push it; keep chevron last */
+        .rect-head .rect-peek + .rect-chevron { margin-right: 18px; }
+
+        .rect-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .data-rect.open .rect-panel {
+            max-height: 2000px;
+        }
+
+        .rect-panel-inner {
+            padding: 0 26px 28px;
+        }
+
+        /* Chart height inside a panel */
+        .rect-panel-inner .bar-chart {
+            height: 320px;
+        }
+
+        /* Image column */
+        .data-image {
+            position: sticky;
+            top: 30px;
+            height: 100%;
+            min-height: 420px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #004225 0%, #0a6b3f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .data-image svg {
+            width: 55%;
+            height: auto;
+            opacity: 0.92;
+        }
+
+        @media (max-width: 900px) {
+            .data-layout {
+                grid-template-columns: 1fr;
+            }
+            .data-image {
+                position: static;
+                min-height: 220px;
+                order: -1;
+            }
+        }
+
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 900px) {
             .collections {
@@ -546,12 +689,201 @@
         </div>
     </div>
 
+    <!-- ==================== DATA SECTION ==================== -->
+    <div class="data-section">
+        <div class="container">
+            <div class="data-layout">
+                <div class="data-rects" id="dataRects"></div>
+                <div class="data-image">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 3v18h18"/>
+                        <rect x="6" y="12" width="3" height="6" rx="0.6" fill="white" stroke="none"/>
+                        <rect x="11" y="8" width="3" height="10" rx="0.6" fill="white" stroke="none"/>
+                        <rect x="16" y="4" width="3" height="14" rx="0.6" fill="white" stroke="none"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== JAVASCRIPT ==================== -->
     <script>
+        // ==================== DATA ====================
+        // Monthly spending in ₪ (index 0 = January); rendered up to the current month.
+        const monthlySpending = [320, 180, 540, 260, 610, 430, 290, 380, 450, 500, 340, 410];
+        const monthNames = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
+
+        const favoriteStyles = [
+            { name: 'קז\'ואל', pct: 85 },
+            { name: 'וינטג\'', pct: 62 },
+            { name: 'ספורט', pct: 48 },
+            { name: 'פורמלי', pct: 35 },
+        ];
+        const favoriteBrands = [
+            { name: 'Basics Co', pct: 90 },
+            { name: 'Denim House', pct: 70 },
+            { name: 'Street Style', pct: 55 },
+            { name: 'Smart Style', pct: 40 },
+        ];
+
+        // Fallback samples so the cart & wishlist always show products.
+        const sampleCart = [
+            { name: 'טי-שירט לבן קלאסי', price: '₪49.90', icon: '👕', category: 'קז\'ואל', seller: 'Basics Co', rating: 4.7 },
+            { name: 'ג\'ינס סקיני כחול', price: '₪189.00', icon: '👖', category: 'ג\'ינס', seller: 'Denim House', rating: 4.6 },
+            { name: 'סניקרס לבן קלאסי', price: '₪150.00', icon: '👟', category: 'סניקרס', seller: 'Basics Co', rating: 4.8 },
+            { name: 'הודי אפור', price: '₪139.00', icon: '🧥', category: 'הודיס', seller: 'Street Style', rating: 4.6 },
+            { name: 'חולצה מכופתרת תכלת', price: '₪149.00', icon: '👔', category: 'פורמלי', seller: 'Smart Style', rating: 4.6 },
+            { name: 'כובע בייסבול', price: '₪89.90', icon: '🧢', category: 'כובעים', seller: 'Accessories Co', rating: 4.5 },
+        ];
+        const sampleWishlist = [
+            { name: 'בלייזר נייבי', price: '₪320.00', icon: '👔', category: 'פורמלי', seller: 'Smart Style', rating: 4.8 },
+            { name: 'ג\'קט עור', price: '₪450.00', icon: '🧥', category: 'ג\'קטים', seller: 'Leather Lab', rating: 4.8 },
+            { name: 'מגפיים חום', price: '₪290.00', icon: '🥾', category: 'מגפיים', seller: 'Boots Co', rating: 4.8 },
+            { name: 'סוודר צמר וינטג\'', price: '₪165.00', icon: '🧶', category: 'וינטג\'', seller: 'Vintage 90s', rating: 4.8 },
+            { name: 'תיק צד עור', price: '₪290.00', icon: '👜', category: 'תיקים', seller: 'Leather Lab', rating: 4.8 },
+            { name: 'שרשרת זהב', price: '₪120.00', icon: '⛓️', category: 'תכשיטים', seller: 'Jewelry Co', rating: 4.8 },
+        ];
+
+        // ==================== CHART BUILDERS ====================
+        // Generic vertical bar chart; bars is [{ value, display, label }], heights scaled to the max.
+        function barChartHTML(bars) {
+            const max = Math.max(...bars.map(b => b.value));
+            return `<div class="bar-chart">` + bars.map(b => {
+                const height = max > 0 ? (b.value / max) * 100 : 0;
+                return `
+                    <div class="bar-col">
+                        <div class="bar-value">${b.display}</div>
+                        <div class="bar" style="height: ${height}%"></div>
+                        <div class="bar-label">${b.label}</div>
+                    </div>`;
+            }).join('') + `</div>`;
+        }
+
+        function spendChartHTML() {
+            const currentMonth = new Date().getMonth(); // up to "today"
+            const data = monthlySpending.slice(0, currentMonth + 1);
+            return barChartHTML(data.map((value, i) => ({
+                value,
+                display: `₪${value.toLocaleString()}`,
+                label: monthNames[i]
+            })));
+        }
+
+        function pctChartHTML(items) {
+            return barChartHTML(items.map(item => ({
+                value: item.pct,
+                display: `${item.pct}%`,
+                label: item.name
+            })));
+        }
+
+        // ==================== PRODUCTS ====================
+        function productPageUrl(item) {
+            const data = {
+                name: item.name, price: item.price, icon: item.icon,
+                category: item.category, seller: item.seller, rating: item.rating,
+                type: item.type || 'clothing'
+            };
+            return `product.html?product=${encodeURIComponent(JSON.stringify(data))}`;
+        }
+
+        function miniCardHTML(item) {
+            const rating = item.rating || 4.5;
+            const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+            return `
+                <a href="${productPageUrl(item)}" class="product-card">
+                    <div class="product-image">${item.icon}</div>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price">${item.price}</div>
+                        </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${item.seller || 'Vero Store'}</div>
+                            <div class="product-name">${item.name}</div>
+                            <div class="product-rating">${stars}</div>
+                        </div>
+                    </div>
+                </a>`;
+        }
+
+        // The six most recent items from a store, padded with samples up to six.
+        function recentItems(storageKey, fallback) {
+            let items = [];
+            try { items = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch (e) { items = []; }
+            items.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+            const seen = new Set(items.map(i => i.name + '|' + i.price));
+            for (const f of fallback) {
+                if (items.length >= 6) break;
+                const key = f.name + '|' + f.price;
+                if (!seen.has(key)) { items.push(f); seen.add(key); }
+            }
+            return items.slice(0, 6);
+        }
+
+        // Inline peek: the first three product icons shown on the rectangle head.
+        function peekHTML(items) {
+            return `<span class="rect-peek">` +
+                items.slice(0, 3).map(i => `<span class="peek-item">${i.icon}</span>`).join('') +
+                `</span>`;
+        }
+
+        function productGridHTML(items) {
+            return `<div class="mini-grid">` + items.map(miniCardHTML).join('') + `</div>`;
+        }
+
+        // ==================== RECTANGLES ====================
+        const chevronSVG = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+
+        function iconCircle(path) {
+            return `<span class="rect-icon"><svg viewBox="0 0 24 24" width="24" height="24" style="fill:white">${path}</svg></span>`;
+        }
+
+        const chartIcon = iconCircle('<path d="M3 3v18h18v-2H5V3H3zm4 12h2v2H7v-2zm4-6h2v8h-2V9zm4-4h2v12h-2V5z"/>');
+        const styleIcon = iconCircle('<path d="M16 4l-4 2-4-2-5 4 3 3 2-1v9h8v-9l2 1 3-3-5-4z"/>');
+        const cartIcon = iconCircle('<path d="M9 2L6 6H2v2h1.17L4 20c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2l.83-12H23V6h-4L15 2H9zm0 2h6v2H9V4zm9 14H6L4.22 8h15.56L18 18z"/>');
+        const wishIcon = iconCircle('<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>');
+        const brandIcon = iconCircle('<path d="M12 2l2.4 4.8 5.3.8-3.8 3.7.9 5.3L12 14.9 7.2 16.4l.9-5.3L4.3 7.6l5.3-.8L12 2z"/>');
+
+        function rectHTML(icon, title, peek, body) {
+            return `
+                <div class="data-rect">
+                    <button class="rect-head" type="button">
+                        ${icon}
+                        <span class="rect-title">${title}</span>
+                        ${peek || ''}
+                        <span class="rect-chevron">${chevronSVG}</span>
+                    </button>
+                    <div class="rect-panel"><div class="rect-panel-inner">${body}</div></div>
+                </div>`;
+        }
+
+        function buildRects() {
+            const cart = recentItems('vero_cart', sampleCart);
+            const wish = recentItems('vero_wishlist', sampleWishlist);
+
+            document.getElementById('dataRects').innerHTML = [
+                rectHTML(chartIcon, 'הנתוני רכישה החודשיים', '', spendChartHTML()),
+                rectHTML(styleIcon, 'הסגנונות המועדפים עליי', '', pctChartHTML(favoriteStyles)),
+                rectHTML(cartIcon, 'עגלת קניות', peekHTML(cart), productGridHTML(cart)),
+                rectHTML(wishIcon, 'רשימת משאלות', peekHTML(wish), productGridHTML(wish)),
+                rectHTML(brandIcon, 'החברות האהובות עליי', '', pctChartHTML(favoriteBrands)),
+            ].join('');
+
+            // Accordion behaviour: clicking a head toggles that rectangle.
+            document.querySelectorAll('#dataRects .data-rect').forEach(rect => {
+                rect.querySelector('.rect-head').addEventListener('click', () => {
+                    rect.classList.toggle('open');
+                });
+            });
+        }
+
         // ==================== NAVIGATION ====================
         function backToMain() {
             window.location.href = 'index.html';
         }
+
+        // Initialize
+        buildRects();
     </script>
 </body>
 </html>
