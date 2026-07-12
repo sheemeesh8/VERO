@@ -707,6 +707,28 @@
         @media (max-width: 1100px) { .dh-cards { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 700px)  { .dh-cards { grid-template-columns: repeat(2, 1fr); } }
 
+        /* Month selector chips */
+        .dh-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .dh-chip {
+            border: 1px solid #d8d8d8;
+            background: #fff;
+            color: #555;
+            font: inherit;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dh-chip:hover { border-color: #004225; color: #004225; }
+        .dh-chip.active { background: #004225; border-color: #004225; color: #fff; }
+        .dh-empty { color: #999; font-size: 15px; padding: 20px 0; }
+
         /* Slide transition when moving between slides */
         @keyframes dhSlideIn {
             from { opacity: 0; transform: translateX(48px); }
@@ -923,20 +945,58 @@
                 `<div class="dh-cards">` + items.slice(0, 5).map(miniCardHTML).join('') + `</div>`;
         }
 
-        // Current-month consumption stats for the monthly-spending slide.
+        // Pool of items that could have been purchased, and a deterministic
+        // per-month selection so each month shows a stable, distinct product list.
+        const purchasePool = [...sampleCart, ...sampleWishlist];
+        function purchasesForMonth(m) {
+            if (!monthlySpending[m]) return [];
+            const count = Math.min(purchasePool.length, Math.max(1, Math.round(monthlySpending[m] / 130)));
+            const out = [];
+            for (let k = 0; k < count; k++) {
+                out.push(purchasePool[(m * 3 + k) % purchasePool.length]);
+            }
+            return out;
+        }
+
+        // The month whose consumption is being viewed (defaults to the current month).
+        let dhSelectedMonth = new Date().getMonth();
+
+        function monthChipsHTML() {
+            const cur = new Date().getMonth();
+            let chips = '';
+            for (let m = 0; m <= cur; m++) {
+                chips += `<button class="dh-chip${m === dhSelectedMonth ? ' active' : ''}" onclick="selectMonth(${m})">${monthNames[m]}</button>`;
+            }
+            return `<div class="dh-chips">${chips}</div>`;
+        }
+
+        // Consumption stats + purchased-products list for the selected month.
         function monthDetail() {
-            const m = new Date().getMonth();
+            const m = dhSelectedMonth;
             const cur = monthlySpending[m];
             const prev = m > 0 ? monthlySpending[m - 1] : null;
             const diff = prev != null ? Math.round(((cur - prev) / prev) * 100) : null;
             const total = monthlySpending.slice(0, m + 1).reduce((s, v) => s + v, 0);
             const avg = Math.round(total / (m + 1));
-            return statBlock(`נתוני צריכה · ${monthNames[m]}`, [
+            const stats = statBlock(`נתוני צריכה · ${monthNames[m]}`, [
                 ['הוצאה החודש', `₪${cur.toLocaleString()}`],
                 ['לעומת חודש קודם', diff == null ? '—' : `${diff >= 0 ? '+' : ''}${diff}%`],
                 ['סה"כ מתחילת השנה', `₪${total.toLocaleString()}`],
                 ['ממוצע חודשי', `₪${avg.toLocaleString()}`],
             ]);
+            const products = purchasesForMonth(m);
+            const list = products.length
+                ? `<div class="dh-cards">${products.map(miniCardHTML).join('')}</div>`
+                : `<p class="dh-empty">לא נרכשו מוצרים בחודש זה.</p>`;
+            return monthChipsHTML() + stats +
+                `<h3 class="dh-detail-title" style="margin-top:44px">המוצרים שנרכשו · ${monthNames[m]}</h3>` +
+                list;
+        }
+
+        // Switch the viewed month and refresh only the detail block.
+        function selectMonth(m) {
+            dhSelectedMonth = m;
+            document.getElementById('dhDetail').innerHTML = monthDetail();
         }
 
         // ==================== DATA HERO SLIDER (5 slides, category style) ====================
