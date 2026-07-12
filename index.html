@@ -2413,6 +2413,63 @@
             50% { box-shadow: 0 0 0 3px rgba(61,74,62,0.08); border-color: var(--c-sage); }
         }
 
+        .vchat-back {
+            border: none; background: none; cursor: pointer;
+            font-family: var(--f-sans); font-size: 12px; color: var(--c-mute);
+            padding: 0; margin-inline-end: 6px;
+        }
+        .vchat-back:hover { color: var(--c-ink); }
+
+        /* ---- Chats inbox ---- */
+        .vinbox {
+            --c-bg: #F9F8F6; --c-ink: #1C1C1C; --c-mute: #767676; --c-line: #E5E2DD;
+            --c-sage: #3D4A3E; --c-terra: #8A4F4F; --c-cream: #F1EFEA;
+            --f-serif: 'Playfair Display', Garamond, Georgia, serif;
+            --f-sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            position: fixed; inset: 0;
+            background: var(--c-bg); color: var(--c-ink);
+            direction: rtl; max-width: 520px; margin: 0 auto;
+            box-shadow: 0 0 60px rgba(0,0,0,0.06);
+            z-index: 90; display: flex; flex-direction: column;
+        }
+        .vinbox-head {
+            flex: 0 0 auto; display: flex; align-items: center; gap: 14px;
+            padding: 22px 16px; border-bottom: 1px solid var(--c-line);
+        }
+        .vinbox-close { border: none; background: none; cursor: pointer; font-size: 26px; color: var(--c-ink); line-height: 1; }
+        .vinbox-kicker { display: block; font-family: var(--f-sans); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--c-mute); }
+        .vinbox-h { font-family: var(--f-serif); font-size: 22px; }
+        .vinbox-list { flex: 1 1 auto; overflow-y: auto; padding: 8px 0 40px; }
+        .vinbox-empty { padding: 60px 30px; text-align: center; color: var(--c-mute); font-family: var(--f-sans); font-size: 14px; line-height: 1.7; }
+        .vinbox-item {
+            width: 100%; display: flex; align-items: center; gap: 14px;
+            text-align: right; background: none; cursor: pointer;
+            border: none; border-bottom: 1px solid var(--c-line);
+            padding: 18px 16px; font-family: var(--f-sans);
+            transition: background 0.2s;
+        }
+        .vinbox-item:hover { background: #fff; }
+        .vinbox-img {
+            width: 52px; height: 52px; border-radius: 2px; flex: 0 0 auto;
+            background: var(--c-cream); display: flex; align-items: center; justify-content: center; font-size: 28px;
+        }
+        .vinbox-mid { flex: 1; min-width: 0; }
+        .vinbox-seller { font-family: var(--f-serif); font-size: 15px; }
+        .vinbox-name { font-size: 12px; color: var(--c-mute); margin: 2px 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vinbox-steps { display: flex; gap: 5px; }
+        .vstep { width: 22px; height: 3px; border-radius: 3px; background: var(--c-line); }
+        .vstep.on { background: var(--c-ink); }
+        .vstep.on.good { background: var(--c-sage); }
+        .vstep.on.alert { background: var(--c-terra); }
+        .vinbox-status {
+            flex: 0 0 auto; max-width: 34%; text-align: left;
+            font-size: 11px; line-height: 1.4; color: var(--c-mute);
+        }
+        .vinbox-status.good { color: var(--c-sage); }
+        .vinbox-status.alert { color: var(--c-terra); }
+
+        @media (max-width: 540px) { .vinbox { max-width: 100%; box-shadow: none; } }
+
         /* Modal (rating / cancel reasons) */
         .vchat-modal {
             position: fixed; inset: 0; z-index: 120;
@@ -3067,7 +3124,7 @@
                     </button>
                     <span class="badge" id="cartBadge">0</span>
                 </span>
-                <button class="icon-btn" title="Deal Chat" onclick="vchatOpen()">
+                <button class="icon-btn" title="Deal Chats" onclick="vchatOpenInbox()">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"></path>
                     </svg>
@@ -3344,6 +3401,20 @@
         </div>
     </div>
 
+    <!-- ==================== CHATS INBOX (one per seller) ==================== -->
+    <div id="chatListView" style="display:none">
+        <div class="vinbox">
+            <header class="vinbox-head">
+                <button class="vinbox-close" onclick="showMain()" title="סגירה">&times;</button>
+                <div class="vinbox-title">
+                    <span class="vinbox-kicker">Deal Room</span>
+                    <span class="vinbox-h">הצ׳אטים שלי</span>
+                </div>
+            </header>
+            <div class="vinbox-list" id="vinboxList"></div>
+        </div>
+    </div>
+
     <!-- ==================== SECURE CHAT (deal room) ==================== -->
     <div id="chatView" style="display:none">
         <div class="vchat">
@@ -3359,10 +3430,10 @@
 
             <!-- Perspective toggle (demo only) -->
             <div class="vchat-persona">
+                <button class="vchat-back" onclick="vchatOpenInbox()" title="חזרה לרשימה">→ הצ׳אטים</button>
                 <span class="vchat-persona-label">תצוגה:</span>
                 <button class="vchat-seg active" id="vchatSegBuyer" onclick="vchatSetRole('buyer')">קונה</button>
                 <button class="vchat-seg" id="vchatSegSeller" onclick="vchatSetRole('seller')">מוכר</button>
-                <button class="vchat-reset" onclick="vchatReset()" title="אפס דמו">↺</button>
             </div>
 
             <!-- B. Chat feed -->
@@ -3671,6 +3742,7 @@
             document.getElementById('wishlistHero').style.display = 'none';
             document.getElementById('wishlistContainer').style.display = 'none';
             document.getElementById('chatView').style.display = 'none';
+            document.getElementById('chatListView').style.display = 'none';
         }
 
         function showMain() {
@@ -3878,11 +3950,13 @@
         function checkout() {
             if (cart.length === 0) return;
             const total = cart.reduce((sum, i) => sum + priceToNum(i.price) * i.qty, 0);
+            const items = cart.slice();   // capture before clearing → one chat per seller
             showToast(`Payment of ₪${total.toFixed(2)} received! Thank you 🎉`);
             cart = [];
             saveState();
             updateBadges();
             renderCartPage();
+            vchatFromCheckout(items);     // open the deal-room chats inbox
         }
 
         // ==================== WISHLIST PAGE RENDER ====================
@@ -4960,17 +5034,24 @@
         }
 
         // ==================== SECURE CHAT ENGINE (demo · mock state) ====================
-        const VCHAT = {
-            role: 'buyer',                 // 'buyer' | 'seller'
-            status: 'INITIATED',           // INITIATED, ACTIVE, BUYER_REPORTED, SELLER_REPORTED, COMPLETED, CANCELLED
-            product: { name: 'Cocktail Dress', brand: 'Designer Collection', icon: '👗',
-                       original: 450, current: 450, currency: '₪' },
-            messages: [],
-            pending: null,                 // query awaiting a seller response: {type}
-            submenu: false,
-            timer: { total: 47 * 3600 + 59 * 60 + 12, id: null },
-            initialised: false,
-        };
+        let VCHAT = null;                  // the session currently open in the deal room
+        const VCHATS = [];                 // all deal sessions (one per seller / product)
+        let vchatSeeded = false;
+
+        function vchatSession(seller, name, icon, price, status, role) {
+            return {
+                id: 'c' + (VCHATS.length + 1),
+                seller,
+                product: { name, brand: seller, icon, original: price, current: price, currency: '₪' },
+                status: status || 'INITIATED',
+                role: role || 'buyer',
+                pending: null,
+                submenu: false,
+                timer: { total: 47 * 3600 + 59 * 60 + 12, id: null },
+                messages: [{ sender: 'SYSTEM', type: 'TEXT',
+                    content: 'הצ׳אט נפתח. לרשותכם 48 שעות להשלמת העסקה במפגש.' }],
+            };
+        }
 
         const VCHAT_HOURS = 'שעות פעילות: א׳–ה׳ 10:00–19:00 · ו׳ 10:00–14:00. אפשר לתאם הגעה בטווח זה.';
         const VCHAT_RETURN = 'פריט זה מוגדר כ-Final Sale. אין החזרות על פריטי יד שנייה בארון זה.';
@@ -4988,25 +5069,78 @@
             vchatRenderFeed();
         }
 
-        function vchatOpen() {
+        // Header button → the chats inbox (one row per seller, with progress).
+        function vchatOpenInbox() {
+            hideAllViews();
+            vchatSeed();
+            vchatRenderInbox();
+            document.getElementById('chatListView').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function vchatSeed() {
+            if (vchatSeeded) return;
+            vchatSeeded = true;
+            VCHATS.push(vchatSession('Designer Collection', 'Cocktail Dress', '👗', 450, 'ACTIVE'));
+            VCHATS.push(vchatSession('Vintage Collection', 'Classic Denim Jacket', '🧥', 300, 'SELLER_REPORTED'));
+            VCHATS.push(vchatSession('Studio Vero', 'Ceramic Vase', '🏺', 220, 'COMPLETED'));
+        }
+
+        const VCHAT_STATUS_LABEL = {
+            INITIATED: 'ממתין לשאילתה',
+            ACTIVE: 'במשא ומתן',
+            BUYER_REPORTED: 'דיווחת רכישה — ממתין למוכר',
+            SELLER_REPORTED: 'המוכר אישר — ממתין לאישורך',
+            COMPLETED: 'העסקה הושלמה',
+            CANCELLED: 'העסקה בוטלה',
+        };
+        const VCHAT_STEP = { INITIATED: 1, ACTIVE: 2, BUYER_REPORTED: 3, SELLER_REPORTED: 4, COMPLETED: 5, CANCELLED: 0 };
+
+        function vchatRenderInbox() {
+            const list = document.getElementById('vinboxList');
+            if (!VCHATS.length) {
+                list.innerHTML = '<div class="vinbox-empty">אין עדיין צ׳אטים. הם ייפתחו אוטומטית ב-Check-out, אחד מול כל מוכר.</div>';
+                return;
+            }
+            list.innerHTML = VCHATS.map((s, i) => {
+                const step = VCHAT_STEP[s.status];
+                const tone = s.status === 'COMPLETED' ? 'good' : s.status === 'CANCELLED' ? 'alert' : '';
+                const dots = [1, 2, 3, 4, 5].map(n =>
+                    `<span class="vstep${step >= n && step > 0 ? ' on ' + tone : ''}"></span>`).join('');
+                return `
+                    <button class="vinbox-item" onclick="vchatOpenSession(${i})">
+                        <div class="vinbox-img">${s.product.icon}</div>
+                        <div class="vinbox-mid">
+                            <div class="vinbox-seller">${s.seller}</div>
+                            <div class="vinbox-name">${s.product.name}</div>
+                            <div class="vinbox-steps">${dots}</div>
+                        </div>
+                        <div class="vinbox-status ${tone}">${VCHAT_STATUS_LABEL[s.status]}</div>
+                    </button>`;
+            }).join('');
+        }
+
+        function vchatOpenSession(i) {
+            VCHAT = VCHATS[i];
             hideAllViews();
             document.getElementById('chatView').style.display = 'block';
-            if (!VCHAT.initialised) vchatReset();
-            else vchatRenderAll();
+            document.getElementById('vchatSegBuyer').classList.toggle('active', VCHAT.role === 'buyer');
+            document.getElementById('vchatSegSeller').classList.toggle('active', VCHAT.role === 'seller');
+            document.getElementById('vchatModal').style.display = 'none';
+            vchatRenderAll();
             vchatStartTimer();
         }
 
-        function vchatReset() {
-            VCHAT.initialised = true;
-            VCHAT.status = 'INITIATED';
-            VCHAT.product.current = VCHAT.product.original;
-            VCHAT.pending = null;
-            VCHAT.submenu = false;
-            VCHAT.messages = [{ sender: 'SYSTEM', type: 'TEXT',
-                content: 'הצ׳אט נפתח. לרשותכם 48 שעות להשלמת העסקה במפגש.' }];
-            VCHAT.timer.total = 47 * 3600 + 59 * 60 + 12;
-            document.getElementById('vchatModal').style.display = 'none';
-            vchatRenderAll();
+        // Called at checkout — open a chat per distinct seller in the cart.
+        function vchatFromCheckout(items) {
+            vchatSeed();
+            (items || []).forEach(it => {
+                const seller = it.seller || 'Vero Store';
+                if (VCHATS.some(s => s.seller === seller && s.product.name === it.name)) return;
+                const price = parseFloat(String(it.price).replace(/[^\d.]/g, '')) || 0;
+                VCHATS.push(vchatSession(seller, it.name, it.icon || '🛍️', price, 'INITIATED'));
+            });
+            vchatOpenInbox();
         }
 
         function vchatSetRole(role) {
@@ -5020,10 +5154,12 @@
         function vchatRenderAll() { vchatRenderHead(); vchatRenderFeed(); vchatRenderDeck(); }
 
         /* ---- Timer ---- */
+        let VCHAT_TICK = null;
         function vchatStartTimer() {
-            if (VCHAT.timer.id) return;
-            VCHAT.timer.id = setInterval(() => {
-                if (VCHAT.status === 'COMPLETED' || VCHAT.status === 'CANCELLED') return;
+            if (VCHAT_TICK) return;
+            VCHAT_TICK = setInterval(() => {
+                if (!VCHAT || VCHAT.status === 'COMPLETED' || VCHAT.status === 'CANCELLED') return;
+                if (document.getElementById('chatView').style.display === 'none') return;
                 if (VCHAT.timer.total > 0) VCHAT.timer.total--;
                 vchatRenderHead();
             }, 1000);
