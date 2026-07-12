@@ -2104,11 +2104,12 @@
         .acat-filter .x { color: #111; }
 
         /* ---- Grid ---- */
+        #acatContent { padding: 34px 7vw 90px; }
+        #acatContent .promo-slider { margin: 64px 0; }
         .acat-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 26px;
-            padding: 34px 7vw 90px;
         }
         .acard {
             background: #f4f4f2;
@@ -3053,8 +3054,8 @@
             <!-- FILTERS -->
             <div class="acat-filters" id="acatFilters"></div>
 
-            <!-- GRID -->
-            <div class="acat-grid" id="acatGrid"></div>
+            <!-- GRID + interleaved promo sliders -->
+            <div id="acatContent"></div>
 
             <!-- FOOTER -->
             <footer class="acat-footer">
@@ -4625,9 +4626,21 @@
                 `<button class="acat-filter${i < 3 ? ' active' : ''}">${i < 3 ? '<span class="x">&times;</span> ' : ''}${t}</button>`
             ).join('');
 
-            // Product grid.
-            const items = buildCategoryItems(catName, type, 9, 0);
-            document.getElementById('acatGrid').innerHTML = items.map(acardHTML).join('');
+            // Product grid — a promoted slider is inserted after every 10 products.
+            const content = document.getElementById('acatContent');
+            content.innerHTML = '';
+            const BLOCKS = 3; // 3 × 10 products, each followed by a promo slider
+            for (let b = 0; b < BLOCKS; b++) {
+                const items = buildCategoryItems(catName, type, 10, b * 10);
+                const grid = document.createElement('div');
+                grid.className = 'acat-grid';
+                grid.innerHTML = items.map(acardHTML).join('');
+                content.appendChild(grid);
+
+                const slider = createPromoSlider(buildCategoryFeatured(catName, type, b * 5));
+                content.appendChild(slider);
+                promoGo(slider.dataset.uid, 0);
+            }
         }
 
         // Initialize — either a single category page (?cat=…) or the home feed.
