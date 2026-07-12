@@ -605,6 +605,49 @@
             .dh-emoji { font-size: 150px; }
         }
 
+        /* ---- Per-slide detail (below the hero) ---- */
+        .dh-detail {
+            background: #fff;
+            direction: rtl;
+            text-align: right;
+            padding: 46px 7vw 80px;
+            border-top: 1px solid #eee;
+        }
+        .dh-detail-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #004225;
+            margin: 0 0 26px;
+        }
+        .dh-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 22px;
+        }
+        .dh-stat {
+            border: 1px solid #e4e4e4;
+            padding: 26px 24px;
+        }
+        .dh-stat .k {
+            font-size: 13px;
+            color: #8a8a8a;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .dh-stat .v {
+            font-size: 30px;
+            font-weight: 800;
+            color: #004225;
+            line-height: 1;
+        }
+        .dh-cards {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 22px;
+        }
+        @media (max-width: 1100px) { .dh-cards { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 700px)  { .dh-cards { grid-template-columns: repeat(2, 1fr); } }
+
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 900px) {
             .collections {
@@ -666,6 +709,7 @@
                 <button class="acat-arrow" onclick="dhGo(1)" aria-label="הבא">&rarr;</button>
             </div>
         </section>
+        <div class="dh-detail" id="dhDetail"></div>
     </div>
 
     <!-- ==================== JAVASCRIPT ==================== -->
@@ -787,6 +831,37 @@
             return `<div class="dh-peek">` + items.slice(0, 3).map(miniCardHTML).join('') + `</div>`;
         }
 
+        // ==================== DETAIL BUILDERS (shown below the slide) ====================
+        // A titled row of stat cards ([label, value] pairs).
+        function statBlock(title, pairs) {
+            return `<h3 class="dh-detail-title">${title}</h3>` +
+                `<div class="dh-stats">` +
+                pairs.map(([k, v]) => `<div class="dh-stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('') +
+                `</div>`;
+        }
+
+        // A titled grid of five product cards.
+        function cardsBlock(title, items) {
+            return `<h3 class="dh-detail-title">${title}</h3>` +
+                `<div class="dh-cards">` + items.slice(0, 5).map(miniCardHTML).join('') + `</div>`;
+        }
+
+        // Current-month consumption stats for the monthly-spending slide.
+        function monthDetail() {
+            const m = new Date().getMonth();
+            const cur = monthlySpending[m];
+            const prev = m > 0 ? monthlySpending[m - 1] : null;
+            const diff = prev != null ? Math.round(((cur - prev) / prev) * 100) : null;
+            const total = monthlySpending.slice(0, m + 1).reduce((s, v) => s + v, 0);
+            const avg = Math.round(total / (m + 1));
+            return statBlock(`נתוני צריכה · ${monthNames[m]}`, [
+                ['הוצאה החודש', `₪${cur.toLocaleString()}`],
+                ['לעומת חודש קודם', diff == null ? '—' : `${diff >= 0 ? '+' : ''}${diff}%`],
+                ['סה"כ מתחילת השנה', `₪${total.toLocaleString()}`],
+                ['ממוצע חודשי', `₪${avg.toLocaleString()}`],
+            ]);
+        }
+
         // ==================== DATA HERO SLIDER (5 slides, category style) ====================
         // Each slide: title + description + call-to-action (text side) and an image side
         // that holds either a chart or a 3-product peek.
@@ -796,30 +871,35 @@
                 desc: 'כמה הוצאת בכל חודש, מתחילת השנה ועד היום. עקוב אחרי מגמת ההוצאות שלך לאורך החודשים.',
                 cta: 'לצפייה בהוצאות',
                 image: () => `<div class="dh-chart">${spendChartHTML()}</div>`,
+                detail: monthDetail,
             },
             {
                 title: 'הסגנונות המועדפים עליי',
                 desc: 'פילוח הרכישות שלך לפי סגנון לבוש — הסגנונות שאתה הכי אוהב לקנות.',
                 cta: 'לצפייה בסגנונות',
                 image: () => `<div class="dh-chart">${pctChartHTML(favoriteStyles)}</div>`,
+                detail: () => statBlock('פילוח הסגנונות', favoriteStyles.map(s => [s.name, `${s.pct}%`])),
             },
             {
                 title: 'עגלת קניות',
                 desc: 'הצצה למוצרים שבעגלה שלך. שלושת הפריטים האחרונים שהוספת — מוכנים להשלמת הרכישה.',
                 cta: 'למעבר לעגלה',
                 image: () => peekHTML(recentItems('vero_cart', sampleCart)),
+                detail: () => cardsBlock('המוצרים בעגלה', recentItems('vero_cart', sampleCart)),
             },
             {
                 title: 'רשימת משאלות',
                 desc: 'הצצה למוצרים ששמרת לעצמך. שלושת הפריטים האחרונים שסימנת ברשימת המשאלות.',
                 cta: 'לרשימת המשאלות',
                 image: () => peekHTML(recentItems('vero_wishlist', sampleWishlist)),
+                detail: () => cardsBlock('המוצרים ברשימת המשאלות', recentItems('vero_wishlist', sampleWishlist)),
             },
             {
                 title: 'החברות האהובות עליי',
                 desc: 'המותגים שמהם קנית הכי הרבה. אלה החברות שחוזרות אצלך שוב ושוב.',
                 cta: 'לצפייה במותגים',
                 image: () => `<div class="dh-chart">${pctChartHTML(favoriteBrands)}</div>`,
+                detail: () => statBlock('פילוח המותגים', favoriteBrands.map(b => [b.name, `${b.pct}%`])),
             },
         ];
 
@@ -832,6 +912,7 @@
             document.getElementById('dhDesc').textContent = s.desc;
             document.getElementById('dhBuy').textContent = s.cta;
             document.getElementById('dhImg').innerHTML = s.image();
+            document.getElementById('dhDetail').innerHTML = s.detail();
             document.getElementById('dhIdx').textContent = pad2(dhIndex + 1);
             document.getElementById('dhTotal').textContent = pad2(dhSlides.length);
         }
