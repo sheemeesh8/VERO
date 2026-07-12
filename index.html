@@ -2428,47 +2428,58 @@
             --f-sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
             position: fixed; inset: 0;
             background: var(--c-bg); color: var(--c-ink);
-            direction: rtl; max-width: 520px; margin: 0 auto;
-            box-shadow: 0 0 60px rgba(0,0,0,0.06);
+            direction: rtl;
             z-index: 90; display: flex; flex-direction: column;
         }
         .vinbox-head {
             flex: 0 0 auto; display: flex; align-items: center; gap: 14px;
-            padding: 22px 16px; border-bottom: 1px solid var(--c-line);
+            padding: 26px 5vw; border-bottom: 1px solid var(--c-line);
         }
         .vinbox-close { border: none; background: none; cursor: pointer; font-size: 26px; color: var(--c-ink); line-height: 1; }
         .vinbox-kicker { display: block; font-family: var(--f-sans); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--c-mute); }
-        .vinbox-h { font-family: var(--f-serif); font-size: 22px; }
-        .vinbox-list { flex: 1 1 auto; overflow-y: auto; padding: 8px 0 40px; }
-        .vinbox-empty { padding: 60px 30px; text-align: center; color: var(--c-mute); font-family: var(--f-sans); font-size: 14px; line-height: 1.7; }
-        .vinbox-item {
-            width: 100%; display: flex; align-items: center; gap: 14px;
-            text-align: right; background: none; cursor: pointer;
-            border: none; border-bottom: 1px solid var(--c-line);
-            padding: 18px 16px; font-family: var(--f-sans);
-            transition: background 0.2s;
+        .vinbox-h { font-family: var(--f-serif); font-size: 24px; }
+        /* Full-width grid: five chats across the screen */
+        .vinbox-list {
+            flex: 1 1 auto; overflow-y: auto;
+            padding: 28px 5vw 60px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
+            align-content: start;
         }
-        .vinbox-item:hover { background: #fff; }
+        .vinbox-empty { grid-column: 1 / -1; padding: 60px 30px; text-align: center; color: var(--c-mute); font-family: var(--f-sans); font-size: 14px; line-height: 1.7; }
+        /* Card: everything pinned right, image on the left */
+        .vinbox-item {
+            display: flex; align-items: center; gap: 14px;
+            text-align: right; cursor: pointer;
+            background: #fff; border: 1px solid var(--c-line); border-radius: 2px;
+            padding: 16px; font-family: var(--f-sans);
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .vinbox-item:hover { border-color: var(--c-ink); }
+        .vinbox-mid { flex: 1; min-width: 0; order: 1; }   /* content → right */
         .vinbox-img {
-            width: 52px; height: 52px; border-radius: 2px; flex: 0 0 auto;
+            width: 52px; height: 52px; border-radius: 2px; flex: 0 0 auto; order: 2;  /* image → left */
             background: var(--c-cream); display: flex; align-items: center; justify-content: center; font-size: 28px;
         }
-        .vinbox-mid { flex: 1; min-width: 0; }
-        .vinbox-seller { font-family: var(--f-serif); font-size: 15px; }
+        .vinbox-seller { font-family: var(--f-serif); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .vinbox-name { font-size: 12px; color: var(--c-mute); margin: 2px 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .vinbox-steps { display: flex; gap: 5px; }
-        .vstep { width: 22px; height: 3px; border-radius: 3px; background: var(--c-line); }
-        .vstep.on { background: var(--c-ink); }
-        .vstep.on.good { background: var(--c-sage); }
-        .vstep.on.alert { background: var(--c-terra); }
         .vinbox-status {
-            flex: 0 0 auto; max-width: 34%; text-align: left;
-            font-size: 11px; line-height: 1.4; color: var(--c-mute);
+            text-align: right; font-size: 11px; line-height: 1.4; color: var(--c-mute); margin-bottom: 10px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .vinbox-status.good { color: var(--c-sage); }
         .vinbox-status.alert { color: var(--c-terra); }
+        /* Progress spread across the full width of the card */
+        .vinbox-steps { display: flex; gap: 5px; }
+        .vstep { flex: 1; height: 3px; border-radius: 3px; background: var(--c-line); }
+        .vstep.on { background: var(--c-ink); }
+        .vstep.on.good { background: var(--c-sage); }
+        .vstep.on.alert { background: var(--c-terra); }
 
-        @media (max-width: 540px) { .vinbox { max-width: 100%; box-shadow: none; } }
+        @media (max-width: 1100px) { .vinbox-list { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 720px) { .vinbox-list { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px) { .vinbox-list { grid-template-columns: 1fr; } }
 
         /* Modal (rating / cancel reasons) */
         .vchat-modal {
@@ -5109,13 +5120,13 @@
                     `<span class="vstep${step >= n && step > 0 ? ' on ' + tone : ''}"></span>`).join('');
                 return `
                     <button class="vinbox-item" onclick="vchatOpenSession(${i})">
-                        <div class="vinbox-img">${s.product.icon}</div>
                         <div class="vinbox-mid">
                             <div class="vinbox-seller">${s.seller}</div>
                             <div class="vinbox-name">${s.product.name}</div>
+                            <div class="vinbox-status ${tone}">${VCHAT_STATUS_LABEL[s.status]}</div>
                             <div class="vinbox-steps">${dots}</div>
                         </div>
-                        <div class="vinbox-status ${tone}">${VCHAT_STATUS_LABEL[s.status]}</div>
+                        <div class="vinbox-img">${s.product.icon}</div>
                     </button>`;
             }).join('');
         }
