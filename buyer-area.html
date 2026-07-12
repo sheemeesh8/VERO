@@ -434,6 +434,65 @@
             background: #e9e5db;
         }
 
+        /* wishlist/cart quick-actions live over the image, top-right (same as feed) */
+        .product-icon {
+            position: absolute;
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.85);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.2s;
+            top: 14px;
+            padding: 0;
+            opacity: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .product-card:hover .product-icon { opacity: 1; }
+        .product-icon:hover { transform: scale(1.12); background: #fff; }
+        .product-icon.cart { right: 14px; }
+        .product-icon.heart { right: 60px; }
+        .product-icon svg {
+            width: 19px;
+            height: 19px;
+            stroke: #1a1a1a;
+            fill: none;
+            stroke-width: 1.6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .pc-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .pc-action {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .pc-action:hover { transform: scale(1.15); opacity: 0.7; }
+        .pc-action svg {
+            width: 20px;
+            height: 20px;
+            stroke: #1a1a1a;
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
         /* Bottom info bar: price on the left, meta on the right */
         .product-info {
             padding: 20px 22px 22px;
@@ -648,6 +707,13 @@
         @media (max-width: 1100px) { .dh-cards { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 700px)  { .dh-cards { grid-template-columns: repeat(2, 1fr); } }
 
+        /* Slide transition when moving between slides */
+        @keyframes dhSlideIn {
+            from { opacity: 0; transform: translateX(48px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        .dh-anim { animation: dhSlideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 900px) {
             .collections {
@@ -793,15 +859,26 @@
             return `product.html?product=${encodeURIComponent(JSON.stringify(data))}`;
         }
 
+        // Product card — same form & markup as the storefront feed card.
+        const cartSVG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>`;
+        const heartSVG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+
         function miniCardHTML(item) {
             const rating = item.rating || 4.5;
             const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
             return `
-                <a href="${productPageUrl(item)}" class="product-card">
-                    <div class="product-image">${item.icon}</div>
+                <a href="${productPageUrl(item)}" style="text-decoration: none;" class="product-card">
+                    <div class="product-image">${item.icon}
+                        <button class="product-icon cart" title="Add to Cart" onclick="event.preventDefault(); event.stopPropagation();">${cartSVG}</button>
+                        <button class="product-icon heart" title="Add to Wishlist" onclick="event.preventDefault(); event.stopPropagation();">${heartSVG}</button>
+                    </div>
                     <div class="product-info">
                         <div class="pc-left">
                             <div class="product-price">${item.price}</div>
+                            <div class="pc-actions">
+                                <button class="pc-action" title="Add to Cart" onclick="event.preventDefault(); event.stopPropagation();">${cartSVG}</button>
+                                <button class="pc-action" title="Add to Wishlist" onclick="event.preventDefault(); event.stopPropagation();">${heartSVG}</button>
+                            </div>
                         </div>
                         <div class="pc-right">
                             <div class="product-seller">${item.seller || 'Vero Store'}</div>
@@ -906,7 +983,14 @@
         let dhIndex = 0;
         const pad2 = n => String(n).padStart(2, '0');
 
-        function dhRender() {
+        // Retrigger the slide-in animation on an element.
+        function animateSlide(el) {
+            el.classList.remove('dh-anim');
+            void el.offsetWidth; // force reflow so the animation replays
+            el.classList.add('dh-anim');
+        }
+
+        function dhRender(animate) {
             const s = dhSlides[dhIndex];
             document.getElementById('dhTitle').textContent = '/ ' + s.title;
             document.getElementById('dhDesc').textContent = s.desc;
@@ -915,11 +999,15 @@
             document.getElementById('dhDetail').innerHTML = s.detail();
             document.getElementById('dhIdx').textContent = pad2(dhIndex + 1);
             document.getElementById('dhTotal').textContent = pad2(dhSlides.length);
+            if (animate) {
+                animateSlide(document.querySelector('.acat-hero-inner'));
+                animateSlide(document.getElementById('dhDetail'));
+            }
         }
 
         function dhGo(dir) {
             dhIndex = (dhIndex + dir + dhSlides.length) % dhSlides.length;
-            dhRender();
+            dhRender(true);
         }
 
         // ==================== NAVIGATION ====================
