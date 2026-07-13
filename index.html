@@ -1033,20 +1033,20 @@
             transition: transform 0.6s cubic-bezier(0.65, 0.05, 0.1, 1);
         }
 
-        /* Each slide is one full-width page holding three cards across */
+        /* Each slide is one full-width page holding four square cards across */
         .hp-slide {
             min-width: 100%;
             box-sizing: border-box;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 24px;
         }
 
-        /* Card: info on the LEFT, image on the RIGHT */
+        /* Square card: emoji fills the tile, label + title sit inside it */
         .hp-card {
-            display: flex;
-            flex-direction: row;
-            align-items: stretch;
+            position: relative;
+            display: block;
+            aspect-ratio: 1 / 1;
             border: 1px solid #eee;
             border-radius: 4px;
             overflow: hidden;
@@ -1054,7 +1054,6 @@
             cursor: pointer;
             text-decoration: none;
             color: inherit;
-            min-height: 300px;
             transition: box-shadow 0.3s, transform 0.3s;
         }
 
@@ -1063,23 +1062,27 @@
             box-shadow: 0 14px 30px rgba(0, 0, 0, 0.10);
         }
 
-        .hp-body {
-            flex: 0 0 50%;   /* half text */
-            padding: 26px 26px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 12px;
-        }
-
         .hp-image {
-            flex: 0 0 50%;   /* half image */
+            position: absolute;
+            inset: 0;
             background: linear-gradient(135deg, #e5e0d8 0%, #efeae2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 120px;
+            font-size: 110px;
             color: rgba(0, 0, 0, 0.15);
+        }
+
+        .hp-body {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 22px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: linear-gradient(to top, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.78) 55%, rgba(255,255,255,0) 100%);
         }
 
         .hp-label {
@@ -1092,7 +1095,7 @@
 
         .hp-title {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 30px;
+            font-size: 24px;
             font-weight: 700;
             text-transform: uppercase;
             line-height: 1.12;
@@ -1152,7 +1155,7 @@
 
         @media (max-width: 900px) {
             .hero-promos { padding: 0 50px; }
-            .hp-slide { grid-template-columns: 1fr; }
+            .hp-slide { grid-template-columns: repeat(2, 1fr); }
         }
 
         .promo-slider {
@@ -4474,16 +4477,15 @@
         let hpSlideCount = 1;
         const HP_INTERVAL = 5000;
 
-        // One category card: info left, image (emoji) right.
+        // One square category card: emoji fills the tile, label + title sit inside.
         function hpCardHTML(c, globalIndex, type) {
             return `
                 <a class="hp-card" onclick="openCategory('${type}', ${globalIndex})">
+                    <div class="hp-image">${c.icon}</div>
                     <div class="hp-body">
                         <span class="hp-label">${type === 'art' ? 'Art' : 'Clothing'}</span>
                         <h3 class="hp-title">${c.name}</h3>
-                        ${c.desc ? `<p class="hp-desc">${c.desc}</p>` : ''}
                     </div>
-                    <div class="hp-image">${c.icon}</div>
                 </a>`;
         }
 
@@ -4495,8 +4497,8 @@
             const list = type === 'clothing' ? clothingSliderCategories : artCategories;
             // Chunk the categories into slides of three.
             const slides = [];
-            for (let i = 0; i < list.length; i += 3) {
-                const group = list.slice(i, i + 3);
+            for (let i = 0; i < list.length; i += 4) {
+                const group = list.slice(i, i + 4);
                 const cards = group.map((c, j) => hpCardHTML(c, i + j, type)).join('');
                 slides.push(`<div class="hp-slide">${cards}</div>`);
             }
