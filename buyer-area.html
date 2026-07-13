@@ -665,24 +665,65 @@
         .dh-chips {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 28px;
             margin-bottom: 30px;
+            border-bottom: 1px solid #e2e2e2;
         }
         .dh-chip {
-            border: 1px solid #d8d8d8;
-            background: #fff;
-            color: #555;
+            border: none;
+            background: none;
+            color: #777;
             font: inherit;
-            font-size: 13px;
+            font-size: 15px;
+            font-weight: 700;
             letter-spacing: 0.5px;
-            padding: 8px 16px;
+            padding: 0 2px 12px;
+            margin-bottom: -1px;
             cursor: pointer;
-            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
         }
-        .dh-chip:hover { border-color: #004225; color: #004225; }
-        .dh-chip.active { background: #004225; border-color: #004225; color: #fff; }
+        .dh-chip:hover { color: #004225; }
+        .dh-chip.active { color: #004225; border-bottom-color: #004225; }
         .dh-empty { color: #999; font-size: 15px; padding: 20px 0; }
         .dh-hint { color: #888; font-size: 14px; margin: 0 0 26px; }
+
+        /* ---- Settings panel ---- */
+        .set-panel { max-width: 620px; }
+        .set-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 20px; padding: 18px 0; border-bottom: 1px solid #eee;
+        }
+        .set-row:last-child { border-bottom: none; }
+        .set-row-label { font-size: 16px; font-weight: 600; color: #222; }
+        .set-row-hint { font-size: 13px; color: #999; margin-top: 3px; }
+        .set-switch {
+            flex: 0 0 auto; width: 46px; height: 26px; border-radius: 999px;
+            border: none; background: #d3d3d3; cursor: pointer; padding: 3px;
+            transition: background 0.25s; position: relative;
+        }
+        .set-switch span {
+            display: block; width: 20px; height: 20px; border-radius: 50%;
+            background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+            transition: transform 0.25s;
+        }
+        .set-switch.on { background: #004225; }
+        /* RTL page: "on" slides the knob to the left */
+        .set-switch.on span { transform: translateX(-20px); }
+        .set-select {
+            font: inherit; font-size: 15px; padding: 8px 14px;
+            border: 1px solid #d3d3d3; border-radius: 6px; background: #fff;
+            color: #222; cursor: pointer;
+        }
+        .set-select:focus { outline: none; border-color: #004225; }
+        .set-peek { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+        .set-peek-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fff; border: 1px solid #ececec; border-radius: 8px;
+            padding: 14px 18px; font-size: 15px; font-weight: 600; color: #333;
+        }
+        .set-dot { width: 12px; height: 12px; border-radius: 50%; background: #d3d3d3; }
+        .set-dot.on { background: #004225; }
 
         /* Slide transition when moving between slides */
         @keyframes dhSlideIn {
@@ -992,7 +1033,70 @@
                 image: () => `<div class="dh-chart">${pctChartHTML(favoriteBrands)}</div>`,
                 detail: () => statBlock('פילוח המותגים', favoriteBrands.map(b => [b.name, `${b.pct}%`])),
             },
+            {
+                tab: 'הגדרות',
+                title: 'הגדרות החשבון',
+                desc: 'ניהול ההעדפות שלך — התראות, ניוזלטר, שפה ופרטיות. הכול במקום אחד.',
+                cta: 'לעריכת ההגדרות',
+                image: () => settingsImage(),
+                detail: settingsDetail,
+            },
         ];
+
+        // ==================== SETTINGS ====================
+        const settingsDefaults = { emailAlerts: true, newsletter: true, dealAlerts: false, language: 'he' };
+        function getSettings() {
+            try { return { ...settingsDefaults, ...JSON.parse(localStorage.getItem('vero_settings') || '{}') }; }
+            catch (e) { return { ...settingsDefaults }; }
+        }
+        function toggleSetting(key) {
+            const s = getSettings();
+            s[key] = !s[key];
+            localStorage.setItem('vero_settings', JSON.stringify(s));
+            renderDetail();
+        }
+        function setLanguage(val) {
+            const s = getSettings();
+            s.language = val;
+            localStorage.setItem('vero_settings', JSON.stringify(s));
+        }
+        const settingRows = [
+            { key: 'emailAlerts', label: 'התראות במייל', hint: 'עדכונים על ההזמנות והפעילות שלך' },
+            { key: 'newsletter', label: 'ניוזלטר שבועי', hint: 'המבצעים והחדשות של VERO אחת לשבוע' },
+            { key: 'dealAlerts', label: 'התראות על מבצעים', hint: 'הודעה כשמוצר שאהבת יורד במחיר' },
+        ];
+        function settingsImage() {
+            const s = getSettings();
+            return `<div class="set-peek">` + settingRows.map(r =>
+                `<div class="set-peek-row"><span>${r.label}</span><span class="set-dot${s[r.key] ? ' on' : ''}"></span></div>`
+            ).join('') + `</div>`;
+        }
+        function settingsDetail() {
+            const s = getSettings();
+            const rows = settingRows.map(r => `
+                <div class="set-row">
+                    <div class="set-row-text">
+                        <div class="set-row-label">${r.label}</div>
+                        <div class="set-row-hint">${r.hint}</div>
+                    </div>
+                    <button class="set-switch${s[r.key] ? ' on' : ''}" role="switch" aria-checked="${s[r.key]}"
+                        onclick="toggleSetting('${r.key}')"><span></span></button>
+                </div>`).join('');
+            return `<h3 class="dh-detail-title">הגדרות</h3>
+                <div class="set-panel">
+                    ${rows}
+                    <div class="set-row">
+                        <div class="set-row-text">
+                            <div class="set-row-label">שפה</div>
+                            <div class="set-row-hint">שפת התצוגה של האתר</div>
+                        </div>
+                        <select class="set-select" onchange="setLanguage(this.value)">
+                            <option value="he"${s.language === 'he' ? ' selected' : ''}>עברית</option>
+                            <option value="en"${s.language === 'en' ? ' selected' : ''}>English</option>
+                        </select>
+                    </div>
+                </div>`;
+        }
 
         let dhIndex = 0;
         const pad2 = n => String(n).padStart(2, '0');
