@@ -1741,14 +1741,24 @@
             direction: ltr;
         }
 
+        /* Cart hero reuses the personal-area (acat) hero — set its accent + direction. */
+        .cart-acat {
+            --acat-accent: #004225;
+            direction: ltr;
+            text-align: left;
+            font-family: var(--font-sans);
+            color: #111;
+        }
+        .cart-acat .acat-buy { cursor: pointer; }
+
         .cart-tabs {
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             flex-wrap: wrap;
-            gap: 32px;
+            gap: 28px;
             padding: 0 0;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e2e2e2;
             margin-bottom: 40px;
         }
 
@@ -1757,13 +1767,14 @@
             border: none;
             cursor: pointer;
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            font-size: 12px;
-            letter-spacing: 2px;
-            color: #999;
-            padding: 0;
-            transition: color 0.25s;
-            text-transform: uppercase;
-            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            color: #777;
+            padding: 0 2px 12px;
+            margin-bottom: -1px;
+            border-bottom: 2px solid transparent;
+            transition: color 0.25s, border-color 0.25s;
+            font-weight: 700;
         }
 
         .cart-tab:hover {
@@ -1772,6 +1783,7 @@
 
         .cart-tab.active {
             color: #004225;
+            border-bottom-color: #004225;
         }
 
         /* ==================== CART PAGE BODY ==================== */
@@ -3340,12 +3352,24 @@
 
     <!-- ==================== SHOPPING CART PAGE ==================== -->
     <div id="cartView" style="display:none"></div>
-    <div class="cart-hero" id="cartHero" style="display:none">
-        <div class="hero-caption">
-            <div class="hero-eyebrow">Your Shopping Cart</div>
-            <h1 class="cat-hero-title">My Cart</h1>
+    <section class="acat-hero cart-acat" id="cartHero" style="display:none">
+        <div class="acat-hero-inner">
+            <div class="acat-hero-text">
+                <h1 class="acat-title">/ My Cart</h1>
+                <p class="acat-desc" id="cartHeroDesc">Review the pieces you're about to make yours before you check out.</p>
+                <a class="acat-buy" onclick="checkout()">Checkout</a>
+                <div class="acat-details">Free returns within 14 days</div>
+            </div>
+            <div class="acat-hero-img">🛒</div>
         </div>
-    </div>
+        <div class="acat-hero-foot">
+            <div class="acat-counter">
+                <span id="cartHeroCount">00</span>
+                <span class="acat-line"></span>
+                <span class="dim">items in cart</span>
+            </div>
+        </div>
+    </section>
     <div id="cartContainer" style="display:none">
         <div class="container" style="padding-top: 60px; padding-bottom: 60px;">
             <div id="cartPageBody"></div>
@@ -3893,6 +3917,15 @@
 
         function renderCartPage() {
             const body = document.getElementById('cartPageBody');
+
+            // Keep the acat-style hero in sync with the cart contents.
+            const countEl = document.getElementById('cartHeroCount');
+            const descEl = document.getElementById('cartHeroDesc');
+            const totalUnits = cart.reduce((sum, i) => sum + i.qty, 0);
+            if (countEl) countEl.textContent = String(totalUnits).padStart(2, '0');
+            if (descEl) descEl.textContent = cart.length === 0
+                ? 'Your cart is empty for now — head back and add pieces you love.'
+                : "Review the pieces you're about to make yours before you check out.";
 
             if (cart.length === 0) {
                 body.innerHTML = '<div class="cart-empty">Your cart is empty 🛒<br>Go back to the home page and add products</div>';
