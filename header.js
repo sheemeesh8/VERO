@@ -142,6 +142,62 @@
             align-items: center; justify-content: center; font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         #siteHeader .badge.show { display: flex; }
+        /* Hamburger (replaces the old Social link) */
+        #siteHeader .vero-hamburger {
+            display: inline-flex; flex-direction: column; justify-content: center;
+            gap: 5px; width: 26px; height: 22px; cursor: pointer; padding: 0;
+        }
+        #siteHeader .vero-hamburger span {
+            display: block; width: 100%; height: 2px; border-radius: 2px;
+            background: currentColor; transition: transform 0.3s ease, opacity 0.2s ease;
+        }
+        #siteHeader .vero-hamburger:hover span { opacity: 0.7; }
+
+        /* Slide-in side drawer */
+        .vero-drawer-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 200;
+        }
+        .vero-drawer-overlay.open { opacity: 1; visibility: visible; }
+        .vero-drawer {
+            position: fixed; top: 0; left: 0; height: 100%; width: 340px; max-width: 84vw;
+            background: #fff; z-index: 201; transform: translateX(-100%);
+            transition: transform 0.38s cubic-bezier(0.65,0.05,0.1,1);
+            box-shadow: 2px 0 30px rgba(0,0,0,0.12);
+            display: flex; flex-direction: column; padding: 28px 32px;
+            box-sizing: border-box; direction: ltr; text-align: left;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+        .vero-drawer.open { transform: translateX(0); }
+        .vero-drawer-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        .vero-drawer-head .vero-drawer-logo {
+            font-family: 'Playfair Display', Georgia, serif; font-size: 26px;
+            font-weight: 700; letter-spacing: 5px; text-transform: uppercase; color: #111;
+        }
+        .vero-drawer-close {
+            background: none; border: none; cursor: pointer; font-size: 28px;
+            line-height: 1; color: #111; padding: 0; width: 32px; height: 32px;
+        }
+        .vero-drawer-close:hover { opacity: 0.6; }
+        .vero-drawer-nav { display: flex; flex-direction: column; gap: 4px; }
+        .vero-drawer-nav a {
+            font-size: 19px; font-weight: 600; letter-spacing: 0.5px; color: #111;
+            text-decoration: none; padding: 13px 0; border-bottom: 1px solid rgba(0,0,0,0.07);
+            transition: color 0.2s ease, padding-left 0.2s ease;
+        }
+        .vero-drawer-nav a:hover { color: #8a7d5a; padding-left: 6px; }
+        .vero-drawer-social {
+            margin-top: auto; padding-top: 28px;
+            display: flex; align-items: center; gap: 20px;
+        }
+        .vero-drawer-social a { color: #8a8a8a; display: inline-flex; transition: color 0.2s ease; }
+        .vero-drawer-social a:hover { color: #111; }
+        .vero-drawer-social svg { width: 21px; height: 21px; }
+
         @media (max-width: 768px) {
             #siteHeader .header-container { flex-wrap: wrap; gap: 20px; }
             #siteHeader .header-left { display: flex; flex: 1 1 100%; order: 1; justify-content: center; gap: 15px; font-size: 11px; }
@@ -155,8 +211,8 @@
     const MARKUP = `
         <div class="header-container">
             <div class="header-left">
-                <a onclick="showToast('Social coming soon ✨')">Social
-                    <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                <a class="vero-hamburger" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0">
+                    <span></span><span></span><span></span>
                 </a>
                 <a href="about.html">About Us</a>
                 <a onclick="openMenu()">The Closet Magazine</a>
@@ -203,6 +259,62 @@
         </div>
     `;
 
+    // ---- Slide-in side drawer (opened by the header hamburger) ----
+    const DRAWER_ICONS = {
+        instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+        facebook: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>',
+        twitter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>',
+        linkedin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>'
+    };
+    const DRAWER_MARKUP = `
+        <div class="vero-drawer-overlay" id="veroDrawerOverlay" onclick="veroCloseDrawer()"></div>
+        <aside class="vero-drawer" id="veroDrawer" aria-hidden="true">
+            <div class="vero-drawer-head">
+                <span class="vero-drawer-logo">VERO</span>
+                <button class="vero-drawer-close" aria-label="Close menu" onclick="veroCloseDrawer()">&times;</button>
+            </div>
+            <nav class="vero-drawer-nav">
+                <a onclick="veroCloseDrawer(); showMain()">Home</a>
+                <a href="about.html">About Us</a>
+                <a onclick="veroCloseDrawer(); openMenu()">The Closet Magazine</a>
+                <a onclick="veroCloseDrawer(); openSellerArea()">Seller Area</a>
+                <a onclick="veroCloseDrawer(); openBuyerArea()">My Account</a>
+            </nav>
+            <div class="vero-drawer-social">
+                <a href="#" aria-label="Instagram">${DRAWER_ICONS.instagram}</a>
+                <a href="#" aria-label="Facebook">${DRAWER_ICONS.facebook}</a>
+                <a href="#" aria-label="Twitter">${DRAWER_ICONS.twitter}</a>
+                <a href="#" aria-label="LinkedIn">${DRAWER_ICONS.linkedin}</a>
+            </div>
+        </aside>
+    `;
+
+    function mountDrawer() {
+        if (document.getElementById('veroDrawer')) return;
+        const wrap = document.createElement('div');
+        wrap.id = 'veroDrawerRoot';
+        wrap.innerHTML = DRAWER_MARKUP;
+        document.body.appendChild(wrap);
+    }
+    window.veroToggleDrawer = function () {
+        mountDrawer();
+        const d = document.getElementById('veroDrawer');
+        const o = document.getElementById('veroDrawerOverlay');
+        const open = d.classList.toggle('open');
+        o.classList.toggle('open', open);
+        d.setAttribute('aria-hidden', open ? 'false' : 'true');
+        document.body.style.overflow = open ? 'hidden' : '';
+    };
+    window.veroCloseDrawer = function () {
+        const d = document.getElementById('veroDrawer');
+        const o = document.getElementById('veroDrawerOverlay');
+        if (d) d.classList.remove('open');
+        if (o) o.classList.remove('open');
+        if (d) d.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    };
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') window.veroCloseDrawer(); });
+
     // ---- Fallback handlers ----
     // On index.html these globals are the real SPA functions and win (their
     // function declarations override these). On every other page they navigate
@@ -247,6 +359,7 @@
         const cls = mode === 'dark' ? 'force-dark' : (mode === 'light' ? 'force-light' : '');
         // Use a real <header> element so existing selectors (header.scrolled) apply.
         host.outerHTML = `<header id="siteHeader" class="${cls}">${MARKUP}</header>`;
+        mountDrawer();
         wireBehaviour();
     }
 
