@@ -116,6 +116,23 @@
         #siteHeader.force-dark .icon-btn svg { stroke: #111 !important; }
         #siteHeader.force-dark .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader.force-dark .upload-plus { color: #1DB954 !important; }
+        /* Force-light: permanent solid white header with black contents (homepage). */
+        #siteHeader.force-light {
+            background: #ffffff;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        #siteHeader.force-light .header-left > a,
+        #siteHeader.force-light .logo,
+        #siteHeader.force-light .toggle-category { color: #111; }
+        #siteHeader.force-light .header-left > a:hover { color: rgba(0,0,0,0.55); }
+        #siteHeader.force-light .toggle-category { border-color: rgba(0,0,0,0.18); }
+        #siteHeader.force-light .toggle-category::before { background: #111; }
+        #siteHeader.force-light .toggle-category .seg { color: #6b6b6b; }
+        #siteHeader.force-light .toggle-category .seg.active { color: #fff; }
+        #siteHeader.force-light .icon-btn { color: #111; }
+        #siteHeader.force-light .icon-btn svg { stroke: #111 !important; }
+        #siteHeader.force-light .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
+        #siteHeader.force-light .upload-plus { color: #1DB954 !important; }
         /* Badge on cart & wishlist */
         #siteHeader .icon-wrap { position: relative; display: inline-flex; }
         #siteHeader .badge {
@@ -226,9 +243,10 @@
         }
         // Pages that sit on a light background (buyer/seller area) opt into a black
         // header via <body data-header="dark">.
-        const dark = document.body.getAttribute('data-header') === 'dark';
+        const mode = document.body.getAttribute('data-header');
+        const cls = mode === 'dark' ? 'force-dark' : (mode === 'light' ? 'force-light' : '');
         // Use a real <header> element so existing selectors (header.scrolled) apply.
-        host.outerHTML = `<header id="siteHeader" class="${dark ? 'force-dark' : ''}">${MARKUP}</header>`;
+        host.outerHTML = `<header id="siteHeader" class="${cls}">${MARKUP}</header>`;
         wireBehaviour();
     }
 
