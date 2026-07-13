@@ -385,7 +385,7 @@
         /* ==================== HERO ==================== */
         .hero {
             width: 100vw;
-            aspect-ratio: 1.75 / 1;
+            aspect-ratio: 2 / 1;
             background-size: cover;
             background-position: center;
             display: flex;
@@ -463,7 +463,7 @@
             display: flex;
             flex-direction: row;
             align-items: stretch;
-            min-height: 560px;
+            min-height: 720px;
             direction: ltr;
         }
 
@@ -668,6 +668,18 @@
             transition: all 0.3s;
         }
         .hero-dot.active { background: #111; width: 26px; border-radius: 5px; }
+
+        /* Narrow white footer strip pinned to the bottom of the hero */
+        .hero-footer-strip {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 34px;
+            background: #ffffff;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            z-index: 3;
+        }
 
         @media (max-width: 900px) {
             .hero-slide { flex-direction: column; }
@@ -4697,6 +4709,19 @@
             ]
         };
 
+        // The magazine slide appended to the end of the hero slider. Its title
+        // depends on the mode: "The Closet Magazine" (fashion) / "The Gallery Magazine" (art).
+        const magazineSlides = {
+            clothing: {
+                key: 'magazine', name: 'The Closet', accent: 'Magazine', magazine: true,
+                sub: 'Stories, styling notes and the people behind the pieces — the VERO editorial on second-hand fashion.'
+            },
+            art: {
+                key: 'magazine', name: 'The Gallery', accent: 'Magazine', magazine: true,
+                sub: 'Artists, provenance and the craft behind each work — the VERO editorial on collectible art.'
+            }
+        };
+
         // Garment / art "types" used to synthesise a segment's product feed.
         const artSegmentTypes = {
             paintings: [
@@ -4803,6 +4828,9 @@
             // Stable, reliable hero image per segment (loremflickr was returning 500s
             // and blanking the slider; Lorem Picsum is seeded so each slide is consistent).
             const bg = `https://picsum.photos/seed/vero-${currentCategory}-${s.key}/900/1100`;
+            const cta = s.magazine
+                ? `<button class="hero-cta" onclick="openMenu()">Read the Magazine <span class="arrow">&rarr;</span></button>`
+                : `<button class="hero-cta" onclick="selectSegment('${s.key}')">Shop ${s.name} <span class="arrow">&rarr;</span></button>`;
             return `
                 <div class="hero-slide">
                     <div class="hero-content">
@@ -4814,9 +4842,7 @@
                             <h1 class="hero-title">${s.name}<span class="accent">${s.accent}</span></h1>
                             <div class="hero-bar"></div>
                             <p class="hero-sub">${s.sub}</p>
-                            <button class="hero-cta" onclick="selectSegment('${s.key}')">
-                                Shop ${s.name} <span class="arrow">&rarr;</span>
-                            </button>
+                            ${cta}
                         </div>
                     </div>
                     <div class="hero-image" style="background-image:url('${bg}')"></div>
@@ -4826,7 +4852,7 @@
         function renderFilters() {
             const grid = document.getElementById('filterGrid');
             if (!grid) return;
-            const segs = filterSegments[currentCategory];
+            const segs = filterSegments[currentCategory].concat(magazineSlides[currentCategory]);
             heroState.index = 0;
             if (heroState.timer) clearInterval(heroState.timer);
             grid.innerHTML = `
@@ -4843,7 +4869,8 @@
                 </button>
                 <div class="hero-dots" id="heroDots">
                     ${segs.map((s, i) => `<button class="hero-dot" aria-label="${s.name}" onclick="heroGo(${i})"></button>`).join('')}
-                </div>`;
+                </div>
+                <div class="hero-footer-strip"></div>`;
             heroGo(0);
             heroState.timer = setInterval(() => heroGo(heroState.index + 1), HERO_INTERVAL);
             renderHeroPromos();

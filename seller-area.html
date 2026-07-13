@@ -493,9 +493,37 @@
         }
 
         .chart-bar:hover {
-            opacity: 0.8;
+            opacity: 0.85;
             transform: translateY(-4px);
         }
+
+        .chart-bar { opacity: 0.5; }
+        .chart-bar.active {
+            opacity: 1;
+            box-shadow: 0 0 0 2px #0a6b3f;
+        }
+
+        .chart-hint {
+            font-size: 13px;
+            color: #999;
+            margin: 34px 0 0;
+            text-align: center;
+        }
+
+        .revenue-month-detail {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .revenue-month-detail .rmd-stat {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .revenue-month-detail .rmd-k { font-size: 12px; color: #999; margin-bottom: 6px; }
+        .revenue-month-detail .rmd-v { font-size: 20px; font-weight: 700; color: #004225; }
 
         .chart-bar-label {
             position: absolute;
@@ -992,7 +1020,7 @@
         }
     </style>
 </head>
-<body>
+<body data-header="dark">
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
     <script src="header.js"></script>
@@ -1125,6 +1153,8 @@
                     <div class="revenue-chart" id="revenueChart">
                         <!-- Chart bars will be added by JavaScript -->
                     </div>
+                    <p class="chart-hint">לחץ על עמודה בגרף כדי לראות את נתוני החודש.</p>
+                    <div class="revenue-month-detail" id="revenueMonthDetail"></div>
                 </div>
 
                 <div class="revenue-styles">
@@ -1573,23 +1603,26 @@
         }
 
         // ==================== REVENUE ====================
+        const revenueMonthNames = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+        const revenueData = [2500, 3200, 2800, 4100, 3800, 5200, 4900, 0, 0, 0, 0, 0];
+        // The month whose revenue is being viewed (defaults to the latest month with data).
+        let revenueSelectedMonth = revenueData.reduce((last, v, i) => v > 0 ? i : last, 0);
+
         function renderRevenue() {
             const currentMonth = new Date().getMonth();
-            const monthNames = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
-
-            const revenueData = [
-                2500, 3200, 2800, 4100, 3800, 5200, 4900, 0, 0, 0, 0, 0
-            ];
-
+            const monthNames = revenueMonthNames;
             const maxRevenue = Math.max(...revenueData.filter(r => r > 0));
 
             let chartHtml = '';
             for (let i = 0; i <= currentMonth; i++) {
                 const height = revenueData[i] > 0 ? (revenueData[i] / maxRevenue) * 250 : 10;
+                const hasData = revenueData[i] > 0;
+                const active = i === revenueSelectedMonth ? ' active' : '';
+                const click = hasData ? ` onclick="selectRevenueMonth(${i})"` : '';
                 chartHtml += `
                     <div style="position: relative; flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end;">
-                        <div class="chart-bar" style="height: ${height}px;">
-                            ${revenueData[i] > 0 ? `<div class="chart-bar-value">₪${revenueData[i]}</div>` : ''}
+                        <div class="chart-bar${active}" style="height: ${height}px;"${click}>
+                            ${hasData ? `<div class="chart-bar-value">₪${revenueData[i]}</div>` : ''}
                             <div class="chart-bar-label">${monthNames[i].substring(0, 3)}</div>
                         </div>
                     </div>
@@ -1597,6 +1630,7 @@
             }
 
             document.getElementById('revenueChart').innerHTML = chartHtml;
+            renderRevenueMonthDetail();
 
             // Render styles
             const stylesHtml = styles.map(style => `
@@ -1609,6 +1643,34 @@
             `).join('');
 
             document.getElementById('stylesList').innerHTML = stylesHtml;
+        }
+
+        // Stats for the month currently selected on the revenue chart.
+        function renderRevenueMonthDetail() {
+            const m = revenueSelectedMonth;
+            const el = document.getElementById('revenueMonthDetail');
+            if (!el) return;
+            const cur = revenueData[m];
+            let prev = null;
+            for (let i = m - 1; i >= 0; i--) { if (revenueData[i] > 0) { prev = revenueData[i]; break; } }
+            const diff = prev != null ? Math.round(((cur - prev) / prev) * 100) : null;
+            const withData = revenueData.slice(0, m + 1).filter(v => v > 0);
+            const total = withData.reduce((s, v) => s + v, 0);
+            const avg = withData.length ? Math.round(total / withData.length) : 0;
+            const stats = [
+                ['הכנסה החודש', `₪${cur.toLocaleString()}`],
+                ['לעומת חודש קודם', diff == null ? '—' : `${diff >= 0 ? '+' : ''}${diff}%`],
+                ['סה"כ מתחילת השנה', `₪${total.toLocaleString()}`],
+                ['ממוצע חודשי', `₪${avg.toLocaleString()}`],
+            ];
+            el.innerHTML = `<h3 class="styles-title" style="grid-column:1/-1;margin:0">נתוני הכנסה · ${revenueMonthNames[m]}</h3>` +
+                stats.map(([k, v]) => `<div class="rmd-stat"><div class="rmd-k">${k}</div><div class="rmd-v">${v}</div></div>`).join('');
+        }
+
+        // Switch the viewed month and refresh the chart highlight + detail.
+        function selectRevenueMonth(m) {
+            revenueSelectedMonth = m;
+            renderRevenue();
         }
 
         // ==================== HISTORY ====================

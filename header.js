@@ -102,6 +102,20 @@
         #siteHeader.scrolled .icon-btn { color: #111; }
         #siteHeader.scrolled .icon-btn svg { stroke: #111 !important; }
         #siteHeader.scrolled .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
+        /* Force-dark: black header contents on light pages (e.g. buyer/seller area),
+           regardless of scroll position and without the solid white background. */
+        #siteHeader.force-dark .header-left > a,
+        #siteHeader.force-dark .logo,
+        #siteHeader.force-dark .toggle-category { color: #111; }
+        #siteHeader.force-dark .header-left > a:hover { color: rgba(0,0,0,0.55); }
+        #siteHeader.force-dark .toggle-category { border-color: rgba(0,0,0,0.18); }
+        #siteHeader.force-dark .toggle-category::before { background: #111; }
+        #siteHeader.force-dark .toggle-category .seg { color: #6b6b6b; }
+        #siteHeader.force-dark .toggle-category .seg.active { color: #fff; }
+        #siteHeader.force-dark .icon-btn { color: #111; }
+        #siteHeader.force-dark .icon-btn svg { stroke: #111 !important; }
+        #siteHeader.force-dark .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
+        #siteHeader.force-dark .upload-plus { color: #1DB954 !important; }
         /* Badge on cart & wishlist */
         #siteHeader .icon-wrap { position: relative; display: inline-flex; }
         #siteHeader .badge {
@@ -210,8 +224,11 @@
             host.id = 'siteHeader';
             document.body.insertBefore(host, document.body.firstChild);
         }
+        // Pages that sit on a light background (buyer/seller area) opt into a black
+        // header via <body data-header="dark">.
+        const dark = document.body.getAttribute('data-header') === 'dark';
         // Use a real <header> element so existing selectors (header.scrolled) apply.
-        host.outerHTML = `<header id="siteHeader">${MARKUP}</header>`;
+        host.outerHTML = `<header id="siteHeader" class="${dark ? 'force-dark' : ''}">${MARKUP}</header>`;
         wireBehaviour();
     }
 
