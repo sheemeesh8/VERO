@@ -161,7 +161,7 @@
         }
         .vero-drawer-overlay.open { opacity: 1; visibility: visible; }
         .vero-drawer {
-            position: fixed; top: 0; left: 0; height: 100%; width: 340px; max-width: 84vw;
+            position: fixed; top: 0; left: 0; height: 100%; width: 440px; max-width: 90vw;
             background: #fff; z-index: 201; transform: translateX(-100%);
             transition: transform 0.38s cubic-bezier(0.65,0.05,0.1,1);
             box-shadow: 2px 0 30px rgba(0,0,0,0.12);
