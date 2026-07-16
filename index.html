@@ -2735,13 +2735,15 @@
         }
         .vinbox-empty { padding: 60px 30px; text-align: center; color: var(--c-mute); font-family: var(--f-sans); font-size: 14px; line-height: 1.7; }
         /* Card: enlarged · content pinned right, image on the left */
-        /* Frameless: the rows sit directly on the inbox background — only the text
-           and the progress steps show, no card border or fill. Sized 1.5x. */
+        /* No fill — the rows still sit on the inbox background. The only frame is an
+           age border: green when the chat is fresh, red as it nears the 48h window
+           (colour set inline per row by vchatAgeColor). */
         .vinbox-item {
             display: flex; align-items: center; gap: 33px;
             text-align: right; cursor: pointer;
-            background: none; border: none; border-radius: 0;
-            padding: 0; font-family: var(--f-sans);
+            background: none; border-radius: 0;
+            border: 2px solid #ccc;      /* colour overridden inline per chat */
+            padding: 22px 26px; font-family: var(--f-sans);
             transition: opacity 0.2s;
         }
         .vinbox-item:hover { opacity: 0.65; }
@@ -4525,7 +4527,7 @@
             saveState();
             updateBadges();
             renderCartPage();
-            vchatFromCheckout(items);     // open the deal-room chats inbox
+            vchatFromCheckout(items);     // ask each seller for availability, open that chat
         }
 
         // ==================== WISHLIST PAGE RENDER ====================
@@ -5882,13 +5884,14 @@
         const VCHATS = [];                 // all deal sessions (one per seller / product)
         let vchatSeeded = false;
 
-        function vchatSession(seller, name, icon, price, status, role, withAvailability) {
+        function vchatSession(seller, name, icon, price, status, role, withAvailability, createdAt) {
             const s = {
                 id: 'c' + (VCHATS.length + 1),
                 seller,
                 product: { name, brand: seller, icon, original: price, current: price, currency: '₪' },
                 status: status || 'INITIATED',
                 role: role || 'buyer',
+                createdAt: createdAt || Date.now(),   // drives the inbox age colour
                 pending: null,
                 submenu: false,
                 timer: { total: 47 * 3600 + 59 * 60 + 12, id: null },
@@ -5932,9 +5935,11 @@
         function vchatSeed() {
             if (vchatSeeded) return;
             vchatSeeded = true;
-            VCHATS.push(vchatSession('Designer Collection', 'Cocktail Dress', '👗', 450, 'ACTIVE'));
-            VCHATS.push(vchatSession('Vintage Collection', 'Classic Denim Jacket', '🧥', 300, 'SELLER_REPORTED'));
-            VCHATS.push(vchatSession('Studio Vero', 'Ceramic Vase', '🏺', 220, 'COMPLETED'));
+            // Staggered ages so the inbox colour scale reads at a glance.
+            const H = 3600 * 1000;
+            VCHATS.push(vchatSession('Designer Collection', 'Cocktail Dress', '👗', 450, 'ACTIVE', null, false, Date.now() - 6 * H));
+            VCHATS.push(vchatSession('Vintage Collection', 'Classic Denim Jacket', '🧥', 300, 'SELLER_REPORTED', null, false, Date.now() - 26 * H));
+            VCHATS.push(vchatSession('Studio Vero', 'Ceramic Vase', '🏺', 220, 'COMPLETED', null, false, Date.now() - 45 * H));
         }
 
         const VCHAT_STATUS_LABEL = {
@@ -5946,6 +5951,17 @@
             CANCELLED: 'העסקה בוטלה',
         };
         const VCHAT_STEP = { INITIATED: 1, ACTIVE: 2, BUYER_REPORTED: 3, SELLER_REPORTED: 4, COMPLETED: 5, CANCELLED: 0 };
+
+        // Inbox border colour by chat age: fresh = green, ageing = amber, old = red.
+        // Full red is reached at the 48h deal window, matching the chat's own timer.
+        const VCHAT_AGE_SPAN = 48 * 3600 * 1000;
+
+        function vchatAgeColor(s) {
+            const age = Date.now() - (s.createdAt || Date.now());
+            const t = Math.min(Math.max(age / VCHAT_AGE_SPAN, 0), 1);   // 0 new → 1 old
+            const hue = 130 * (1 - t);                                   // 130 green → 0 red
+            return `hsl(${hue.toFixed(0)}, 62%, 42%)`;
+        }
 
         function vchatRenderInbox() {
             const list = document.getElementById('vinboxList');
@@ -5959,7 +5975,7 @@
                 const dots = [1, 2, 3, 4, 5].map(n =>
                     `<span class="vstep${step >= n && step > 0 ? ' on ' + tone : ''}"></span>`).join('');
                 return `
-                    <button class="vinbox-item" onclick="vchatOpenSession(${i})">
+                    <button class="vinbox-item" style="border-color:${vchatAgeColor(s)}" onclick="vchatOpenSession(${i})">
                         <div class="vinbox-mid">
                             <div class="vinbox-seller">${s.seller}</div>
                             <div class="vinbox-name">${s.product.name}</div>
@@ -5982,16 +5998,25 @@
             vchatStartTimer();
         }
 
-        // Called at checkout — open a chat per distinct seller in the cart.
+        // Called at checkout — open a chat per distinct seller in the cart, each
+        // starting with the automatic "is this still available?" question, then land
+        // straight inside the new chat (the inbox is one back-step away).
         function vchatFromCheckout(items) {
             vchatSeed();
+            let firstNew = -1;
             (items || []).forEach(it => {
                 const seller = it.seller || 'Vero Store';
-                if (VCHATS.some(s => s.seller === seller && s.product.name === it.name)) return;
+                const existing = VCHATS.findIndex(s => s.seller === seller && s.product.name === it.name);
+                if (existing >= 0) {
+                    if (firstNew < 0) firstNew = existing;   // already talking about this piece
+                    return;
+                }
                 const price = parseFloat(String(it.price).replace(/[^\d.]/g, '')) || 0;
                 VCHATS.push(vchatSession(seller, it.name, it.icon || '🛍️', price, 'INITIATED', 'buyer', true));
+                if (firstNew < 0) firstNew = VCHATS.length - 1;
             });
-            vchatOpenInbox();
+            if (firstNew >= 0) vchatOpenSession(firstNew);
+            else vchatOpenInbox();
         }
 
         function vchatSetRole(role) {
