@@ -6,11 +6,12 @@
     <title>VERO — About Us</title>
     <style>
         :root {
-            --bg: #000;
-            --fg: #fff;
-            --muted: rgba(255, 255, 255, 0.5);
-            --bar: rgba(255, 255, 255, 0.25);
-            --bar-active: #fff;
+            --bg: #fff;
+            --fg: #111;
+            --muted: rgba(0, 0, 0, 0.45);
+            --bar: rgba(0, 0, 0, 0.14);
+            --bar-active: #111;
+            --slide-ms: 7000;
             --font-sans: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
             --font-serif: Georgia, 'Times New Roman', serif;
         }
@@ -34,18 +35,20 @@
             direction: ltr;          /* content on the left, media on the right */
         }
 
-        /* ===== Left: the story stage ===== */
+        /* ===== Left: the story stage — a white half of the screen ===== */
         .stage {
             position: relative;
-            flex: 1 1 auto;
+            flex: 0 0 50vw;
             height: 100%;
+            background: #fff;
             overflow: hidden;
         }
 
-        /* Progress bars along the top of the stage */
+        /* Progress bars along the BOTTOM of the stage; the active one fills over
+           the auto-advance interval so it doubles as the slide timer. */
         .progress {
             position: absolute;
-            top: 22px;
+            bottom: 30px;
             left: 56px;
             right: 56px;
             z-index: 40;
@@ -65,8 +68,8 @@
             width: 0;
             background: var(--bar-active);
         }
-        .progress-seg.done .fill,
-        .progress-seg.active .fill { width: 100%; }
+        .progress-seg.done .fill { width: 100%; }
+        .progress-seg.active .fill { width: 100%; transition: width linear; }
 
         /* Brand row */
         .brand {
@@ -98,6 +101,9 @@
 
         /* Slides */
         .slides { position: absolute; inset: 0; }
+        /* Slides ride right on every advance: the incoming one comes in from the
+           left and the outgoing one keeps travelling right, so paging reads as a
+           slider moving rightwards. */
         .slide {
             position: absolute;
             inset: 0;
@@ -105,12 +111,14 @@
             flex-direction: column;
             justify-content: center;
             align-items: flex-start;      /* pin content to the LEFT */
-            padding: 120px 72px 120px 56px;
+            padding: 90px 56px 110px;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.5s ease;
+            transform: translateX(-60px);
+            transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.65, 0.05, 0.1, 1);
         }
-        .slide.active { opacity: 1; visibility: visible; }
+        .slide.active { opacity: 1; visibility: visible; transform: translateX(0); }
+        .slide.leaving { opacity: 0; visibility: visible; transform: translateX(60px); }
 
         .slide-content {
             width: 100%;
@@ -122,7 +130,7 @@
             padding-left: 4px;
         }
         .slide-content::-webkit-scrollbar { width: 6px; }
-        .slide-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 6px; }
+        .slide-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 6px; }
 
         .slide .kicker {
             font-size: 13px;
@@ -142,7 +150,7 @@
         .slide p {
             font-size: 19px;
             line-height: 1.85;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(0, 0, 0, 0.78);
             margin-bottom: 18px;
         }
         .slide p:last-child { margin-bottom: 0; }
@@ -155,7 +163,7 @@
         .slide li {
             font-size: 18px;
             line-height: 1.7;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(0, 0, 0, 0.78);
             padding-left: 22px;           /* bullet on the left */
             position: relative;
         }
@@ -166,10 +174,10 @@
             top: 13px;
             width: 7px;
             height: 7px;
-            background: #fff;
+            background: #111;
             border-radius: 50%;
         }
-        .slide li b { font-weight: 700; color: #fff; }
+        .slide li b { font-weight: 700; color: #111; }
 
         /* Tap zones (browse left → right) */
         .tap {
@@ -192,16 +200,16 @@
             width: 52px;
             height: 52px;
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            background: rgba(0, 0, 0, 0.25);
-            color: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.18);
+            background: rgba(255, 255, 255, 0.9);
+            color: #111;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: background 0.2s ease, opacity 0.2s ease;
         }
-        .arrow:hover { background: rgba(255, 255, 255, 0.12); }
+        .arrow:hover { background: #f2f0ec; }
         .arrow.prev { left: 22px; }
         .arrow.next { right: 22px; }
         .arrow svg { width: 22px; height: 22px; }
@@ -209,7 +217,7 @@
 
         .hint {
             position: absolute;
-            bottom: 28px;
+            bottom: 52px;
             left: 56px;
             z-index: 25;
             font-size: 13px;
@@ -218,14 +226,14 @@
             pointer-events: none;
         }
 
-        /* ===== Right: full-height image panel (a quarter of the screen) ===== */
+        /* ===== Right: full-height image panel (the other half of the screen) ===== */
         .media {
-            flex: 0 0 25vw;
+            flex: 1 1 auto;
             height: 100vh;
-            background: #141414;         /* placeholder — set your image below */
+            background: #ecebe7;         /* placeholder — set your image below */
             background-size: cover;
             background-position: center;
-            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 1px solid rgba(0, 0, 0, 0.07);
             position: relative;
         }
         /* To use a real image, uncomment and set the URL:
@@ -237,7 +245,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: rgba(255, 255, 255, 0.22);
+            color: rgba(0, 0, 0, 0.22);
             font-size: 13px;
             letter-spacing: 3px;
             text-transform: uppercase;
@@ -245,8 +253,8 @@
 
         @media (max-width: 820px) {
             .story { flex-direction: column; }
-            .media { flex: 0 0 30vh; width: 100%; height: 30vh; border-left: none; border-top: 1px solid rgba(255,255,255,0.08); }
-            .stage { flex: 1; }
+            .media { flex: 0 0 30vh; width: 100%; height: 30vh; border-left: none; border-top: 1px solid rgba(0,0,0,0.07); }
+            .stage { flex: 1 1 auto; }
             .slide { padding: 96px 24px; }
             .slide h2 { font-size: 32px; }
             .slide p { font-size: 17px; }
@@ -258,10 +266,7 @@
     </style>
 </head>
 <body>
-    <!-- Shared site header (single source: header.js) -->
-    <div id="siteHeader"></div>
-    <script src="header.js"></script>
-
+    <!-- No site header here: the story runs full-bleed on its own. -->
     <div class="story" id="story">
         <!-- Left: story stage -->
         <div class="stage">
@@ -345,6 +350,9 @@
             var arrowPrev = document.getElementById('arrowPrev');
             var arrowNext = document.getElementById('arrowNext');
             var current = 0;
+            var previous = -1;
+            var SLIDE_MS = 7000;   // auto-advance interval; also the progress fill time
+            var timer = null;
 
             sections.forEach(function (sec) {
                 var kicker = sec.getAttribute('data-kicker');
@@ -366,23 +374,49 @@
             var segs = Array.prototype.slice.call(progress.querySelectorAll('.progress-seg'));
 
             function render() {
-                sections.forEach(function (s, i) { s.classList.toggle('active', i === current); });
-                segs.forEach(function (s, i) {
-                    s.classList.toggle('done', i < current);
+                sections.forEach(function (s, i) {
                     s.classList.toggle('active', i === current);
+                    // the slide we just left keeps travelling right instead of
+                    // snapping back to its off-stage position on the left
+                    s.classList.toggle('leaving', i === previous && i !== current);
+                });
+                segs.forEach(function (s, i) {
+                    var fill = s.querySelector('.fill');
+                    s.classList.toggle('done', i < current);
+                    s.classList.remove('active');
+                    if (i === current) {
+                        // restart the fill from 0 and run it over the interval
+                        fill.style.transition = 'none';
+                        fill.style.width = '0';
+                        void fill.offsetWidth;              // force reflow
+                        fill.style.transition = 'width ' + SLIDE_MS + 'ms linear';
+                        s.classList.add('active');
+                    } else {
+                        fill.style.transition = 'none';
+                        fill.style.width = '';
+                    }
                 });
                 arrowPrev.classList.toggle('hidden', current === 0);
                 var c = sections[current].querySelector('.slide-content');
                 if (c) c.scrollTop = 0;
             }
 
-            function next() {
-                if (current < sections.length - 1) { current++; render(); }
-                else { window.location.href = 'index.html'; }
+            // Auto-play: every advance restarts the clock, so a manual click gives
+            // the new slide a full interval rather than a leftover sliver.
+            function schedule() {
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(next, SLIDE_MS);
             }
-            function prev() {
-                if (current > 0) { current--; render(); }
+
+            function go(i) {
+                previous = current;
+                current = (i + sections.length) % sections.length;   // loops forever
+                render();
+                schedule();
             }
+
+            function next() { go(current + 1); }
+            function prev() { go(current - 1); }
 
             document.getElementById('tapNext').addEventListener('click', next);
             document.getElementById('tapPrev').addEventListener('click', prev);
@@ -396,6 +430,7 @@
             });
 
             render();
+            schedule();
         })();
     </script>
 </body>
