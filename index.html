@@ -41,6 +41,10 @@
             --spacing-lg: 24px;
             --spacing-xl: 32px;
             --spacing-2xl: 48px;
+
+            /* ART-mode hero black band geometry (shared by the box + header spread) */
+            --art-box-w: 873px;
+            --art-box-right: 44px;
         }
 
         * {
@@ -469,9 +473,28 @@
             position: absolute;
             top: 0;
             bottom: 44px;
-            right: 44px;
-            width: 873px;
+            right: var(--art-box-right);
+            width: var(--art-box-w);
             background: #000;
+        }
+
+        /* ---- ART mode: header merges into the black band ----
+           At the top (before scroll) the header is transparent, so the black band
+           shows through and the right-hand icons are spread across its width. The
+           left nav + logo sit over the white band, so they stay dark for contrast.
+           On scroll the normal WHITE STICKY header takes over (header.js .scrolled). */
+        body.art-active #siteHeader:not(.scrolled) .header-left > a,
+        body.art-active #siteHeader:not(.scrolled) .logo {
+            color: #111;
+        }
+        body.art-active #siteHeader:not(.scrolled) .header-left > a:hover {
+            color: rgba(0, 0, 0, 0.55);
+        }
+        body.art-active #siteHeader:not(.scrolled) .header-right {
+            /* keep the icons in their normal tight cluster, just nudged left so the
+               whole group sits inside the black band's right edge. A transform (not a
+               margin) is used so the flex layout is untouched and the logo stays centered. */
+            transform: translateX(calc(-1 * (var(--art-box-right) - 16px)));
         }
 
         @media (max-width: 900px) {
@@ -3230,7 +3253,7 @@
         }
     </style>
 </head>
-<body data-header="light" data-footer="manual">
+<body data-footer="manual">
     <!-- ==================== HEADER ==================== -->
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
@@ -4337,6 +4360,8 @@
             // Change hero image based on category
             const heroImage = document.getElementById('heroImage');
             heroImage.classList.toggle('art-mode', category === 'art');
+            // Mirror the art state on <body> so the header can restyle over the black band.
+            document.body.classList.toggle('art-active', category === 'art');
             if (category === 'clothing') {
                 heroImage.style.backgroundImage = "url('./clothing-hero.png')";
                 heroImage.style.backgroundPosition = "center 10%";
