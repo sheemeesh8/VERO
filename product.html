@@ -195,6 +195,15 @@
         }
 
         /* ==================== PRODUCT HERO (full-width background image) ==================== */
+        /* Adding to cart slides the whole page out before we land on the cart. */
+        body.slide-out {
+            animation: pageSlideOut 0.45s cubic-bezier(0.65, 0.05, 0.1, 1) forwards;
+            overflow: hidden;
+        }
+        @keyframes pageSlideOut {
+            to { transform: translateX(-12%); opacity: 0; }
+        }
+
         /* No background image, no card: the page itself splits in half —
            product data on one side, gallery on the other. */
         .product-hero {
@@ -591,13 +600,18 @@
             }, 2600);
         }
 
+        // Every cart item is held for 48 hours from the moment it was added.
+        const HOLD_MS = 48 * 60 * 60 * 1000;
+
         function addProductToCart() {
             if (!currentProduct) return;
             const id = `${currentProduct.name}|${currentProduct.price}`;
             const existing = cart.find(i => i.id === id);
+            const now = Date.now();
             if (existing) {
                 existing.qty++;
-                existing.addedAt = Date.now();
+                existing.addedAt = now;
+                existing.expiresAt = now + HOLD_MS;   // adding again restarts the hold
             } else {
                 cart.push({
                     id: id,
@@ -608,12 +622,15 @@
                     seller: currentProduct.seller,
                     rating: currentProduct.rating,
                     qty: 1,
-                    addedAt: Date.now()
+                    addedAt: now,
+                    expiresAt: now + HOLD_MS
                 });
             }
             saveState();
             updateBadges();
-            showToast(`נוסף לעגלה: ${currentProduct.name}`);
+            // Slide the page out, then land straight on the cart.
+            document.body.classList.add('slide-out');
+            setTimeout(() => { window.location.href = 'index.html?open=cart'; }, 460);
         }
 
         // ---- Gallery: the icon frame plus three more shots of the same item.

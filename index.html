@@ -502,7 +502,29 @@
         }
 
         /* The home view wears the sticky header's look from the top (header.js
-           .sticky-look), so ART mode needs no header overrides of its own. */
+           .sticky-look), so ART mode needs no header overrides of its own.
+
+           One exception, ART mode only (the black square exists only there): across
+           the square's own column the header goes transparent, so what is behind it
+           runs through unbroken. On scroll the solid white bar takes over. */
+        @media (min-width: 901px) {
+            /* --hdr-hole-right = the square's real distance from the right edge:
+               --art-box-right plus the hero's own 8px inset. Measured, not guessed. */
+            body.art-active #siteHeader.sticky-look:not(.scrolled) {
+                --hdr-hole-right: calc(var(--art-box-right) + 8px);
+                background: linear-gradient(
+                    to right,
+                    #fff 0,
+                    #fff calc(100% - var(--hdr-hole-right) - var(--art-box-w)),
+                    transparent calc(100% - var(--hdr-hole-right) - var(--art-box-w)),
+                    transparent calc(100% - var(--hdr-hole-right)),
+                    #fff calc(100% - var(--hdr-hole-right)),
+                    #fff 100%
+                );
+                border-bottom: none;
+                box-shadow: none;
+            }
+        }
 
         @media (max-width: 900px) {
             .htb-inner { padding: 0 28px 28px; gap: 24px; }
@@ -1661,6 +1683,17 @@
             letter-spacing: 1px;
         }
 
+        /* 48-hour hold countdown on cart cards */
+        .pc-hold {
+            font-size: 11px;
+            font-weight: 700;
+            color: #6b6b6b;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+            direction: ltr;
+        }
+        .pc-hold.expired { color: #c0392b; }
+
         .product-label { display: none; }
         .product-footer { display: none; }
         .product-btn { display: none; }
@@ -2107,7 +2140,7 @@
         }
         .acat-title {
             font-family: var(--font-sans);
-            font-size: 44px;
+            font-size: 66px;          /* 44 × 1.5 */
             font-weight: 400;
             letter-spacing: 0.5px;
             margin: 0 0 26px;
@@ -2115,11 +2148,11 @@
         .acat-title::first-letter { color: #999; }
         .acat-desc {
             font-family: var(--font-sans);
-            font-size: 18px;
+            font-size: 27px;          /* 18 × 1.5 */
             font-weight: 700;
             line-height: 1.8;
             color: #7c7c7c;
-            max-width: 360px;
+            max-width: 540px;
             margin: 0 0 34px;
         }
         .acat-buy {
@@ -2128,7 +2161,7 @@
             border: 1px solid var(--acat-accent);
             color: var(--acat-accent);
             text-decoration: none;
-            font-size: 15px;
+            font-size: 22px;          /* 15 × 1.5 */
             font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -2139,7 +2172,7 @@
         .acat-details {
             margin-top: 40px;
             font-family: var(--font-sans);
-            font-size: 15px;
+            font-size: 22px;          /* 15 × 1.5 */
             font-weight: 700;
             color: #9a9a9a;
             letter-spacing: 1px;
@@ -2240,7 +2273,7 @@
             align-items: center;
             gap: 20px;
             font-family: var(--font-sans);
-            font-size: 15px;
+            font-size: 22px;          /* 15 × 1.5 */
             font-weight: 700;
             letter-spacing: 2px;
             color: #111;
@@ -4017,11 +4050,13 @@
 
         function addToCart(item) {
             const existing = cart.find(i => i.id === item.id);
+            const now = Date.now();
             if (existing) {
                 existing.qty++;
-                existing.addedAt = Date.now();
+                existing.addedAt = now;
+                existing.expiresAt = now + HOLD_MS;   // adding again restarts the 48h hold
             } else {
-                cart.push({ ...item, qty: 1, addedAt: Date.now() });
+                cart.push({ ...item, qty: 1, addedAt: now, expiresAt: now + HOLD_MS });
             }
             saveState();
             updateBadges();
@@ -4347,6 +4382,7 @@
                 </div>
             `;
             body.innerHTML = html;
+            startHoldTicker();   // the timers exist in the DOM only now
         }
 
         function cartCardHTML(item) {
@@ -4377,10 +4413,51 @@
                             <div class="product-seller">${item.seller || 'Vero Store'}</div>
                             <div class="product-name">${item.name}</div>
                             <div class="product-rating">${stars}</div>
+                            ${holdTimerHTML(item)}
                         </div>
                     </div>
                 </a>
             `;
+        }
+
+        // ---- 48-hour hold: every cart item shows how long it stays reserved. ----
+        const HOLD_MS = 48 * 60 * 60 * 1000;
+
+        function holdLeft(item) {
+            // items added before this feature existed get a hold from their addedAt
+            const expires = item.expiresAt || ((item.addedAt || Date.now()) + HOLD_MS);
+            return expires - Date.now();
+        }
+
+        function holdText(ms) {
+            if (ms <= 0) return 'ההזמנה פגה';
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            const pad = n => String(n).padStart(2, '0');
+            return `נשמר עוד ${pad(h)}:${pad(m)}:${pad(s)}`;
+        }
+
+        function holdTimerHTML(item) {
+            const left = holdLeft(item);
+            return `<div class="pc-hold${left <= 0 ? ' expired' : ''}" data-hold-id="${item.id.replace(/"/g, '&quot;')}">${holdText(left)}</div>`;
+        }
+
+        // One ticker refreshes every visible hold timer each second.
+        let holdTicker = null;
+        function startHoldTicker() {
+            if (holdTicker) clearInterval(holdTicker);
+            holdTicker = setInterval(() => {
+                const nodes = document.querySelectorAll('.pc-hold[data-hold-id]');
+                if (!nodes.length) { clearInterval(holdTicker); holdTicker = null; return; }
+                nodes.forEach(node => {
+                    const item = cart.find(i => i.id === node.dataset.holdId);
+                    if (!item) return;
+                    const left = holdLeft(item);
+                    node.textContent = holdText(left);
+                    node.classList.toggle('expired', left <= 0);
+                });
+            }, 1000);
         }
 
         function checkout() {
