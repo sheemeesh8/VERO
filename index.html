@@ -5378,6 +5378,19 @@
         // minimalist product grid, all driven by the same category data builders.
         let acatState = { items: [], idx: 0 };
 
+        const ACAT_BLOCKS = 3;   // product blocks on a category page; each gets a promo slider
+
+        // Every promoted product on a category page, in page order: the same sets the
+        // promo sliders render (one per block), so the hero always features a
+        // promoted product rather than a separate list of its own.
+        function categoryPromoted(catName, type) {
+            const out = [];
+            for (let b = 0; b < ACAT_BLOCKS; b++) {
+                out.push(...buildCategoryFeatured(catName, type, b * 5));
+            }
+            return out;
+        }
+
         function acatRenderHero() {
             const it = acatState.items[acatState.idx];
             if (!it) return;
@@ -5424,8 +5437,16 @@
             view.style.display = 'block';
             document.title = `${catName} | VERO`;
 
-            // Featured hero slider.
-            acatState.items = buildCategoryFeatured(catName, type, 0);
+            // The category page sits on a light background from the very top, so the
+            // header must stay dark whatever the scroll position — including right
+            // after a refresh, before any scroll event fires.
+            document.body.setAttribute('data-header', 'dark');
+            const hdr = document.querySelector('header#siteHeader');
+            if (hdr) hdr.classList.add('force-dark');
+
+            // Featured hero slider — shows the SAME promoted products that the promo
+            // sliders further down the page use (one set of 5 per block).
+            acatState.items = categoryPromoted(catName, type);
             acatState.idx = 0;
             acatRenderHero();
 
@@ -5440,8 +5461,7 @@
             // Product grid — a promoted slider is inserted after every 10 products.
             const content = document.getElementById('acatContent');
             content.innerHTML = '';
-            const BLOCKS = 3; // 3 × 10 products, each followed by a promo slider
-            for (let b = 0; b < BLOCKS; b++) {
+            for (let b = 0; b < ACAT_BLOCKS; b++) {   // 10 products per block, each followed by a promo slider
                 const items = buildCategoryItems(catName, type, 10, b * 10);
                 const grid = document.createElement('div');
                 grid.className = 'acat-grid';
