@@ -54,24 +54,24 @@
         #siteHeader .logo:hover { color: rgba(255, 255, 255, 0.85); transform: scale(1.02); }
         #siteHeader .header-right { display: flex; gap: 12px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 13px; }
+        /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {
-            position: relative; display: inline-flex; align-items: center;
-            background: transparent; padding: 4px; border-radius: 20px; cursor: pointer;
-            font-weight: 700; letter-spacing: 1px; color: #fff; transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.5); gap: 0; font-size: 12px;
+            position: relative; display: inline-block; box-sizing: border-box;
+            width: 52px; height: 28px; flex: 0 0 auto;
+            background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
+            transition: all 0.3s ease; border: 1px solid rgba(255, 255, 255, 0.5);
         }
         #siteHeader .toggle-category::before {
-            content: ''; position: absolute; top: 4px; bottom: 4px; left: 4px;
-            width: calc(50% - 4px); border-radius: 16px; background: #fff; z-index: 0;
+            content: ''; position: absolute; top: 3px; left: 3px;
+            width: 20px; height: 20px; border-radius: 50%; background: #fff; z-index: 0;
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease;
         }
-        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(100%); }
+        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(24px); }
+        /* labels kept in the markup for state/a11y, but not shown */
         #siteHeader .toggle-category .seg {
-            position: relative; z-index: 1; flex: 1 1 0; text-align: center;
-            padding: 5px 14px; border-radius: 14px; transition: color 0.3s ease;
-            text-transform: uppercase; color: rgba(255, 255, 255, 0.75); white-space: nowrap;
+            position: absolute; width: 1px; height: 1px; overflow: hidden;
+            clip: rect(0 0 0 0); white-space: nowrap;
         }
-        #siteHeader .toggle-category .seg.active { color: #111; }
         #siteHeader .toggle-category:hover { border-color: rgba(255, 255, 255, 0.8); }
         #siteHeader .icon-btn {
             background: none; border: none; cursor: pointer; font-size: 27px;
