@@ -102,6 +102,46 @@
         #siteHeader.scrolled .icon-btn { color: #111; }
         #siteHeader.scrolled .icon-btn svg { stroke: #111 !important; }
         #siteHeader.scrolled .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
+
+        /* ===== Sticky (scrolled) header layout — shared across the whole site =====
+           White left area (hamburger + logo), a black band on the right holding the
+           icons spread evenly. Same fixed sizing/spacing on every page. Pages opt out
+           with <body data-sticky="plain"> (e.g. the product page and the upload view). */
+        :root {
+            --hdr-band-w: 873px;      /* width of the black band */
+            --hdr-band-right: 44px;   /* band offset from the right edge */
+            --hdr-spread-w: 720px;    /* width the icon group spreads across */
+            --hdr-spread-right: 84px; /* icon group offset from the right edge */
+        }
+        @media (min-width: 901px) {
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-container {
+                position: relative;
+                min-height: 56px; /* all groups go absolute below → keep header height */
+                z-index: 1;       /* sit above the black band ::after */
+            }
+            /* left: hamburger + logo only (nav links live in the drawer here) */
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-left {
+                position: absolute; left: 16px; top: 50%;
+                transform: translateY(-50%); margin: 0;
+            }
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-left > a:not(.vero-hamburger) {
+                display: none;
+            }
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .logo {
+                position: absolute; left: 58px; top: 0; height: 56px;
+                display: flex; align-items: center; margin: 0; padding-left: 0; color: #111;
+            }
+            /* right: the icon group spreads evenly across the black band */
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-right {
+                position: absolute; top: 50%; transform: translateY(-50%);
+                right: var(--hdr-spread-right); left: auto;
+                width: var(--hdr-spread-w);
+                justify-content: space-between; gap: 0;
+            }
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .upload-plus {
+                animation: none !important; box-shadow: none !important;
+            }
+        }
         /* Force-dark: black header contents on light pages (e.g. buyer/seller area),
            regardless of scroll position and without the solid white background. */
         #siteHeader.force-dark .header-left > a,
