@@ -526,6 +526,18 @@
             }
         }
 
+        /* Before the sticky header kicks in, the right-hand icon group is white
+           (it sits over the black square); everything left of it stays dark. */
+        #siteHeader.sticky-look:not(.scrolled) .header-right .icon-btn { color: #fff; }
+        #siteHeader.sticky-look:not(.scrolled) .header-right .icon-btn svg { stroke: #fff !important; }
+        #siteHeader.sticky-look:not(.scrolled) .header-right .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
+        #siteHeader.sticky-look:not(.scrolled) .header-right .upload-plus {
+            color: #fff !important;
+            border-color: #fff !important;
+        }
+        #siteHeader.sticky-look:not(.scrolled) .header-right .toggle-category { border-color: rgba(255,255,255,0.5); }
+        #siteHeader.sticky-look:not(.scrolled) .header-right .toggle-category::before { background: #fff; }
+
         @media (max-width: 900px) {
             .htb-inner { padding: 0 28px 28px; gap: 24px; }
             .htb-title { font-size: clamp(40px, 11vw, 72px); }
@@ -1682,6 +1694,48 @@
             font-weight: 600;
             letter-spacing: 1px;
         }
+
+        /* ---- Feed filter bar: hairline selects, no boxes ---- */
+        .feed-filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 28px;
+            direction: ltr;
+            padding: 0 0 26px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ececec;
+        }
+        .ff-field { display: flex; flex-direction: column; gap: 6px; }
+        .ff-label {
+            font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase;
+            color: #9a9a9a; font-weight: 600;
+        }
+        .ff-label b { color: #111; font-weight: 700; }
+        .ff-select {
+            appearance: none; -webkit-appearance: none;
+            border: none; border-bottom: 1px solid #ddd; background: none;
+            padding: 4px 22px 6px 0; min-width: 120px;
+            font-family: inherit; font-size: 13px; font-weight: 600; color: #111;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat; background-position: right center; background-size: 13px;
+        }
+        .ff-select:focus { outline: none; border-bottom-color: #111; }
+        .ff-range { min-width: 190px; }
+        .ff-slider { -webkit-appearance: none; appearance: none; height: 2px; background: #ddd; cursor: pointer; }
+        .ff-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
+            background: #111; cursor: pointer;
+        }
+        .ff-clear {
+            border: none; background: none; cursor: pointer; padding: 6px 0;
+            font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
+            text-transform: uppercase; color: #9a9a9a; border-bottom: 1px solid transparent;
+        }
+        .ff-clear:hover { color: #111; border-bottom-color: #111; }
+        .feed-empty { color: #9a9a9a; font-size: 15px; padding: 50px 0; text-align: center; }
+        @media (max-width: 700px) { .feed-filters { gap: 18px; } .ff-select { min-width: 100px; } }
 
         /* 48-hour hold countdown on cart cards */
         .pc-hold {
@@ -3666,6 +3720,7 @@
     <!-- ==================== INFINITE FEED ==================== -->
     <div class="feed-section">
         <div class="container">
+            <div class="feed-filters" id="feedFilters"><!-- built by renderFeedFilters --></div>
             <div id="feedContainer"></div>
             <div class="load-more">↓ Scroll down for more products ↓</div>
         </div>
@@ -4130,6 +4185,7 @@
             // Always render filters and categories when returning home.
             renderFilters();
             renderCategories();
+            renderFeedFilters();
             // Only lazy-load the feed if it was never built (direct landing on category page).
             if (!document.getElementById('feedContainer').children.length) {
                 renderFeed();
@@ -4712,10 +4768,13 @@
                 heroImage.style.backgroundSize = "cover";
             }
 
-            // Switching mode resets the primary filter.
+            // Switching mode resets the primary filter — and the feed filters with
+            // it, since sellers/types/colours differ per mode.
             currentSegment = null;
+            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
             renderFilters();
             renderCategories();
+            renderFeedFilters();
             renderFeed();
         }
 
@@ -4837,6 +4896,9 @@
             feedContainer.innerHTML = '';
             feedBlocksCount = 0;
             loadMoreFeedBlocks();
+            if (!feedContainer.children.length) {
+                feedContainer.innerHTML = '<div class="feed-empty">No pieces match these filters.</div>';
+            }
         }
 
         // Load More Feed Blocks
@@ -5451,9 +5513,105 @@
         }
 
         // The product list that feeds the home feed right now.
-        function feedSource() {
+        // ==================== FEED FILTERS ====================
+        // Products carry no fabric/colour of their own, so both are derived from the
+        // name — deterministic, so a product always shows the same attributes.
+        const FEED_FABRICS = ['Cotton', 'Linen', 'Wool', 'Silk', 'Denim', 'Leather', 'Canvas', 'Mixed'];
+        const FEED_COLORS  = ['Black', 'White', 'Grey', 'Beige', 'Brown', 'Blue', 'Green', 'Red', 'Multi'];
+
+        function strHash(s) {
+            let h = 0;
+            for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            return h;
+        }
+        function productFabric(p) { return FEED_FABRICS[strHash(p.name) % FEED_FABRICS.length]; }
+        function productColor(p)  { return FEED_COLORS[strHash(p.name + 'c') % FEED_COLORS.length]; }
+
+        let feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
+
+        function feedBaseProducts() {
             if (currentSegment) return buildSegmentProducts(currentCategory, currentSegment);
             return currentCategory === 'clothing' ? clothingProducts : artProducts;
+        }
+
+        function feedPriceBounds() {
+            const prices = feedBaseProducts().map(p => priceToNum(p.price));
+            if (!prices.length) return { min: 0, max: 0 };
+            return { min: Math.floor(Math.min(...prices)), max: Math.ceil(Math.max(...prices)) };
+        }
+
+        function feedSource() {
+            let list = feedBaseProducts().slice();
+            const f = feedFilters;
+            if (f.seller) list = list.filter(p => (p.seller || '') === f.seller);
+            if (f.type)   list = list.filter(p => (p.category || '') === f.type);
+            if (f.fabric) list = list.filter(p => productFabric(p) === f.fabric);
+            if (f.color)  list = list.filter(p => productColor(p) === f.color);
+            if (f.maxPrice != null) list = list.filter(p => priceToNum(p.price) <= f.maxPrice);
+            if (f.sort === 'asc')  list.sort((a, b) => priceToNum(a.price) - priceToNum(b.price));
+            if (f.sort === 'desc') list.sort((a, b) => priceToNum(b.price) - priceToNum(a.price));
+            return list;
+        }
+
+        function uniqueSorted(values) {
+            return [...new Set(values.filter(Boolean))].sort();
+        }
+
+        // Minimal filter bar above the feed; every change re-renders the feed.
+        function renderFeedFilters() {
+            const wrap = document.getElementById('feedFilters');
+            if (!wrap) return;
+            const base = feedBaseProducts();
+            const bounds = feedPriceBounds();
+            if (feedFilters.maxPrice == null) feedFilters.maxPrice = bounds.max;
+            const opt = (v, cur) => `<option value="${v}"${v === cur ? ' selected' : ''}>${v}</option>`;
+            const sel = (id, label, values, cur) => `
+                <label class="ff-field">
+                    <span class="ff-label">${label}</span>
+                    <select class="ff-select" id="${id}" onchange="setFeedFilter('${id}', this.value)">
+                        <option value="">All</option>
+                        ${values.map(v => opt(v, cur)).join('')}
+                    </select>
+                </label>`;
+            wrap.innerHTML = `
+                ${sel('seller', 'Seller', uniqueSorted(base.map(p => p.seller)), feedFilters.seller)}
+                ${sel('type', 'Type', uniqueSorted(base.map(p => p.category)), feedFilters.type)}
+                ${sel('fabric', 'Fabric', uniqueSorted(base.map(productFabric)), feedFilters.fabric)}
+                ${sel('color', 'Colour', uniqueSorted(base.map(productColor)), feedFilters.color)}
+                <label class="ff-field">
+                    <span class="ff-label">Price</span>
+                    <select class="ff-select" id="sort" onchange="setFeedFilter('sort', this.value)">
+                        <option value=""${!feedFilters.sort ? ' selected' : ''}>Default</option>
+                        <option value="asc"${feedFilters.sort === 'asc' ? ' selected' : ''}>Low to high</option>
+                        <option value="desc"${feedFilters.sort === 'desc' ? ' selected' : ''}>High to low</option>
+                    </select>
+                </label>
+                <label class="ff-field ff-range">
+                    <span class="ff-label">Up to <b id="ffPriceOut">₪${feedFilters.maxPrice}</b></span>
+                    <input type="range" class="ff-slider" min="${bounds.min}" max="${bounds.max}"
+                           value="${feedFilters.maxPrice}" oninput="setFeedPrice(this.value)">
+                </label>
+                <button class="ff-clear" onclick="clearFeedFilters()">Clear</button>`;
+        }
+
+        function setFeedFilter(key, value) {
+            feedFilters[key] = value;
+            renderFeed();
+        }
+
+        // The slider updates its label live but only re-renders on release.
+        function setFeedPrice(value) {
+            feedFilters.maxPrice = Number(value);
+            const out = document.getElementById('ffPriceOut');
+            if (out) out.textContent = '₪' + value;
+            clearTimeout(setFeedPrice._t);
+            setFeedPrice._t = setTimeout(renderFeed, 180);
+        }
+
+        function clearFeedFilters() {
+            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
+            renderFeedFilters();
+            renderFeed();
         }
 
         // Render the four primary rectangles (3 filters + magazine) for the mode.
@@ -5538,6 +5696,9 @@
         // Select (or toggle off) a primary filter; the whole feed follows.
         function selectSegment(key) {
             currentSegment = currentSegment === key ? null : key;
+            // the segment changes the pool, so rebuild the filter options for it
+            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
+            renderFeedFilters();
             renderFeed();
             document.querySelector('.feed-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -6126,6 +6287,7 @@
             applyHomeHeaderLook();   // white sticky-style header from the top
             renderFilters();
             renderCategories();
+            renderFeedFilters();
             initializeApp(); // Shows onboarding if needed, then renders feed
         }
         updateBadges();
