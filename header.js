@@ -93,7 +93,10 @@
             0%, 100% { border-color: #111; box-shadow: 0 0 0 0 rgba(0,0,0,0.35); opacity: 1; }
             50% { border-color: rgba(0,0,0,0.35); box-shadow: 0 0 0 6px rgba(0,0,0,0); opacity: 0.55; }
         }
-        #siteHeader.scrolled { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); }
+        /* .sticky-look = the sticky header's appearance without the scroll trigger,
+           so a page (e.g. the home view) can wear it from the very top. */
+        #siteHeader.scrolled,
+        #siteHeader.sticky-look { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); }
         #siteHeader.scrolled .header-left > a,
         #siteHeader.scrolled .logo,
         #siteHeader.scrolled .toggle-category { color: #111; }
@@ -116,31 +119,37 @@
             --hdr-spread-right: 84px; /* icon group offset from the right edge */
         }
         @media (min-width: 901px) {
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-container {
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-container,
+            body:not([data-sticky="plain"]) #siteHeader.sticky-look .header-container {
                 position: relative;
                 min-height: 56px; /* all groups go absolute below → keep header height */
-                z-index: 1;       /* sit above the black band ::after */
+                z-index: 1;
             }
             /* left: hamburger + logo only (nav links live in the drawer here) */
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-left {
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-left,
+            body:not([data-sticky="plain"]) #siteHeader.sticky-look .header-left {
                 position: absolute; left: 16px; top: 50%;
                 transform: translateY(-50%); margin: 0;
             }
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-left > a:not(.vero-hamburger) {
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-left > a:not(.vero-hamburger),
+            body:not([data-sticky="plain"]) #siteHeader.sticky-look .header-left > a:not(.vero-hamburger) {
                 display: none;
             }
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .logo {
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .logo,
+            body:not([data-sticky="plain"]) #siteHeader.sticky-look .logo {
                 position: absolute; left: 58px; top: 0; height: 56px;
                 display: flex; align-items: center; margin: 0; padding-left: 0; color: #111;
             }
-            /* right: the icon group spreads evenly across the black band */
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-right {
+            /* right: the icon group spreads evenly across the right side */
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-right,
+            body:not([data-sticky="plain"]) #siteHeader.sticky-look .header-right {
                 position: absolute; top: 50%; transform: translateY(-50%);
                 right: var(--hdr-spread-right); left: auto;
                 width: var(--hdr-spread-w);
                 justify-content: space-between; gap: 0;
             }
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .upload-plus {
+            body:not([data-sticky="plain"]) #siteHeader.scrolled .upload-plus,
+            body:not([data-sticky="plain"]) #siteHeader.sticky-look .upload-plus {
                 animation: none !important; box-shadow: none !important;
             }
         }
