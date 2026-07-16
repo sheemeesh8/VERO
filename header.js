@@ -36,22 +36,24 @@
             direction: ltr;
         }
         #siteHeader .header-left { display: flex; gap: 32px; align-items: center; flex: 1; }
+        /* Header contents are ALWAYS dark — on every page, at every scroll position.
+           (Pages that sit on a dark hero keep their own overrides.) */
         #siteHeader .header-left > a {
-            color: #fff; text-decoration: none; font-size: 16px; font-weight: 600;
+            color: #111; text-decoration: none; font-size: 16px; font-weight: 600;
             letter-spacing: 1.3px; cursor: pointer; transition: color 0.25s ease;
             text-transform: uppercase; position: relative; display: flex;
             align-items: center; gap: 5px;
         }
-        #siteHeader .header-left > a:hover { opacity: 1; color: rgba(255, 255, 255, 0.7); }
+        #siteHeader .header-left > a:hover { opacity: 1; color: rgba(0, 0, 0, 0.55); }
         #siteHeader .header-left > a .caret { width: 8px; height: 8px; opacity: 0.65; }
         #siteHeader .logo {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 34px; font-weight: 700; letter-spacing: 5px; color: #fff;
+            font-size: 34px; font-weight: 700; letter-spacing: 5px; color: #111;
             font-style: normal; text-transform: uppercase; min-width: 80px;
             flex: 0 0 auto; text-align: center; transition: all 0.3s ease;
             cursor: pointer; padding-left: 5px;
         }
-        #siteHeader .logo:hover { color: rgba(255, 255, 255, 0.85); transform: scale(1.02); }
+        #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
         #siteHeader .header-right { display: flex; gap: 12px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 13px; }
         /* Plain switch — no labels, just a track with a sliding knob. */
@@ -59,11 +61,11 @@
             position: relative; display: inline-block; box-sizing: border-box;
             width: 52px; height: 28px; flex: 0 0 auto;
             background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
-            transition: all 0.3s ease; border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease; border: 1px solid rgba(0, 0, 0, 0.18);
         }
         #siteHeader .toggle-category::before {
             content: ''; position: absolute; top: 3px; left: 3px;
-            width: 20px; height: 20px; border-radius: 50%; background: #fff; z-index: 0;
+            width: 20px; height: 20px; border-radius: 50%; background: #111; z-index: 0;
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease;
         }
         #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(24px); }
@@ -72,24 +74,24 @@
             position: absolute; width: 1px; height: 1px; overflow: hidden;
             clip: rect(0 0 0 0); white-space: nowrap;
         }
-        #siteHeader .toggle-category:hover { border-color: rgba(255, 255, 255, 0.8); }
+        #siteHeader .toggle-category:hover { border-color: rgba(0, 0, 0, 0.45); }
         #siteHeader .icon-btn {
             background: none; border: none; cursor: pointer; font-size: 27px;
-            transition: transform 0.2s; color: #fff; width: 56px; height: 56px;
+            transition: transform 0.2s; color: #111; width: 56px; height: 56px;
             display: flex; align-items: center; justify-content: center; padding: 0;
         }
-        #siteHeader .icon-btn svg { width: 30px; height: 30px; stroke: #fff !important; fill: none; }
-        #siteHeader .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
+        #siteHeader .icon-btn svg { width: 30px; height: 30px; stroke: #111 !important; fill: none; }
+        #siteHeader .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader .icon-btn:hover { transform: scale(1.1); opacity: 0.65; }
         #siteHeader .upload-plus {
-            color: #1DB954 !important; border: 2px solid #1DB954 !important;
+            color: #111 !important; border: 2px solid #111 !important;
             border-radius: 50%; width: 38px; height: 38px;
             animation: uploadPulse 1.2s ease-in-out infinite;
         }
-        #siteHeader.scrolled .upload-plus { color: #1DB954 !important; }
+        #siteHeader.scrolled .upload-plus { color: #111 !important; }
         @keyframes uploadPulse {
-            0%, 100% { border-color: #1DB954; box-shadow: 0 0 0 0 rgba(29,185,84,0.55); opacity: 1; }
-            50% { border-color: rgba(29,185,84,0.35); box-shadow: 0 0 0 6px rgba(29,185,84,0); opacity: 0.55; }
+            0%, 100% { border-color: #111; box-shadow: 0 0 0 0 rgba(0,0,0,0.35); opacity: 1; }
+            50% { border-color: rgba(0,0,0,0.35); box-shadow: 0 0 0 6px rgba(0,0,0,0); opacity: 0.55; }
         }
         #siteHeader.scrolled { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); }
         #siteHeader.scrolled .header-left > a,
@@ -155,7 +157,7 @@
         #siteHeader.force-dark .icon-btn { color: #111; }
         #siteHeader.force-dark .icon-btn svg { stroke: #111 !important; }
         #siteHeader.force-dark .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
-        #siteHeader.force-dark .upload-plus { color: #1DB954 !important; }
+        #siteHeader.force-dark .upload-plus { color: #111 !important; }
         /* Force-light: permanent solid white header with black contents (homepage). */
         #siteHeader.force-light {
             background: #ffffff;
@@ -172,7 +174,7 @@
         #siteHeader.force-light .icon-btn { color: #111; }
         #siteHeader.force-light .icon-btn svg { stroke: #111 !important; }
         #siteHeader.force-light .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
-        #siteHeader.force-light .upload-plus { color: #1DB954 !important; }
+        #siteHeader.force-light .upload-plus { color: #111 !important; }
         /* Badge on cart & wishlist */
         #siteHeader .icon-wrap { position: relative; display: inline-flex; }
         #siteHeader .badge {
