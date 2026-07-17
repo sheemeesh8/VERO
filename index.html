@@ -432,7 +432,9 @@
             justify-content: space-between;
             gap: 48px;
         }
-        .hero.art-mode .htb-inner { display: flex; }
+        /* The top band (title + black square) shows in BOTH modes; only the square's
+           copy changes — Art in art mode, Clothing in fashion mode (see setCategory). */
+        .hero .htb-inner { display: flex; }
 
         .htb-left { flex: 0 0 auto; text-align: left; }
         .htb-title {
@@ -504,13 +506,13 @@
         /* The home view wears the sticky header's look from the top (header.js
            .sticky-look), so ART mode needs no header overrides of its own.
 
-           One exception, ART mode only (the black square exists only there): across
-           the square's own column the header goes transparent, so what is behind it
-           runs through unbroken. On scroll the solid white bar takes over. */
+           One exception, home only: across the black square's own column the header
+           goes transparent, so the square runs through it unbroken. Both modes have
+           the square now. On scroll the solid white bar takes over. */
         @media (min-width: 901px) {
             /* --hdr-hole-right = the square's real distance from the right edge:
                --art-box-right plus the hero's own 8px inset. Measured, not guessed. */
-            body.art-active #siteHeader.sticky-look:not(.scrolled) {
+            #siteHeader.sticky-look:not(.scrolled) {
                 --hdr-hole-right: calc(var(--art-box-right) + 8px);
                 background: linear-gradient(
                     to right,
@@ -3702,8 +3704,8 @@
                     <button class="htb-about" onclick="openMenu()">About Us <span class="htb-arrow">&rarr;</span></button>
                 </div>
                 <div class="htb-square">
-                    <h2 class="htb-square-title">Art</h2>
-                    <p class="htb-square-text">Original works by independent artists — paintings, prints and one-of-a-kind pieces, collected in one place and ready to live on your wall.</p>
+                    <h2 class="htb-square-title" id="htbSquareTitle">Art</h2>
+                    <p class="htb-square-text" id="htbSquareText">Original works by independent artists — paintings, prints and one-of-a-kind pieces, collected in one place and ready to live on your wall.</p>
                 </div>
             </div>
         </div>
@@ -4166,14 +4168,39 @@
             document.getElementById('wishlistContainer').style.display = 'none';
             document.getElementById('chatView').style.display = 'none';
             document.getElementById('chatListView').style.display = 'none';
+            // The home-only header look leaves with the home view.
+            const hdr = document.querySelector('header#siteHeader');
+            if (hdr) hdr.classList.remove('sticky-look');
             if (typeof hideSiteFooter === 'function') hideSiteFooter();
         }
 
         // The home view carries the sticky header's look from the very top, so the
-        // header never sits transparent over the hero.
+        // header never sits transparent over the hero. Home only — every other view
+        // drops it again in hideAllViews().
         function applyHomeHeaderLook() {
             const hdr = document.querySelector('header#siteHeader');
             if (hdr) hdr.classList.add('sticky-look');
+        }
+
+        // The hero's black square carries the copy of the OTHER half of the shop:
+        // the same block in both modes, only the words change.
+        const HERO_SQUARE_COPY = {
+            art: {
+                title: 'Art',
+                text: 'Original works by independent artists — paintings, prints and one-of-a-kind pieces, collected in one place and ready to live on your wall.'
+            },
+            clothing: {
+                title: 'Clothing',
+                text: 'Pre-loved pieces with a past — denim, tailoring and everyday staples, chosen for quality and character and ready for their next wardrobe.'
+            }
+        };
+
+        function applyHeroSquareCopy(category) {
+            const copy = HERO_SQUARE_COPY[category] || HERO_SQUARE_COPY.art;
+            const t = document.getElementById('htbSquareTitle');
+            const p = document.getElementById('htbSquareText');
+            if (t) t.textContent = copy.title;
+            if (p) p.textContent = copy.text;
         }
 
         function showMain() {
@@ -4760,6 +4787,7 @@
             heroImage.classList.toggle('art-mode', category === 'art');
             // Mirror the art state on <body> so the header can restyle over the black band.
             document.body.classList.toggle('art-active', category === 'art');
+            applyHeroSquareCopy(category);
             if (category === 'clothing') {
                 heroImage.style.backgroundImage = "url('./clothing-hero.png')";
                 heroImage.style.backgroundPosition = "center 10%";
