@@ -1783,6 +1783,27 @@
             font-size: 14px;
         }
 
+        /* ---- YOUR RESULTS page (mirrors the feed/category listing) ---- */
+        .results-hero {
+            padding: 130px 80px 40px;
+            border-bottom: 1px solid #ececec;
+        }
+        .results-hero-inner { max-width: 1600px; margin: 0 auto; }
+        .results-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 64px; font-weight: 500; letter-spacing: -1px; margin: 0; color: #111;
+        }
+        .results-count {
+            margin: 14px 0 0; font-size: 12px; letter-spacing: 2px;
+            text-transform: uppercase; color: #9a9a9a; font-weight: 600;
+        }
+        .results-body { padding: 44px 80px 90px; }
+        @media (max-width: 768px) {
+            .results-hero { padding: 110px 20px 30px; }
+            .results-title { font-size: 40px; }
+            .results-body { padding: 30px 20px 60px; }
+        }
+
         /* ==================== ICON BADGES ==================== */
         .icon-wrap {
             position: relative;
@@ -2768,7 +2789,7 @@
         .vinbox-item {
             display: flex; align-items: center; gap: 33px;
             text-align: right; cursor: pointer;
-            background: none; border-radius: 0;
+            background: none; border-radius: 10px;
             border: 2px solid #ccc;      /* colour overridden inline per chat */
             padding: 22px 26px; font-family: var(--f-sans);
             transition: opacity 0.2s;
@@ -2776,8 +2797,8 @@
         .vinbox-item:hover { opacity: 0.65; }
         .vinbox-mid { flex: 1; min-width: 0; order: 1; }   /* content → right */
         .vinbox-img {
-            width: 126px; height: 126px; border-radius: 2px; flex: 0 0 auto; order: 2;  /* image → left */
-            background: none; display: flex; align-items: center; justify-content: center; font-size: 66px;
+            width: 126px; height: 126px; border-radius: 10px; flex: 0 0 auto; order: 2;  /* image → left */
+            background: #efece4; display: flex; align-items: center; justify-content: center; font-size: 66px;
         }
         .vinbox-seller { font-family: var(--f-serif); font-size: 33px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .vinbox-name { font-size: 21px; color: var(--c-mute); margin: 6px 0 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -3470,6 +3491,7 @@
             font-size: 80px;
         }
     </style>
+    <link rel="stylesheet" href="cards.css">
 </head>
 <body data-footer="manual">
     <!-- ==================== HEADER ==================== -->
@@ -3848,6 +3870,19 @@
         </div>
     </div>
 
+    <!-- ==================== YOUR RESULTS (filtered listing) ==================== -->
+    <div id="resultsView" style="display:none">
+        <section class="results-hero">
+            <div class="results-hero-inner">
+                <h1 class="results-title">YOUR RESULTS</h1>
+                <p class="results-count" id="resultsCount"></p>
+            </div>
+        </section>
+        <div class="results-body">
+            <div id="resultsGrid"></div>
+        </div>
+    </div>
+
     <!-- ==================== CHATS INBOX (one per seller) ==================== -->
     <div id="chatListView" style="display:none">
         <div class="vinbox">
@@ -4195,6 +4230,7 @@
             document.getElementById('wishlistContainer').style.display = 'none';
             document.getElementById('chatView').style.display = 'none';
             document.getElementById('chatListView').style.display = 'none';
+            document.getElementById('resultsView').style.display = 'none';
             // The home-only header look — and its inline hole — leave with the home view.
             const hdr = document.querySelector('header#siteHeader');
             if (hdr) { hdr.classList.remove('sticky-look'); hdr.style.background = ''; }
@@ -5656,6 +5692,47 @@
             window.veroOnSearch._t = setTimeout(renderFeed, 160);
         };
 
+        // Apply the header-panel filter state to the current mode's products.
+        function resultsSource(state) {
+            let list = feedBaseProducts().slice();
+            const h = state || {};
+            if (h.brand)  list = list.filter(p => productBrand(p) === h.brand);
+            if (h.type)   list = list.filter(p => (p.category || '') === h.type);
+            if (h.seller) list = list.filter(p => (p.seller || '') === h.seller);
+            if (h.style)  list = list.filter(p => productStyle(p) === h.style);
+            if (h.color)  list = list.filter(p => productColor(p) === h.color);
+            if (h.gender) list = list.filter(p => productGender(p) === h.gender);
+            if (h.maxPrice != null) list = list.filter(p => priceToNum(p.price) <= h.maxPrice);
+            return list;
+        }
+
+        // Right-half preview in the filter panel: the top match + total count.
+        window.veroFilterPreview = function (state) {
+            const list = resultsSource(state);
+            return { count: list.length, product: list[0] || null };
+        };
+
+        // "All results" from the panel → open the YOUR RESULTS listing.
+        window.veroOnAllResults = function (state) { openResults(state); };
+
+        function openResults(state) {
+            hideAllViews();
+            document.getElementById('resultsView').style.display = 'block';
+            document.title = 'Your Results | VERO';
+            document.body.setAttribute('data-header', 'dark');
+            const hdr = document.querySelector('header#siteHeader');
+            if (hdr) hdr.classList.add('force-dark');
+            const list = resultsSource(state);
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = list.length
+                ? `<div class="products-grid">${list.map(productCardHTML).join('')}</div>`
+                : '<div class="feed-empty">No pieces match these filters.</div>';
+            const countEl = document.getElementById('resultsCount');
+            if (countEl) countEl.textContent = `${list.length} ${list.length === 1 ? 'result' : 'results'}`;
+            if (typeof showSiteFooter === 'function') showSiteFooter();
+            window.scrollTo(0, 0);
+        }
+
         let feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
 
         function feedBaseProducts() {
@@ -6454,6 +6531,13 @@
         const catParam = catParams.get('cat');
         if (catParam) {
             showCategoryPage(catParam, catParams.get('type') || 'clothing');
+        } else if (catParams.get('open') === 'results') {
+            // Arrived from another page's filter panel — restore its selections.
+            let saved = {};
+            try { saved = JSON.parse(localStorage.getItem('vero_results_filters') || '{}'); } catch (e) {}
+            renderFilters();
+            renderCategories();
+            openResults(saved);
         } else {
             applyHomeHeaderLook();   // white sticky-style header from the top
             applyHeroSquareCopy(currentCategory);   // square copy must match the mode on load

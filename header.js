@@ -83,11 +83,11 @@
             top: calc(100% + 10px);
             left: 50%;
             transform: translateX(-50%);
-            width: min(560px, 92vw);
+            width: min(1120px, 96vw);
             background: #fff;
             border: 1px solid #ececec;
             box-shadow: 0 20px 50px rgba(0,0,0,0.12);
-            padding: 24px 26px 22px;
+            padding: 34px 38px 32px;
             display: none;
             z-index: 120;
             direction: ltr;
@@ -95,8 +95,63 @@
             font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         #siteHeader .hdr-filters.open { display: block; }
+        /* Two halves: filters on the left, product preview on the right. */
+        #siteHeader .hdr-inner {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+        }
+        #siteHeader .hdr-main { min-width: 0; display: flex; flex-direction: column; }
         #siteHeader .hdr-filters .hf-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 20px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px 24px;
+        }
+        /* Right half: quick preview of the best-matching product + results CTA. */
+        #siteHeader .hdr-preview {
+            display: flex; flex-direction: column; gap: 16px;
+            border-inline-start: 1px solid #f0f0f0; padding-inline-start: 40px;
+        }
+        #siteHeader .hdr-preview-card {
+            flex: 1; background: #efece4; border-radius: 10px; overflow: hidden;
+            display: flex; flex-direction: column; min-height: 300px;
+        }
+        #siteHeader .hdr-preview-img {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            font-size: 96px; color: rgba(0,0,0,0.85);
+        }
+        #siteHeader .hdr-preview-info {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            gap: 14px; padding: 18px 20px 20px;
+        }
+        #siteHeader .hdr-preview-price {
+            font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: #111; line-height: 1;
+        }
+        #siteHeader .hdr-preview-meta { text-align: right; }
+        #siteHeader .hdr-preview-seller {
+            font-size: 14px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #111;
+        }
+        #siteHeader .hdr-preview-name {
+            font-size: 12px; color: #8a8a8a; letter-spacing: 0.2px; margin-top: 4px;
+            max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        #siteHeader .hdr-preview-empty {
+            flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+            color: #b3b3b3; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 24px;
+        }
+        #siteHeader .hdr-preview-kicker {
+            font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #9a9a9a; font-weight: 700;
+        }
+        #siteHeader .hdr-results {
+            width: 100%; background: #111; color: #fff; border: none; cursor: pointer;
+            padding: 16px 24px; font-family: inherit; font-size: 12px; font-weight: 700;
+            letter-spacing: 1.6px; text-transform: uppercase;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: background 0.2s;
+        }
+        #siteHeader .hdr-results:hover { background: #333; }
+        #siteHeader .hdr-results .arrow { font-size: 14px; }
+        @media (max-width: 820px) {
+            #siteHeader .hdr-inner { grid-template-columns: 1fr; gap: 26px; }
+            #siteHeader .hdr-preview { border-inline-start: none; padding-inline-start: 0;
+                border-top: 1px solid #f0f0f0; padding-top: 24px; }
+            #siteHeader .hdr-preview-card { min-height: 240px; }
         }
         #siteHeader .hdr-filters .hf-field { display: flex; flex-direction: column; gap: 6px; }
         #siteHeader .hdr-filters .hf-label {
@@ -382,15 +437,24 @@
             </div>
 
             <div class="hdr-filters" id="veroFilters">
-                <div class="hf-grid" id="veroFilterGrid"><!-- fields built by veroBuildFilters --></div>
-                <div class="hdr-price">
-                    <span class="hf-label">Price — up to <b id="veroPriceOut">₪3000</b></span>
-                    <input type="range" id="veroPriceRange" min="0" max="3000" step="10" value="3000"
-                           oninput="veroPriceInput(this.value)">
-                </div>
-                <div class="hdr-acts">
-                    <button class="hdr-clear" onclick="veroClearFilters()">Clear all</button>
-                    <button class="hdr-apply" onclick="veroApplyFilters()">Apply</button>
+                <div class="hdr-inner">
+                    <div class="hdr-main">
+                        <div class="hf-grid" id="veroFilterGrid"><!-- fields built by veroBuildFilters --></div>
+                        <div class="hdr-price">
+                            <span class="hf-label">Price — up to <b id="veroPriceOut">₪3000</b></span>
+                            <input type="range" id="veroPriceRange" min="0" max="3000" step="10" value="3000"
+                                   oninput="veroPriceInput(this.value)">
+                        </div>
+                        <div class="hdr-acts">
+                            <button class="hdr-clear" onclick="veroClearFilters()">Clear all</button>
+                            <button class="hdr-apply" onclick="veroApplyFilters()">Apply</button>
+                        </div>
+                    </div>
+                    <div class="hdr-preview">
+                        <span class="hdr-preview-kicker">Best match</span>
+                        <div class="hdr-preview-card" id="veroFilterPreview"></div>
+                        <button class="hdr-results" onclick="veroAllResults()">All results <span class="arrow">&rarr;</span></button>
+                    </div>
                 </div>
             </div>
 
@@ -523,14 +587,52 @@
                     </select>
                 </label>`;
         }).join('');
+        window.veroRenderPreview();
     };
 
-    window.veroSetFilter = function (key, value) { veroFilterState[key] = value; };
+    window.veroSetFilter = function (key, value) { veroFilterState[key] = value; window.veroRenderPreview(); };
 
     window.veroPriceInput = function (value) {
         veroFilterState.maxPrice = Number(value);
         const out = document.getElementById('veroPriceOut');
         if (out) out.textContent = '₪' + value;
+        window.veroRenderPreview();
+    };
+
+    // Right-half live preview: shows the single product that best matches the
+    // current selections. The page supplies the match via window.veroFilterPreview.
+    window.veroRenderPreview = function () {
+        const host = document.getElementById('veroFilterPreview');
+        if (!host) return;
+        const res = (typeof window.veroFilterPreview === 'function')
+            ? (window.veroFilterPreview({ ...veroFilterState }) || null) : null;
+        const p = res && res.product;
+        if (!p) {
+            host.innerHTML = `<div class="hdr-preview-empty">No matching product yet</div>`;
+            return;
+        }
+        host.innerHTML = `
+            <div class="hdr-preview-img">${p.icon || '🛍️'}</div>
+            <div class="hdr-preview-info">
+                <div class="hdr-preview-price">${p.price || ''}</div>
+                <div class="hdr-preview-meta">
+                    <div class="hdr-preview-seller">${p.seller || ''}</div>
+                    <div class="hdr-preview-name">${p.name || ''}</div>
+                </div>
+            </div>`;
+    };
+
+    // "All results" → the page shows a full YOUR RESULTS listing if it can;
+    // otherwise carry the filter state home and open it there.
+    window.veroAllResults = function () {
+        const state = { ...veroFilterState };
+        if (typeof window.veroOnAllResults === 'function') {
+            window.veroOnAllResults(state);
+            window.veroToggleFilters();
+        } else {
+            try { localStorage.setItem('vero_results_filters', JSON.stringify(state)); } catch (e) {}
+            location.href = 'index.html?open=results';
+        }
     };
 
     window.veroToggleFilters = function (e) {
