@@ -478,12 +478,16 @@
             right: var(--art-box-right);
             width: var(--art-box-w);
             background: #000;
+            /* copy back at the bottom; the magazine button sits to its right */
             display: flex;
-            flex-direction: column;
-            justify-content: center;   /* copy sits in the middle of the block */
-            padding: 0 44px;
+            flex-direction: row;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 40px;
+            padding: 0 44px 48px;
             box-sizing: border-box;
         }
+        .htb-square-copy { flex: 1 1 auto; min-width: 0; }
         .htb-square-title {
             font-family: var(--font-sans);
             font-size: clamp(44px, 4.4vw, 72px);
@@ -502,24 +506,42 @@
             margin: 0;
             max-width: 460px;
         }
-        /* White rectangle under the copy, into the magazine */
-        .htb-square-cta {
-            align-self: flex-start;
-            margin-top: 28px;
+        /* Round button to the right of the copy, caption underneath it */
+        .htb-square-mag {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            background: none;
             border: none;
-            border-radius: 0;
-            background: #fff;
-            color: #111;
-            font-family: var(--font-sans);
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            padding: 15px 28px;
+            padding: 0;
             cursor: pointer;
-            transition: background 0.25s ease;
+            font-family: var(--font-sans);
         }
-        .htb-square-cta:hover { background: rgba(255, 255, 255, 0.82); }
+        .htb-square-mag .circle {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            background: none;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: background 0.25s ease, color 0.25s ease;
+        }
+        .htb-square-mag:hover .circle { background: #fff; color: #111; }
+        .htb-square-mag .cap {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.75);
+            white-space: nowrap;
+        }
+        .htb-square-mag:hover .cap { color: #fff; }
 
         /* The home view wears the sticky header's look from the top (header.js
            .sticky-look), so ART mode needs no header overrides of its own.
@@ -561,9 +583,10 @@
         @media (max-width: 900px) {
             .htb-inner { padding: 0 28px 28px; gap: 24px; }
             .htb-title { font-size: clamp(40px, 11vw, 72px); }
-            .htb-square { top: 0; bottom: 24px; right: 24px; width: 66vw; padding: 0 24px; }
+            .htb-square { top: 0; bottom: 24px; right: 24px; width: 66vw; padding: 0 24px 28px; gap: 20px; }
             .htb-square-text { font-size: 13px; }
-            .htb-square-cta { font-size: 11px; padding: 12px 20px; margin-top: 20px; }
+            .htb-square-mag .circle { width: 52px; height: 52px; font-size: 16px; }
+            .htb-square-mag .cap { font-size: 9px; }
         }
 
         /* ==================== GRID ==================== */
@@ -2274,11 +2297,10 @@
         .achs { position: relative; padding: 0 44px; font-family: var(--font-sans); }
         .achs-viewport { overflow: hidden; }
         .achs-track { display: flex; transition: transform 0.5s cubic-bezier(0.65,0.05,0.1,1); }
-        /* One product per slide */
         .achs-slide {
             flex: 0 0 100%;
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
         }
         .achs-card {
@@ -3728,9 +3750,14 @@
                     <button class="htb-about" onclick="openMenu()">About Us <span class="htb-arrow">&rarr;</span></button>
                 </div>
                 <div class="htb-square">
-                    <h2 class="htb-square-title" id="htbSquareTitle">Art</h2>
-                    <p class="htb-square-text" id="htbSquareText">Original works by independent artists — paintings, prints and one-of-a-kind pieces, collected in one place and ready to live on your wall.</p>
-                    <button class="htb-square-cta" onclick="openMenu()">To the Closet Magazine</button>
+                    <div class="htb-square-copy">
+                        <h2 class="htb-square-title" id="htbSquareTitle">Art</h2>
+                        <p class="htb-square-text" id="htbSquareText">Original works by independent artists — paintings, prints and one-of-a-kind pieces, collected in one place and ready to live on your wall.</p>
+                    </div>
+                    <button class="htb-square-mag" onclick="openMenu()" title="To the Magazine">
+                        <span class="circle">&rarr;</span>
+                        <span class="cap">To the Magazine</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -4372,8 +4399,7 @@
         // ---- Hero item slider: the pieces on the page, two per slide, auto-paging.
         // Mirrors the hero promo slider under the hero (hpGo/hpTrack) in behaviour.
         // One instance per host element (cart hero + wishlist hero), keyed by id.
-        const ACHS_INTERVAL = 4000;
-        const ACHS_MAX_ITEMS = 5;   // the hero slider shows at most five pieces
+        const ACHS_INTERVAL = 3000;
         const achs = {};   // wrapId -> { idx, timer, slideCount }
 
         function achsState(wrapId) {
@@ -4400,18 +4426,19 @@
         }
 
         // Build the slider for one hero. `items` is the cart / wishlist list.
-        // One product per slide, five slides at most.
-        function renderHeroSlider(wrapId, allItems, emptyText) {
+        function renderHeroSlider(wrapId, items, emptyText) {
             const wrap = document.getElementById(wrapId);
             if (!wrap) return;
             const st = achsState(wrapId);
             if (st.timer) { clearInterval(st.timer); st.timer = null; }
-            if (!allItems.length) {
+            if (!items.length) {
                 wrap.innerHTML = `<div class="achs-empty">${emptyText}</div>`;
                 return;
             }
-            const items = allItems.slice(0, ACHS_MAX_ITEMS);
-            const slides = items.map(it => `<div class="achs-slide">${achsCardHTML(it)}</div>`);
+            const slides = [];
+            for (let i = 0; i < items.length; i += 2) {
+                slides.push(`<div class="achs-slide">${items.slice(i, i + 2).map(achsCardHTML).join('')}</div>`);
+            }
             st.slideCount = slides.length;
             wrap.innerHTML = `
                 <button class="achs-arrow prev" aria-label="Previous" onclick="achsGo('${wrapId}', achs['${wrapId}'].idx - 1)">&#8249;</button>
