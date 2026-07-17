@@ -50,7 +50,7 @@
             align-items: center;
             gap: 12px;
             position: absolute;
-            left: 210px;                    /* close to the logo (which sits at ~58px) */
+            left: 430px;                    /* trimmed from the left → narrower field */
             top: 50%;
             transform: translateY(-50%);
             z-index: 3;
@@ -62,7 +62,7 @@
             border: 1px solid #e4e4e4;
             border-radius: 999px;
             height: 46px;
-            width: min(520px, 38vw);
+            width: min(250px, 19vw);
             padding: 4px 5px 4px 22px;
             box-sizing: border-box;
         }
@@ -131,31 +131,35 @@
             border-inline-start: 1px solid #f0f0f0; padding-inline-start: 40px;
         }
         #siteHeader .hdr-preview-card {
-            flex: 1; background: #efece4; border-radius: 10px; overflow: hidden;
-            display: flex; flex-direction: column; min-height: 300px;
+            flex: 1; background: #efece4; border-radius: 12px; overflow: hidden;
+            display: flex; flex-direction: column; min-height: 560px;
+            transition: box-shadow 0.25s;
         }
+        #siteHeader .hdr-preview-card:hover { box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
         #siteHeader .hdr-preview-img {
             flex: 1; display: flex; align-items: center; justify-content: center;
-            font-size: 96px; color: rgba(0,0,0,0.85);
+            font-size: 180px; color: rgba(0,0,0,0.85);
+            transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
         }
+        #siteHeader .hdr-preview-card:hover .hdr-preview-img { transform: scale(1.04); }
         #siteHeader .hdr-preview-info {
             display: flex; align-items: flex-end; justify-content: space-between;
-            gap: 14px; padding: 18px 20px 20px;
+            gap: 18px; padding: 26px 30px 30px;
         }
         #siteHeader .hdr-preview-price {
-            font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: #111; line-height: 1;
+            font-size: 44px; font-weight: 800; letter-spacing: -0.5px; color: #111; line-height: 1;
         }
         #siteHeader .hdr-preview-meta { text-align: right; }
         #siteHeader .hdr-preview-seller {
-            font-size: 14px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #111;
+            font-size: 18px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #111;
         }
         #siteHeader .hdr-preview-name {
-            font-size: 12px; color: #8a8a8a; letter-spacing: 0.2px; margin-top: 4px;
-            max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            font-size: 15px; color: #8a8a8a; letter-spacing: 0.2px; margin-top: 6px;
+            max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         #siteHeader .hdr-preview-empty {
             flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
-            color: #b3b3b3; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 24px;
+            color: #b3b3b3; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; padding: 40px;
         }
         #siteHeader .hdr-preview-kicker {
             font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #9a9a9a; font-weight: 700;
@@ -200,7 +204,7 @@
             -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
             background: #111; cursor: pointer;
         }
-        #siteHeader .hdr-acts { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        #siteHeader .hdr-acts { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 24px; }
         #siteHeader .hdr-acts button {
             border: none; background: none; cursor: pointer; font-family: inherit;
             font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
@@ -209,7 +213,7 @@
         #siteHeader .hdr-clear:hover { color: #111; }
         #siteHeader .hdr-apply { background: #111 !important; color: #fff; padding: 12px 26px !important; }
         #siteHeader .hdr-apply:hover { background: #333 !important; }
-        @media (max-width: 1080px) {
+        @media (max-width: 1180px) {
             #siteHeader.scrolled .hdr-searchwrap, #siteHeader.sticky-look .hdr-searchwrap { display: none; }
         }
         /* Header contents are ALWAYS dark — on every page, at every scroll position.

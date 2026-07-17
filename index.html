@@ -1783,27 +1783,6 @@
             font-size: 14px;
         }
 
-        /* ---- YOUR RESULTS page (mirrors the feed/category listing) ---- */
-        .results-hero {
-            padding: 130px 80px 40px;
-            border-bottom: 1px solid #ececec;
-        }
-        .results-hero-inner { max-width: 1600px; margin: 0 auto; }
-        .results-title {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: 64px; font-weight: 500; letter-spacing: -1px; margin: 0; color: #111;
-        }
-        .results-count {
-            margin: 14px 0 0; font-size: 12px; letter-spacing: 2px;
-            text-transform: uppercase; color: #9a9a9a; font-weight: 600;
-        }
-        .results-body { padding: 44px 80px 90px; }
-        @media (max-width: 768px) {
-            .results-hero { padding: 110px 20px 30px; }
-            .results-title { font-size: 40px; }
-            .results-body { padding: 30px 20px 60px; }
-        }
-
         /* ==================== ICON BADGES ==================== */
         .icon-wrap {
             position: relative;
@@ -2420,7 +2399,7 @@
         .acat-filter .x { color: #111; }
 
         /* ---- Grid ---- */
-        #acatContent { padding: 34px 7vw 90px; }
+        #acatContent, #resultsContent { padding: 34px 7vw 90px; }
         #acatContent .promo-slider { margin: 64px 0; }
         /* Five across → each block of 10 products reads as two rows of five,
            followed by that category's promoted slider (see showCategoryPage). */
@@ -3870,16 +3849,33 @@
         </div>
     </div>
 
-    <!-- ==================== YOUR RESULTS (filtered listing) ==================== -->
+    <!-- ==================== YOUR RESULTS (filtered listing) ====================
+         Same structure as a category page (acat-*), five products per row,
+         with NO promoted/featured sliders interleaved. -->
     <div id="resultsView" style="display:none">
-        <section class="results-hero">
-            <div class="results-hero-inner">
-                <h1 class="results-title">YOUR RESULTS</h1>
-                <p class="results-count" id="resultsCount"></p>
-            </div>
-        </section>
-        <div class="results-body">
-            <div id="resultsGrid"></div>
+        <div class="acat">
+            <section class="acat-hero">
+                <div class="acat-hero-inner">
+                    <div class="acat-hero-text">
+                        <h1 class="acat-title" id="resultsTitle">YOUR RESULTS</h1>
+                        <p class="acat-desc" id="resultsDesc"></p>
+                        <div class="acat-details">&#8964; Product details</div>
+                    </div>
+                    <div class="acat-hero-img" id="resultsHeroImg">🔎</div>
+                </div>
+            </section>
+
+            <!-- Active filter chips -->
+            <div class="acat-filters" id="resultsFilters"></div>
+
+            <!-- GRID (no promo sliders) -->
+            <div id="resultsContent"></div>
+
+            <footer class="acat-footer">
+                <div class="acat-foot-lang">En &#8964;</div>
+                <div class="acat-foot-links">CONTACT / MEDIA / LEGAL / COOKIES</div>
+                <div class="acat-foot-social">Fb Tw Yt In Ln</div>
+            </footer>
         </div>
     </div>
 
@@ -5722,14 +5718,31 @@
             document.body.setAttribute('data-header', 'dark');
             const hdr = document.querySelector('header#siteHeader');
             if (hdr) hdr.classList.add('force-dark');
+
             const list = resultsSource(state);
-            const grid = document.getElementById('resultsGrid');
-            grid.innerHTML = list.length
-                ? `<div class="products-grid">${list.map(productCardHTML).join('')}</div>`
+
+            // Hero — title + a short summary + the first match as the hero visual.
+            document.getElementById('resultsDesc').textContent = list.length
+                ? `${list.length} ${list.length === 1 ? 'piece matches' : 'pieces match'} your filters.`
+                : 'No pieces match your filters — try widening them.';
+            document.getElementById('resultsHeroImg').textContent = list[0] ? list[0].icon : '🔎';
+
+            // Active-filter chips (only the ones actually chosen).
+            const s = state || {};
+            const chips = [
+                ['Brand', s.brand], ['Type', s.type], ['Seller', s.seller],
+                ['Style', s.style], ['Colour', s.color], ['Gender', s.gender]
+            ].filter(([, v]) => v).map(([, v]) =>
+                `<button class="acat-filter active"><span class="x">&times;</span> ${v}</button>`).join('');
+            document.getElementById('resultsFilters').innerHTML =
+                chips || '<button class="acat-filter active">All results</button>';
+
+            // Grid — five across, the regular category structure, NO promo sliders.
+            const content = document.getElementById('resultsContent');
+            content.innerHTML = list.length
+                ? `<div class="acat-grid">${list.map(acardHTML).join('')}</div>`
                 : '<div class="feed-empty">No pieces match these filters.</div>';
-            const countEl = document.getElementById('resultsCount');
-            if (countEl) countEl.textContent = `${list.length} ${list.length === 1 ? 'result' : 'results'}`;
-            if (typeof showSiteFooter === 'function') showSiteFooter();
+
             window.scrollTo(0, 0);
         }
 
