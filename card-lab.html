@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO — Card Lab</title>
+    <style>
+        :root {
+            --ink: #111;
+            --mute: #6b6b6b;
+            --faint: #9a9a9a;
+            --line: #ececec;
+            --bg: #fafafa;
+            --sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--ink);
+            direction: ltr;
+            padding: 56px 48px 120px;
+        }
+
+        /* ---- page head, same editorial voice as the cart hero ---- */
+        .lab-head { max-width: 1400px; margin: 0 auto 44px; }
+        .lab-title {
+            font-size: 52px; font-weight: 800; text-transform: uppercase;
+            line-height: 1.04; letter-spacing: -0.02em; margin-bottom: 18px;
+        }
+        .lab-title span { color: var(--faint); }
+        .lab-sub { font-size: 15px; line-height: 1.55; color: var(--mute); max-width: 460px; }
+
+        /* ---- controls ---- */
+        .lab-controls {
+            max-width: 1400px; margin: 0 auto 46px;
+            display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-end;
+            padding-bottom: 24px; border-bottom: 1px solid var(--line);
+        }
+        .lab-field { display: flex; flex-direction: column; gap: 6px; }
+        .lab-label {
+            font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase;
+            color: var(--faint); font-weight: 600;
+        }
+        .lab-select, .lab-input {
+            appearance: none; -webkit-appearance: none;
+            border: none; border-bottom: 1px solid #ddd; background: none;
+            padding: 4px 22px 6px 0; min-width: 130px;
+            font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
+            cursor: pointer;
+        }
+        .lab-select:focus, .lab-input:focus { outline: none; border-bottom-color: var(--ink); }
+
+        /* ---- the grid of variants ---- */
+        .lab-grid {
+            max-width: 1400px; margin: 0 auto;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 40px 26px;
+        }
+        .lab-cell { display: flex; flex-direction: column; gap: 14px; }
+        .lab-cap {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+        }
+        .lab-cap b { font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; }
+        .lab-cap span { font-size: 11px; color: var(--faint); }
+
+        /* ==================================================================
+           VARIANT A — bare: image, name, price. Nothing else.
+           ================================================================== */
+        .v-a { background: none; }
+        .v-a .img { aspect-ratio: 3 / 4; background: #f1efec; overflow: hidden; }
+        .v-a .img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .v-a .meta { padding: 12px 0 0; display: flex; flex-direction: column; gap: 3px; }
+        .v-a .nm { font-size: 13px; font-weight: 600; }
+        .v-a .pr { font-size: 13px; font-weight: 400; color: var(--mute); }
+
+        /* ==================================================================
+           VARIANT B — label above, name + price on one baseline row.
+           ================================================================== */
+        .v-b { background: none; }
+        .v-b .img { aspect-ratio: 3 / 4; background: #f1efec; overflow: hidden; }
+        .v-b .img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .v-b .meta { padding: 12px 0 0; }
+        .v-b .kick {
+            font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase;
+            color: var(--faint); font-weight: 600; display: block; margin-bottom: 5px;
+        }
+        .v-b .row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+        .v-b .nm { font-size: 13px; font-weight: 600; }
+        .v-b .pr { font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+        /* ==================================================================
+           VARIANT C — hairline framed, price on its own rule.
+           ================================================================== */
+        .v-c { border: 1px solid var(--line); background: #fff; }
+        .v-c .img { aspect-ratio: 1 / 1; background: #f1efec; overflow: hidden; }
+        .v-c .img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .v-c .meta { padding: 14px 14px 16px; }
+        .v-c .kick {
+            font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase;
+            color: var(--faint); font-weight: 600;
+        }
+        .v-c .nm { font-size: 13px; font-weight: 600; margin: 5px 0 12px; }
+        .v-c .pr {
+            font-size: 14px; font-weight: 700;
+            padding-top: 10px; border-top: 1px solid #f2f2f2;
+        }
+
+        /* ==================================================================
+           VARIANT D — actions revealed on hover only.
+           ================================================================== */
+        .v-d { background: none; }
+        .v-d .img { position: relative; aspect-ratio: 3 / 4; background: #f1efec; overflow: hidden; }
+        .v-d .img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .v-d .acts {
+            position: absolute; left: 0; right: 0; bottom: 0;
+            display: flex; opacity: 0; transform: translateY(6px);
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+        .v-d:hover .acts { opacity: 1; transform: none; }
+        .v-d .acts button {
+            flex: 1; border: none; cursor: pointer; padding: 11px 0;
+            font-family: inherit; font-size: 10px; font-weight: 700;
+            letter-spacing: 1.4px; text-transform: uppercase;
+        }
+        .v-d .acts .buy { background: #111; color: #fff; }
+        .v-d .acts .save { background: #fff; color: #111; }
+        .v-d .meta { padding: 12px 0 0; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+        .v-d .nm { font-size: 13px; font-weight: 600; }
+        .v-d .pr { font-size: 13px; font-weight: 700; }
+
+        /* ==================================================================
+           VARIANT E — text over the image, no panel at all.
+           ================================================================== */
+        .v-e { position: relative; aspect-ratio: 3 / 4; background: #f1efec; overflow: hidden; }
+        .v-e img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .v-e .meta {
+            position: absolute; left: 0; right: 0; bottom: 0; padding: 16px;
+            background: linear-gradient(to top, rgba(0,0,0,0.62), rgba(0,0,0,0));
+            color: #fff;
+        }
+        .v-e .nm { font-size: 13px; font-weight: 700; }
+        .v-e .pr { font-size: 12px; font-weight: 400; opacity: 0.85; margin-top: 2px; }
+
+        /* ==================================================================
+           VARIANT F — editorial: big tight uppercase name (inspiration board).
+           ================================================================== */
+        .v-f { background: none; }
+        .v-f .img { aspect-ratio: 4 / 5; background: #f1efec; overflow: hidden; }
+        .v-f .img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .v-f .meta { padding: 14px 0 0; }
+        .v-f .nm {
+            font-size: 17px; font-weight: 800; text-transform: uppercase;
+            line-height: 1.05; letter-spacing: -0.02em;
+        }
+        .v-f .sub { font-size: 12px; color: var(--mute); margin: 6px 0 0; line-height: 1.45; }
+        .v-f .pr { font-size: 13px; font-weight: 700; margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <div class="lab-head">
+        <h1 class="lab-title"><span>/</span> Card Lab</h1>
+        <p class="lab-sub">Six takes on the product card, all fed by the same product. Pick a
+            direction (or mix parts of two) and I'll wire it into the feed, the category pages
+            and the cart — every card in the app comes from one template.</p>
+    </div>
+
+    <div class="lab-controls">
+        <label class="lab-field">
+            <span class="lab-label">Product</span>
+            <select class="lab-select" id="prodSel"></select>
+        </label>
+        <label class="lab-field">
+            <span class="lab-label">Card width</span>
+            <input class="lab-input" id="widthIn" type="range" min="200" max="360" value="260">
+        </label>
+        <label class="lab-field">
+            <span class="lab-label">Images</span>
+            <select class="lab-select" id="imgSel">
+                <option value="photo">Photo</option>
+                <option value="emoji">Emoji tile</option>
+            </select>
+        </label>
+    </div>
+
+    <div class="lab-grid" id="grid"></div>
+
+    <script>
+        const PRODUCTS = [
+            { name: 'Classic Denim Jacket', price: '₪89.99',  seller: "Levi's",          category: 'Vintage 90s',  icon: '🧥' },
+            { name: 'Large Mixed Artwork',  price: '₪520.00', seller: 'Mixed Media',      category: 'Mixed Media',  icon: '🎭' },
+            { name: 'Classic White Sneakers', price: '₪150.00', seller: 'Nike',           category: 'Basic Casual', icon: '👟' },
+            { name: 'Watercolor Landscape', price: '₪290.00', seller: 'Watercolor Studio', category: 'Watercolor',  icon: '💧' }
+        ];
+
+        const VARIANTS = [
+            { id: 'a', name: 'A · Bare',        note: 'image · name · price' },
+            { id: 'b', name: 'B · Baseline',    note: 'seller kicker, price aligned' },
+            { id: 'c', name: 'C · Hairline',    note: 'framed, price on a rule' },
+            { id: 'd', name: 'D · Hover',       note: 'actions on hover only' },
+            { id: 'e', name: 'E · Overlay',     note: 'text on the image' },
+            { id: 'f', name: 'F · Editorial',   note: 'tight uppercase name' }
+        ];
+
+        const state = { product: 0, width: 260, images: 'photo' };
+
+        function imgFor(p) {
+            if (state.images === 'emoji') {
+                return `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:64px">${p.icon}</div>`;
+            }
+            const seed = encodeURIComponent(p.name);
+            return `<img src="https://picsum.photos/seed/vero-${seed}/700/900" alt="${p.name}">`;
+        }
+
+        function cardHTML(v, p) {
+            const img = imgFor(p);
+            switch (v) {
+                case 'a': return `
+                    <div class="v-a">
+                        <div class="img">${img}</div>
+                        <div class="meta"><span class="nm">${p.name}</span><span class="pr">${p.price}</span></div>
+                    </div>`;
+                case 'b': return `
+                    <div class="v-b">
+                        <div class="img">${img}</div>
+                        <div class="meta">
+                            <span class="kick">${p.seller}</span>
+                            <div class="row"><span class="nm">${p.name}</span><span class="pr">${p.price}</span></div>
+                        </div>
+                    </div>`;
+                case 'c': return `
+                    <div class="v-c">
+                        <div class="img">${img}</div>
+                        <div class="meta">
+                            <span class="kick">${p.category}</span>
+                            <div class="nm">${p.name}</div>
+                            <div class="pr">${p.price}</div>
+                        </div>
+                    </div>`;
+                case 'd': return `
+                    <div class="v-d">
+                        <div class="img">${img}
+                            <div class="acts"><button class="buy">Add to cart</button><button class="save">Save</button></div>
+                        </div>
+                        <div class="meta"><span class="nm">${p.name}</span><span class="pr">${p.price}</span></div>
+                    </div>`;
+                case 'e': return `
+                    <div class="v-e">${img}
+                        <div class="meta"><div class="nm">${p.name}</div><div class="pr">${p.price}</div></div>
+                    </div>`;
+                case 'f': return `
+                    <div class="v-f">
+                        <div class="img">${img}</div>
+                        <div class="meta">
+                            <div class="nm">${p.name}</div>
+                            <p class="sub">${p.seller} · ${p.category}</p>
+                            <div class="pr">${p.price}</div>
+                        </div>
+                    </div>`;
+            }
+        }
+
+        function render() {
+            const p = PRODUCTS[state.product];
+            document.getElementById('grid').innerHTML = VARIANTS.map(v => `
+                <div class="lab-cell" style="max-width:${state.width}px">
+                    <div class="lab-cap"><b>${v.name}</b><span>${v.note}</span></div>
+                    ${cardHTML(v.id, p)}
+                </div>`).join('');
+        }
+
+        const sel = document.getElementById('prodSel');
+        sel.innerHTML = PRODUCTS.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+        sel.onchange = e => { state.product = +e.target.value; render(); };
+        document.getElementById('widthIn').oninput = e => { state.width = +e.target.value; render(); };
+        document.getElementById('imgSel').onchange = e => { state.images = e.target.value; render(); };
+
+        render();
+    </script>
+</body>
+</html>
