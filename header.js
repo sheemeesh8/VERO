@@ -41,41 +41,63 @@
            Hidden by default; the sticky/sticky-look header reveals it. The panel is
            generic: pages feed it options and receive the chosen filters through the
            window hooks at the bottom of this file. */
-        #siteHeader .hdr-search { display: none; }
-        #siteHeader.scrolled .hdr-search,
-        #siteHeader.sticky-look .hdr-search {
+        /* Search pill + funnel circle: hidden until the header is sticky, then
+           pinned just to the right of the logo. */
+        #siteHeader .hdr-searchwrap { display: none; }
+        #siteHeader.scrolled .hdr-searchwrap,
+        #siteHeader.sticky-look .hdr-searchwrap {
             display: flex;
             align-items: center;
-            gap: 0;
+            gap: 12px;
             position: absolute;
-            left: 50%;
+            left: 210px;                    /* close to the logo (which sits at ~58px) */
             top: 50%;
-            transform: translate(-50%, -50%);
-            width: min(420px, 32vw);
+            transform: translateY(-50%);
             z-index: 3;
-            border-bottom: 1px solid rgba(0,0,0,0.18);
-            background: none;
+        }
+        /* The rounded search field */
+        #siteHeader .hdr-search {
+            display: flex; align-items: center;
+            background: #efefef;
+            border: 1px solid #e4e4e4;
+            border-radius: 999px;
+            height: 46px;
+            width: min(520px, 38vw);
+            padding: 4px 5px 4px 22px;
+            box-sizing: border-box;
         }
         #siteHeader .hdr-search input {
             flex: 1; min-width: 0;
             border: none; background: none; outline: none;
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            font-size: 13px; font-weight: 600; color: #111;
-            padding: 8px 4px;
+            font-size: 14px; font-weight: 500; color: #111;
+            padding: 0 8px 0 0;
         }
         #siteHeader .hdr-search input::placeholder {
-            color: #9a9a9a; font-weight: 500; letter-spacing: 0.4px;
+            color: #9a9a9a; font-weight: 500; letter-spacing: 0.3px;
         }
-        #siteHeader .hdr-funnel {
-            order: -1;                      /* funnel on the LEFT of the field */
-            background: none; border: none; cursor: pointer;
+        /* Black circle with the white magnifier, on the right of the field */
+        #siteHeader .hdr-searchgo {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: #111; border: none; cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center;
-            width: 30px; height: 30px; padding: 0; flex: 0 0 auto;
+            transition: background 0.2s;
         }
-        #siteHeader .hdr-funnel svg { width: 16px; height: 16px; stroke: #111; fill: none; stroke-width: 1.7; }
-        #siteHeader .hdr-funnel:hover svg { stroke: #6b6b6b; }
-        #siteHeader .hdr-funnel.on svg { stroke: #fff; }
-        #siteHeader .hdr-funnel.on { background: #111; border-radius: 50%; }
+        #siteHeader .hdr-searchgo:hover { background: #333; }
+        #siteHeader .hdr-searchgo svg {
+            width: 16px; height: 16px; stroke: #fff; fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+        /* Funnel: its own black circle with the white funnel, beside the field
+           on the same (right) side as the magnifier. */
+        #siteHeader .hdr-funnel {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: #111; border: none; cursor: pointer; flex: 0 0 auto;
+            display: flex; align-items: center; justify-content: center; padding: 0;
+            transition: background 0.2s;
+        }
+        #siteHeader .hdr-funnel:hover, #siteHeader .hdr-funnel.on { background: #333; }
+        #siteHeader .hdr-funnel svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 1.8; }
 
         /* the dropdown panel */
         #siteHeader .hdr-filters {
@@ -187,8 +209,8 @@
         #siteHeader .hdr-clear:hover { color: #111; }
         #siteHeader .hdr-apply { background: #111 !important; color: #fff; padding: 12px 26px !important; }
         #siteHeader .hdr-apply:hover { background: #333 !important; }
-        @media (max-width: 900px) {
-            #siteHeader.scrolled .hdr-search, #siteHeader.sticky-look .hdr-search { display: none; }
+        @media (max-width: 1080px) {
+            #siteHeader.scrolled .hdr-searchwrap, #siteHeader.sticky-look .hdr-searchwrap { display: none; }
         }
         /* Header contents are ALWAYS dark — on every page, at every scroll position.
            (Pages that sit on a dark hero keep their own overrides.) */
@@ -269,7 +291,7 @@
         :root {
             --hdr-band-w: 873px;      /* width of the black band */
             --hdr-band-right: 44px;   /* band offset from the right edge */
-            --hdr-spread-w: 720px;    /* width the icon group spreads across */
+            --hdr-spread-w: 300px;    /* icon group clustered right, leaving room for the search pill */
             --hdr-spread-right: 84px; /* icon group offset from the right edge */
         }
         @media (min-width: 901px) {
@@ -426,14 +448,23 @@
             <div class="logo" onclick="showMain()" style="cursor:pointer">VERO</div>
 
             <!-- Search + filter: only visible once the header is sticky -->
-            <div class="hdr-search">
+            <div class="hdr-searchwrap">
+                <div class="hdr-search">
+                    <input id="veroSearchInput" type="search" placeholder="Search..."
+                           oninput="veroSearch(this.value)" autocomplete="off">
+                    <button class="hdr-searchgo" aria-label="Search" title="Search"
+                            onclick="veroSearch(document.getElementById('veroSearchInput').value)">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+                        </svg>
+                    </button>
+                </div>
                 <button class="hdr-funnel" id="veroFunnel" onclick="veroToggleFilters(event)" aria-label="Filters" title="Filters">
                     <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                     </svg>
                 </button>
-                <input id="veroSearchInput" type="search" placeholder="Search products…"
-                       oninput="veroSearch(this.value)" autocomplete="off">
             </div>
 
             <div class="hdr-filters" id="veroFilters">
