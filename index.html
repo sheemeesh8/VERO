@@ -5620,6 +5620,42 @@
         function productFabric(p) { return FEED_FABRICS[strHash(p.name) % FEED_FABRICS.length]; }
         function productColor(p)  { return FEED_COLORS[strHash(p.name + 'c') % FEED_COLORS.length]; }
 
+        // Brand / style / gender don't exist on the products either — same trick, so a
+        // product always reports the same values. Swap these out once the upload wizard
+        // writes real fields.
+        const FEED_STYLES  = ['Casual', 'Formal', 'Sport', 'Vintage', 'Streetwear', 'Elegant', 'Minimalist'];
+        const FEED_GENDERS = ['Men', 'Women', 'Unisex'];
+        function productBrand(p)  { const b = catBrands[p.type || currentCategory] || catBrands.clothing; return b[strHash(p.name + 'b') % b.length]; }
+        function productStyle(p)  { return FEED_STYLES[strHash(p.name + 's') % FEED_STYLES.length]; }
+        function productGender(p) { return FEED_GENDERS[strHash(p.name + 'g') % FEED_GENDERS.length]; }
+
+        // ---- Hooks the shared header's search + filter panel calls into ----
+        let headerFilters = null;   // set by the panel's Apply
+        let headerQuery = '';
+
+        window.veroFilterOptions = function () {
+            const base = feedBaseProducts();
+            return {
+                brand:  uniqueSorted(base.map(productBrand)),
+                type:   uniqueSorted(base.map(p => p.category)),
+                seller: uniqueSorted(base.map(p => p.seller)),
+                style:  uniqueSorted(base.map(productStyle)),
+                color:  uniqueSorted(base.map(productColor)),
+                gender: uniqueSorted(base.map(productGender))
+            };
+        };
+
+        window.veroOnFilters = function (f) {
+            headerFilters = f;
+            renderFeed();
+        };
+
+        window.veroOnSearch = function (q) {
+            headerQuery = (q || '').trim().toLowerCase();
+            clearTimeout(window.veroOnSearch._t);
+            window.veroOnSearch._t = setTimeout(renderFeed, 160);
+        };
+
         let feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
 
         function feedBaseProducts() {
@@ -5641,6 +5677,25 @@
             if (f.fabric) list = list.filter(p => productFabric(p) === f.fabric);
             if (f.color)  list = list.filter(p => productColor(p) === f.color);
             if (f.maxPrice != null) list = list.filter(p => priceToNum(p.price) <= f.maxPrice);
+
+            // ---- the shared header's search box + funnel panel ----
+            if (headerQuery) {
+                list = list.filter(p =>
+                    (p.name || '').toLowerCase().includes(headerQuery) ||
+                    (p.seller || '').toLowerCase().includes(headerQuery) ||
+                    (p.category || '').toLowerCase().includes(headerQuery));
+            }
+            const h = headerFilters;
+            if (h) {
+                if (h.brand)  list = list.filter(p => productBrand(p) === h.brand);
+                if (h.type)   list = list.filter(p => (p.category || '') === h.type);
+                if (h.seller) list = list.filter(p => (p.seller || '') === h.seller);
+                if (h.style)  list = list.filter(p => productStyle(p) === h.style);
+                if (h.color)  list = list.filter(p => productColor(p) === h.color);
+                if (h.gender) list = list.filter(p => productGender(p) === h.gender);
+                if (h.maxPrice != null) list = list.filter(p => priceToNum(p.price) <= h.maxPrice);
+            }
+
             if (f.sort === 'asc')  list.sort((a, b) => priceToNum(a.price) - priceToNum(b.price));
             if (f.sort === 'desc') list.sort((a, b) => priceToNum(b.price) - priceToNum(a.price));
             return list;

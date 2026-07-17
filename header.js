@@ -36,6 +36,105 @@
             direction: ltr;
         }
         #siteHeader .header-left { display: flex; gap: 32px; align-items: center; flex: 1; }
+
+        /* ===== Search + filter (sticky header only) =====
+           Hidden by default; the sticky/sticky-look header reveals it. The panel is
+           generic: pages feed it options and receive the chosen filters through the
+           window hooks at the bottom of this file. */
+        #siteHeader .hdr-search { display: none; }
+        #siteHeader.scrolled .hdr-search,
+        #siteHeader.sticky-look .hdr-search {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: min(420px, 32vw);
+            z-index: 3;
+            border-bottom: 1px solid rgba(0,0,0,0.18);
+            background: none;
+        }
+        #siteHeader .hdr-search input {
+            flex: 1; min-width: 0;
+            border: none; background: none; outline: none;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-size: 13px; font-weight: 600; color: #111;
+            padding: 8px 4px;
+        }
+        #siteHeader .hdr-search input::placeholder {
+            color: #9a9a9a; font-weight: 500; letter-spacing: 0.4px;
+        }
+        #siteHeader .hdr-funnel {
+            order: -1;                      /* funnel on the LEFT of the field */
+            background: none; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            width: 30px; height: 30px; padding: 0; flex: 0 0 auto;
+        }
+        #siteHeader .hdr-funnel svg { width: 16px; height: 16px; stroke: #111; fill: none; stroke-width: 1.7; }
+        #siteHeader .hdr-funnel:hover svg { stroke: #6b6b6b; }
+        #siteHeader .hdr-funnel.on svg { stroke: #fff; }
+        #siteHeader .hdr-funnel.on { background: #111; border-radius: 50%; }
+
+        /* the dropdown panel */
+        #siteHeader .hdr-filters {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(560px, 92vw);
+            background: #fff;
+            border: 1px solid #ececec;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+            padding: 24px 26px 22px;
+            display: none;
+            z-index: 120;
+            direction: ltr;
+            text-align: left;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+        #siteHeader .hdr-filters.open { display: block; }
+        #siteHeader .hdr-filters .hf-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 20px;
+        }
+        #siteHeader .hdr-filters .hf-field { display: flex; flex-direction: column; gap: 6px; }
+        #siteHeader .hdr-filters .hf-label {
+            font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase;
+            color: #9a9a9a; font-weight: 700;
+        }
+        #siteHeader .hdr-filters select {
+            appearance: none; -webkit-appearance: none;
+            border: none; border-bottom: 1px solid #e2e2e2; background: none;
+            padding: 4px 18px 6px 0;
+            font-family: inherit; font-size: 12.5px; font-weight: 600; color: #111;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat; background-position: right center; background-size: 12px;
+        }
+        #siteHeader .hdr-filters select:focus { outline: none; border-bottom-color: #111; }
+        #siteHeader .hdr-price { margin-top: 20px; padding-top: 18px; border-top: 1px solid #f0f0f0; }
+        #siteHeader .hdr-price .hf-label b { color: #111; }
+        #siteHeader .hdr-price input {
+            width: 100%; -webkit-appearance: none; appearance: none;
+            height: 2px; background: #e2e2e2; cursor: pointer; margin-top: 10px;
+        }
+        #siteHeader .hdr-price input::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+            background: #111; cursor: pointer;
+        }
+        #siteHeader .hdr-acts { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        #siteHeader .hdr-acts button {
+            border: none; background: none; cursor: pointer; font-family: inherit;
+            font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
+        }
+        #siteHeader .hdr-clear { color: #9a9a9a; padding: 6px 0; }
+        #siteHeader .hdr-clear:hover { color: #111; }
+        #siteHeader .hdr-apply { background: #111 !important; color: #fff; padding: 12px 26px !important; }
+        #siteHeader .hdr-apply:hover { background: #333 !important; }
+        @media (max-width: 900px) {
+            #siteHeader.scrolled .hdr-search, #siteHeader.sticky-look .hdr-search { display: none; }
+        }
         /* Header contents are ALWAYS dark — on every page, at every scroll position.
            (Pages that sit on a dark hero keep their own overrides.) */
         #siteHeader .header-left > a {
@@ -270,6 +369,31 @@
                 <a onclick="openSellerArea()">Seller Area</a>
             </div>
             <div class="logo" onclick="showMain()" style="cursor:pointer">VERO</div>
+
+            <!-- Search + filter: only visible once the header is sticky -->
+            <div class="hdr-search">
+                <button class="hdr-funnel" id="veroFunnel" onclick="veroToggleFilters(event)" aria-label="Filters" title="Filters">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                </button>
+                <input id="veroSearchInput" type="search" placeholder="Search products…"
+                       oninput="veroSearch(this.value)" autocomplete="off">
+            </div>
+
+            <div class="hdr-filters" id="veroFilters">
+                <div class="hf-grid" id="veroFilterGrid"><!-- fields built by veroBuildFilters --></div>
+                <div class="hdr-price">
+                    <span class="hf-label">Price — up to <b id="veroPriceOut">₪3000</b></span>
+                    <input type="range" id="veroPriceRange" min="0" max="3000" step="10" value="3000"
+                           oninput="veroPriceInput(this.value)">
+                </div>
+                <div class="hdr-acts">
+                    <button class="hdr-clear" onclick="veroClearFilters()">Clear all</button>
+                    <button class="hdr-apply" onclick="veroApplyFilters()">Apply</button>
+                </div>
+            </div>
+
             <div class="header-right">
                 <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
                     <span class="seg active" id="segArt">Art</span>
@@ -365,6 +489,96 @@
         document.body.style.overflow = '';
     };
     document.addEventListener('keydown', e => { if (e.key === 'Escape') window.veroCloseDrawer(); });
+
+    // ---- Search + filter panel ----
+    // The header owns the UI only. A page opts in by defining:
+    //   window.veroFilterOptions() -> { brand:[], type:[], seller:[], style:[], color:[], gender:[] }
+    //   window.veroOnFilters(filters)  — called on Apply / Clear
+    //   window.veroOnSearch(query)     — called as the user types
+    // Without those hooks the panel still opens, it just has nothing to drive.
+    const VERO_FILTER_FIELDS = [
+        { key: 'brand',  label: 'Brand' },
+        { key: 'type',   label: 'Product type' },
+        { key: 'seller', label: 'Seller' },
+        { key: 'style',  label: 'Style' },
+        { key: 'color',  label: 'Colour' },
+        { key: 'gender', label: 'Gender' }
+    ];
+    const VERO_PRICE_MAX = 3000;
+    let veroFilterState = { brand: '', type: '', seller: '', style: '', color: '', gender: '', maxPrice: VERO_PRICE_MAX };
+
+    window.veroBuildFilters = function () {
+        const grid = document.getElementById('veroFilterGrid');
+        if (!grid) return;
+        const opts = (typeof window.veroFilterOptions === 'function') ? (window.veroFilterOptions() || {}) : {};
+        grid.innerHTML = VERO_FILTER_FIELDS.map(f => {
+            const values = opts[f.key] || [];
+            const cur = veroFilterState[f.key];
+            return `
+                <label class="hf-field">
+                    <span class="hf-label">${f.label}</span>
+                    <select onchange="veroSetFilter('${f.key}', this.value)">
+                        <option value="">All</option>
+                        ${values.map(v => `<option value="${String(v).replace(/"/g, '&quot;')}"${v === cur ? ' selected' : ''}>${v}</option>`).join('')}
+                    </select>
+                </label>`;
+        }).join('');
+    };
+
+    window.veroSetFilter = function (key, value) { veroFilterState[key] = value; };
+
+    window.veroPriceInput = function (value) {
+        veroFilterState.maxPrice = Number(value);
+        const out = document.getElementById('veroPriceOut');
+        if (out) out.textContent = '₪' + value;
+    };
+
+    window.veroToggleFilters = function (e) {
+        if (e) e.stopPropagation();
+        const panel = document.getElementById('veroFilters');
+        const btn = document.getElementById('veroFunnel');
+        if (!panel) return;
+        const open = !panel.classList.contains('open');
+        if (open) window.veroBuildFilters();
+        panel.classList.toggle('open', open);
+        if (btn) btn.classList.toggle('on', open);
+    };
+
+    window.veroApplyFilters = function () {
+        if (typeof window.veroOnFilters === 'function') window.veroOnFilters({ ...veroFilterState });
+        window.veroToggleFilters();
+    };
+
+    window.veroClearFilters = function () {
+        veroFilterState = { brand: '', type: '', seller: '', style: '', color: '', gender: '', maxPrice: VERO_PRICE_MAX };
+        const range = document.getElementById('veroPriceRange');
+        const out = document.getElementById('veroPriceOut');
+        if (range) range.value = VERO_PRICE_MAX;
+        if (out) out.textContent = '₪' + VERO_PRICE_MAX;
+        window.veroBuildFilters();
+        if (typeof window.veroOnFilters === 'function') window.veroOnFilters({ ...veroFilterState });
+    };
+
+    window.veroSearch = function (query) {
+        if (typeof window.veroOnSearch === 'function') window.veroOnSearch(query);
+    };
+
+    // click outside / Escape closes the panel
+    document.addEventListener('click', e => {
+        const panel = document.getElementById('veroFilters');
+        if (!panel || !panel.classList.contains('open')) return;
+        if (e.target.closest('#veroFilters') || e.target.closest('#veroFunnel')) return;
+        panel.classList.remove('open');
+        const btn = document.getElementById('veroFunnel');
+        if (btn) btn.classList.remove('on');
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        const panel = document.getElementById('veroFilters');
+        if (panel) panel.classList.remove('open');
+        const btn = document.getElementById('veroFunnel');
+        if (btn) btn.classList.remove('on');
+    });
 
     // ---- Fallback handlers ----
     // On index.html these globals are the real SPA functions and win (their
