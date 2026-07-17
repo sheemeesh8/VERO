@@ -478,16 +478,14 @@
             right: var(--art-box-right);
             width: var(--art-box-w);
             background: #000;
-            /* copy back at the bottom; the magazine button sits to its right */
+            /* one column, pinned to the bottom: title → text → magazine → button */
             display: flex;
-            flex-direction: row;
-            align-items: flex-end;
-            justify-content: space-between;
-            gap: 40px;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-end;
             padding: 0 44px 48px;
             box-sizing: border-box;
         }
-        .htb-square-copy { flex: 1 1 auto; min-width: 0; }
         .htb-square-title {
             font-family: var(--font-sans);
             font-size: clamp(44px, 4.4vw, 72px);
@@ -506,63 +504,44 @@
             margin: 0;
             max-width: 460px;
         }
-        /* Round button to the right of the copy, caption underneath it */
-        .htb-square-mag {
-            flex: 0 0 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            background: none;
-            border: none;
-            padding: 0;
-            cursor: pointer;
+        /* What the magazine is, then a full-width rectangle into it */
+        .htb-square-magtext {
             font-family: var(--font-sans);
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 22px 0 0;
+            max-width: 460px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.18);
         }
-        .htb-square-mag .circle {
-            width: 68px;
-            height: 68px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.55);
-            background: none;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            transition: background 0.25s ease, color 0.25s ease;
-        }
-        .htb-square-mag:hover .circle { background: #fff; color: #111; }
-        .htb-square-mag .cap {
-            font-size: 10px;
+        .htb-square-mag {
+            width: 100%;
+            margin-top: 18px;
+            border: none;
+            border-radius: 0;
+            background: #fff;
+            color: #111;
+            font-family: var(--font-sans);
+            font-size: 12px;
             font-weight: 700;
-            letter-spacing: 1.6px;
+            letter-spacing: 1.8px;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.75);
-            white-space: nowrap;
+            padding: 16px 0;
+            cursor: pointer;
+            transition: background 0.25s ease;
         }
-        .htb-square-mag:hover .cap { color: #fff; }
+        .htb-square-mag:hover { background: rgba(255, 255, 255, 0.82); }
 
         /* The home view wears the sticky header's look from the top (header.js
            .sticky-look), so ART mode needs no header overrides of its own.
 
            One exception, home only: across the black square's own column the header
-           goes transparent, so the square runs through it unbroken. Both modes have
-           the square now. On scroll the solid white bar takes over. */
+           goes transparent, so the square runs through it unbroken. The gradient stops
+           are written by syncHeaderHole() from the square's measured position — a CSS
+           guess left a 1px sliver at some window widths. On scroll white takes over. */
         @media (min-width: 901px) {
-            /* --hdr-hole-right = the square's real distance from the right edge:
-               --art-box-right plus the hero's own 8px inset. Measured, not guessed. */
             #siteHeader.sticky-look:not(.scrolled) {
-                --hdr-hole-right: calc(var(--art-box-right) + 8px);
-                background: linear-gradient(
-                    to right,
-                    #fff 0,
-                    #fff calc(100% - var(--hdr-hole-right) - var(--art-box-w)),
-                    transparent calc(100% - var(--hdr-hole-right) - var(--art-box-w)),
-                    transparent calc(100% - var(--hdr-hole-right)),
-                    #fff calc(100% - var(--hdr-hole-right)),
-                    #fff 100%
-                );
                 border-bottom: none;
                 box-shadow: none;
             }
@@ -583,10 +562,10 @@
         @media (max-width: 900px) {
             .htb-inner { padding: 0 28px 28px; gap: 24px; }
             .htb-title { font-size: clamp(40px, 11vw, 72px); }
-            .htb-square { top: 0; bottom: 24px; right: 24px; width: 66vw; padding: 0 24px 28px; gap: 20px; }
+            .htb-square { top: 0; bottom: 24px; right: 24px; width: 66vw; padding: 0 24px 28px; }
             .htb-square-text { font-size: 13px; }
-            .htb-square-mag .circle { width: 52px; height: 52px; font-size: 16px; }
-            .htb-square-mag .cap { font-size: 9px; }
+            .htb-square-magtext { font-size: 11px; margin-top: 14px; padding-top: 14px; }
+            .htb-square-mag { font-size: 10px; padding: 13px 0; margin-top: 14px; }
         }
 
         /* ==================== GRID ==================== */
@@ -3750,14 +3729,10 @@
                     <button class="htb-about" onclick="openMenu()">About Us <span class="htb-arrow">&rarr;</span></button>
                 </div>
                 <div class="htb-square">
-                    <div class="htb-square-copy">
-                        <h2 class="htb-square-title" id="htbSquareTitle">Art</h2>
-                        <p class="htb-square-text" id="htbSquareText">Original works by independent artists — paintings, prints and one-of-a-kind pieces, collected in one place and ready to live on your wall.</p>
-                    </div>
-                    <button class="htb-square-mag" onclick="openMenu()" title="To the Magazine">
-                        <span class="circle">&rarr;</span>
-                        <span class="cap">To the Magazine</span>
-                    </button>
+                    <h2 class="htb-square-title" id="htbSquareTitle">Art</h2>
+                    <p class="htb-square-text" id="htbSquareText">Original works by independent artists — paintings, prints and one-of-a-kind pieces, collected in one place and ready to live on your wall.</p>
+                    <p class="htb-square-magtext" id="htbSquareMagText">The Gallery Magazine is where we write about the makers: studio visits, the story behind a piece, and how collectors actually live with the work they buy.</p>
+                    <button class="htb-square-mag" id="htbSquareMagBtn" onclick="openMenu()">To the Gallery Magazine</button>
                 </div>
             </div>
         </div>
@@ -4220,9 +4195,9 @@
             document.getElementById('wishlistContainer').style.display = 'none';
             document.getElementById('chatView').style.display = 'none';
             document.getElementById('chatListView').style.display = 'none';
-            // The home-only header look leaves with the home view.
+            // The home-only header look — and its inline hole — leave with the home view.
             const hdr = document.querySelector('header#siteHeader');
-            if (hdr) hdr.classList.remove('sticky-look');
+            if (hdr) { hdr.classList.remove('sticky-look'); hdr.style.background = ''; }
             if (typeof hideSiteFooter === 'function') hideSiteFooter();
         }
 
@@ -4232,6 +4207,7 @@
         function applyHomeHeaderLook() {
             const hdr = document.querySelector('header#siteHeader');
             if (hdr) hdr.classList.add('sticky-look');
+            syncHeaderHole();
         }
 
         // The hero's black square carries the copy of the OTHER half of the shop:
@@ -4239,11 +4215,15 @@
         const HERO_SQUARE_COPY = {
             art: {
                 title: 'Art',
-                text: 'Original works by independent artists — paintings, prints and one-of-a-kind pieces, collected in one place and ready to live on your wall.'
+                text: 'Original works by independent artists — paintings, prints and one-of-a-kind pieces, collected in one place and ready to live on your wall.',
+                magText: 'The Gallery Magazine is where we write about the makers: studio visits, the story behind a piece, and how collectors actually live with the work they buy.',
+                magCta: 'To the Gallery Magazine'
             },
             clothing: {
                 title: 'Clothing',
-                text: 'Pre-loved pieces with a past — denim, tailoring and everyday staples, chosen for quality and character and ready for their next wardrobe.'
+                text: 'Pre-loved pieces with a past — denim, tailoring and everyday staples, chosen for quality and character and ready for their next wardrobe.',
+                magText: 'The Closet Magazine is our editorial on second-hand fashion: styling notes, how to spot quality, and the people behind the pieces we sell.',
+                magCta: 'To the Closet Magazine'
             }
         };
 
@@ -4251,14 +4231,43 @@
             const copy = HERO_SQUARE_COPY[category] || HERO_SQUARE_COPY.art;
             const t = document.getElementById('htbSquareTitle');
             const p = document.getElementById('htbSquareText');
+            const m = document.getElementById('htbSquareMagText');
+            const b = document.getElementById('htbSquareMagBtn');
             if (t) t.textContent = copy.title;
             if (p) p.textContent = copy.text;
+            if (m) m.textContent = copy.magText;
+            if (b) b.textContent = copy.magCta;
+            syncHeaderHole();
         }
+
+        // Punch the header's transparent window to exactly where the black square is.
+        // Measured rather than computed in CSS: the square's offsets shift with the
+        // hero's own padding, and a fixed guess left a 1px sliver at some widths.
+        function syncHeaderHole() {
+            const hdr = document.querySelector('header#siteHeader');
+            const sq = document.querySelector('.htb-square');
+            if (!hdr || !sq) return;
+            if (!hdr.classList.contains('sticky-look') || hdr.classList.contains('scrolled')
+                || window.innerWidth < 901) {
+                hdr.style.background = '';        // fall back to the stylesheet
+                return;
+            }
+            const r = sq.getBoundingClientRect();
+            if (r.width < 2) { hdr.style.background = ''; return; }
+            // keep sub-pixel precision — rounding here leaves a hairline sliver
+            const l = r.left.toFixed(2);
+            const rt = r.right.toFixed(2);
+            hdr.style.background =
+                `linear-gradient(to right, #fff 0, #fff ${l}px, transparent ${l}px, ` +
+                `transparent ${rt}px, #fff ${rt}px, #fff 100%)`;
+        }
+        window.addEventListener('resize', syncHeaderHole);
 
         function showMain() {
             hideAllViews();
             document.getElementById('mainView').style.display = 'block';
             applyHomeHeaderLook();
+            applyHeroSquareCopy(currentCategory);
             // Clear URL params so refreshing always returns to home.
             if (location.search) {
                 history.replaceState(null, '', '/');
@@ -5038,6 +5047,8 @@
             // Transparent over the hero; solid + dark once scrolled past it.
             const hdr = document.querySelector('header');
             if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 80);
+            // the hole is inline, so it has to be re-applied / cleared on scroll
+            syncHeaderHole();
         });
 
         // ==================== PROMO SLIDER (Ferrari-style, multi-instance) ====================
@@ -6390,6 +6401,7 @@
             showCategoryPage(catParam, catParams.get('type') || 'clothing');
         } else {
             applyHomeHeaderLook();   // white sticky-style header from the top
+            applyHeroSquareCopy(currentCategory);   // square copy must match the mode on load
             renderFilters();
             renderCategories();
             renderFeedFilters();
