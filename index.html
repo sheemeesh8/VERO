@@ -1926,6 +1926,41 @@
         }
         .cart-acat .acat-buy { cursor: pointer; }
 
+        /* Black title box on the cart hero — same language as the home hero
+           square, and it runs up through the (sticky) header via syncHeaderHole. */
+        #cartHero { position: relative; }
+        .cart-square {
+            position: absolute;
+            top: 0;
+            bottom: 44px;
+            right: var(--art-box-right);
+            width: var(--art-box-w);
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 0 44px 48px;
+            box-sizing: border-box;
+            z-index: 2;
+        }
+        .cart-square-title {
+            font-family: var(--font-sans);
+            font-size: clamp(44px, 4.4vw, 72px);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.01em;
+            text-transform: uppercase;
+            color: #fff;
+            margin: 0;
+        }
+        /* Keep the hero copy clear of the black box (which starts ~360px from the left). */
+        .cart-acat .acat-hero-text { max-width: 250px; }
+        @media (max-width: 900px) {
+            .cart-square { position: static; width: auto; padding: 40px 28px; margin-top: 24px; }
+            .cart-acat .acat-hero-text { max-width: none; }
+        }
+
         .cart-tabs {
             display: flex;
             justify-content: flex-start;
@@ -3764,12 +3799,14 @@
     <section class="acat-hero cart-acat" id="cartHero" style="display:none">
         <div class="acat-hero-inner">
             <div class="acat-hero-text">
-                <h1 class="acat-title">/ My Cart</h1>
                 <p class="acat-desc" id="cartHeroDesc">Review the pieces you're about to make yours before you check out.</p>
                 <a class="acat-buy" onclick="checkout()">Checkout</a>
                 <div class="acat-details">Free returns within 14 days</div>
             </div>
-            <div class="achs" id="cartHeroSlider"><!-- cart items slider, populated by JS --></div>
+        </div>
+        <!-- Black title box, mirrors the home hero square (runs up through the sticky header) -->
+        <div class="cart-square">
+            <h1 class="cart-square-title">My Cart</h1>
         </div>
         <div class="acat-hero-foot">
             <div class="acat-counter">
@@ -4277,8 +4314,10 @@
         // hero's own padding, and a fixed guess left a 1px sliver at some widths.
         function syncHeaderHole() {
             const hdr = document.querySelector('header#siteHeader');
-            const sq = document.querySelector('.htb-square');
-            if (!hdr || !sq) return;
+            // Whichever hero black box is currently on screen (home square or cart box).
+            const sq = [document.querySelector('.htb-square'), document.querySelector('.cart-square')]
+                .find(el => el && el.getBoundingClientRect().width > 2);
+            if (!hdr || !sq) { if (hdr) hdr.style.background = ''; return; }
             if (!hdr.classList.contains('sticky-look') || hdr.classList.contains('scrolled')
                 || window.innerWidth < 901) {
                 hdr.style.background = '';        // fall back to the stylesheet
@@ -4321,6 +4360,10 @@
             document.getElementById('cartHero').style.display = 'block';
             document.getElementById('cartContainer').style.display = 'block';
             renderCartPage();
+            // Wear the sticky-header look so the black title box runs up through the header.
+            const hdr = document.querySelector('header#siteHeader');
+            if (hdr) hdr.classList.add('sticky-look');
+            syncHeaderHole();
             if (typeof showSiteFooter === 'function') showSiteFooter();
             window.scrollTo(0, 0);
         }
