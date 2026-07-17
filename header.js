@@ -213,7 +213,7 @@
         #siteHeader .hdr-clear:hover { color: #111; }
         #siteHeader .hdr-apply { background: #111 !important; color: #fff; padding: 12px 26px !important; }
         #siteHeader .hdr-apply:hover { background: #333 !important; }
-        @media (max-width: 1180px) {
+        @media (max-width: 1200px) {
             #siteHeader.scrolled .hdr-searchwrap, #siteHeader.sticky-look .hdr-searchwrap { display: none; }
         }
         /* Header contents are ALWAYS dark — on every page, at every scroll position.
@@ -295,7 +295,7 @@
         :root {
             --hdr-band-w: 873px;      /* width of the black band */
             --hdr-band-right: 44px;   /* band offset from the right edge */
-            --hdr-spread-w: 300px;    /* icon group clustered right, leaving room for the search pill */
+            --hdr-spread-w: 380px;    /* medium spread — roomier than clustered, still clears the search pill */
             --hdr-spread-right: 84px; /* icon group offset from the right edge */
         }
         @media (min-width: 901px) {
