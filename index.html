@@ -2270,10 +2270,11 @@
         .achs { position: relative; padding: 0 44px; font-family: var(--font-sans); }
         .achs-viewport { overflow: hidden; }
         .achs-track { display: flex; transition: transform 0.5s cubic-bezier(0.65,0.05,0.1,1); }
+        /* One product per slide */
         .achs-slide {
             flex: 0 0 100%;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr;
             gap: 20px;
         }
         .achs-card {
@@ -4367,7 +4368,8 @@
         // ---- Hero item slider: the pieces on the page, two per slide, auto-paging.
         // Mirrors the hero promo slider under the hero (hpGo/hpTrack) in behaviour.
         // One instance per host element (cart hero + wishlist hero), keyed by id.
-        const ACHS_INTERVAL = 3000;
+        const ACHS_INTERVAL = 4000;
+        const ACHS_MAX_ITEMS = 5;   // the hero slider shows at most five pieces
         const achs = {};   // wrapId -> { idx, timer, slideCount }
 
         function achsState(wrapId) {
@@ -4394,19 +4396,18 @@
         }
 
         // Build the slider for one hero. `items` is the cart / wishlist list.
-        function renderHeroSlider(wrapId, items, emptyText) {
+        // One product per slide, five slides at most.
+        function renderHeroSlider(wrapId, allItems, emptyText) {
             const wrap = document.getElementById(wrapId);
             if (!wrap) return;
             const st = achsState(wrapId);
             if (st.timer) { clearInterval(st.timer); st.timer = null; }
-            if (!items.length) {
+            if (!allItems.length) {
                 wrap.innerHTML = `<div class="achs-empty">${emptyText}</div>`;
                 return;
             }
-            const slides = [];
-            for (let i = 0; i < items.length; i += 2) {
-                slides.push(`<div class="achs-slide">${items.slice(i, i + 2).map(achsCardHTML).join('')}</div>`);
-            }
+            const items = allItems.slice(0, ACHS_MAX_ITEMS);
+            const slides = items.map(it => `<div class="achs-slide">${achsCardHTML(it)}</div>`);
             st.slideCount = slides.length;
             wrap.innerHTML = `
                 <button class="achs-arrow prev" aria-label="Previous" onclick="achsGo('${wrapId}', achs['${wrapId}'].idx - 1)">&#8249;</button>
