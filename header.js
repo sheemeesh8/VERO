@@ -53,12 +53,11 @@
             transform: translateY(-50%);
             z-index: 3;
         }
-        /* Scrolled (solid white) header: the field sits closer to the logo. Left
-           untouched in .sticky-look, where the hero's black box occupies that space. */
-        #siteHeader.scrolled:not(.hero-left-box) .hdr-searchwrap { left: 210px; }
-        /* ...and the logo sits centred in the gap, so the spacing to the hamburger on
-           its left and to the search field on its right is equal (~27px each). */
-        #siteHeader.scrolled:not(.hero-left-box) .logo { left: 69px !important; }
+        /* Logo + field keep the SAME positions before and after the header goes
+           sticky, so nothing shifts on scroll. The logo sits centred in the gap, with
+           equal spacing to the hamburger on its left and the field on its right. */
+        #siteHeader:not(.hero-left-box) .hdr-searchwrap { left: 210px; }
+        #siteHeader:not(.hero-left-box) .logo { left: 69px !important; }
         /* The rounded search field */
         #siteHeader .hdr-search {
             display: flex; align-items: center;
