@@ -1939,6 +1939,25 @@
             color: #111;
         }
         .cw-hero .acat-buy { cursor: pointer; }
+        /* Back to wherever the user opened cart / wishlist from. Sits above the
+           title inside the black square, quieter than the primary action. */
+        .cw-back {
+            align-self: center;
+            margin-bottom: 14px;
+            padding: 8px 18px;
+            border: 1px solid rgba(255,255,255,0.45);
+            border-radius: 999px;
+            background: transparent;
+            color: inherit;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .cw-back:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.8); }
         /* Square box, rather than the category hero's taller rectangle. Height is
            driven off the width, so it stays square at every viewport; the stretch
            the category box uses to fill the grid row is cancelled. */
@@ -3852,6 +3871,7 @@
     <section class="acat-hero cw-hero" id="cartHero" style="display:none">
         <div class="acat-hero-inner">
             <div class="acat-hero-text">
+                <button class="cw-back" onclick="cwGoBack()">&#8249; Back</button>
                 <h1 class="acat-title">/ My Cart</h1>
                 <p class="acat-desc" id="cartHeroDesc">Everything you've picked, gathered in one place. Take a last look, adjust what you need, and check out when it feels right.</p>
                 <a class="acat-buy" onclick="checkout()">Checkout</a>
@@ -3878,6 +3898,7 @@
     <section class="acat-hero cw-hero" id="wishlistHero" style="display:none">
         <div class="acat-hero-inner">
             <div class="acat-hero-text">
+                <button class="cw-back" onclick="cwGoBack()">&#8249; Back</button>
                 <h1 class="acat-title">/ My Wishlist</h1>
                 <p class="acat-desc" id="wishlistHeroDesc">The pieces you saved for later — keep them close until you're ready.</p>
                 <a class="acat-buy" onclick="moveWishlistToCart()">Move all to cart</a>
@@ -4434,7 +4455,37 @@
             setTimeout(() => window.scrollTo(0, 0), 50);
         }
 
+        // Where the Back button on the cart / wishlist heroes should return to.
+        // Captured the moment either page is opened, so it always points at the page
+        // the user actually came from rather than a fixed destination.
+        let cwReturn = null;
+        let lastCategory = null;   // { name, type } of the last category page shown
+
+        function captureCwReturn() {
+            if (document.getElementById('categoryView').style.display === 'block' && lastCategory) {
+                const { name, type } = lastCategory;
+                cwReturn = () => showCategoryPage(name, type);
+            } else if (document.getElementById('cartContainer').style.display === 'block' ||
+                       document.getElementById('wishlistContainer').style.display === 'block') {
+                // Cart -> wishlist (or back) keeps whatever origin we already had, so
+                // Back doesn't just bounce between the two overlay pages.
+                return;
+            } else {
+                cwReturn = showMain;
+            }
+        }
+
+        function cwGoBack() {
+            const back = cwReturn || showMain;
+            cwReturn = null;
+            // showCategoryPage only hides the home view, so clear the overlay pages here.
+            hideAllViews();
+            back();
+            window.scrollTo(0, 0);
+        }
+
         function openCart() {
+            captureCwReturn();
             hideAllViews();
             document.getElementById('cartHero').style.display = 'block';
             document.getElementById('cartContainer').style.display = 'block';
@@ -4445,6 +4496,7 @@
         }
 
         function openWishlist() {
+            captureCwReturn();
             hideAllViews();
             document.getElementById('wishlistHero').style.display = 'block';
             document.getElementById('wishlistContainer').style.display = 'block';
@@ -6196,6 +6248,7 @@
         }
 
         function showCategoryPage(catName, type) {
+            lastCategory = { name: catName, type };
             document.getElementById('mainView').style.display = 'none';
             const view = document.getElementById('categoryView');
             view.style.display = 'block';
