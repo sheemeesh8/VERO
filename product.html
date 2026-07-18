@@ -226,44 +226,56 @@
             align-items: start;
         }
 
-        /* Gallery half: main image + three thumbnails underneath */
+        /* Gallery half: one photograph filling the side, the rest inside it */
         .product-banner-image {
             min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
         }
 
-        /* The first shot fills the whole half of the screen. */
+        /* The main shot takes the whole width and height of this half. */
         .pd-main-img {
+            position: relative;
             width: 100%;
-            height: calc(100vh - 190px);
-            min-height: 420px;
+            height: calc(100vh - 150px);
+            min-height: 460px;
             background: #f4f3f1;
+            overflow: hidden;
+        }
+        /* The frame the shot is painted into — swapping shots never touches the
+           thumbnails, which live alongside it. */
+        .pd-main-frame {
+            position: absolute;
+            inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
         }
-        .pd-main-img img { width: 100%; height: 100%; object-fit: cover; }
+        .pd-main-frame img { width: 100%; height: 100%; object-fit: cover; }
 
         .product-banner-icon {
             font-size: 190px;
             line-height: 1;
         }
 
-        /* The seller's other shots sit under it as small squares. */
+        /* The seller's other shots sit inside the main photograph, along its
+           bottom edge, as squares. */
         .pd-thumbs {
+            position: absolute;
+            left: 24px;
+            bottom: 24px;
+            z-index: 2;
             display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
+            gap: 14px;
         }
         .pd-thumb {
-            width: 88px;
-            height: 88px;
+            width: 116px;
+            height: 116px;
             flex: 0 0 auto;
-            background: #f4f3f1;
-            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.82);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.9);
             padding: 0;
             cursor: pointer;
             overflow: hidden;
@@ -277,6 +289,13 @@
         .pd-thumb img { width: 100%; height: 100%; object-fit: cover; }
         .pd-thumb:hover { opacity: 1; }
         .pd-thumb.active { border-color: #111; opacity: 1; }
+        .pd-thumb:focus-visible { outline: 3px solid #111; outline-offset: 3px; }
+
+        @media (max-width: 900px) {
+            .pd-main-img { height: 62vh; min-height: 360px; }
+            .pd-thumbs { left: 14px; bottom: 14px; gap: 10px; }
+            .pd-thumb { width: 84px; height: 84px; }
+        }
 
         /* Data half — minimal: type kicker, name, price, hairline rules */
         .product-banner-info {
@@ -577,10 +596,12 @@
             </div>
             <div class="product-banner-image">
                 <div class="pd-main-img" id="pdMainImg">
-                    <div class="product-banner-icon" id="productIcon">🎨</div>
+                    <div class="pd-main-frame" id="pdMainFrame">
+                        <div class="product-banner-icon" id="productIcon">🎨</div>
+                    </div>
+                    <!-- the other shots, inside the photograph; click to swap them in -->
+                    <div class="pd-thumbs" id="pdThumbs"></div>
                 </div>
-                <!-- three more shots of the item; click to swap into the main frame -->
-                <div class="pd-thumbs" id="pdThumbs"></div>
             </div>
         </div>
     </div>
@@ -670,11 +691,12 @@
         // Clicking a thumbnail swaps it into the main frame.
         function galleryShots(product) {
             const seed = encodeURIComponent(product.name || 'vero');
+            // A listing carries three photographs — the main one plus two others,
+            // the same three the upload wizard asks the seller for.
             return [
                 { icon: product.icon },                                    // the item's own icon
                 { src: `https://picsum.photos/seed/${seed}-a/900/900` },
-                { src: `https://picsum.photos/seed/${seed}-b/900/900` },
-                { src: `https://picsum.photos/seed/${seed}-c/900/900` }
+                { src: `https://picsum.photos/seed/${seed}-b/900/900` }
             ];
         }
 
@@ -694,7 +716,7 @@
         function showShot(i) {
             const shot = galleryItems[i];
             if (!shot) return;
-            const main = document.getElementById('pdMainImg');
+            const main = document.getElementById('pdMainFrame');
             main.innerHTML = shot.src
                 ? `<img src="${shot.src}" alt="${currentProduct ? currentProduct.name : ''}">`
                 : `<div class="product-banner-icon" id="productIcon">${shot.icon || '🛍️'}</div>`;
