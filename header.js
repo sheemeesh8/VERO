@@ -332,7 +332,20 @@
             body:not([data-sticky="plain"]) #siteHeader.sticky-look .upload-plus {
                 animation: none !important; box-shadow: none !important;
             }
+
+            /* ---- hero-left-box: pages whose hero black box sits on the LEFT (category
+               / results). Hamburger, logo and the search pill all shift right so the
+               whole group lands inside the black rectangle. ---- */
+            #siteHeader.hero-left-box .header-left { left: 56px !important; }
+            #siteHeader.hero-left-box .logo { left: 98px !important; }
+            #siteHeader.hero-left-box.sticky-look .hdr-searchwrap,
+            #siteHeader.hero-left-box.scrolled .hdr-searchwrap { left: 220px; }
+            #siteHeader.hero-left-box .hdr-search { width: min(380px, 26vw); }
         }
+        /* Over the black box the left-hand contents go white (the icon group on the
+           right already does this via .sticky-look). */
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .logo,
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .vero-hamburger { color: #fff !important; }
         /* Force-dark: black header contents on light pages (e.g. buyer/seller area),
            regardless of scroll position and without the solid white background. */
         #siteHeader.force-dark .header-left > a,
