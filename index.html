@@ -49,6 +49,8 @@
             /* The site's big copy boxes — home hero, category / cart / wishlist hero,
                split-section half. Pantone 5605 C. */
             --box-dark: #22372B;
+            /* Hover shade for the solid buttons that carry --box-dark. */
+            --box-dark-hover: #2E4A3A;
         }
 
         * {
@@ -461,7 +463,7 @@
             gap: 32px;
             border: none;
             cursor: pointer;
-            background: #111;
+            background: var(--box-dark);
             color: #fff;
             font-family: var(--font-sans);
             font-size: 15px;
@@ -471,7 +473,7 @@
             padding: 16px 28px;
             transition: background 0.25s ease;
         }
-        .htb-about:hover { background: #333; }
+        .htb-about:hover { background: var(--box-dark-hover); }
         .htb-arrow { font-size: 18px; transition: transform 0.25s ease; }
         .htb-about:hover .htb-arrow { transform: translateX(5px); }
 
@@ -676,7 +678,7 @@
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            background: #111;
+            background: var(--box-dark);
             color: #fff;
             border: none;
             cursor: pointer;
@@ -690,7 +692,7 @@
             font-family: 'Inter', 'Segoe UI', sans-serif;
         }
 
-        .hero-cta:hover { background: #000; transform: translateY(-2px); }
+        .hero-cta:hover { background: var(--box-dark-hover); transform: translateY(-2px); }
         .hero-cta .arrow { transition: transform 0.3s; font-size: 15px; }
         .hero-cta:hover .arrow { transform: translateX(5px); }
 
@@ -2602,16 +2604,23 @@
             direction: rtl;
             display: flex;
             flex-direction: column;
-            max-width: 520px;
+            /* Desktop deal room: a wide panel rather than a phone-width column.
+               The inner rows cap their own content width so lines stay readable. */
+            max-width: 1180px;
             margin: 0 auto;
             box-shadow: 0 0 60px rgba(0,0,0,0.06);
             z-index: 90;
+        }
+        /* Shared content rail — header, feed and deck all line up on it. */
+        .vchat-head, .vchat-feed, .vchat-persona, .vchat-upper, .vchat-bottom {
+            width: min(100%, 980px);
+            margin-inline: auto;
         }
 
         /* A. Pinned product header */
         .vchat-head {
             flex: 0 0 auto;
-            height: 72px;
+            height: 96px;
             display: flex;
             align-items: center;
             gap: 14px;
@@ -2679,16 +2688,16 @@
         .vchat-feed {
             flex: 1 1 auto;
             overflow-y: auto;
-            padding: 20px 16px 28px;
+            padding: 28px 24px 34px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
         .vbubble {
-            max-width: 78%;
-            padding: 12px 16px;
+            max-width: 62%;
+            padding: 14px 20px;
             font-family: var(--f-sans);
-            font-size: 14px;
+            font-size: 15px;
             line-height: 1.5;
             border-radius: 2px;
         }
@@ -2768,22 +2777,24 @@
             border-top: 1px solid var(--c-line);
             background: var(--c-bg);
         }
+        /* On a wide screen the query buttons read as a row of tiles rather than a
+           strip the user has to scroll sideways. */
         .vchat-upper {
             display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding: 14px 16px;
-            scrollbar-width: none;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 18px 24px;
         }
-        .vchat-upper::-webkit-scrollbar { display: none; }
         .vpill {
-            flex: 0 0 auto;
+            flex: 1 1 200px;
+            max-width: 300px;
+            text-align: center;
             border: 1px solid var(--c-line);
             background: transparent;
             color: var(--c-ink);
             font-family: var(--f-sans);
-            font-size: 13px;
-            padding: 10px 16px;
+            font-size: 14px;
+            padding: 14px 18px;
             border-radius: 2px;
             cursor: pointer;
             white-space: nowrap;
@@ -2791,7 +2802,26 @@
         }
         .vpill:hover { border-color: var(--c-ink); }
         .vpill.special { color: var(--c-terra); border-color: rgba(138,79,79,0.4); }
-        .vchat-upper.empty { padding: 8px 16px; }
+        .vchat-upper.empty { padding: 12px 24px; }
+        /* Bot "typing" dots, shown while a canned answer is on its way. */
+        .vtyping {
+            align-self: flex-end;
+            display: flex; gap: 5px;
+            padding: 14px 20px;
+            background: var(--c-cream);
+            border-radius: 2px;
+        }
+        .vtyping span {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--c-mute);
+            animation: vtype 1.1s infinite ease-in-out;
+        }
+        .vtyping span:nth-child(2) { animation-delay: 0.18s; }
+        .vtyping span:nth-child(3) { animation-delay: 0.36s; }
+        @keyframes vtype {
+            0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+            30% { opacity: 1; transform: translateY(-3px); }
+        }
         .vchat-hint { font-family: var(--f-sans); font-size: 12px; color: var(--c-mute); padding: 4px 2px; }
 
         .vchat-bottom {
@@ -6439,6 +6469,12 @@
             document.getElementById('vchatModal').style.display = 'none';
             vchatRenderAll();
             vchatStartTimer();
+            // The chat opens on the automatic "still available?" question — the bot
+            // answers it the moment the room is entered, once.
+            if (VCHAT.pending && VCHAT.pending.type === 'AVAILABILITY') {
+                VCHAT.pending = null;
+                vchatBotReply('AVAILABILITY');
+            }
         }
 
         // Called at checkout — open a chat per distinct seller in the cart, each
@@ -6545,20 +6581,62 @@
             };
             vchatAdd('BUYER', 'TEXT', labels[type]);
             VCHAT.submenu = false;
+            VCHAT.pending = null;
 
-            if (type === 'SIMILAR') {           // fully automatic — no seller action
-                setTimeout(() => vchatAdd('SYSTEM', 'TEXT', 'המערכת אספה פריטים דומים במידתך מהארון של המוכר'), 350);
-                setTimeout(() => vchatAdd('SYSTEM', 'PRODUCT_CAROUSEL', VCHAT_SIMILAR), 500);
-            } else if (type === 'RETURNS') {    // automatic DB pull
-                setTimeout(() => vchatAdd('SYSTEM', 'TEXT', VCHAT_RETURN), 350);
-            } else if (type === 'RECHECK') {
-                // Re-verification reuses the same seller availability prompt the chat
-                // opens with, so the seller sees one consistent pair of buttons.
-                VCHAT.pending = { type: 'AVAILABILITY' };
-            } else {                            // needs a seller response
-                VCHAT.pending = { type };
-            }
+            // Every query is answered by the bot straight from the seller's profile
+            // data — the seller never has to be online for the buyer to get an answer.
+            vchatBotReply(type);
             vchatRenderDeck();
+        }
+
+        // Typing indicator, then the canned answer for `type`.
+        function vchatBotReply(type) {
+            vchatTyping(true);
+            setTimeout(() => {
+                vchatTyping(false);
+                if (VCHAT.status === 'INITIATED') VCHAT.status = 'ACTIVE';
+                switch (type) {
+                    case 'RECHECK':
+                    case 'AVAILABILITY':
+                        vchatAdd('SELLER', 'TEXT', 'כן, הפריט זמין וממתין לך 🙂');
+                        vchatAdd('SYSTEM', 'TEXT', 'המוכר אישר את זמינות הפריט. אפשר להמשיך בתיאום המפגש.', 'good');
+                        break;
+                    case 'LOCATION':
+                        vchatSellerRespond('LOCATION');
+                        return;
+                    case 'HOURS':
+                        vchatSellerRespond('HOURS');
+                        return;
+                    case 'SIMILAR':
+                        vchatAdd('SYSTEM', 'TEXT', 'המערכת אספה פריטים דומים במידתך מהארון של המוכר');
+                        vchatAdd('SYSTEM', 'PRODUCT_CAROUSEL', VCHAT_SIMILAR);
+                        break;
+                    case 'RETURNS':
+                        vchatAdd('SYSTEM', 'TEXT', VCHAT_RETURN);
+                        break;
+                    case 'DEFECTS':
+                        vchatSellerRespond('NO_DEFECT');
+                        return;
+                    case 'LATE':
+                        vchatSellerRespond('LATE_OK');
+                        return;
+                }
+                vchatRenderDeck();
+            }, 900);
+        }
+
+        // A "seller is typing…" row that lives outside the message list, so it never
+        // ends up in the transcript.
+        function vchatTyping(on) {
+            const feed = document.getElementById('vchatFeed');
+            if (!feed) return;
+            const old = feed.querySelector('.vtyping');
+            if (old) old.remove();
+            if (on) {
+                feed.insertAdjacentHTML('beforeend',
+                    '<div class="vtyping"><span></span><span></span><span></span></div>');
+                feed.scrollTop = feed.scrollHeight;
+            }
         }
 
         /* ---- Seller responses ---- */

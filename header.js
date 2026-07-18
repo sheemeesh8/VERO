@@ -179,13 +179,13 @@
             font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #9a9a9a; font-weight: 700;
         }
         #siteHeader .hdr-results {
-            width: 100%; background: #111; color: #fff; border: none; cursor: pointer;
+            width: 100%; background: #22372B; color: #fff; border: none; cursor: pointer;
             padding: 16px 24px; font-family: inherit; font-size: 12px; font-weight: 700;
             letter-spacing: 1.6px; text-transform: uppercase;
             display: flex; align-items: center; justify-content: center; gap: 10px;
             transition: background 0.2s;
         }
-        #siteHeader .hdr-results:hover { background: #333; }
+        #siteHeader .hdr-results:hover { background: #2E4A3A; }
         #siteHeader .hdr-results .arrow { font-size: 14px; }
         @media (max-width: 820px) {
             #siteHeader .hdr-inner { grid-template-columns: 1fr; gap: 26px; }
@@ -225,8 +225,8 @@
         }
         #siteHeader .hdr-clear { color: #9a9a9a; padding: 6px 0; }
         #siteHeader .hdr-clear:hover { color: #111; }
-        #siteHeader .hdr-apply { background: #111 !important; color: #fff; padding: 12px 26px !important; }
-        #siteHeader .hdr-apply:hover { background: #333 !important; }
+        #siteHeader .hdr-apply { background: #22372B !important; color: #fff; padding: 12px 26px !important; }
+        #siteHeader .hdr-apply:hover { background: #2E4A3A !important; }
         @media (max-width: 1200px) {
             #siteHeader .hdr-searchwrap { display: none; }
         }
