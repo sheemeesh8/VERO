@@ -56,8 +56,8 @@
         /* Logo + field keep the SAME positions before and after the header goes
            sticky, so nothing shifts on scroll. The logo sits centred in the gap, with
            equal spacing to the hamburger on its left and the field on its right. */
-        #siteHeader:not(.hero-left-box) .hdr-searchwrap { left: 210px; }
-        #siteHeader:not(.hero-left-box) .logo { left: 69px !important; }
+        #siteHeader .hdr-searchwrap { left: 210px; }
+        #siteHeader .logo { left: 69px !important; }
         /* The rounded search field */
         #siteHeader .hdr-search {
             display: flex; align-items: center;
@@ -302,59 +302,49 @@
         #siteHeader.scrolled .icon-btn svg { stroke: #111 !important; }
         #siteHeader.scrolled .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
 
-        /* ===== Sticky (scrolled) header layout — shared across the whole site =====
-           White left area (hamburger + logo), a black band on the right holding the
-           icons spread evenly. Same fixed sizing/spacing on every page. Pages opt out
-           with <body data-sticky="plain"> (e.g. the product page and the upload view). */
+        /* ===== Header layout — one geometry for every header on the site =====
+           White left area (hamburger + logo), the search field beside it, and the icon
+           group spread evenly on the right. Identical before and after the header goes
+           sticky, and identical on every page. Pages opt out with
+           <body data-sticky="plain"> (e.g. the product page and the upload view). */
         :root {
             --hdr-band-w: 873px;      /* width of the black band */
             --hdr-band-right: 44px;   /* band offset from the right edge */
-            --hdr-spread-w: 380px;    /* medium spread — roomier than clustered, still clears the search pill */
-            --hdr-spread-right: 84px; /* icon group offset from the right edge */
+            /* Fixed spread, matching the home header. Shrinks with the viewport so the
+               group never collides with the search field on narrower desktops. */
+            /* 778px = the search field's right edge (624px) + a 26px gap + the 128px
+               offset below, so the icons never run into the field. */
+            --hdr-spread-w: min(749px, calc(100vw - 778px));
+            --hdr-spread-right: 128px; /* icon group offset from the right edge */
         }
         @media (min-width: 901px) {
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-container,
-            body:not([data-sticky="plain"]) #siteHeader.sticky-look .header-container {
+            body:not([data-sticky="plain"]) #siteHeader .header-container {
                 position: relative;
                 min-height: 56px; /* all groups go absolute below → keep header height */
                 z-index: 1;
             }
             /* left: hamburger + logo only (nav links live in the drawer here) */
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-left,
-            body:not([data-sticky="plain"]) #siteHeader.sticky-look .header-left {
+            body:not([data-sticky="plain"]) #siteHeader .header-left {
                 position: absolute; left: 16px; top: 50%;
                 transform: translateY(-50%); margin: 0;
             }
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-left > a:not(.vero-hamburger),
-            body:not([data-sticky="plain"]) #siteHeader.sticky-look .header-left > a:not(.vero-hamburger) {
+            body:not([data-sticky="plain"]) #siteHeader .header-left > a:not(.vero-hamburger) {
                 display: none;
             }
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .logo,
-            body:not([data-sticky="plain"]) #siteHeader.sticky-look .logo {
+            body:not([data-sticky="plain"]) #siteHeader .logo {
                 position: absolute; left: 58px; top: 0; height: 56px;
                 display: flex; align-items: center; margin: 0; padding-left: 0; color: #111;
             }
             /* right: the icon group spreads evenly across the right side */
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .header-right,
-            body:not([data-sticky="plain"]) #siteHeader.sticky-look .header-right {
+            body:not([data-sticky="plain"]) #siteHeader .header-right {
                 position: absolute; top: 50%; transform: translateY(-50%);
                 right: var(--hdr-spread-right); left: auto;
                 width: var(--hdr-spread-w);
                 justify-content: space-between; gap: 0;
             }
-            body:not([data-sticky="plain"]) #siteHeader.scrolled .upload-plus,
-            body:not([data-sticky="plain"]) #siteHeader.sticky-look .upload-plus {
+            body:not([data-sticky="plain"]) #siteHeader .upload-plus {
                 animation: none !important; box-shadow: none !important;
             }
-
-            /* ---- hero-left-box: pages whose hero black box sits on the LEFT (category
-               / results). Hamburger, logo and the search pill all shift right so the
-               whole group lands inside the black rectangle. ---- */
-            #siteHeader.hero-left-box .header-left { left: 56px !important; }
-            #siteHeader.hero-left-box .logo { left: 98px !important; }
-            #siteHeader.hero-left-box.sticky-look .hdr-searchwrap,
-            #siteHeader.hero-left-box.scrolled .hdr-searchwrap { left: 220px; }
-            #siteHeader.hero-left-box .hdr-search { width: min(380px, 26vw); }
         }
         /* Over the black box the left-hand contents go white (the icon group on the
            right already does this via .sticky-look). */
