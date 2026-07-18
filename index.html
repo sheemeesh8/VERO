@@ -4383,14 +4383,29 @@
             const sq = [document.querySelector('.htb-square'), document.querySelector('.cart-square'),
                         ...document.querySelectorAll('.acat-hero-text')]
                 .find(el => el && el.getBoundingClientRect().width > 2);
-            if (!hdr || !sq) { if (hdr) hdr.style.background = ''; return; }
+            // Icon spread follows the black box; cleared whenever the hole is.
+            const clearSpread = () => {
+                hdr.style.removeProperty('--hdr-spread-w');
+                hdr.style.removeProperty('--hdr-spread-right');
+            };
+            if (!hdr || !sq) { if (hdr) { hdr.style.background = ''; clearSpread(); } return; }
             if (!hdr.classList.contains('sticky-look') || hdr.classList.contains('scrolled')
                 || window.innerWidth < 901) {
                 hdr.style.background = '';        // fall back to the stylesheet
+                clearSpread();
                 return;
             }
             const r = sq.getBoundingClientRect();
-            if (r.width < 2) { hdr.style.background = ''; return; }
+            if (r.width < 2) { hdr.style.background = ''; clearSpread(); return; }
+            // Before sticky kicks in, spread the icons across the FULL width of the black
+            // box (home / cart). Skipped where the box is on the left and holds the logo.
+            if (hdr.classList.contains('hero-left-box')) {
+                clearSpread();
+            } else {
+                const pad = 34;
+                hdr.style.setProperty('--hdr-spread-w', `${Math.max(r.width - pad * 2, 200).toFixed(2)}px`);
+                hdr.style.setProperty('--hdr-spread-right', `${Math.max(window.innerWidth - r.right + pad, 0).toFixed(2)}px`);
+            }
             // keep sub-pixel precision — rounding here leaves a hairline sliver
             const l = r.left.toFixed(2);
             const rt = r.right.toFixed(2);
