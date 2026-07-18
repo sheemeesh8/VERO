@@ -1928,76 +1928,8 @@
         }
         .cart-acat .acat-buy { cursor: pointer; }
 
-        /* Black box on the cart hero — same language as the home hero square,
-           holds ALL the cart-hero copy, and runs up through the (sticky) header
-           via syncHeaderHole. */
-        #cartHero { position: relative; min-height: 82vh; }
-        .cart-square {
-            position: absolute;
-            top: 0;
-            bottom: 44px;
-            right: var(--art-box-right);
-            width: var(--art-box-w);
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: flex-end;
-            padding: 0 56px 56px;
-            box-sizing: border-box;
-            z-index: 2;
-        }
-        .cart-square-title {
-            font-family: var(--font-sans);
-            font-size: clamp(44px, 4.4vw, 72px);
-            font-weight: 700;
-            line-height: 1;
-            letter-spacing: -0.01em;
-            text-transform: uppercase;
-            color: #fff;
-            margin: 0 0 18px;
-        }
-        .cart-square-desc {
-            font-family: var(--font-sans);
-            font-size: 15px;
-            line-height: 1.65;
-            color: rgba(255, 255, 255, 0.72);
-            margin: 0 0 28px;
-            max-width: 460px;
-        }
-        .cart-square-buy {
-            display: inline-block;
-            background: none;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            color: #fff;
-            padding: 15px 40px;
-            font-family: var(--font-sans);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 1.6px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-        }
-        .cart-square-buy:hover { background: #fff; color: #000; }
-        .cart-square-foot {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-top: 30px;
-        }
-        .cart-square-count { font-family: var(--font-sans); font-size: 22px; font-weight: 700; color: #fff; }
-        .cart-square-line { width: 60px; height: 1px; background: rgba(255, 255, 255, 0.35); }
-        .cart-square-dim {
-            font-family: var(--font-sans);
-            font-size: 12px; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.5);
-        }
-        @media (max-width: 900px) {
-            #cartHero { min-height: 0; }
-            .cart-square {
-                position: static; width: auto; padding: 120px 28px 48px;
-            }
-        }
+        /* The cart hero is built from the shared .acat-hero parts (same as the
+           wishlist hero), so it needs no black-box styles of its own. */
 
         .cart-tabs {
             display: flex;
@@ -3865,17 +3797,23 @@
 
     <!-- ==================== SHOPPING CART PAGE ==================== -->
     <div id="cartView" style="display:none"></div>
+    <!-- Same structure as the wishlist hero below: black text box on the left,
+         item slider on the right, counter in the foot. -->
     <section class="acat-hero cart-acat" id="cartHero" style="display:none">
-        <!-- All the cart-hero data sits INSIDE the black box, mirroring the home
-             hero square, and the box runs up through the sticky header. -->
-        <div class="cart-square">
-            <h1 class="cart-square-title">My Cart</h1>
-            <p class="cart-square-desc" id="cartHeroDesc">Review the pieces you're about to make yours before you check out.</p>
-            <a class="cart-square-buy" onclick="checkout()">Checkout</a>
-            <div class="cart-square-foot">
-                <span class="cart-square-count" id="cartHeroCount">00</span>
-                <span class="cart-square-line"></span>
-                <span class="cart-square-dim">items in cart · free returns within 14 days</span>
+        <div class="acat-hero-inner">
+            <div class="acat-hero-text">
+                <h1 class="acat-title">/ My Cart</h1>
+                <p class="acat-desc" id="cartHeroDesc">Review the pieces you're about to make yours before you check out.</p>
+                <a class="acat-buy" onclick="checkout()">Checkout</a>
+                <div class="acat-details">Free returns within 14 days</div>
+            </div>
+            <div class="achs" id="cartHeroSlider"><!-- cart items slider, populated by JS --></div>
+        </div>
+        <div class="acat-hero-foot">
+            <div class="acat-counter">
+                <span id="cartHeroCount">00</span>
+                <span class="acat-line"></span>
+                <span class="dim">items in cart</span>
             </div>
         </div>
     </section>
@@ -4391,9 +4329,9 @@
         // hero's own padding, and a fixed guess left a 1px sliver at some widths.
         function syncHeaderHole() {
             const hdr = document.querySelector('header#siteHeader');
-            // Whichever hero black box is currently on screen (home square, cart box,
-            // or the category/results hero box).
-            const sq = [document.querySelector('.htb-square'), document.querySelector('.cart-square'),
+            // Whichever hero black box is currently on screen. Only the home hero can
+            // reach the header now — cart, wishlist and category views have no header.
+            const sq = [document.querySelector('.htb-square'),
                         ...document.querySelectorAll('.acat-hero-text')]
                 .find(el => el && el.getBoundingClientRect().width > 2);
             // The icon spread is a fixed, site-wide value in header.js — this only
@@ -4450,10 +4388,7 @@
             document.getElementById('cartHero').style.display = 'block';
             document.getElementById('cartContainer').style.display = 'block';
             renderCartPage();
-            // Wear the sticky-header look so the black title box runs up through the header.
-            const hdr = document.querySelector('header#siteHeader');
-            if (hdr) hdr.classList.add('sticky-look');
-            syncHeaderHole();
+            hideSiteHeader();
             if (typeof showSiteFooter === 'function') showSiteFooter();
             window.scrollTo(0, 0);
         }
@@ -4463,6 +4398,7 @@
             document.getElementById('wishlistHero').style.display = 'block';
             document.getElementById('wishlistContainer').style.display = 'block';
             renderWishlistPage();
+            hideSiteHeader();
             if (typeof showSiteFooter === 'function') showSiteFooter();
             window.scrollTo(0, 0);
         }
