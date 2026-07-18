@@ -2797,6 +2797,8 @@
             --c-sage: #3D4A3E; --c-terra: #8A4F4F; --c-cream: #F1EFEA;
             --f-serif: 'Playfair Display', Garamond, Georgia, serif;
             --f-sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            /* Sits below the fixed site header (z-index 100) so nothing scrolls over it. */
+            --vinbox-top: 72px;
             position: fixed; inset: 0;
             background: var(--c-bg); color: var(--c-ink);
             direction: rtl;
@@ -2804,7 +2806,8 @@
         }
         .vinbox-head {
             flex: 0 0 auto; display: flex; align-items: center; gap: 14px;
-            padding: 26px 5vw; border-bottom: 1px solid var(--c-line);
+            padding: calc(var(--vinbox-top) + 18px) 5vw 22px; border-bottom: 1px solid var(--c-line);
+            background: var(--c-bg);
         }
         .vinbox-close { border: none; background: none; cursor: pointer; font-size: 26px; color: var(--c-ink); line-height: 1; }
         .vinbox-kicker { display: block; font-family: var(--f-sans); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--c-mute); }
@@ -2833,18 +2836,23 @@
         }
         .vinbox-empty { padding: 60px 30px; text-align: center; color: var(--c-mute); font-family: var(--f-sans); font-size: 14px; line-height: 1.7; }
         /* Card: enlarged · content pinned right, image on the left */
-        /* No fill — the rows still sit on the inbox background. The only frame is an
-           age border: green when the chat is fresh, red as it nears the 48h window
-           (colour set inline per row by vchatAgeColor). */
+        /* Quiet rows: one hairline separator, no coloured frames. The 48h deadline is
+           carried by the countdown line instead of by border colour. */
         .vinbox-item {
             display: flex; align-items: center; gap: 33px;
             text-align: right; cursor: pointer;
-            background: none; border-radius: 10px;
-            border: 2px solid #ccc;      /* colour overridden inline per chat */
+            background: none; border: none; border-radius: 10px;
+            box-shadow: inset 0 -1px 0 var(--c-line);
             padding: 22px 26px; font-family: var(--f-sans);
-            transition: opacity 0.2s;
+            transition: background 0.2s;
         }
-        .vinbox-item:hover { opacity: 0.65; }
+        .vinbox-item:hover { background: var(--c-cream); }
+        .vinbox-deadline {
+            font-size: 15px; color: var(--c-mute); margin-bottom: 14px;
+            letter-spacing: 0.5px; font-variant-numeric: tabular-nums;
+        }
+        .vinbox-deadline.urgent { color: var(--c-terra); }
+        .vinbox-deadline.expired { color: var(--c-mute); text-decoration: line-through; }
         .vinbox-mid { flex: 1; min-width: 0; order: 1; }   /* content → right */
         .vinbox-img {
             width: 126px; height: 126px; border-radius: 10px; flex: 0 0 auto; order: 2;  /* image → left */
@@ -5329,6 +5337,8 @@
         }
 
         function openUploadProduct() {
+            // The upload view opts out of the black-band sticky header.
+            document.body.setAttribute('data-sticky', 'plain');
             document.getElementById('uploadProductView').style.display = 'block';
             document.getElementById('categorySelectorFull').classList.add('active');
             document.getElementById('uploadContainer').style.display = 'none';
@@ -5338,6 +5348,7 @@
         }
 
         function closeUploadProduct() {
+            document.body.removeAttribute('data-sticky');
             document.getElementById('uploadProductView').style.display = 'none';
             document.getElementById('categorySelectorFull').classList.remove('active');
             document.getElementById('uploadContainer').style.display = 'none';
@@ -6234,6 +6245,13 @@
             vchatRenderInbox();
             document.getElementById('chatListView').style.display = 'block';
             window.scrollTo(0, 0);
+            // Keep the 48h holds ticking while the inbox is on screen.
+            clearInterval(window.__vinboxTick);
+            window.__vinboxTick = setInterval(() => {
+                if (document.getElementById('chatListView').style.display === 'none') {
+                    clearInterval(window.__vinboxTick);
+                } else vchatRenderInbox();
+            }, 30000);
         }
 
         function vchatSeed() {
@@ -6256,15 +6274,17 @@
         };
         const VCHAT_STEP = { INITIATED: 1, ACTIVE: 2, BUYER_REPORTED: 3, SELLER_REPORTED: 4, COMPLETED: 5, CANCELLED: 0 };
 
-        // Inbox border colour by chat age: fresh = green, ageing = amber, old = red.
-        // Full red is reached at the 48h deal window, matching the chat's own timer.
+        // A chat holds the item for 48h from the moment it opened — second-hand stock is
+        // one-of-a-kind, so the hold prevents duplicate deals and gives both sides a deadline.
         const VCHAT_AGE_SPAN = 48 * 3600 * 1000;
 
-        function vchatAgeColor(s) {
-            const age = Date.now() - (s.createdAt || Date.now());
-            const t = Math.min(Math.max(age / VCHAT_AGE_SPAN, 0), 1);   // 0 new → 1 old
-            const hue = 130 * (1 - t);                                   // 130 green → 0 red
-            return `hsl(${hue.toFixed(0)}, 62%, 42%)`;
+        function vchatDeadline(s) {
+            const left = (s.createdAt || Date.now()) + VCHAT_AGE_SPAN - Date.now();
+            if (left <= 0) return { cls: 'expired', text: 'ההחזקה פגה — הפריט שוחרר' };
+            const h = Math.floor(left / 3600000);
+            const m = Math.floor((left % 3600000) / 60000);
+            const cls = left < 6 * 3600000 ? 'urgent' : '';
+            return { cls, text: `הפריט שמור עוד ${h} שע׳ ${String(m).padStart(2, '0')} דק׳` };
         }
 
         function vchatRenderInbox() {
@@ -6278,12 +6298,14 @@
                 const tone = s.status === 'COMPLETED' ? 'good' : s.status === 'CANCELLED' ? 'alert' : '';
                 const dots = [1, 2, 3, 4, 5].map(n =>
                     `<span class="vstep${step >= n && step > 0 ? ' on ' + tone : ''}"></span>`).join('');
+                const dl = vchatDeadline(s);
                 return `
-                    <button class="vinbox-item" style="border-color:${vchatAgeColor(s)}" onclick="vchatOpenSession(${i})">
+                    <button class="vinbox-item" onclick="vchatOpenSession(${i})">
                         <div class="vinbox-mid">
                             <div class="vinbox-seller">${s.seller}</div>
                             <div class="vinbox-name">${s.product.name}</div>
                             <div class="vinbox-status ${tone}">${VCHAT_STATUS_LABEL[s.status]}</div>
+                            <div class="vinbox-deadline ${dl.cls}">${dl.text}</div>
                             <div class="vinbox-steps">${dots}</div>
                         </div>
                         <div class="vinbox-img">${s.product.icon}</div>
