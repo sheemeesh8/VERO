@@ -4372,8 +4372,10 @@
         // hero's own padding, and a fixed guess left a 1px sliver at some widths.
         function syncHeaderHole() {
             const hdr = document.querySelector('header#siteHeader');
-            // Whichever hero black box is currently on screen (home square or cart box).
-            const sq = [document.querySelector('.htb-square'), document.querySelector('.cart-square')]
+            // Whichever hero black box is currently on screen (home square, cart box,
+            // or the category/results hero box).
+            const sq = [document.querySelector('.htb-square'), document.querySelector('.cart-square'),
+                        ...document.querySelectorAll('.acat-hero-text')]
                 .find(el => el && el.getBoundingClientRect().width > 2);
             if (!hdr || !sq) { if (hdr) hdr.style.background = ''; return; }
             if (!hdr.classList.contains('sticky-look') || hdr.classList.contains('scrolled')
@@ -6177,12 +6179,14 @@
             view.style.display = 'block';
             document.title = `${catName} | VERO`;
 
-            // The category page sits on a light background from the very top, so the
-            // header must stay dark whatever the scroll position — including right
-            // after a refresh, before any scroll event fires.
-            document.body.setAttribute('data-header', 'dark');
+            // Same header treatment as home: the sticky look from the very top, with a
+            // transparent hole punched where the hero's black box runs up through it.
+            document.body.removeAttribute('data-header');
             const hdr = document.querySelector('header#siteHeader');
-            if (hdr) hdr.classList.add('force-dark');
+            if (hdr) {
+                hdr.classList.remove('force-dark');
+                hdr.classList.add('sticky-look');
+            }
 
             // Featured hero slider — shows the SAME promoted products that the promo
             // sliders further down the page use (one set of 5 per block).
@@ -6212,6 +6216,9 @@
                 content.appendChild(slider);
                 promoGo(slider.dataset.uid, 0);
             }
+
+            // Punch the header hole once the hero box has its final size.
+            syncHeaderHole();
         }
 
         // ==================== SECURE CHAT ENGINE (demo · mock state) ====================
