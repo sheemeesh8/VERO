@@ -1747,13 +1747,16 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             align-items: end;
-            gap: 34px 44px;
+            gap: 30px 44px;
             direction: ltr;
-            padding: 40px 48px;
-            margin: 0 80px 44px;
-            background: #fbfbfa;
-            border: 1px solid #ececec;
-            border-radius: 4px;
+            /* No card: the fields sit straight on the page, flush with the category
+               row above them, separated only by a hairline. */
+            padding: 26px 0 30px;
+            margin: 0 0 36px;
+            background: none;
+            border: none;
+            border-bottom: 1px solid #ececec;
+            border-radius: 0;
         }
         .ff-field { display: flex; flex-direction: column; gap: 12px; }
         .ff-label {
@@ -1788,7 +1791,7 @@
         @media (max-width: 700px) {
             .feed-filters {
                 grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-                gap: 22px 24px; padding: 24px 20px; margin: 0 16px 30px;
+                gap: 20px 24px; padding: 20px 0 24px; margin: 0 0 26px;
             }
             .ff-select { font-size: 16px; }
         }
@@ -4098,7 +4101,7 @@
                         <h1 class="acat-title" id="acatTitle">/ Category</h1>
                         <p class="acat-desc" id="acatDesc"></p>
                         <a class="acat-buy" id="acatBuy" href="#">Buy</a>
-                        <div class="acat-details">&#8964; Product details</div>
+                        <div class="acat-details" id="resultsCount">&#8964; Refine your filters</div>
                     </div>
                     <a class="acat-hero-img" id="acatHeroImg" href="#">🕶️</a>
                 </div>
@@ -4135,7 +4138,7 @@
             <section class="acat-hero">
                 <div class="acat-hero-inner">
                     <div class="acat-hero-text">
-                        <h1 class="acat-title" id="resultsTitle">YOUR RESULTS</h1>
+                        <h1 class="acat-title" id="resultsTitle">/ Your Results</h1>
                         <p class="acat-desc" id="resultsDesc"></p>
                         <div class="acat-details">&#8964; Product details</div>
                     </div>
@@ -4252,7 +4255,7 @@
             { name: 'Art Deco', desc: 'Geometric luxury style', icon: '💎', img: 'artdeco,design' }
         ];
 
-        const clothingProducts = [
+        let clothingProducts = [
             // Basic Casual
             { name: 'Classic White T-Shirt', category: 'Basic Casual', price: '₪49.90', icon: '👕', seller: 'H&M', rating: 4.7 },
             { name: 'Blue Skinny Jeans', category: 'Basic Casual', price: '₪189.00', icon: '👖', seller: 'Zara', rating: 4.6 },
@@ -4298,7 +4301,7 @@
             { name: 'Green Golf Sweater', category: 'Dark Academia', price: '₪180.00', icon: '📚', seller: 'Massimo Dutti', rating: 4.8 }
         ];
 
-        const artProducts = [
+        let artProducts = [
             // Acrylic
             { name: 'Colorful Acrylic Painting', category: 'Acrylic', price: '₪380.00', icon: '🎨', seller: 'Modern Art', rating: 4.9 },
             { name: 'Large Acrylic Abstract', category: 'Acrylic', price: '₪620.00', icon: '🎨', seller: 'Modern Art', rating: 4.8 },
@@ -4336,6 +4339,58 @@
             // Art Deco
             { name: 'Classic Art Deco Design', category: 'Art Deco', price: '₪420.00', icon: '💎', seller: 'Deco Style', rating: 4.7 }
         ];
+
+        // ==================== CATALOGUE FILL ====================
+        // The curated lists above are the hand-written pieces. On top of them we
+        // generate one listing for every category × colour combination, cycling the
+        // fabrics and the category's own sellers, so that every filter combination a
+        // shopper can pick actually has stock behind it.
+        const CATALOG_FABRICS = ['Cotton', 'Linen', 'Wool', 'Silk', 'Denim', 'Leather', 'Canvas', 'Mixed'];
+        const CATALOG_COLORS  = ['Black', 'White', 'Grey', 'Beige', 'Brown', 'Blue', 'Green', 'Red', 'Multi'];
+
+        // Nouns per category, so a generated name reads like a real piece.
+        const CATALOG_NOUNS = {
+            'Basic Casual': 'Tee', 'Smart Casual': 'Shirt', 'Athleisure': 'Track Jacket',
+            'Loungewear': 'Lounge Set', 'Streetwear': 'Hoodie', 'Techwear': 'Shell Jacket',
+            'Vintage 90s': 'Slip Dress', 'Y2K': 'Flare Trousers', 'Old Money': 'Polo',
+            'Grunge': 'Flannel', 'Goth': 'Lace Dress', 'Boho Chic': 'Maxi Skirt',
+            'Minimalist': 'Overshirt', 'Dark Academia': 'Tweed Blazer',
+            'Acrylic': 'Acrylic Canvas', 'Oil': 'Oil Study', 'Watercolor': 'Watercolour',
+            'Mixed Media': 'Collage', 'Digital': 'Digital Print', 'Gouache': 'Gouache Panel',
+            'Pastel': 'Pastel Study', 'Epoxy': 'Resin Piece', 'Stone Sculpture': 'Stone Form',
+            'Metal Sculpture': 'Metal Form', 'Ceramics': 'Ceramic Vessel', 'Prints': 'Art Print',
+            'Abstract': 'Abstract Study', 'Art Deco': 'Deco Panel'
+        };
+
+        // Build the catalogue for one curated list: keep the originals, then add the
+        // generated coverage on top.
+        function fillCatalogue(base, priceFloor, priceStep) {
+            const byCat = {};
+            base.forEach(p => {
+                (byCat[p.category] = byCat[p.category] || { sellers: [], icon: p.icon }).sellers.push(p.seller);
+            });
+            const extra = [];
+            Object.keys(byCat).forEach((cat, ci) => {
+                const sellers = [...new Set(byCat[cat].sellers)];
+                const noun = CATALOG_NOUNS[cat] || 'Piece';
+                CATALOG_COLORS.forEach((color, i) => {
+                    const fabric = CATALOG_FABRICS[i % CATALOG_FABRICS.length];
+                    const seller = sellers[i % sellers.length];
+                    const price = priceFloor + ((ci * 7 + i * 3) % 12) * priceStep;
+                    extra.push({
+                        name: `${color} ${fabric} ${noun}`,
+                        category: cat,
+                        price: `₪${price.toFixed(2)}`,
+                        icon: byCat[cat].icon,
+                        seller,
+                        rating: Math.round((4.3 + ((ci + i) % 7) * 0.1) * 10) / 10,
+                        fabric,
+                        color
+                    });
+                });
+            });
+            return base.concat(extra);
+        }
 
         const featuredProducts = [
             {
@@ -6059,8 +6114,14 @@
             for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
             return h;
         }
-        function productFabric(p) { return FEED_FABRICS[strHash(p.name) % FEED_FABRICS.length]; }
-        function productColor(p)  { return FEED_COLORS[strHash(p.name + 'c') % FEED_COLORS.length]; }
+        // Generated pieces carry a real fabric/colour; the hand-written ones still
+        // fall back to the deterministic name hash.
+        function productFabric(p) { return p.fabric || FEED_FABRICS[strHash(p.name) % FEED_FABRICS.length]; }
+        function productColor(p)  { return p.color  || FEED_COLORS[strHash(p.name + 'c') % FEED_COLORS.length]; }
+
+        // Run the fill once both lists and the helpers exist.
+        clothingProducts = fillCatalogue(clothingProducts, 79, 15);
+        artProducts = fillCatalogue(artProducts, 190, 40);
 
         // Brand / style / gender don't exist on the products either — same trick, so a
         // product always reports the same values. Swap these out once the upload wizard
@@ -6125,16 +6186,19 @@
             hideAllViews();
             document.getElementById('resultsView').style.display = 'block';
             document.title = 'Your Results | VERO';
-            document.body.setAttribute('data-header', 'dark');
-            const hdr = document.querySelector('header#siteHeader');
-            if (hdr) hdr.classList.add('force-dark');
+            // Full-bleed listing: no site header, same as the category view.
+            hideSiteHeader();
 
             const list = resultsSource(state);
 
             // Hero — title + a short summary + the first match as the hero visual.
             document.getElementById('resultsDesc').textContent = list.length
-                ? `${list.length} ${list.length === 1 ? 'piece matches' : 'pieces match'} your filters.`
-                : 'No pieces match your filters — try widening them.';
+                ? `${list.length} ${list.length === 1 ? 'piece matches' : 'pieces match'} your filters. Everything here is in stock and ready to be collected.`
+                : 'Nothing matches this combination yet. Clear a filter or two and the selection will open up.';
+            const countEl = document.getElementById('resultsCount');
+            if (countEl) countEl.innerHTML = list.length
+                ? `&#8964; ${list.length} pieces`
+                : '&#8964; Refine your filters';
             document.getElementById('resultsHeroImg').textContent = list[0] ? list[0].icon : '🔎';
 
             // Active-filter chips (only the ones actually chosen).
