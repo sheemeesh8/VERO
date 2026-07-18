@@ -57,7 +57,9 @@
         }
         /* Scrolled (solid white) header: the field sits closer to the logo. Left
            untouched in .sticky-look, where the hero's black box occupies that space. */
-        #siteHeader.scrolled:not(.hero-left-box) .hdr-searchwrap { left: 230px; }
+        #siteHeader.scrolled:not(.hero-left-box) .hdr-searchwrap { left: 210px; }
+        /* ...and the logo shifts right to leave only a small gap before the field. */
+        #siteHeader.scrolled:not(.hero-left-box) .logo { left: 96px !important; }
         /* The rounded search field */
         #siteHeader .hdr-search {
             display: flex; align-items: center;
