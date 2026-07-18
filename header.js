@@ -19,7 +19,8 @@
             border-bottom: none;
             padding: 8px 0;
             position: fixed;
-            top: 0; left: 0; right: 0;
+            /* Sits a little below the very top edge rather than flush against it. */
+            top: 18px; left: 0; right: 0;
             z-index: 100;
             width: 100%;
             box-shadow: none;
