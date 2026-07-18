@@ -50,7 +50,7 @@
             align-items: center;
             gap: 12px;
             position: absolute;
-            left: 430px;                    /* trimmed from the left → narrower field */
+            left: 430px;
             top: 50%;
             transform: translateY(-50%);
             z-index: 3;
@@ -62,7 +62,7 @@
             border: 1px solid #e4e4e4;
             border-radius: 999px;
             height: 46px;
-            width: min(250px, 19vw);
+            width: min(400px, 28vw);   /* widened; still clears the icon group on the right */
             padding: 4px 5px 4px 22px;
             box-sizing: border-box;
         }
