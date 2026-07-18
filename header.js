@@ -41,11 +41,9 @@
            Hidden by default; the sticky/sticky-look header reveals it. The panel is
            generic: pages feed it options and receive the chosen filters through the
            window hooks at the bottom of this file. */
-        /* Search pill + funnel circle: hidden until the header is sticky, then
-           pinned just to the right of the logo. */
-        #siteHeader .hdr-searchwrap { display: none; }
-        #siteHeader.scrolled .hdr-searchwrap,
-        #siteHeader.sticky-look .hdr-searchwrap {
+        /* Search pill + funnel circle: always visible, pinned just to the right of
+           the logo (also before the header goes sticky). */
+        #siteHeader .hdr-searchwrap {
             display: flex;
             align-items: center;
             gap: 12px;
@@ -231,7 +229,7 @@
         #siteHeader .hdr-apply { background: #111 !important; color: #fff; padding: 12px 26px !important; }
         #siteHeader .hdr-apply:hover { background: #333 !important; }
         @media (max-width: 1200px) {
-            #siteHeader.scrolled .hdr-searchwrap, #siteHeader.sticky-look .hdr-searchwrap { display: none; }
+            #siteHeader .hdr-searchwrap { display: none; }
         }
         /* Header contents are ALWAYS dark — on every page, at every scroll position.
            (Pages that sit on a dark hero keep their own overrides.) */
