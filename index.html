@@ -6480,6 +6480,13 @@
                 if (!VCHAT || VCHAT.status === 'COMPLETED' || VCHAT.status === 'CANCELLED') return;
                 if (document.getElementById('chatView').style.display === 'none') return;
                 if (VCHAT.timer.total > 0) VCHAT.timer.total--;
+                // Hold expired — the item is released and the chat locks itself, so a
+                // deal can't sit open indefinitely with the stock frozen behind it.
+                if (VCHAT.timer.total === 0) {
+                    VCHAT.status = 'CANCELLED';
+                    vchatAdd('SYSTEM', 'TEXT', 'חלון 48 השעות הסתיים. הפריט שוחרר חזרה לפיד הציבורי והשיחה ננעלה.', 'alert');
+                    vchatRenderDeck();
+                }
                 vchatRenderHead();
             }, 1000);
         }
@@ -6533,6 +6540,8 @@
                 SIMILAR: '👗 האם יש מוצרים דומים נוספים בארון?',
                 RETURNS: '🛡️ מהי מדיניות ההחזרים של הארון שלך?',
                 DEFECTS: '🔍 האם יש פגמים, כתמים או קרעים שלא צוינו?',
+                RECHECK: '✅ האם המוצר זמין כרגע?',
+                LATE: '⏰ אני מאחר / לא אצליח להגיע בזמן שתואם',
             };
             vchatAdd('BUYER', 'TEXT', labels[type]);
             VCHAT.submenu = false;
@@ -6542,6 +6551,10 @@
                 setTimeout(() => vchatAdd('SYSTEM', 'PRODUCT_CAROUSEL', VCHAT_SIMILAR), 500);
             } else if (type === 'RETURNS') {    // automatic DB pull
                 setTimeout(() => vchatAdd('SYSTEM', 'TEXT', VCHAT_RETURN), 350);
+            } else if (type === 'RECHECK') {
+                // Re-verification reuses the same seller availability prompt the chat
+                // opens with, so the seller sees one consistent pair of buttons.
+                VCHAT.pending = { type: 'AVAILABILITY' };
             } else {                            // needs a seller response
                 VCHAT.pending = { type };
             }
@@ -6573,6 +6586,12 @@
                 });
             } else if (action === 'HOURS') {
                 vchatAdd('SELLER', 'TEXT', VCHAT_HOURS);
+            } else if (action === 'LATE_OK') {
+                vchatAdd('SELLER', 'TEXT', 'אין בעיה — הפריט נשמר לך עד תום 48 השעות.');
+                vchatAdd('SYSTEM', 'TEXT', 'ההחזקה נותרה בתוקף. הטיימר ממשיך כרגיל.', 'good');
+            } else if (action === 'LATE_RESCHEDULE') {
+                vchatAdd('SELLER', 'TEXT', 'נתאם מועד חדש — אפשר להגיע בשעות הפעילות הבאות.');
+                vchatAdd('SELLER', 'TEXT', VCHAT_HOURS);
             } else if (action === 'NO_DEFECT') {
                 vchatAdd('SELLER', 'TEXT', 'הפריט נבדק שוב — ללא פגמים נוספים מעבר לתיאור.');
             } else if (action === 'DEFECT_DISCOUNT') {
@@ -6601,11 +6620,13 @@
                     upper.innerHTML =
                         `<button class="vpill" onclick="vchatBuyerQuery('RETURNS')">🛡️ מדיניות החזרים</button>
                          <button class="vpill" onclick="vchatBuyerQuery('DEFECTS')">🔍 פגמים שלא צוינו?</button>
+                         <button class="vpill" onclick="vchatBuyerQuery('LATE')">⏰ אאחר / לא אגיע בזמן</button>
                          <button class="vpill" onclick="VCHAT.submenu=false;vchatRenderDeck()">← חזרה</button>`;
                 } else {
                     upper.innerHTML =
                         `<button class="vpill" onclick="vchatBuyerQuery('LOCATION')">📍 מיקום המפגש</button>
                          <button class="vpill" onclick="vchatBuyerQuery('HOURS')">🕒 שעות הגעה</button>
+                         <button class="vpill" onclick="vchatBuyerQuery('RECHECK')">✅ זמין כרגע?</button>
                          <button class="vpill" onclick="vchatBuyerQuery('SIMILAR')">👗 פריטים דומים</button>
                          <button class="vpill special" onclick="VCHAT.submenu=true;vchatRenderDeck()">⚠️ שאלה מיוחדת</button>`;
                 }
@@ -6618,6 +6639,10 @@
                     upper.innerHTML = `<button class="vpill" onclick="vchatSellerRespond('LOCATION')">[שלח מיקום מאושר מהפרופיל]</button>`;
                 } else if (VCHAT.pending && VCHAT.pending.type === 'HOURS') {
                     upper.innerHTML = `<button class="vpill" onclick="vchatSellerRespond('HOURS')">[שלח שעות פעילות מוגדרות]</button>`;
+                } else if (VCHAT.pending && VCHAT.pending.type === 'LATE') {
+                    upper.innerHTML =
+                        `<button class="vpill" onclick="vchatSellerRespond('LATE_OK')">[הפריט נשמר — אין בעיה]</button>
+                         <button class="vpill" onclick="vchatSellerRespond('LATE_RESCHEDULE')">[תיאום מועד חדש + שעות פעילות]</button>`;
                 } else if (VCHAT.pending && VCHAT.pending.type === 'DEFECTS') {
                     upper.innerHTML =
                         `<button class="vpill" onclick="vchatSellerRespond('NO_DEFECT')">[נבדק — ללא פגמים נוספים]</button>
