@@ -174,6 +174,33 @@
             border-bottom-color: #004225;
         }
 
+        /* ==================== CATEGORY RAIL (same as the personal area) ==================== */
+        .dh-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 34px;
+            border-bottom: 1px solid #ececec;
+        }
+        .dh-chip {
+            border: none;
+            background: none;
+            color: #777;
+            font: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0 2px 12px;
+            margin-bottom: -1px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .dh-chip:hover { color: #004225; }
+        .dh-chip.active { color: #004225; border-bottom-color: #004225; }
+        .dh-chip:focus-visible { outline: 2px solid #004225; outline-offset: 3px; }
+        .dh-rail { padding: 0 40px; }
+
         /* ==================== TAB CONTENT ==================== */
         .tab-content {
             display: none;
@@ -185,6 +212,44 @@
         .tab-content.active {
             display: block;
         }
+
+        /* ==================== THE BOX ====================
+           One shared rectangle across the whole site: same colour, same shape,
+           same size. Change it here and every page follows. */
+        :root {
+            --box-dark: #22372B;
+            --box-dark-hover: #2E4A3A;
+            --box-max: 620px;
+            --box-pad: 64px 44px 56px;
+        }
+        .acat-hero-text {
+            background: var(--box-dark);
+            color: #fff;
+            max-width: var(--box-max);
+            padding: var(--box-pad);
+            border-radius: 0;
+            box-sizing: border-box;
+            align-self: stretch;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .acat-hero-text .acat-title { color: #fff; }
+        .acat-hero-text .acat-title::first-letter { color: #6d6d6d; }
+        .acat-hero-text .acat-desc { color: #b5b5b5; }
+        .acat-hero-text .acat-buy { border-color: #fff; color: #fff; background: none; }
+        .acat-hero-text .acat-buy:hover { background: #fff; color: #111; }
+        .acat-hero-text .acat-details { color: #8f8f8f; }
+        /* The back button sits inside the box, so it reads on the dark ground. */
+        .acat-hero-text .cw-back {
+            position: static;
+            align-self: flex-start;
+            margin-bottom: 26px;
+            border-color: rgba(255,255,255,0.45);
+            background: transparent;
+            color: #fff;
+        }
+        .acat-hero-text .cw-back:hover { background: rgba(255,255,255,0.14); }
 
         /* ==================== SELLER HERO (mirrors the buyer-area acat-hero) ==================== */
         .acat-hero {
@@ -1076,6 +1141,11 @@
         </div>
     </section>
 
+    <!-- Category rail: the same control the personal area uses. -->
+    <nav class="dh-rail" aria-label="אזורי המוכר">
+        <div class="dh-chips" id="sellerChips" role="tablist"></div>
+    </nav>
+
     <!-- ==================== INVENTORY TAB ==================== -->
     <div id="inventory" class="tab-content active">
         <div class="container">
@@ -1860,9 +1930,17 @@
             document.getElementById('shIdx').textContent = shPad2(sellerIndex + 1);
             document.getElementById('shTotal').textContent = shPad2(sellerSlides.length);
 
-            // Show only the matching section.
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById(s.tab).classList.add('active');
+            // Show only the matching section, and keep the rail in step with it.
+            document.querySelectorAll('.tab-content').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('role', 'tabpanel');
+                t.setAttribute('aria-hidden', 'true');
+            });
+            const panel = document.getElementById(s.tab);
+            panel.classList.add('active');
+            panel.setAttribute('aria-hidden', 'false');
+            panel.setAttribute('aria-labelledby', 'sellerTab' + sellerIndex);
+            renderSellerChips();
 
             // Initialize the section's dynamic content.
             if (s.tab === 'inventory') renderInventory('all-clothing');
@@ -1875,6 +1953,24 @@
                 void el.offsetWidth;
                 el.classList.add('dh-anim');
             }
+        }
+
+        // The rail mirrors sellerSlides, so both controls drive the same state.
+        function sellerChipsHTML() {
+            return sellerSlides.map((sl, i) =>
+                `<button class="dh-chip${i === sellerIndex ? ' active' : ''}" role="tab" type="button"
+                         id="sellerTab${i}" aria-selected="${i === sellerIndex}" aria-controls="${sl.tab}"
+                         onclick="sellerSelect(${i})">${sl.title}</button>`).join('');
+        }
+
+        function renderSellerChips() {
+            const wrap = document.getElementById('sellerChips');
+            if (wrap) wrap.innerHTML = sellerChipsHTML();
+        }
+
+        function sellerSelect(i) {
+            sellerIndex = i;
+            sellerRender(true);
         }
 
         function sellerGo(dir) {
