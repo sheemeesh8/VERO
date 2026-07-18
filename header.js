@@ -93,15 +93,6 @@
             width: 16px; height: 16px; stroke: #111; fill: none;
             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
         }
-        /* Over the hero's black box the same line style flips to white. */
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search,
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo {
-            border-color: rgba(255,255,255,0.55);
-        }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #fff; }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: rgba(255,255,255,0.6); }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: #fff; }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo:hover { background: rgba(255,255,255,0.12); }
         /* Funnel: its own black circle with the white funnel, beside the field
            on the same (right) side as the magnifier. */
         #siteHeader .hdr-funnel {
@@ -345,11 +336,23 @@
             body:not([data-sticky="plain"]) #siteHeader .upload-plus {
                 animation: none !important; box-shadow: none !important;
             }
+
+            /* The black band behind the icon group, running to the right edge of the
+               header. Same on every page, so the pre-sticky header always reads as
+               "white left / black right". Gone once the header turns solid white. */
+            body:not([data-sticky="plain"]) #siteHeader.sticky-look:not(.scrolled) .header-container::after {
+                content: '';
+                position: absolute;
+                top: 50%; transform: translateY(-50%);
+                height: 72px;              /* full header height */
+                right: 0;
+                width: calc(var(--hdr-spread-w) + var(--hdr-spread-right) * 2);
+                background: #111;
+                z-index: 0;
+            }
+            /* ...with the icons riding on top of it. */
+            body:not([data-sticky="plain"]) #siteHeader .header-right { z-index: 2; }
         }
-        /* Over the black box the left-hand contents go white (the icon group on the
-           right already does this via .sticky-look). */
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .logo,
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .vero-hamburger { color: #fff !important; }
         /* Force-dark: black header contents on light pages (e.g. buyer/seller area),
            regardless of scroll position and without the solid white background. */
         #siteHeader.force-dark .header-left > a,
