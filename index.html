@@ -4373,45 +4373,17 @@
             syncHeaderHole();
         }
 
-        // Punch the header's transparent window to exactly where the black square is.
-        // Measured rather than computed in CSS: the square's offsets shift with the
-        // hero's own padding, and a fixed guess left a 1px sliver at some widths.
+        // The header used to punch a transparent window onto the hero's black box, and
+        // to stretch the icon spread to match it. Both are gone: the header's black is
+        // now the fixed band painted by header.js, identical on every page. Aligning to
+        // the box as well made the black overrun the band wherever the two disagreed.
+        // All this does now is strip any inline leftovers so the stylesheet governs.
         function syncHeaderHole() {
             const hdr = document.querySelector('header#siteHeader');
-            // Whichever hero black box is currently on screen (home square, cart box,
-            // or the category/results hero box).
-            const sq = [document.querySelector('.htb-square'), document.querySelector('.cart-square'),
-                        ...document.querySelectorAll('.acat-hero-text')]
-                .find(el => el && el.getBoundingClientRect().width > 2);
-            // The icon spread is a fixed, site-wide value in header.js — this only
-            // clears any inline leftover so every header keeps the same geometry.
-            const clearSpread = () => {
-                hdr.style.removeProperty('--hdr-spread-w');
-                hdr.style.removeProperty('--hdr-spread-right');
-            };
-            if (!hdr || !sq) { if (hdr) { hdr.style.background = ''; clearSpread(); } return; }
-            const isSticky = hdr.classList.contains('sticky-look') || hdr.classList.contains('scrolled');
-            if (!isSticky || window.innerWidth < 901) {
-                hdr.style.background = '';        // fall back to the stylesheet
-                clearSpread();
-                return;
-            }
-            const r = sq.getBoundingClientRect();
-            if (r.width < 2) { hdr.style.background = ''; clearSpread(); return; }
-            clearSpread();
-            // Once scrolled the header is solid white — keep the icon spread from the
-            // pre-scroll state, but drop the black-box cut-out gradient.
-            if (hdr.classList.contains('scrolled')) { hdr.style.background = ''; return; }
-            // Where the hero box sits on the LEFT (category / results) the header must
-            // stay white on that side — the black is the band on the right instead, so
-            // the header reads the same as it does on home. No hole here.
-            if (hdr.classList.contains('hero-left-box')) { hdr.style.background = ''; return; }
-            // keep sub-pixel precision — rounding here leaves a hairline sliver
-            const l = r.left.toFixed(2);
-            const rt = r.right.toFixed(2);
-            hdr.style.background =
-                `linear-gradient(to right, #fff 0, #fff ${l}px, transparent ${l}px, ` +
-                `transparent ${rt}px, #fff ${rt}px, #fff 100%)`;
+            if (!hdr) return;
+            hdr.style.background = '';
+            hdr.style.removeProperty('--hdr-spread-w');
+            hdr.style.removeProperty('--hdr-spread-right');
         }
         window.addEventListener('resize', syncHeaderHole);
 
