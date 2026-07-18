@@ -292,6 +292,17 @@
            so a page (e.g. the home view) can wear it from the very top. */
         #siteHeader.scrolled,
         #siteHeader.sticky-look { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); }
+        /* The header sits 18px down from the top edge; this fills that strip with
+           whatever the header is wearing, so the page never shows through above it. */
+        #siteHeader::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 100%;
+            height: 18px;
+            background: inherit;
+        }
         #siteHeader.scrolled .header-left > a,
         #siteHeader.scrolled .logo,
         #siteHeader.scrolled .toggle-category { color: #111; }
