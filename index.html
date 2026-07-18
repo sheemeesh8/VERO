@@ -2347,9 +2347,29 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
             transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
         .achs-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(0,0,0,0.08); }
+        /* Remove-from-list control, top-right of the card. Fades in on hover but
+           stays reachable on touch, where there is no hover state. */
+        .achs-remove {
+            position: absolute;
+            top: 10px; right: 10px;
+            z-index: 2;
+            width: 30px; height: 30px;
+            display: flex; align-items: center; justify-content: center;
+            border: none; border-radius: 50%;
+            background: rgba(255,255,255,0.92);
+            color: #111; font-size: 18px; line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .achs-card:hover .achs-remove, .achs-remove:focus-visible { opacity: 1; }
+        .achs-remove:hover { background: #c0392b; color: #fff; }
+        @media (hover: none) { .achs-remove { opacity: 1; } }
         .achs-image {
             position: relative;
             aspect-ratio: 1 / 1;
@@ -4548,9 +4568,14 @@
             return achs[wrapId];
         }
 
-        function achsCardHTML(item) {
+        // `remover` is the name of the removal function for the list this card
+        // belongs to — cart and wishlist share the card, only the list differs.
+        function achsCardHTML(item, remover) {
+            const safeId = String(item.id).replace(/'/g, "\\'");
             return `
                 <div class="achs-card">
+                    <button class="achs-remove" title="Remove" aria-label="Remove"
+                            onclick="event.stopPropagation(); ${remover}('${safeId}')">&times;</button>
                     <div class="achs-image">${item.icon || '🛍️'}
                         <img class="achs-photo" loading="lazy" alt="${item.name}"
                              src="https://picsum.photos/seed/vero-cart-${encodeURIComponent(item.name)}/500/500"
@@ -4567,7 +4592,7 @@
         }
 
         // Build the slider for one hero. `items` is the cart / wishlist list.
-        function renderHeroSlider(wrapId, items, emptyText) {
+        function renderHeroSlider(wrapId, items, emptyText, remover) {
             const wrap = document.getElementById(wrapId);
             if (!wrap) return;
             const st = achsState(wrapId);
@@ -4578,7 +4603,7 @@
             }
             const slides = [];
             for (let i = 0; i < items.length; i += 2) {
-                slides.push(`<div class="achs-slide">${items.slice(i, i + 2).map(achsCardHTML).join('')}</div>`);
+                slides.push(`<div class="achs-slide">${items.slice(i, i + 2).map(it => achsCardHTML(it, remover)).join('')}</div>`);
             }
             st.slideCount = slides.length;
             wrap.innerHTML = `
@@ -4607,11 +4632,11 @@
         }
 
         function renderCartHeroSlider() {
-            renderHeroSlider('cartHeroSlider', cart, 'Your cart is empty 🛒');
+            renderHeroSlider('cartHeroSlider', cart, 'Your cart is empty 🛒', 'removeFromCart');
         }
 
         function renderWishlistHeroSlider() {
-            renderHeroSlider('wishlistHeroSlider', wishlist, 'Your wishlist is empty 🤍');
+            renderHeroSlider('wishlistHeroSlider', wishlist, 'Your wishlist is empty 🤍', 'removeFromWishlist');
         }
 
         function renderCartPage() {
@@ -4625,7 +4650,7 @@
             if (countEl) countEl.textContent = String(totalUnits).padStart(2, '0');
             if (descEl) descEl.textContent = cart.length === 0
                 ? 'Your cart is empty for now — head back and add pieces you love.'
-                : "Review the pieces you're about to make yours before you check out.";
+                : "Everything you've picked, gathered in one place. Take a last look, adjust what you need, and check out when it feels right.";
 
             if (cart.length === 0) {
                 body.innerHTML = '<div class="cart-empty">Your cart is empty 🛒<br>Go back to the home page and add products</div>';
