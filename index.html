@@ -547,17 +547,19 @@
             }
         }
 
-        /* Before the sticky header kicks in, the right-hand icon group is white — it
-           sits on the black band that header.js paints behind it on every page. */
-        #siteHeader.sticky-look:not(.scrolled) .header-right .icon-btn { color: #fff; }
-        #siteHeader.sticky-look:not(.scrolled) .header-right .icon-btn svg { stroke: #fff !important; }
-        #siteHeader.sticky-look:not(.scrolled) .header-right .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
-        #siteHeader.sticky-look:not(.scrolled) .header-right .upload-plus {
+        /* Before the sticky header kicks in, the right-hand icon group is white
+           ONLY where it actually sits over the black square — i.e. the home/cart hero,
+           whose box is centre-right. On .hero-left-box pages (category / results) the
+           box is on the LEFT, so the icons sit on white and must stay dark. */
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .icon-btn { color: #fff; }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .icon-btn svg { stroke: #fff !important; }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .upload-plus {
             color: #fff !important;
             border-color: #fff !important;
         }
-        #siteHeader.sticky-look:not(.scrolled) .header-right .toggle-category { border-color: rgba(255,255,255,0.5); }
-        #siteHeader.sticky-look:not(.scrolled) .header-right .toggle-category::before { background: #fff; }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .toggle-category { border-color: rgba(255,255,255,0.5); }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .toggle-category::before { background: #fff; }
 
         @media (max-width: 900px) {
             .htb-inner { padding: 0 28px 28px; gap: 24px; }
@@ -4373,17 +4375,41 @@
             syncHeaderHole();
         }
 
-        // The header used to punch a transparent window onto the hero's black box, and
-        // to stretch the icon spread to match it. Both are gone: the header's black is
-        // now the fixed band painted by header.js, identical on every page. Aligning to
-        // the box as well made the black overrun the band wherever the two disagreed.
-        // All this does now is strip any inline leftovers so the stylesheet governs.
+        // Punch the header's transparent window to exactly where the black square is.
+        // Measured rather than computed in CSS: the square's offsets shift with the
+        // hero's own padding, and a fixed guess left a 1px sliver at some widths.
         function syncHeaderHole() {
             const hdr = document.querySelector('header#siteHeader');
-            if (!hdr) return;
-            hdr.style.background = '';
-            hdr.style.removeProperty('--hdr-spread-w');
-            hdr.style.removeProperty('--hdr-spread-right');
+            // Whichever hero black box is currently on screen (home square, cart box,
+            // or the category/results hero box).
+            const sq = [document.querySelector('.htb-square'), document.querySelector('.cart-square'),
+                        ...document.querySelectorAll('.acat-hero-text')]
+                .find(el => el && el.getBoundingClientRect().width > 2);
+            // The icon spread is a fixed, site-wide value in header.js — this only
+            // clears any inline leftover so every header keeps the same geometry.
+            const clearSpread = () => {
+                hdr.style.removeProperty('--hdr-spread-w');
+                hdr.style.removeProperty('--hdr-spread-right');
+            };
+            if (!hdr || !sq) { if (hdr) { hdr.style.background = ''; clearSpread(); } return; }
+            const isSticky = hdr.classList.contains('sticky-look') || hdr.classList.contains('scrolled');
+            if (!isSticky || window.innerWidth < 901) {
+                hdr.style.background = '';        // fall back to the stylesheet
+                clearSpread();
+                return;
+            }
+            const r = sq.getBoundingClientRect();
+            if (r.width < 2) { hdr.style.background = ''; clearSpread(); return; }
+            clearSpread();
+            // Once scrolled the header is solid white — keep the icon spread from the
+            // pre-scroll state, but drop the black-box cut-out gradient.
+            if (hdr.classList.contains('scrolled')) { hdr.style.background = ''; return; }
+            // keep sub-pixel precision — rounding here leaves a hairline sliver
+            const l = r.left.toFixed(2);
+            const rt = r.right.toFixed(2);
+            hdr.style.background =
+                `linear-gradient(to right, #fff 0, #fff ${l}px, transparent ${l}px, ` +
+                `transparent ${rt}px, #fff ${rt}px, #fff 100%)`;
         }
         window.addEventListener('resize', syncHeaderHole);
 
