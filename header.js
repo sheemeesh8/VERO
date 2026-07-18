@@ -58,8 +58,9 @@
         /* The rounded search field */
         #siteHeader .hdr-search {
             display: flex; align-items: center;
-            background: #efefef;
-            border: 1px solid #e4e4e4;
+            /* Line style: no fill, just a hairline outline. */
+            background: transparent;
+            border: 1px solid rgba(0,0,0,0.3);
             border-radius: 999px;
             height: 46px;
             width: min(400px, 28vw);   /* widened; still clears the icon group on the right */
@@ -76,18 +77,28 @@
         #siteHeader .hdr-search input::placeholder {
             color: #9a9a9a; font-weight: 500; letter-spacing: 0.3px;
         }
-        /* Black circle with the white magnifier, on the right of the field */
+        /* Outlined circle with the magnifier drawn in the same line colour */
         #siteHeader .hdr-searchgo {
             width: 38px; height: 38px; border-radius: 50%;
-            background: #111; border: none; cursor: pointer; flex: 0 0 auto;
+            background: transparent; border: 1px solid rgba(0,0,0,0.3);
+            cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center;
             transition: background 0.2s;
         }
-        #siteHeader .hdr-searchgo:hover { background: #333; }
+        #siteHeader .hdr-searchgo:hover { background: rgba(0,0,0,0.06); }
         #siteHeader .hdr-searchgo svg {
-            width: 16px; height: 16px; stroke: #fff; fill: none;
+            width: 16px; height: 16px; stroke: #111; fill: none;
             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
         }
+        /* Over the hero's black box the same line style flips to white. */
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search,
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo {
+            border-color: rgba(255,255,255,0.55);
+        }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #fff; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: rgba(255,255,255,0.6); }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: #fff; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo:hover { background: rgba(255,255,255,0.12); }
         /* Funnel: its own black circle with the white funnel, beside the field
            on the same (right) side as the magnifier. */
         #siteHeader .hdr-funnel {
