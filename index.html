@@ -3231,6 +3231,15 @@
             background: #fff;
         }
 
+        /* ---- Dimensions, three fields on one line (art) ---- */
+        .dims-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .dim-field { display: flex; flex-direction: column; gap: 8px; }
+        .dim-field span {
+            font-size: 13px; font-weight: 700; letter-spacing: 1.4px;
+            text-transform: uppercase; color: #8a8a8a; text-align: center;
+        }
+        .dim-field input { text-align: center; }
+
         .upload-viewport { position: absolute; inset: 0; overflow: hidden; }
         .upload-track {
             display: flex;
@@ -3888,11 +3897,11 @@
                             </div>
                             <div class="upload-form">
                                 <div class="upload-form-group">
-                                    <label>Brand</label>
+                                    <label id="brandLabel">Brand</label>
                                     <input type="text" id="brandNameInput" placeholder="e.g., Levi's, Zara" oninput="syncBrandHeading()">
                                 </div>
                                 <div class="upload-form-group">
-                                    <label>Item Type</label>
+                                    <label id="itemTypeLabel">Item Type</label>
                                     <select id="itemTypeSelect" onchange="updateItemTypeDisplay()">
                                         <option>Select item type</option>
                                     </select>
@@ -3909,6 +3918,29 @@
 
                                 <!-- Sizes open underneath once a type is chosen: a size grid
                                      for garments, a 0–65 slider for shoes. -->
+                                <!-- Art carries dimensions and a year instead of a size. -->
+                                <div class="upload-form-group size-panel" id="dimsGroup" style="display:none">
+                                    <label>Dimensions (cm)</label>
+                                    <div class="dims-row">
+                                        <div class="dim-field">
+                                            <input type="number" id="dimH" min="0" placeholder="0" oninput="syncDims()">
+                                            <span>Height</span>
+                                        </div>
+                                        <div class="dim-field">
+                                            <input type="number" id="dimW" min="0" placeholder="0" oninput="syncDims()">
+                                            <span>Width</span>
+                                        </div>
+                                        <div class="dim-field">
+                                            <input type="number" id="dimD" min="0" placeholder="0" oninput="syncDims()">
+                                            <span>Depth</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="upload-form-group" id="yearGroup" style="display:none">
+                                    <label>Year created</label>
+                                    <input type="number" id="yearInput" min="1800" max="2100" placeholder="e.g., 2024">
+                                </div>
+
                                 <div class="upload-form-group size-panel" id="sizeGroup" style="display:none">
                                     <label id="sizeLabel">Size</label>
                                     <div class="size-grid" id="sizeGrid"></div>
@@ -3993,6 +4025,15 @@
                                 <div class="upload-form-group">
                                     <label>Condition</label>
                                     <div class="chips" id="conditionChips"></div>
+                                </div>
+                                <!-- Art only: how it is finished, and how many exist. -->
+                                <div class="upload-form-group" id="framingGroup" style="display:none">
+                                    <label>Framing</label>
+                                    <div class="chips" id="framingChips"></div>
+                                </div>
+                                <div class="upload-form-group" id="editionGroup" style="display:none">
+                                    <label>Edition</label>
+                                    <div class="chips" id="editionChips"></div>
                                 </div>
                                 <div class="upload-form-group">
                                     <label>Description</label>
@@ -5706,7 +5747,8 @@
         function blankUploadForm() {
             return {category: null, image: null, photos: [null, null, null], brand: null,
                     itemType: null, gender: null, description: null, size: null, color: null,
-                    style: null, material: null, condition: null, price: null};
+                    style: null, material: null, condition: null, price: null,
+                    dimensions: null, year: null, framing: null, edition: null};
         }
 
         function openUploadProduct() {
@@ -5728,12 +5770,42 @@
             currentSlide = 0;
             uploadFormData = blankUploadForm();
             resetUploadMedia();
+            resetUploadFields();
+        }
+
+        // Wiping uploadFormData isn't enough — the inputs and chips keep whatever the
+        // last listing put there, so the next one has to start from a clean form.
+        function resetUploadFields() {
+            ['brandNameInput', 'priceInput', 'descriptionInput', 'yearInput', 'dimH', 'dimW', 'dimD']
+                .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            ['genderSelect', 'itemTypeSelect'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.selectedIndex = 0;
+            });
+            document.querySelectorAll('#uploadContainer .chip.selected, #uploadContainer .swatch.selected, #uploadContainer .size.selected')
+                .forEach(el => el.classList.remove('selected'));
+            const heading = document.getElementById('brandInput');
+            if (heading) heading.textContent = uploadFormData.category === 'art' ? 'Artist Name' : 'Brand Name';
+            const typeDisplay = document.getElementById('itemTypeDisplay');
+            if (typeDisplay) typeDisplay.textContent = 'Item Type';
+            const shoe = document.getElementById('shoeSlider');
+            if (shoe) { shoe.value = 42; document.getElementById('shoeOut').textContent = '42'; }
         }
 
         // Gender and size only make sense for clothing; art skips both.
         function applyCategoryFields(category) {
-            const show = category === 'clothing' ? 'flex' : 'none';
-            document.getElementById('genderGroup').style.display = show;
+            const isArt = category === 'art';
+            const garment = isArt ? 'none' : 'flex';
+            const art = isArt ? 'flex' : 'none';
+            document.getElementById('genderGroup').style.display = garment;
+            ['dimsGroup', 'yearGroup', 'framingGroup', 'editionGroup']
+                .forEach(id => { document.getElementById(id).style.display = art; });
+            // The copy on the first step speaks to whoever is listing.
+            document.getElementById('brandLabel').textContent = isArt ? 'Artist' : 'Brand';
+            document.getElementById('brandNameInput').placeholder = isArt
+                ? "e.g., Yayoi Kusama" : "e.g., Levi's, Zara";
+            document.getElementById('brandInput').textContent = isArt ? 'Artist Name' : 'Brand Name';
+            document.getElementById('itemTypeLabel').textContent = isArt ? 'Artwork type' : 'Item Type';
             renderSizePanel();
         }
 
@@ -5888,6 +5960,10 @@
         ];
 
         const UPLOAD_CONDITIONS = ['New with tags', 'Like new', 'Excellent', 'Good', 'Fair'];
+        // Art is graded on its own terms, and carries framing + edition instead.
+        const ART_CONDITIONS = ['Mint', 'Excellent', 'Very good', 'Good', 'Restored'];
+        const ART_FRAMING = ['Framed', 'Unframed', 'Mounted', 'Stretched canvas'];
+        const ART_EDITIONS = ['Original, one of one', 'Limited edition', 'Open edition', 'Artist proof'];
 
         // Styles mirror the feed's own categories, so an upload lands in a real aisle.
         const CLOTHING_STYLES = ['Basic Casual', 'Smart Casual', 'Athleisure', 'Loungewear',
@@ -5912,8 +5988,18 @@
             }
             const chips = document.getElementById('conditionChips');
             if (chips) {
-                chips.innerHTML = UPLOAD_CONDITIONS.map(c =>
+                chips.innerHTML = (isArt ? ART_CONDITIONS : UPLOAD_CONDITIONS).map(c =>
                     `<button type="button" class="chip" data-cond="${c}" onclick="selectUploadCondition('${c}')">${c}</button>`).join('');
+            }
+            const framing = document.getElementById('framingChips');
+            if (framing) {
+                framing.innerHTML = ART_FRAMING.map(v =>
+                    `<button type="button" class="chip" data-framing="${v}" onclick="selectUploadFraming('${v}')">${v}</button>`).join('');
+            }
+            const editions = document.getElementById('editionChips');
+            if (editions) {
+                editions.innerHTML = ART_EDITIONS.map(v =>
+                    `<button type="button" class="chip" data-edition="${v}" onclick="selectUploadEdition('${v}')">${v}</button>`).join('');
             }
             const styles = document.getElementById('styleChips');
             if (styles) {
@@ -5937,6 +6023,27 @@
             uploadFormData.condition = name;
             document.querySelectorAll('#conditionChips .chip').forEach(c =>
                 c.classList.toggle('selected', c.dataset.cond === name));
+        }
+
+        function selectUploadFraming(name) {
+            uploadFormData.framing = name;
+            document.querySelectorAll('#framingChips .chip').forEach(c =>
+                c.classList.toggle('selected', c.dataset.framing === name));
+        }
+
+        function selectUploadEdition(name) {
+            uploadFormData.edition = name;
+            document.querySelectorAll('#editionChips .chip').forEach(c =>
+                c.classList.toggle('selected', c.dataset.edition === name));
+        }
+
+        // Height × width × depth, kept as one readable string on the listing.
+        function syncDims() {
+            const n = id => document.getElementById(id).value;
+            const [h, w, d] = ['dimH', 'dimW', 'dimD'].map(n);
+            uploadFormData.dimensions = (h && w)
+                ? `${h}×${w}${d ? '×' + d : ''} cm`
+                : null;
         }
 
         function selectUploadStyle(name) {
@@ -5965,7 +6072,9 @@
         // Final step — the listing exactly as the feed will carry it.
         function renderUploadPreview() {
             const d = uploadFormData;
-            const meta = [d.gender, d.size, d.material, d.style, d.condition].filter(Boolean).join(' · ');
+            const meta = (d.category === 'art'
+                ? [d.dimensions, d.year, d.material, d.style, d.framing, d.edition, d.condition]
+                : [d.gender, d.size, d.material, d.style, d.condition]).filter(Boolean).join(' · ');
             const img = d.image
                 ? `<img src="${d.image}" alt="${d.itemType || 'Product'}">`
                 : (d.category === 'art' ? '🖼️' : '👕');
@@ -5999,6 +6108,10 @@
                     || document.getElementById('brandInput').textContent.trim();
                 uploadFormData.itemType = pickValue('itemTypeSelect');
                 // style / colour / material and the size are set by their own handlers
+            }
+            if (step === 0 && uploadFormData.category === 'art') {
+                syncDims();
+                uploadFormData.year = document.getElementById('yearInput').value || null;
             }
             if (step === 2) {
                 uploadFormData.description = document.getElementById('descriptionInput').value;
