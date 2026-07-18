@@ -4338,6 +4338,15 @@
             if (typeof hideSiteFooter === 'function') hideSiteFooter();
         }
 
+        // Views that run full-bleed to the top of the page (category, chats) drop the
+        // site header entirely. hideAllViews() puts it back for everything else.
+        function hideSiteHeader() {
+            const hdr = document.querySelector('header#siteHeader');
+            if (!hdr) return;
+            hdr.classList.remove('force-dark', 'sticky-look', 'hero-left-box');
+            hdr.style.display = 'none';
+        }
+
         // The home view carries the sticky header's look from the very top, so the
         // header never sits transparent over the hero. Home only — every other view
         // drops it again in hideAllViews().
@@ -6201,13 +6210,8 @@
             document.title = `${catName} | VERO`;
 
             // No site header on category pages — the hero runs full-bleed to the top.
-            // hideAllViews() puts it back when any other view takes over.
             document.body.removeAttribute('data-header');
-            const hdr = document.querySelector('header#siteHeader');
-            if (hdr) {
-                hdr.classList.remove('force-dark', 'sticky-look', 'hero-left-box');
-                hdr.style.display = 'none';
-            }
+            hideSiteHeader();
 
             // Featured hero slider — shows the SAME promoted products that the promo
             // sliders further down the page use (one set of 5 per block).
@@ -6291,6 +6295,7 @@
             hideAllViews();
             vchatSeed();
             vchatRenderInbox();
+            hideSiteHeader();
             document.getElementById('chatListView').style.display = 'block';
             window.scrollTo(0, 0);
             // Keep the 48h holds ticking while the inbox is on screen.
@@ -6364,6 +6369,7 @@
         function vchatOpenSession(i) {
             VCHAT = VCHATS[i];
             hideAllViews();
+            hideSiteHeader();
             document.getElementById('chatView').style.display = 'block';
             document.getElementById('vchatSegBuyer').classList.toggle('active', VCHAT.role === 'buyer');
             document.getElementById('vchatSegSeller').classList.toggle('active', VCHAT.role === 'seller');
