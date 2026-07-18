@@ -663,6 +663,30 @@
         @media (max-width: 1100px) { .dh-cards { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 700px)  { .dh-cards { grid-template-columns: repeat(2, 1fr); } }
 
+        /* A listing card carries its status underneath the product card. */
+        .dh-listing { display: flex; flex-direction: column; gap: 10px; }
+        .dh-listing-foot {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .dh-badge {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 3px;
+            background: #eee;
+            color: #555;
+        }
+        .dh-badge.live    { background: #e8f0eb; color: #004225; }
+        .dh-badge.draft   { background: #f3efe4; color: #8a6d1f; }
+        .dh-badge.sold    { background: #111; color: #fff; }
+        .dh-badge.removed,
+        .dh-badge.expired { background: #f2f2f2; color: #9a9a9a; }
+        .dh-listing-note { font-size: 12px; color: #8a8a8a; }
+
         /* Month selector chips */
         .dh-chips {
             display: flex;
@@ -1025,6 +1049,86 @@
         // ==================== DATA HERO SLIDER (5 slides, category style) ====================
         // Each slide: title + description + call-to-action (text side) and an image side
         // that holds either a chart or a 3-product peek.
+        // ==================== MY LISTINGS ====================
+        // Pieces this user put up for sale. "live" is on the feed right now; the
+        // history slide carries everything that already closed.
+        const sampleListings = [
+            { name: 'ג\'קט ג\'ינס וינטג\'', price: '₪189.00', icon: '🧥', category: 'וינטג\'', seller: 'החנות שלי', rating: 4.8, status: 'live', views: 412, since: '12 ביולי' },
+            { name: 'סוודר צמר אפור', price: '₪145.00', icon: '🧶', category: 'סריגים', seller: 'החנות שלי', rating: 4.6, status: 'live', views: 268, since: '3 ביולי' },
+            { name: 'סניקרס עור לבן', price: '₪230.00', icon: '👟', category: 'סניקרס', seller: 'החנות שלי', rating: 4.9, status: 'live', views: 531, since: '28 ביוני' },
+            { name: 'חצאית מידי פרחונית', price: '₪120.00', icon: '👗', category: 'שמלות וחצאיות', seller: 'החנות שלי', rating: 4.5, status: 'live', views: 190, since: '21 ביוני' },
+            { name: 'תיק כתף עור חום', price: '₪265.00', icon: '👜', category: 'תיקים', seller: 'החנות שלי', rating: 4.7, status: 'live', views: 347, since: '9 ביוני' },
+        ];
+
+        const listingHistory = [
+            { name: 'מעיל טרנץ\' בז\'', price: '₪310.00', icon: '🧥', category: 'מעילים', seller: 'החנות שלי', rating: 4.9, status: 'sold', closed: 'מאי 2026', buyer: 'דנה ל.' },
+            { name: 'ג\'ינס מאם-פיט', price: '₪165.00', icon: '👖', category: 'ג\'ינס', seller: 'החנות שלי', rating: 4.7, status: 'sold', closed: 'מאי 2026', buyer: 'יובל ש.' },
+            { name: 'חולצת פלנל משובצת', price: '₪95.00', icon: '👕', category: 'גראנג\'', seller: 'החנות שלי', rating: 4.4, status: 'sold', closed: 'אפריל 2026', buyer: 'נועה ב.' },
+            { name: 'שרשרת כסף', price: '₪140.00', icon: '⛓️', category: 'תכשיטים', seller: 'החנות שלי', rating: 4.6, status: 'removed', closed: 'אפריל 2026' },
+            { name: 'כובע בוקט', price: '₪75.00', icon: '🧢', category: 'כובעים', seller: 'החנות שלי', rating: 4.3, status: 'expired', closed: 'מרץ 2026' },
+        ];
+
+        // Drafts parked by the upload wizard show up beside the live pieces.
+        function myDrafts() {
+            try {
+                return JSON.parse(localStorage.getItem('vero_drafts') || '[]').map(d => ({
+                    name: d.itemType || d.brand || 'טיוטה', price: d.price ? '₪' + d.price : '₪—',
+                    icon: d.category === 'art' ? '🖼️' : '👕', category: d.style || 'טיוטה',
+                    seller: 'החנות שלי', rating: 4.5, status: 'draft'
+                }));
+            } catch (e) { return []; }
+        }
+
+        const LISTING_LABELS = { live: 'באוויר', draft: 'טיוטה', sold: 'נמכר', removed: 'הוסר', expired: 'פג תוקף' };
+
+        // A product card with the listing's own status line underneath.
+        function listingCardHTML(item) {
+            const extra = item.status === 'live'
+                ? `${item.views} צפיות · עלה ב־${item.since}`
+                : item.status === 'sold'
+                    ? `נמכר ל${item.buyer || 'קונה'} · ${item.closed}`
+                    : item.closed || '';
+            return `<div class="dh-listing">
+                ${miniCardHTML(item)}
+                <div class="dh-listing-foot">
+                    <span class="dh-badge ${item.status}">${LISTING_LABELS[item.status] || item.status}</span>
+                    <span class="dh-listing-note">${extra}</span>
+                </div>
+            </div>`;
+        }
+
+        function listingsBlock(title, items) {
+            if (!items.length) return `<h3 class="dh-detail-title">${title}</h3><p class="dh-empty">אין כאן פריטים עדיין.</p>`;
+            return `<h3 class="dh-detail-title">${title}</h3>` +
+                `<div class="dh-cards">` + items.slice(0, 5).map(listingCardHTML).join('') + `</div>`;
+        }
+
+        function liveListings() { return [...myDrafts(), ...sampleListings]; }
+
+        function myListingsDetail() {
+            const live = liveListings();
+            const onAir = live.filter(l => l.status === 'live');
+            const views = onAir.reduce((sum, l) => sum + (l.views || 0), 0);
+            const value = onAir.reduce((sum, l) => sum + Number(String(l.price).replace(/[^\d.]/g, '') || 0), 0);
+            return statBlock('המוצרים שפרסמתי', [
+                ['באוויר עכשיו', String(onAir.length)],
+                ['טיוטות', String(live.filter(l => l.status === 'draft').length)],
+                ['סה"כ צפיות', views.toLocaleString()],
+                ['שווי המדף', '₪' + value.toLocaleString()],
+            ]) + listingsBlock('הפריטים שלי', live);
+        }
+
+        function listingHistoryDetail() {
+            const sold = listingHistory.filter(l => l.status === 'sold');
+            const earned = sold.reduce((sum, l) => sum + Number(String(l.price).replace(/[^\d.]/g, '') || 0), 0);
+            return statBlock('סיכום ההיסטוריה', [
+                ['נמכרו', String(sold.length)],
+                ['הוסרו / פג תוקף', String(listingHistory.length - sold.length)],
+                ['סה"כ הכנסות', '₪' + earned.toLocaleString()],
+                ['מחיר מכירה ממוצע', sold.length ? '₪' + Math.round(earned / sold.length).toLocaleString() : '—'],
+            ]) + listingsBlock('כל הפריטים שסגרו מעגל', listingHistory);
+        }
+
         const dhSlides = [
             {
                 tab: 'הוצאות חודשיות',
@@ -1065,6 +1169,22 @@
                 cta: 'לצפייה במותגים',
                 image: () => `<div class="dh-chart">${pctChartHTML(favoriteBrands)}</div>`,
                 detail: () => statBlock('פילוח המותגים', favoriteBrands.map(b => [b.name, `${b.pct}%`])),
+            },
+            {
+                tab: 'המוצרים שלי',
+                title: 'המוצרים שלי',
+                desc: 'הפריטים שפרסמת ונמצאים באוויר עכשיו — כמה צפיות אספו, ומה עוד מחכה כטיוטה.',
+                cta: 'לניהול הפריטים',
+                image: () => peekHTML(liveListings()),
+                detail: myListingsDetail,
+            },
+            {
+                tab: 'היסטוריית פרסומים',
+                title: 'היסטוריית הפרסומים',
+                desc: 'כל מה שכבר סגר מעגל — נמכר, הוסר או פג תוקפו, עם הסיכום הכספי.',
+                cta: 'לצפייה בהיסטוריה',
+                image: () => peekHTML(listingHistory),
+                detail: listingHistoryDetail,
             },
             {
                 tab: 'הגדרות',
