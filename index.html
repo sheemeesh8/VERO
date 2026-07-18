@@ -3217,102 +3217,93 @@
             background: white;
         }
 
-        /* ==================== UPLOAD WIZARD — About-story layout ====================
-           Full-screen split: the form half slides step by step on the left, the
-           product's own photograph holds the right half from the first step on. */
-        .upload-container {
-            display: flex;
+        /* ==================== UPLOAD WIZARD — full-page story slider ====================
+           Every step is a full viewport: its own form half and its own media half,
+           so the photograph slides across with the copy rather than sitting still. */
+        .upload-story {
+            position: relative;
+            width: 100vw;
             height: 100vh;
-            width: 100%;
+            overflow: hidden;
             direction: ltr;
             background: #fff;
         }
 
-        /* LEFT: the sliding form half */
-        .upload-right {
-            width: 50vw;
-            flex: 0 0 50vw;
-            padding: 88px 56px 104px;
+        .upload-viewport { position: absolute; inset: 0; overflow: hidden; }
+        .upload-track {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
+            height: 100%;
+            transition: transform 0.7s cubic-bezier(0.65, 0.05, 0.1, 1);
         }
 
-        /* RIGHT: the media half — the uploaded photo, kept in view all the way through */
-        .upload-left {
-            width: 50vw;
-            flex: 0 0 50vw;
+        .upload-slide {
+            flex: 0 0 100vw;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 50vw 50vw;
+        }
+        .upload-slide.final { grid-template-columns: 100vw; }
+
+        /* ---- Form half ---- */
+        .us-form {
+            display: flex;
+            align-items: center;
+            padding: 80px 56px 110px;
+            overflow-y: auto;
+            background: #fff;
+        }
+        .us-inner { width: 100%; max-width: 560px; margin: 0 auto; }
+
+        /* ---- Media half ---- */
+        .us-media {
             position: relative;
             background: #ecebe7 center / cover no-repeat;
             border-left: 1px solid rgba(0, 0, 0, 0.07);
-            overflow: hidden;
-        }
-
-        .upload-image-display {
-            position: absolute;
-            inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 120px;
             color: rgba(0, 0, 0, 0.14);
-            background: #ecebe7 center / cover no-repeat;
-            transition: background-image 0.5s ease;
+            overflow: hidden;
         }
-        .upload-image-display img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        /* Empty-state caption under the placeholder glyph */
-        .upload-media-hint {
+        /* The thumbnails that ride along on the later steps */
+        .us-media .thumbs {
             position: absolute;
-            bottom: 40px;
-            left: 0;
-            right: 0;
-            text-align: center;
+            right: 22px;
+            bottom: 22px;
+            display: flex;
+            gap: 10px;
+        }
+        .us-media .thumbs .thumb {
+            width: 60px;
+            height: 76px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.55) center / cover no-repeat;
+            border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 8px 22px rgba(0,0,0,0.16);
+        }
+        .us-media .empty {
             font-size: 12px;
             letter-spacing: 3px;
             text-transform: uppercase;
-            color: rgba(0, 0, 0, 0.35);
+            color: rgba(0,0,0,0.35);
         }
 
-        /* The two secondary shots ride along in the corner once they exist. */
-        .upload-media-strip {
-            position: absolute;
-            right: 24px;
-            bottom: 24px;
-            display: flex;
-            gap: 10px;
-            z-index: 3;
-        }
-        .upload-media-strip .thumb {
-            width: 62px;
-            height: 78px;
-            border-radius: 4px;
-            background: rgba(255,255,255,0.6) center / cover no-repeat;
-            border: 1px solid rgba(255,255,255,0.85);
-            box-shadow: 0 8px 22px rgba(0,0,0,0.16);
-            cursor: pointer;
-            transition: transform 0.25s ease;
-        }
-        .upload-media-strip .thumb:hover { transform: translateY(-4px); }
-        .upload-media-strip .thumb.active { outline: 2px solid #004225; outline-offset: 2px; }
-
-        /* ---- The three photo slots on the opening step ---- */
-        .photo-slots {
+        /* ---- The three photographs on the opening step ---- */
+        .us-media.photos {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: 1fr 168px;
             gap: 14px;
+            padding: 42px;
+            align-items: stretch;
+            background: #f4f3f0;
         }
-        .photo-slot {
+        .photo-side { display: flex; flex-direction: column; gap: 14px; }
+        .photo-main, .photo-slot {
             position: relative;
-            aspect-ratio: 3 / 4;
-            border: 1.5px dashed #d8d5cd;
+            border: 1.5px dashed #d3d0c8;
             border-radius: 10px;
-            background: #fafaf8 center / cover no-repeat;
+            background: #fbfbf9 center / cover no-repeat;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -3320,94 +3311,139 @@
             gap: 8px;
             cursor: pointer;
             color: #a8a49b;
-            font-size: 12px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            transition: border-color 0.2s, background-color 0.2s, transform 0.2s;
+            transition: border-color 0.2s, transform 0.2s;
         }
-        .photo-slot:hover { border-color: #004225; transform: translateY(-2px); }
-        .photo-slot .plus { font-size: 26px; line-height: 1; }
-        .photo-slot.filled { border-style: solid; border-color: #004225; color: transparent; }
-        .photo-slot.filled .plus { display: none; }
-        .photo-slot .badge {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0, 66, 37, 0.9);
-            color: #fff;
-            font-size: 10px;
-            letter-spacing: 1px;
-            padding: 3px 7px;
-            border-radius: 3px;
+        .photo-side .photo-slot { flex: 1; }
+        .photo-main:hover, .photo-slot:hover { border-color: #004225; transform: translateY(-2px); }
+        .photo-main .plus { font-size: 40px; line-height: 1; }
+        .photo-slot .plus { font-size: 24px; line-height: 1; }
+        .photo-main .cap, .photo-slot .cap {
+            font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
         }
-        .photo-slot input { display: none; }
+        .photo-main.filled, .photo-slot.filled { border-style: solid; border-color: #004225; }
+        .photo-main.filled .plus, .photo-main.filled .cap,
+        .photo-slot.filled .plus, .photo-slot.filled .cap { display: none; }
+        .photo-main input, .photo-slot input { display: none; }
 
-        /* ---- Physical slider: viewport clips, track slides via translateX ---- */
-        .upload-viewport {
-            overflow: hidden;
-            width: 100%;
+        /* ---- Size grid (garments) and the shoe slider ---- */
+        .size-panel { animation: sizeIn 0.35s ease both; }
+        @keyframes sizeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        .size-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .size-grid .size {
+            min-width: 58px;
+            padding: 11px 12px;
+            border: 1px solid #e2e0da;
+            border-radius: 8px;
+            background: #fafaf8;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .size-grid .size:hover { border-color: #004225; color: #004225; }
+        .size-grid .size.selected { background: #004225; border-color: #004225; color: #fff; }
+        .shoe-size { display: flex; align-items: center; gap: 18px; }
+        .shoe-size input[type=range] {
+            -webkit-appearance: none; appearance: none;
+            flex: 1; height: 2px; background: #ddd; cursor: pointer; padding: 0; border: none;
+        }
+        .shoe-size input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+            background: #004225; cursor: pointer;
+        }
+        .shoe-out {
+            min-width: 62px;
+            font-size: 26px;
+            font-weight: 700;
+            color: #111;
+            font-variant-numeric: tabular-nums;
         }
 
-        .upload-track {
+        /* ---- Final step: the art hero, in glass, with the finished card on top ---- */
+        .upload-slide.final .us-final {
+            position: relative;
+            width: 100vw;
+            height: 100%;
+            background: url('./art-hero.png') center / cover no-repeat;
             display: flex;
-            width: 100%;
-            transition: transform 0.65s cubic-bezier(0.65, 0.05, 0.1, 1);
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
         }
-
-        .upload-slide {
-            min-width: 100%;
-            box-sizing: border-box;
+        /* Glassmorphism at 0.5 over the hero photograph */
+        .upload-slide.final .us-final::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.5);
+            -webkit-backdrop-filter: blur(30px) saturate(1.1);
+            backdrop-filter: blur(30px) saturate(1.1);
+        }
+        .us-final-inner {
+            position: relative;
+            z-index: 1;
             display: flex;
             flex-direction: column;
-            padding: 2px;
+            align-items: center;
+            gap: 26px;
+            padding: 60px 24px;
+        }
+        .us-final-inner .upload-final {
+            display: flex;
+            gap: 14px;
+        }
+        .upload-btn.ghost {
+            background: none;
+            border: none;
+            color: rgba(0,0,0,0.5);
+            text-decoration: underline;
         }
 
-        /* ---- Progress bars along the bottom of the form half (about.html) ---- */
+        /* ---- Progress bars + step name, pinned over the form half ---- */
         .upload-progress {
             position: absolute;
             bottom: 44px;
             left: 56px;
-            right: 56px;
+            width: calc(50vw - 112px);
             display: flex;
             gap: 6px;
             z-index: 5;
         }
         .upload-progress .seg {
-            flex: 1;
-            height: 3px;
-            border-radius: 3px;
-            background: rgba(0, 0, 0, 0.14);
-            overflow: hidden;
+            flex: 1; height: 3px; border-radius: 3px;
+            background: rgba(0, 0, 0, 0.14); overflow: hidden;
         }
         .upload-progress .seg span {
-            display: block;
-            height: 100%;
-            width: 0;
-            background: #004225;
-            transition: width 0.45s ease;
+            display: block; height: 100%; width: 0;
+            background: #004225; transition: width 0.45s ease;
         }
         .upload-progress .seg.done span,
         .upload-progress .seg.active span { width: 100%; }
-
-        /* Step caption next to the bars */
         .upload-stepname {
             position: absolute;
             bottom: 58px;
             left: 56px;
+            z-index: 5;
             font-size: 12px;
             letter-spacing: 3px;
             text-transform: uppercase;
             color: rgba(0, 0, 0, 0.4);
         }
+        /* Over the glass final step both read on a lighter ground */
+        .upload-story.on-final .upload-progress { width: calc(100vw - 112px); }
 
         @media (max-width: 900px) {
-            .upload-container { flex-direction: column-reverse; height: auto; min-height: 100vh; }
-            .upload-right, .upload-left { width: 100%; flex: 1 1 auto; }
-            .upload-left { height: 34vh; border-left: none; border-bottom: 1px solid rgba(0,0,0,0.07); }
-            .upload-right { padding: 32px 24px 96px; }
-            .upload-progress, .upload-stepname { left: 24px; right: 24px; }
+            .upload-slide { grid-template-columns: 100vw; grid-template-rows: 34vh 1fr; }
+            .us-media { border-left: none; border-bottom: 1px solid rgba(0,0,0,0.07); }
+            .us-media.photos { grid-template-columns: 1fr 108px; padding: 18px; }
+            .us-form { padding: 28px 24px 96px; }
+            .upload-progress, .upload-stepname { left: 24px; width: calc(100vw - 48px); }
         }
 
+        
         .upload-form {
             display: flex;
             flex-direction: column;
@@ -3773,211 +3809,164 @@
             </div>
         </div>
 
-        <div class="upload-container" id="uploadContainer" style="display:none;">
-            <!-- MEDIA HALF: the product's own photo, from step one to the last -->
-            <div class="upload-left">
-                <button class="upload-close-btn" onclick="closeUploadProduct()">✕</button>
-                <div class="upload-image-display" id="uploadImageDisplay">📷
-                    <div class="upload-media-hint" id="uploadMediaHint">Your photo appears here</div>
-                </div>
-                <div class="upload-media-strip" id="uploadMediaStrip"></div>
-            </div>
+        <!-- The whole page slides: every step carries its own form half AND its own
+             media half, so the photograph travels with the copy. -->
+        <div class="upload-story" id="uploadContainer" style="display:none;">
+            <button class="upload-close-btn" onclick="closeUploadProduct()">✕</button>
 
-            <!-- RIGHT SIDE: Form -->
-            <div class="upload-right" id="uploadRight">
-                <!-- Progress bars + step name, in the About-story language -->
-                <div class="upload-stepname" id="uploadStepName">Photos</div>
-                <div class="upload-progress" id="uploadProgress"></div>
+            <div class="upload-viewport">
+            <div class="upload-track" id="uploadTrack">
 
-                <!-- SLIDING TRACK: steps physically slide left/right (like the promo slider) -->
-                <div class="upload-viewport">
-                <div class="upload-track" id="uploadTrack">
-                <!-- SLIDE 0: three photographs — the piece is built from here on -->
-                <div id="slide-photos" class="upload-slide">
-                    <div class="upload-header">
-                        <h1>Three photographs</h1>
-                        <p>Front, detail and label. The first one carries the listing.</p>
+                <!-- ===== SLIDE 0: the piece — brand, type, sizes, three photos ===== -->
+                <section class="upload-slide" id="slide-0">
+                    <div class="us-form">
+                        <div class="us-inner">
+                            <div class="upload-header">
+                                <h1 id="brandInput" contenteditable="true">Brand Name</h1>
+                                <p id="itemTypeDisplay">Item Type</p>
+                            </div>
+                            <div class="upload-form">
+                                <div class="upload-form-group">
+                                    <label>Brand</label>
+                                    <input type="text" id="brandNameInput" placeholder="e.g., Levi's, Zara" oninput="syncBrandHeading()">
+                                </div>
+                                <div class="upload-form-group">
+                                    <label>Item Type</label>
+                                    <select id="itemTypeSelect" onchange="updateItemTypeDisplay()">
+                                        <option>Select item type</option>
+                                    </select>
+                                </div>
+                                <div class="upload-form-group" id="genderGroup">
+                                    <label>Gender</label>
+                                    <select id="genderSelect">
+                                        <option>Select gender</option>
+                                        <option>Men</option>
+                                        <option>Women</option>
+                                        <option>Unisex</option>
+                                    </select>
+                                </div>
+
+                                <!-- Sizes open underneath once a type is chosen: a size grid
+                                     for garments, a 0–65 slider for shoes. -->
+                                <div class="upload-form-group size-panel" id="sizeGroup" style="display:none">
+                                    <label id="sizeLabel">Size</label>
+                                    <div class="size-grid" id="sizeGrid"></div>
+                                    <div class="shoe-size" id="shoeSize" style="display:none">
+                                        <input type="range" id="shoeSlider" min="0" max="65" step="1" value="42"
+                                               oninput="setShoeSize(this.value)">
+                                        <output class="shoe-out" id="shoeOut">42</output>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="upload-buttons">
+                                <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
+                                <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="photo-slots">
-                        <div class="photo-slot" id="photoSlot0" onclick="document.getElementById('photoInput0').click()">
-                            <span class="plus">+</span><span>Main</span>
+
+                    <!-- Media half: the three photographs. The first one is the listing's. -->
+                    <div class="us-media photos">
+                        <div class="photo-main" id="photoSlot0" onclick="document.getElementById('photoInput0').click()">
+                            <span class="plus">+</span>
+                            <span class="cap">Main photograph</span>
                             <input type="file" id="photoInput0" accept="image/*" onchange="handleSlotUpload(event, 0)">
                         </div>
-                        <div class="photo-slot" id="photoSlot1" onclick="document.getElementById('photoInput1').click()">
-                            <span class="plus">+</span><span>Detail</span>
-                            <input type="file" id="photoInput1" accept="image/*" onchange="handleSlotUpload(event, 1)">
-                        </div>
-                        <div class="photo-slot" id="photoSlot2" onclick="document.getElementById('photoInput2').click()">
-                            <span class="plus">+</span><span>Label</span>
-                            <input type="file" id="photoInput2" accept="image/*" onchange="handleSlotUpload(event, 2)">
-                        </div>
-                    </div>
-
-                    <div class="upload-buttons">
-                        <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
-                        <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
-                    </div>
-                </div>
-
-                <!-- SLIDE 1: who it's for → brand → type → size -->
-                <div id="slide-0" class="upload-slide">
-                    <div class="upload-header">
-                        <h1 id="brandInput" contenteditable="true" style="cursor: text; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 8px;">Brand Name</h1>
-                        <p id="itemTypeDisplay" style="font-size: 16px; font-weight: 600; color: #666;">Item Type</p>
-                    </div>
-                    <div class="upload-form">
-                        <div class="upload-form-group" id="genderGroup">
-                            <label>Gender</label>
-                            <select id="genderSelect">
-                                <option>Select gender</option>
-                                <option>Men</option>
-                                <option>Women</option>
-                                <option>Unisex</option>
-                            </select>
-                        </div>
-
-                        <div class="upload-form-group">
-                            <label>Brand</label>
-                            <input type="text" id="brandNameInput" placeholder="e.g., Levi's, Zara" oninput="syncBrandHeading()">
-                        </div>
-
-                        <div class="upload-form-group">
-                            <label>Item Type</label>
-                            <select id="itemTypeSelect" onchange="updateItemTypeDisplay()">
-                                <option>Select item type</option>
-                            </select>
-                        </div>
-
-                        <!-- clothing only: hidden for art in selectCategory* -->
-                        <div class="upload-form-group" id="sizeGroup">
-                            <label>Size</label>
-                            <select id="sizeSelect">
-                                <option>Select size</option>
-                                <option>Y</option>
-                                <option>XS</option>
-                                <option>S</option>
-                                <option>M</option>
-                                <option>L</option>
-                                <option>XL</option>
-                                <option>XXL</option>
-                                <option>XXXL</option>
-                            </select>
+                        <div class="photo-side">
+                            <div class="photo-slot" id="photoSlot1" onclick="document.getElementById('photoInput1').click()">
+                                <span class="plus">+</span><span class="cap">Detail</span>
+                                <input type="file" id="photoInput1" accept="image/*" onchange="handleSlotUpload(event, 1)">
+                            </div>
+                            <div class="photo-slot" id="photoSlot2" onclick="document.getElementById('photoInput2').click()">
+                                <span class="plus">+</span><span class="cap">Label</span>
+                                <input type="file" id="photoInput2" accept="image/*" onchange="handleSlotUpload(event, 2)">
+                            </div>
                         </div>
                     </div>
+                </section>
 
-                    <div class="upload-buttons">
-                        <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
-                        <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
-                    </div>
-                </div>
-
-                <!-- SLIDE 1: material → style → colour → condition -->
-                <div id="slide-1" class="upload-slide">
-                    <div class="upload-header">
-                        <h1>Attributes</h1>
-                    </div>
-                    <div class="upload-form">
-                        <div class="upload-form-group">
-                            <label>Material</label>
-                            <select id="materialSelect">
-                                <option>Select material</option>
-                                <option>Cotton</option>
-                                <option>Linen</option>
-                                <option>Wool</option>
-                                <option>Silk</option>
-                                <option>Denim</option>
-                                <option>Leather</option>
-                                <option>Cashmere</option>
-                                <option>Polyester</option>
-                                <option>Canvas</option>
-                                <option>Mixed</option>
-                            </select>
-                        </div>
-
-                        <div class="upload-form-group">
-                            <label>Style</label>
-                            <select id="styleSelect">
-                                <option>Select style</option>
-                                <option>Casual</option>
-                                <option>Formal</option>
-                                <option>Sport</option>
-                                <option>Vintage</option>
-                                <option>Streetwear</option>
-                                <option>Elegant</option>
-                                <option>Minimalist</option>
-                            </select>
-                        </div>
-
-                        <div class="upload-form-group">
-                            <label>Color</label>
-                            <div class="swatches" id="colorSwatches"><!-- palette, built by JS --></div>
-                        </div>
-
-                        <div class="upload-form-group">
-                            <label>Condition</label>
-                            <div class="chips" id="conditionChips"><!-- built by JS --></div>
+                <!-- ===== SLIDE 1: the look — style, colour, material ===== -->
+                <section class="upload-slide" id="slide-1">
+                    <div class="us-form">
+                        <div class="us-inner">
+                            <div class="upload-header">
+                                <h1>The look</h1>
+                                <p>Style, colour and what it's made of</p>
+                            </div>
+                            <div class="upload-form">
+                                <div class="upload-form-group">
+                                    <label>Style</label>
+                                    <div class="chips" id="styleChips"></div>
+                                </div>
+                                <div class="upload-form-group">
+                                    <label>Colour</label>
+                                    <div class="swatches" id="colorSwatches"></div>
+                                </div>
+                                <div class="upload-form-group">
+                                    <label>Material</label>
+                                    <div class="chips" id="materialChips"></div>
+                                </div>
+                            </div>
+                            <div class="upload-buttons">
+                                <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
+                                <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
+                            </div>
                         </div>
                     </div>
+                    <div class="us-media" data-media="1"></div>
+                </section>
 
-                    <div class="upload-buttons">
-                        <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
-                        <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
-                    </div>
-                </div>
-
-                <!-- SLIDE 2: photo → description → price -->
-                <div id="slide-2" class="upload-slide">
-                    <div class="upload-header">
-                        <h1>Story &amp; Price</h1>
-                    </div>
-                    <div class="upload-form">
-                        <div class="upload-form-group">
-                            <label>Description</label>
-                            <textarea id="descriptionInput" placeholder="Describe the item in detail..."></textarea>
+                <!-- ===== SLIDE 2: price, condition, description ===== -->
+                <section class="upload-slide" id="slide-2">
+                    <div class="us-form">
+                        <div class="us-inner">
+                            <div class="upload-header">
+                                <h1>Price &amp; condition</h1>
+                                <p>What it costs and how it has worn</p>
+                            </div>
+                            <div class="upload-form">
+                                <div class="upload-form-group">
+                                    <label>Price (₪)</label>
+                                    <input type="number" id="priceInput" placeholder="Enter price" min="0">
+                                </div>
+                                <div class="upload-form-group">
+                                    <label>Condition</label>
+                                    <div class="chips" id="conditionChips"></div>
+                                </div>
+                                <div class="upload-form-group">
+                                    <label>Description</label>
+                                    <textarea id="descriptionInput" placeholder="Describe the piece — its history, its fit, anything a buyer should know."></textarea>
+                                </div>
+                            </div>
+                            <div class="upload-buttons">
+                                <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
+                                <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
+                            </div>
                         </div>
+                    </div>
+                    <div class="us-media" data-media="2"></div>
+                </section>
 
-                        <div class="upload-form-group">
-                            <label>Price (₪)</label>
-                            <input type="number" id="priceInput" placeholder="Enter price" min="0">
+                <!-- ===== SLIDE 3: full-bleed result over the art hero, in glass ===== -->
+                <section class="upload-slide final" id="slide-3">
+                    <div class="us-final">
+                        <div class="us-final-inner">
+                            <div class="upload-preview" id="uploadPreview"></div>
+                            <div class="upload-final">
+                                <button class="upload-btn draft" onclick="saveProductDraft()">Save as draft</button>
+                                <button class="upload-btn submit" onclick="submitProduct()">Publish to feed</button>
+                            </div>
+                            <button class="upload-btn back ghost" onclick="goToPreviousSlide()">Back</button>
                         </div>
                     </div>
+                </section>
 
-                    <div class="upload-buttons">
-                        <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
-                        <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
-                    </div>
-                </div>
+            </div><!-- /.upload-track -->
+            </div><!-- /.upload-viewport -->
 
-                <!-- SLIDE 3: full-bleed preview of the finished product card -->
-                <div id="slide-3" class="upload-slide">
-                    <div class="upload-header">
-                        <h1>Preview</h1>
-                    </div>
-                    <div class="upload-preview" id="uploadPreview"><!-- card, built by JS --></div>
-
-                    <div class="upload-buttons">
-                        <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
-                        <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
-                    </div>
-                </div>
-
-                <!-- SLIDE 4: publish or park it -->
-                <div id="slide-4" class="upload-slide">
-                    <div class="upload-header">
-                        <h1>Ready to go</h1>
-                    </div>
-                    <div class="upload-final">
-                        <button class="upload-btn submit" onclick="submitProduct()">Publish to feed</button>
-                        <button class="upload-btn draft" onclick="saveProductDraft()">Save as draft</button>
-                    </div>
-
-                    <div class="upload-buttons">
-                        <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
-                    </div>
-                </div>
-                </div><!-- /.upload-track -->
-                </div><!-- /.upload-viewport -->
-            </div>
+            <!-- Progress bars + step name, in the About-story language -->
+            <div class="upload-stepname" id="uploadStepName">The Piece</div>
+            <div class="upload-progress" id="uploadProgress"></div>
         </div>
     </div>
 
@@ -5649,7 +5638,8 @@
         };
         let slideDirection = 'right';
 
-        const clothingTypes = ['Shirts', 'Pants', 'Dresses', 'Skirts', 'Sweaters', 'Coats', 'Shoes', 'Boots', 'Jackets'];
+        const clothingTypes = ['Shirts', 'Pants', 'Dresses', 'Skirts', 'Sweaters', 'Coats',
+            'Jackets', 'Shoes', 'Boots', 'Sneakers', 'Sandals'];
         const artTypes = ['Painting', 'Sculpture', 'Photography', 'Digital Art', 'Drawing', 'Print'];
 
         function blankUploadForm() {
@@ -5683,7 +5673,7 @@
         function applyCategoryFields(category) {
             const show = category === 'clothing' ? 'flex' : 'none';
             document.getElementById('genderGroup').style.display = show;
-            document.getElementById('sizeGroup').style.display = show;
+            renderSizePanel();
         }
 
         function selectCategoryInit(category) {
@@ -5693,6 +5683,7 @@
             applyCategoryFields(category);
             updateItemTypeOptions();
             buildUploadPalette();
+            resetUploadMedia();
             updateSlideDisplay();
         }
 
@@ -5717,86 +5708,113 @@
         }
 
         function updateItemTypeDisplay() {
-            uploadFormData.itemType = document.getElementById('itemTypeSelect').value;
+            uploadFormData.itemType = pickValue('itemTypeSelect');
             document.getElementById('itemTypeDisplay').textContent = uploadFormData.itemType || 'Item Type';
+            // Choosing a type is what opens the size column underneath.
+            uploadFormData.size = null;
+            renderSizePanel();
         }
 
-        // The three shots taken on the opening step. Slot 0 is the main photograph:
-        // it fills the media half and stays there for every step that follows.
+        // ---- The three photographs. Slot 0 is the listing's main image; it travels
+        // with the seller onto every later step's media half.
         function handleSlotUpload(event, slot) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
                 uploadFormData.photos[slot] = e.target.result;
-                if (slot === 0 || !uploadFormData.image) uploadFormData.image = uploadFormData.photos[0] || e.target.result;
+                uploadFormData.image = uploadFormData.photos[0] || e.target.result;
                 const el = document.getElementById('photoSlot' + slot);
                 el.classList.add('filled');
                 el.style.backgroundImage = `url('${e.target.result}')`;
-                if (!el.querySelector('.badge')) {
-                    const b = document.createElement('span');
-                    b.className = 'badge';
-                    b.textContent = ['MAIN', 'DETAIL', 'LABEL'][slot];
-                    el.appendChild(b);
-                }
-                renderUploadMedia(slot);
+                renderUploadMedia();
             };
             reader.readAsDataURL(file);
         }
 
-        // Paint the media half from the photos captured so far.
-        function renderUploadMedia(active) {
-            const display = document.getElementById('uploadImageDisplay');
-            const strip = document.getElementById('uploadMediaStrip');
-            const hint = document.getElementById('uploadMediaHint');
+        // Paint the media half of every step that isn't the photo step, so the piece
+        // stays in view from the moment it has a photograph.
+        function renderUploadMedia() {
             const shots = uploadFormData.photos.filter(Boolean);
-            if (!display) return;
-            const main = uploadFormData.photos[active] || uploadFormData.photos[0] || shots[0];
-            if (main) {
-                display.style.backgroundImage = `url('${main}')`;
-                display.textContent = '';
-                uploadFormData.image = uploadFormData.photos[0] || main;
-            } else {
-                display.style.backgroundImage = '';
-                display.textContent = '📷';
-            }
-            if (hint && main) hint.remove();
-            // Thumbnails only earn their place once there is more than one shot.
-            if (strip) {
-                strip.innerHTML = shots.length > 1
-                    ? uploadFormData.photos.map((p, i) => p
-                        ? `<div class="thumb${i === active ? ' active' : ''}" style="background-image:url('${p}')"
-                                onclick="renderUploadMedia(${i})"></div>`
-                        : '').join('')
-                    : '';
-            }
+            const main = uploadFormData.photos[0] || shots[0];
+            document.querySelectorAll('.us-media[data-media]').forEach(m => {
+                if (main) {
+                    m.style.backgroundImage = `url('${main}')`;
+                    m.innerHTML = shots.length > 1
+                        ? `<div class="thumbs">${uploadFormData.photos.filter(Boolean).slice(1).map(p =>
+                            `<div class="thumb" style="background-image:url('${p}')"></div>`).join('')}</div>`
+                        : '';
+                } else {
+                    m.style.backgroundImage = '';
+                    m.innerHTML = '<span class="empty">Your photograph appears here</span>';
+                }
+            });
         }
 
         function resetUploadMedia() {
-            const display = document.getElementById('uploadImageDisplay');
-            if (display) {
-                display.style.backgroundImage = '';
-                display.innerHTML = '📷<div class="upload-media-hint" id="uploadMediaHint">Your photo appears here</div>';
-            }
-            const strip = document.getElementById('uploadMediaStrip');
-            if (strip) strip.innerHTML = '';
+            document.querySelectorAll('.us-media[data-media]').forEach(m => {
+                m.style.backgroundImage = '';
+                m.innerHTML = '<span class="empty">Your photograph appears here</span>';
+            });
             [0, 1, 2].forEach(i => {
                 const el = document.getElementById('photoSlot' + i);
-                if (!el) return;
-                el.classList.remove('filled');
-                el.style.backgroundImage = '';
-                const b = el.querySelector('.badge');
-                if (b) b.remove();
+                if (el) { el.classList.remove('filled'); el.style.backgroundImage = ''; }
                 const input = document.getElementById('photoInput' + i);
                 if (input) input.value = '';
             });
         }
 
-        // Steps: 0 photos · 1 item · 2 attributes · 3 story+price · 4 preview · 5 publish.
-        const UPLOAD_STEP_NAMES = ['Photos', 'The Item', 'Attributes', 'Story & Price', 'Preview', 'Publish'];
+        // ---- Sizes: a garment grid, or a 0–65 slider when the piece is footwear ----
+        const GARMENT_SIZES = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+        const SHOE_TYPES = ['Shoes', 'Boots', 'Sneakers', 'Sandals'];
+
+        function isShoeType(type) { return SHOE_TYPES.includes(type); }
+
+        // Called whenever the item type changes: opens the right size control under it.
+        function renderSizePanel() {
+            const panel = document.getElementById('sizeGroup');
+            const grid = document.getElementById('sizeGrid');
+            const shoe = document.getElementById('shoeSize');
+            const label = document.getElementById('sizeLabel');
+            if (!panel) return;
+            const type = uploadFormData.itemType;
+            // Art has no size, and neither does an unanswered type.
+            if (uploadFormData.category !== 'clothing' || !type) {
+                panel.style.display = 'none';
+                return;
+            }
+            panel.style.display = 'flex';
+            if (isShoeType(type)) {
+                label.textContent = 'Shoe size';
+                grid.style.display = 'none';
+                shoe.style.display = 'flex';
+                if (!uploadFormData.size) setShoeSize(document.getElementById('shoeSlider').value);
+            } else {
+                label.textContent = 'Size';
+                shoe.style.display = 'none';
+                grid.style.display = 'flex';
+                grid.innerHTML = GARMENT_SIZES.map(sz =>
+                    `<button type="button" class="size${uploadFormData.size === sz ? ' selected' : ''}"
+                             data-size="${sz}" onclick="selectUploadSize('${sz}')">${sz}</button>`).join('');
+            }
+        }
+
+        function selectUploadSize(sz) {
+            uploadFormData.size = sz;
+            document.querySelectorAll('#sizeGrid .size').forEach(b =>
+                b.classList.toggle('selected', b.dataset.size === sz));
+        }
+
+        function setShoeSize(v) {
+            uploadFormData.size = String(v);
+            const out = document.getElementById('shoeOut');
+            if (out) out.textContent = v;
+        }
+
+        // Steps: 0 the piece · 1 the look · 2 price & condition · 3 the finished listing.
+        const UPLOAD_STEP_NAMES = ['The Piece', 'The Look', 'Price & Condition', 'Your Listing'];
         const UPLOAD_LAST_SLIDE = UPLOAD_STEP_NAMES.length - 1;
 
-        // Colour palette offered on the attributes step.
         const UPLOAD_COLORS = [
             { name: 'Black', hex: '#111111' }, { name: 'White', hex: '#ffffff' },
             { name: 'Grey', hex: '#9a9a9a' },  { name: 'Beige', hex: '#d9c9ae' },
@@ -5810,7 +5828,21 @@
 
         const UPLOAD_CONDITIONS = ['New with tags', 'Like new', 'Excellent', 'Good', 'Fair'];
 
+        // Styles mirror the feed's own categories, so an upload lands in a real aisle.
+        const CLOTHING_STYLES = ['Basic Casual', 'Smart Casual', 'Athleisure', 'Loungewear',
+            'Streetwear', 'Techwear', 'Vintage 90s', 'Y2K', 'Old Money', 'Grunge', 'Goth',
+            'Boho Chic', 'Minimalist', 'Dark Academia'];
+        const ART_STYLES = ['Acrylic', 'Oil', 'Watercolor', 'Mixed Media', 'Digital', 'Gouache',
+            'Pastel', 'Epoxy', 'Stone Sculpture', 'Metal Sculpture', 'Ceramics', 'Prints',
+            'Abstract', 'Art Deco'];
+
+        const CLOTHING_MATERIALS = ['Cotton', 'Linen', 'Wool', 'Cashmere', 'Silk', 'Denim',
+            'Leather', 'Suede', 'Canvas', 'Polyester', 'Velvet', 'Mixed'];
+        const ART_MATERIALS = ['Canvas', 'Paper', 'Wood', 'Stone', 'Metal', 'Ceramic',
+            'Resin', 'Textile', 'Glass', 'Mixed'];
+
         function buildUploadPalette() {
+            const isArt = uploadFormData.category === 'art';
             const wrap = document.getElementById('colorSwatches');
             if (wrap) {
                 wrap.innerHTML = UPLOAD_COLORS.map(c =>
@@ -5822,18 +5854,40 @@
                 chips.innerHTML = UPLOAD_CONDITIONS.map(c =>
                     `<button type="button" class="chip" data-cond="${c}" onclick="selectUploadCondition('${c}')">${c}</button>`).join('');
             }
+            const styles = document.getElementById('styleChips');
+            if (styles) {
+                styles.innerHTML = (isArt ? ART_STYLES : CLOTHING_STYLES).map(v =>
+                    `<button type="button" class="chip" data-style="${v}" onclick="selectUploadStyle('${v}')">${v}</button>`).join('');
+            }
+            const mats = document.getElementById('materialChips');
+            if (mats) {
+                mats.innerHTML = (isArt ? ART_MATERIALS : CLOTHING_MATERIALS).map(v =>
+                    `<button type="button" class="chip" data-mat="${v}" onclick="selectUploadMaterial('${v}')">${v}</button>`).join('');
+            }
         }
 
         function selectUploadColor(name) {
             uploadFormData.color = name;
-            document.querySelectorAll('#colorSwatches .swatch').forEach(s =>
-                s.classList.toggle('selected', s.dataset.color === name));
+            document.querySelectorAll('#colorSwatches .swatch').forEach(sw =>
+                sw.classList.toggle('selected', sw.dataset.color === name));
         }
 
         function selectUploadCondition(name) {
             uploadFormData.condition = name;
             document.querySelectorAll('#conditionChips .chip').forEach(c =>
                 c.classList.toggle('selected', c.dataset.cond === name));
+        }
+
+        function selectUploadStyle(name) {
+            uploadFormData.style = name;
+            document.querySelectorAll('#styleChips .chip').forEach(c =>
+                c.classList.toggle('selected', c.dataset.style === name));
+        }
+
+        function selectUploadMaterial(name) {
+            uploadFormData.material = name;
+            document.querySelectorAll('#materialChips .chip').forEach(c =>
+                c.classList.toggle('selected', c.dataset.mat === name));
         }
 
         // The brand typed on the form and the big editable heading are the same field.
@@ -5847,10 +5901,10 @@
             return c ? c.hex : '#e2e2e2';
         }
 
-        // Step 4 — render what the listing will look like in the feed.
+        // Final step — the listing exactly as the feed will carry it.
         function renderUploadPreview() {
             const d = uploadFormData;
-            const meta = [d.gender, d.size, d.material, d.style].filter(Boolean).join(' · ');
+            const meta = [d.gender, d.size, d.material, d.style, d.condition].filter(Boolean).join(' · ');
             const img = d.image
                 ? `<img src="${d.image}" alt="${d.itemType || 'Product'}">`
                 : (d.category === 'art' ? '🖼️' : '👕');
@@ -5878,20 +5932,14 @@
 
         // Pull the fields owned by the step we're leaving into uploadFormData.
         function collectUploadStep(step) {
-            if (step === 1) {
+            if (step === 0) {
                 uploadFormData.gender = pickValue('genderSelect');
                 uploadFormData.brand = document.getElementById('brandNameInput').value.trim()
                     || document.getElementById('brandInput').textContent.trim();
                 uploadFormData.itemType = pickValue('itemTypeSelect');
-                uploadFormData.size = uploadFormData.category === 'clothing'
-                    ? pickValue('sizeSelect') : null;
+                // style / colour / material and the size are set by their own handlers
             }
             if (step === 2) {
-                uploadFormData.material = pickValue('materialSelect');
-                uploadFormData.style = pickValue('styleSelect');
-                // colour + condition are set by their own click handlers
-            }
-            if (step === 3) {
                 uploadFormData.description = document.getElementById('descriptionInput').value;
                 uploadFormData.price = document.getElementById('priceInput').value;
             }
@@ -5902,7 +5950,7 @@
                 collectUploadStep(currentSlide);
                 slideDirection = 'right';
                 currentSlide++;
-                if (currentSlide === 4) renderUploadPreview();
+                if (currentSlide === UPLOAD_LAST_SLIDE) renderUploadPreview();
                 updateSlideDisplay();
             }
         }
@@ -5920,11 +5968,11 @@
         }
 
         function updateSlideDisplay() {
-            // Physically slide the track to the current step (translateX like the promo slider).
+            // The whole page slides — form half and media half together.
             const track = document.getElementById('uploadTrack');
-            if (track) {
-                track.style.transform = `translateX(-${currentSlide * 100}%)`;
-            }
+            if (track) track.style.transform = `translateX(-${currentSlide * 100}%)`;
+            const story = document.getElementById('uploadContainer');
+            if (story) story.classList.toggle('on-final', currentSlide === UPLOAD_LAST_SLIDE);
             updateStepper();
         }
 
@@ -5947,7 +5995,7 @@
         function submitProduct() {
             if (!uploadFormData.price) {
                 showToast('Please enter a price');
-                currentSlide = 3;              // back to the step that owns it
+                currentSlide = 2;              // back to the step that owns it
                 updateSlideDisplay();
                 return;
             }
