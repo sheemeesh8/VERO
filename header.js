@@ -74,7 +74,7 @@
         #siteHeader .hdr-search input {
             flex: 1; min-width: 0;
             border: none; background: none; outline: none;
-            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
             font-size: 14px; font-weight: 500; color: #111;
             padding: 0 8px 0 0;
         }
@@ -129,7 +129,7 @@
             z-index: 120;
             direction: ltr;
             text-align: left;
-            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         #siteHeader .hdr-filters.open { display: block; }
         /* Two halves: filters on the left, product preview on the right. */
@@ -242,7 +242,7 @@
         #siteHeader .header-left > a:hover { opacity: 1; color: rgba(0, 0, 0, 0.55); }
         #siteHeader .header-left > a .caret { width: 8px; height: 8px; opacity: 0.65; }
         #siteHeader .logo {
-            font-family: 'Poppins', 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
             font-size: 34px; font-weight: 700; letter-spacing: 5px; color: #111;
             font-style: normal; text-transform: uppercase; min-width: 80px;
             flex: 0 0 auto; text-align: center; transition: all 0.3s ease;
@@ -399,7 +399,7 @@
             position: absolute; top: 50%; left: -13px; transform: translateY(-50%);
             background: #c0392b; color: white; font-size: 10px; font-weight: 700;
             width: 15px; height: 28px; padding: 0; border-radius: 8px; display: none;
-            align-items: center; justify-content: center; font-family: 'Poppins', 'Segoe UI', sans-serif;
+            align-items: center; justify-content: center; font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         #siteHeader .badge.show { display: flex; }
         /* Hamburger (replaces the old Social link) */
@@ -427,7 +427,7 @@
             box-shadow: 2px 0 30px rgba(0,0,0,0.12);
             display: flex; flex-direction: column; padding: 28px 32px;
             box-sizing: border-box; direction: ltr; text-align: left;
-            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         .vero-drawer.open { transform: translateX(0); }
         .vero-drawer-head {
@@ -435,7 +435,7 @@
             margin-bottom: 40px;
         }
         .vero-drawer-head .vero-drawer-logo {
-            font-family: 'Poppins', 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 26px;
+            font-family: 'Playfair Display', Georgia, serif; font-size: 26px;
             font-weight: 700; letter-spacing: 5px; text-transform: uppercase; color: #111;
         }
         .vero-drawer-close {
