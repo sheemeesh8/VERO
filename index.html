@@ -502,13 +502,32 @@
             gap: 28px;
             width: 100%;
         }
+        /* Inert white placeholder rectangle. Position and size are being decided by
+           hand — drag it with the mouse, resize from its bottom-right corner, and
+           enableMagBoxEditing() prints the numbers to bake back into this rule. */
         .htb-square-row .htb-square-mag {
-            width: auto;
-            margin: 0 0 12px;
             flex: 0 0 auto;
-            white-space: nowrap;
-            padding: 16px 26px;
+            margin: 0 0 12px;
+            padding: 0;
+            width: 220px;
+            height: 56px;
+            background: #fff;
+            border: none;
+            /* Not a control: no clicks, no hover, no text. */
+            pointer-events: none;
+            cursor: default;
         }
+        /* Editing mode, toggled by enableMagBoxEditing(): the box becomes grabbable
+           and gets a native resize handle in its bottom-right corner. */
+        body.mag-edit .htb-square-row .htb-square-mag {
+            pointer-events: auto;
+            cursor: grab;
+            resize: both;
+            overflow: hidden;
+            outline: 1px dashed rgba(0, 0, 0, 0.45);
+            outline-offset: 2px;
+        }
+        body.mag-edit .htb-square-row .htb-square-mag:active { cursor: grabbing; }
 
         .htb-square-text {
             font-family: var(--font-sans);
@@ -4275,7 +4294,10 @@
                 <div class="htb-square">
                     <div class="htb-square-row">
                         <h2 class="htb-square-title" id="htbSquareTitle">Art</h2>
-                        <button class="htb-square-mag" id="htbSquareMagBtn" onclick="openMenu()">To the Gallery Magazine</button>
+                        <!-- Placeholder while the layout is being dialled in: a plain
+                             white rectangle, no click target. Drag it / resize it by
+                             hand — see enableMagBoxEditing(). -->
+                        <div class="htb-square-mag" id="htbSquareMagBtn"></div>
                     </div>
                 </div>
             </div>
@@ -4880,7 +4902,8 @@
             if (t) t.textContent = copy.title;
             if (p) p.textContent = copy.text;
             if (m) m.textContent = copy.magText;
-            if (b) b.textContent = copy.magCta;
+            // The magazine CTA is a blank white placeholder for now — leave it empty.
+            if (b && b.tagName === 'BUTTON') b.textContent = copy.magCta;
             syncHeaderHole();
         }
 
@@ -4921,6 +4944,92 @@
                 `transparent ${rt}px, #fff ${rt}px, #fff 100%)`;
         }
         window.addEventListener('resize', syncHeaderHole);
+
+        // Hand-tuning mode for the white magazine rectangle. Call
+        // enableMagBoxEditing() from the console (or press Ctrl+Shift+M) to grab the
+        // box with the mouse and drag it anywhere; the bottom-right corner resizes it.
+        // Every change prints the current numbers and stores them in localStorage, so
+        // a reload keeps whatever you last dialled in. enableMagBoxEditing(false)
+        // leaves the box exactly where it is but makes it inert again.
+        function enableMagBoxEditing(on = true) {
+            document.body.classList.toggle('mag-edit', on);
+            if (on) console.log('[mag-box] editing ON — drag to move, bottom-right corner to resize.');
+            return magBoxGeometry();
+        }
+
+        function magBoxGeometry() {
+            const box = document.getElementById('htbSquareMagBtn');
+            if (!box) return null;
+            const g = {
+                width: Math.round(box.offsetWidth) + 'px',
+                height: Math.round(box.offsetHeight) + 'px',
+                offsetX: Math.round(magBoxOffset.x) + 'px',
+                offsetY: Math.round(magBoxOffset.y) + 'px'
+            };
+            console.log('[mag-box]', g);
+            return g;
+        }
+
+        let magBoxOffset = { x: 0, y: 0 };
+        (function initMagBoxEditing() {
+            const box = document.getElementById('htbSquareMagBtn');
+            if (!box) return;
+
+            // Restore whatever was last dialled in by hand.
+            try {
+                const saved = JSON.parse(localStorage.getItem('veroMagBox') || 'null');
+                if (saved) {
+                    magBoxOffset = { x: saved.x || 0, y: saved.y || 0 };
+                    if (saved.w) box.style.width = saved.w + 'px';
+                    if (saved.h) box.style.height = saved.h + 'px';
+                    box.style.transform = `translate(${magBoxOffset.x}px, ${magBoxOffset.y}px)`;
+                }
+            } catch (e) { /* ignore a corrupt entry and start fresh */ }
+
+            const save = () => localStorage.setItem('veroMagBox', JSON.stringify({
+                x: magBoxOffset.x, y: magBoxOffset.y,
+                w: box.offsetWidth, h: box.offsetHeight
+            }));
+
+            let drag = null;
+            box.addEventListener('mousedown', e => {
+                if (!document.body.classList.contains('mag-edit')) return;
+                // The native resize grip lives in the bottom-right ~16px — let it work.
+                const r = box.getBoundingClientRect();
+                if (e.clientX > r.right - 16 && e.clientY > r.bottom - 16) return;
+                drag = { sx: e.clientX, sy: e.clientY, ox: magBoxOffset.x, oy: magBoxOffset.y };
+                e.preventDefault();
+            });
+            window.addEventListener('mousemove', e => {
+                if (!drag) return;
+                magBoxOffset.x = drag.ox + (e.clientX - drag.sx);
+                magBoxOffset.y = drag.oy + (e.clientY - drag.sy);
+                box.style.transform = `translate(${magBoxOffset.x}px, ${magBoxOffset.y}px)`;
+            });
+            window.addEventListener('mouseup', () => {
+                if (!drag) return;
+                drag = null;
+                save();
+                magBoxGeometry();
+            });
+
+            // Resizing is native (CSS resize), so watch the element for size changes.
+            if (window.ResizeObserver) {
+                let first = true;
+                new ResizeObserver(() => {
+                    if (first) { first = false; return; }
+                    if (!document.body.classList.contains('mag-edit')) return;
+                    save();
+                    magBoxGeometry();
+                }).observe(box);
+            }
+
+            window.addEventListener('keydown', e => {
+                if (e.ctrlKey && e.shiftKey && (e.key === 'M' || e.key === 'm')) {
+                    enableMagBoxEditing(!document.body.classList.contains('mag-edit'));
+                }
+            });
+        })();
 
 
         function showMain() {
