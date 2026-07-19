@@ -2419,6 +2419,47 @@
         }
         .acat-hero-img:hover { transform: translateY(-6px); }
 
+        /* ---- Category hero slider ----
+           A .promo-slider mounted in the hero's image slot. The emoji-sized type of
+           .acat-hero-img is cancelled and the slider's own arrows / dots / VIEW ALL
+           are hidden — the hero's counter and arrow page it. The hero band's own
+           padding and min-height are untouched, so its grey area keeps its size. */
+        .acat-hero-promo {
+            display: block;
+            font-size: 16px;
+            line-height: 1.5;
+            filter: none;
+        }
+        .acat-hero-promo:hover { transform: none; }
+        .acat-hero-promo .promo-slider { margin: 0; width: 100%; }
+        .acat-hero-promo .promo-arrow,
+        .acat-hero-promo .promo-footer { display: none; }
+        .acat-hero-promo .promo-viewport { margin: 0; }
+        .acat-hero-promo .promo-slide {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 32px;
+            padding: 0;
+        }
+        /* Capped so the slide can't push the hero band taller than the emoji did —
+           the grey area keeps the height it had before the slider moved in. */
+        .acat-hero-promo .promo-image {
+            font-size: 120px;
+            max-width: none;
+            width: auto;
+            max-height: 400px;
+            height: 400px;
+            margin: 0 auto;
+        }
+        .acat-hero-promo .promo-title { font-size: 40px; }
+        .acat-hero-promo .promo-desc { font-size: 14px; max-width: 320px; }
+        .acat-hero-promo .promo-price { font-size: 24px; }
+        .acat-hero-promo .promo-readmore { font-size: 11px; padding: 12px 22px; }
+        @media (max-width: 1100px) {
+            .acat-hero-promo .promo-slide { grid-template-columns: 1fr; gap: 18px; }
+            .acat-hero-promo .promo-image { aspect-ratio: 16 / 10; font-size: 80px; }
+            .acat-hero-promo .promo-title { font-size: 28px; }
+        }
+
         /* ---- Cart hero slider (replaces the emoji): the pieces in the cart,
                same card language as the hero promo slider under the hero. ---- */
         .achs { position: relative; padding: 0 44px; font-family: var(--font-sans); }
@@ -4243,7 +4284,9 @@
                         <a class="acat-buy" id="acatBuy" href="#">Buy</a>
                         <div class="acat-details" id="resultsCount">&#8964; Refine your filters</div>
                     </div>
-                    <a class="acat-hero-img" id="acatHeroImg" href="#">🕶️</a>
+                    <!-- Promo slider over the five promoted pieces, paged by the
+                         counter + arrow below; populated by acatRenderHero. -->
+                    <div class="acat-hero-img acat-hero-promo" id="acatHeroImg"></div>
                 </div>
                 <div class="acat-hero-foot">
                     <div class="acat-counter">
@@ -6800,21 +6843,37 @@
             return out;
         }
 
+        const ACAT_HERO_SLIDES = 5;   // promoted pieces carried by the hero slider
+
+        // Mount the hero's promo slider — the same component the feed and the blocks
+        // below use — over the first five promoted pieces. The slider's own controls
+        // are hidden: the hero's counter and arrow page it, so the copy on the left
+        // and the slide on the right can never drift apart.
+        function acatMountHeroSlider() {
+            const wrap = document.getElementById('acatHeroImg');
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            acatState.uid = null;
+            if (!acatState.items.length) return;
+            const slider = createPromoSlider(acatState.items.slice(0, ACAT_HERO_SLIDES));
+            wrap.appendChild(slider);
+            acatState.uid = slider.dataset.uid;
+        }
+
         function acatRenderHero() {
             const it = acatState.items[acatState.idx];
             if (!it) return;
-            const url = productPageUrl(it);
-            document.getElementById('acatTitle').innerHTML = '/ ' + it.name;
-            document.getElementById('acatDesc').textContent = it.desc || '';
-            const img = document.getElementById('acatHeroImg');
-            img.textContent = it.icon;
-            img.href = url;
-            const buy = document.getElementById('acatBuy');
-            buy.href = url;
-            buy.textContent = 'Buy ' + (it.price || '');
+            // The slide itself now carries the piece's name, price and CTA, so the
+            // copy beside it stays on the category rather than repeating them.
             const pad = n => String(n).padStart(2, '0');
             document.getElementById('acatIdx').textContent = pad(acatState.idx + 1);
             document.getElementById('acatTotal').textContent = pad(acatState.items.length);
+            // Move the slider to match. promoGo restarts its own auto-advance, which
+            // would page the slide without the copy — the hero's timer drives both.
+            if (acatState.uid) {
+                promoGo(acatState.uid, acatState.idx);
+                clearInterval(promoState[acatState.uid].timer);
+            }
         }
 
         function acatHeroGo(dir) {
@@ -6853,9 +6912,21 @@
 
             // Featured hero slider — shows the SAME promoted products that the promo
             // sliders further down the page use (one set of 5 per block).
-            acatState.items = categoryPromoted(catName, type);
+            acatState.items = categoryPromoted(catName, type).slice(0, ACAT_HERO_SLIDES);
             acatState.idx = 0;
+
+            // Category-level copy beside the slider.
+            const heroMeta = categoryMeta(catName, type);
+            document.getElementById('acatTitle').innerHTML = '/ ' + catName;
+            document.getElementById('acatDesc').textContent = heroMeta.desc
+                || `Promoted ${catName.toLowerCase()} picked by VERO — five pieces, refreshed often.`;
+            document.getElementById('acatBuy').style.display = 'none';
+
+            acatMountHeroSlider();
             acatRenderHero();
+            // One clock for the pair, so the copy and the slide advance together.
+            clearInterval(acatState.timer);
+            acatState.timer = setInterval(() => acatHeroGo(1), PROMO_INTERVAL);
 
             // Filter tags (visual — first three active, last muted).
             const tags = type === 'clothing'
