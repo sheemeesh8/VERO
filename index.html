@@ -6965,8 +6965,29 @@
             if (acatState.uid) {
                 promoGo(acatState.uid, acatState.idx);
                 clearInterval(promoState[acatState.uid].timer);
+                // Slides differ in copy length, so the button moves — refit the box.
+                acatSyncHeroBox();
             }
         }
+
+        // End the green box level with the bottom of the slide's buy button. The box
+        // top is fixed (it runs up behind the header), and the button sits inside a
+        // vertically centred column, so the height can only be measured, not
+        // expressed in CSS.
+        function acatSyncHeroBox() {
+            const box = document.querySelector('#categoryView .acat-hero-text');
+            const slide = document.querySelectorAll('#acatHeroImg .promo-slide')[acatState.idx];
+            const btn = slide && slide.querySelector('.promo-readmore');
+            if (!box || !btn) return;
+            box.style.alignSelf = 'start';
+            box.style.marginBottom = '0';
+            box.style.height = 'auto';
+            const top = box.getBoundingClientRect().top;
+            const bottom = btn.getBoundingClientRect().bottom;
+            if (bottom > top) box.style.height = Math.round(bottom - top) + 'px';
+        }
+
+        window.addEventListener('resize', acatSyncHeroBox);
 
         function acatHeroGo(dir) {
             const n = acatState.items.length;
@@ -7044,6 +7065,7 @@
             }
 
             // Punch the header hole once the hero box has its final size.
+            acatSyncHeroBox();
             syncHeaderHole();
         }
 
