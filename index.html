@@ -2054,6 +2054,9 @@
             width: auto;
             height: auto;
             align-self: stretch;
+            /* Without a cap the 4/5 image grows with the column and drags the whole
+               hero band taller than the copy beside it ever needs. */
+            max-height: 460px;
             margin: 0 auto;
         }
         .cw-hero .promo-viewport { margin: 0 52px; }
@@ -2414,14 +2417,26 @@
             grid-template-columns: minmax(0, 310px) minmax(0, 1fr);
             gap: 56px;
         }
+        /* The box is absolute, so the slider is the only grid item left and would
+           otherwise fall into the first column — the one the box sits over. */
+        #categoryView .acat-hero-img { grid-column: 2; }
+        #categoryView .acat-hero { position: relative; }
         #categoryView .acat-hero-text {
             background: var(--box-dark);
             color: #fff;
+            /* Out of the grid flow. As a grid item its height set the row height,
+               which set the band height — so sizing it against the band could never
+               settle. Absolute, it is free to span the band with an even gap top and
+               bottom while the slider column alone decides how tall the band is.
+               The grid column stays 310px wide, holding the space it sits over. */
+            position: absolute;
+            left: 24px;
+            top: 36px;
+            bottom: 36px;
+            width: 310px;
             max-width: 310px;
-            margin-left: calc(-7vw + 24px);
-            /* The old left padding pushed the copy past the middle of a 310px box —
-               at half width the text starts near the box's own edge instead. */
-            padding: 176px 30px 40px 40px;
+            margin: 0;
+            padding: 56px 30px 40px 40px;
         }
         #categoryView .acat-hero-text .acat-title { color: #fff; font-size: 40px; }
         #categoryView .acat-hero-text .acat-title::first-letter { color: #6d6d6d; }
@@ -6965,29 +6980,8 @@
             if (acatState.uid) {
                 promoGo(acatState.uid, acatState.idx);
                 clearInterval(promoState[acatState.uid].timer);
-                // Slides differ in copy length, so the button moves — refit the box.
-                acatSyncHeroBox();
             }
         }
-
-        // End the green box level with the bottom of the slide's buy button. The box
-        // top is fixed (it runs up behind the header), and the button sits inside a
-        // vertically centred column, so the height can only be measured, not
-        // expressed in CSS.
-        function acatSyncHeroBox() {
-            const box = document.querySelector('#categoryView .acat-hero-text');
-            const slide = document.querySelectorAll('#acatHeroImg .promo-slide')[acatState.idx];
-            const btn = slide && slide.querySelector('.promo-readmore');
-            if (!box || !btn) return;
-            box.style.alignSelf = 'start';
-            box.style.marginBottom = '0';
-            box.style.height = 'auto';
-            const top = box.getBoundingClientRect().top;
-            const bottom = btn.getBoundingClientRect().bottom;
-            if (bottom > top) box.style.height = Math.round(bottom - top) + 'px';
-        }
-
-        window.addEventListener('resize', acatSyncHeroBox);
 
         function acatHeroGo(dir) {
             const n = acatState.items.length;
@@ -7065,7 +7059,6 @@
             }
 
             // Punch the header hole once the hero box has its final size.
-            acatSyncHeroBox();
             syncHeaderHole();
         }
 
