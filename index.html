@@ -1344,10 +1344,31 @@
             padding: 0;
         }
 
+        /* The copy is two tight groups — company + piece name at the top, the
+           description / price / button at the bottom — rather than five items
+           spread evenly down the column. */
+        .promo-head, .promo-foot {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            /* Full column width, so the label fitter has the real space to measure. */
+            align-self: stretch;
+            gap: 8px;
+        }
+        .promo-foot { gap: 12px; }
+
         /* Company name — the first line, large and in the regular weight. */
         .promo-label {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 46px;
+            font-size: var(--promo-company, 46px);
+            /* One word per line — each word is its own span — inside a block whose
+               height is fixed at two lines of the base size. A one-word name is set
+               larger (below) so it fills that same block instead of leaving a gap. */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: calc(var(--promo-company, 46px) * 2.2);
+            overflow-wrap: normal;
             font-weight: 400;
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -1356,6 +1377,13 @@
             color: #111;
             margin: 0;
         }
+
+        /* Each word holds its own line — the fitter has already sized it to fit. */
+        .promo-label > span { white-space: nowrap; }
+
+        /* A single word has no second line, so it is set at twice the size to fill
+           the same block of the column that a stacked two-word name does. */
+        .promo-label.one-word { font-size: calc(var(--promo-company, 46px) * 2); }
 
         /* The piece's own name — smaller than the company name, and bold. */
         .promo-title {
@@ -2007,8 +2035,8 @@
            One scale for all three hero sliders (cart, wishlist, category), so the
            categories read at exactly the size the cart and wishlist do. Every value
            is 1.5x the size the slider was first built at. */
-        .cw-hero .promo-label,
-        .acat-hero-promo .promo-label { font-size: 69px; }
+        .cw-hero .promo-slider,
+        .acat-hero-promo .promo-slider { --promo-company: 69px; }
         .cw-hero .promo-title,
         .acat-hero-promo .promo-title { font-size: 36px; }
         .cw-hero .promo-desc,
@@ -2023,8 +2051,8 @@
             .cw-hero .promo-viewport { margin: 0 34px; }
             .cw-hero .promo-slide { grid-template-columns: 1fr; gap: 18px; }
             .cw-hero .promo-image { aspect-ratio: 16 / 10; font-size: 80px; }
-            .cw-hero .promo-label,
-            .acat-hero-promo .promo-label { font-size: 45px; }
+            .cw-hero .promo-slider,
+            .acat-hero-promo .promo-slider { --promo-company: 45px; }
             .cw-hero .promo-title,
             .acat-hero-promo .promo-title { font-size: 28px; }
         }
@@ -5715,18 +5743,28 @@
 
         function promoSlideHTML(s) {
             const url = productPageUrl(s);
+            const company = (s.brand || s.seller || 'VERO Select').trim();
+            // A multi-word company name breaks one word per line; a single word has
+            // no second line to fill, so it is set larger to cover the same block.
+            const oneWord = company.split(/\s+/).length === 1;
             return `
                 <div class="promo-slide">
                     <div class="promo-text">
                         <!-- Company name first and large, in the regular weight;
                              the piece's own name sits under it, smaller and bold. -->
-                        <span class="promo-label">${s.brand || s.seller || 'VERO Select'}</span>
-                        <h2 class="promo-title">${s.name}</h2>
-                        <p class="promo-desc">${s.desc}</p>
-                        <div class="promo-price">${s.price || ''}</div>
-                        <button class="promo-readmore" onclick="window.location.href='${url}'">
-                            Discover the Piece <span class="arrow">&rarr;</span>
-                        </button>
+                        <div class="promo-head">
+                            <span class="promo-label${oneWord ? ' one-word' : ''}">${
+                                company.split(/\s+/).map(w => `<span>${w}</span>`).join('')
+                            }</span>
+                            <h2 class="promo-title">${s.name}</h2>
+                        </div>
+                        <div class="promo-foot">
+                            <p class="promo-desc">${s.desc}</p>
+                            <div class="promo-price">${s.price || ''}</div>
+                            <button class="promo-readmore" onclick="window.location.href='${url}'">
+                                Discover the Piece <span class="arrow">&rarr;</span>
+                            </button>
+                        </div>
                     </div>
                     <a href="${url}" class="promo-image" style="text-decoration: none; color: inherit;">${s.icon}</a>
                 </div>`;
@@ -5826,6 +5864,38 @@
             return el;
         }
 
+        // Fit the company name to its column. A two-word name stacks one word per
+        // line at the base size; a single word is set larger so it covers the same
+        // block. Both are then capped by what actually fits the column width, so no
+        // word ever wraps mid-way and blows the block's height out.
+        function promoFitLabels(root = document) {
+            root.querySelectorAll('.promo-label').forEach(el => {
+                const col = el.closest('.promo-text');
+                if (!col || !col.clientWidth) return;
+                const base = parseFloat(getComputedStyle(el).getPropertyValue('--promo-company')) || 46;
+                const wanted = el.classList.contains('one-word') ? base * 2 : base;
+                // Widest single word at 100px, used to scale down to the column.
+                const probe = document.createElement('span');
+                probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:100px';
+                probe.style.fontFamily = getComputedStyle(el).fontFamily;
+                probe.style.fontWeight = getComputedStyle(el).fontWeight;
+                document.body.appendChild(probe);
+                let widest = 0;
+                el.textContent.trim().split(/\s+/).forEach(w => {
+                    probe.textContent = w;
+                    widest = Math.max(widest, probe.getBoundingClientRect().width);
+                });
+                probe.remove();
+                if (!widest) return;
+                // 0.94 keeps the longest word clear of the column edge; sized flush
+                // it still wraps on sub-pixel rounding.
+                const maxForWidth = (col.clientWidth * 0.94 / widest) * 100;
+                el.style.fontSize = Math.floor(Math.min(wanted, maxForWidth)) + 'px';
+            });
+        }
+
+        window.addEventListener('resize', () => promoFitLabels());
+
         function promoGo(uid, i) {
             const st = promoState[uid];
             const track = document.getElementById('promoTrack-' + uid);
@@ -5833,6 +5903,7 @@
             const n = st.slides.length;
             st.index = (i + n) % n;
             track.style.transform = `translateX(-${st.index * 100}%)`;
+            promoFitLabels(track);
             document.querySelectorAll('#promoDots-' + uid + ' .promo-dot').forEach((dot, idx) => {
                 const active = idx === st.index;
                 dot.classList.toggle('active', active);
