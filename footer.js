@@ -20,7 +20,7 @@
             background: #ffffff;
             border-top: 1px solid rgba(0,0,0,0.08);
             padding: 72px 0 40px;
-            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
             color: #111;
             direction: ltr;
             text-align: left;
@@ -49,7 +49,7 @@
             gap: 10px;
         }
         #siteFooter .foot-logo .mark {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: 'Poppins', 'Segoe UI', Helvetica, Arial, sans-serif;
             font-size: 26px; font-weight: 700; letter-spacing: 4px;
             text-transform: uppercase; color: #111;
         }
