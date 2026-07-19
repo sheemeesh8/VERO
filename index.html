@@ -468,10 +468,10 @@
         .htb-about {
             position: absolute;
             left: 60px;
-            /* Raised so the bar crosses the second line (TO VERO) through its middle. */
+            /* Fallback only — syncAboutBar() measures the "to VERO" line and writes
+               the real left / width / bottom inline, so the bar matches it exactly. */
             bottom: 120px;
             margin-top: 0;
-            /* Spans the left column instead of hugging its label. */
             width: calc(100% - 120px);
             box-sizing: border-box;
             display: inline-flex;
@@ -4930,6 +4930,30 @@
                 `transparent ${rt}px, #fff ${rt}px, #fff 100%)`;
         }
         window.addEventListener('resize', syncHeaderHole);
+
+        // The ABOUT US bar mirrors the second title line ("to VERO") exactly: same
+        // width, and centred on that line's vertical middle. Both are measured rather
+        // than guessed — the title is a clamp(), so its size and the line's width
+        // change with the viewport.
+        function syncAboutBar() {
+            const title = document.querySelector('.htb-title');
+            const btn = document.querySelector('.htb-about');
+            if (!title || !btn || !title.firstChild) return;
+            // Client rects come one per rendered line; the last is "to VERO".
+            const range = document.createRange();
+            range.selectNodeContents(title);
+            const lines = Array.from(range.getClientRects()).filter(r => r.width > 1);
+            if (!lines.length) return;
+            const last = lines[lines.length - 1];
+            const parent = btn.offsetParent || title.parentElement;
+            const pRect = parent.getBoundingClientRect();
+            btn.style.width = last.width + 'px';
+            btn.style.left = (last.left - pRect.left) + 'px';
+            // Centre the bar on the line: bottom of parent → middle of the line.
+            btn.style.bottom = (pRect.bottom - (last.top + last.height / 2) - btn.offsetHeight / 2) + 'px';
+        }
+        window.addEventListener('resize', syncAboutBar);
+        window.addEventListener('load', syncAboutBar);
 
         function showMain() {
             hideAllViews();
