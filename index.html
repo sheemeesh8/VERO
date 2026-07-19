@@ -1982,7 +1982,41 @@
            the category box uses to fill the grid row is cancelled. */
         /* Bigger than the category box, but not by the full 1.5x — the column carrying
            it grows from 0.45 to ~0.56 of the row, leaving the slider usable room. */
-        .cw-hero .acat-hero-inner { grid-template-columns: 1.13fr 0.87fr; }
+        /* The right column now carries a promo slider rather than a single emoji,
+           so it takes the larger share of the row. */
+        .cw-hero .acat-hero-inner { grid-template-columns: 0.82fr 1.18fr; }
+
+        /* ---- Cart / wishlist hero slider ----
+           The same .promo-slider component the feed and category pages use, scaled
+           to the hero column: the emoji-sized type of .acat-hero-img is cancelled
+           and the two-up slide is stacked tighter. */
+        .cw-hero .acat-hero-img {
+            display: block;
+            font-size: 16px;
+            line-height: 1.5;
+            filter: none;
+        }
+        .cw-hero .acat-hero-img:hover { transform: none; }
+        .cw-hero .promo-slider { margin: 0; width: 100%; }
+        .cw-hero .promo-viewport { margin: 0 52px; }
+        .cw-hero .promo-slide {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 32px;
+            padding: 12px 4px;
+        }
+        .cw-hero .promo-image { font-size: 110px; max-width: none; }
+        .cw-hero .promo-title { font-size: 38px; }
+        .cw-hero .promo-desc { font-size: 14px; max-width: 320px; }
+        .cw-hero .promo-price { font-size: 24px; }
+        .cw-hero .promo-readmore { font-size: 11px; padding: 12px 22px; }
+        /* Narrow columns can't carry image + copy side by side — stack them. */
+        @media (max-width: 1100px) {
+            .cw-hero .acat-hero-inner { grid-template-columns: 1fr; }
+            .cw-hero .promo-viewport { margin: 0 34px; }
+            .cw-hero .promo-slide { grid-template-columns: 1fr; gap: 18px; }
+            .cw-hero .promo-image { aspect-ratio: 16 / 10; font-size: 80px; }
+            .cw-hero .promo-title { font-size: 30px; }
+        }
         .cw-hero .acat-hero-text {
             align-self: start;
             aspect-ratio: 1 / 1;
@@ -2298,10 +2332,11 @@
             background: linear-gradient(180deg, #f3f3f1 0%, #fafafa 100%);
             padding: 130px 7vw 40px;
         }
-        /* The copy sits inside a black rectangle — same language as the home hero box. */
+        /* No box behind the copy — the green rectangle is a home-page-only device.
+           Category / cart / wishlist heroes let the copy sit straight on the page. */
         .acat-hero-text {
-            background: var(--box-dark);
-            color: #fff;
+            background: none;
+            color: #111;
             /* The box stretches left to sit near the page edge and runs up through the
                hero's top padding so it merges with the header, as on the home page.
                The extra padding cancels both pulls so the copy itself stays put. */
@@ -2315,12 +2350,12 @@
             padding: 176px 30px 40px calc(7vw - 24px + 44px);
             box-sizing: border-box;
         }
-        .acat-hero-text .acat-title { color: #fff; }
-        .acat-hero-text .acat-title::first-letter { color: #6d6d6d; }
-        .acat-hero-text .acat-desc { color: #b5b5b5; }
-        .acat-hero-text .acat-buy { border-color: #fff; color: #fff; }
-        .acat-hero-text .acat-buy:hover { background: #fff; color: #000; }
-        .acat-hero-text .acat-details { color: #8f8f8f; }
+        .acat-hero-text .acat-title { color: #111; }
+        .acat-hero-text .acat-title::first-letter { color: #999; }
+        .acat-hero-text .acat-desc { color: #6b6b6b; }
+        .acat-hero-text .acat-buy { border-color: var(--acat-accent); color: var(--acat-accent); }
+        .acat-hero-text .acat-buy:hover { background: var(--acat-accent); color: #fff; }
+        .acat-hero-text .acat-details { color: #9a9a9a; }
         .acat-hero-inner {
             display: grid;
             grid-template-columns: 0.9fr 1.1fr;
@@ -5005,16 +5040,44 @@
             });
         }
 
-        // The hero image side shows a single icon, like the category heroes — the
-        // items themselves are listed further down the page.
+        // The hero image side carries a promo slider — the same component the feed
+        // and category pages use — showing the first five items on the page's own
+        // list (cart or wishlist) rather than a static icon.
+        const CW_HERO_SLIDES = 5;
+
+        // Cart / wishlist entries carry no marketing copy, so give each slide a line
+        // built from what the item does have.
+        function cwPromoSlides(items, verb) {
+            return items.slice(0, CW_HERO_SLIDES).map(it => ({
+                ...it,
+                brand: it.seller || 'VERO Select',
+                desc: it.desc || `${it.name} — ${verb}. ${it.category || ''}`.trim(),
+                icon: it.icon || '🛍️'
+            }));
+        }
+
+        // Mount a promo slider for `items` into the hero image slot, or the empty
+        // note when the list has nothing in it yet.
+        function renderCwHeroSlider(wrapId, items, verb, emptyText) {
+            const wrap = document.getElementById(wrapId);
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            const slides = cwPromoSlides(items, verb);
+            if (!slides.length) {
+                wrap.innerHTML = `<div class="achs-empty">${emptyText}</div>`;
+                return;
+            }
+            const slider = createPromoSlider(slides);
+            wrap.appendChild(slider);
+            promoGo(slider.dataset.uid, 0);
+        }
+
         function renderCartHeroSlider() {
-            const wrap = document.getElementById('cartHeroSlider');
-            if (wrap) wrap.innerHTML = '🛒';
+            renderCwHeroSlider('cartHeroSlider', cart, 'in your cart', 'Your cart is empty');
         }
 
         function renderWishlistHeroSlider() {
-            const wrap = document.getElementById('wishlistHeroSlider');
-            if (wrap) wrap.innerHTML = '🤍';
+            renderCwHeroSlider('wishlistHeroSlider', wishlist, 'saved for later', 'Your wishlist is empty');
         }
 
         function renderCartPage() {
