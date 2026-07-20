@@ -342,7 +342,7 @@
         /* The switch + the plus, held tight to each other. This is one flex item, so
            the spread layout below distributes around the pair, not between them. */
         #siteHeader .hdr-mode-pair {
-            display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto;
+            display: inline-flex; align-items: center; gap: 26px; flex: 0 0 auto;
         }
         /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {

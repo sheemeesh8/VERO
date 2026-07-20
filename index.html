@@ -1242,14 +1242,27 @@
         }
         .hp-card:hover .hp-photo { transform: scale(1.04); }
 
-        /* Caption below the frame, aligned to its right edge. */
+        /* A white band laid over the bottom third of the photo, carrying the
+           category name. It sits inside .hp-frame, so it crops the image rather
+           than adding height below it. */
         .hp-body {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 33.333%;
+            background: #fff;
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
-            gap: 4px;
-            padding: 18px 2px 0;
-            text-align: right;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 2px;
+            /* Laid out left-to-right on this RTL page so the name starts at the
+               band's left edge. */
+            direction: ltr;
+            padding: 0 22px;
+            text-align: left;
+            box-sizing: border-box;
         }
 
         .hp-label {
@@ -1260,17 +1273,18 @@
             font-weight: 600;
         }
 
-        /* Restrained serif at a civil size — the old 68px Impact over the photo was
-           the loudest thing on the page. */
+        /* Sized by hpFitTitles() to run across most of the band's left side, so a
+           short name and a long one both fill the same measure. */
         .hp-title {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 22px;
+            font-size: 34px;
             font-weight: 400;
             text-transform: uppercase;
-            line-height: 1.2;
-            letter-spacing: 2px;
+            line-height: 1;
+            letter-spacing: 1px;
             margin: 0;
             color: #111;
+            white-space: nowrap;
         }
 
         .hp-desc {
@@ -4013,6 +4027,8 @@
     </style>
     <!-- The green hero rectangle, shared by every page (single source: hero-box.css). -->
     <link rel="stylesheet" href="hero-box.css">
+    <!-- The product card, shared by every page (single source: product-card.css). -->
+    <link rel="stylesheet" href="product-card.css">
 </head>
 <!-- data-back="none": this page opens on the home view, which carries no back
      control. hideAllViews() clears it for every other view. -->
@@ -5918,9 +5934,11 @@
                         <img class="hp-photo" loading="lazy" alt="${c.name}"
                              src="https://picsum.photos/seed/vero-cat-${encodeURIComponent(c.name)}-${globalIndex}/800/600"
                              onerror="this.remove()">
-                    </div>
-                    <div class="hp-body">
-                        <h3 class="hp-title">${c.name}</h3>
+                        <!-- White band over the bottom third of the photo, carrying
+                             the category name. -->
+                        <div class="hp-body">
+                            <h3 class="hp-title">${c.name}</h3>
+                        </div>
                     </div>
                 </a>`;
         }
@@ -5950,7 +5968,35 @@
                 </div>`;
             hpIndex = 0;
             hpGo(0);
+            hpFitTitles();
             hpTimer = setInterval(() => hpGo(hpIndex + 1), HP_INTERVAL);
+        }
+
+        // Size each category name so it runs across most of its white band —
+        // a short word and a long one end up filling the same measure, which is
+        // what makes the row read as one set rather than mixed type sizes.
+        function hpFitTitles() {
+            document.querySelectorAll('.hp-title').forEach(el => {
+                const band = el.closest('.hp-body');
+                if (!band || !band.clientWidth) return;
+                // The band's usable width, less its own padding.
+                const pad = parseFloat(getComputedStyle(band).paddingLeft) * 2;
+                const room = (band.clientWidth - pad) * 0.82;
+                // Measure the word once at 100px and scale to the room available.
+                const probe = document.createElement('span');
+                probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:100px';
+                probe.style.fontFamily = getComputedStyle(el).fontFamily;
+                probe.style.fontWeight = getComputedStyle(el).fontWeight;
+                probe.style.letterSpacing = getComputedStyle(el).letterSpacing;
+                probe.textContent = el.textContent.trim();
+                document.body.appendChild(probe);
+                const w = probe.getBoundingClientRect().width;
+                probe.remove();
+                if (!w) return;
+                // Capped so it never outgrows the band's height.
+                const byHeight = band.clientHeight * 0.72;
+                el.style.fontSize = Math.floor(Math.min((room / w) * 100, byHeight)) + 'px';
+            });
         }
 
         function hpGo(i) {
@@ -7103,11 +7149,12 @@
                 <a class="acard" href="${url}">
                     <div class="acard-img">${it.icon}</div>
                     <div class="acard-meta">
+                        <!-- Same bottom bar as .product-card: meta left, price right. -->
                         <div class="acard-row">
                             <span class="acard-name">${it.name}</span>
-                            <span class="acard-price">${it.price}</span>
+                            <span class="acard-sub">${sub}</span>
                         </div>
-                        <div class="acard-sub">${sub}</div>
+                        <span class="acard-price">${it.price}</span>
                     </div>
                 </a>`;
         }
