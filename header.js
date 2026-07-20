@@ -132,49 +132,80 @@
             font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         #siteHeader .hdr-filters.open { display: block; }
-        /* Two halves: filters on the left, product preview on the right. */
+        /* Stacked: the filter fields on top, the best-match product below them,
+           so the panel runs long and the product reads as a promoted slide. */
         #siteHeader .hdr-inner {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+            display: flex; flex-direction: column; gap: 34px;
         }
         #siteHeader .hdr-main { min-width: 0; display: flex; flex-direction: column; }
         #siteHeader .hdr-filters .hf-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px 24px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px 24px;
         }
-        /* Right half: quick preview of the best-matching product + results CTA. */
+        /* Below the filters: the best-matching product, laid out as a promoted
+           slide — image beside the copy, company name / product name / short
+           description / price / buy button. Type follows .promo-* in index.html,
+           scaled to the panel. */
         #siteHeader .hdr-preview {
             display: flex; flex-direction: column; gap: 16px;
-            border-inline-start: 1px solid #f0f0f0; padding-inline-start: 40px;
+            border-top: 1px solid #f0f0f0; padding-top: 28px;
         }
         #siteHeader .hdr-preview-card {
-            flex: 1; background: #efece4; border-radius: 12px; overflow: hidden;
-            display: flex; flex-direction: column; min-height: 560px;
-            transition: box-shadow 0.25s;
+            background: transparent; overflow: hidden;
+            display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            align-items: stretch; gap: 48px;
         }
-        #siteHeader .hdr-preview-card:hover { box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
         #siteHeader .hdr-preview-img {
-            flex: 1; display: flex; align-items: center; justify-content: center;
-            font-size: 180px; color: rgba(0,0,0,0.85);
+            display: flex; align-items: center; justify-content: center;
+            background: #efece4; border-radius: 4px;
+            aspect-ratio: 4 / 5; max-height: 420px; align-self: stretch;
+            font-size: 150px; color: rgba(0,0,0,0.85);
+            text-decoration: none;
             transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
         }
-        #siteHeader .hdr-preview-card:hover .hdr-preview-img { transform: scale(1.04); }
+        #siteHeader .hdr-preview-card:hover .hdr-preview-img { transform: scale(1.02); }
+        /* Copy runs the image's full height: first line on its top edge, buy
+           button on its bottom edge. */
         #siteHeader .hdr-preview-info {
-            display: flex; align-items: flex-end; justify-content: space-between;
-            gap: 18px; padding: 26px 30px 30px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            align-items: flex-start; gap: 18px; padding: 4px 0;
+        }
+        #siteHeader .hdr-preview-head { display: flex; flex-direction: column; gap: 8px; }
+        #siteHeader .hdr-preview-foot { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+        /* Company name — large, regular weight, one word per line. */
+        #siteHeader .hdr-preview-seller {
+            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+            display: flex; flex-direction: column; justify-content: center;
+            font-size: 46px; font-weight: 400; letter-spacing: 0.5px;
+            text-transform: uppercase; line-height: 1.1; color: #111;
+        }
+        #siteHeader .hdr-preview-seller > span { white-space: nowrap; }
+        #siteHeader .hdr-preview-seller.one-word { font-size: 68px; }
+        /* The piece's own name — smaller than the company name, and bold. */
+        #siteHeader .hdr-preview-name {
+            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+            font-size: 26px; font-weight: 700; text-transform: uppercase;
+            line-height: 1.25; letter-spacing: 0.5px; color: #111;
+            overflow-wrap: anywhere; margin: 0;
+        }
+        #siteHeader .hdr-preview-desc {
+            font-size: 15px; line-height: 1.7; color: #6b665e; max-width: 460px; margin: 0;
         }
         #siteHeader .hdr-preview-price {
-            font-size: 44px; font-weight: 800; letter-spacing: -0.5px; color: #111; line-height: 1;
+            font-size: 30px; font-weight: 600; letter-spacing: 0.5px; color: #111; margin: 2px 0;
         }
-        #siteHeader .hdr-preview-meta { text-align: right; }
-        #siteHeader .hdr-preview-seller {
-            font-size: 18px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #111;
+        #siteHeader .hdr-preview-buy {
+            display: inline-flex; align-items: center; gap: 12px;
+            background: #22372B; border: 1px solid #22372B; cursor: pointer;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-size: 13px; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; color: #fff; padding: 14px 26px;
+            transition: gap 0.3s, background 0.25s;
         }
-        #siteHeader .hdr-preview-name {
-            font-size: 15px; color: #8a8a8a; letter-spacing: 0.2px; margin-top: 6px;
-            max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
+        #siteHeader .hdr-preview-buy:hover { gap: 16px; background: #2E4A3A; border-color: #2E4A3A; }
         #siteHeader .hdr-preview-empty {
-            flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
-            color: #b3b3b3; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; padding: 40px;
+            grid-column: 1 / -1;
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            color: #b3b3b3; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; padding: 60px 40px;
         }
         #siteHeader .hdr-preview-kicker {
             font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #9a9a9a; font-weight: 700;
@@ -189,10 +220,12 @@
         #siteHeader .hdr-results:hover { background: #2E4A3A; }
         #siteHeader .hdr-results .arrow { font-size: 14px; }
         @media (max-width: 820px) {
-            #siteHeader .hdr-inner { grid-template-columns: 1fr; gap: 26px; }
-            #siteHeader .hdr-preview { border-inline-start: none; padding-inline-start: 0;
-                border-top: 1px solid #f0f0f0; padding-top: 24px; }
-            #siteHeader .hdr-preview-card { min-height: 240px; }
+            #siteHeader .hdr-filters .hf-grid { grid-template-columns: repeat(2, 1fr); }
+            #siteHeader .hdr-inner { gap: 26px; }
+            #siteHeader .hdr-preview-card { grid-template-columns: 1fr; gap: 22px; }
+            #siteHeader .hdr-preview-img { aspect-ratio: 16 / 10; font-size: 90px; }
+            #siteHeader .hdr-preview-seller { font-size: 34px; }
+            #siteHeader .hdr-preview-seller.one-word { font-size: 48px; }
         }
         #siteHeader .hdr-filters .hf-field { display: flex; flex-direction: column; gap: 6px; }
         #siteHeader .hdr-filters .hf-label {
@@ -663,8 +696,9 @@
         window.veroRenderPreview();
     };
 
-    // Right-half live preview: shows the single product that best matches the
-    // current selections. The page supplies the match via window.veroFilterPreview.
+    // Live preview under the filters: the single product that best matches the
+    // current selections, laid out as a promoted slide. The page supplies the
+    // match via window.veroFilterPreview.
     window.veroRenderPreview = function () {
         const host = document.getElementById('veroFilterPreview');
         if (!host) return;
@@ -675,13 +709,30 @@
             host.innerHTML = `<div class="hdr-preview-empty">No matching product yet</div>`;
             return;
         }
+        // Same slide order as .promo-slide: company name (large, regular weight,
+        // one word per line) → product name (bold) → description → price → buy.
+        const company = (p.brand || p.seller || 'VERO Select').trim();
+        const oneWord = company.split(/\s+/).length === 1;
+        // Feed products carry a written description; ordinary listings do not, so
+        // fall back to the category the piece is filed under.
+        const desc = p.desc || [p.category, p.style].filter(Boolean).join(' — ') || '';
+        const url = (typeof window.productPageUrl === 'function')
+            ? window.productPageUrl(p) : 'product.html';
         host.innerHTML = `
-            <div class="hdr-preview-img">${p.icon || '🛍️'}</div>
+            <a href="${url}" class="hdr-preview-img">${p.icon || '🛍️'}</a>
             <div class="hdr-preview-info">
-                <div class="hdr-preview-price">${p.price || ''}</div>
-                <div class="hdr-preview-meta">
-                    <div class="hdr-preview-seller">${p.seller || ''}</div>
-                    <div class="hdr-preview-name">${p.name || ''}</div>
+                <div class="hdr-preview-head">
+                    <span class="hdr-preview-seller${oneWord ? ' one-word' : ''}">${
+                        company.split(/\s+/).map(w => `<span>${w}</span>`).join('')
+                    }</span>
+                    <h2 class="hdr-preview-name">${p.name || ''}</h2>
+                </div>
+                <div class="hdr-preview-foot">
+                    <p class="hdr-preview-desc">${desc}</p>
+                    <div class="hdr-preview-price">${p.price || ''}</div>
+                    <button class="hdr-preview-buy" onclick="window.location.href='${url}'">
+                        Discover the Piece <span class="arrow">&rarr;</span>
+                    </button>
                 </div>
             </div>`;
     };
