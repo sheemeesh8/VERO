@@ -17,13 +17,13 @@
         #siteFooter {
             width: 100%;
             box-sizing: border-box;
-            background: #ffffff;
-            border-top: 1px solid rgba(0,0,0,0.08);
+            background: #22372B;
+            border-top: 1px solid rgba(255,255,255,0.12);
             padding: 72px 0 40px;
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            color: #111;
+            color: #ffffff;
             direction: ltr;
-            text-align: left;
+            text-align: center;
         }
         #siteFooter .foot-container {
             max-width: 1600px;
@@ -34,14 +34,14 @@
         #siteFooter .foot-top {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            align-items: center;
             gap: 40px;
         }
         #siteFooter .foot-brand {
             display: flex;
             flex-direction: column;
             gap: 22px;
-            align-items: flex-start;
+            align-items: center;
         }
         #siteFooter .foot-logo {
             display: flex;
@@ -51,28 +51,22 @@
         #siteFooter .foot-logo .mark {
             font-family: 'Playfair Display', Georgia, serif;
             font-size: 26px; font-weight: 700; letter-spacing: 4px;
-            text-transform: uppercase; color: #111;
-        }
-        #siteFooter .foot-desc {
-            max-width: 340px;
-            font-size: 14px;
-            line-height: 1.65;
-            color: #8a8a8a;
-            margin: 0;
+            text-transform: uppercase; color: #ffffff;
         }
         #siteFooter .foot-social {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 22px;
             list-style: none;
             margin: 0; padding: 0;
         }
         #siteFooter .foot-social a {
-            color: #8a8a8a;
+            color: rgba(255,255,255,0.7);
             display: inline-flex;
             transition: color 0.2s ease;
         }
-        #siteFooter .foot-social a:hover { color: #111; }
+        #siteFooter .foot-social a:hover { color: #ffffff; }
         #siteFooter .foot-social svg { width: 20px; height: 20px; }
         #siteFooter .foot-cols {
             display: grid;
@@ -84,44 +78,39 @@
             font-size: 13px;
             font-weight: 700;
             letter-spacing: 0.5px;
-            color: #111;
+            color: #ffffff;
             text-transform: uppercase;
         }
         #siteFooter .foot-col ul { list-style: none; margin: 0; padding: 0; }
         #siteFooter .foot-col li { margin-bottom: 12px; }
         #siteFooter .foot-col a {
             font-size: 14px;
-            color: #8a8a8a;
+            color: rgba(255,255,255,0.72);
             text-decoration: none;
             transition: color 0.2s ease;
         }
-        #siteFooter .foot-col a:hover { color: #111; }
+        #siteFooter .foot-col a:hover { color: #ffffff; }
         #siteFooter .foot-bottom {
             margin-top: 48px;
             padding-top: 28px;
-            border-top: 1px solid rgba(0,0,0,0.08);
+            border-top: 1px solid rgba(255,255,255,0.15);
             display: flex;
             flex-direction: column;
+            align-items: center;
             gap: 12px;
             font-size: 12px;
-            color: #9a9a9a;
+            color: rgba(255,255,255,0.6);
         }
         #siteFooter .foot-legal {
             display: flex;
+            justify-content: center;
             gap: 22px;
             list-style: none;
             margin: 0; padding: 0;
             flex-wrap: wrap;
         }
-        #siteFooter .foot-legal a { color: #9a9a9a; text-decoration: none; }
-        #siteFooter .foot-legal a:hover { color: #111; }
-
-        @media (min-width: 1024px) {
-            #siteFooter .foot-top { flex-direction: row; align-items: flex-start; }
-            #siteFooter .foot-brand { flex: 0 0 34%; }
-            #siteFooter .foot-cols { flex: 1; }
-            #siteFooter .foot-bottom { flex-direction: row; justify-content: space-between; align-items: center; }
-        }
+        #siteFooter .foot-legal a { color: rgba(255,255,255,0.6); text-decoration: none; }
+        #siteFooter .foot-legal a:hover { color: #ffffff; }
         @media (max-width: 620px) {
             #siteFooter .foot-cols { grid-template-columns: 1fr 1fr; gap: 28px; }
         }
@@ -175,7 +164,6 @@
                     <div class="foot-logo">
                         <span class="mark">VERO</span>
                     </div>
-                    <p class="foot-desc">Second-hand, curated. Fashion &amp; art with a story worth wearing.</p>
                     <ul class="foot-social">
                         ${social.map(s => `<li><a href="${s.href}" aria-label="${s.label}">${s.icon}</a></li>`).join('')}
                     </ul>
