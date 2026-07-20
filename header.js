@@ -22,7 +22,8 @@
     //   veroSetIconOrder(['cart', 'wishlist', 'mode', 'chats', 'account', 'upload'])
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
-    const ICON_ORDER = ['account', 'wishlist', 'cart', 'chats', 'mode', 'upload'];
+    // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
+    const ICON_ORDER = ['account', 'wishlist', 'cart', 'chats', 'mode'];
     const ICON_ORDER_KEY = 'vero_header_icon_order';
 
     function currentIconOrder() {
@@ -338,17 +339,27 @@
         #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
         #siteHeader .header-right { display: flex; gap: 12px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 13px; }
+        /* The switch + the plus, held tight to each other. This is one flex item, so
+           the spread layout below distributes around the pair, not between them. */
+        #siteHeader .hdr-mode-pair {
+            display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto;
+        }
         /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {
             position: relative; display: inline-block; box-sizing: border-box;
             width: 52px; height: 28px; flex: 0 0 auto;
             background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
-            transition: all 0.3s ease; border: 1px solid rgba(0, 0, 0, 0.18);
+            /* Not "all": border-color is mode-driven and must switch immediately when
+               the mode flips — transitioning it left the switch showing the old
+               mode's colour. */
+            transition: background 0.3s ease; border: 1px solid rgba(0, 0, 0, 0.18);
         }
         #siteHeader .toggle-category::before {
             content: ''; position: absolute; top: 3px; left: 3px;
             width: 20px; height: 20px; border-radius: 50%; background: #111; z-index: 0;
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease;
+            /* Only the slide animates. The knob's colour is mode-driven, same as the
+               track's border, and must switch instantly rather than fade. */
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(24px); }
         /* labels kept in the markup for state/a11y, but not shown */
@@ -552,6 +563,64 @@
             #siteHeader .logo { font-size: 20px; letter-spacing: 3px; order: 2; flex: 0 1 auto; }
             #siteHeader .header-right { order: 3; flex: 1 1 100%; justify-content: center; gap: 15px; }
         }
+
+        /* ===== The two mode-coloured controls =====
+           The switch and the + are the only header items that carry the site's mode
+           colour: green in fashion, burgundy in art. Everything else in the header
+           stays black on every page. Last in the file and marked !important so it
+           beats the .scrolled / .force-dark / .force-light blocks above, which all
+           hard-set these to #111.
+
+           Written with literal colours rather than a custom property: the toggle
+           carries "transition: all", and a var()-substituted border-color did not
+           repaint reliably when the mode flipped. */
+        #siteHeader .hdr-mode-pair .toggle-category,
+        #siteHeader.scrolled .hdr-mode-pair .toggle-category,
+        #siteHeader.force-dark .hdr-mode-pair .toggle-category,
+        #siteHeader.force-light .hdr-mode-pair .toggle-category,
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category {
+            border-color: #22372B !important;
+        }
+        #siteHeader .hdr-mode-pair .toggle-category::before,
+        #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
+        #siteHeader.force-dark .hdr-mode-pair .toggle-category::before,
+        #siteHeader.force-light .hdr-mode-pair .toggle-category::before,
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category::before {
+            background: #22372B !important;
+        }
+        #siteHeader .hdr-mode-pair .upload-plus,
+        #siteHeader.scrolled .hdr-mode-pair .upload-plus,
+        #siteHeader.force-dark .hdr-mode-pair .upload-plus,
+        #siteHeader.force-light .hdr-mode-pair .upload-plus,
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .upload-plus {
+            color: #22372B !important;
+            border-color: #22372B !important;
+        }
+        /* Art mode repaints the same two controls burgundy. */
+        body[data-mode="art"] #siteHeader .hdr-mode-pair .toggle-category,
+        body[data-mode="art"] #siteHeader.scrolled .hdr-mode-pair .toggle-category,
+        body[data-mode="art"] #siteHeader.force-dark .hdr-mode-pair .toggle-category,
+        body[data-mode="art"] #siteHeader.force-light .hdr-mode-pair .toggle-category,
+        body[data-mode="art"] #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category {
+            border-color: #6E232B !important;
+        }
+        body[data-mode="art"] #siteHeader .hdr-mode-pair .toggle-category::before,
+        body[data-mode="art"] #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
+        body[data-mode="art"] #siteHeader.force-dark .hdr-mode-pair .toggle-category::before,
+        body[data-mode="art"] #siteHeader.force-light .hdr-mode-pair .toggle-category::before,
+        body[data-mode="art"] #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category::before {
+            background: #6E232B !important;
+        }
+        body[data-mode="art"] #siteHeader .hdr-mode-pair .upload-plus,
+        body[data-mode="art"] #siteHeader.scrolled .hdr-mode-pair .upload-plus,
+        body[data-mode="art"] #siteHeader.force-dark .hdr-mode-pair .upload-plus,
+        body[data-mode="art"] #siteHeader.force-light .hdr-mode-pair .upload-plus,
+        body[data-mode="art"] #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .upload-plus {
+            color: #6E232B !important;
+            border-color: #6E232B !important;
+        }
+        /* The pulse ring inherits the mode colour too, rather than the black default. */
+        #siteHeader .hdr-mode-pair .upload-plus { animation: none !important; }
     `;
 
     // ---- Markup (identical everywhere) ----
@@ -610,10 +679,16 @@
             </div>
 
             <div class="header-right">
-                <div class="toggle-category" id="categoryToggleBtn" data-icon="mode" onclick="toggleSwitch()">
-                    <span class="seg active" id="segArt">Art</span>
-                    <span class="seg" id="segFashion">Fashion</span>
-                </div>
+                <!-- The switch and the + travel together as one unit: they are the
+                     two mode-coloured controls, so they read as a pair rather than
+                     as two icons that happen to sit at opposite ends of the spread. -->
+                <span class="hdr-mode-pair" data-icon="mode">
+                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
+                        <span class="seg active" id="segArt">Art</span>
+                        <span class="seg" id="segFashion">Fashion</span>
+                    </div>
+                    <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
+                </span>
                 <span class="icon-wrap" data-icon="wishlist">
                     <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke-width: 1.5;">
@@ -644,7 +719,6 @@
                         <path d="M12 13.5c-4.5 0-8.2 2.9-8.2 6.5h16.4c0-3.6-3.7-6.5-8.2-6.5z"/>
                     </svg>
                 </button>
-                <button class="icon-btn upload-plus" data-icon="upload" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
             </div>
         </div>
     `;
