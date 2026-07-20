@@ -2051,11 +2051,9 @@
         /* Square box, rather than the category hero's taller rectangle. Height is
            driven off the width, so it stays square at every viewport; the stretch
            the category box uses to fill the grid row is cancelled. */
-        /* Bigger than the category box, but not by the full 1.5x — the column carrying
-           it grows from 0.45 to ~0.56 of the row, leaving the slider usable room. */
-        /* The right column now carries a promo slider rather than a single emoji,
-           so it takes the larger share of the row. */
-        .cw-hero .acat-hero-inner { grid-template-columns: 0.82fr 1.18fr; }
+        /* Column geometry comes from the shared category-hero box rules further
+           down — cart and wishlist use the same 310px box and the same slider
+           column. Nothing page-specific here. */
 
         /* ---- Cart / wishlist hero slider ----
            The same .promo-slider component the feed and category pages use, scaled
@@ -2101,38 +2099,10 @@
             .cw-hero .promo-image,
             .acat-hero-promo .promo-image { aspect-ratio: 16 / 10; font-size: 80px; }
         }
-        .cw-hero .acat-hero-text {
-            align-self: start;
-            aspect-ratio: 1 / 1;
-            height: auto;
-            margin-bottom: 0;
-            max-width: 780px;
-            /* The category box reserves 176px on top to run up behind the sticky
-               header; these two pages have none, and that reserve is what stopped the
-               copy fitting inside a square at narrower widths. */
-            /* Copy is spread over the full height of the square rather than sitting
-               in a clump — even gaps between back-link, title, text, CTA and note. */
-            padding: 56px 40px;
-            justify-content: space-between;
-            gap: 0;
-            /* Flush to the left edge of the box, not centred in it. */
-            align-items: flex-start;
-            text-align: left;
-        }
+        /* The box itself — size, padding, colour, type — is the shared category-hero
+           treatment further down. The only cart/wishlist addition is the back arrow
+           above the title. */
         .cw-hero .acat-hero-text > * { margin-left: 0; margin-right: auto; }
-
-        /* Cart + wishlist titles: twice the category size, one word per line. */
-        .cw-hero .acat-title {
-            /* As large as the square allows — the cap is what keeps the longest
-               title inside the box rather than spilling out of it. */
-            font-size: clamp(120px, 20vw, 264px);
-            line-height: 0.98;
-            /* Forces the break, so MY sits above CART. */
-            word-spacing: 100vw;
-        }
-        /* That grey first letter was there to dim the slash; without one it would
-           just knock the M out of the word. */
-        .cw-hero .acat-hero-text .acat-title::first-letter { color: inherit; }
 
         .cart-tabs {
             display: flex;
@@ -2441,20 +2411,24 @@
         .acat-hero-text .acat-buy:hover { background: var(--acat-accent); color: #fff; }
         .acat-hero-text .acat-details { color: #9a9a9a; }
 
-        /* ---- Category hero: the green box, at half its original width ----
-           Only the category hero carries it; cart and wishlist stay boxless. At
-           310px (was 620px) the box no longer has room for the old bleed-left
-           padding, so it sits inside the hero rather than running to the page edge,
-           and its column is narrowed to match so the slider keeps the space. */
-        #categoryView .acat-hero-inner {
+        /* ---- Category / cart / wishlist hero: the green box, at half its original
+           width ---- At 310px (was 620px) the box no longer has room for the old
+           bleed-left padding, so it sits inside the hero rather than running to the
+           page edge, and its column is narrowed to match so the slider keeps the
+           space. Cart and wishlist carry the same treatment — one hero design. */
+        #categoryView .acat-hero-inner,
+        .cw-hero .acat-hero-inner {
             grid-template-columns: minmax(0, 310px) minmax(0, 1fr);
             gap: 56px;
         }
         /* The box is absolute, so the slider is the only grid item left and would
            otherwise fall into the first column — the one the box sits over. */
-        #categoryView .acat-hero-img { grid-column: 2; }
-        #categoryView .acat-hero { position: relative; }
-        #categoryView .acat-hero-text {
+        #categoryView .acat-hero-img,
+        .cw-hero .acat-hero-img { grid-column: 2; }
+        #categoryView .acat-hero,
+        .cw-hero.acat-hero { position: relative; }
+        #categoryView .acat-hero-text,
+        .cw-hero .acat-hero-text {
             background: var(--box-dark);
             color: #fff;
             /* Out of the grid flow. As a grid item its height set the row height,
@@ -2472,10 +2446,17 @@
             margin: 0;
             padding: 56px 30px 40px 40px;
         }
-        #categoryView .acat-hero-text .acat-title { color: #fff; font-size: 40px; }
-        #categoryView .acat-hero-text .acat-title::first-letter { color: #6d6d6d; }
-        #categoryView .acat-hero-text .acat-desc { color: #b5b5b5; }
-        #categoryView .acat-hero-text .acat-details { color: #8f8f8f; }
+        #categoryView .acat-hero-text .acat-title,
+        .cw-hero .acat-hero-text .acat-title { color: #fff; font-size: 40px; }
+        #categoryView .acat-hero-text .acat-title::first-letter,
+        .cw-hero .acat-hero-text .acat-title::first-letter { color: #6d6d6d; }
+        #categoryView .acat-hero-text .acat-desc,
+        .cw-hero .acat-hero-text .acat-desc { color: #b5b5b5; }
+        #categoryView .acat-hero-text .acat-details,
+        .cw-hero .acat-hero-text .acat-details { color: #8f8f8f; }
+        /* The back arrow and the "move all" link sit on the green box too. */
+        .cw-hero .acat-hero-text .cw-back,
+        .cw-hero .acat-hero-text .acat-buy { color: #fff; }
         .acat-hero-inner {
             display: grid;
             grid-template-columns: 0.9fr 1.1fr;
@@ -4331,7 +4312,10 @@
         <div class="acat-hero-inner">
             <div class="acat-hero-text">
                 <button class="cw-back" onclick="cwGoBack()" aria-label="Back">&#8249;</button>
-                <h1 class="acat-title">My Cart</h1>
+                <h1 class="acat-title">/&nbsp;My Cart</h1>
+                <p class="acat-desc" id="cartHeroDesc">The pieces you're ready to take home — reviewed and waiting on checkout.</p>
+                <a class="acat-buy" onclick="checkout()">Checkout</a>
+                <div class="acat-details">Secure payment, tracked delivery</div>
             </div>
             <div class="acat-hero-img" id="cartHeroSlider"><!-- cart items slider, populated by JS --></div>
         </div>

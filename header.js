@@ -12,6 +12,48 @@
 (function () {
     'use strict';
 
+    // ---- Header icon order (manual) ------------------------------------------
+    // Left-to-right order of the items on the right side of the header. Edit this
+    // list to move an icon; every page picks the change up. The keys match the
+    // data-icon attributes on the markup below — any key left out of the list
+    // keeps its markup position, and an unknown key is ignored.
+    //
+    // At runtime you can also reorder without editing the file:
+    //   veroSetIconOrder(['cart', 'wishlist', 'mode', 'chats', 'account', 'upload'])
+    //   veroResetIconOrder()          // back to the default below
+    // A runtime order is remembered in localStorage and wins over this default.
+    const ICON_ORDER = ['mode', 'wishlist', 'cart', 'chats', 'account', 'upload'];
+    const ICON_ORDER_KEY = 'vero_header_icon_order';
+
+    function currentIconOrder() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(ICON_ORDER_KEY) || 'null');
+            if (Array.isArray(saved) && saved.length) return saved;
+        } catch (e) { /* malformed stored order — fall back to the default */ }
+        return ICON_ORDER;
+    }
+
+    // Applied as flex `order`, so the markup stays in its readable default order.
+    function applyIconOrder() {
+        const right = document.querySelector('#siteHeader .header-right');
+        if (!right) return;
+        const order = currentIconOrder();
+        right.querySelectorAll('[data-icon]').forEach(el => {
+            const i = order.indexOf(el.dataset.icon);
+            el.style.order = i === -1 ? '0' : String(i + 1);
+        });
+    }
+
+    window.veroSetIconOrder = function (order) {
+        if (!Array.isArray(order)) return;
+        localStorage.setItem(ICON_ORDER_KEY, JSON.stringify(order));
+        applyIconOrder();
+    };
+    window.veroResetIconOrder = function () {
+        localStorage.removeItem(ICON_ORDER_KEY);
+        applyIconOrder();
+    };
+
     // ---- Styles (injected once; appended late so it wins over any page CSS) ----
     const CSS = `
         #siteHeader {
@@ -556,11 +598,11 @@
             </div>
 
             <div class="header-right">
-                <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
+                <div class="toggle-category" id="categoryToggleBtn" data-icon="mode" onclick="toggleSwitch()">
                     <span class="seg active" id="segArt">Art</span>
                     <span class="seg" id="segFashion">Fashion</span>
                 </div>
-                <span class="icon-wrap">
+                <span class="icon-wrap" data-icon="wishlist">
                     <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke-width: 1.5;">
                             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="none"/>
@@ -568,7 +610,7 @@
                     </button>
                     <span class="badge" id="wishlistBadge">0</span>
                 </span>
-                <span class="icon-wrap">
+                <span class="icon-wrap" data-icon="cart">
                     <button class="icon-btn" title="Cart" onclick="openCart()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke-width: 1.5;">
                             <path d="M6 6h15l-1.5 9h-12z" fill="none"/>
@@ -579,18 +621,18 @@
                     </button>
                     <span class="badge" id="cartBadge">0</span>
                 </span>
-                <button class="icon-btn" title="Deal Chats" onclick="vchatOpenInbox()">
+                <button class="icon-btn" data-icon="chats" title="Deal Chats" onclick="vchatOpenInbox()">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"></path>
                     </svg>
                 </button>
-                <button class="icon-btn" title="My Account" onclick="openBuyerArea()">
+                <button class="icon-btn" data-icon="account" title="My Account" onclick="openBuyerArea()">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" data-fill>
                         <circle cx="12" cy="8" r="4.2"/>
                         <path d="M12 13.5c-4.5 0-8.2 2.9-8.2 6.5h16.4c0-3.6-3.7-6.5-8.2-6.5z"/>
                     </svg>
                 </button>
-                <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
+                <button class="icon-btn upload-plus" data-icon="upload" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
             </div>
         </div>
     `;
@@ -842,6 +884,7 @@
         // Use a real <header> element so existing selectors (header.scrolled) apply.
         host.outerHTML = `<header id="siteHeader" class="${cls}">${MARKUP}</header>`;
         mountDrawer();
+        applyIconOrder();
         wireBehaviour();
     }
 
