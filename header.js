@@ -22,7 +22,7 @@
     //   veroSetIconOrder(['cart', 'wishlist', 'mode', 'chats', 'account', 'upload'])
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
-    const ICON_ORDER = ['mode', 'wishlist', 'cart', 'chats', 'account', 'upload'];
+    const ICON_ORDER = ['account', 'wishlist', 'cart', 'chats', 'mode', 'upload'];
     const ICON_ORDER_KEY = 'vero_header_icon_order';
 
     function currentIconOrder() {
@@ -99,52 +99,64 @@
         /* Logo + field keep the SAME positions before and after the header goes
            sticky, so nothing shifts on scroll. The logo sits centred in the gap, with
            equal spacing to the hamburger on its left and the field on its right. */
-        #siteHeader .hdr-searchwrap { left: 210px; }
+        /* Tucked up against the logo rather than floating in the middle of the bar. */
+        #siteHeader .hdr-searchwrap { left: 186px; }
         #siteHeader .logo { left: 69px !important; }
-        /* The rounded search field */
+        /* The rounded search field. Given a real ground and a firmer edge so it
+           reads as the primary way into the catalogue, not a hairline afterthought. */
         #siteHeader .hdr-search {
             display: flex; align-items: center;
-            /* Line style: no fill, just a hairline outline. */
-            background: transparent;
-            border: 1px solid rgba(0,0,0,0.3);
+            background: #fff;
+            border: 1.5px solid rgba(0,0,0,0.55);
             border-radius: 999px;
-            height: 46px;
-            width: min(400px, 28vw);   /* widened; still clears the icon group on the right */
-            padding: 4px 5px 4px 22px;
+            height: 50px;
+            width: min(420px, 30vw);
+            padding: 4px 5px 4px 24px;
             box-sizing: border-box;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #siteHeader .hdr-search:focus-within {
+            border-color: #22372B;
+            box-shadow: 0 4px 16px rgba(34,55,43,0.16);
         }
         #siteHeader .hdr-search input {
             flex: 1; min-width: 0;
             border: none; background: none; outline: none;
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            font-size: 14px; font-weight: 500; color: #111;
+            font-size: 15px; font-weight: 500; color: #111;
             padding: 0 8px 0 0;
         }
         #siteHeader .hdr-search input::placeholder {
-            color: #9a9a9a; font-weight: 500; letter-spacing: 0.3px;
+            color: #6e6e6e; font-weight: 500; letter-spacing: 0.3px;
         }
-        /* Outlined circle with the magnifier drawn in the same line colour */
+        /* Solid green circle — the one filled control in the bar. */
         #siteHeader .hdr-searchgo {
-            width: 38px; height: 38px; border-radius: 50%;
-            background: transparent; border: 1px solid rgba(0,0,0,0.3);
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #22372B; border: 1.5px solid #22372B;
             cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center;
-            transition: background 0.2s;
+            transition: background 0.2s, border-color 0.2s;
         }
-        #siteHeader .hdr-searchgo:hover { background: rgba(0,0,0,0.06); }
+        #siteHeader .hdr-searchgo:hover { background: #2E4A3A; border-color: #2E4A3A; }
         #siteHeader .hdr-searchgo svg {
-            width: 16px; height: 16px; stroke: #111; fill: none;
+            width: 17px; height: 17px; stroke: #fff; fill: none;
             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
         }
-        /* Over the hero's black box the same line style flips to white. */
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search,
+        /* Over the hero's dark box the field drops its white fill and inverts, so it
+           still reads as one solid control rather than a white slab on the box. */
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search {
+            background: rgba(255,255,255,0.10);
+            border-color: rgba(255,255,255,0.7);
+            box-shadow: none;
+        }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo {
-            border-color: rgba(255,255,255,0.55);
+            background: #fff; border-color: #fff;
         }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #fff; }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: rgba(255,255,255,0.6); }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: #fff; }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo:hover { background: rgba(255,255,255,0.12); }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: rgba(255,255,255,0.72); }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: #22372B; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo:hover { background: #f0f0f0; border-color: #f0f0f0; }
         /* Funnel: its own black circle with the white funnel, beside the field
            on the same (right) side as the magnifier. */
         #siteHeader .hdr-funnel {

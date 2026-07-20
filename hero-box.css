@@ -1,0 +1,150 @@
+/* ------------------------------------------------------------------
+   VERO — the green hero rectangle.
+
+   ONE definition for every dark hero box on the site: the category hero,
+   the cart and wishlist heroes, the seller area and the buyer area. They
+   are the same object on every page — same width, same height, same
+   shape, same type — so this file is the only place to change it.
+
+   RULE: a change to any hero box is a change to all of them. Never
+   re-declare .acat-hero-text geometry in a page's own <style>.
+
+   Usage:
+     <link rel="stylesheet" href="hero-box.css">
+   Load it AFTER the page's own stylesheet so it wins.
+
+   The markup it expects, unchanged across pages:
+     <section class="acat-hero">
+       <div class="acat-hero-inner">
+         <div class="acat-hero-text"> title / desc / cta / details </div>
+         <div class="acat-hero-img">  slider or panel  </div>
+       </div>
+       <div class="acat-hero-foot"> counter + arrow </div>
+     </section>
+------------------------------------------------------------------ */
+
+:root {
+    /* Pantone 5605 C — the site's dark box colour. */
+    --box-dark: #22372B;
+    --box-dark-hover: #2E4A3A;
+    /* The box's one set of dimensions. */
+    --hero-box-w: 310px;
+    --hero-box-left: 24px;
+    /* A fixed height, not "stretch to the band". The band's height is set by
+       whatever sits beside the box — a slider on one page, a settings panel on
+       another — so stretching made the same rectangle a different height on
+       every page. Fixed, it is one object everywhere. */
+    --hero-box-h: 560px;
+}
+
+/* The band. Positioned so the absolute box has something to sit in. */
+.acat-hero {
+    position: relative;
+    padding: 130px 7vw 40px;
+    box-sizing: border-box;
+}
+
+/* The row: a fixed box column, and the rest for the slider. */
+.acat-hero-inner {
+    display: grid;
+    grid-template-columns: minmax(0, var(--hero-box-w)) minmax(0, 1fr);
+    gap: 56px;
+    align-items: center;
+    min-height: 46vh;
+}
+
+/* The box is absolute, so the slider is the only grid item left and would
+   otherwise fall into the first column — the one the box sits over. */
+.acat-hero-img { grid-column: 2; }
+
+/* ---- The rectangle ----
+   Absolute rather than a grid item: as a grid item its height set the row
+   height, which set the band height, so sizing it against the band could
+   never settle. Absolute, it spans the band while the slider column alone
+   decides how tall the band is. The grid column holds the space it covers. */
+.acat-hero-text {
+    position: absolute;
+    left: var(--hero-box-left);
+    /* Flush with the top of the band — no grey strip above it. */
+    top: 0;
+    height: var(--hero-box-h);
+    width: var(--hero-box-w);
+    max-width: var(--hero-box-w);
+    margin: 0;
+    /* Quiet luxury: the copy sits high in the box and the space below it is
+       deliberate, not leftover. Generous, uneven gutters — wider on the
+       reading edge than the outer one. */
+    padding: 56px 30px 40px 40px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
+    background: var(--box-dark);
+    color: #fff;
+    text-align: left;
+}
+.acat-hero-text > * { margin-left: 0; margin-right: auto; }
+
+/* ---- Type on the box ---- */
+.acat-hero-text .acat-title {
+    font-size: 40px;
+    font-weight: 800;
+    text-transform: uppercase;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    margin: 0 0 22px;
+    max-width: 12ch;
+    color: #fff;
+}
+/* The dimmed slash that opens every hero title. */
+.acat-hero-text .acat-title::first-letter { color: #6d6d6d; }
+
+.acat-hero-text .acat-desc {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: #b5b5b5;
+    max-width: 380px;
+    margin: 0 0 30px;
+}
+
+/* The CTA is a hairline outline on the dark ground, not a filled slab —
+   one restrained control per box. */
+.acat-hero-text .acat-buy {
+    display: inline-block;
+    border: 1px solid rgba(255,255,255,0.55);
+    color: #fff;
+    background: none;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.4px;
+    text-transform: uppercase;
+    padding: 15px 30px;
+    cursor: pointer;
+    transition: background 0.25s, border-color 0.25s, color 0.25s;
+}
+.acat-hero-text .acat-buy:hover { background: #fff; border-color: #fff; color: var(--box-dark); }
+
+.acat-hero-text .acat-details {
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    color: #8f8f8f;
+    margin-top: 22px;
+}
+
+/* ---- Narrow screens ----
+   The box stops being an overlay and becomes a plain block above the slider. */
+@media (max-width: 1100px) {
+    .acat-hero-inner { grid-template-columns: 1fr; gap: 28px; }
+    .acat-hero-img { grid-column: 1; }
+    .acat-hero-text {
+        position: static;
+        width: 100%;
+        max-width: none;
+        height: auto;
+        padding: 40px 28px;
+    }
+}
