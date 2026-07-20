@@ -4033,7 +4033,9 @@
         }
     </style>
 </head>
-<body data-footer="manual">
+<!-- data-back="none": this page opens on the home view, which carries no back
+     control. hideAllViews() clears it for every other view. -->
+<body data-footer="manual" data-back="none">
     <!-- ==================== HEADER ==================== -->
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
@@ -4842,7 +4844,14 @@
                 hdr.style.display = '';
             }
             if (typeof hideSiteFooter === 'function') hideSiteFooter();
+            // Every view except the home one carries the shared back control;
+            // showMain() hides it again once the home view is up.
+            document.body.removeAttribute('data-back');
         }
+
+        // The shared back control (back-button.js) steps between this page's own
+        // views rather than leaving the page.
+        window.veroOnBack = function () { cwGoBack(); };
 
         // Views that run full-bleed to the top of the page (category, chats) drop the
         // site header entirely. hideAllViews() puts it back for everything else.
@@ -5021,6 +5030,10 @@
         function showMain() {
             hideAllViews();
             document.getElementById('mainView').style.display = 'block';
+            // The home view is the one page with nothing to go back to. Set the
+            // attribute directly rather than calling veroHideBack(), which is not
+            // defined yet on first paint — back-button.js loads at end of body.
+            document.body.setAttribute('data-back', 'none');
             applyHomeHeaderLook();
             applyHeroSquareCopy(currentCategory);
             // Clear URL params so refreshing always returns to home.
@@ -7724,5 +7737,7 @@
     </script>
     <!-- Shared site footer (single source: footer.js) — shown on cart & wishlist views -->
     <script src="footer.js"></script>
+    <!-- Shared back control (single source: back-button.js) -->
+    <script src="back-button.js"></script>
 </body>
 </html>

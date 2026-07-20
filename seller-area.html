@@ -311,6 +311,84 @@
             filter: drop-shadow(0 30px 40px rgba(0,0,0,0.10));
         }
         .dh-emoji { font-size: 210px; line-height: 1; }
+
+        /* ---- Hero data panels ----
+           The column beside the green box carries the slide's own data. When it
+           does, it stops being a centred emoji slot and becomes a full block. */
+        .acat-hero-img.sh-has-panel {
+            display: block;
+            align-items: stretch;
+            filter: none;
+            min-height: 46vh;
+        }
+        .sh-panel {
+            direction: rtl;
+            text-align: right;
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.07);
+            border-radius: 4px;
+            padding: 26px 30px 30px;
+            box-sizing: border-box;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+        .sh-panel-head {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.07); padding-bottom: 14px;
+        }
+        .sh-panel-kicker {
+            font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase;
+            color: #9a9a9a; font-weight: 700;
+        }
+        .sh-inv-count, .sh-rev-total { font-size: 13px; color: #6b6b6b; letter-spacing: 1px; }
+        .sh-panel-empty {
+            display: flex; align-items: center; justify-content: center; height: 100%;
+            color: #b3b3b3; font-size: 14px; letter-spacing: 1.5px;
+        }
+
+        /* Inventory slider: one product at a time, an arrow either side. */
+        .sh-inv-body { flex: 1; display: flex; align-items: center; gap: 14px; }
+        .sh-inv-nav {
+            flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.18); background: none; cursor: pointer;
+            font-size: 20px; line-height: 1; color: #111;
+            transition: background 0.2s, color 0.2s;
+        }
+        .sh-inv-nav:hover { background: #22372B; border-color: #22372B; color: #fff; }
+        .sh-inv-card {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 10px; text-align: center;
+            background: #f4f2ee; border-radius: 4px; padding: 30px 20px; min-height: 300px;
+        }
+        .sh-inv-icon { font-size: 110px; line-height: 1; }
+        .sh-inv-name { font-size: 19px; font-weight: 700; color: #111; }
+        .sh-inv-seller { font-size: 13px; color: #8a8a8a; letter-spacing: 0.5px; }
+        .sh-inv-price { font-size: 26px; font-weight: 600; color: #111; margin-top: 4px; }
+
+        /* Revenue chart: one bar per month that has data. */
+        .sh-chart {
+            flex: 1; display: flex; align-items: flex-end; gap: 14px;
+            min-height: 280px; padding-top: 26px;
+        }
+        .sh-bar-col {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            justify-content: flex-end; height: 100%; gap: 8px;
+        }
+        .sh-bar {
+            width: 100%; max-width: 54px; background: #22372B; border-radius: 2px 2px 0 0;
+            transition: background 0.2s;
+        }
+        .sh-bar-col:hover .sh-bar { background: #2E4A3A; }
+        .sh-bar-val { font-size: 12px; color: #6b6b6b; white-space: nowrap; }
+        .sh-bar-lbl { font-size: 12px; color: #9a9a9a; letter-spacing: 0.5px; }
+
+        /* The settings panel, once moved into the hero column, is a plain block —
+           it no longer needs the full-page container it had below. */
+        .acat-hero-img #settings { width: 100%; }
+        .acat-hero-img #settings .container { padding: 0; max-width: none; width: 100%; }
+        .acat-hero-img #settings .settings-grid { grid-template-columns: 1fr; gap: 24px; }
         .acat-hero-foot {
             display: flex; align-items: center; justify-content: flex-end; gap: 22px;
             margin-top: 24px; padding-top: 20px;
@@ -1168,7 +1246,8 @@
     <section class="acat-hero">
         <div class="acat-hero-inner">
             <div class="acat-hero-text">
-                <button class="cw-back" onclick="goBackToStore()" aria-label="Back">&#8249;</button>
+                <!-- Back is the shared top-right control (back-button.js); it routes
+                     through goBackToStore via window.veroOnBack below. -->
                 <h1 class="acat-title" id="shTitle">/ ...</h1>
                 <p class="acat-desc" id="shDesc"></p>
                 <a class="acat-buy" id="shBuy" href="#" onclick="return false;">View</a>
@@ -1357,6 +1436,9 @@
     </div>
 
     <!-- ==================== SETTINGS TAB ==================== -->
+    <!-- The settings panel lives beside the green box in the hero; this is the slot
+         it returns to whenever another slide is showing. -->
+    <div id="settingsHome"></div>
     <div id="settings" class="tab-content">
         <div class="container">
             <div class="settings-grid">
@@ -1966,11 +2048,99 @@
         let sellerIndex = 0;
         const shPad2 = n => String(n).padStart(2, '0');
 
+        // ---- Hero right column ----
+        // The column beside the green box carries the slide's own data rather than
+        // a single emoji: the inventory slide gets a slider of the seller's
+        // products, the revenue slide the monthly chart, and the settings slide the
+        // real settings panel moved up out of the section below. Slides with no
+        // data of their own keep the emoji.
+        let heroInvIndex = 0;
+
+        // Every inventory product, flattened out of the per-category buckets.
+        function allInventoryProducts() {
+            return Object.values(inventoryData).flat();
+        }
+
+        function heroInventoryHTML() {
+            const items = allInventoryProducts();
+            if (!items.length) return `<div class="sh-panel-empty">אין עדיין מוצרים במלאי</div>`;
+            heroInvIndex = ((heroInvIndex % items.length) + items.length) % items.length;
+            const p = items[heroInvIndex];
+            return `
+                <div class="sh-panel sh-inv">
+                    <div class="sh-panel-head">
+                        <span class="sh-panel-kicker">מוצר במלאי</span>
+                        <span class="sh-inv-count">${shPad2(heroInvIndex + 1)} / ${shPad2(items.length)}</span>
+                    </div>
+                    <div class="sh-inv-body">
+                        <button class="sh-inv-nav" onclick="heroInvGo(-1)" aria-label="הקודם">&#8249;</button>
+                        <div class="sh-inv-card">
+                            <div class="sh-inv-icon">${p.icon}</div>
+                            <div class="sh-inv-name">${p.name}</div>
+                            <div class="sh-inv-seller">${p.seller || ''}</div>
+                            <div class="sh-inv-price">${p.price}</div>
+                        </div>
+                        <button class="sh-inv-nav" onclick="heroInvGo(1)" aria-label="הבא">&#8250;</button>
+                    </div>
+                </div>`;
+        }
+
+        function heroInvGo(dir) {
+            heroInvIndex += dir;
+            const host = document.getElementById('shImg');
+            if (host) host.innerHTML = heroInventoryHTML();
+        }
+
+        function heroRevenueHTML() {
+            const months = revenueData.map((v, i) => ({ v, i })).filter(m => m.v > 0);
+            if (!months.length) return `<div class="sh-panel-empty">אין עדיין נתוני הכנסה</div>`;
+            const max = Math.max(...months.map(m => m.v));
+            const total = months.reduce((s, m) => s + m.v, 0);
+            const bars = months.map(m => `
+                <div class="sh-bar-col">
+                    <div class="sh-bar-val">₪${m.v.toLocaleString()}</div>
+                    <div class="sh-bar" style="height: ${(m.v / max) * 100}%"></div>
+                    <div class="sh-bar-lbl">${revenueMonthNames[m.i].substring(0, 3)}</div>
+                </div>`).join('');
+            return `
+                <div class="sh-panel sh-rev">
+                    <div class="sh-panel-head">
+                        <span class="sh-panel-kicker">הכנסה חודשית</span>
+                        <span class="sh-rev-total">סה"כ ₪${total.toLocaleString()}</span>
+                    </div>
+                    <div class="sh-chart">${bars}</div>
+                </div>`;
+        }
+
+        // The settings panel is the real one — moved into the hero and put back
+        // when the slide changes, so its inputs and handlers survive the trip.
+        function moveSettingsHome() {
+            const panel = document.getElementById('settings');
+            const slot = document.getElementById('settingsHome');
+            if (panel && slot && panel.parentElement !== slot) slot.appendChild(panel);
+        }
+
+        function renderHeroPanel(s) {
+            const host = document.getElementById('shImg');
+            if (!host) return;
+            moveSettingsHome();
+            host.classList.toggle('sh-has-panel', s.tab !== 'history' && s.tab !== 'vacation');
+            if (s.tab === 'inventory') { host.innerHTML = heroInventoryHTML(); return; }
+            if (s.tab === 'revenue')   { host.innerHTML = heroRevenueHTML(); return; }
+            if (s.tab === 'settings') {
+                host.innerHTML = '';
+                const panel = document.getElementById('settings');
+                if (panel) { panel.classList.add('active'); host.appendChild(panel); }
+                return;
+            }
+            host.innerHTML = `<span class="dh-emoji">${s.emoji}</span>`;
+        }
+
         function sellerRender(animate) {
             const s = sellerSlides[sellerIndex];
             document.getElementById('shTitle').textContent = '/ ' + s.title;
             document.getElementById('shDesc').textContent = s.desc;
-            document.getElementById('shImg').innerHTML = `<span class="dh-emoji">${s.emoji}</span>`;
+            renderHeroPanel(s);
             document.getElementById('shIdx').textContent = shPad2(sellerIndex + 1);
             document.getElementById('shTotal').textContent = shPad2(sellerSlides.length);
 
@@ -2022,10 +2192,15 @@
             sellerRender(true);
         }
 
+        // The shared top-right back control returns to the store.
+        window.veroOnBack = function () { goBackToStore(); };
+
         // Initialize
         sellerRender(false);
     </script>
     <!-- Shared site footer (single source: footer.js) -->
     <script src="footer.js"></script>
+    <!-- Shared back control (single source: back-button.js) -->
+    <script src="back-button.js"></script>
 </body>
 </html>
