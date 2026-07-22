@@ -1370,7 +1370,22 @@
         .hp-body {
             direction: ltr;
             padding: 14px 0 0;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 14px;
         }
+        /* The category's own figure, alongside its name. */
+        .hp-count {
+            flex: 0 0 auto;
+            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: #8a8a8a;
+        }
+        .hp-count b { color: #111; font-weight: 700; }
 
         .hp-label {
             font-size: 10px;
@@ -4484,6 +4499,7 @@
         <div class="acat-hero-inner">
             <div class="acat-hero-text">
                 <h1 class="acat-title">/&nbsp;My Cart</h1>
+                <div class="acat-count" id="cartHeroCount"></div>
                 <p class="acat-desc" id="cartHeroDesc">The pieces you're ready to take home — reviewed and waiting on checkout.</p>
                 <a class="acat-buy" onclick="checkout()">Checkout</a>
                 <div class="acat-details">Secure payment, tracked delivery</div>
@@ -4512,6 +4528,7 @@
         <div class="acat-hero-inner">
             <div class="acat-hero-text">
                 <h1 class="acat-title">/&nbsp;My Wishlist</h1>
+                <div class="acat-count" id="wishlistHeroCount"></div>
                 <p class="acat-desc" id="wishlistHeroDesc">The pieces you saved for later — keep them close until you're ready.</p>
                 <a class="acat-buy" onclick="moveWishlistToCart()">Move all to cart</a>
                 <div class="acat-details">Saved across all your devices</div>
@@ -4542,6 +4559,8 @@
                 <div class="acat-hero-inner">
                     <div class="acat-hero-text">
                         <h1 class="acat-title" id="acatTitle">/ Category</h1>
+                        <!-- How much this category actually holds. -->
+                        <div class="acat-count" id="acatCount"></div>
                         <p class="acat-desc" id="acatDesc"></p>
                         <a class="acat-buy" id="acatBuy" href="#">Buy</a>
                         <div class="acat-details" id="resultsCount">&#8964; Refine your filters</div>
@@ -5518,10 +5537,18 @@
 
         function renderCartHeroSlider() {
             renderCwHeroSlider('cartHeroSlider', cart, 'in your cart', 'Your cart is empty');
+            setHeroCount('cartHeroCount', cart.reduce((n, i) => n + (i.qty || 1), 0), 'pieces in your cart');
         }
 
         function renderWishlistHeroSlider() {
             renderCwHeroSlider('wishlistHeroSlider', wishlist, 'saved for later', 'Your wishlist is empty');
+            setHeroCount('wishlistHeroCount', wishlist.length, 'pieces saved');
+        }
+
+        // Every hero on the site carries its own figure; this writes one.
+        function setHeroCount(id, n, noun) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = `<b>${n}</b> ${noun}`;
         }
 
         function renderCartPage() {
@@ -6153,6 +6180,8 @@
                          flat and horizontal — no band laid over the image. -->
                     <div class="hp-body">
                         <h3 class="hp-title">${c.name}</h3>
+                        <!-- What the category holds, on the caption's own line. -->
+                        <span class="hp-count"><b>${ACAT_BLOCKS * 10}</b> pieces</span>
                     </div>
                 </a>`;
         }
@@ -7406,6 +7435,9 @@
             // Category-level copy beside the slider.
             const heroMeta = categoryMeta(catName, type);
             document.getElementById('acatTitle').innerHTML = '/ ' + catName;
+            // The page's own figure: every product the three blocks render.
+            const acatTotal = ACAT_BLOCKS * 10;
+            document.getElementById('acatCount').innerHTML = `<b>${acatTotal}</b> pieces in ${catName}`;
             document.getElementById('acatDesc').textContent = heroMeta.desc
                 || `Promoted ${catName.toLowerCase()} picked by VERO — five pieces, refreshed often.`;
             document.getElementById('acatBuy').style.display = 'none';
