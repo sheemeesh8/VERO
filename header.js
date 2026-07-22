@@ -342,7 +342,7 @@
         /* The switch + the plus, held tight to each other. This is one flex item, so
            the spread layout below distributes around the pair, not between them. */
         #siteHeader .hdr-mode-pair {
-            display: inline-flex; align-items: center; gap: 63px; flex: 0 0 auto;
+            display: inline-flex; align-items: center; gap: 26px; flex: 0 0 auto;
         }
         /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {
@@ -620,7 +620,13 @@
             border-color: #6E232B !important;
         }
         /* The pulse ring inherits the mode colour too, rather than the black default. */
-        #siteHeader .hdr-mode-pair .upload-plus { animation: none !important; }
+        /* The + is nudged right on its own (transform, so it takes no extra layout
+           width) — the switch keeps its original place in the pair. */
+        #siteHeader .hdr-mode-pair .upload-plus {
+            animation: none !important;
+            transform: translateX(60px);
+        }
+        #siteHeader .hdr-mode-pair .upload-plus:hover { transform: translateX(60px) scale(1.1); }
     `;
 
     // ---- Markup (identical everywhere) ----
