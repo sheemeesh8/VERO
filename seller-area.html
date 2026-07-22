@@ -1099,6 +1099,58 @@
             line-height: 1.4;
         }
 
+        /* ==================== INVENTORY EDITOR ====================
+           The three-dot menu on an inventory card and the sheet it opens: the
+           piece shown large, every detail editable in place, and a discount
+           below them. Saving writes through product-overrides.js, so the change
+           lands on every page the piece appears on. */
+        .pc-dots {
+            position: absolute; top: 10px; left: 10px; z-index: 3;
+            width: 30px; height: 30px; border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.12); background: rgba(255,255,255,0.92);
+            cursor: pointer; font-size: 17px; line-height: 1; color: #111;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .pc-dots:hover { background: #fff; }
+        .sh-edit-back {
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(0,0,0,0.45); display: flex;
+            align-items: center; justify-content: center; padding: 24px;
+        }
+        .sh-edit {
+            background: #fff; border-radius: 18px; width: min(560px, 100%);
+            max-height: 90vh; overflow-y: auto; padding: 30px;
+            direction: rtl; text-align: right;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+        }
+        .sh-edit h3 { font-size: 22px; margin: 0 0 4px; }
+        .sh-edit-sub { font-size: 13px; color: #8a8a8a; margin-bottom: 22px; }
+        .sh-edit-hero {
+            display: flex; align-items: center; gap: 18px;
+            background: #f6f6f4; border-radius: 14px; padding: 20px; margin-bottom: 22px;
+        }
+        .sh-edit-icon { font-size: 64px; line-height: 1; }
+        .sh-edit-heroname { font-size: 18px; font-weight: 700; }
+        .sh-edit-heroprice { font-size: 15px; color: #6b6b6b; margin-top: 4px; }
+        .sh-edit-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .sh-edit-row label { font-size: 12px; letter-spacing: 1px; color: #8a8a8a; text-transform: uppercase; }
+        .sh-edit-row input {
+            border: 1px solid #e2e0dc; border-radius: 10px; padding: 12px 14px;
+            font: inherit; font-size: 15px; background: #fafafa; color: #111;
+        }
+        .sh-edit-row input:focus { outline: none; border-color: #111; background: #fff; }
+        .sh-edit-sale { border-top: 1px solid #ececea; margin-top: 20px; padding-top: 18px; }
+        .sh-edit-note { font-size: 12px; color: #8a8a8a; margin-top: 6px; line-height: 1.6; }
+        .sh-edit-actions { display: flex; gap: 10px; margin-top: 24px; }
+        .sh-edit-actions button {
+            flex: 1; border-radius: 10px; padding: 14px; cursor: pointer;
+            font: inherit; font-size: 13px; font-weight: 700; letter-spacing: 1px;
+        }
+        .sh-edit-done { background: #111; color: #fff; border: 1px solid #111; }
+        .sh-edit-cancel { background: #fff; color: #111; border: 1px solid #ddd9d2; }
+        .sh-edit-drop { background: #fff; color: #c0392b; border: 1px solid #e8c9c4; }
+
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 1024px) {
             .products-grid, .history-grid {
@@ -1148,6 +1200,8 @@
     <link rel="stylesheet" href="hero-box.css">
     <!-- The product card, shared by every page (single source: product-card.css). -->
     <link rel="stylesheet" href="product-card.css">
+    <!-- Seller edits + sale prices, shared by every page (single source). -->
+    <script src="product-overrides.js"></script>
 </head>
 <body>
     <!-- No site header on this page. -->
@@ -1677,7 +1731,9 @@
                 const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
                 const url = productPageUrl(product);
                 return `
-                <div class="product-card inventory-product" data-url="${url}">
+                <div class="product-card inventory-product${veroCardClass(product)}" data-url="${url}">
+                    <!-- Seller's own menu for this piece: edit its details or discount it. -->
+                    <button class="pc-dots" title="פעולות" onclick="event.stopPropagation(); shOpenEditor('${category}', ${products.indexOf(product)})">&#8942;</button>
                     <div class="product-image">
                         ${product.icon}
                         <button class="product-icon heart" title="ערוך" style="right:60px;">
@@ -1695,7 +1751,7 @@
                     </div>
                     <div class="product-info">
                         <div class="pc-left">
-                            <div class="product-price">${product.price}</div>
+                            <div class="product-price">${veroPriceHTML(product)}</div>
                         </div>
                         <div class="pc-right">
                             <div class="product-seller">${seller}</div>
@@ -1721,6 +1777,108 @@
         };
 
         // Build the product-page URL for an inventory item (all are clothing items)
+        // ---- Inventory editor ----
+        // One sheet for both jobs a seller has on a piece: correcting its details,
+        // and putting it on sale. Everything is written through veroOverrides,
+        // which every page reads — so a discount set here shows up on the feed, the
+        // category pages, the personal area and the product page.
+        let shEditing = null;
+
+        function shOpenEditor(category, index) {
+            const p = (inventoryData[category] || [])[index];
+            if (!p) return;
+            shEditing = { category, index, product: p };
+            const cur = veroApplyOverride(p);
+            const base = veroOverrides.toNum(cur.originalPrice || cur.price);
+            const sale = cur.onSale ? veroOverrides.toNum(cur.price) : '';
+            const wrap = document.createElement('div');
+            wrap.className = 'sh-edit-back';
+            wrap.id = 'shEditBack';
+            wrap.onclick = e => { if (e.target === wrap) shCloseEditor(); };
+            wrap.innerHTML = `
+                <div class="sh-edit">
+                    <h3>עריכת פריט</h3>
+                    <div class="sh-edit-sub">השינויים יעודכנו בכל מקום שבו הפריט מופיע באתר</div>
+                    <div class="sh-edit-hero">
+                        <div class="sh-edit-icon">${cur.icon || '🛍️'}</div>
+                        <div>
+                            <div class="sh-edit-heroname">${cur.name}</div>
+                            <div class="sh-edit-heroprice">${cur.seller || 'My Store'}</div>
+                        </div>
+                    </div>
+                    <div class="sh-edit-row">
+                        <label>שם הפריט</label>
+                        <input id="shEditName" type="text" value="${cur.name || ''}">
+                    </div>
+                    <div class="sh-edit-row">
+                        <label>קטגוריה</label>
+                        <input id="shEditCat" type="text" value="${cur.category || ''}">
+                    </div>
+                    <div class="sh-edit-row">
+                        <label>תיאור</label>
+                        <input id="shEditDesc" type="text" value="${cur.desc || ''}">
+                    </div>
+                    <div class="sh-edit-row">
+                        <label>מחיר (₪)</label>
+                        <input id="shEditPrice" type="number" min="0" value="${base}">
+                    </div>
+                    <div class="sh-edit-sale">
+                        <div class="sh-edit-row">
+                            <label>מחיר אחרי הנחה (₪)</label>
+                            <input id="shEditSale" type="number" min="0" placeholder="ללא הנחה" value="${sale}">
+                        </div>
+                        <div class="sh-edit-note">
+                            המחיר הישן יוצג מעל החדש עם קו אדום, ובמשך שבוע כרטיס הפריט
+                            יסומן במסגרת ירוקה בכל האתר.
+                        </div>
+                    </div>
+                    <div class="sh-edit-actions">
+                        <button class="sh-edit-done" onclick="shSaveEditor()">סיום</button>
+                        ${cur.onSale ? '<button class="sh-edit-drop" onclick="shDropSale()">ביטול הנחה</button>' : ''}
+                        <button class="sh-edit-cancel" onclick="shCloseEditor()">ביטול</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(wrap);
+        }
+
+        function shCloseEditor() {
+            const el = document.getElementById('shEditBack');
+            if (el) el.remove();
+            shEditing = null;
+        }
+
+        function shSaveEditor() {
+            if (!shEditing) return;
+            const { product: p, category } = shEditing;
+            const saleRaw = document.getElementById('shEditSale').value.trim();
+            const priceVal = veroOverrides.toNum(document.getElementById('shEditPrice').value);
+            const saleVal = saleRaw === '' ? null : veroOverrides.toNum(saleRaw);
+            if (saleVal != null && saleVal >= priceVal) {
+                alert('מחיר ההנחה חייב להיות נמוך מהמחיר המקורי');
+                return;
+            }
+            const patch = {
+                name: document.getElementById('shEditName').value.trim(),
+                category: document.getElementById('shEditCat').value.trim(),
+                desc: document.getElementById('shEditDesc').value.trim(),
+                price: priceVal,
+            };
+            if (saleVal != null) patch.salePrice = saleVal;
+            const ok = veroOverrides.save(p, patch);
+            if (saleVal == null) veroOverrides.clearSale(p);
+            if (!ok) { alert('לא ניתן לשמור — אחסון הדפדפן מלא'); return; }
+            shCloseEditor();
+            renderInventory(category);
+        }
+
+        function shDropSale() {
+            if (!shEditing) return;
+            const category = shEditing.category;
+            veroOverrides.clearSale(shEditing.product);
+            shCloseEditor();
+            renderInventory(category);
+        }
+
         function productPageUrl(product) {
             const data = {
                 name: product.name,
