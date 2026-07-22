@@ -87,6 +87,10 @@
            window hooks at the bottom of this file. */
         /* Search pill + funnel circle: always visible, pinned just to the right of
            the logo (also before the header goes sticky). */
+        /* One source of truth for the site's mode colour, shared by the switch, the
+           +, and now the search field / magnifier / funnel. */
+        body { --hdr-mode-color: #22372B; }
+        body[data-mode="art"] { --hdr-mode-color: #6E232B; }
         #siteHeader .hdr-searchwrap {
             display: flex;
             align-items: center;
@@ -108,7 +112,7 @@
         #siteHeader .hdr-search {
             display: flex; align-items: center;
             background: #fff;
-            border: 1.5px solid rgba(0,0,0,0.55);
+            border: 1.5px solid var(--hdr-mode-color, #22372B);
             border-radius: 999px;
             height: 50px;
             width: min(420px, 30vw);
@@ -118,8 +122,8 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         #siteHeader .hdr-search:focus-within {
-            border-color: #22372B;
-            box-shadow: 0 4px 16px rgba(34,55,43,0.16);
+            border-color: var(--hdr-mode-color, #22372B);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.16);
         }
         #siteHeader .hdr-search input {
             flex: 1; min-width: 0;
@@ -131,15 +135,16 @@
         #siteHeader .hdr-search input::placeholder {
             color: #6e6e6e; font-weight: 500; letter-spacing: 0.3px;
         }
-        /* Solid green circle — the one filled control in the bar. */
+        /* Solid mode-coloured circle — the one filled control in the bar. */
         #siteHeader .hdr-searchgo {
             width: 40px; height: 40px; border-radius: 50%;
-            background: #22372B; border: 1.5px solid #22372B;
+            background: var(--hdr-mode-color, #22372B);
+            border: 1.5px solid var(--hdr-mode-color, #22372B);
             cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center;
             transition: background 0.2s, border-color 0.2s;
         }
-        #siteHeader .hdr-searchgo:hover { background: #2E4A3A; border-color: #2E4A3A; }
+        #siteHeader .hdr-searchgo:hover { filter: brightness(1.25); }
         #siteHeader .hdr-searchgo svg {
             width: 17px; height: 17px; stroke: #fff; fill: none;
             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
@@ -156,17 +161,18 @@
         }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #fff; }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: rgba(255,255,255,0.72); }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: #22372B; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: var(--hdr-mode-color, #22372B); }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo:hover { background: #f0f0f0; border-color: #f0f0f0; }
-        /* Funnel: its own black circle with the white funnel, beside the field
-           on the same (right) side as the magnifier. */
+        /* Funnel: its own mode-coloured circle with the white funnel, beside the
+           field on the same (right) side as the magnifier. */
         #siteHeader .hdr-funnel {
             width: 44px; height: 44px; border-radius: 50%;
-            background: #111; border: none; cursor: pointer; flex: 0 0 auto;
+            background: var(--hdr-mode-color, #22372B);
+            border: none; cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center; padding: 0;
-            transition: background 0.2s;
+            transition: background 0.2s, filter 0.2s;
         }
-        #siteHeader .hdr-funnel:hover, #siteHeader .hdr-funnel.on { background: #333; }
+        #siteHeader .hdr-funnel:hover, #siteHeader .hdr-funnel.on { filter: brightness(1.25); }
         #siteHeader .hdr-funnel svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 1.8; }
 
         /* the dropdown panel */
