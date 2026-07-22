@@ -467,28 +467,67 @@
             text-transform: uppercase;
         }
 
-        /* Wide rectangle under the title, as long as the title itself — flat, filled,
-           no radius, in the same editorial key as the type above it. */
-        .htb-about {
-            display: block;
+        /* ---- Site status row ----
+           Soft rounded tiles under the title: a big figure with a small uppercase
+           caption beneath it. The last tile is the dark one and carries the link
+           out to the about page. */
+        .htb-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 30px;
             width: 100%;
-            box-sizing: border-box;
-            margin-top: 28px;
-            padding: 22px 0;
-            background: #111;
-            color: #fff;
-            text-align: center;
-            text-decoration: none;
-            text-transform: uppercase;
-            font-family: var(--font-sans);
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: 4px;
-            border: 1px solid #111;
-            cursor: pointer;
-            transition: background 0.25s, color 0.25s;
         }
-        .htb-about:hover { background: transparent; color: #111; }
+        .hstat {
+            position: relative;
+            flex: 1 1 0;
+            min-width: 120px;
+            box-sizing: border-box;
+            background: #f1f1ef;
+            border-radius: 14px;
+            padding: 18px 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-decoration: none;
+            transition: background 0.25s, transform 0.25s;
+        }
+        .hstat.dark { background: #111; padding-right: 54px; }
+        .hstat:hover { transform: translateY(-2px); }
+        .hstat-num {
+            font-family: var(--font-sans);
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.5px;
+            color: #111;
+            text-transform: uppercase;
+        }
+        .hstat-cap {
+            font-family: var(--font-sans);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: #8a8a8a;
+        }
+        .hstat.dark .hstat-num { color: #fff; }
+        .hstat.dark .hstat-cap { color: rgba(255, 255, 255, 0.6); }
+        /* The circled arrow in the corner of the dark tile. */
+        .hstat-arrow {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #fff;
+            color: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
 
         /* The home hero's dark rectangle is retired along with every other one on
            the site (see the note at the end of hero-box.css). */
@@ -4304,8 +4343,28 @@
             <div class="htb-inner">
                 <div class="htb-left">
                     <h1 class="htb-title">Welcome<br>to VERO</h1>
-                    <!-- Runs the full width of the title above it. -->
-                    <a class="htb-about" href="about.html">About Us</a>
+                    <!-- The site's status, read as one row of stat cards under the
+                         title. The counts are live: renderSiteStats() reads the
+                         catalogue, so a newly listed piece moves the number. -->
+                    <div class="htb-stats">
+                        <div class="hstat">
+                            <span class="hstat-num" id="statItems">0</span>
+                            <span class="hstat-cap">Items listed</span>
+                        </div>
+                        <div class="hstat">
+                            <span class="hstat-num" id="statUsers">0</span>
+                            <span class="hstat-cap">Members</span>
+                        </div>
+                        <div class="hstat">
+                            <span class="hstat-num">Israel</span>
+                            <span class="hstat-cap">Shipping from</span>
+                        </div>
+                        <a class="hstat dark" href="about.html">
+                            <span class="hstat-num">About</span>
+                            <span class="hstat-cap">Who we are</span>
+                            <span class="hstat-arrow">&#8599;</span>
+                        </a>
+                    </div>
                 </div>
                 <div class="htb-square">
                     <div class="htb-square-row">
@@ -6597,6 +6656,20 @@
                 updateSlideDisplay();
                 return;
             }
+            // Put the listing into the catalogue it belongs to, so the feed and the
+            // "items listed" figure both account for it straight away.
+            const list = uploadFormData.category === 'art' ? artProducts : clothingProducts;
+            list.push({
+                id: 'user-' + Date.now(),
+                name: [uploadFormData.brand, uploadFormData.itemType].filter(Boolean).join(' ') || 'New listing',
+                price: uploadFormData.price,
+                seller: uploadFormData.brand || 'VERO',
+                category: uploadFormData.itemType || '',
+                type: uploadFormData.category === 'art' ? 'art' : 'clothing',
+                image: uploadFormData.image,
+                icon: uploadFormData.category === 'art' ? '🖼️' : '🛍️'
+            });
+            renderSiteStats();
             closeUploadProduct();
             showToast('Product listed successfully!');
         }
@@ -6768,6 +6841,26 @@
         // Run the fill once both lists and the helpers exist.
         clothingProducts = fillCatalogue(clothingProducts, 79, 15);
         artProducts = fillCatalogue(artProducts, 190, 40);
+
+        // ---- The status row under the home title ----
+        // Items is a real count of the catalogue, so publishing a listing moves it.
+        // Members has no source yet — there is no account backend — so it is one
+        // number kept here rather than a figure dressed up as live data.
+        const SITE_MEMBERS = 12480;
+
+        function formatStat(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(n % 1000000 ? 1 : 0) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(n % 1000 ? 1 : 0) + 'K';
+            return String(n);
+        }
+
+        function renderSiteStats() {
+            const items = document.getElementById('statItems');
+            const users = document.getElementById('statUsers');
+            if (items) items.textContent = formatStat(clothingProducts.length + artProducts.length);
+            if (users) users.textContent = formatStat(SITE_MEMBERS);
+        }
+        renderSiteStats();
 
         // Brand / style / gender don't exist on the products either — same trick, so a
         // product always reports the same values. Swap these out once the upload wizard
