@@ -23,9 +23,9 @@
      // out.ok     — false if it fell back to the original
 ------------------------------------------------------------------ */
 
-/* The ground the pieces stand on: off-white, a touch grey, so a white shirt
-   still reads as an object. Same value as the card's own field. */
-const VERO_CUTOUT_BG = '#f1efea';
+/* The cut-out keeps its transparency and is saved as a PNG: the ground is the
+   card's, set once in CSS (--card-ground), so re-colouring every product on the
+   site is one line and no image is ever baked onto the wrong shade. */
 
 /* The square every product ends up in, so the grid never has to crop. */
 const VERO_CUTOUT_SIZE = 1000;
@@ -99,8 +99,7 @@ function veroCutoutCompose(img) {
     const out = document.createElement('canvas');
     out.width = out.height = VERO_CUTOUT_SIZE;
     const ctx = out.getContext('2d');
-    ctx.fillStyle = VERO_CUTOUT_BG;
-    ctx.fillRect(0, 0, VERO_CUTOUT_SIZE, VERO_CUTOUT_SIZE);
+    // No fill: the square stays transparent and the card paints the ground.
 
     const box = VERO_CUTOUT_SIZE * (1 - VERO_CUTOUT_PAD * 2);
     const scale = Math.min(box / cw, box / ch);
@@ -108,7 +107,8 @@ function veroCutoutCompose(img) {
     ctx.drawImage(img, left, top, cw, ch,
         (VERO_CUTOUT_SIZE - dw) / 2, (VERO_CUTOUT_SIZE - dh) / 2, dw, dh);
 
-    return out.toDataURL('image/jpeg', 0.92);
+    // PNG, not JPEG — JPEG has no alpha and would fill the transparency black.
+    return out.toDataURL('image/png');
 }
 
 async function veroCutout(src, opts = {}) {

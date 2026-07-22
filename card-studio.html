@@ -210,8 +210,9 @@
             <label>רוחב <input id="widthIn" type="range" min="180" max="420" value="260"><span id="widthOut">260px</span></label>
             <label>תמונה
                 <select id="imgSel">
+                    <option value="cutout">PNG חתוך</option>
                     <option value="emoji">אימוג׳י</option>
-                    <option value="photo">תצלום</option>
+                    <option value="photo">תצלום מלא</option>
                 </select>
             </label>
             <label>רקע
@@ -367,37 +368,36 @@
     </div>
 </article>`;
 
-    const PROPOSAL_CSS = `/* The card IS the image: 3 wide to 4 tall, everything else sits on top of it. */
+    const PROPOSAL_CSS = `/* The card is one flat off-white field, 3 wide to 4 tall. The product is a
+   cut-out PNG standing on it — no photograph edge, no second background, so a
+   wall of these reads as one surface with objects on it. */
 .vcard {
+    --card-ground: #eeedeb;      /* the whitish grey the whole card is made of */
     position: relative;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 3 / 4.5;       /* taller than wide — the piece gets the room */
     overflow: hidden;
     border-radius: 4px;
-    background: #efece4;
+    background: var(--card-ground);
     cursor: pointer;
-    color: #111;                 /* the copy is black, on the image */
+    color: #111;
     direction: ltr;
 }
 
-/* The image fills the card, and nothing else has a ground of its own. */
+/* The product floats in the upper part of the field, clear of the copy at the
+   bottom. contain, never cover: a cut-out must not be cropped. */
 .vcard-media {
     position: absolute;
-    inset: 0;
+    inset: 0 0 46px 0;           /* the bottom strip belongs to the copy */
     display: grid;
     place-items: center;
+    padding: 14%;
     font-size: 96px;             /* the emoji stand-in */
 }
-.vcard-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* Black type over a photograph needs something under it or it disappears into a
-   dark frame. This is the lightest thing that works — delete it to see why. */
-.vcard::after {
-    content: '';
-    position: absolute;
-    inset: auto 0 0 0;
-    height: 46%;
-    background: linear-gradient(to top, rgba(255,255,255,0.92), rgba(255,255,255,0));
-    pointer-events: none;
+.vcard-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;         /* the whole piece, always */
+    display: block;
 }
 
 /* ---- Top right: cart and wishlist ---- */
@@ -431,9 +431,6 @@
     stroke-width: 1.6;
     stroke-linecap: round;
     stroke-linejoin: round;
-    /* A black line on a dark photograph disappears. This is the least that keeps
-       it readable without putting a shape behind it. */
-    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
 }
 
 /* ---- Bottom: a template, not a layout ----
@@ -466,48 +463,74 @@
     line-height: 1;
 }
 
+/* The copy is quiet — one weight, no emphasis. The price is the only thing on
+   the card that is allowed to be loud. */
+
 /* Row 1, left: the company. */
 .vcard-company {
     font-family: 'Oswald', sans-serif;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 400;
     letter-spacing: 0.4px;
     text-transform: uppercase;
 }
-/* Row 1, right: the price, on the company's line. */
+/* Row 1, right: the price, on the company's line — the one bold thing. */
 .vcard-price {
     font-family: 'Playfair Display', serif;
     font-size: 17px;
+    font-weight: 700;
     text-align: right;
 }
-/* Row 2, left: what the piece is — the bold line. */
+/* Row 2, left: what the piece is. */
 .vcard-type {
     font-family: 'Oswald', sans-serif;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.6px;
 }
 /* Row 2, right: the seller. */
 .vcard-seller {
     font-family: 'Oswald', sans-serif;
     font-size: 11px;
+    font-weight: 400;
     letter-spacing: 0.6px;
     text-align: right;
     opacity: 0.75;
 }`;
 
-    const state = { product: 0, width: 260, images: 'emoji', bg: 'light' };
+    const state = { product: 0, width: 260, images: 'cutout', bg: 'light' };
     const htmlIn = document.getElementById('htmlIn');
     const cssIn  = document.getElementById('cssIn');
     const stage  = document.getElementById('stage');
 
     function imageFor(p) {
+        // What the card will actually be fed: a transparent PNG of the piece,
+        // standing on the card's ground. Drawn here rather than fetched, so the
+        // studio shows the real case — object with alpha, no photo edge.
+        if (state.images === 'cutout') {
+            return `<img src="${cutoutStandIn(p)}" alt="${p.name}">`;
+        }
         if (state.images === 'photo') {
             const seed = encodeURIComponent(p.name);
             return `<img src="https://picsum.photos/seed/vero-${seed}/700/900" alt="${p.name}"
                          style="width:100%;height:100%;object-fit:cover;display:block">`;
         }
         return p.icon;
+    }
+
+    /* A stand-in for a real cut-out: the piece's emoji drawn onto a transparent
+       square, exactly what cutout.js hands the card. Cached per product. */
+    const cutoutCache = {};
+    function cutoutStandIn(p) {
+        if (cutoutCache[p.name]) return cutoutCache[p.name];
+        const c = document.createElement('canvas');
+        c.width = c.height = 600;
+        const ctx = c.getContext('2d');          // left transparent on purpose
+        ctx.font = '460px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.icon, 300, 320);
+        return (cutoutCache[p.name] = c.toDataURL('image/png'));
     }
 
     // The tokens are the only contract between the markup and the product.
@@ -553,9 +576,9 @@
     // The proposal is shown once, the first time this version of the studio opens.
     // Whatever was on the sheet before is kept under its own key, so nothing that
     // was drawn by hand is lost — "המקודם" puts it back.
-    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-3') {
+    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-5') {
         if (saved) localStorage.setItem('veroCardStudioPrev', JSON.stringify(saved));
-        localStorage.setItem('veroCardStudioSeen', 'proposal-3');
+        localStorage.setItem('veroCardStudioSeen', 'proposal-5');
         load(PROPOSAL_HTML, PROPOSAL_CSS);
     } else {
         load(saved ? saved.html : PROPOSAL_HTML, saved ? saved.css : PROPOSAL_CSS);
