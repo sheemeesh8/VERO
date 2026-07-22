@@ -1216,7 +1216,8 @@
         /* The rectangle itself — a landscape frame, flat on the page. */
         .hp-frame {
             position: relative;
-            aspect-ratio: 4 / 3;
+            /* A low, wide letterbox rather than a tall block. */
+            aspect-ratio: 16 / 9;
             overflow: hidden;
             background: #efeae2;
         }
@@ -1243,24 +1244,11 @@
         }
         .hp-card:hover .hp-photo { transform: scale(1.04); }
 
-        /* A soft-grey band down the LEFT third of the photo, full height, carrying
-           the category name. It sits inside .hp-frame, so it crops the image rather
-           than adding width beside it. */
+        /* The caption sits beneath the photograph on the page itself — no panel, no
+           fill, nothing laid over the image. */
         .hp-body {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 33.333%;
-            background: #e2e0da;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
             direction: ltr;
-            padding: 22px 0;
-            box-sizing: border-box;
+            padding: 14px 0 0;
         }
 
         .hp-label {
@@ -1271,22 +1259,19 @@
             font-weight: 600;
         }
 
-        /* The name runs UP the tall grey band. Sized by hpFitTitles() to fill most
-           of the band's height, so a short name and a long one read at the same
-           scale. */
+        /* Flat editorial caption: heavy condensed caps on the page, reading left to
+           right under the frame. */
         .hp-title {
-            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 34px;
-            font-weight: 400;
+            font-size: clamp(20px, 1.7vw, 30px);
+            font-weight: 700;
             text-transform: uppercase;
             line-height: 1;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             margin: 0;
             color: #111;
             white-space: nowrap;
-            /* Vertical, reading bottom-to-top on the left edge. */
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .hp-desc {
@@ -5980,11 +5965,11 @@
                         <img class="hp-photo" loading="lazy" alt="${c.name}"
                              src="https://picsum.photos/seed/vero-cat-${encodeURIComponent(c.name)}-${globalIndex}/800/600"
                              onerror="this.remove()">
-                        <!-- White band over the bottom third of the photo, carrying
-                             the category name. -->
-                        <div class="hp-body">
-                            <h3 class="hp-title">${c.name}</h3>
-                        </div>
+                    </div>
+                    <!-- Editorial caption: the name sits UNDER the photograph, set
+                         flat and horizontal — no band laid over the image. -->
+                    <div class="hp-body">
+                        <h3 class="hp-title">${c.name}</h3>
                     </div>
                 </a>`;
         }
@@ -6014,36 +5999,7 @@
                 </div>`;
             hpIndex = 0;
             hpGo(0);
-            hpFitTitles();
             hpTimer = setInterval(() => hpGo(hpIndex + 1), HP_INTERVAL);
-        }
-
-        // Size each category name so it runs up most of its tall grey band — a
-        // short word and a long one end up at the same scale, which is what makes
-        // the row read as one set rather than mixed type sizes. The title is
-        // vertical, so its measured horizontal length maps to the band's HEIGHT.
-        function hpFitTitles() {
-            document.querySelectorAll('.hp-title').forEach(el => {
-                const band = el.closest('.hp-body');
-                if (!band || !band.clientHeight) return;
-                // Vertical runway = the band's height less its top/bottom padding.
-                const padV = parseFloat(getComputedStyle(band).paddingTop) * 2;
-                const runway = (band.clientHeight - padV) * 0.9;
-                // Measure the word once at 100px; its width is how long it runs.
-                const probe = document.createElement('span');
-                probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:100px';
-                probe.style.fontFamily = getComputedStyle(el).fontFamily;
-                probe.style.fontWeight = getComputedStyle(el).fontWeight;
-                probe.style.letterSpacing = getComputedStyle(el).letterSpacing;
-                probe.textContent = el.textContent.trim();
-                document.body.appendChild(probe);
-                const w = probe.getBoundingClientRect().width;
-                probe.remove();
-                if (!w) return;
-                // Capped by the band's width so the glyphs never touch its edges.
-                const byWidth = band.clientWidth * 0.72;
-                el.style.fontSize = Math.floor(Math.min((runway / w) * 100, byWidth)) + 'px';
-            });
         }
 
         function hpGo(i) {
