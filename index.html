@@ -807,31 +807,55 @@
             margin: 0 0 44px;
         }
 
-        /* Same object as the status tiles under WELCOME TO VERO: one dark rounded
-           card of the same size and shape, with the label sitting low in it. */
+        /* The status tiles from the top of the home page, flattened: same width,
+           same corner, same pale ground — but a low bar with its label centred and
+           the segment's count in a circle at the right-hand end. */
         .hero-cta {
+            position: relative;
             display: inline-flex;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
             gap: 12px;
             width: 274px;
-            min-height: 132px;
+            height: 66px;
             box-sizing: border-box;
             border-radius: 16px;
-            background: #111;
-            color: #fff;
+            background: #f1f1ef;
+            color: #111;
             border: none;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
             letter-spacing: 2.5px;
             text-transform: uppercase;
-            padding: 26px 24px 22px;
+            padding: 0 62px 0 24px;
             transition: background 0.3s, transform 0.25s;
-            font-family: 'Inter', 'Segoe UI', sans-serif;
+            /* The face the WOMEN / MEN / KIDS title above it is set in. */
+            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
         }
 
-        .hero-cta:hover { background: #333; transform: translateY(-2px); }
+        .hero-cta:hover { background: #e6e6e3; transform: translateY(-2px); }
+
+        .hero-cta-label { line-height: 1; }
+
+        /* The count, in its own circle at the right end of the bar. */
+        .hero-cta-count {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #111;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
         .hero-cta .arrow { transition: transform 0.3s; font-size: 15px; }
         .hero-cta:hover .arrow { transform: translateX(5px); }
 
@@ -4128,8 +4152,9 @@
         /* Headings only: Oswald. Everything else keeps the Playfair face above. */
         h1, h2, h3, h4, h5, h6, .logo, .htb-square-title, .acat-title, .hero-title, .section-title,
         [class*="title"], .product-name, .promo-title, .hp-title, .dh-detail-title,
-        /* The status tiles are set in the WELCOME TO VERO face, like the title above them. */
-        .hstat-num, .hstat-cap {
+        /* The status tiles are set in the WELCOME TO VERO face, like the title above
+           them; the slider's buttons match their own WOMEN / MEN / KIDS title. */
+        .hstat-num, .hstat-cap, .hero-cta, .hero-cta-label, .hero-cta-count {
             font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
         }
     </style>
@@ -7118,9 +7143,15 @@
             // Stable, reliable hero image per segment (loremflickr was returning 500s
             // and blanking the slider; Lorem Picsum is seeded so each slide is consistent).
             const bg = `https://picsum.photos/seed/vero-${currentCategory}-${s.key}/900/1100`;
+            // How much this segment actually has to offer — the figure in the
+            // button's own counter, read from the same catalogue the feed uses.
+            const count = s.magazine ? null : buildSegmentProducts(currentCategory, s.key).length;
             const cta = s.magazine
-                ? `<button class="hero-cta" onclick="openMenu()">Read the Magazine <span class="arrow">&rarr;</span></button>`
-                : `<button class="hero-cta" onclick="selectSegment('${s.key}')">Shop ${s.name} <span class="arrow">&rarr;</span></button>`;
+                ? `<button class="hero-cta" onclick="openMenu()"><span class="hero-cta-label">Read the Magazine</span></button>`
+                : `<button class="hero-cta" onclick="selectSegment('${s.key}')">
+                       <span class="hero-cta-label">Shop Now</span>
+                       <span class="hero-cta-count">${count}</span>
+                   </button>`;
             // Minimal slide: just a title, the text under it, and the CTA.
             return `
                 <div class="hero-slide">
