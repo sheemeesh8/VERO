@@ -228,7 +228,7 @@
 
     <!-- RIGHT: the two code panes -->
     <div class="cs-editors">
-        <div class="cs-panehead">HTML <small>— {{name}} {{price}} {{seller}} {{store}} {{category}} {{rating}} {{image}}</small></div>
+        <div class="cs-panehead">HTML <small>— {{name}} {{price}} {{oldPrice}} {{discount}} {{seller}} {{store}} {{category}} {{rating}} {{image}}</small></div>
         <textarea class="cs-code" id="htmlIn" spellcheck="false"></textarea>
         <div class="cs-panehead">CSS <small>— ממודר לכרטיס בלבד</small></div>
         <textarea class="cs-code" id="cssIn" spellcheck="false"></textarea>
@@ -238,10 +238,10 @@
 <script>
     /* The products the studio draws with — the same shape the app's cards get. */
     const PRODUCTS = [
-        { name: 'Navy Blazer',        price: '₪320.00', seller: 'Ralph Lauren', store: 'Dana K.',   category: 'Smart Casual', rating: '4.7', icon: '👔' },
-        { name: 'Classic Denim Jacket', price: '₪89.99', seller: "Levi's",      store: 'Yuval M.',  category: 'Vintage 90s',  rating: '4.5', icon: '🧥' },
-        { name: 'Pants Classic',      price: '₪190.90', seller: 'Vero Select',  store: 'Noa B.',    category: 'Every Day',    rating: '4.6', icon: '👖' },
-        { name: 'Watercolor Landscape', price: '₪290.00', seller: 'Watercolor Studio', store: 'Studio 6', category: 'Watercolor', rating: '4.9', icon: '💧' }
+        { name: 'Navy Blazer',        price: '₪320.00', oldPrice: '₪420.00', discount: '-24%', seller: 'Ralph Lauren', store: 'Dana K.',   category: 'Smart Casual', rating: '4.7', icon: '👔' },
+        { name: 'Classic Denim Jacket', price: '₪89.99', oldPrice: '₪140.00', discount: '-36%', seller: "Levi's",      store: 'Yuval M.',  category: 'Vintage 90s',  rating: '4.5', icon: '🧥' },
+        { name: 'Pants Classic',      price: '₪190.90', oldPrice: '₪250.00', discount: '-24%', seller: 'Vero Select',  store: 'Noa B.',    category: 'Every Day',    rating: '4.6', icon: '👖' },
+        { name: 'Watercolor Landscape', price: '₪290.00', oldPrice: '₪360.00', discount: '-19%', seller: 'Watercolor Studio', store: 'Studio 6', category: 'Watercolor', rating: '4.9', icon: '💧' }
     ];
 
     /* A blank sheet — enough structure to see something, nothing decided. */
@@ -346,6 +346,9 @@
     const PROPOSAL_HTML = `<article class="vcard">
     <div class="vcard-media">{{image}}</div>
 
+    <!-- Only on a card marked .is-sale — otherwise it is not in the picture. -->
+    <span class="vcard-badge">{{discount}}</span>
+
     <!-- Top right: the two controls, on the image. -->
     <div class="vcard-tools">
         <button class="vcard-tool" aria-label="הוסף לעגלה">
@@ -362,7 +365,7 @@
          never drift apart, whatever the copy is. -->
     <div class="vcard-foot">
         <h3 class="vcard-company">{{seller}}</h3>
-        <span class="vcard-price">{{price}}</span>
+        <span class="vcard-price">{{price}}<s class="vcard-was">{{oldPrice}}</s></span>
         <p class="vcard-type">{{category}}</p>
         <span class="vcard-seller">{{store}}</span>
     </div>
@@ -474,11 +477,13 @@
     letter-spacing: 0.4px;
     text-transform: uppercase;
 }
-/* Row 1, right: the price, on the company's line — the one bold thing. */
+/* Row 1, right: the price, on the company's line — the one bold thing. Same
+   face as the titles, so the card is set in a single voice. */
 .vcard-price {
-    font-family: 'Playfair Display', serif;
-    font-size: 17px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 16px;
     font-weight: 700;
+    letter-spacing: 0.4px;
     text-align: right;
 }
 /* Row 2, left: what the piece is. */
@@ -488,6 +493,35 @@
     font-weight: 400;
     letter-spacing: 0.6px;
 }
+/* ---- The sale state ----
+   The same card, marked .is-sale. Nothing moves: the old price sits beside the
+   new one on the row that already exists, and the badge is the only thing added
+   to the field. A card on sale and a card not on sale are the same object. */
+.vcard-badge,
+.vcard-was { display: none; }
+
+.vcard.is-sale .vcard-badge {
+    display: block;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: #8f2230;              /* the one place a colour is spent */
+}
+.vcard.is-sale .vcard-was {
+    display: inline;
+    margin-inline-start: 7px;
+    font-weight: 400;
+    font-size: 12px;
+    opacity: 0.5;
+}
+/* The figure that matters is the one being charged. */
+.vcard.is-sale .vcard-price { color: #8f2230; }
+
 /* Row 2, right: the seller. */
 .vcard-seller {
     font-family: 'Oswald', sans-serif;
@@ -542,6 +576,8 @@
             .replace(/\{\{store\}\}/g,    p.store)
             .replace(/\{\{category\}\}/g, p.category)
             .replace(/\{\{rating\}\}/g,   p.rating)
+            .replace(/\{\{oldPrice\}\}/g, p.oldPrice)
+            .replace(/\{\{discount\}\}/g, p.discount)
             .replace(/\{\{image\}\}/g,    imageFor(p));
     }
 
@@ -551,6 +587,10 @@
         // Four different products in the grid: a card only works if it survives a
         // long name next to a short one.
         const many = PRODUCTS.map(q => fill(htmlIn.value, q)).join('');
+        // The sale row is the very same markup with the card marked. If the root
+        // class is renamed in the HTML pane, mark it by hand instead.
+        const saleMany = PRODUCTS.map(q =>
+            fill(htmlIn.value, q).replace('class="vcard"', 'class="vcard is-sale"')).join('');
 
         stage.classList.toggle('dark', state.bg === 'dark');
         stage.style.setProperty('--card-w', state.width + 'px');
@@ -560,6 +600,8 @@
             <div class="cs-one">${one}</div>
             <p class="cs-caption">In the grid · four products</p>
             <div class="cs-grid">${many}</div>
+            <p class="cs-caption">On sale · same card, marked</p>
+            <div class="cs-grid">${saleMany}</div>
             <p class="cs-caption">Wide row · cart &amp; wishlist</p>
             <div class="cs-wide">${one}</div>`;
         save();
@@ -576,9 +618,9 @@
     // The proposal is shown once, the first time this version of the studio opens.
     // Whatever was on the sheet before is kept under its own key, so nothing that
     // was drawn by hand is lost — "המקודם" puts it back.
-    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-5') {
+    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-6') {
         if (saved) localStorage.setItem('veroCardStudioPrev', JSON.stringify(saved));
-        localStorage.setItem('veroCardStudioSeen', 'proposal-5');
+        localStorage.setItem('veroCardStudioSeen', 'proposal-6');
         load(PROPOSAL_HTML, PROPOSAL_CSS);
     } else {
         load(saved ? saved.html : PROPOSAL_HTML, saved ? saved.css : PROPOSAL_CSS);
