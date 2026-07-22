@@ -630,9 +630,9 @@
            width) — the switch keeps its original place in the pair. */
         #siteHeader .hdr-mode-pair .upload-plus {
             animation: none !important;
-            transform: translateX(60px);
+            transform: translateX(40px);
         }
-        #siteHeader .hdr-mode-pair .upload-plus:hover { transform: translateX(60px) scale(1.1); }
+        #siteHeader .hdr-mode-pair .upload-plus:hover { transform: translateX(40px) scale(1.1); }
     `;
 
     // ---- Markup (identical everywhere) ----
