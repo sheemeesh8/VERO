@@ -4319,9 +4319,14 @@
                                 </div>
                                 <div class="upload-form-group">
                                     <label id="itemTypeLabel">Item Type</label>
-                                    <select id="itemTypeSelect" onchange="updateItemTypeDisplay()">
-                                        <option>Select item type</option>
-                                    </select>
+                                    <!-- Open field, not a picker: the type is what the
+                                         seller calls the piece — "מעיל עור", "מכנסי דגמ״ח" —
+                                         and it is the line the card carries under the brand.
+                                         The list below is a suggestion, never a limit. -->
+                                    <input type="text" id="itemTypeSelect" list="itemTypeOptions"
+                                           placeholder="e.g. מעיל עור, מכנס וינטג׳"
+                                           oninput="updateItemTypeDisplay()">
+                                    <datalist id="itemTypeOptions"></datalist>
                                 </div>
                                 <div class="upload-form-group" id="genderGroup">
                                     <label>Gender</label>
@@ -6455,9 +6460,10 @@
         // Wiping uploadFormData isn't enough — the inputs and chips keep whatever the
         // last listing put there, so the next one has to start from a clean form.
         function resetUploadFields() {
-            ['brandNameInput', 'priceInput', 'descriptionInput', 'yearInput', 'dimH', 'dimW', 'dimD']
+            // itemTypeSelect is an open field now, so it clears like the other text ones.
+            ['brandNameInput', 'priceInput', 'descriptionInput', 'yearInput', 'dimH', 'dimW', 'dimD', 'itemTypeSelect']
                 .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-            ['genderSelect', 'itemTypeSelect'].forEach(id => {
+            ['genderSelect'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.selectedIndex = 0;
             });
@@ -6507,16 +6513,13 @@
             goToNextSlide();
         }
 
+        // The suggestions behind the open field — the mode's usual types, offered
+        // as a datalist. Anything typed that isn't on the list is kept as written.
         function updateItemTypeOptions() {
-            const select = document.getElementById('itemTypeSelect');
-            select.innerHTML = '<option>Select item type</option>';
+            const list = document.getElementById('itemTypeOptions');
+            if (!list) return;
             const types = uploadFormData.category === 'clothing' ? clothingTypes : artTypes;
-            types.forEach(type => {
-                const option = document.createElement('option');
-                option.value = type;
-                option.textContent = type;
-                select.appendChild(option);
-            });
+            list.innerHTML = types.map(t => `<option value="${t}"></option>`).join('');
         }
 
         function updateItemTypeDisplay() {
