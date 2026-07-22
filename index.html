@@ -5167,6 +5167,9 @@
            leaves the height as-is and makes the band inert again.
            heroBandReset() drops back to the stylesheet's own value. */
         const HERO_BAND_MIN = 240, HERO_BAND_MAX = 900;
+        // Set by initHeroBandEditing() once the panel exists — it keeps the panel's
+        // readout in step with a drag or a call from the console.
+        let heroBandSync = () => {};
 
         function heroBandHeight() {
             const v = getComputedStyle(document.documentElement)
@@ -5178,12 +5181,14 @@
             const h = Math.max(HERO_BAND_MIN, Math.min(HERO_BAND_MAX, Math.round(px)));
             document.documentElement.style.setProperty('--hero-band-h', h + 'px');
             localStorage.setItem('veroHeroBand', h);
+            heroBandSync();
             return h;
         }
 
         function heroBandReset() {
             document.documentElement.style.removeProperty('--hero-band-h');
             localStorage.removeItem('veroHeroBand');
+            heroBandSync();
             console.log('[hero-band] back to the stylesheet value:', heroBandHeight() + 'px');
             return heroBandHeight();
         }
@@ -5199,6 +5204,36 @@
             const saved = parseInt(localStorage.getItem('veroHeroBand') || '', 10);
             if (saved) document.documentElement.style.setProperty('--hero-band-h', saved + 'px');
 
+            // The on-screen controls, so the height can be set without the console:
+            // Ctrl+Shift+H toggles them. Arrows step by 10px, the readout is live.
+            const panel = document.createElement('div');
+            panel.className = 'hero-band-panel';
+            panel.innerHTML = `
+                <span>BAND</span>
+                <button type="button" data-step="-10" title="נמוך יותר">&minus;</button>
+                <span class="hbp-val">—</span>
+                <button type="button" data-step="10" title="גבוה יותר">+</button>
+                <button type="button" class="hbp-reset">RESET</button>
+                <button type="button" class="hbp-close">&times;</button>`;
+            document.body.appendChild(panel);
+            const readout = panel.querySelector('.hbp-val');
+            const sync = () => { readout.textContent = heroBandHeight() + 'px'; };
+            panel.addEventListener('click', e => {
+                const b = e.target.closest('button');
+                if (!b) return;
+                if (b.dataset.step) setHeroBandHeight(heroBandHeight() + Number(b.dataset.step));
+                else if (b.classList.contains('hbp-reset')) heroBandReset();
+                else enableHeroBandEditing(false);
+                sync();
+            });
+            document.addEventListener('keydown', e => {
+                if (!(e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h')) return;
+                e.preventDefault();
+                enableHeroBandEditing(!document.body.classList.contains('band-edit'));
+                sync();
+            });
+            heroBandSync = sync;
+
             let drag = null;
             document.addEventListener('mousedown', e => {
                 if (!document.body.classList.contains('band-edit')) return;
@@ -5207,7 +5242,7 @@
                 // Only the grip strip along the bottom edge — the rest of the band
                 // stays clickable so the slider still works while editing.
                 const r = band.getBoundingClientRect();
-                if (e.clientY < r.bottom - 18) return;
+                if (e.clientY < r.bottom - 34) return;   // the grip bar's own height
                 drag = { y: e.clientY, h: heroBandHeight() };
                 e.preventDefault();
             });
