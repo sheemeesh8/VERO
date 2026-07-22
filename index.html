@@ -3275,23 +3275,14 @@
         .vinbox-h { font-family: var(--f-serif); font-size: clamp(34px, 3.4vw, 56px); line-height: 1.05; margin: 0; }
         /* One scrolling column, like the cart page: slider on top, deals below. */
         .vinbox-body { flex: 1 1 auto; display: block; overflow-y: auto; min-height: 0; }
-        /* ---- Top block: the pieces these chats are about ---- */
-        /* The band: title column on the left, slider on the right. Written LTR so
-           the columns fall in that order on a page that is otherwise RTL. */
+        /* ---- Top block: the page's title ----
+           The slider that used to sit beside it is gone, so the band is a single
+           column and the title reads on the page's own RTL side. */
         .vinbox-top {
-            direction: ltr;
             padding: calc(var(--vinbox-top) + 34px) 4vw 40px;
             border-bottom: 1px solid var(--c-line);
-            display: grid;
-            grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
-            gap: 56px;
-            align-items: center;
         }
         .vinbox-topcount { font-family: var(--f-sans); font-size: 13px; color: var(--c-mute); }
-        .vinbox-slider { min-width: 0; }
-        @media (max-width: 1100px) {
-            .vinbox-top { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-        }
         /* ---- The deals: two columns of sellers ---- */
         .vinbox-list {
             padding: 30px 4vw 60px;
@@ -4649,9 +4640,9 @@
     <!-- ==================== CHATS INBOX (one per seller) ==================== -->
     <div id="chatListView" style="display:none">
         <div class="vinbox">
-            <!-- Same band as every other page: the page's title on the left, the
-                 slider and its counters on the right. Then the deals underneath,
-                 two columns of sellers, each with its product beside it. -->
+            <!-- The band is the page's title alone — the inbox carries no slider.
+                 Then the deals underneath, two columns of sellers, each with its
+                 product beside it. -->
             <div class="vinbox-body">
                 <section class="vinbox-top">
                     <div class="vinbox-topside">
@@ -4660,7 +4651,6 @@
                         <span class="vinbox-topcount"><span id="vinboxCount">0</span> פריטים במשא ומתן</span>
                         <button class="vinbox-close" onclick="showMain()">חזרה לחנות</button>
                     </div>
-                    <div class="vinbox-slider" id="chatsHeroSlider"></div>
                 </section>
                 <!-- Open deals / closed-chat history -->
                 <div class="vinbox-tabs" id="vinboxTabs"></div>
@@ -7613,26 +7603,11 @@
             return { cls, text: `הפריט שמור עוד ${h} שע׳ ${String(m).padStart(2, '0')} דק׳` };
         }
 
-        // The slider across the top of the inbox: the pieces the open chats are
-        // about, in the same promo component the cart and wishlist heroes use.
+        // The inbox band carries no slider any more — only the count line under
+        // the title, which is how many deals are open.
         function vchatRenderInboxSlider() {
-            const wrap = document.getElementById('chatsHeroSlider');
             const count = document.getElementById('vinboxCount');
             if (count) count.textContent = VCHATS.length;
-            if (!wrap) return;
-            wrap.innerHTML = '';
-            if (!VCHATS.length) {
-                wrap.innerHTML = '<div class="achs-empty">אין פריטים במשא ומתן</div>';
-                return;
-            }
-            const items = VCHATS.map(s => ({
-                name: s.product.name,
-                price: `${s.product.currency}${s.product.current}`,
-                seller: s.seller,
-                icon: s.product.icon,
-                category: VCHAT_STATUS_LABEL[s.status]
-            }));
-            wrap.appendChild(createPromoSlider(cwPromoSlides(items, 'במשא ומתן')));
         }
 
         // A chat is "closed" once it ended, either way — those move out of the
