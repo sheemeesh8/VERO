@@ -111,23 +111,23 @@
         /* Tucked up against the logo rather than floating in the middle of the bar. */
         #siteHeader .hdr-searchwrap { left: 186px; }
         #siteHeader .logo { left: 69px !important; }
-        /* The rounded search field. Given a real ground and a firmer edge so it
-           reads as the primary way into the catalogue, not a hairline afterthought. */
+        /* Minimal: no fill, no shadow, no pill — a single hairline rule under the
+           field, which darkens to the mode colour while it is being used. */
         #siteHeader .hdr-search {
             display: flex; align-items: center;
-            background: #fff;
-            border: 1.5px solid var(--hdr-mode-color, #22372B);
-            border-radius: 999px;
-            height: 50px;
+            background: none;
+            border: none;
+            border-bottom: 1px solid rgba(0,0,0,0.22);
+            border-radius: 0;
+            height: 44px;
             width: min(420px, 30vw);
-            padding: 4px 5px 4px 24px;
+            padding: 0 2px 0 0;
             box-sizing: border-box;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-            transition: border-color 0.2s, box-shadow 0.2s;
+            box-shadow: none;
+            transition: border-color 0.2s;
         }
         #siteHeader .hdr-search:focus-within {
-            border-color: var(--hdr-mode-color, #22372B);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.16);
+            border-bottom-color: var(--hdr-mode-color, #22372B);
         }
         #siteHeader .hdr-search input {
             flex: 1; min-width: 0;
@@ -139,45 +139,45 @@
         #siteHeader .hdr-search input::placeholder {
             color: #6e6e6e; font-weight: 500; letter-spacing: 0.3px;
         }
-        /* Solid mode-coloured circle — the one filled control in the bar. */
+        /* The magnifier is just the glyph now — no disc behind it. */
         #siteHeader .hdr-searchgo {
-            width: 40px; height: 40px; border-radius: 50%;
-            background: var(--hdr-mode-color, #22372B);
-            border: 1.5px solid var(--hdr-mode-color, #22372B);
+            width: 30px; height: 30px; border-radius: 0;
+            background: none;
+            border: none;
             cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center;
-            transition: background 0.2s, border-color 0.2s;
+            transition: opacity 0.2s;
         }
-        #siteHeader .hdr-searchgo:hover { filter: brightness(1.25); }
+        #siteHeader .hdr-searchgo:hover { opacity: 0.6; filter: none; }
         #siteHeader .hdr-searchgo svg {
-            width: 17px; height: 17px; stroke: #fff; fill: none;
-            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+            width: 18px; height: 18px;
+            stroke: var(--hdr-mode-color, #22372B); fill: none;
+            stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
         }
         /* Over the hero's dark box the field drops its white fill and inverts, so it
            still reads as one solid control rather than a white slab on the box. */
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search {
-            background: rgba(255,255,255,0.10);
-            border-color: rgba(255,255,255,0.7);
+            background: none;
+            border-bottom-color: rgba(255,255,255,0.7);
             box-shadow: none;
-        }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo {
-            background: #fff; border-color: #fff;
         }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #fff; }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: rgba(255,255,255,0.72); }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: var(--hdr-mode-color, #22372B); }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo:hover { background: #f0f0f0; border-color: #f0f0f0; }
-        /* Funnel: its own mode-coloured circle with the white funnel, beside the
-           field on the same (right) side as the magnifier. */
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg,
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-funnel svg { stroke: #fff; }
+        /* Funnel: the bare glyph beside the field, matching the magnifier. */
         #siteHeader .hdr-funnel {
-            width: 44px; height: 44px; border-radius: 50%;
-            background: var(--hdr-mode-color, #22372B);
+            width: 30px; height: 30px; border-radius: 0;
+            background: none;
             border: none; cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center; padding: 0;
-            transition: background 0.2s, filter 0.2s;
+            transition: opacity 0.2s;
         }
-        #siteHeader .hdr-funnel:hover, #siteHeader .hdr-funnel.on { filter: brightness(1.25); }
-        #siteHeader .hdr-funnel svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 1.8; }
+        #siteHeader .hdr-funnel:hover, #siteHeader .hdr-funnel.on { opacity: 0.6; filter: none; }
+        #siteHeader .hdr-funnel svg {
+            width: 17px; height: 17px;
+            stroke: var(--hdr-mode-color, #22372B); fill: none; stroke-width: 1.6;
+        }
 
         /* the dropdown panel */
         #siteHeader .hdr-filters {
