@@ -41,7 +41,11 @@
         const order = currentIconOrder();
         right.querySelectorAll('[data-icon]').forEach(el => {
             const i = order.indexOf(el.dataset.icon);
-            el.style.order = i === -1 ? '0' : String(i + 1);
+            const o = i === -1 ? '0' : String(i + 1);
+            el.style.order = o;
+            // .hdr-mode-pair is display:contents, so the flex line sees its two
+            // children, not the wrapper — the order has to land on them.
+            [...el.children].forEach(child => { child.style.order = o; });
         });
     }
 
@@ -345,11 +349,10 @@
         #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
         #siteHeader .header-right { display: flex; gap: 12px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 13px; }
-        /* The switch + the plus, held tight to each other. This is one flex item, so
-           the spread layout below distributes around the pair, not between them. */
-        #siteHeader .hdr-mode-pair {
-            display: inline-flex; align-items: center; gap: 26px; flex: 0 0 auto;
-        }
+        /* The switch and the plus keep their shared styling through this wrapper, but
+           the wrapper itself is transparent to layout — both controls are direct flex
+           items of .header-right, so every gap in the icon row is the same. */
+        #siteHeader .hdr-mode-pair { display: contents; }
         /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {
             position: relative; display: inline-block; box-sizing: border-box;
@@ -628,11 +631,7 @@
         /* The pulse ring inherits the mode colour too, rather than the black default. */
         /* The + is nudged right on its own (transform, so it takes no extra layout
            width) — the switch keeps its original place in the pair. */
-        #siteHeader .hdr-mode-pair .upload-plus {
-            animation: none !important;
-            transform: translateX(40px);
-        }
-        #siteHeader .hdr-mode-pair .upload-plus:hover { transform: translateX(40px) scale(1.1); }
+        #siteHeader .hdr-mode-pair .upload-plus { animation: none !important; }
     `;
 
     // ---- Markup (identical everywhere) ----
