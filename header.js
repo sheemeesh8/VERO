@@ -91,10 +91,11 @@
            window hooks at the bottom of this file. */
         /* Search pill + funnel circle: always visible, pinned just to the right of
            the logo (also before the header goes sticky). */
-        /* One source of truth for the site's mode colour, shared by the switch, the
-           +, and now the search field / magnifier / funnel. */
-        body { --hdr-mode-color: #22372B; }
-        body[data-mode="art"] { --hdr-mode-color: #6E232B; }
+        /* One source of truth for the colour of the search field, the magnifier and
+           the funnel. Black in both modes — every icon in the header is black. The
+           per-mode green / burgundy is kept here, commented, in case it comes back. */
+        body { --hdr-mode-color: #111; }            /* was #22372B in fashion mode */
+        body[data-mode="art"] { --hdr-mode-color: #111; }   /* was #6E232B */
         #siteHeader .hdr-searchwrap {
             display: flex;
             align-items: center;
@@ -154,17 +155,17 @@
             stroke: var(--hdr-mode-color, #22372B); fill: none;
             stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
         }
-        /* Over the hero's dark box the field drops its white fill and inverts, so it
-           still reads as one solid control rather than a white slab on the box. */
+        /* This block used to invert the field over the hero's dark box. No dark box
+           is left, so it keeps the same black treatment as everywhere else. */
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search {
             background: none;
-            border-bottom-color: rgba(255,255,255,0.7);
+            border-bottom-color: rgba(0,0,0,0.22);
             box-shadow: none;
         }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #fff; }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: rgba(255,255,255,0.72); }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #111; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: #6e6e6e; }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg,
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-funnel svg { stroke: #fff; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-funnel svg { stroke: #111; }
         /* Funnel: the bare glyph beside the field, matching the magnifier. */
         #siteHeader .hdr-funnel {
             width: 30px; height: 30px; border-radius: 0;
@@ -465,10 +466,9 @@
                 animation: none !important; box-shadow: none !important;
             }
         }
-        /* Over the black box the left-hand contents go white (the icon group on the
-           right already does this via .sticky-look). */
+        /* The left-hand contents stay black too — nothing dark sits behind them. */
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .logo,
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .vero-hamburger { color: #fff !important; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .vero-hamburger { color: #111 !important; }
         /* Force-dark: black header contents on light pages (e.g. buyer/seller area),
            regardless of scroll position and without the solid white background. */
         #siteHeader.force-dark .header-left > a,
@@ -573,81 +573,36 @@
             #siteHeader .header-right { order: 3; flex: 1 1 100%; justify-content: center; gap: 15px; }
         }
 
-        /* ===== The two mode-coloured controls =====
-           The switch and the + are the only header items that carry the site's mode
-           colour: green in fashion, burgundy in art. Everything else in the header
-           stays black on every page. Last in the file and marked !important so it
-           beats the .scrolled / .force-dark / .force-light blocks above, which all
-           hard-set these to #111.
-
-           Written with literal colours rather than a custom property: the toggle
-           carries "transition: all", and a var()-substituted border-color did not
-           repaint reliably when the mode flipped. */
+        /* ===== The switch and the + =====
+           Black like every other control in the header, in every state. They used
+           to carry the site's mode colour (green in fashion, burgundy in art);
+           that is retired. Last in the file and marked !important so it beats the
+           .scrolled / .force-dark / .force-light blocks above. */
         #siteHeader .hdr-mode-pair .toggle-category,
         #siteHeader.scrolled .hdr-mode-pair .toggle-category,
         #siteHeader.force-dark .hdr-mode-pair .toggle-category,
         #siteHeader.force-light .hdr-mode-pair .toggle-category,
         #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category {
-            border-color: #22372B !important;
+            border-color: #111 !important;
         }
         #siteHeader .hdr-mode-pair .toggle-category::before,
         #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
         #siteHeader.force-dark .hdr-mode-pair .toggle-category::before,
         #siteHeader.force-light .hdr-mode-pair .toggle-category::before,
         #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category::before {
-            background: #22372B !important;
+            background: #111 !important;
         }
         #siteHeader .hdr-mode-pair .upload-plus,
         #siteHeader.scrolled .hdr-mode-pair .upload-plus,
         #siteHeader.force-dark .hdr-mode-pair .upload-plus,
         #siteHeader.force-light .hdr-mode-pair .upload-plus,
         #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .upload-plus {
-            color: #22372B !important;
-            border-color: #22372B !important;
-        }
-        /* Art mode repaints the same two controls burgundy. */
-        body[data-mode="art"] #siteHeader .hdr-mode-pair .toggle-category,
-        body[data-mode="art"] #siteHeader.scrolled .hdr-mode-pair .toggle-category,
-        body[data-mode="art"] #siteHeader.force-dark .hdr-mode-pair .toggle-category,
-        body[data-mode="art"] #siteHeader.force-light .hdr-mode-pair .toggle-category,
-        body[data-mode="art"] #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category {
-            border-color: #6E232B !important;
-        }
-        body[data-mode="art"] #siteHeader .hdr-mode-pair .toggle-category::before,
-        body[data-mode="art"] #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
-        body[data-mode="art"] #siteHeader.force-dark .hdr-mode-pair .toggle-category::before,
-        body[data-mode="art"] #siteHeader.force-light .hdr-mode-pair .toggle-category::before,
-        body[data-mode="art"] #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category::before {
-            background: #6E232B !important;
-        }
-        body[data-mode="art"] #siteHeader .hdr-mode-pair .upload-plus,
-        body[data-mode="art"] #siteHeader.scrolled .hdr-mode-pair .upload-plus,
-        body[data-mode="art"] #siteHeader.force-dark .hdr-mode-pair .upload-plus,
-        body[data-mode="art"] #siteHeader.force-light .hdr-mode-pair .upload-plus,
-        body[data-mode="art"] #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .upload-plus {
-            color: #6E232B !important;
-            border-color: #6E232B !important;
+            color: #111 !important;
+            border-color: #111 !important;
         }
         #siteHeader .hdr-mode-pair .upload-plus { animation: none !important; }
 
-        /* Before the header goes sticky it sits over the hero's dark rectangle, so
-           the switch and the + drop their mode colour and go white like the icons
-           beside them. The selectors carry the same weight as the mode-colour rules
-           above and come after them, which is what lets them win. */
-        body #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .toggle-category,
-        body[data-mode] #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .toggle-category {
-            border-color: #fff !important;
-        }
-        body #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .toggle-category::before,
-        body[data-mode] #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .toggle-category::before {
-            background: #fff !important;
-        }
-        body #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .upload-plus,
-        body[data-mode] #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .upload-plus {
-            color: #fff !important;
-            border-color: #fff !important;
-        }
-    `;
+`;
 
     // ---- Markup (identical everywhere) ----
     const MARKUP = `
