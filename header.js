@@ -628,10 +628,25 @@
             color: #6E232B !important;
             border-color: #6E232B !important;
         }
-        /* The pulse ring inherits the mode colour too, rather than the black default. */
-        /* The + is nudged right on its own (transform, so it takes no extra layout
-           width) — the switch keeps its original place in the pair. */
         #siteHeader .hdr-mode-pair .upload-plus { animation: none !important; }
+
+        /* Before the header goes sticky it sits over the hero's dark rectangle, so
+           the switch and the + drop their mode colour and go white like the icons
+           beside them. The selectors carry the same weight as the mode-colour rules
+           above and come after them, which is what lets them win. */
+        body #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .toggle-category,
+        body[data-mode] #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .toggle-category {
+            border-color: #fff !important;
+        }
+        body #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .toggle-category::before,
+        body[data-mode] #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .toggle-category::before {
+            background: #fff !important;
+        }
+        body #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .upload-plus,
+        body[data-mode] #siteHeader:not(.scrolled):not(.force-dark):not(.force-light) .header-right .hdr-mode-pair .upload-plus {
+            color: #fff !important;
+            border-color: #fff !important;
+        }
     `;
 
     // ---- Markup (identical everywhere) ----
