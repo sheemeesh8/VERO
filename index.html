@@ -1242,26 +1242,23 @@
         }
         .hp-card:hover .hp-photo { transform: scale(1.04); }
 
-        /* A soft-grey band laid over the top third of the photo, carrying the
-           category name above the image. It sits inside .hp-frame, so it crops the
-           image rather than adding height above it. */
+        /* A soft-grey band down the LEFT third of the photo, full height, carrying
+           the category name. It sits inside .hp-frame, so it crops the image rather
+           than adding width beside it. */
         .hp-body {
             position: absolute;
             left: 0;
-            right: 0;
             top: 0;
-            height: 33.333%;
+            bottom: 0;
+            width: 33.333%;
             background: #e2e0da;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
             gap: 2px;
-            /* Laid out left-to-right on this RTL page so the name starts at the
-               band's left edge. */
             direction: ltr;
-            padding: 0 22px;
-            text-align: left;
+            padding: 22px 0;
             box-sizing: border-box;
         }
 
@@ -1273,8 +1270,9 @@
             font-weight: 600;
         }
 
-        /* Sized by hpFitTitles() to run across most of the band's left side, so a
-           short name and a long one both fill the same measure. */
+        /* The name runs UP the tall grey band. Sized by hpFitTitles() to fill most
+           of the band's height, so a short name and a long one read at the same
+           scale. */
         .hp-title {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
             font-size: 34px;
@@ -1285,6 +1283,9 @@
             margin: 0;
             color: #111;
             white-space: nowrap;
+            /* Vertical, reading bottom-to-top on the left edge. */
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
         }
 
         .hp-desc {
@@ -4317,12 +4318,14 @@
             </div>
             <div class="acat-hero-img" id="cartHeroSlider"><!-- cart items slider, populated by JS --></div>
         </div>
+        <!-- Same pager as the category hero: slide index / total + a next arrow. -->
         <div class="acat-hero-foot">
             <div class="acat-counter">
-                <span id="cartHeroCount">00</span>
+                <span id="cartHeroIdx">01</span>
                 <span class="acat-line"></span>
-                <span class="dim">items in cart</span>
+                <span class="dim" id="cartHeroTotal">01</span>
             </div>
+            <button class="acat-arrow" onclick="cwHeroGo('cart', 1)" aria-label="Next">&rarr;</button>
         </div>
     </section>
     <div id="cartContainer" style="display:none">
@@ -4343,12 +4346,14 @@
             </div>
             <div class="acat-hero-img" id="wishlistHeroSlider"><!-- wishlist items slider, populated by JS --></div>
         </div>
+        <!-- Same pager as the category hero: slide index / total + a next arrow. -->
         <div class="acat-hero-foot">
             <div class="acat-counter">
-                <span id="wishlistHeroCount">00</span>
+                <span id="wishlistHeroIdx">01</span>
                 <span class="acat-line"></span>
-                <span class="dim">saved items</span>
+                <span class="dim" id="wishlistHeroTotal">01</span>
             </div>
+            <button class="acat-arrow" onclick="cwHeroGo('wishlist', 1)" aria-label="Next">&rarr;</button>
         </div>
     </section>
     <div id="wishlistContainer" style="display:none">
@@ -5288,18 +5293,51 @@
 
         // Mount a promo slider for `items` into the hero image slot, or the empty
         // note when the list has nothing in it yet.
+        // The cart and wishlist heroes drive their slider from the foot pager,
+        // exactly like the category hero (acatRenderHero / acatHeroGo). Keyed by
+        // 'cart' / 'wishlist' so both share one code path.
+        const cwHeroState = {};
+
         function renderCwHeroSlider(wrapId, items, verb, emptyText) {
             const wrap = document.getElementById(wrapId);
             if (!wrap) return;
+            const key = wrapId === 'cartHeroSlider' ? 'cart' : 'wishlist';
             wrap.innerHTML = '';
             const slides = cwPromoSlides(items, verb);
+            const idxEl = document.getElementById(key + 'HeroIdx');
+            const totalEl = document.getElementById(key + 'HeroTotal');
             if (!slides.length) {
                 wrap.innerHTML = `<div class="achs-empty">${emptyText}</div>`;
+                cwHeroState[key] = null;
+                if (idxEl) idxEl.textContent = '00';
+                if (totalEl) totalEl.textContent = '00';
                 return;
             }
             const slider = createPromoSlider(slides);
             wrap.appendChild(slider);
-            promoGo(slider.dataset.uid, 0);
+            cwHeroState[key] = { uid: slider.dataset.uid, idx: 0, total: slides.length };
+            cwHeroRender(key);
+        }
+
+        function cwHeroRender(key) {
+            const st = cwHeroState[key];
+            if (!st) return;
+            const pad = n => String(n).padStart(2, '0');
+            const idxEl = document.getElementById(key + 'HeroIdx');
+            const totalEl = document.getElementById(key + 'HeroTotal');
+            if (idxEl) idxEl.textContent = pad(st.idx + 1);
+            if (totalEl) totalEl.textContent = pad(st.total);
+            // Move the slider to match, then stop its own auto-advance so the foot
+            // arrow drives it — same handoff the category hero uses.
+            promoGo(st.uid, st.idx);
+            if (promoState[st.uid]) clearInterval(promoState[st.uid].timer);
+        }
+
+        function cwHeroGo(key, dir) {
+            const st = cwHeroState[key];
+            if (!st) return;
+            st.idx = (st.idx + dir + st.total) % st.total;
+            cwHeroRender(key);
         }
 
         function renderCartHeroSlider() {
@@ -5972,17 +6010,18 @@
             hpTimer = setInterval(() => hpGo(hpIndex + 1), HP_INTERVAL);
         }
 
-        // Size each category name so it runs across most of its white band —
-        // a short word and a long one end up filling the same measure, which is
-        // what makes the row read as one set rather than mixed type sizes.
+        // Size each category name so it runs up most of its tall grey band — a
+        // short word and a long one end up at the same scale, which is what makes
+        // the row read as one set rather than mixed type sizes. The title is
+        // vertical, so its measured horizontal length maps to the band's HEIGHT.
         function hpFitTitles() {
             document.querySelectorAll('.hp-title').forEach(el => {
                 const band = el.closest('.hp-body');
-                if (!band || !band.clientWidth) return;
-                // The band's usable width, less its own padding.
-                const pad = parseFloat(getComputedStyle(band).paddingLeft) * 2;
-                const room = (band.clientWidth - pad) * 0.82;
-                // Measure the word once at 100px and scale to the room available.
+                if (!band || !band.clientHeight) return;
+                // Vertical runway = the band's height less its top/bottom padding.
+                const padV = parseFloat(getComputedStyle(band).paddingTop) * 2;
+                const runway = (band.clientHeight - padV) * 0.9;
+                // Measure the word once at 100px; its width is how long it runs.
                 const probe = document.createElement('span');
                 probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:100px';
                 probe.style.fontFamily = getComputedStyle(el).fontFamily;
@@ -5993,9 +6032,9 @@
                 const w = probe.getBoundingClientRect().width;
                 probe.remove();
                 if (!w) return;
-                // Capped so it never outgrows the band's height.
-                const byHeight = band.clientHeight * 0.72;
-                el.style.fontSize = Math.floor(Math.min((room / w) * 100, byHeight)) + 'px';
+                // Capped by the band's width so the glyphs never touch its edges.
+                const byWidth = band.clientWidth * 0.72;
+                el.style.fontSize = Math.floor(Math.min((runway / w) * 100, byWidth)) + 'px';
             });
         }
 
