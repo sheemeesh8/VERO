@@ -521,6 +521,41 @@
     letter-spacing: 0.6px;
     color: #8f2230;              /* the one place a colour is spent */
 }
+/* The figure being charged, in the sale's own red. */
+.vcard.is-sale .vcard-price { color: #c0392b; }
+
+/* ---- The running frame ----
+   A hairline of red dashes travelling around the card. Marching ants: four
+   one-pixel gradients, one per edge, whose positions are animated. Drawn on a
+   pseudo-element over the card so it never moves the layout by a pixel. */
+.vcard.is-sale::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(90deg, #c0392b 0 7px, transparent 7px 14px) top    / 14px 1px repeat-x,
+        repeating-linear-gradient(90deg, #c0392b 0 7px, transparent 7px 14px) bottom / 14px 1px repeat-x,
+        repeating-linear-gradient(0deg,  #c0392b 0 7px, transparent 7px 14px) left   / 1px 14px repeat-y,
+        repeating-linear-gradient(0deg,  #c0392b 0 7px, transparent 7px 14px) right  / 1px 14px repeat-y;
+    animation: vcardAnts 0.7s linear infinite;
+}
+/* Each edge runs in the direction that keeps the whole frame turning one way. */
+@keyframes vcardAnts {
+    to {
+        background-position:
+            top    0 left   14px,
+            bottom 0 right  14px,
+            left   0 bottom 14px,
+            right  0 top    14px;
+    }
+}
+/* A frame that never stops is a lot to sit next to. */
+@media (prefers-reduced-motion: reduce) {
+    .vcard.is-sale::before { animation: none; }
+}
+
 /* The price that was, in the seller's cell — directly under the price that is,
    so the two figures read as one column: new on top, old beneath it. The seller
    steps aside on a sale card; the template keeps its two rows either way. */
@@ -641,9 +676,9 @@
     // The proposal is shown once, the first time this version of the studio opens.
     // Whatever was on the sheet before is kept under its own key, so nothing that
     // was drawn by hand is lost — "המקודם" puts it back.
-    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-8') {
+    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-9') {
         if (saved) localStorage.setItem('veroCardStudioPrev', JSON.stringify(saved));
-        localStorage.setItem('veroCardStudioSeen', 'proposal-8');
+        localStorage.setItem('veroCardStudioSeen', 'proposal-9');
         load(PROPOSAL_HTML, PROPOSAL_CSS);
     } else {
         load(saved ? saved.html : PROPOSAL_HTML, saved ? saved.css : PROPOSAL_CSS);
