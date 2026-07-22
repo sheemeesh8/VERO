@@ -3731,6 +3731,38 @@
         .photo-slot.filled .plus, .photo-slot.filled .cap { display: none; }
         .photo-main input, .photo-slot input { display: none; }
 
+        /* ---- The cut-out ----
+           While the background is being lifted the slot says so over the photograph
+           it already shows; when it lands, a small control offers the original back.
+           See cutout.js — the work runs in the seller's own browser. */
+        .photo-main.cutting::after, .photo-slot.cutting::after {
+            content: attr(data-status);
+            position: absolute;
+            inset: auto 0 0 0;
+            padding: 8px;
+            background: rgba(0, 66, 37, 0.9);
+            color: #fff;
+            font-size: 11px;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .slot-undo {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 2;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #111;
+            font-size: 11px;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        .slot-undo:hover { background: #fff; }
+
         /* ---- Size grid (garments) and the shoe slider ---- */
         .size-panel { animation: sizeIn 0.35s ease both; }
         @keyframes sizeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
@@ -4224,6 +4256,8 @@
     <link rel="stylesheet" href="hero-box.css">
     <!-- Ctrl+Shift+H: dial this page's band height in by hand (single source: hero-band.js). -->
     <script src="hero-band.js" defer></script>
+    <!-- Lifts an uploaded product off its background, once, at upload time. -->
+    <script src="cutout.js"></script>
     <!-- The product card, shared by every page (single source: product-card.css). -->
     <link rel="stylesheet" href="product-card.css">
     <!-- Seller edits + sale prices, shared by every page (single source). -->
@@ -6486,19 +6520,64 @@
 
         // ---- The three photographs. Slot 0 is the listing's main image; it travels
         // with the seller onto every later step's media half.
+        // The photograph as it was taken, kept per slot so a bad cut-out can be
+        // undone without asking the seller to shoot the piece again.
+        const uploadOriginals = {};
+
         function handleSlotUpload(event, slot) {
             const file = event.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                uploadFormData.photos[slot] = e.target.result;
-                uploadFormData.image = uploadFormData.photos[0] || e.target.result;
-                const el = document.getElementById('photoSlot' + slot);
+            const el = document.getElementById('photoSlot' + slot);
+
+            const paint = (src) => {
+                uploadFormData.photos[slot] = src;
+                uploadFormData.image = uploadFormData.photos[0] || src;
                 el.classList.add('filled');
-                el.style.backgroundImage = `url('${e.target.result}')`;
+                el.style.backgroundImage = `url('${src}')`;
                 renderUploadMedia();
             };
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // The photo goes up straight away — the cut-out replaces it when it
+                // is ready, so the seller is never waiting on a blank slot.
+                paint(e.target.result);
+                uploadOriginals[slot] = e.target.result;
+
+                el.classList.add('cutting');
+                veroCutout(file, { onStatus: msg => el.dataset.status = msg })
+                    .then(res => {
+                        el.classList.remove('cutting');
+                        delete el.dataset.status;
+                        if (!res.ok) return;
+                        paint(res.image);
+                        // The way back, offered only when there is something to undo.
+                        if (!el.querySelector('.slot-undo')) {
+                            const undo = document.createElement('button');
+                            undo.type = 'button';
+                            undo.className = 'slot-undo';
+                            undo.textContent = 'המקור';
+                            undo.title = 'החזר את התצלום כפי שצולם';
+                            undo.onclick = (ev) => undoSlotCutout(slot, ev);
+                            el.appendChild(undo);
+                        }
+                        el.classList.add('cut');
+                    });
+            };
             reader.readAsDataURL(file);
+        }
+
+        // Put the untouched photograph back on a slot whose cut-out came out wrong.
+        function undoSlotCutout(slot, event) {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+            const src = uploadOriginals[slot];
+            if (!src) return;
+            const el = document.getElementById('photoSlot' + slot);
+            uploadFormData.photos[slot] = src;
+            uploadFormData.image = uploadFormData.photos[0] || src;
+            el.style.backgroundImage = `url('${src}')`;
+            el.classList.remove('cut');
+            renderUploadMedia();
         }
 
         // Paint the media half of every step that isn't the photo step, so the piece
