@@ -355,17 +355,15 @@
         </button>
     </div>
 
-    <!-- Bottom: one line, company on the left and price on the right, each with
-         its own second line underneath. -->
+    <!-- Bottom: a fixed 2x2 template, not two columns that size themselves.
+         Row 1 is company | price, row 2 is type | seller. The four cells are
+         siblings in one grid, so the rows are shared and the two sides can
+         never drift apart, whatever the copy is. -->
     <div class="vcard-foot">
-        <div class="vcard-side">
-            <h3 class="vcard-company">{{seller}}</h3>
-            <p class="vcard-type">{{category}}</p>
-        </div>
-        <div class="vcard-side end">
-            <span class="vcard-price">{{price}}</span>
-            <span class="vcard-seller">{{store}}</span>
-        </div>
+        <h3 class="vcard-company">{{seller}}</h3>
+        <span class="vcard-price">{{price}}</span>
+        <p class="vcard-type">{{category}}</p>
+        <span class="vcard-seller">{{store}}</span>
     </div>
 </article>`;
 
@@ -434,48 +432,63 @@
     stroke-linejoin: round;
 }
 
-/* ---- Bottom: the two columns, sharing one baseline ---- */
+/* ---- Bottom: a template, not a layout ----
+   Two rows of fixed height, so every card puts its title on the same line as
+   every other card's title and its subtitle on the same line as every other's.
+   A long company name is cut with an ellipsis rather than allowed to wrap —
+   wrapping is what pushed the second line down and made the cards uneven. */
 .vcard-foot {
     position: absolute;
     inset: auto 0 0 0;
     z-index: 2;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 14px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;   /* copy | figure */
+    grid-template-rows: var(--row-1) var(--row-2);
+    column-gap: 12px;
+    align-items: center;
     padding: 0 14px 14px;
 }
-.vcard-side { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.vcard-side.end { align-items: flex-end; text-align: right; }
 
-/* Left: the company, then what the piece is. */
+/* The two line boxes. Change these and both sides move together. */
+.vcard { --row-1: 20px; --row-2: 16px; }
+
+/* One line, always. Every cell in the template carries it. */
+.vcard-foot > * {
+    margin: 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+}
+
+/* Row 1, left: the company. */
 .vcard-company {
     font-family: 'Oswald', sans-serif;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.4px;
     text-transform: uppercase;
-    line-height: 1.15;
-    margin: 0;
 }
-.vcard-type {
-    font-family: 'Oswald', sans-serif;
-    font-size: 12px;
-    font-weight: 700;            /* the type is the bold line */
-    letter-spacing: 0.6px;
-    margin: 0;
-}
-
-/* Right: the price on the company's line, the seller under it. */
+/* Row 1, right: the price, on the company's line. */
 .vcard-price {
     font-family: 'Playfair Display', serif;
     font-size: 17px;
-    line-height: 1.15;
+    text-align: right;
 }
+/* Row 2, left: what the piece is — the bold line. */
+.vcard-type {
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+}
+/* Row 2, right: the seller. */
 .vcard-seller {
     font-family: 'Oswald', sans-serif;
     font-size: 11px;
     letter-spacing: 0.6px;
+    text-align: right;
     opacity: 0.75;
 }`;
 
@@ -536,9 +549,9 @@
     // The proposal is shown once, the first time this version of the studio opens.
     // Whatever was on the sheet before is kept under its own key, so nothing that
     // was drawn by hand is lost — "המקודם" puts it back.
-    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-1') {
+    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-2') {
         if (saved) localStorage.setItem('veroCardStudioPrev', JSON.stringify(saved));
-        localStorage.setItem('veroCardStudioSeen', 'proposal-1');
+        localStorage.setItem('veroCardStudioSeen', 'proposal-2');
         load(PROPOSAL_HTML, PROPOSAL_CSS);
     } else {
         load(saved ? saved.html : PROPOSAL_HTML, saved ? saved.css : PROPOSAL_CSS);
