@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO — Card Studio</title>
+
+    <!--
+        A blank sheet for the product card.
+
+        Write the card's markup on the left and its CSS on the right; the preview
+        redraws as you type. The card is fed the same product shape the app uses, so
+        what you build here is what it looks like in the feed — one card, a row of
+        four, and the cart's wide row, all from the same code.
+
+        Nothing here touches the live site. When a card is right, say so and it gets
+        wired into product-card.css and the templates that render it.
+
+        Your work is kept in localStorage, so a reload holds it. "מאפס" clears the
+        sheet; "הכרטיס הנוכחי" loads the card the site ships today, to start from.
+    -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #f6f5f3;
+            color: #111;
+            font-family: 'Playfair Display', Georgia, serif;
+            height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            overflow: hidden;
+        }
+
+        /* ---- Head ---- */
+        .cs-head {
+            display: flex;
+            align-items: baseline;
+            gap: 18px;
+            flex-wrap: wrap;
+            padding: 18px 26px;
+            background: #fff;
+            border-bottom: 1px solid #e6e4de;
+        }
+        .cs-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            text-transform: uppercase;
+        }
+        .cs-title span { color: #b3b3b3; }
+        .cs-sub { font-size: 13px; color: #8a8a8a; }
+        .cs-head .cs-tools { margin-inline-start: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .cs-btn {
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            padding: 9px 14px;
+            border: 1px solid #d8d5cc;
+            border-radius: 6px;
+            background: #fff;
+            color: #111;
+            cursor: pointer;
+        }
+        .cs-btn:hover { background: #f0efeb; }
+        .cs-btn.dark { background: #22372B; border-color: #22372B; color: #fff; }
+        .cs-btn.dark:hover { background: #2E4A3A; }
+
+        /* ---- The two halves ---- */
+        .cs-body {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            min-height: 0;
+        }
+        @media (max-width: 900px) {
+            .cs-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr 1fr; }
+        }
+
+        /* ---- Stage ---- */
+        .cs-stage {
+            direction: ltr;
+            overflow: auto;
+            padding: 26px;
+            background:
+                linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px) 0 0 / 24px 24px,
+                #f6f5f3;
+        }
+        .cs-stage.dark { background: #191919; }
+        .cs-stage.dark .cs-caption { color: #777; }
+
+        .cs-caption {
+            font-family: 'Oswald', sans-serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #9a9a9a;
+            margin: 0 0 12px;
+        }
+        .cs-caption + * { margin-bottom: 34px; }
+
+        /* The row of four: the card as it lands in a real grid. */
+        .cs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--card-w, 260px), 1fr));
+            gap: 22px;
+        }
+        /* The single card, at the width the slider says. */
+        .cs-one { width: var(--card-w, 260px); }
+        /* The cart's wide row. */
+        .cs-wide { width: 100%; max-width: 760px; }
+
+        /* ---- Editors ---- */
+        .cs-editors {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr);
+            border-inline-start: 1px solid #e6e4de;
+            background: #fff;
+            min-height: 0;
+        }
+        .cs-panehead {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: #fafaf8;
+            border-block: 1px solid #eceae4;
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: #555;
+        }
+        .cs-panehead small {
+            font-family: 'Oswald', sans-serif;
+            letter-spacing: 0.5px;
+            text-transform: none;
+            color: #a0a0a0;
+        }
+        .cs-code {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            resize: none;
+            padding: 14px 16px;
+            font-family: 'Consolas', 'Menlo', monospace !important;
+            font-size: 13px;
+            line-height: 1.6;
+            direction: ltr;
+            text-align: left;
+            tab-size: 4;
+            outline: none;
+            background: #fff;
+            color: #1b1b1b;
+        }
+
+        /* ---- Controls strip ---- */
+        .cs-controls {
+            direction: rtl;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            padding: 10px 26px;
+            background: #fff;
+            border-bottom: 1px solid #e6e4de;
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #666;
+        }
+        .cs-controls label { display: flex; align-items: center; gap: 8px; }
+        .cs-controls select, .cs-controls input[type="range"] { font: inherit; }
+        .cs-controls select {
+            border: 1px solid #d8d5cc;
+            border-radius: 6px;
+            padding: 6px 8px;
+            background: #fff;
+        }
+        .cs-saved { color: #9a9a9a; }
+    </style>
+</head>
+<body>
+
+<div class="cs-head">
+    <h1 class="cs-title"><span>/</span> Card Studio</h1>
+    <p class="cs-sub">גיליון ריק לכרטיס המוצר. כותבים משמאל, רואים מימין — שום דבר כאן לא נוגע באתר.</p>
+    <div class="cs-tools">
+        <button class="cs-btn" id="btnCurrent">הכרטיס הנוכחי</button>
+        <button class="cs-btn" id="btnBlank">מאפס</button>
+        <button class="cs-btn dark" id="btnCopy">העתק HTML + CSS</button>
+    </div>
+</div>
+
+<div class="cs-body">
+    <!-- LEFT (in RTL: the visual side sits on the right of the code) -->
+    <div>
+        <div class="cs-controls">
+            <label>מוצר <select id="prodSel"></select></label>
+            <label>רוחב <input id="widthIn" type="range" min="180" max="420" value="260"><span id="widthOut">260px</span></label>
+            <label>תמונה
+                <select id="imgSel">
+                    <option value="emoji">אימוג׳י</option>
+                    <option value="photo">תצלום</option>
+                </select>
+            </label>
+            <label>רקע
+                <select id="bgSel">
+                    <option value="light">בהיר</option>
+                    <option value="dark">כהה</option>
+                </select>
+            </label>
+            <span class="cs-saved" id="savedOut"></span>
+        </div>
+        <div class="cs-stage" id="stage"></div>
+    </div>
+
+    <!-- RIGHT: the two code panes -->
+    <div class="cs-editors">
+        <div class="cs-panehead">HTML <small>— {{name}} {{price}} {{seller}} {{category}} {{rating}} {{image}}</small></div>
+        <textarea class="cs-code" id="htmlIn" spellcheck="false"></textarea>
+        <div class="cs-panehead">CSS <small>— ממודר לכרטיס בלבד</small></div>
+        <textarea class="cs-code" id="cssIn" spellcheck="false"></textarea>
+    </div>
+</div>
+
+<script>
+    /* The products the studio draws with — the same shape the app's cards get. */
+    const PRODUCTS = [
+        { name: 'Navy Blazer',        price: '₪320.00', seller: 'Ralph Lauren', category: 'Smart Casual', rating: '4.7', icon: '👔' },
+        { name: 'Classic Denim Jacket', price: '₪89.99', seller: "Levi's",      category: 'Vintage 90s',  rating: '4.5', icon: '🧥' },
+        { name: 'Pants Classic',      price: '₪190.90', seller: 'Vero Select',  category: 'Every Day',    rating: '4.6', icon: '👖' },
+        { name: 'Watercolor Landscape', price: '₪290.00', seller: 'Watercolor Studio', category: 'Watercolor', rating: '4.9', icon: '💧' }
+    ];
+
+    /* A blank sheet — enough structure to see something, nothing decided. */
+    const BLANK_HTML = `<article class="card">
+    <div class="card-media">{{image}}</div>
+    <div class="card-body">
+        <span class="card-seller">{{seller}}</span>
+        <h3 class="card-name">{{name}}</h3>
+        <span class="card-price">{{price}}</span>
+    </div>
+</article>`;
+
+    const BLANK_CSS = `.card {
+    background: #fff;
+}
+
+.card-media {
+    aspect-ratio: 4 / 5;
+    display: grid;
+    place-items: center;
+    font-size: 64px;
+}
+
+.card-body {
+    padding: 14px;
+}`;
+
+    /* The card the site ships today, to start from rather than from nothing. */
+    const CURRENT_HTML = `<a class="product-card">
+    <div class="product-image">{{image}}</div>
+    <div class="product-info">
+        <div class="pc-left">
+            <div class="product-price">{{price}}</div>
+        </div>
+        <div class="pc-right">
+            <div class="product-seller">{{seller}}</div>
+            <div class="product-name">{{name}}</div>
+            <div class="product-rating">★ {{rating}}</div>
+        </div>
+    </div>
+</a>`;
+
+    const CURRENT_CSS = `/* The live card, trimmed to what shapes it. The full rule set is in
+   product-card.css — edit freely, this copy is only a starting point. */
+.product-card {
+    background: #efece4;
+    border: 1px solid #e3dfd5;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.10);
+}
+.product-image {
+    aspect-ratio: 4 / 5;
+    display: grid;
+    place-items: center;
+    font-size: 72px;
+    background: #efece4;
+}
+.product-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 14px 16px 16px;
+}
+.pc-right { text-align: right; }
+.product-seller {
+    font-family: 'Playfair Display', serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #6b6b6b;
+}
+.product-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    color: #111;
+}
+.product-rating { font-size: 11px; color: #999; }
+.product-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: #111;
+}`;
+
+    const state = { product: 0, width: 260, images: 'emoji', bg: 'light' };
+    const htmlIn = document.getElementById('htmlIn');
+    const cssIn  = document.getElementById('cssIn');
+    const stage  = document.getElementById('stage');
+
+    function imageFor(p) {
+        if (state.images === 'photo') {
+            const seed = encodeURIComponent(p.name);
+            return `<img src="https://picsum.photos/seed/vero-${seed}/700/900" alt="${p.name}"
+                         style="width:100%;height:100%;object-fit:cover;display:block">`;
+        }
+        return p.icon;
+    }
+
+    // The tokens are the only contract between the markup and the product.
+    function fill(tpl, p) {
+        return tpl
+            .replace(/\{\{name\}\}/g,     p.name)
+            .replace(/\{\{price\}\}/g,    p.price)
+            .replace(/\{\{seller\}\}/g,   p.seller)
+            .replace(/\{\{category\}\}/g, p.category)
+            .replace(/\{\{rating\}\}/g,   p.rating)
+            .replace(/\{\{image\}\}/g,    imageFor(p));
+    }
+
+    function render() {
+        const p = PRODUCTS[state.product];
+        const one = fill(htmlIn.value, p);
+        // Four different products in the grid: a card only works if it survives a
+        // long name next to a short one.
+        const many = PRODUCTS.map(q => fill(htmlIn.value, q)).join('');
+
+        stage.classList.toggle('dark', state.bg === 'dark');
+        stage.style.setProperty('--card-w', state.width + 'px');
+        stage.innerHTML = `
+            <style id="cardCSS">${cssIn.value}</style>
+            <p class="cs-caption">One card · ${state.width}px</p>
+            <div class="cs-one">${one}</div>
+            <p class="cs-caption">In the grid · four products</p>
+            <div class="cs-grid">${many}</div>
+            <p class="cs-caption">Wide row · cart &amp; wishlist</p>
+            <div class="cs-wide">${one}</div>`;
+        save();
+    }
+
+    /* ---- What you wrote, kept ---- */
+    function save() {
+        localStorage.setItem('veroCardStudio', JSON.stringify({ html: htmlIn.value, css: cssIn.value }));
+        document.getElementById('savedOut').textContent = 'נשמר ' + new Date().toLocaleTimeString('he-IL');
+    }
+    function load(html, css) { htmlIn.value = html; cssIn.value = css; render(); }
+
+    const saved = JSON.parse(localStorage.getItem('veroCardStudio') || 'null');
+    load(saved ? saved.html : BLANK_HTML, saved ? saved.css : BLANK_CSS);
+
+    /* ---- Wiring ---- */
+    htmlIn.addEventListener('input', render);
+    cssIn.addEventListener('input', render);
+
+    document.getElementById('btnBlank').onclick   = () => load(BLANK_HTML, BLANK_CSS);
+    document.getElementById('btnCurrent').onclick = () => load(CURRENT_HTML, CURRENT_CSS);
+    document.getElementById('btnCopy').onclick = async () => {
+        await navigator.clipboard.writeText(
+            '<!-- HTML -->\n' + htmlIn.value + '\n\n/* CSS */\n' + cssIn.value);
+        document.getElementById('savedOut').textContent = 'הועתק ללוח';
+    };
+
+    const sel = document.getElementById('prodSel');
+    sel.innerHTML = PRODUCTS.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+    sel.onchange = e => { state.product = +e.target.value; render(); };
+
+    const widthIn = document.getElementById('widthIn');
+    widthIn.oninput = e => {
+        state.width = +e.target.value;
+        document.getElementById('widthOut').textContent = state.width + 'px';
+        render();
+    };
+    document.getElementById('imgSel').onchange = e => { state.images = e.target.value; render(); };
+    document.getElementById('bgSel').onchange  = e => { state.bg = e.target.value; render(); };
+
+    // Tab types a tab instead of leaving the pane.
+    [htmlIn, cssIn].forEach(box => box.addEventListener('keydown', e => {
+        if (e.key !== 'Tab') return;
+        e.preventDefault();
+        const s = box.selectionStart;
+        box.value = box.value.slice(0, s) + '    ' + box.value.slice(box.selectionEnd);
+        box.selectionStart = box.selectionEnd = s + 4;
+        render();
+    }));
+</script>
+</body>
+</html>
