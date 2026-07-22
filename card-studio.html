@@ -114,6 +114,9 @@
         }
         /* The single card, at the width the slider says. */
         .cs-one { width: var(--card-w, 260px); }
+        /* Plain and on sale, side by side — the difference has to be visible at a
+           glance, not by scrolling between two rows. */
+        .cs-pair { display: flex; gap: 22px; flex-wrap: wrap; }
         /* The cart's wide row. */
         .cs-wide { width: 100%; max-width: 760px; }
 
@@ -368,9 +371,12 @@
          never drift apart, whatever the copy is. -->
     <div class="vcard-foot">
         <h3 class="vcard-company">{{seller}}</h3>
-        <span class="vcard-price">{{price}}<s class="vcard-was">{{oldPrice}}</s></span>
+        <span class="vcard-price">{{price}}</span>
         <p class="vcard-type">{{type}}</p>
         <span class="vcard-seller">{{store}}</span>
+        <!-- On sale, this takes the seller's cell: the price that was, struck out,
+             directly under the price that is. -->
+        <s class="vcard-was">{{oldPrice}}</s>
     </div>
 </article>`;
 
@@ -515,15 +521,25 @@
     letter-spacing: 0.6px;
     color: #8f2230;              /* the one place a colour is spent */
 }
+/* The price that was, in the seller's cell — directly under the price that is,
+   so the two figures read as one column: new on top, old beneath it. The seller
+   steps aside on a sale card; the template keeps its two rows either way. */
+.vcard.is-sale .vcard-seller { display: none; }
 .vcard.is-sale .vcard-was {
-    display: inline;
-    margin-inline-start: 7px;
-    font-weight: 400;
+    display: block;
+    grid-column: 2;
+    grid-row: 2;
+    font-family: 'Oswald', sans-serif;
     font-size: 12px;
-    opacity: 0.5;
+    font-weight: 400;
+    letter-spacing: 0.4px;
+    text-align: right;
+    opacity: 0.55;
+    /* The strike is the red — a line drawn through the old figure. */
+    text-decoration: line-through;
+    text-decoration-color: #c0392b;
+    text-decoration-thickness: 1.5px;
 }
-/* The figure that matters is the one being charged. */
-.vcard.is-sale .vcard-price { color: #8f2230; }
 
 /* Row 2, right: the seller. */
 .vcard-seller {
@@ -595,15 +611,16 @@
         const many = PRODUCTS.map(q => fill(htmlIn.value, q)).join('');
         // The sale row is the very same markup with the card marked. If the root
         // class is renamed in the HTML pane, mark it by hand instead.
-        const saleMany = PRODUCTS.map(q =>
-            fill(htmlIn.value, q).replace('class="vcard"', 'class="vcard is-sale"')).join('');
+        const asSale = (html) => html.replace('class="vcard"', 'class="vcard is-sale"');
+        const sale = asSale(one);
+        const saleMany = PRODUCTS.map(q => asSale(fill(htmlIn.value, q))).join('');
 
         stage.classList.toggle('dark', state.bg === 'dark');
         stage.style.setProperty('--card-w', state.width + 'px');
         stage.innerHTML = `
             <style id="cardCSS">${cssIn.value}</style>
-            <p class="cs-caption">One card · ${state.width}px</p>
-            <div class="cs-one">${one}</div>
+            <p class="cs-caption">One card · ${state.width}px · plain and on sale</p>
+            <div class="cs-pair"><div class="cs-one">${one}</div><div class="cs-one">${sale}</div></div>
             <p class="cs-caption">In the grid · four products</p>
             <div class="cs-grid">${many}</div>
             <p class="cs-caption">On sale · same card, marked</p>
@@ -624,9 +641,9 @@
     // The proposal is shown once, the first time this version of the studio opens.
     // Whatever was on the sheet before is kept under its own key, so nothing that
     // was drawn by hand is lost — "המקודם" puts it back.
-    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-7') {
+    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-8') {
         if (saved) localStorage.setItem('veroCardStudioPrev', JSON.stringify(saved));
-        localStorage.setItem('veroCardStudioSeen', 'proposal-7');
+        localStorage.setItem('veroCardStudioSeen', 'proposal-8');
         load(PROPOSAL_HTML, PROPOSAL_CSS);
     } else {
         load(saved ? saved.html : PROPOSAL_HTML, saved ? saved.css : PROPOSAL_CSS);
