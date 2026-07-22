@@ -5156,6 +5156,72 @@
         // Every change prints the current numbers and stores them in localStorage, so
         // a reload keeps whatever you last dialled in. enableMagBoxEditing(false)
         // leaves the box exactly where it is but makes it inert again.
+        /* ---- Hero band: dial the height in by hand ----
+           enableHeroBandEditing() in the console turns every hero band (category,
+           cart, wishlist) into a draggable object: grab the striped strip along its
+           bottom edge and pull. It writes --hero-band-h, so the band, its slider
+           column and the image inside all move together and the pages stay the same
+           size as each other. The number is printed on every drop and kept in
+           localStorage, so a reload holds it. When it looks right, bake the printed
+           value into --hero-band-h in hero-box.css; enableHeroBandEditing(false)
+           leaves the height as-is and makes the band inert again.
+           heroBandReset() drops back to the stylesheet's own value. */
+        const HERO_BAND_MIN = 240, HERO_BAND_MAX = 900;
+
+        function heroBandHeight() {
+            const v = getComputedStyle(document.documentElement)
+                .getPropertyValue('--hero-band-h').trim();
+            return parseInt(v, 10) || 0;
+        }
+
+        function setHeroBandHeight(px) {
+            const h = Math.max(HERO_BAND_MIN, Math.min(HERO_BAND_MAX, Math.round(px)));
+            document.documentElement.style.setProperty('--hero-band-h', h + 'px');
+            localStorage.setItem('veroHeroBand', h);
+            return h;
+        }
+
+        function heroBandReset() {
+            document.documentElement.style.removeProperty('--hero-band-h');
+            localStorage.removeItem('veroHeroBand');
+            console.log('[hero-band] back to the stylesheet value:', heroBandHeight() + 'px');
+            return heroBandHeight();
+        }
+
+        function enableHeroBandEditing(on = true) {
+            document.body.classList.toggle('band-edit', on);
+            if (on) console.log('[hero-band] editing ON — drag the striped strip at the bottom of the band. Now:', heroBandHeight() + 'px');
+            return heroBandHeight();
+        }
+
+        (function initHeroBandEditing() {
+            // Whatever was last dialled in by hand.
+            const saved = parseInt(localStorage.getItem('veroHeroBand') || '', 10);
+            if (saved) document.documentElement.style.setProperty('--hero-band-h', saved + 'px');
+
+            let drag = null;
+            document.addEventListener('mousedown', e => {
+                if (!document.body.classList.contains('band-edit')) return;
+                const band = e.target.closest('.acat-hero');
+                if (!band) return;
+                // Only the grip strip along the bottom edge — the rest of the band
+                // stays clickable so the slider still works while editing.
+                const r = band.getBoundingClientRect();
+                if (e.clientY < r.bottom - 18) return;
+                drag = { y: e.clientY, h: heroBandHeight() };
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', e => {
+                if (!drag) return;
+                setHeroBandHeight(drag.h + (e.clientY - drag.y));
+            });
+            document.addEventListener('mouseup', () => {
+                if (!drag) return;
+                drag = null;
+                console.log('[hero-band] --hero-band-h:', heroBandHeight() + 'px');
+            });
+        })();
+
         function enableMagBoxEditing(on = true) {
             document.body.classList.toggle('mag-edit', on);
             if (on) console.log('[mag-box] editing ON — drag to move, bottom-right corner to resize.');
