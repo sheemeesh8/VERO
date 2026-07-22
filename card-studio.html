@@ -194,6 +194,8 @@
     <h1 class="cs-title"><span>/</span> Card Studio</h1>
     <p class="cs-sub">גיליון ריק לכרטיס המוצר. כותבים משמאל, רואים מימין — שום דבר כאן לא נוגע באתר.</p>
     <div class="cs-tools">
+        <button class="cs-btn" id="btnProposal">ההצעה</button>
+        <button class="cs-btn" id="btnPrev">הקודם שלי</button>
         <button class="cs-btn" id="btnCurrent">הכרטיס הנוכחי</button>
         <button class="cs-btn" id="btnBlank">מאפס</button>
         <button class="cs-btn dark" id="btnCopy">העתק HTML + CSS</button>
@@ -225,7 +227,7 @@
 
     <!-- RIGHT: the two code panes -->
     <div class="cs-editors">
-        <div class="cs-panehead">HTML <small>— {{name}} {{price}} {{seller}} {{category}} {{rating}} {{image}}</small></div>
+        <div class="cs-panehead">HTML <small>— {{name}} {{price}} {{seller}} {{store}} {{category}} {{rating}} {{image}}</small></div>
         <textarea class="cs-code" id="htmlIn" spellcheck="false"></textarea>
         <div class="cs-panehead">CSS <small>— ממודר לכרטיס בלבד</small></div>
         <textarea class="cs-code" id="cssIn" spellcheck="false"></textarea>
@@ -235,10 +237,10 @@
 <script>
     /* The products the studio draws with — the same shape the app's cards get. */
     const PRODUCTS = [
-        { name: 'Navy Blazer',        price: '₪320.00', seller: 'Ralph Lauren', category: 'Smart Casual', rating: '4.7', icon: '👔' },
-        { name: 'Classic Denim Jacket', price: '₪89.99', seller: "Levi's",      category: 'Vintage 90s',  rating: '4.5', icon: '🧥' },
-        { name: 'Pants Classic',      price: '₪190.90', seller: 'Vero Select',  category: 'Every Day',    rating: '4.6', icon: '👖' },
-        { name: 'Watercolor Landscape', price: '₪290.00', seller: 'Watercolor Studio', category: 'Watercolor', rating: '4.9', icon: '💧' }
+        { name: 'Navy Blazer',        price: '₪320.00', seller: 'Ralph Lauren', store: 'Dana K.',   category: 'Smart Casual', rating: '4.7', icon: '👔' },
+        { name: 'Classic Denim Jacket', price: '₪89.99', seller: "Levi's",      store: 'Yuval M.',  category: 'Vintage 90s',  rating: '4.5', icon: '🧥' },
+        { name: 'Pants Classic',      price: '₪190.90', seller: 'Vero Select',  store: 'Noa B.',    category: 'Every Day',    rating: '4.6', icon: '👖' },
+        { name: 'Watercolor Landscape', price: '₪290.00', seller: 'Watercolor Studio', store: 'Studio 6', category: 'Watercolor', rating: '4.9', icon: '💧' }
     ];
 
     /* A blank sheet — enough structure to see something, nothing decided. */
@@ -332,6 +334,151 @@
     color: #111;
 }`;
 
+    /* ---- The proposal ----
+       Read straight off the description: the whole card is one image at 3:4, the
+       copy sits inside it in black, and the two controls sit in the top corner.
+         bottom-left   company name, and the product type in bold under it
+         bottom-right  price on the same line as the company, seller under it
+         top-right     cart and wishlist
+       Everything is a plain number or a plain colour — nothing clever to unpick
+       when a line lands wrong. */
+    const PROPOSAL_HTML = `<article class="vcard">
+    <div class="vcard-media">{{image}}</div>
+
+    <!-- Top right: the two controls, on the image. -->
+    <div class="vcard-tools">
+        <button class="vcard-tool" aria-label="הוסף לעגלה">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.6 12.4a1.8 1.8 0 0 0 1.8 1.4h8.4a1.8 1.8 0 0 0 1.8-1.4L22 7H6"/></svg>
+        </button>
+        <button class="vcard-tool" aria-label="הוסף לרשימת משאלות">
+            <svg viewBox="0 0 24 24"><path d="M12 20.5 4.2 12.9a4.6 4.6 0 0 1 0-6.6 4.6 4.6 0 0 1 6.5 0l1.3 1.3 1.3-1.3a4.6 4.6 0 0 1 6.5 0 4.6 4.6 0 0 1 0 6.6z"/></svg>
+        </button>
+    </div>
+
+    <!-- Bottom: one line, company on the left and price on the right, each with
+         its own second line underneath. -->
+    <div class="vcard-foot">
+        <div class="vcard-side">
+            <h3 class="vcard-company">{{seller}}</h3>
+            <p class="vcard-type">{{category}}</p>
+        </div>
+        <div class="vcard-side end">
+            <span class="vcard-price">{{price}}</span>
+            <span class="vcard-seller">{{store}}</span>
+        </div>
+    </div>
+</article>`;
+
+    const PROPOSAL_CSS = `/* The card IS the image: 3 wide to 4 tall, everything else sits on top of it. */
+.vcard {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #efece4;
+    cursor: pointer;
+    color: #111;                 /* the copy is black, on the image */
+    direction: ltr;
+}
+
+/* The image fills the card, and nothing else has a ground of its own. */
+.vcard-media {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 96px;             /* the emoji stand-in */
+}
+.vcard-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Black type over a photograph needs something under it or it disappears into a
+   dark frame. This is the lightest thing that works — delete it to see why. */
+.vcard::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 46%;
+    background: linear-gradient(to top, rgba(255,255,255,0.92), rgba(255,255,255,0));
+    pointer-events: none;
+}
+
+/* ---- Top right: cart and wishlist ---- */
+.vcard-tools {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+}
+.vcard-tool {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.82);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+.vcard-tool:hover { background: #fff; transform: scale(1.08); }
+.vcard-tool svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: #111;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ---- Bottom: the two columns, sharing one baseline ---- */
+.vcard-foot {
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 0 14px 14px;
+}
+.vcard-side { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vcard-side.end { align-items: flex-end; text-align: right; }
+
+/* Left: the company, then what the piece is. */
+.vcard-company {
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    line-height: 1.15;
+    margin: 0;
+}
+.vcard-type {
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    font-weight: 700;            /* the type is the bold line */
+    letter-spacing: 0.6px;
+    margin: 0;
+}
+
+/* Right: the price on the company's line, the seller under it. */
+.vcard-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    line-height: 1.15;
+}
+.vcard-seller {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    opacity: 0.75;
+}`;
+
     const state = { product: 0, width: 260, images: 'emoji', bg: 'light' };
     const htmlIn = document.getElementById('htmlIn');
     const cssIn  = document.getElementById('cssIn');
@@ -352,6 +499,7 @@
             .replace(/\{\{name\}\}/g,     p.name)
             .replace(/\{\{price\}\}/g,    p.price)
             .replace(/\{\{seller\}\}/g,   p.seller)
+            .replace(/\{\{store\}\}/g,    p.store)
             .replace(/\{\{category\}\}/g, p.category)
             .replace(/\{\{rating\}\}/g,   p.rating)
             .replace(/\{\{image\}\}/g,    imageFor(p));
@@ -385,13 +533,28 @@
     function load(html, css) { htmlIn.value = html; cssIn.value = css; render(); }
 
     const saved = JSON.parse(localStorage.getItem('veroCardStudio') || 'null');
-    load(saved ? saved.html : BLANK_HTML, saved ? saved.css : BLANK_CSS);
+    // The proposal is shown once, the first time this version of the studio opens.
+    // Whatever was on the sheet before is kept under its own key, so nothing that
+    // was drawn by hand is lost — "המקודם" puts it back.
+    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-1') {
+        if (saved) localStorage.setItem('veroCardStudioPrev', JSON.stringify(saved));
+        localStorage.setItem('veroCardStudioSeen', 'proposal-1');
+        load(PROPOSAL_HTML, PROPOSAL_CSS);
+    } else {
+        load(saved ? saved.html : PROPOSAL_HTML, saved ? saved.css : PROPOSAL_CSS);
+    }
 
     /* ---- Wiring ---- */
     htmlIn.addEventListener('input', render);
     cssIn.addEventListener('input', render);
 
-    document.getElementById('btnBlank').onclick   = () => load(BLANK_HTML, BLANK_CSS);
+    document.getElementById('btnBlank').onclick    = () => load(BLANK_HTML, BLANK_CSS);
+    document.getElementById('btnProposal').onclick = () => load(PROPOSAL_HTML, PROPOSAL_CSS);
+    document.getElementById('btnPrev').onclick = () => {
+        const prev = JSON.parse(localStorage.getItem('veroCardStudioPrev') || 'null');
+        if (prev) load(prev.html, prev.css);
+        else document.getElementById('savedOut').textContent = 'אין גרסה קודמת שמורה';
+    };
     document.getElementById('btnCurrent').onclick = () => load(CURRENT_HTML, CURRENT_CSS);
     document.getElementById('btnCopy').onclick = async () => {
         await navigator.clipboard.writeText(
