@@ -1446,7 +1446,9 @@
         /* ==================== CATEGORY SLIDER (3 cards per slide, image-right) ==================== */
         .hero-promos {
             margin: 50px 0 0;
-            padding: 0 70px;
+            /* Cards run to the site edges; only the 6px inter-card gap remains, so the
+               edge spacing matches the spacing between the cards. */
+            padding: 0 6px;
             position: relative;
             direction: ltr;   /* keep info-left / image-right despite the RTL page */
         }
@@ -1612,7 +1614,7 @@
         .hp-dot.active { background: #111; transform: scale(1.3); }
 
         @media (max-width: 900px) {
-            .hero-promos { padding: 0 50px; }
+            .hero-promos { padding: 0 6px; }
             .hp-slide { grid-template-columns: repeat(2, 1fr); }
         }
 
@@ -1643,7 +1645,22 @@
         .promo-track {
             display: flex;
             width: 100%;
-            transition: transform 0.75s cubic-bezier(0.65, 0.05, 0.1, 1);
+            /* Ferrari-style glide: a long, smooth ease-out for the horizontal slide. */
+            transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* Ferrari-style content reveal: when a slide becomes current, its image and
+           copy fade up and the image settles from a faint zoom — a calm crossfade
+           layered over the horizontal glide. */
+        .promo-slide.is-current .promo-image { animation: promoImgIn 1.1s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .promo-slide.is-current .promo-text  { animation: promoTextIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.12s; }
+        @keyframes promoImgIn {
+            from { opacity: 0.35; transform: scale(1.06); }
+            to   { opacity: 1;    transform: scale(1); }
+        }
+        @keyframes promoTextIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         .promo-slide {
@@ -2154,8 +2171,7 @@
             padding: 4px 65px 20px;
             margin: 0;
             background: none;
-            border: none;
-            border-bottom: 1px solid #ececec;
+            border: none;   /* no frame / hairline under the filter bar */
             box-shadow: none;
             z-index: auto;
         }
@@ -4450,47 +4466,10 @@
         }
     </style>
     <link rel="stylesheet" href="cards.css">
-    <!-- Site-wide type: clean sans-serif everywhere (Ferrari-inspired). Inter stands
-         in for FerrariSans — one restrained neo-grotesque across the whole site,
-         headings included, instead of the old serif + condensed pairing. -->
-    <style>
-        *, *::before, *::after {
-            font-family: var(--font-sans) !important;
-        }
-        /* Headings share the same face, just heavier — Ferrari keeps one type voice. */
-        h1, h2, h3, h4, h5, h6, .logo, .htb-square-title, .acat-title, .hero-title, .section-title,
-        [class*="title"], .product-name, .promo-title, .hp-title, .dh-detail-title,
-        .hstat-num, .hstat-cap, .hero-cta, .hero-cta-label, .hero-count, .hero-count-num,
-        .promo-label, .promo-desc, .promo-price, .promo-readmore, .promo-buylabel, .promo-buyprice,
-        .acat-count, .hp-count {
-            font-family: var(--font-sans) !important;
-            letter-spacing: -0.01em;
-        }
-
-        /* ===== Ferrari-inspired theme layer: red accent + sharp corners ===== */
-        /* Signature red on every small highlight. */
-        .badge { background: var(--ferrari-red) !important; }
-        /* Menu + link highlights go red. */
-        .hero-sidenav .hsn-list a:hover { color: var(--ferrari-red); }
-        .hero-sidenav .hsn-list a::after { background: var(--ferrari-red); }
-        /* The Art/Fashion toggle's active pill and any select highlight go red. */
-        .toggle-category::before { background: var(--ferrari-red) !important; }
-        select option:checked, select option:hover, select option:focus {
-            background: var(--ferrari-red) !important; color: #fff !important;
-        }
-        /* Sharp corners on rectangular controls (circular icon buttons untouched). */
-        .hero-cta, .promo-image, .hdr-search, .hdr-apply, .hdr-clear, .hdr-results,
-        .vbtn, .featured-image, .promo-buy, input[type="search"], input[type="text"],
-        .ff-select, .wh-cta {
-            border-radius: 0 !important;
-        }
-        /* Minimal, uppercase primary buttons with wide tracking. */
-        .hero-cta, .promo-buy, .hdr-apply, .vbtn.primary {
-            text-transform: uppercase;
-            letter-spacing: 1.4px;
-            font-weight: 600;
-        }
-    </style>
+    <!-- Site-wide design line (single source: design-system.css). Ferrari-inspired
+         type, red accent and sharp corners live here — edit that one file to
+         restyle every page at once. -->
+    <link rel="stylesheet" href="design-system.css">
     <!-- The green hero rectangle, shared by every page (single source: hero-box.css). -->
     <link rel="stylesheet" href="hero-box.css">
     <!-- Ctrl+Shift+H: dial this page's band height in by hand (single source: hero-band.js). -->
@@ -6679,6 +6658,11 @@
             const n = st.slides.length;
             st.index = (i + n) % n;
             track.style.transform = `translateX(-${st.index * 100}%)`;
+            // Retrigger the Ferrari-style content reveal on the slide coming into view.
+            const slides = track.querySelectorAll('.promo-slide');
+            slides.forEach(s => s.classList.remove('is-current'));
+            const cur = slides[st.index];
+            if (cur) { void cur.offsetWidth; cur.classList.add('is-current'); }
             promoFitLabels(track);
             document.querySelectorAll('#promoDots-' + uid + ' .promo-dot').forEach((dot, idx) => {
                 const active = idx === st.index;
