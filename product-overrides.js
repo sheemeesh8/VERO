@@ -83,7 +83,12 @@
     function priceHTML(p) {
         const m = apply(p);
         if (!m.onSale) return `<span class="vprice">${m.price}</span>`;
+        // How much came off, worked out from the two figures the card already
+        // holds — the card corner shows it, and nothing has to store it.
+        const was = toNum(m.originalPrice), now = toNum(m.price);
+        const off = was > 0 ? Math.round((1 - now / was) * 100) : 0;
         return `<span class="vprice-wrap">` +
+               (off > 0 ? `<span class="vprice-off">-${off}%</span>` : '') +
                `<span class="vprice-was">${m.originalPrice}</span>` +
                `<span class="vprice vprice-sale">${m.price}</span>` +
                `</span>`;

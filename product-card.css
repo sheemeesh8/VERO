@@ -13,23 +13,58 @@
      <link rel="stylesheet" href="product-card.css">
    Load it AFTER the page's own stylesheet so it wins.
 
-   Layout, bottom bar:
-     left  — brand (serif, uppercase) / product name / stars
-     right — price (serif, large) with the wishlist + cart icons under it
+   ---- The card, as built in card-studio.html ----
+
+   The whole card is one flat off-white field, 3 wide to 4.5 tall, with the
+   product standing on it as a cut-out PNG (see cutout.js). Nothing else has a
+   ground of its own, so a grid of these reads as one surface with objects on
+   it rather than a wall of photographs.
+
+     top right     cart and wishlist, hollow — the line only
+     bottom left   the company, and under it what the piece is
+     bottom right  the price, and under it the rating (or, on sale, the old
+                   price struck through in red)
+
+   The bottom is a fixed two-row template, not a layout that sizes itself: one
+   line per cell, cut with an ellipsis rather than wrapped. A long company name
+   can never push its own second line down, so every card in a grid puts its
+   title on the same line as every other card's.
+
+   The markup this expects is what the pages already emit:
+     <a class="product-card">
+       <div class="product-image">  icon/img + .product-icon buttons  </div>
+       <div class="product-info">
+         <div class="pc-left">   .product-price  (+ .pc-actions)  </div>
+         <div class="pc-right">  .product-seller / .product-name / .product-rating </div>
+       </div>
+     </a>
 ------------------------------------------------------------------ */
 
 .product-card {
-    background: #efece4;
-    border: 1px solid #e3dfd5;
-    border-radius: 10px;
-    overflow: hidden;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
+    /* The whitish grey the whole card is made of. One line to re-colour every
+       card on the site. */
+    --card-ground: #eeedeb;
+    /* The two line boxes of the bottom template. Both sides read from these, so
+       the columns can never drift apart. */
+    --row-1: 20px;
+    --row-2: 16px;
+    /* How much of the card's foot belongs to the copy. */
+    --foot-h: 46px;
+
     position: relative;
-    text-decoration: none;
-    color: inherit;
+    aspect-ratio: 3 / 4.5;
+    overflow: hidden;
+    border-radius: 4px;
+    background: var(--card-ground);
+    border: none;
     box-shadow: none;
+    cursor: pointer;
+    text-decoration: none;
+    color: #111;
+    /* The card is set left-to-right even on the RTL pages: the price belongs on
+       the same side of every card on the site. */
+    direction: ltr;
+    display: block;
     transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -39,247 +74,261 @@
     box-shadow: 0 16px 34px rgba(0, 0, 0, 0.10);
 }
 
-/* The piece itself, centred in a tall frame. */
+/* ---- The piece ----
+   Floats in the field above the copy. contain, never cover: a cut-out must not
+   be cropped, and a photograph that is not a cut-out is still shown whole. */
 .product-image {
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    background: #efece4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 84px;
-    color: rgba(0, 0, 0, 0.85);
-    position: relative;
-    overflow: hidden;
-    padding: 0;
-}
-
-/* The hover quick-actions over the image are gone — the card carries real
-   icons in its bottom bar, and two sets of the same two controls read as a
-   mistake. Kept hidden rather than deleted so existing markup still parses. */
-.product-image .product-icon { display: none !important; }
-
-/* ---- Bottom bar ---- */
-.product-info {
-    /* The bar is laid out left-to-right on every page, including the RTL ones:
-       brand always on the left, price always on the right. Without this the
-       flex order below is mirrored and the two columns swap. */
-    direction: ltr;
-    padding: 18px 20px 20px;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 14px;
-    position: relative;
-    background: #efece4;
-}
-
-/* Left column: brand, name, stars. */
-.pc-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    gap: 3px;
-    min-width: 0;
-    order: 1;
-}
-
-.product-seller {
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-    font-size: 15px;
-    color: #111;
-    letter-spacing: 2px;
-    font-weight: 500;
-    text-transform: uppercase;
-    cursor: pointer;
-}
-
-/* The one accent on the card. */
-.product-name {
-    font-size: 11px;
-    font-weight: 500;
-    color: #6E8C7A;
-    letter-spacing: 0.3px;
-    line-height: 1.2;
-    margin: 0;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.product-rating {
-    font-size: 9px;
-    color: #111;
-    margin-top: 2px;
-    font-weight: 400;
-    letter-spacing: 1px;
-}
-
-/* Right column: price, with the two controls beneath it. */
-.pc-left {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-end;
-    order: 2;
-}
-
-.product-price {
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-    font-size: 26px;
-    color: #111;
-    font-weight: 500;
-    letter-spacing: 0;
-    margin: 0;
-    line-height: 1;
-    white-space: nowrap;
-}
-
-.pc-actions {
-    display: flex;
-    gap: 14px;
-    align-items: center;
-}
-
-.pc-action {
+    position: absolute;
+    inset: 0 0 var(--foot-h) 0;
+    width: auto;
+    aspect-ratio: auto;
+    display: grid;
+    place-items: center;
+    padding: 12%;
     background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s, opacity 0.2s;
+    font-size: clamp(56px, 7vw, 96px);   /* the emoji stand-in */
+    line-height: 1;
+    overflow: visible;
+}
+.product-image img,
+.product-image .pc-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
-.pc-action:hover { transform: scale(1.15); opacity: 0.7; }
-.pc-action.remove svg { stroke: #c0392b; }
-
-.pc-action svg {
-    width: 17px;
-    height: 17px;
-    stroke: #1a1a1a;
-    fill: none;
-    stroke-width: 1.4;
+/* ---- Top right: cart and wishlist ----
+   The drawing and nothing else — no disc behind them, no fill inside them. */
+.product-image .product-icon {
+    display: grid !important;
+    position: absolute;
+    top: 10px;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    opacity: 1;
+    cursor: pointer;
+    z-index: 2;
+    transition: transform 0.2s;
+}
+.product-image .product-icon.cart  { right: 44px; }
+.product-image .product-icon.heart { right: 10px; }
+.product-image .product-icon.remove { right: 10px; }
+.product-image .product-icon:hover { background: none; transform: scale(1.12); }
+.product-image .product-icon svg {
+    width: 19px;
+    height: 19px;
+    fill: none;                 /* hollow */
+    stroke: #111;
+    stroke-width: 1.6;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+/* The remove control the cart and wishlist rows carry keeps its own colour. */
+.product-image .product-icon.remove svg { stroke: #c0392b; }
 
-/* ---- Category grid cards ----
-   The category pages render .acard; it is the same object, so it wears the
-   same skin rather than its own. */
-.acard {
-    background: #efece4;
-    border: 1px solid #e3dfd5;
-    border-radius: 10px;
-    overflow: hidden;
-    text-decoration: none;
-    color: inherit;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.acard:hover {
-    background: #efece4;
-    transform: translateY(-4px);
-    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.10);
-}
-.acard-img {
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 84px;
-}
-.acard-meta {
+/* ---- The bottom: a template, not a layout ---- */
+.product-info {
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 2;
     direction: ltr;
-    padding: 18px 20px 20px;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 14px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;   /* copy | figure */
+    column-gap: 12px;
+    align-items: start;
+    padding: 0 14px 14px;
+    background: none;
+    border: none;
 }
-.acard-row {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 3px;
+/* The markup wraps the copy in two boxes (.pc-right holds company, type and
+   rating; .pc-left holds the price). Those boxes are dissolved with
+   `display: contents` so the four lines become siblings in ONE grid — that is
+   what keeps the two sides on shared rows. Nested boxes each sized themselves,
+   which is how the rating ended up on a third line of its own. */
+.pc-right,
+.pc-left { display: contents; }
+
+.product-seller { grid-area: 1 / 1; }
+.product-name   { grid-area: 2 / 1; }
+.product-price  { grid-area: 1 / 2; }
+.product-rating { grid-area: 2 / 2; }
+
+/* The cart's 48-hour hold notice is not part of the template — it rides on the
+   field above the copy, so a cart card stays the same height as every other. */
+.pc-hold {
+    position: absolute;
+    left: 14px;
+    bottom: calc(100% + 10px);
+    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    color: #6b6b6b;
+    white-space: nowrap;
+}
+
+/* One line, always — in every cell of the template. */
+.product-seller,
+.product-name,
+.product-rating,
+.product-price,
+.product-price .vprice,
+.product-price .vprice-was {
+    margin: 0;
     min-width: 0;
-    order: 1;
-}
-.acard-name {
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-    font-size: 15px;
-    color: #111;
-    letter-spacing: 2px;
-    font-weight: 500;
-    text-transform: uppercase;
+    max-width: 100%;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1;
 }
-.acard-price {
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-    font-size: 26px;
+
+/* Row 1, left: the company. Quiet — one weight, no emphasis. */
+.product-seller {
+    height: var(--row-1);
+    display: flex;
+    align-items: center;
+    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
     color: #111;
-    font-weight: 500;
-    white-space: nowrap;
-    order: 2;
+    cursor: pointer;
 }
-.acard-sub {
+
+/* Row 2, left: what the piece is — the seller's own words for it. */
+.product-name {
+    height: var(--row-2);
+    display: flex;
+    align-items: center;
+    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.6px;
+    color: #111;
+}
+
+/* Row 1, right: the price — the one loud thing on the card. */
+.product-price {
+    height: var(--row-1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: #111;
+    text-align: right;
+}
+
+/* Row 2, right: the rating, in the quietest voice on the card. */
+.product-rating {
+    height: var(--row-2);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
     font-size: 11px;
-    font-weight: 500;
-    color: #6E8C7A;
-    letter-spacing: 0.3px;
+    font-weight: 400;
+    letter-spacing: 0.6px;
+    color: #111;
+    opacity: 0.55;
 }
 
-/* ------------------------------------------------------------------
-   Sale prices and the sale marker.
+/* The second copy of the cart / wishlist controls that used to sit in the
+   footer — the card carries them on the image now. */
+.pc-actions { display: none; }
 
-   Written once here because every surface that draws a piece — the feed,
-   the category grids, the promoted sliders, the personal area, the seller
-   area and the product page — renders the same block through
-   veroPriceHTML() (product-overrides.js). Never restyle these per page.
------------------------------------------------------------------- */
-.vprice-wrap {
-    display: inline-flex;
+/* ---- On sale ----
+   The same card, marked. The price that was sits directly under the price that
+   is, in the rating's cell, so the template keeps its two rows either way and a
+   sale card is exactly as tall as a plain one. See product-overrides.js, which
+   is what puts .is-sale on the card and builds the price block. */
+.product-card.is-sale .product-price { height: auto; display: block; }
+.product-card.is-sale .vprice-wrap {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    line-height: 1.15;
+    align-items: flex-end;
 }
-/* The old price, with the diagonal red rule through it. */
-.vprice-was {
-    position: relative;
-    color: #9a9a9a;
-    font-size: 0.72em;
-    white-space: nowrap;
+/* The new price on top, the old one beneath it. */
+.product-card.is-sale .vprice-sale {
+    order: 1;
+    height: var(--row-1);
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #c0392b;             /* the figure being charged, in the sale's red */
 }
-.vprice-was::after {
+.product-card.is-sale .vprice-was {
+    order: 2;
+    height: var(--row-2);
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.4px;
+    opacity: 0.55;
+    /* The strike is the red — a line drawn through the old figure. */
+    text-decoration: line-through;
+    text-decoration-color: #c0392b;
+    text-decoration-thickness: 1.5px;
+}
+/* The old price takes the rating's line, so the rating steps aside. */
+.product-card.is-sale .product-rating { display: none; }
+/* The price block then spans both rows of its column. */
+.product-card.is-sale .product-price { grid-area: 1 / 2 / 3 / 3; }
+
+/* How much came off. It is emitted inside the price block (product-overrides.js
+   builds one string for card and product page alike), so it is positioned
+   against the foot rather than the card: it sits just above the copy, on the
+   left. To put it in the card's own top corner it would have to be emitted
+   outside .product-info, in every renderer. */
+.vprice-off {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 0;
+    z-index: 3;
+    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: #8f2230;
+}
+
+/* The frame: a red hairline that breathes. Drawn on a pseudo-element over the
+   card, so it never moves the layout by a pixel. */
+.product-card.is-sale::before {
     content: '';
     position: absolute;
-    left: -2px;
-    right: -2px;
-    top: 50%;
-    height: 1.5px;
-    background: #c0392b;
-    transform: rotate(-12deg);
-    transform-origin: center;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    border: 1px solid #c0392b;
+    border-radius: inherit;
+    animation: vcardBlink 2s ease-in-out infinite;
 }
-.vprice-sale { color: #c0392b; }
+@keyframes vcardBlink {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+}
+/* A frame that never stops is a lot to sit next to. */
+@media (prefers-reduced-motion: reduce) {
+    .product-card.is-sale::before { animation: none; }
+}
 
-/* A piece discounted in the last week carries a thin green frame wherever
-   its card appears. The sale price stays after the week is out; only the
-   frame lapses. */
-.is-sale-new,
-.product-card.is-sale-new,
-.acard.is-sale-new,
-.achs-card.is-sale-new {
-    border: 1px solid #2e7d4f;
-    border-radius: 4px;
+/* ---- Narrow screens ----
+   The template holds; only the type shrinks with the card. */
+@media (max-width: 600px) {
+    .product-card { --row-1: 18px; --row-2: 15px; --foot-h: 42px; }
+    .product-seller { font-size: 13px; }
+    .product-price  { font-size: 14px; }
+    .product-name   { font-size: 11px; }
 }
