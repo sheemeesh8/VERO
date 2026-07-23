@@ -637,7 +637,9 @@
                 </div>
                 <button class="hdr-funnel" id="veroFunnel" onclick="veroToggleFilters(event)" aria-label="Filters" title="Filters">
                     <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                        <path d="M4 3 L20 3 L12 12 Z"></path>
+                        <line x1="12" y1="12" x2="12" y2="19.5"></line>
+                        <path d="M7 21 L12 19.5 L17 21 Z"></path>
                     </svg>
                 </button>
             </div>
