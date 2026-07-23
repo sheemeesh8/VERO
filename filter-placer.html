@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO — Filter Placer</title>
+
+    <!--
+        A placement bench for the feed's filter column.
+
+        The stage below mirrors the real .feed-lead row: the first promoted slider
+        on the left, and the actual filter column on its right. Grab the panel by
+        its handle and drag it anywhere; the sliders set its width, the gap between
+        its fields, and where it sits in the height. The readout shows the exact
+        numbers, and "העתק CSS" copies a rule you paste into index.html.
+
+        Nothing here touches the live site — it only measures a placement for you.
+    -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f6f5f3;
+            color: #111;
+            font-family: 'Playfair Display', Georgia, serif;
+            min-height: 100vh;
+        }
+
+        /* ---- Head ---- */
+        .cs-head {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            padding: 16px 26px;
+            background: #fff;
+            border-bottom: 1px solid #e6e4de;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        .cs-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 22px; font-weight: 700;
+            letter-spacing: -0.01em; text-transform: uppercase;
+        }
+        .cs-title span { color: #b3b3b3; }
+        .cs-readout {
+            font-family: 'Oswald', sans-serif;
+            font-size: 12px; letter-spacing: 0.5px; color: #555;
+            background: #f1f1ef; border-radius: 8px; padding: 8px 14px;
+            direction: ltr;
+        }
+        .cs-readout b { color: #111; }
+        .cs-tools { margin-inline-start: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+        .cs-btn {
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
+            padding: 9px 14px; border: 1px solid #d8d5cc; border-radius: 6px;
+            background: #fff; color: #111; cursor: pointer;
+        }
+        .cs-btn:hover { background: #f0efeb; }
+        .cs-btn.dark { background: #22372B; border-color: #22372B; color: #fff; }
+        .cs-btn.dark:hover { background: #2E4A3A; }
+
+        /* ---- Controls strip ---- */
+        .cs-controls {
+            display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+            padding: 10px 26px; background: #fff; border-bottom: 1px solid #e6e4de;
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: #666;
+        }
+        .cs-controls label { display: flex; align-items: center; gap: 8px; }
+        .cs-controls select { font: inherit; border: 1px solid #d8d5cc; border-radius: 6px; padding: 6px 8px; background: #fff; }
+        .cs-hint { color: #9a9a9a; text-transform: none; letter-spacing: 0.3px; }
+
+        /* ================= The stage — a mirror of .feed-lead ================= */
+        .stage {
+            padding: 40px 26px 80px;
+            background:
+                linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px) 0 0 / 24px 24px,
+                linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px) 0 0 / 24px 24px,
+                #f6f5f3;
+            overflow-x: auto;
+        }
+
+        .feed-lead {
+            direction: ltr;
+            display: flex;
+            align-items: stretch;
+            gap: 48px;
+            max-width: 1500px;
+            margin: 0 auto;
+            min-height: 560px;
+        }
+        .feed-lead-slider {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 44px;
+            align-items: center;
+            padding: 12px 40px;
+        }
+        /* A stand-in for the promo slide: the copy block and the image panel, just
+           enough to judge the filter column against. */
+        .ph-copy { display: flex; flex-direction: column; gap: 18px; }
+        .ph-line { background: #e7e5e0; border-radius: 4px; height: 22px; }
+        .ph-line.lg { height: 56px; width: 80%; }
+        .ph-line.sm { height: 14px; width: 60%; }
+        .ph-bar { height: 62px; border-radius: 16px; background: #edecea; margin-top: 10px; }
+        .ph-image {
+            aspect-ratio: 4 / 5; background: #f2f0ec; border-radius: 4px;
+            display: grid; place-items: center; font-size: 150px; color: rgba(0,0,0,0.10);
+        }
+
+        /* ---- The filter column being placed ---- */
+        .feed-filters {
+            direction: ltr;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;   /* set live by the align control */
+            align-items: stretch;
+            gap: 18px;                 /* set live by the gap slider */
+            flex: 0 0 240px;           /* set live by the width slider */
+            width: 240px;
+            padding: 0 0 0 44px;
+            border-left: 1px solid #ececec;
+            position: relative;        /* transform offset rides on top of the flex spot */
+            background: rgba(255,255,255,0.35);
+        }
+        /* The drag handle — the only grab point, so the selects stay usable. */
+        .ff-handle {
+            position: absolute;
+            top: -14px; left: 44px; right: 0;
+            height: 26px;
+            display: flex; align-items: center; gap: 8px;
+            padding: 0 10px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+            color: #fff; background: #22372B; border-radius: 6px;
+            cursor: grab; user-select: none;
+        }
+        .ff-handle:active { cursor: grabbing; }
+        .ff-handle::before { content: '✥'; font-size: 13px; }
+
+        .ff-field { display: flex; flex-direction: column; gap: 12px; }
+        .ff-label { font-family:'Oswald',sans-serif; font-size: 13px; letter-spacing: 1.8px; text-transform: uppercase; color: #8a8a8a; font-weight: 600; }
+        .ff-select {
+            appearance: none; -webkit-appearance: none;
+            border: none; border-bottom: 1px solid #ddd; background: none;
+            padding: 8px 26px 12px 0; width: 100%;
+            font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; color: #111; cursor: pointer;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat; background-position: right center; background-size: 17px;
+        }
+        .ff-clear {
+            border: none; background: none; cursor: pointer; padding: 10px 0;
+            align-self: start;
+            font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1.4px;
+            text-transform: uppercase; color: #9a9a9a;
+        }
+
+        /* A faint outline of where the panel naturally sits, so the drag offset is
+           readable at a glance. */
+        .ff-ghost {
+            position: absolute; inset: 0;
+            border: 1px dashed #c9c6bd; border-radius: 4px;
+            pointer-events: none; opacity: 0; transition: opacity 0.15s;
+        }
+        .feed-lead.dragging .ff-ghost { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div class="cs-head">
+    <h1 class="cs-title"><span>/</span> Filter Placer</h1>
+    <div class="cs-readout" id="readout">translate(0px, 0px) · width 240 · gap 18</div>
+    <div class="cs-tools">
+        <button class="cs-btn" id="btnReset">אפס</button>
+        <button class="cs-btn dark" id="btnCopy">העתק CSS</button>
+    </div>
+</div>
+
+<div class="cs-controls">
+    <label>רוחב <input id="widthIn" type="range" min="180" max="340" value="240"><span id="widthOut">240px</span></label>
+    <label>מרווח בין שדות <input id="gapIn" type="range" min="8" max="34" value="18"><span id="gapOut">18px</span></label>
+    <label>יישור אנכי
+        <select id="alignSel">
+            <option value="center">מרכז</option>
+            <option value="flex-start">למעלה</option>
+            <option value="flex-end">למטה</option>
+        </select>
+    </label>
+    <span class="cs-hint">גרור את הפאנל מהידית הירוקה למעלה שלו · החיצים במקלדת מזיזים ב־1px</span>
+</div>
+
+<div class="stage">
+    <div class="feed-lead" id="lead">
+        <!-- LEFT: a stand-in for the first promoted slider -->
+        <div class="feed-lead-slider">
+            <div class="ph-copy">
+                <div class="ph-line sm"></div>
+                <div class="ph-line lg"></div>
+                <div class="ph-line" style="width:70%"></div>
+                <div class="ph-line" style="width:90%"></div>
+                <div class="ph-bar"></div>
+            </div>
+            <div class="ph-image">🧥</div>
+        </div>
+
+        <!-- RIGHT: the filter column you are placing -->
+        <div class="feed-filters" id="filters">
+            <div class="ff-ghost"></div>
+            <div class="ff-handle" id="handle">גרור למיקום</div>
+            <div class="ff-field"><span class="ff-label">Seller</span><select class="ff-select"><option>All</option></select></div>
+            <div class="ff-field"><span class="ff-label">Type</span><select class="ff-select"><option>All</option></select></div>
+            <div class="ff-field"><span class="ff-label">Fabric</span><select class="ff-select"><option>All</option></select></div>
+            <div class="ff-field"><span class="ff-label">Colour</span><select class="ff-select"><option>All</option></select></div>
+            <div class="ff-field"><span class="ff-label">Price</span><select class="ff-select"><option>Default</option></select></div>
+            <button class="ff-clear">Clear</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const state = { dx: 0, dy: 0, width: 240, gap: 18, align: 'center' };
+    const filters = document.getElementById('filters');
+    const lead    = document.getElementById('lead');
+    const handle  = document.getElementById('handle');
+    const readout = document.getElementById('readout');
+
+    const KEY = 'veroFilterPlacer';
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) Object.assign(state, saved);
+
+    function apply() {
+        filters.style.transform = `translate(${state.dx}px, ${state.dy}px)`;
+        filters.style.width = state.width + 'px';
+        filters.style.flex = `0 0 ${state.width}px`;
+        filters.style.gap = state.gap + 'px';
+        filters.style.justifyContent = state.align;
+        readout.innerHTML = `translate(<b>${state.dx}px</b>, <b>${state.dy}px</b>) · width <b>${state.width}</b> · gap <b>${state.gap}</b> · ${state.align}`;
+        // Mirror to the controls
+        widthIn.value = state.width; widthOut.textContent = state.width + 'px';
+        gapIn.value = state.gap; gapOut.textContent = state.gap + 'px';
+        alignSel.value = state.align;
+        localStorage.setItem(KEY, JSON.stringify(state));
+    }
+
+    /* ---- Drag from the handle ---- */
+    let drag = null;
+    handle.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        drag = { x: e.clientX, y: e.clientY, dx: state.dx, dy: state.dy };
+        lead.classList.add('dragging');
+        handle.setPointerCapture(e.pointerId);
+    });
+    handle.addEventListener('pointermove', e => {
+        if (!drag) return;
+        state.dx = Math.round(drag.dx + (e.clientX - drag.x));
+        state.dy = Math.round(drag.dy + (e.clientY - drag.y));
+        apply();
+    });
+    const endDrag = () => { drag = null; lead.classList.remove('dragging'); };
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+
+    /* ---- Nudge with the arrow keys ---- */
+    window.addEventListener('keydown', e => {
+        const step = e.shiftKey ? 10 : 1;
+        if (e.key === 'ArrowLeft')  { state.dx -= step; apply(); e.preventDefault(); }
+        if (e.key === 'ArrowRight') { state.dx += step; apply(); e.preventDefault(); }
+        if (e.key === 'ArrowUp')    { state.dy -= step; apply(); e.preventDefault(); }
+        if (e.key === 'ArrowDown')  { state.dy += step; apply(); e.preventDefault(); }
+    });
+
+    /* ---- Controls ---- */
+    const widthIn = document.getElementById('widthIn');
+    const widthOut = document.getElementById('widthOut');
+    const gapIn = document.getElementById('gapIn');
+    const gapOut = document.getElementById('gapOut');
+    const alignSel = document.getElementById('alignSel');
+    widthIn.oninput = e => { state.width = +e.target.value; apply(); };
+    gapIn.oninput = e => { state.gap = +e.target.value; apply(); };
+    alignSel.onchange = e => { state.align = e.target.value; apply(); };
+
+    document.getElementById('btnReset').onclick = () => {
+        Object.assign(state, { dx: 0, dy: 0, width: 240, gap: 18, align: 'center' });
+        apply();
+    };
+
+    /* ---- The CSS you paste into index.html ---- */
+    function cssOut() {
+        const lines = [
+            `    width: ${state.width}px;`,
+            `    flex: 0 0 ${state.width}px;`,
+            `    gap: ${state.gap}px;`,
+            `    justify-content: ${state.align};`,
+        ];
+        if (state.dx || state.dy) lines.push(`    transform: translate(${state.dx}px, ${state.dy}px);`);
+        return `/* Manual placement of the feed filter column — from Filter Placer */\n` +
+               `.feed-lead .feed-filters {\n${lines.join('\n')}\n}`;
+    }
+    document.getElementById('btnCopy').onclick = async () => {
+        await navigator.clipboard.writeText(cssOut());
+        const b = document.getElementById('btnCopy');
+        const t = b.textContent; b.textContent = 'הועתק ✓';
+        setTimeout(() => b.textContent = t, 1200);
+    };
+
+    apply();
+</script>
+</body>
+</html>
