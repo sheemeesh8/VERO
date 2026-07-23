@@ -8443,29 +8443,30 @@
                 || document.querySelector('.hero-slider, .hero-promos, .feed-section');
         }
 
-        // A crisp, self-driven scroll with an easeInOutCubic curve — sharper and
-        // more consistent than the browser's native "smooth" behaviour.
+        // A crisp, self-driven scroll with an easeOutCubic curve — it starts fast
+        // and settles softly, so it never feels like it's stalling at the start.
         let animating = false;
+        let lockUntil = 0;   // brief cooldown so scroll momentum can't re-trigger it
         function glideTo(endY, dur) {
             const startY = window.scrollY || window.pageYOffset;
             const dist = endY - startY;
             if (Math.abs(dist) < 2) return;
             const t0 = performance.now();
             animating = true;
-            function ease(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2; }
+            function ease(t) { return 1 - Math.pow(1 - t, 3); }   // easeOutCubic
             function step(now) {
                 const t = Math.min(1, (now - t0) / dur);
                 window.scrollTo(0, startY + dist * ease(t));
                 if (t < 1) { requestAnimationFrame(step); }
-                else { animating = false; }
+                else { animating = false; lastY = window.scrollY || 0; lockUntil = performance.now() + 260; }
             }
             requestAnimationFrame(step);
         }
         function glideDown() {
             const t = belowHero();
-            if (t) glideTo(t.getBoundingClientRect().top + (window.scrollY || 0), 620);
+            if (t) glideTo(t.getBoundingClientRect().top + (window.scrollY || 0), 380);
         }
-        function glideUp() { glideTo(0, 620); }
+        function glideUp() { glideTo(0, 380); }
 
         btn.addEventListener('click', glideDown);
 
@@ -8479,9 +8480,9 @@
             // Fade the cue out as soon as we leave the top.
             btn.classList.toggle('is-hidden', y > 40);
 
-            if (!animating) {
+            if (!animating && performance.now() > lockUntil) {
                 const goingDown = y > lastY;
-                if (goingDown && y > 60 && y < H() * 0.5) {
+                if (goingDown && y > 40 && y < H() * 0.5) {
                     glideDown();               // nudge down near the top → snap past hero
                 } else if (!goingDown && y > H() * 0.5 && y < H() * 1.15) {
                     glideUp();                 // nudge up just below hero → snap back up
