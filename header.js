@@ -400,8 +400,11 @@
         }
         /* .sticky-look = the sticky header's appearance without the scroll trigger,
            so a page (e.g. the home view) can wear it from the very top. */
-        #siteHeader.scrolled,
-        #siteHeader.sticky-look { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); }
+        #siteHeader.scrolled { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); }
+        /* Home (sticky-look) header floats transparent over the full-bleed hero image
+           until you scroll past it — only the white content shows, no white bar. */
+        #siteHeader.sticky-look:not(.scrolled) { background: transparent; border-bottom: none; box-shadow: none; }
+        #siteHeader.sticky-look.scrolled { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); }
         /* The header sits 18px down from the top edge; this fills that strip with
            whatever the header is wearing, so the page never shows through above it. */
         #siteHeader::before {

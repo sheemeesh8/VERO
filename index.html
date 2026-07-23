@@ -407,9 +407,8 @@
         /* ==================== HERO ==================== */
         .hero {
             width: 100vw;
-            /* Full-bleed hero: the image fills almost the whole screen, leaving just
-               a sliver of the white section below peeking out. */
-            height: 92vh;
+            /* Full-bleed hero: the image fills the entire screen. */
+            height: 100vh;
             background-size: cover;
             background-position: center 10%;
             display: flex;
@@ -426,6 +425,49 @@
             margin-right: -50vw;
             margin-top: -24px;
         }
+
+        /* ---- Slide-down button, centered at the bottom of the full-screen hero ---- */
+        .hero-scrolldown {
+            position: absolute;
+            left: 50%;
+            bottom: 38px;
+            transform: translateX(-50%);
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            padding: 8px 12px;
+            font-family: var(--font-sans);
+            letter-spacing: 3px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease;
+        }
+        .hero-scrolldown:hover { opacity: 0.7; }
+        .hero-scrolldown .hsd-arrow {
+            display: flex;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            border: 1.5px solid rgba(255, 255, 255, 0.75);
+            border-radius: 50%;
+            animation: hsdBounce 1.8s ease-in-out infinite;
+        }
+        .hero-scrolldown .hsd-arrow svg { width: 20px; height: 20px; }
+        @keyframes hsdBounce {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(7px); }
+        }
+        /* Fades the whole cue out once the user has scrolled past the hero. */
+        .hero-scrolldown.is-hidden { opacity: 0; pointer-events: none; }
 
         /* White band removed — the hero image now runs full-screen. */
         .hero-topband {
@@ -686,18 +728,19 @@
             }
         }
 
-        /* The icon group used to go white before the header went sticky, because it
-           sat over the hero's black square. That square is gone, so every icon in
-           the header is black in every state — nothing to invert against. */
-        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .icon-btn { color: #111; }
-        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .icon-btn svg { stroke: #111 !important; }
-        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
+        /* The header now floats transparent over the full-bleed hero image, so its
+           content stays white until you scroll past the hero (header.scrolled → dark). */
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-left > a,
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .logo { color: #fff; }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .icon-btn { color: #fff; }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .icon-btn svg { stroke: #fff !important; }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
         #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .upload-plus {
-            color: #111 !important;
-            border-color: #111 !important;
+            color: #fff !important;
+            border-color: #fff !important;
         }
-        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .toggle-category { border-color: #111; }
-        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .toggle-category::before { background: #111; }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .toggle-category { border-color: #fff; }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .toggle-category::before { background: #fff; }
 
         @media (max-width: 900px) {
             .htb-inner { padding: 0 28px 28px; gap: 24px; }
@@ -4377,7 +4420,7 @@
     <!-- ==================== HEADER ==================== -->
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
-    <script src="header.js"></script>
+    <script src="header.js?v=2"></script>
 
 <!-- ==================== UPLOAD PRODUCT VIEW ==================== -->
     <div id="uploadProductView">
@@ -4632,6 +4675,16 @@
                 </div>
             </div>
         </div>
+        <!-- Scroll-down cue: click (or a small scroll) glides to the content below. -->
+        <button class="hero-scrolldown" id="heroScrollDown" type="button" aria-label="Slide down">
+            <span class="hsd-label">SLIDE DOWN</span>
+            <span class="hsd-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </span>
+        </button>
     </div>
 
     <!-- ==================== HERO SEGMENT SLIDER ==================== -->
@@ -8371,5 +8424,45 @@
     <script src="vero-animations.js"></script>
     <!-- Live manual editor (✎ button, bottom-left) — move & resize any piece. -->
     <script src="vero-editor.js"></script>
+
+    <!-- Hero "SLIDE DOWN" cue + auto-glide: a small scroll off the top snaps the
+         page down past the full-screen hero, like a one-step slider. -->
+    <script>
+    (function () {
+        const btn  = document.getElementById('heroScrollDown');
+        const hero = document.getElementById('heroImage');
+        if (!btn || !hero) return;
+
+        // The first thing under the hero we should land on.
+        function target() {
+            return document.getElementById('filterGrid')
+                || document.querySelector('.hero-slider, .hero-promos, .feed-section');
+        }
+        function glideDown() {
+            const t = target();
+            if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        btn.addEventListener('click', glideDown);
+
+        // Auto-snap: once the user nudges a little way down from the very top
+        // (but is still on the hero), glide the rest of the way automatically.
+        let snapping = false;
+        window.addEventListener('scroll', function () {
+            const y = window.scrollY || window.pageYOffset;
+
+            // Fade the cue out as soon as we leave the top.
+            btn.classList.toggle('is-hidden', y > 40);
+
+            if (snapping) return;
+            if (y > 60 && y < hero.offsetHeight * 0.6) {
+                snapping = true;
+                glideDown();
+                // Release the lock once the smooth scroll has settled.
+                setTimeout(() => { snapping = false; }, 900);
+            }
+        }, { passive: true });
+    })();
+    </script>
 </body>
 </html>
