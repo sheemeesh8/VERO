@@ -55,22 +55,26 @@
     // A product with its seller's edits folded in. Returns a copy — callers
     // render from it without mutating the catalogue behind them.
     function apply(p) {
-        const o = readAll()[keyOf(p)];
-        if (!o) return { ...p, onSale: false };
+        const o = readAll()[keyOf(p)] || {};
         const merged = { ...p };
         ['name', 'category', 'desc', 'seller'].forEach(f => {
             if (o[f] != null && o[f] !== '') merged[f] = o[f];
         });
         if (o.price != null) merged.price = money(toNum(o.price));
 
-        const sale = o.salePrice != null && toNum(o.salePrice) > 0;
+        // A seller's own discount (the override) wins; otherwise a sale seeded on
+        // the product itself in the base catalogue is honoured too. Either way the
+        // rest of the site draws the sale identically.
+        const salePrice = o.salePrice != null ? o.salePrice : p.salePrice;
+        const saleAt    = o.salePrice != null ? o.saleAt    : p.saleAt;
+        const sale = salePrice != null && toNum(salePrice) > 0;
         if (sale) {
             merged.originalPrice = merged.price;       // what it was before the cut
-            merged.price = money(toNum(o.salePrice));
+            merged.price = money(toNum(salePrice));
             merged.onSale = true;
             // The green frame is a "new sale" marker, not the sale itself: it
             // lapses after a week even though the price stays cut.
-            merged.saleFresh = Date.now() - (o.saleAt || 0) < SALE_WINDOW_MS;
+            merged.saleFresh = Date.now() - (saleAt || 0) < SALE_WINDOW_MS;
         } else {
             merged.onSale = false;
             merged.saleFresh = false;

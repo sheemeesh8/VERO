@@ -7084,6 +7084,23 @@
         clothingProducts = fillCatalogue(clothingProducts, 79, 15);
         artProducts = fillCatalogue(artProducts, 190, 40);
 
+        // One on-sale piece per category, so every category shows a sale card.
+        // The discount is seeded on the product itself, not written to the
+        // seller overrides — see product-overrides.js apply(): it reads through
+        // the same pipeline (struck-through price, red frame), it does not touch
+        // the user's saved edits, and a seller's own discount still wins over it.
+        function seedCategorySales(list) {
+            const seen = new Set();
+            list.forEach(p => {
+                if (seen.has(p.category)) return;
+                seen.add(p.category);
+                const base = veroOverrides.toNum(p.price);
+                if (base > 0) p.salePrice = +(base * 0.8).toFixed(2);   // ~20% off
+            });
+        }
+        seedCategorySales(clothingProducts);
+        seedCategorySales(artProducts);
+
         // ---- The status row under the home title ----
         // Items is a real count of the catalogue, so publishing a listing moves it.
         // Members has no source yet — there is no account backend — so it is one
