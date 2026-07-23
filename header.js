@@ -463,7 +463,7 @@
                 position: absolute; top: 50%; transform: translateY(-50%);
                 right: 40px; left: auto;
                 width: auto;
-                justify-content: flex-end; gap: 6px;
+                justify-content: flex-end; gap: 16px;
             }
             body:not([data-sticky="plain"]) #siteHeader .upload-plus {
                 animation: none !important; box-shadow: none !important;
@@ -506,10 +506,12 @@
         /* Badge on cart & wishlist */
         #siteHeader .icon-wrap { position: relative; display: inline-flex; }
         #siteHeader .badge {
-            position: absolute; top: 50%; left: -13px; transform: translateY(-50%);
-            background: #c0392b; color: white; font-size: 10px; font-weight: 700;
-            width: 15px; height: 28px; padding: 0; border-radius: 8px; display: none;
-            align-items: center; justify-content: center; font-family: 'Inter', 'Segoe UI', sans-serif;
+            position: absolute; top: 4px; right: 8px;
+            background: #ff3b30; color: #fff; font-size: 11px; font-weight: 700;
+            min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; display: none;
+            align-items: center; justify-content: center; line-height: 1;
+            border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.22);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         #siteHeader .badge.show { display: flex; }
         /* Hamburger (replaces the old Social link) */
