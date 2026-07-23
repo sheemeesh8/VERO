@@ -2009,8 +2009,9 @@
             margin: 0;
             border: none;
             border-left: 1px solid #ececec;
-            /* Manual placement from the Filter Placer bench. */
-            transform: translate(-82px, 14px);
+            /* Manual placement from the Filter Placer bench. Pulled well left so the
+               column sits very close to the image — a small breathing gap, not flush. */
+            transform: translate(-170px, 14px);
         }
         .feed-lead .ff-clear { justify-self: start; align-self: start; }
 
@@ -3769,12 +3770,16 @@
         .photo-side {
             position: absolute;
             left: 28px;
-            right: 28px;
+            right: auto;
             bottom: 28px;
             z-index: 2;
             display: grid;
+            /* Tiles shrunk ~1.5x: the set no longer spans the frame, it sits as a
+               small trio in the corner. */
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+            width: 66%;
+            max-width: 340px;
+            gap: 12px;
         }
         /* Squares, not rectangles: the three slots read as one set of tiles. */
         .photo-side .photo-slot {
@@ -3983,34 +3988,34 @@
         }
 
         .upload-form-group label {
-            font-weight: 800;
-            font-size: 21px;
-            color: #4a4a4a;
+            font-weight: 600;
+            font-size: 12px;
+            color: #999;
             text-transform: uppercase;
-            letter-spacing: 1.4px;
+            letter-spacing: 1.6px;
         }
 
         .upload-form-group input,
         .upload-form-group textarea,
         .upload-form-group select {
-            padding: 18px 20px;
-            border: 1.5px solid #ddd9d2;
-            border-radius: 12px;
+            padding: 12px 2px;
+            border: none;
+            border-bottom: 1px solid #e2ded7;
+            border-radius: 0;
             font-family: inherit;
-            font-size: 28px;
-            font-weight: 700;
+            font-size: 18px;
+            font-weight: 400;
             color: #111;
-            background: #fafafa;
-            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            background: transparent;
+            transition: border-color 0.2s;
         }
 
         .upload-form-group input:focus,
         .upload-form-group textarea:focus,
         .upload-form-group select:focus {
             outline: none;
-            border-color: #004225;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(0, 66, 37, 0.10);
+            border-bottom-color: #004225;
+            background: transparent;
         }
 
         .upload-form-group textarea {
@@ -4025,19 +4030,19 @@
 
         .upload-header h1 {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 52px;
-            font-weight: 800;
+            font-size: 40px;
+            font-weight: 600;
             color: #111;
-            letter-spacing: -0.5px;
-            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+            margin-bottom: 8px;
         }
 
         .upload-header p {
-            font-size: 22px;
-            color: #6b6b6b;
-            font-weight: 800;
+            font-size: 12px;
+            color: #999;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.6px;
         }
 
         /* ---- Colour palette + condition chips (step 2) ---- */
@@ -6002,6 +6007,45 @@
             setTimeout(() => card.remove(), 300);
         }
 
+        // A quick checkmark that blooms at a point, then fades — the confirmation
+        // gesture when a card's cart/wishlist icon is pressed.
+        function veroCheckBurst(x, y) {
+            if (!document.getElementById('veroCheckBurstCSS')) {
+                const st = document.createElement('style');
+                st.id = 'veroCheckBurstCSS';
+                st.textContent = `
+                    .vero-check-burst {
+                        position: fixed; z-index: 500; width: 56px; height: 56px;
+                        margin: -28px 0 0 -28px; border-radius: 50%;
+                        background: #004225; display: flex; align-items: center; justify-content: center;
+                        box-shadow: 0 10px 30px rgba(0,66,37,0.35);
+                        pointer-events: none; transform: scale(0);
+                        animation: veroCheckPop 0.9s cubic-bezier(0.22,1,0.36,1) forwards;
+                    }
+                    .vero-check-burst svg { width: 30px; height: 30px;
+                        stroke-dasharray: 30; stroke-dashoffset: 30;
+                        animation: veroCheckDraw 0.4s ease 0.12s forwards; }
+                    @keyframes veroCheckPop {
+                        0% { transform: scale(0); opacity: 0; }
+                        30% { transform: scale(1.1); opacity: 1; }
+                        45% { transform: scale(1); }
+                        75% { transform: scale(1); opacity: 1; }
+                        100% { transform: scale(0.85) translateY(-14px); opacity: 0; }
+                    }
+                    @keyframes veroCheckDraw { to { stroke-dashoffset: 0; } }
+                `;
+                document.head.appendChild(st);
+            }
+            const el = document.createElement('div');
+            el.className = 'vero-check-burst';
+            el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            document.body.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+        }
+
         // ==================== EVENT DELEGATION (product cards & buttons) ====================
         document.addEventListener('click', (e) => {
             // Check if click is on an action button (cart or wishlist)
@@ -6020,6 +6064,8 @@
                     rating: parseFloat(card.dataset.rating)
                 };
                 const action = btn.dataset.action;
+                // A checkmark pops where the icon was pressed, confirming the add.
+                veroCheckBurst(e.clientX, e.clientY);
                 if (action === 'cart') {
                     addToCart(item);
                     removeCardFromFeed(card);
@@ -7306,7 +7352,7 @@
             // Grid — five across, the regular category structure, NO promo sliders.
             const content = document.getElementById('resultsContent');
             content.innerHTML = list.length
-                ? `<div class="acat-grid">${list.map(acardHTML).join('')}</div>`
+                ? `<div class="acat-grid">${list.map(productCardHTML).join('')}</div>`
                 : '<div class="feed-empty">No pieces match these filters.</div>';
 
             window.scrollTo(0, 0);
@@ -7705,7 +7751,7 @@
                 const items = buildCategoryItems(catName, type, 10, b * 10);
                 const grid = document.createElement('div');
                 grid.className = 'acat-grid';
-                grid.innerHTML = items.map(acardHTML).join('');
+                grid.innerHTML = items.map(productCardHTML).join('');
                 content.appendChild(grid);
 
                 const slider = createPromoSlider(buildCategoryFeatured(catName, type, b * 5));
@@ -8323,5 +8369,7 @@
     </script>
     <!-- Shared site footer (single source: footer.js) — shown on cart & wishlist views -->
     <script src="footer.js"></script>
+    <!-- Live manual editor (✎ button, bottom-left) — move & resize any piece. -->
+    <script src="vero-editor.js"></script>
 </body>
 </html>

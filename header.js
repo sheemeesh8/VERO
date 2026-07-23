@@ -384,6 +384,9 @@
             display: flex; align-items: center; justify-content: center; padding: 0;
         }
         #siteHeader .icon-btn svg { width: 30px; height: 30px; stroke: #111 !important; fill: none; }
+        /* Cart & wishlist read a touch larger than the rest of the icon row. */
+        #siteHeader [data-icon="cart"] .icon-btn svg,
+        #siteHeader [data-icon="wishlist"] .icon-btn svg { width: 38px; height: 38px; }
         #siteHeader .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader .icon-btn:hover { transform: scale(1.1); opacity: 0.65; }
         #siteHeader .upload-plus {
@@ -529,7 +532,7 @@
         .vero-drawer-overlay.open { opacity: 1; visibility: visible; }
         .vero-drawer {
             position: fixed; top: 0; left: 0; height: 100%; width: 440px; max-width: 90vw;
-            background: #fff; z-index: 201; transform: translateX(-100%);
+            background: #000000; z-index: 201; transform: translateX(-100%);
             transition: transform 0.38s cubic-bezier(0.65,0.05,0.1,1);
             box-shadow: 2px 0 30px rgba(0,0,0,0.12);
             display: flex; flex-direction: column; padding: 28px 32px;
@@ -543,26 +546,26 @@
         }
         .vero-drawer-head .vero-drawer-logo {
             font-family: 'Playfair Display', Georgia, serif; font-size: 26px;
-            font-weight: 700; letter-spacing: 5px; text-transform: uppercase; color: #111;
+            font-weight: 700; letter-spacing: 5px; text-transform: uppercase; color: #fff;
         }
         .vero-drawer-close {
             background: none; border: none; cursor: pointer; font-size: 28px;
-            line-height: 1; color: #111; padding: 0; width: 32px; height: 32px;
+            line-height: 1; color: #fff; padding: 0; width: 32px; height: 32px;
         }
         .vero-drawer-close:hover { opacity: 0.6; }
         .vero-drawer-nav { display: flex; flex-direction: column; gap: 4px; }
         .vero-drawer-nav a {
-            font-size: 19px; font-weight: 600; letter-spacing: 0.5px; color: #111;
-            text-decoration: none; padding: 13px 0; border-bottom: 1px solid rgba(0,0,0,0.07);
+            font-size: 19px; font-weight: 600; letter-spacing: 0.5px; color: #fff;
+            text-decoration: none; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.14);
             transition: color 0.2s ease, padding-left 0.2s ease;
         }
-        .vero-drawer-nav a:hover { color: #8a7d5a; padding-left: 6px; }
+        .vero-drawer-nav a:hover { color: rgba(255,255,255,0.6); padding-left: 6px; }
         .vero-drawer-social {
             margin-top: auto; padding-top: 28px;
             display: flex; align-items: center; gap: 20px;
         }
-        .vero-drawer-social a { color: #8a8a8a; display: inline-flex; transition: color 0.2s ease; }
-        .vero-drawer-social a:hover { color: #111; }
+        .vero-drawer-social a { color: rgba(255,255,255,0.6); display: inline-flex; transition: color 0.2s ease; }
+        .vero-drawer-social a:hover { color: #fff; }
         .vero-drawer-social svg { width: 21px; height: 21px; }
 
         @media (max-width: 768px) {

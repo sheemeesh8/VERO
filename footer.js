@@ -17,7 +17,7 @@
         #siteFooter {
             width: 100%;
             box-sizing: border-box;
-            background: #22372B;
+            background: #000000;
             border-top: 1px solid rgba(255,255,255,0.12);
             padding: 72px 0 40px;
             font-family: 'Inter', 'Segoe UI', sans-serif;
