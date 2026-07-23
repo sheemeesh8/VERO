@@ -459,12 +459,15 @@
             justify-content: center;
             border: 1.5px solid rgba(255, 255, 255, 0.75);
             border-radius: 50%;
-            animation: hsdBounce 1.8s ease-in-out infinite;
+            animation: hsdBounce 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
         }
         .hero-scrolldown .hsd-arrow svg { width: 20px; height: 20px; }
+        /* A crisper cue: a quick drop, a short hold, then a snap back up. */
         @keyframes hsdBounce {
-            0%, 100% { transform: translateY(0); }
-            50%      { transform: translateY(7px); }
+            0%   { transform: translateY(0);    opacity: 0.75; }
+            30%  { transform: translateY(9px);  opacity: 1; }
+            55%  { transform: translateY(9px);  opacity: 1; }
+            100% { transform: translateY(0);    opacity: 0.75; }
         }
         /* Fades the whole cue out once the user has scrolled past the hero. */
         .hero-scrolldown.is-hidden { opacity: 0; pointer-events: none; }
@@ -8426,7 +8429,8 @@
     <script src="vero-editor.js"></script>
 
     <!-- Hero "SLIDE DOWN" cue + auto-glide: a small scroll off the top snaps the
-         page down past the full-screen hero, like a one-step slider. -->
+         page down past the full-screen hero — and a small scroll up near the top
+         snaps back to it. A one-step slider in both directions. -->
     <script>
     (function () {
         const btn  = document.getElementById('heroScrollDown');
@@ -8434,33 +8438,56 @@
         if (!btn || !hero) return;
 
         // The first thing under the hero we should land on.
-        function target() {
+        function belowHero() {
             return document.getElementById('filterGrid')
                 || document.querySelector('.hero-slider, .hero-promos, .feed-section');
         }
-        function glideDown() {
-            const t = target();
-            if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // A crisp, self-driven scroll with an easeInOutCubic curve — sharper and
+        // more consistent than the browser's native "smooth" behaviour.
+        let animating = false;
+        function glideTo(endY, dur) {
+            const startY = window.scrollY || window.pageYOffset;
+            const dist = endY - startY;
+            if (Math.abs(dist) < 2) return;
+            const t0 = performance.now();
+            animating = true;
+            function ease(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2; }
+            function step(now) {
+                const t = Math.min(1, (now - t0) / dur);
+                window.scrollTo(0, startY + dist * ease(t));
+                if (t < 1) { requestAnimationFrame(step); }
+                else { animating = false; }
+            }
+            requestAnimationFrame(step);
         }
+        function glideDown() {
+            const t = belowHero();
+            if (t) glideTo(t.getBoundingClientRect().top + (window.scrollY || 0), 620);
+        }
+        function glideUp() { glideTo(0, 620); }
 
         btn.addEventListener('click', glideDown);
 
-        // Auto-snap: once the user nudges a little way down from the very top
-        // (but is still on the hero), glide the rest of the way automatically.
-        let snapping = false;
+        // Track direction so an upward nudge snaps back and a downward one snaps on.
+        let lastY = window.scrollY || 0;
+        const H = () => hero.offsetHeight;
+
         window.addEventListener('scroll', function () {
             const y = window.scrollY || window.pageYOffset;
 
             // Fade the cue out as soon as we leave the top.
             btn.classList.toggle('is-hidden', y > 40);
 
-            if (snapping) return;
-            if (y > 60 && y < hero.offsetHeight * 0.6) {
-                snapping = true;
-                glideDown();
-                // Release the lock once the smooth scroll has settled.
-                setTimeout(() => { snapping = false; }, 900);
+            if (!animating) {
+                const goingDown = y > lastY;
+                if (goingDown && y > 60 && y < H() * 0.5) {
+                    glideDown();               // nudge down near the top → snap past hero
+                } else if (!goingDown && y > H() * 0.5 && y < H() * 1.15) {
+                    glideUp();                 // nudge up just below hero → snap back up
+                }
             }
+            lastY = y;
         }, { passive: true });
     })();
     </script>
