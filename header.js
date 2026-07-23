@@ -139,20 +139,20 @@
         #siteHeader .hdr-search input::placeholder {
             color: #6e6e6e; font-weight: 500; letter-spacing: 0.3px;
         }
-        /* A black disc at the right cap with a white magnifier inside it. */
+        /* Just the magnifier glyph — no disc behind it. */
         #siteHeader .hdr-searchgo {
-            width: 38px; height: 38px; border-radius: 50%;
-            background: #111;
+            width: 34px; height: 34px; border-radius: 0;
+            background: none;
             border: none;
             cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center;
             transition: opacity 0.2s;
         }
-        #siteHeader .hdr-searchgo:hover { opacity: 0.85; filter: none; }
+        #siteHeader .hdr-searchgo:hover { opacity: 0.6; filter: none; }
         #siteHeader .hdr-searchgo svg {
-            width: 17px; height: 17px;
-            stroke: #fff !important; fill: none;
-            stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+            width: 18px; height: 18px;
+            stroke: #111; fill: none;
+            stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
         }
         /* This block used to invert the field over the hero's dark box. No dark box
            is left, so it keeps the same black treatment as everywhere else. */
