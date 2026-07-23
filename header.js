@@ -510,7 +510,7 @@
         #siteHeader .icon-wrap { position: relative; display: inline-flex; }
         #siteHeader .badge {
             position: absolute; top: 4px; right: 8px;
-            background: #ff3b30; color: #fff; font-size: 11px; font-weight: 700;
+            background: #EB2323; color: #fff; font-size: 11px; font-weight: 700;
             min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; display: none;
             align-items: center; justify-content: center; line-height: 1;
             border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.22);

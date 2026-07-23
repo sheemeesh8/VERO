@@ -30,6 +30,10 @@
             --success: #2d7a3e;
             --error: #d41a1a;
 
+            /* Ferrari-inspired signature red accent, used for interactive highlights. */
+            --ferrari-red: #EB2323;
+            --ferrari-red-dark: #c81717;
+
             /* Typography */
             --font-sans: 'Inter', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
             --font-mono: 'Courier New', monospace;
@@ -1462,7 +1466,8 @@
             /* Three per slide, not five: fewer, larger frames with room to breathe
                is the quiet-luxury read. */
             grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
+            /* Wider frames, separated by only a thin hairline of space. */
+            gap: 6px;
         }
 
         /* Flat rectangle, with the title set beneath it rather than burned into the
@@ -4445,20 +4450,45 @@
         }
     </style>
     <link rel="stylesheet" href="cards.css">
-    <!-- Site-wide type: everything uses the WELCOME TO VERO face. -->
+    <!-- Site-wide type: clean sans-serif everywhere (Ferrari-inspired). Inter stands
+         in for FerrariSans — one restrained neo-grotesque across the whole site,
+         headings included, instead of the old serif + condensed pairing. -->
     <style>
         *, *::before, *::after {
-            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif !important;
+            font-family: var(--font-sans) !important;
         }
-        /* Headings only: Oswald. Everything else keeps the Playfair face above. */
+        /* Headings share the same face, just heavier — Ferrari keeps one type voice. */
         h1, h2, h3, h4, h5, h6, .logo, .htb-square-title, .acat-title, .hero-title, .section-title,
         [class*="title"], .product-name, .promo-title, .hp-title, .dh-detail-title,
-        /* The status tiles are set in the WELCOME TO VERO face, like the title above
-           them; the slider's buttons match their own WOMEN / MEN / KIDS title. */
         .hstat-num, .hstat-cap, .hero-cta, .hero-cta-label, .hero-count, .hero-count-num,
         .promo-label, .promo-desc, .promo-price, .promo-readmore, .promo-buylabel, .promo-buyprice,
         .acat-count, .hp-count {
-            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
+            font-family: var(--font-sans) !important;
+            letter-spacing: -0.01em;
+        }
+
+        /* ===== Ferrari-inspired theme layer: red accent + sharp corners ===== */
+        /* Signature red on every small highlight. */
+        .badge { background: var(--ferrari-red) !important; }
+        /* Menu + link highlights go red. */
+        .hero-sidenav .hsn-list a:hover { color: var(--ferrari-red); }
+        .hero-sidenav .hsn-list a::after { background: var(--ferrari-red); }
+        /* The Art/Fashion toggle's active pill and any select highlight go red. */
+        .toggle-category::before { background: var(--ferrari-red) !important; }
+        select option:checked, select option:hover, select option:focus {
+            background: var(--ferrari-red) !important; color: #fff !important;
+        }
+        /* Sharp corners on rectangular controls (circular icon buttons untouched). */
+        .hero-cta, .promo-image, .hdr-search, .hdr-apply, .hdr-clear, .hdr-results,
+        .vbtn, .featured-image, .promo-buy, input[type="search"], input[type="text"],
+        .ff-select, .wh-cta {
+            border-radius: 0 !important;
+        }
+        /* Minimal, uppercase primary buttons with wide tracking. */
+        .hero-cta, .promo-buy, .hdr-apply, .vbtn.primary {
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            font-weight: 600;
         }
     </style>
     <!-- The green hero rectangle, shared by every page (single source: hero-box.css). -->
@@ -4478,7 +4508,7 @@
     <!-- ==================== HEADER ==================== -->
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
-    <script src="header.js?v=2"></script>
+    <script src="header.js?v=3"></script>
 
 <!-- ==================== UPLOAD PRODUCT VIEW ==================== -->
     <div id="uploadProductView">
@@ -8563,16 +8593,29 @@
             btn.classList.toggle('is-hidden', y > 40);
             syncHeader(y);
 
-            if (!animating && performance.now() > lockUntil) {
-                const goingDown = y > lastY;
-                if (goingDown && y > 40 && y < H() * 0.5) {
-                    glideDown();               // nudge down near the top → snap past hero
-                } else if (!goingDown && y > 40 && y < H() * 2.2) {
-                    glideUp();                 // one nudge up from the feed → glide to hero
-                }
-            }
             lastY = y;
         }, { passive: true });
+
+        // Mouse-wheel / trackpad: take over the gesture in the hero↔feed zone and run
+        // our own glide, blocking the native scroll so a hard flick can't fight the
+        // animation or overshoot. Outside the zone the wheel scrolls normally.
+        window.addEventListener('wheel', function (e) {
+            const y = window.scrollY || window.pageYOffset;
+            const h = H();
+
+            // While a glide is running, swallow the wheel so momentum can't stutter it.
+            if (animating || performance.now() < lockUntil) {
+                if (y < h * 2.2) e.preventDefault();
+                return;
+            }
+            if (e.deltaY > 0 && y < h * 0.5) {
+                e.preventDefault();
+                glideDown();               // flick down on the hero → glide into the feed
+            } else if (e.deltaY < 0 && y > 40 && y < h * 2.2) {
+                e.preventDefault();
+                glideUp();                 // flick up in the feed → glide back to the hero
+            }
+        }, { passive: false });
     })();
     </script>
 </body>
