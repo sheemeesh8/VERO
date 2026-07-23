@@ -116,19 +116,18 @@
            field, which darkens to the mode colour while it is being used. */
         #siteHeader .hdr-search {
             display: flex; align-items: center;
-            background: none;
-            border: none;
-            border-bottom: 1px solid rgba(0,0,0,0.22);
-            border-radius: 0;
-            height: 44px;
+            background: #fff;
+            border: 1.5px solid #111;
+            border-radius: 999px;
+            height: 46px;
             width: min(420px, 30vw);
-            padding: 0 2px 0 0;
+            padding: 0 4px 0 22px;   /* text breathes on the left; the button hugs the right cap */
             box-sizing: border-box;
             box-shadow: none;
             transition: border-color 0.2s;
         }
         #siteHeader .hdr-search:focus-within {
-            border-bottom-color: var(--hdr-mode-color, #22372B);
+            border-color: #111;
         }
         #siteHeader .hdr-search input {
             flex: 1; min-width: 0;
@@ -140,26 +139,26 @@
         #siteHeader .hdr-search input::placeholder {
             color: #6e6e6e; font-weight: 500; letter-spacing: 0.3px;
         }
-        /* The magnifier is just the glyph now — no disc behind it. */
+        /* A black disc at the right cap with a white magnifier inside it. */
         #siteHeader .hdr-searchgo {
-            width: 30px; height: 30px; border-radius: 0;
-            background: none;
+            width: 38px; height: 38px; border-radius: 50%;
+            background: #111;
             border: none;
             cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center;
             transition: opacity 0.2s;
         }
-        #siteHeader .hdr-searchgo:hover { opacity: 0.6; filter: none; }
+        #siteHeader .hdr-searchgo:hover { opacity: 0.85; filter: none; }
         #siteHeader .hdr-searchgo svg {
-            width: 18px; height: 18px;
-            stroke: var(--hdr-mode-color, #22372B); fill: none;
-            stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+            width: 17px; height: 17px;
+            stroke: #fff !important; fill: none;
+            stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
         }
         /* This block used to invert the field over the hero's dark box. No dark box
            is left, so it keeps the same black treatment as everywhere else. */
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search {
-            background: none;
-            border-bottom-color: rgba(0,0,0,0.22);
+            background: #fff;
+            border-color: #111;
             box-shadow: none;
         }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #111; }
