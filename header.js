@@ -516,14 +516,20 @@
         #siteHeader .badge.show { display: flex; }
         /* Hamburger (replaces the old Social link) */
         #siteHeader .vero-hamburger {
-            display: inline-flex; flex-direction: column; justify-content: center;
+            display: inline-flex; flex-direction: column; align-items: flex-end; justify-content: center;
             gap: 5px; width: 26px; height: 22px; cursor: pointer; padding: 0;
         }
+        /* Three thick rounded bars, right-aligned and stepping shorter — a sort /
+           align-end style menu glyph. */
         #siteHeader .vero-hamburger span {
-            display: block; width: 100%; height: 2px; border-radius: 2px;
-            background: currentColor; transition: transform 0.3s ease, opacity 0.2s ease;
+            display: block; height: 3.5px; border-radius: 999px;
+            background: currentColor; transition: width 0.25s ease, opacity 0.2s ease;
         }
-        #siteHeader .vero-hamburger:hover span { opacity: 0.7; }
+        #siteHeader .vero-hamburger span:nth-child(1) { width: 100%; }
+        #siteHeader .vero-hamburger span:nth-child(2) { width: 72%; }
+        #siteHeader .vero-hamburger span:nth-child(3) { width: 46%; }
+        #siteHeader .vero-hamburger:hover span:nth-child(2) { width: 100%; }
+        #siteHeader .vero-hamburger:hover span:nth-child(3) { width: 100%; }
 
         /* Slide-in side drawer */
         .vero-drawer-overlay {
