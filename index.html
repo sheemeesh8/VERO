@@ -407,8 +407,9 @@
         /* ==================== HERO ==================== */
         .hero {
             width: 100vw;
-            /* Full-bleed hero: the image fills the entire screen. */
-            height: 100vh;
+            /* Full-bleed hero: fills the entire screen. The +24px compensates for the
+               -24px margin-top below, so no white strip peeks under the water. */
+            height: calc(100vh + 24px);
             background-size: cover;
             background-position: center 10%;
             display: flex;
@@ -498,13 +499,18 @@
         .hero-sidenav .hsn-list a:hover { color: #fff; }
         .hero-sidenav .hsn-list a:hover::after { width: 100%; }
 
-        /* Over the hero (sticky-look, not yet scrolled) the top header is hidden —
-           the left menu stands in for it. It fades back in once you scroll past. */
-        #siteHeader.sticky-look:not(.scrolled) {
-            opacity: 0;
-            pointer-events: none;
+        /* The top header stays hidden (slid up out of view) while the hero fills the
+           screen; it slides in fast only once the feed fully takes over the viewport
+           (script toggles .wh-over-hero on scroll). */
+        #siteHeader.wh-over-hero {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateY(-100%);
         }
-        #siteHeader { transition: opacity 0.35s ease, background 0.35s ease, box-shadow 0.35s ease; }
+        #siteHeader {
+            transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                        background 0.35s ease, box-shadow 0.35s ease;
+        }
 
         @media (max-width: 768px) {
             .hero-sidenav { flex-wrap: wrap; gap: 14px 22px; padding: 18px 22px; }
@@ -536,23 +542,31 @@
             transition: opacity 0.3s ease;
         }
         .hero-scrolldown:hover { opacity: 0.7; }
+        /* Line-style cue: a thin vertical line with a brighter segment gliding down. */
         .hero-scrolldown .hsd-arrow {
-            display: flex;
-            width: 40px;
-            height: 40px;
-            align-items: center;
-            justify-content: center;
-            border: 1.5px solid rgba(255, 255, 255, 0.75);
-            border-radius: 50%;
-            animation: hsdBounce 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+            position: relative;
+            display: block;
+            width: 1.5px;
+            height: 52px;
+            border: none;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.30);
+            overflow: hidden;
         }
-        .hero-scrolldown .hsd-arrow svg { width: 20px; height: 20px; }
-        /* A crisper cue: a quick drop, a short hold, then a snap back up. */
-        @keyframes hsdBounce {
-            0%   { transform: translateY(0);    opacity: 0.75; }
-            30%  { transform: translateY(9px);  opacity: 1; }
-            55%  { transform: translateY(9px);  opacity: 1; }
-            100% { transform: translateY(0);    opacity: 0.75; }
+        .hero-scrolldown .hsd-arrow::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 55%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
+            animation: hsdLine 1.9s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+        }
+        .hero-scrolldown .hsd-arrow svg { display: none; }
+        @keyframes hsdLine {
+            0%   { transform: translateY(-100%); }
+            100% { transform: translateY(240%); }
         }
         /* Fades the whole cue out once the user has scrolled past the hero. */
         .hero-scrolldown.is-hidden { opacity: 0; pointer-events: none; }
@@ -2093,11 +2107,10 @@
         .feed-lead {
             direction: ltr;
             display: flex;
+            flex-direction: column;   /* filters on top, then the first slider */
             align-items: stretch;
-            gap: 48px;
-            padding: 20px 65px 0;
-            /* The offset parent for the lead slider's arrows (below), so the next
-               chevron can reach the row's right wall. */
+            gap: 8px;
+            padding: 20px 0 0;
             position: relative;
         }
         /* The slider now runs the FULL width of the row and passes under the filter
@@ -2117,96 +2130,55 @@
            filter rectangle. */
         .feed-lead-slider .promo-arrow.next { right: 8px; z-index: 7; }
 
-        /* Inside the lead row the filter bar becomes a vertical column stacked
-           down the right of the slider; the hairline moves to its inner edge. */
-        .feed-lead .feed-filters {
-            /* An opaque white rectangle pinned over the right of the row, on top of
-               the full-width slider — the slider slides along underneath it. */
-            position: absolute;
-            top: 50%;
-            right: 0;             /* extended all the way to the page edge */
-            transform: translateY(-50%);
-            z-index: 6;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: stretch;
-            gap: 22px;
-            /* The fields keep their old width (232); the extra 65px on the right is
-               blank white padding reaching the page edge — it carries the arrow, no
-               labels. */
-            width: 297px;
-            padding: 18px 65px 14px 24px;
-            margin: 0;
-            background: #fff;
-            /* No frame at all — no border line. A soft white fade on the left lets
-               the covered slider dissolve into the rectangle without any hard seam. */
-            border: none;
-            box-shadow: -34px 0 30px -20px rgba(255,255,255,1);
-        }
-        .feed-lead .ff-clear { justify-self: start; align-self: start; }
-        /* White bleed from the filter's right edge to the true page edge, so on wide
-           screens (where the 1600px container is centred) the rectangle still reaches
-           the site edge without moving the fields. Clipped so it adds no scrollbar. */
         .feed-section { overflow-x: clip; }
-        .feed-lead .feed-filters::after {
-            content: ''; position: absolute; top: 0; bottom: 0; left: 100%;
-            width: 100vw; background: #fff; pointer-events: none;
-        }
 
-        @media (max-width: 900px) {
-            .feed-lead { flex-direction: column; gap: 0; }
-            .feed-lead .feed-filters {
-                /* Back into normal flow under the slider on narrow screens. */
-                position: static;
-                z-index: auto;
-                box-shadow: none;
-                flex: none;
-                width: auto;
-                border-left: none;
-                border-top: 1px solid #ececec;
-                padding: 24px 0 0;
-                margin-top: 8px;
-                transform: none;   /* the manual offset is a desktop-only placement */
-            }
-        }
-
+        /* ---- Minimalist filter bar, sitting above the first promoted slider ----
+           A single clean horizontal row: quiet inline dropdowns, a hairline under
+           the whole bar, and a light "Clear" at the end. No boxes, no overlay. */
+        .feed-lead .feed-filters,
         .feed-filters {
-            display: grid;
-            /* The five fields share the row evenly and CLEAR takes only what it
-               needs at the end — a definite track list, so nothing wraps to a
-               second line or runs past the gutters. */
-            grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
-            align-items: end;
-            gap: 30px 44px;
+            position: static;
+            transform: none;
+            display: flex;
+            flex-flow: row wrap;
+            align-items: center;
+            gap: 14px 30px;
+            width: auto;
             direction: ltr;
-            /* No card: the fields sit straight on the page, flush with the category
-               row above them, separated only by a hairline. The 65px gutters match
-               .feed-block, so the row lines up with the products under it instead
-               of bleeding to the window edge. */
-            padding: 26px 65px 30px;
-            margin: 0 0 36px;
+            padding: 4px 65px 20px;
+            margin: 0;
             background: none;
             border: none;
             border-bottom: 1px solid #ececec;
-            border-radius: 0;
+            box-shadow: none;
+            z-index: auto;
         }
-        .ff-field { display: flex; flex-direction: column; gap: 12px; }
+        .feed-lead .feed-filters::after { content: none; }
+
+        /* Each control is just a label + a borderless select, inline. */
+        .ff-field {
+            display: inline-flex;
+            flex-direction: row;
+            align-items: baseline;
+            gap: 8px;
+        }
         .ff-label {
-            font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-            color: #a3a3a3; font-weight: 500;
+            font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase;
+            color: #b0b0b0; font-weight: 600;
         }
         .ff-label b { color: #111; font-weight: 700; }
         .ff-select {
             appearance: none; -webkit-appearance: none;
-            border: none; border-bottom: 1px solid #ddd; background: none;
-            padding: 8px 26px 12px 0; width: 100%;
-            font-family: inherit; font-size: 16px; font-weight: 500; color: #111;
+            border: none; background: none;
+            padding: 4px 20px 4px 0; width: auto;
+            font-family: inherit; font-size: 14px; font-weight: 600; color: #111;
+            letter-spacing: 0.2px;
             cursor: pointer;
             background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
-            background-repeat: no-repeat; background-position: right center; background-size: 17px;
+            background-repeat: no-repeat; background-position: right center; background-size: 14px;
         }
-        .ff-select:focus { outline: none; border-bottom-color: #111; }
+        .ff-select:focus { outline: none; }
+        .feed-lead .ff-clear { margin-left: auto; }
 
         /* ---- The open dropdown list (every select on the page) ----
            The chosen option carries the brand green instead of the browser's grey
@@ -4804,8 +4776,9 @@
                  slider into #feedLeadSlider (later sliders precede their grids in
                  the feed as before). -->
             <div class="feed-lead">
-                <div class="feed-lead-slider" id="feedLeadSlider"></div>
+                <!-- Minimalist filter bar, laid out above the first promoted slider. -->
                 <div class="feed-filters" id="feedFilters"><!-- built by renderFeedFilters --></div>
+                <div class="feed-lead-slider" id="feedLeadSlider"></div>
             </div>
             <div id="feedContainer"></div>
             <div class="load-more">↓ Scroll down for more products ↓</div>
@@ -8552,32 +8525,42 @@
             if (Math.abs(dist) < 2) return;
             const t0 = performance.now();
             animating = true;
-            function ease(t) { return 1 - Math.pow(1 - t, 3); }   // easeOutCubic
+            // easeInOutCubic — smooth acceleration and deceleration on both ends.
+            function ease(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
             function step(now) {
                 const t = Math.min(1, (now - t0) / dur);
                 window.scrollTo(0, startY + dist * ease(t));
                 if (t < 1) { requestAnimationFrame(step); }
-                else { animating = false; lastY = window.scrollY || 0; lockUntil = performance.now() + 260; }
+                else { animating = false; lastY = window.scrollY || 0; lockUntil = performance.now() + 220; }
             }
             requestAnimationFrame(step);
         }
         function glideDown() {
             const t = belowHero();
-            if (t) glideTo(t.getBoundingClientRect().top + (window.scrollY || 0), 300);
+            if (t) glideTo(t.getBoundingClientRect().top + (window.scrollY || 0), 240);
         }
-        function glideUp() { glideTo(0, 300); }
+        function glideUp() { glideTo(0, 240); }
 
         btn.addEventListener('click', glideDown);
 
         // Track direction so an upward nudge snaps back and a downward one snaps on.
         let lastY = window.scrollY || 0;
         const H = () => hero.offsetHeight;
+        const header = document.querySelector('#siteHeader');
+
+        // Keep the header slid up until the feed fully fills the viewport (the hero
+        // is essentially gone), then let it slide in fast.
+        function syncHeader(y) {
+            if (header) header.classList.toggle('wh-over-hero', y < H() * 0.92);
+        }
+        syncHeader(window.scrollY || 0);
 
         window.addEventListener('scroll', function () {
             const y = window.scrollY || window.pageYOffset;
 
             // Fade the cue out as soon as we leave the top.
             btn.classList.toggle('is-hidden', y > 40);
+            syncHeader(y);
 
             if (!animating && performance.now() > lockUntil) {
                 const goingDown = y > lastY;
