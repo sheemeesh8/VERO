@@ -349,7 +349,7 @@
         }
         #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
         #siteHeader .header-right { display: flex; gap: 12px; align-items: center; flex: 1; justify-content: flex-end; }
-        #siteHeader .header-right .icon-wrap { margin-left: 13px; }
+        #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
            the wrapper itself is transparent to layout — both controls are direct flex
            items of .header-right, so every gap in the icon row is the same. */
@@ -458,12 +458,13 @@
                 position: absolute; left: 58px; top: 0; height: 56px;
                 display: flex; align-items: center; margin: 0; padding-left: 0; color: #111;
             }
-            /* right: the icon group spreads evenly across the right side */
+            /* right: the icon group sits tight against the right edge, close together
+               rather than spread across the bar. */
             body:not([data-sticky="plain"]) #siteHeader .header-right {
                 position: absolute; top: 50%; transform: translateY(-50%);
-                right: var(--hdr-spread-right); left: auto;
-                width: var(--hdr-spread-w);
-                justify-content: space-between; gap: 0;
+                right: 40px; left: auto;
+                width: auto;
+                justify-content: flex-end; gap: 6px;
             }
             body:not([data-sticky="plain"]) #siteHeader .upload-plus {
                 animation: none !important; box-shadow: none !important;
