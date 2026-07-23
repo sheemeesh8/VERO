@@ -1968,6 +1968,50 @@
         /* ---- Feed filter bar: hairline selects, no boxes ---- */
         /* A real card rather than a thin strip: the fields sit on an even grid so
            each one gets the same room and the values line up down the row. */
+        /* The lead row: first promo slider on the left, filters column on the
+           right. Forced LTR so the slider is the left child even on RTL pages. */
+        .feed-lead {
+            direction: ltr;
+            display: flex;
+            align-items: stretch;
+            gap: 48px;
+            padding: 20px 65px 0;
+        }
+        .feed-lead-slider { flex: 1 1 auto; min-width: 0; }
+        /* Fit the shared promo slider into the narrower left column: trim its side
+           gutters and gap (layout only — never its type or copy). */
+        .feed-lead-slider .promo-slider { margin: 0; }
+        .feed-lead-slider .promo-viewport { margin: 0 44px; }
+        .feed-lead-slider .promo-slide { gap: 44px; padding: 12px 10px; }
+
+        /* Inside the lead row the filter bar becomes a vertical column stacked
+           down the right of the slider; the hairline moves to its inner edge. */
+        .feed-lead .feed-filters {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 24px;
+            flex: 0 0 260px;
+            width: 260px;
+            padding: 8px 0 8px 44px;
+            margin: 0;
+            border: none;
+            border-left: 1px solid #ececec;
+        }
+        .feed-lead .ff-clear { justify-self: start; align-self: start; }
+
+        @media (max-width: 900px) {
+            .feed-lead { flex-direction: column; gap: 0; }
+            .feed-lead .feed-filters {
+                flex: none;
+                width: auto;
+                border-left: none;
+                border-top: 1px solid #ececec;
+                padding: 24px 0 0;
+                margin-top: 8px;
+            }
+        }
+
         .feed-filters {
             display: grid;
             /* The five fields share the row evenly and CLEAR takes only what it
@@ -4568,7 +4612,14 @@
     <!-- ==================== INFINITE FEED ==================== -->
     <div class="feed-section">
         <div class="container">
-            <div class="feed-filters" id="feedFilters"><!-- built by renderFeedFilters --></div>
+            <!-- The first promoted slider sits on the left; the filters run as a
+                 vertical column on its right. loadMoreFeedBlocks mounts the first
+                 slider into #feedLeadSlider (later sliders precede their grids in
+                 the feed as before). -->
+            <div class="feed-lead">
+                <div class="feed-lead-slider" id="feedLeadSlider"></div>
+                <div class="feed-filters" id="feedFilters"><!-- built by renderFeedFilters --></div>
+            </div>
             <div id="feedContainer"></div>
             <div class="load-more">↓ Scroll down for more products ↓</div>
         </div>
@@ -6141,6 +6192,8 @@
             const feedContainer = document.getElementById('feedContainer');
             clearPromoSliders();
             feedContainer.innerHTML = '';
+            const lead = document.getElementById('feedLeadSlider');
+            if (lead) lead.innerHTML = '';
             feedBlocksCount = 0;
             loadMoreFeedBlocks();
             if (!feedContainer.children.length) {
@@ -6187,7 +6240,15 @@
                     ? segmentFeatured(currentCategory, currentSegment)
                     : featuredProducts;
                 const slider = createPromoSlider(slides);
-                feedContainer.appendChild(slider);
+                // The very first slider mounts beside the filters in the lead row;
+                // every later slider precedes its grid in the feed as before.
+                if (feedBlocksCount === 0) {
+                    const lead = document.getElementById('feedLeadSlider');
+                    if (lead) { lead.innerHTML = ''; lead.appendChild(slider); }
+                    else feedContainer.appendChild(slider);
+                } else {
+                    feedContainer.appendChild(slider);
+                }
                 promoGo(slider.dataset.uid, 0);
 
                 feedContainer.appendChild(block);
