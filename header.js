@@ -240,12 +240,12 @@
         /* Company name — large, regular weight, one word per line. */
         #siteHeader .hdr-preview-seller {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            display: flex; flex-direction: column; justify-content: center;
+            display: block; white-space: nowrap;
             font-size: 46px; font-weight: 400; letter-spacing: 0.5px;
-            text-transform: uppercase; line-height: 1.1; color: #111;
+            text-transform: uppercase; line-height: 1.15; color: #111;
         }
         #siteHeader .hdr-preview-seller > span { white-space: nowrap; }
-        #siteHeader .hdr-preview-seller.one-word { font-size: 68px; }
+        #siteHeader .hdr-preview-seller.one-word { font-size: 46px; }
         /* The piece's own name — smaller than the company name, and bold. */
         #siteHeader .hdr-preview-name {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
@@ -835,7 +835,7 @@
             <div class="hdr-preview-info">
                 <div class="hdr-preview-head">
                     <span class="hdr-preview-seller${oneWord ? ' one-word' : ''}">${
-                        company.split(/\s+/).map(w => `<span>${w}</span>`).join('')
+                        company.split(/\s+/).map(w => `<span>${w}</span>`).join(' ')
                     }</span>
                     <h2 class="hdr-preview-name">${p.name || ''}</h2>
                 </div>

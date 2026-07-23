@@ -1550,28 +1550,25 @@
         .promo-label {
             font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
             font-size: var(--promo-company, 46px);
-            /* One word per line — each word is its own span — inside a block whose
-               height is fixed at two lines of the base size. A one-word name is set
-               larger (below) so it fills that same block instead of leaving a gap. */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            height: calc(var(--promo-company, 46px) * 2.2);
+            /* The whole name sits on ONE line — the fitter scales the font so the
+               full name (e.g. LOUIS VUITTON) fits the column width without wrapping. */
+            display: block;
+            white-space: nowrap;
             overflow-wrap: normal;
             font-weight: 400;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            line-height: 1.1;
+            line-height: 1.15;
             color: #111;
             margin: 0;
         }
 
-        /* Each word holds its own line — the fitter has already sized it to fit. */
+        /* Words stay whole; the single space between them keeps the name on one line. */
         .promo-label > span { white-space: nowrap; }
 
-        /* A single word has no second line, so it is set at twice the size to fill
-           the same block of the column that a stacked two-word name does. */
-        .promo-label.one-word { font-size: calc(var(--promo-company, 46px) * 2); }
+        /* No special-case sizing any more — one-word and multi-word names are both
+           sized to fit the column width on a single line. */
+        .promo-label.one-word { font-size: var(--promo-company, 46px); }
 
         /* The piece's own name — smaller than the company name, and bold. */
         .promo-title {
@@ -6363,7 +6360,7 @@
                              the piece's own name sits under it, smaller and bold. -->
                         <div class="promo-head">
                             <span class="promo-label${oneWord ? ' one-word' : ''}">${
-                                company.split(/\s+/).map(w => `<span>${w}</span>`).join('')
+                                company.split(/\s+/).map(w => `<span>${w}</span>`).join(' ')
                             }</span>
                             <h2 class="promo-title">${s.name}</h2>
                         </div>
@@ -6489,23 +6486,23 @@
                 const col = el.closest('.promo-text');
                 if (!col || !col.clientWidth) return;
                 const base = parseFloat(getComputedStyle(el).getPropertyValue('--promo-company')) || 46;
-                const wanted = el.classList.contains('one-word') ? base * 2 : base;
-                // Widest single word at 100px, used to scale down to the column.
+                const wanted = base;
+                // The WHOLE name on one line, measured at 100px, then scaled so the
+                // full string (e.g. "LOUIS VUITTON") fits the column width.
                 const probe = document.createElement('span');
                 probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:100px';
                 probe.style.fontFamily = getComputedStyle(el).fontFamily;
                 probe.style.fontWeight = getComputedStyle(el).fontWeight;
+                probe.style.letterSpacing = getComputedStyle(el).letterSpacing;
+                probe.style.textTransform = getComputedStyle(el).textTransform;
                 document.body.appendChild(probe);
-                let widest = 0;
-                el.textContent.trim().split(/\s+/).forEach(w => {
-                    probe.textContent = w;
-                    widest = Math.max(widest, probe.getBoundingClientRect().width);
-                });
+                probe.textContent = el.textContent.trim();
+                const nameWidth = probe.getBoundingClientRect().width;
                 probe.remove();
-                if (!widest) return;
-                // 0.94 keeps the longest word clear of the column edge; sized flush
-                // it still wraps on sub-pixel rounding.
-                const maxForWidth = (col.clientWidth * 0.94 / widest) * 100;
+                if (!nameWidth) return;
+                // 0.94 keeps the name clear of the column edge; sized flush it can
+                // still wrap on sub-pixel rounding.
+                const maxForWidth = (col.clientWidth * 0.94 / nameWidth) * 100;
                 el.style.fontSize = Math.floor(Math.min(wanted, maxForWidth)) + 'px';
             });
         }
