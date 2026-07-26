@@ -350,7 +350,7 @@
         }
         #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
         #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; }
-        #siteHeader .header-right { display: flex; gap: 12px; align-items: center; flex: 1; justify-content: flex-end; }
+        #siteHeader .header-right { display: flex; gap: 26px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
            the wrapper itself is transparent to layout — both controls are direct flex
@@ -469,7 +469,7 @@
                 position: absolute; top: 50%; transform: translateY(-50%);
                 right: 40px; left: auto;
                 width: auto;
-                justify-content: flex-end; gap: 16px;
+                justify-content: flex-end; gap: 26px;
             }
             body:not([data-sticky="plain"]) #siteHeader .upload-plus {
                 animation: none !important; box-shadow: none !important;
