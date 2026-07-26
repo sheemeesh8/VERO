@@ -181,6 +181,43 @@
         /* The connector line has no area to fill — keep it a white stroke. */
         #siteHeader .hdr-funnel svg line { stroke: #fff; }
 
+        /* ---- Search dock in the icon row: a magnifier circle that flies the
+           field open to its left, with the filter funnel at the far left. ---- */
+        #siteHeader .hdr-searchdock {
+            position: relative; display: flex; align-items: center;
+            direction: ltr; flex: 0 0 auto;
+        }
+        #siteHeader .hdr-searchtoggle {
+            position: relative; z-index: 2;
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 1.6px solid #111; background: #fff; color: #111;
+            cursor: pointer; flex: 0 0 auto; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+        }
+        #siteHeader .hdr-searchtoggle:hover { transform: scale(1.06); }
+        #siteHeader .hdr-searchtoggle svg {
+            width: 18px; height: 18px; stroke: currentColor; fill: none;
+            stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+        }
+        /* Open: the trigger fills in as a solid black circle. */
+        #siteHeader .hdr-searchdock.open .hdr-searchtoggle { background: #111; border-color: #111; color: #fff; }
+
+        /* The fly-out holds the funnel + field. Anchored to the toggle's left edge,
+           it grows leftward on open. Absolute, so it glides over the row without
+           shoving the other icons. */
+        #siteHeader .hdr-searchfly {
+            position: absolute; top: 50%; right: 48px; transform: translateY(-50%);
+            display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+            direction: ltr; width: 0; opacity: 0; overflow: hidden; pointer-events: none;
+            transition: width 0.44s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.26s ease;
+        }
+        #siteHeader .hdr-searchdock.open .hdr-searchfly {
+            width: min(340px, 40vw); opacity: 1; pointer-events: auto;
+        }
+        #siteHeader .hdr-searchfly .hdr-funnel { flex: 0 0 auto; }
+        #siteHeader .hdr-searchfly .hdr-search { flex: 1 1 auto; min-width: 0; width: auto; }
+
         /* the dropdown panel */
         #siteHeader .hdr-filters {
             position: absolute;
@@ -640,27 +677,6 @@
             </div>
             <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vr-logo.png" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
 
-            <!-- Search + filter: only visible once the header is sticky -->
-            <div class="hdr-searchwrap">
-                <div class="hdr-search">
-                    <input id="veroSearchInput" type="search" placeholder=""
-                           oninput="veroSearch(this.value)" autocomplete="off">
-                    <button class="hdr-searchgo" aria-label="Search" title="Search"
-                            onclick="veroSearch(document.getElementById('veroSearchInput').value)">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="7"></circle>
-                            <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-                        </svg>
-                    </button>
-                </div>
-                <button class="hdr-funnel" id="veroFunnel" onclick="veroToggleFilters(event)" aria-label="Filters" title="Filters">
-                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 3 L20 3 L12 12 Z"></path>
-                        <line x1="12" y1="12" x2="12" y2="19.5"></line>
-                        <path d="M7 21 L12 19.5 L17 21 Z"></path>
-                    </svg>
-                </button>
-            </div>
 
             <div class="hdr-filters" id="veroFilters">
                 <div class="hdr-inner">
@@ -725,6 +741,30 @@
                         <path d="M12 13.5c-4.5 0-8.2 2.9-8.2 6.5h16.4c0-3.6-3.7-6.5-8.2-6.5z"/>
                     </svg>
                 </button>
+
+                <!-- Search: a magnifier in a circle. Click it to slide the field open,
+                     with the filter funnel to its left. -->
+                <div class="hdr-searchdock" id="veroSearchDock" data-icon="search">
+                    <div class="hdr-searchfly">
+                        <button class="hdr-funnel" id="veroFunnel" onclick="veroToggleFilters(event)" aria-label="Filters" title="Filters" tabindex="-1">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 3 L20 3 L12 12 Z"></path>
+                                <line x1="12" y1="12" x2="12" y2="19.5"></line>
+                                <path d="M7 21 L12 19.5 L17 21 Z"></path>
+                            </svg>
+                        </button>
+                        <div class="hdr-search">
+                            <input id="veroSearchInput" type="search" placeholder="Search..."
+                                   oninput="veroSearch(this.value)" autocomplete="off">
+                        </div>
+                    </div>
+                    <button class="hdr-searchtoggle" id="veroSearchToggle" onclick="veroToggleSearch(event)" aria-label="Search" title="Search">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     `;
@@ -914,21 +954,51 @@
         if (typeof window.veroOnSearch === 'function') window.veroOnSearch(query);
     };
 
-    // click outside / Escape closes the panel
+    // Toggle the sliding search field open/closed from the magnifier circle.
+    window.veroToggleSearch = function (e) {
+        if (e) e.stopPropagation();
+        const dock = document.getElementById('veroSearchDock');
+        if (!dock) return;
+        const open = !dock.classList.contains('open');
+        dock.classList.toggle('open', open);
+        const input = document.getElementById('veroSearchInput');
+        if (open) {
+            if (input) setTimeout(() => input.focus(), 80);
+        } else {
+            // closing the field also tucks the filter panel away
+            const panel = document.getElementById('veroFilters');
+            if (panel && panel.classList.contains('open')) window.veroToggleFilters();
+        }
+    };
+    function veroCloseSearch() {
+        const dock = document.getElementById('veroSearchDock');
+        if (dock) dock.classList.remove('open');
+        const panel = document.getElementById('veroFilters');
+        if (panel && panel.classList.contains('open')) {
+            panel.classList.remove('open');
+            const f = document.getElementById('veroFunnel');
+            if (f) f.classList.remove('on');
+        }
+    }
+
+    // click outside / Escape closes the panel and the search field
     document.addEventListener('click', e => {
         const panel = document.getElementById('veroFilters');
-        if (!panel || !panel.classList.contains('open')) return;
-        if (e.target.closest('#veroFilters') || e.target.closest('#veroFunnel')) return;
-        panel.classList.remove('open');
-        const btn = document.getElementById('veroFunnel');
-        if (btn) btn.classList.remove('on');
+        if (panel && panel.classList.contains('open') &&
+            !e.target.closest('#veroFilters') && !e.target.closest('#veroFunnel')) {
+            panel.classList.remove('open');
+            const btn = document.getElementById('veroFunnel');
+            if (btn) btn.classList.remove('on');
+        }
+        const dock = document.getElementById('veroSearchDock');
+        if (dock && dock.classList.contains('open') &&
+            !e.target.closest('#veroSearchDock') && !e.target.closest('#veroFilters')) {
+            dock.classList.remove('open');
+        }
     });
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape') return;
-        const panel = document.getElementById('veroFilters');
-        if (panel) panel.classList.remove('open');
-        const btn = document.getElementById('veroFunnel');
-        if (btn) btn.classList.remove('on');
+        veroCloseSearch();
     });
 
     // ---- Fallback handlers ----
