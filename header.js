@@ -473,8 +473,8 @@
            scrolled header above. Toggled by wireBehaviour(). */
         #siteHeader.scrolled.over-dark {
             background: #000;
-            border-bottom: 1px solid rgba(255,255,255,0.12);
-            box-shadow: 0 1px 12px rgba(0,0,0,0.4);
+            border-bottom: none;
+            box-shadow: none;
         }
         #siteHeader.scrolled.over-dark .header-left > a,
         #siteHeader.scrolled.over-dark .logo,
