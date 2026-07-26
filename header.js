@@ -467,6 +467,29 @@
         #siteHeader.scrolled .icon-btn svg { stroke: #111 !important; }
         #siteHeader.scrolled .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
 
+        /* ===== Sticky header over the black band =====
+           While the scrolled header still sits above the feed filter line, it wears
+           black with light content; once it passes the filter it reverts to the white
+           scrolled header above. Toggled by wireBehaviour(). */
+        #siteHeader.scrolled.over-dark {
+            background: #000;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 1px 12px rgba(0,0,0,0.4);
+        }
+        #siteHeader.scrolled.over-dark .header-left > a,
+        #siteHeader.scrolled.over-dark .logo,
+        #siteHeader.scrolled.over-dark .toggle-category { color: #fff; }
+        #siteHeader.scrolled.over-dark .logo-img { filter: invert(1) brightness(1.15); }
+        #siteHeader.scrolled.over-dark .header-left > a:hover { color: rgba(255,255,255,0.6); }
+        #siteHeader.scrolled.over-dark .toggle-category { border-color: rgba(255,255,255,0.28); }
+        #siteHeader.scrolled.over-dark .toggle-category::before { background: #fff; }
+        #siteHeader.scrolled.over-dark .toggle-category .seg { color: #b8b8b8; }
+        #siteHeader.scrolled.over-dark .toggle-category .seg.active { color: #111; }
+        #siteHeader.scrolled.over-dark .icon-btn { color: #fff; }
+        #siteHeader.scrolled.over-dark .icon-btn svg { stroke: #fff !important; }
+        #siteHeader.scrolled.over-dark .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
+        #siteHeader.scrolled.over-dark .upload-plus { color: #fff !important; }
+
         /* ===== Header layout — one geometry for every header on the site =====
            White left area (hamburger + logo), the search field beside it, and the icon
            group spread evenly on the right. Identical before and after the header goes
@@ -1051,10 +1074,22 @@
     }
 
     function wireBehaviour() {
-        // Solid header once scrolled past the top.
+        // Solid header once scrolled past the top. On the feed, the header wears
+        // black while it still sits above the filter line, then flips to the white
+        // scrolled header once it passes it.
         const onScroll = () => {
             const hdr = document.querySelector('header#siteHeader') || document.querySelector('header');
-            if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 80);
+            if (!hdr) return;
+            const scrolled = window.scrollY > 80;
+            hdr.classList.toggle('scrolled', scrolled);
+            // Only the feed has a filter line; elsewhere the header never goes dark.
+            const filter = document.querySelector('.feed-filters');
+            let overDark = false;
+            if (scrolled && filter) {
+                const filterBottom = filter.getBoundingClientRect().bottom + window.scrollY;
+                overDark = (window.scrollY + hdr.offsetHeight) < filterBottom;
+            }
+            hdr.classList.toggle('over-dark', overDark);
         };
         window.addEventListener('scroll', onScroll, { passive: true });
         onScroll();
