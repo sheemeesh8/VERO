@@ -389,6 +389,38 @@
         }
         .dh-emoji { font-size: 210px; line-height: 1; }
         .dh-chart { width: 100%; height: 360px; }
+
+        /* ---- Chart slider (favourite brands / styles) — modelled on the
+               promoted-products slider: viewport + track, round side arrows and
+               dots underneath. ---- */
+        .dh-cs { position: relative; width: 100%; }
+        .dh-cs-viewport { overflow: hidden; width: 100%; }
+        .dh-cs-track {
+            display: flex;
+            direction: ltr;
+            transition: transform 0.6s cubic-bezier(0.65, 0.05, 0.1, 1);
+        }
+        .dh-cs-panel { min-width: 100%; box-sizing: border-box; }
+        .dh-cs-cap {
+            direction: rtl; text-align: center;
+            font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+            text-transform: uppercase; color: #9a9a9a; margin-bottom: 18px;
+        }
+        .dh-cs-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 34px; height: 34px; border-radius: 50%; border: 1px solid #ddd;
+            background: #fff; color: #111; font-size: 18px; cursor: pointer; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .dh-cs-arrow:hover { background: #f4f1ea; }
+        .dh-cs-arrow.prev { left: 0; }
+        .dh-cs-arrow.next { right: 0; }
+        .dh-cs-dots { display: flex; justify-content: center; gap: 7px; margin-top: 18px; }
+        .dh-cs-dot {
+            width: 7px; height: 7px; border-radius: 50%; border: none;
+            background: #d3d3d3; cursor: pointer; transition: all 0.25s ease; padding: 0;
+        }
+        .dh-cs-dot.active { background: #111; transform: scale(1.3); }
         .dh-peek {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -657,6 +689,12 @@
             { name: 'Street Style', pct: 55 },
             { name: 'Smart Style', pct: 40 },
         ];
+        const favoriteStyles = [
+            { name: 'קז\'ואל', pct: 85 },
+            { name: 'וינטג\'', pct: 62 },
+            { name: 'ספורט', pct: 48 },
+            { name: 'פורמלי', pct: 35 },
+        ];
 
         // Fallback samples so the cart & wishlist always show products.
         const sampleCart = [
@@ -712,6 +750,42 @@
                 label: item.name
             })));
         }
+
+        // A two-slide chart slider (brands, then styles), built like the promoted
+        // slider. Rebuilt fresh each time the slide is shown, so its index resets.
+        let favChartIndex = 0;
+        function favChartPanel(caption, data) {
+            return `<div class="dh-cs-panel">
+                <div class="dh-cs-cap">${caption}</div>
+                <div class="dh-chart">${pctChartHTML(data)}</div>
+            </div>`;
+        }
+        function favChartsSliderHTML() {
+            favChartIndex = 0;
+            return `<div class="dh-cs" id="favCS">
+                <div class="dh-cs-viewport">
+                    <div class="dh-cs-track" id="favTrack">
+                        ${favChartPanel('מותגים אהובים', favoriteBrands)}
+                        ${favChartPanel('סגנונות מועדפים', favoriteStyles)}
+                    </div>
+                </div>
+                <button class="dh-cs-arrow prev" onclick="favChartGo(-1)" aria-label="הקודם">&#8249;</button>
+                <button class="dh-cs-arrow next" onclick="favChartGo(1)" aria-label="הבא">&#8250;</button>
+                <div class="dh-cs-dots">
+                    <button class="dh-cs-dot active" onclick="favChartSet(0)" aria-label="מותגים אהובים"></button>
+                    <button class="dh-cs-dot" onclick="favChartSet(1)" aria-label="סגנונות מועדפים"></button>
+                </div>
+            </div>`;
+        }
+        function favChartSet(i) {
+            favChartIndex = (i + 2) % 2;
+            const t = document.getElementById('favTrack');
+            if (!t) return;
+            t.style.transform = `translateX(-${favChartIndex * 100}%)`;
+            document.querySelectorAll('#favCS .dh-cs-dot')
+                .forEach((d, idx) => d.classList.toggle('active', idx === favChartIndex));
+        }
+        function favChartGo(dir) { favChartSet(favChartIndex + dir); }
 
         // ==================== PRODUCTS ====================
         function productPageUrl(item) {
@@ -959,7 +1033,7 @@
                 title: 'החברות האהובות עליי',
                 desc: 'המותגים שמהם קנית הכי הרבה. אלה החברות שחוזרות אצלך שוב ושוב.',
                 cta: 'לצפייה במותגים',
-                image: () => `<div class="dh-chart">${pctChartHTML(favoriteBrands)}</div>`,
+                image: () => favChartsSliderHTML(),
                 count: () => [favoriteBrands.length, 'מותגים'],
                 detail: () => statBlock('פילוח המותגים', favoriteBrands.map(b => [b.name, `${b.pct}%`])),
             },
