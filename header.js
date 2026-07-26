@@ -685,6 +685,13 @@
         }
         #siteHeader .hdr-mode-pair .upload-plus { animation: none !important; }
 
+        /* On the black sticky header the switch and the + turn white, like the rest
+           of the icons. Higher specificity + !important so they beat the black
+           mode-pair rules above. */
+        #siteHeader.scrolled.over-dark .hdr-mode-pair .toggle-category { border-color: #fff !important; }
+        #siteHeader.scrolled.over-dark .hdr-mode-pair .toggle-category::before { background: #fff !important; }
+        #siteHeader.scrolled.over-dark .hdr-mode-pair .upload-plus { color: #fff !important; border-color: #fff !important; }
+
 `;
 
     // ---- Markup (identical everywhere) ----
