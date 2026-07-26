@@ -164,7 +164,7 @@
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #111; }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: #6e6e6e; }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: #111; }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-funnel svg { stroke: #fff; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-funnel svg { stroke: #fff; fill: #fff; }
         /* Funnel: the bare glyph beside the field, matching the magnifier. */
         #siteHeader .hdr-funnel {
             width: 36px; height: 36px; border-radius: 50%;
@@ -175,9 +175,11 @@
         }
         #siteHeader .hdr-funnel:hover, #siteHeader .hdr-funnel.on { opacity: 0.6; filter: none; }
         #siteHeader .hdr-funnel svg {
-            width: 17px; height: 17px;
-            stroke: #fff; fill: none; stroke-width: 1.6;
+            width: 18px; height: 18px;
+            stroke: #fff; fill: #fff; stroke-width: 1.6;
         }
+        /* The connector line has no area to fill — keep it a white stroke. */
+        #siteHeader .hdr-funnel svg line { stroke: #fff; }
 
         /* the dropdown panel */
         #siteHeader .hdr-filters {
