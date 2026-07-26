@@ -524,6 +524,8 @@
         .dh-badge.removed,
         .dh-badge.expired { background: #f2f2f2; color: #9a9a9a; }
         .dh-listing-note { font-size: 12px; color: #8a8a8a; }
+        .dh-buyer-link { color: #004225; font-weight: 700; text-decoration: underline; }
+        .dh-buyer-link:hover { color: #111; }
 
         /* Month selector chips */
         .dh-chips {
@@ -950,14 +952,17 @@
             } catch (e) { return []; }
         }
 
-        const LISTING_LABELS = { live: 'באוויר', draft: 'טיוטה', sold: 'נמכר', removed: 'הוסר', expired: 'פג תוקף' };
+        // History listings collapse to just two states: sold, or off-air
+        // (anything removed / expired).
+        const LISTING_LABELS = { live: 'באוויר', draft: 'טיוטה', sold: 'נמכר', removed: 'ירד מהאוויר', expired: 'ירד מהאוויר' };
 
         // A product card with the listing's own status line underneath.
         function listingCardHTML(item) {
+            const buyer = item.buyer || 'קונה';
             const extra = item.status === 'live'
                 ? `${item.views} צפיות · עלה ב־${item.since}`
                 : item.status === 'sold'
-                    ? `נמכר ל${item.buyer || 'קונה'} · ${item.closed}`
+                    ? `נמכר ל<a class="dh-buyer-link" href="seller-area.html?user=${encodeURIComponent(buyer)}">${buyer}</a> · ${item.closed}`
                     : item.closed || '';
             return `<div class="dh-listing">
                 ${miniCardHTML(item)}
@@ -971,7 +976,7 @@
         function listingsBlock(title, items) {
             if (!items.length) return `<h3 class="dh-detail-title">${title}</h3><p class="dh-empty">אין כאן פריטים עדיין.</p>`;
             return `<h3 class="dh-detail-title">${title}</h3>` +
-                `<div class="dh-cards">` + items.slice(0, 5).map(listingCardHTML).join('') + `</div>`;
+                `<div class="dh-cards">` + items.map(listingCardHTML).join('') + `</div>`;
         }
 
         function liveListings() { return [...myDrafts(), ...sampleListings]; }
