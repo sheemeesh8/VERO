@@ -163,12 +163,12 @@
         }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input { color: #111; }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: #6e6e6e; }
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg,
-        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-funnel svg { stroke: #111; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: #111; }
+        #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-funnel svg { stroke: #fff; }
         /* Funnel: the bare glyph beside the field, matching the magnifier. */
         #siteHeader .hdr-funnel {
-            width: 30px; height: 30px; border-radius: 0;
-            background: none;
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #111;
             border: none; cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center; padding: 0;
             transition: opacity 0.2s;
@@ -176,7 +176,7 @@
         #siteHeader .hdr-funnel:hover, #siteHeader .hdr-funnel.on { opacity: 0.6; filter: none; }
         #siteHeader .hdr-funnel svg {
             width: 17px; height: 17px;
-            stroke: var(--hdr-mode-color, #22372B); fill: none; stroke-width: 1.6;
+            stroke: #fff; fill: none; stroke-width: 1.6;
         }
 
         /* the dropdown panel */
@@ -347,6 +347,7 @@
             cursor: pointer; padding-left: 5px;
         }
         #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
+        #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; }
         #siteHeader .header-right { display: flex; gap: 12px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
@@ -559,6 +560,11 @@
             font-family: 'Playfair Display', Georgia, serif; font-size: 26px;
             font-weight: 700; letter-spacing: 5px; text-transform: uppercase; color: #fff;
         }
+        .vero-drawer-head .vero-drawer-logo .vero-drawer-logo-img {
+            height: 34px; width: auto; display: block;
+            /* logo art is black; drawer background is dark, so flip it to white */
+            filter: invert(1) brightness(2);
+        }
         .vero-drawer-close {
             background: none; border: none; cursor: pointer; font-size: 28px;
             line-height: 1; color: #fff; padding: 0; width: 32px; height: 32px;
@@ -584,6 +590,7 @@
             #siteHeader .header-left { display: flex; flex: 1 1 100%; order: 1; justify-content: center; gap: 15px; font-size: 11px; }
             #siteHeader .header-left > a { font-size: 11px; }
             #siteHeader .logo { font-size: 20px; letter-spacing: 3px; order: 2; flex: 0 1 auto; }
+            #siteHeader .logo .logo-img { height: 32px; }
             #siteHeader .header-right { order: 3; flex: 1 1 100%; justify-content: center; gap: 15px; }
         }
 
@@ -629,12 +636,12 @@
                 <a onclick="openMenu()">The Closet Magazine</a>
                 <a onclick="openSellerArea()">Seller Area</a>
             </div>
-            <div class="logo" onclick="showMain()" style="cursor:pointer">VERO</div>
+            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vr-logo.png" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
 
             <!-- Search + filter: only visible once the header is sticky -->
             <div class="hdr-searchwrap">
                 <div class="hdr-search">
-                    <input id="veroSearchInput" type="search" placeholder="Search..."
+                    <input id="veroSearchInput" type="search" placeholder=""
                            oninput="veroSearch(this.value)" autocomplete="off">
                     <button class="hdr-searchgo" aria-label="Search" title="Search"
                             onclick="veroSearch(document.getElementById('veroSearchInput').value)">
@@ -731,7 +738,7 @@
         <div class="vero-drawer-overlay" id="veroDrawerOverlay" onclick="veroCloseDrawer()"></div>
         <aside class="vero-drawer" id="veroDrawer" aria-hidden="true">
             <div class="vero-drawer-head">
-                <span class="vero-drawer-logo">VERO</span>
+                <span class="vero-drawer-logo"><img src="vr-logo.png" alt="VERO" class="vero-drawer-logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></span>
                 <button class="vero-drawer-close" aria-label="Close menu" onclick="veroCloseDrawer()">&times;</button>
             </div>
             <nav class="vero-drawer-nav">

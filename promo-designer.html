@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO — Promo Designer</title>
+
+    <!--
+        A VISUAL editor for the promoted-product slide. No code: every size, colour,
+        stretch, button style and position is a control on the right, and the real
+        slide redraws live on the left. "Move mode" lets you drag any element.
+        "העתק CSS" copies a variable block you paste into index.html's
+        ".promo-slider — ONE definition" rules (which drives every promoted slider
+        on the site at once). Work is saved to localStorage.
+    -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #f6f5f3;
+            color: #111;
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            overflow: hidden;
+        }
+
+        /* ---- Head ---- */
+        .pd-head {
+            display: flex;
+            align-items: baseline;
+            gap: 18px;
+            flex-wrap: wrap;
+            padding: 14px 26px;
+            background: #fff;
+            border-bottom: 1px solid #e6e4de;
+        }
+        .pd-title { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; text-transform: uppercase; }
+        .pd-title span { color: #b3b3b3; }
+        .pd-sub { font-size: 13px; color: #8a8a8a; font-family: 'Playfair Display', serif; }
+        .pd-head .pd-tools { margin-inline-start: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .pd-btn {
+            font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
+            padding: 9px 14px; border: 1px solid #d8d5cc; border-radius: 6px;
+            background: #fff; color: #111; cursor: pointer;
+        }
+        .pd-btn:hover { background: #f0efeb; }
+        .pd-btn.dark { background: #22372B; border-color: #22372B; color: #fff; }
+        .pd-btn.dark:hover { background: #2E4A3A; }
+        .pd-btn.on { background: #22372B; border-color: #22372B; color: #fff; }
+
+        /* ---- Body split: stage on the left, controls on the right ---- */
+        .pd-body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; min-height: 0; }
+
+        .pd-stage {
+            direction: ltr;
+            overflow: auto;
+            padding: 40px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px) 0 0 / 24px 24px,
+                var(--pd-page-bg, #f6f5f3);
+        }
+        .pd-stage.moving .promo-slide * { cursor: move; }
+        .pd-stage.moving .drag-on { outline: 1.5px dashed rgba(34,55,43,0.5); outline-offset: 4px; }
+
+        /* ---- Controls ---- */
+        .pd-controls {
+            direction: rtl;
+            overflow-y: auto;
+            background: #fff;
+            border-inline-start: 1px solid #e6e4de;
+            padding: 6px 0 40px;
+        }
+        .pd-group { border-bottom: 1px solid #eeece6; padding: 14px 18px; }
+        .pd-group h3 {
+            font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase;
+            color: #555; margin-bottom: 12px;
+        }
+        .pd-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+        .pd-row:last-child { margin-bottom: 0; }
+        .pd-row label { flex: 0 0 96px; font-size: 12px; color: #666; letter-spacing: 0.4px; }
+        .pd-row input[type="range"] { flex: 1; min-width: 0; accent-color: #22372B; }
+        .pd-row input[type="color"] {
+            width: 34px; height: 26px; padding: 0; border: 1px solid #d8d5cc;
+            border-radius: 6px; background: #fff; cursor: pointer;
+        }
+        .pd-row select {
+            flex: 1; font: inherit; font-size: 12px; border: 1px solid #d8d5cc;
+            border-radius: 6px; padding: 6px 8px; background: #fff;
+        }
+        .pd-val { flex: 0 0 46px; font-size: 11px; color: #999; text-align: left; direction: ltr; }
+
+        .pd-presets { display: flex; flex-wrap: wrap; gap: 7px; }
+        .pd-preset {
+            font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+            padding: 7px 10px; border: 1px solid #d8d5cc; border-radius: 6px;
+            background: #fff; cursor: pointer;
+        }
+        .pd-preset:hover { background: #f0efeb; }
+
+        .pd-hint { font-size: 11px; color: #a0a0a0; font-family: 'Playfair Display', serif; margin-top: 8px; }
+
+        /* =====================================================================
+           The promo slide — every changeable value is a CSS variable, so the
+           controls only set variables and the exported block is just variables.
+           This mirrors index.html's ".promo-slider — ONE definition".
+           ===================================================================== */
+        .promo-slider {
+            --promo-company: 69px;
+            --pd-gap: 88px;
+            --pd-img-w: 620px;
+            --pd-img-aspect: 0.8;
+            --pd-panel-bg: #f2f0ec;
+            --pd-emoji-size: 210px;
+            --pd-title-size: 36px;
+            --pd-title-color: #111;
+            --pd-company-color: #111;
+            --pd-desc-size: 19px;
+            --pd-desc-color: #6b665e;
+            --pd-btn-h: 66px;
+            --pd-btn-radius: 16px;
+            --pd-btn-bg: #f1f1ef;
+            --pd-btn-color: #111;
+            --pd-btn-border: transparent;
+            --pd-price-size: 14px;
+            direction: ltr;
+        }
+        .promo-slide {
+            display: grid;
+            grid-template-columns: minmax(0, 600px) minmax(0, var(--pd-img-w));
+            align-items: stretch;
+            gap: var(--pd-gap);
+        }
+        .promo-image {
+            width: 100%;
+            max-width: var(--pd-img-w);
+            aspect-ratio: 1 / var(--pd-img-aspect);
+            background: var(--pd-panel-bg);
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: var(--pd-emoji-size);
+            color: rgba(0,0,0,0.14);
+        }
+        .promo-text {
+            direction: ltr; text-align: left;
+            display: flex; flex-direction: column; align-items: flex-start;
+            justify-content: space-between; gap: 26px; min-height: 100%;
+        }
+        .promo-head, .promo-foot {
+            display: flex; flex-direction: column; align-items: flex-start;
+            align-self: stretch; gap: 8px;
+        }
+        .promo-foot { gap: 12px; }
+        .promo-label {
+            font-family: 'Oswald', sans-serif;
+            font-size: var(--promo-company, 46px);
+            font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase;
+            line-height: 1.1; color: var(--pd-company-color);
+        }
+        .promo-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: var(--pd-title-size); font-weight: 700; text-transform: uppercase;
+            line-height: 1.25; letter-spacing: 0.5px; color: var(--pd-title-color);
+        }
+        .promo-desc {
+            font-family: 'Oswald', sans-serif; font-weight: 400;
+            font-size: var(--pd-desc-size); line-height: 1.7;
+            color: var(--pd-desc-color); max-width: 480px;
+        }
+        .promo-readmore {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 20px; width: 100%; height: var(--pd-btn-h);
+            border-radius: var(--pd-btn-radius);
+            background: var(--pd-btn-bg);
+            border: 2px solid var(--pd-btn-border);
+            cursor: pointer; font-family: 'Oswald', sans-serif;
+            font-size: var(--pd-price-size); font-weight: 700; letter-spacing: 2.5px;
+            text-transform: uppercase; color: var(--pd-btn-color);
+            padding: 0 24px; transition: background 0.25s, transform 0.25s;
+        }
+        .promo-readmore .promo-buyprice { font-weight: 700; letter-spacing: 0.5px; }
+        .promo-readmore:hover { transform: translateY(-2px); filter: brightness(0.96); }
+    </style>
+</head>
+<body>
+
+<div class="pd-head">
+    <h1 class="pd-title"><span>/</span> Promo Designer</h1>
+    <p class="pd-sub">עורך ויזואלי לכרטיסיית המוצר המקודמת — גררו, מתחו, צבעו, החליפו סגנון כפתור.</p>
+    <div class="pd-tools">
+        <button class="pd-btn" id="btnMove">מצב הזזה</button>
+        <button class="pd-btn" id="btnReset">איפוס</button>
+        <button class="pd-btn dark" id="btnCopy">העתק CSS</button>
+    </div>
+</div>
+
+<div class="pd-body">
+    <div class="pd-stage" id="stage">
+        <div class="promo-slider" id="slider">
+            <div class="promo-slide">
+                <div class="promo-text">
+                    <div class="promo-head">
+                        <span class="promo-label drag" data-el="company">Designer</span>
+                        <h2 class="promo-title drag" data-el="title">Cocktail Dress</h2>
+                    </div>
+                    <div class="promo-foot">
+                        <p class="promo-desc drag" data-el="desc">Elegant dress by a famous designer. Perfect for evening events. Quality fabric with excellent stitching.</p>
+                        <button class="promo-readmore drag" data-el="button" type="button">
+                            <span class="promo-buylabel">Buy Now</span>
+                            <span class="promo-buyprice">₪180.00</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="promo-image drag" data-el="image">👗</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pd-controls" id="controls">
+
+        <div class="pd-group">
+            <h3>מוצר לתצוגה</h3>
+            <div class="pd-row">
+                <label>מוצר</label>
+                <select id="prodSel"></select>
+            </div>
+        </div>
+
+        <div class="pd-group">
+            <h3>גדלים</h3>
+            <div class="pd-row"><label>שם החברה</label><input type="range" id="v_company" min="24" max="120" data-var="--promo-company" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>שם המוצר</label><input type="range" id="v_title" min="16" max="72" data-var="--pd-title-size" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>תיאור</label><input type="range" id="v_desc" min="12" max="34" data-var="--pd-desc-size" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>מחיר/כפתור</label><input type="range" id="v_price" min="10" max="26" data-var="--pd-price-size" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>אימוג׳י</label><input type="range" id="v_emoji" min="80" max="360" data-var="--pd-emoji-size" data-unit="px"><span class="pd-val"></span></div>
+        </div>
+
+        <div class="pd-group">
+            <h3>מתיחה ופריסה</h3>
+            <div class="pd-row"><label>רוחב תמונה</label><input type="range" id="v_imgw" min="300" max="900" data-var="--pd-img-w" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>יחס תמונה</label><input type="range" id="v_aspect" min="0.5" max="1.6" step="0.05" data-var="--pd-img-aspect" data-unit=""><span class="pd-val"></span></div>
+            <div class="pd-row"><label>מרווח</label><input type="range" id="v_gap" min="0" max="200" data-var="--pd-gap" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>צד תמונה</label>
+                <select id="imgSide">
+                    <option value="right">ימין</option>
+                    <option value="left">שמאל</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="pd-group">
+            <h3>צבעים</h3>
+            <div class="pd-row"><label>שם החברה</label><input type="color" data-var="--pd-company-color"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>שם המוצר</label><input type="color" data-var="--pd-title-color"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>תיאור</label><input type="color" data-var="--pd-desc-color"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>פאנל תמונה</label><input type="color" data-var="--pd-panel-bg"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>רקע דף</label><input type="color" data-var="--pd-page-bg" data-target="stage"><span class="pd-val"></span></div>
+        </div>
+
+        <div class="pd-group">
+            <h3>כפתור</h3>
+            <div class="pd-presets" id="btnPresets">
+                <button class="pd-preset" data-bg="#f1f1ef" data-color="#111" data-radius="16" data-border="transparent">בהיר</button>
+                <button class="pd-preset" data-bg="#111111" data-color="#ffffff" data-radius="16" data-border="transparent">שחור</button>
+                <button class="pd-preset" data-bg="#22372B" data-color="#ffffff" data-radius="16" data-border="transparent">ירוק</button>
+                <button class="pd-preset" data-bg="#ffffff" data-color="#111" data-radius="999" data-border="#111111">מתאר</button>
+                <button class="pd-preset" data-bg="#f1f1ef" data-color="#111" data-radius="999" data-border="transparent">גלולה</button>
+                <button class="pd-preset" data-bg="#f1f1ef" data-color="#111" data-radius="0" data-border="transparent">מרובע</button>
+            </div>
+            <div class="pd-row" style="margin-top:12px"><label>רקע</label><input type="color" data-var="--pd-btn-bg"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>טקסט</label><input type="color" data-var="--pd-btn-color"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>גובה</label><input type="range" id="v_btnh" min="40" max="100" data-var="--pd-btn-h" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>עיגול פינות</label><input type="range" id="v_btnr" min="0" max="60" data-var="--pd-btn-radius" data-unit="px"><span class="pd-val"></span></div>
+        </div>
+
+        <div class="pd-group">
+            <p class="pd-hint">מצב הזזה: לחצו "מצב הזזה" וגררו כל רכיב למקום הרצוי. השינויים נשמרים אוטומטית.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const PRODUCTS = [
+        { company: 'Designer',     name: 'Cocktail Dress', desc: 'Elegant dress by a famous designer. Perfect for evening events. Quality fabric with excellent stitching.', price: '₪180.00', icon: '👗' },
+        { company: 'Ralph Lauren', name: 'Navy Blazer',    desc: 'Tailored wool blazer, sharp shoulders, kept in mint condition.', price: '₪320.00', icon: '👔' },
+        { company: "Levi's",       name: 'Denim Jacket',   desc: 'Quality denim jacket from the 90s in excellent condition, thick denim, strong stitching.', price: '₪89.99', icon: '🧥' },
+        { company: 'Vero Select',  name: 'Classic Pants',  desc: 'Wide-leg utility trousers, deep pockets, an everyday staple.', price: '₪190.90', icon: '👖' }
+    ];
+
+    const slider   = document.getElementById('slider');
+    const stage    = document.getElementById('stage');
+    const slide     = slider.querySelector('.promo-slide');
+    const KEY = 'veroPromoDesigner';
+
+    // Default values read once from the stylesheet so "reset" restores them.
+    const VAR_INPUTS = [...document.querySelectorAll('[data-var]')];
+    const DEFAULTS = {};
+    function readDefaults() {
+        const cs = getComputedStyle(slider);
+        VAR_INPUTS.forEach(inp => {
+            const v = cs.getPropertyValue(inp.dataset.var).trim();
+            DEFAULTS[inp.dataset.var] = v;
+        });
+        DEFAULTS['--pd-page-bg'] = '#f6f5f3';
+    }
+
+    function setVar(name, value, targetStage) {
+        (targetStage ? stage : slider).style.setProperty(name, value);
+    }
+
+    // ---- Sliders (numeric variables) ----
+    function syncRange(inp) {
+        const raw = getComputedStyle(inp.dataset.target === 'stage' ? stage : slider)
+                        .getPropertyValue(inp.dataset.var).trim();
+        const num = parseFloat(raw);
+        if (!isNaN(num)) inp.value = num;
+        showVal(inp, inp.value + (inp.dataset.unit || ''));
+    }
+    function showVal(inp, text) {
+        const val = inp.parentElement.querySelector('.pd-val');
+        if (val) val.textContent = text;
+    }
+
+    document.querySelectorAll('input[type="range"][data-var]').forEach(inp => {
+        inp.addEventListener('input', () => {
+            const v = inp.value + (inp.dataset.unit || '');
+            setVar(inp.dataset.var, v, inp.dataset.target === 'stage');
+            showVal(inp, v);
+            save();
+        });
+    });
+
+    // ---- Colour pickers ----
+    document.querySelectorAll('input[type="color"][data-var]').forEach(inp => {
+        inp.addEventListener('input', () => {
+            setVar(inp.dataset.var, inp.value, inp.dataset.target === 'stage');
+            showVal(inp, inp.value);
+            save();
+        });
+    });
+    function syncColor(inp) {
+        const raw = getComputedStyle(inp.dataset.target === 'stage' ? stage : slider)
+                        .getPropertyValue(inp.dataset.var).trim();
+        const hex = toHex(raw);
+        if (hex) inp.value = hex;
+        showVal(inp, inp.value);
+    }
+    function toHex(c) {
+        if (!c) return null;
+        if (c[0] === '#') {
+            if (c.length === 4) return '#' + c[1]+c[1]+c[2]+c[2]+c[3]+c[3];
+            return c.slice(0, 7);
+        }
+        const m = c.match(/rgba?\(([^)]+)\)/);
+        if (!m) return null;
+        const [r,g,b] = m[1].split(',').map(n => parseInt(n));
+        return '#' + [r,g,b].map(n => n.toString(16).padStart(2,'0')).join('');
+    }
+
+    // ---- Image side ----
+    document.getElementById('imgSide').addEventListener('change', e => {
+        applyImgSide(e.target.value);
+        save();
+    });
+    function applyImgSide(side) {
+        const img = slide.querySelector('.promo-image');
+        const txt = slide.querySelector('.promo-text');
+        if (side === 'left') { img.style.order = '0'; txt.style.order = '1'; }
+        else { img.style.order = ''; txt.style.order = ''; }
+    }
+
+    // ---- Button presets ----
+    document.querySelectorAll('.pd-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setVar('--pd-btn-bg', btn.dataset.bg);
+            setVar('--pd-btn-color', btn.dataset.color);
+            setVar('--pd-btn-radius', btn.dataset.radius + 'px');
+            setVar('--pd-btn-border', btn.dataset.border);
+            resyncAll();
+            save();
+        });
+    });
+
+    // ---- Product selector ----
+    const prodSel = document.getElementById('prodSel');
+    prodSel.innerHTML = PRODUCTS.map((p,i) => `<option value="${i}">${p.company} — ${p.name}</option>`).join('');
+    prodSel.addEventListener('change', e => {
+        const p = PRODUCTS[+e.target.value];
+        slide.querySelector('.promo-label').textContent = p.company;
+        slide.querySelector('.promo-title').textContent = p.name;
+        slide.querySelector('.promo-desc').textContent  = p.desc;
+        slide.querySelector('.promo-buyprice').textContent = p.price;
+        slide.querySelector('.promo-image').firstChild.nodeValue = p.icon;
+        save();
+    });
+
+    // ---- Move mode: drag any .drag element, store a translate offset ----
+    const offsets = {};              // { company: {x,y}, ... }
+    let moving = false, dragEl = null, startX = 0, startY = 0, baseX = 0, baseY = 0;
+
+    document.getElementById('btnMove').addEventListener('click', function () {
+        moving = !moving;
+        this.classList.toggle('on', moving);
+        stage.classList.toggle('moving', moving);
+        slide.querySelectorAll('.drag').forEach(el => el.classList.toggle('drag-on', moving));
+    });
+
+    slide.querySelectorAll('.drag').forEach(el => {
+        el.addEventListener('mousedown', e => {
+            if (!moving) return;
+            e.preventDefault();
+            dragEl = el;
+            const key = el.dataset.el;
+            const o = offsets[key] || { x: 0, y: 0 };
+            baseX = o.x; baseY = o.y;
+            startX = e.clientX; startY = e.clientY;
+        });
+    });
+    window.addEventListener('mousemove', e => {
+        if (!dragEl) return;
+        const key = dragEl.dataset.el;
+        const x = baseX + (e.clientX - startX);
+        const y = baseY + (e.clientY - startY);
+        offsets[key] = { x, y };
+        dragEl.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    window.addEventListener('mouseup', () => { if (dragEl) { dragEl = null; save(); } });
+
+    // ---- Persistence ----
+    function currentVars() {
+        const out = {};
+        VAR_INPUTS.forEach(inp => {
+            const n = inp.dataset.var;
+            out[n] = getComputedStyle(inp.dataset.target === 'stage' ? stage : slider)
+                        .getPropertyValue(n).trim();
+        });
+        // extras not tied to a single input
+        ['--pd-btn-border'].forEach(n => out[n] = getComputedStyle(slider).getPropertyValue(n).trim());
+        return out;
+    }
+    function save() {
+        localStorage.setItem(KEY, JSON.stringify({
+            vars: currentVars(),
+            offsets,
+            product: prodSel.value,
+            imgSide: document.getElementById('imgSide').value
+        }));
+    }
+    function load() {
+        const data = JSON.parse(localStorage.getItem(KEY) || 'null');
+        if (!data) return;
+        Object.entries(data.vars || {}).forEach(([n, v]) => {
+            if (!v) return;
+            const isStage = n === '--pd-page-bg';
+            setVar(n, v, isStage);
+        });
+        Object.assign(offsets, data.offsets || {});
+        Object.entries(offsets).forEach(([key, o]) => {
+            const el = slide.querySelector(`[data-el="${key}"]`);
+            if (el) el.style.transform = `translate(${o.x}px, ${o.y}px)`;
+        });
+        if (data.product != null) { prodSel.value = data.product; prodSel.dispatchEvent(new Event('change')); }
+        if (data.imgSide) { document.getElementById('imgSide').value = data.imgSide; applyImgSide(data.imgSide); }
+    }
+
+    function resyncAll() {
+        document.querySelectorAll('input[type="range"][data-var]').forEach(syncRange);
+        document.querySelectorAll('input[type="color"][data-var]').forEach(syncColor);
+    }
+
+    // ---- Reset ----
+    document.getElementById('btnReset').addEventListener('click', () => {
+        Object.entries(DEFAULTS).forEach(([n, v]) => setVar(n, v, n === '--pd-page-bg'));
+        setVar('--pd-btn-border', 'transparent');
+        Object.keys(offsets).forEach(k => delete offsets[k]);
+        slide.querySelectorAll('.drag').forEach(el => el.style.transform = '');
+        applyImgSide('right');
+        document.getElementById('imgSide').value = 'right';
+        resyncAll();
+        localStorage.removeItem(KEY);
+    });
+
+    // ---- Copy CSS ----
+    document.getElementById('btnCopy').addEventListener('click', async () => {
+        const vars = currentVars();
+        let css = '/* === Promo slider — paste into index.html ".promo-slider — ONE definition" === */\n';
+        css += '.promo-slider {\n';
+        Object.entries(vars).forEach(([n, v]) => {
+            if (n === '--pd-page-bg') return;   // page background is the studio's, not the slider's
+            css += `    ${n}: ${v};\n`;
+        });
+        css += '}\n';
+        const movedKeys = Object.keys(offsets).filter(k => offsets[k] && (offsets[k].x || offsets[k].y));
+        if (movedKeys.length) {
+            css += '\n/* dragged positions */\n';
+            const map = { company: '.promo-label', title: '.promo-title', desc: '.promo-desc', button: '.promo-readmore', image: '.promo-image' };
+            movedKeys.forEach(k => {
+                css += `.promo-slider ${map[k]} { transform: translate(${offsets[k].x}px, ${offsets[k].y}px); }\n`;
+            });
+        }
+        try {
+            await navigator.clipboard.writeText(css);
+            const b = document.getElementById('btnCopy');
+            const t = b.textContent; b.textContent = 'הועתק ✓';
+            setTimeout(() => b.textContent = t, 1400);
+        } catch (e) {
+            alert(css);
+        }
+    });
+
+    // ---- Boot ----
+    readDefaults();
+    resyncAll();
+    load();
+</script>
+</body>
+</html>
