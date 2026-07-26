@@ -1,724 +1,271 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <link rel="stylesheet" href="design-system.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VERO — Card Studio</title>
 
     <!--
-        A blank sheet for the product card.
-
-        Write the card's markup on the left and its CSS on the right; the preview
-        redraws as you type. The card is fed the same product shape the app uses, so
-        what you build here is what it looks like in the feed — one card, a row of
-        four, and the cart's wide row, all from the same code.
-
-        Nothing here touches the live site. When a card is right, say so and it gets
-        wired into product-card.css and the templates that render it.
-
-        Your work is kept in localStorage, so a reload holds it. "מאפס" clears the
-        sheet; "הכרטיס הנוכחי" loads the card the site ships today, to start from.
+        VISUAL editor for the product card (product-card.css — ONE definition for
+        every card on the site). No code: sizes, colours, spacing, icons, radius and
+        positions are controls on the right; the real card redraws live on the left.
+        "מצב הזזה" drags any element. "העתק CSS" copies a .product-card variable block.
+        Work is saved to localStorage.
     -->
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
-            background: #f6f5f3;
-            color: #111;
-            font-family: 'Playfair Display', Georgia, serif;
-            height: 100vh;
-            display: grid;
-            grid-template-rows: auto 1fr;
-            overflow: hidden;
+            background: #f6f5f3; color: #111;
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            height: 100vh; display: grid; grid-template-rows: auto minmax(0,1fr); overflow: hidden;
         }
 
-        /* ---- Head ---- */
-        .cs-head {
-            display: flex;
-            align-items: baseline;
-            gap: 18px;
-            flex-wrap: wrap;
-            padding: 18px 26px;
-            background: #fff;
-            border-bottom: 1px solid #e6e4de;
-        }
-        .cs-title {
-            font-family: 'Oswald', sans-serif;
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            text-transform: uppercase;
-        }
-        .cs-title span { color: #b3b3b3; }
-        .cs-sub { font-size: 13px; color: #8a8a8a; }
-        .cs-head .cs-tools { margin-inline-start: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+        .pd-head { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; padding: 14px 26px; background: #fff; border-bottom: 1px solid #e6e4de; }
+        .pd-title { font-size: 22px; font-weight: 700; text-transform: uppercase; }
+        .pd-title span { color: #b3b3b3; }
+        .pd-sub { font-size: 13px; color: #8a8a8a; font-family: 'Playfair Display', serif; }
+        .pd-head .pd-tools { margin-inline-start: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+        .pd-btn { font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; padding: 9px 14px; border: 1px solid #d8d5cc; border-radius: 6px; background: #fff; color: #111; cursor: pointer; }
+        .pd-btn:hover { background: #f0efeb; }
+        .pd-btn.dark { background: #22372B; border-color: #22372B; color: #fff; }
+        .pd-btn.on { background: #22372B; border-color: #22372B; color: #fff; }
 
-        .cs-btn {
-            font-family: 'Oswald', sans-serif;
-            font-size: 11px;
-            letter-spacing: 1.4px;
-            text-transform: uppercase;
-            padding: 9px 14px;
-            border: 1px solid #d8d5cc;
-            border-radius: 6px;
-            background: #fff;
-            color: #111;
-            cursor: pointer;
+        .pd-body { display: grid; grid-template-columns: minmax(0,1fr) 340px; min-height: 0; }
+        .pd-stage {
+            direction: ltr; overflow: auto; padding: 40px; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px) 0 0 / 24px 24px, var(--pd-page-bg, #f6f5f3);
         }
-        .cs-btn:hover { background: #f0efeb; }
-        .cs-btn.dark { background: #22372B; border-color: #22372B; color: #fff; }
-        .cs-btn.dark:hover { background: #2E4A3A; }
+        .pd-stage.moving .drag { outline: 1.5px dashed rgba(34,55,43,0.5); outline-offset: 3px; cursor: move; }
+        .card-frame { width: 300px; }
 
-        /* ---- The two halves ---- */
-        .cs-body {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-            min-height: 0;
-        }
-        @media (max-width: 900px) {
-            .cs-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr 1fr; }
-        }
+        .pd-controls { direction: rtl; overflow-y: auto; background: #fff; border-inline-start: 1px solid #e6e4de; padding: 6px 0 40px; }
+        .pd-group { border-bottom: 1px solid #eeece6; padding: 14px 18px; }
+        .pd-group h3 { font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: #555; margin-bottom: 12px; }
+        .pd-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+        .pd-row:last-child { margin-bottom: 0; }
+        .pd-row label { flex: 0 0 92px; font-size: 12px; color: #666; }
+        .pd-row input[type="range"] { flex: 1; min-width: 0; accent-color: #22372B; }
+        .pd-row input[type="color"] { width: 34px; height: 26px; padding: 0; border: 1px solid #d8d5cc; border-radius: 6px; background: #fff; cursor: pointer; }
+        .pd-row select { flex: 1; font: inherit; font-size: 12px; border: 1px solid #d8d5cc; border-radius: 6px; padding: 6px 8px; background: #fff; }
+        .pd-val { flex: 0 0 46px; font-size: 11px; color: #999; text-align: left; direction: ltr; }
+        .pd-hint { font-size: 11px; color: #a0a0a0; font-family: 'Playfair Display', serif; margin-top: 8px; }
 
-        /* ---- Stage ---- */
-        .cs-stage {
-            direction: ltr;
-            overflow: auto;
-            padding: 26px;
-            background:
-                linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px) 0 0 / 24px 24px,
-                #f6f5f3;
-        }
-        .cs-stage.dark { background: #191919; }
-        .cs-stage.dark .cs-caption { color: #777; }
+        /* =====================================================================
+           The product card — a variable-driven mirror of product-card.css so the
+           controls only set variables and the exported block is just variables.
+           ===================================================================== */
+        .product-card {
+            --card-ground: #eeedeb;
+            --pc-radius: 4px;
+            --pc-aspect: 0.6667;      /* width / height = 3 / 4.5 */
+            --row-1: 30px;
+            --row-2: 24px;
+            --foot-h: 70px;
+            --pc-img-pad: 8%;
+            --pc-emoji: 120px;
+            --pc-icon-color: #111;
+            --pc-seller-size: 22px;
+            --pc-seller-color: #111;
+            --pc-name-size: 18px;
+            --pc-name-color: #111;
+            --pc-price-size: 24px;
+            --pc-price-color: #111;
+            --pc-rating-size: 16px;
+            --pc-rating-color: #111;
+            --pc-rating-opacity: 0.75;
 
-        .cs-caption {
-            font-family: 'Oswald', sans-serif;
-            font-size: 10px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #9a9a9a;
-            margin: 0 0 12px;
+            position: relative;
+            aspect-ratio: 1 / calc(1 / var(--pc-aspect));
+            overflow: hidden; border-radius: var(--pc-radius);
+            background: var(--card-ground);
+            direction: ltr; display: block; color: #111;
         }
-        .cs-caption + * { margin-bottom: 34px; }
+        .product-image {
+            position: absolute; inset: 0 0 var(--foot-h) 0;
+            display: grid; place-items: center; padding: var(--pc-img-pad);
+            font-size: var(--pc-emoji); line-height: 1; overflow: visible;
+        }
+        .product-image .product-icon { position: absolute; top: 10px; width: 38px; height: 38px; display: grid; place-items: center; }
+        .product-image .product-icon.cart { right: 54px; }
+        .product-image .product-icon.heart { right: 10px; }
+        .product-image .product-icon svg { width: 24px; height: 24px; fill: none; stroke: var(--pc-icon-color); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
-        /* The row of four: the card as it lands in a real grid. */
-        .cs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(var(--card-w, 260px), 1fr));
-            gap: 22px;
+        .product-info {
+            position: absolute; inset: auto 0 0 0; z-index: 2; direction: ltr;
+            display: grid; grid-template-columns: minmax(0,1fr) auto; column-gap: 12px;
+            align-items: center; padding: 0 14px 14px;
         }
-        /* The single card, at the width the slider says. */
-        .cs-one { width: var(--card-w, 260px); }
-        /* Plain and on sale, side by side — the difference has to be visible at a
-           glance, not by scrolling between two rows. */
-        .cs-pair { display: flex; gap: 22px; flex-wrap: wrap; }
-        /* The cart's wide row. */
-        .cs-wide { width: 100%; max-width: 760px; }
-
-        /* ---- Editors ---- */
-        .cs-editors {
-            display: grid;
-            grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr);
-            border-inline-start: 1px solid #e6e4de;
-            background: #fff;
-            min-height: 0;
-        }
-        .cs-panehead {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            background: #fafaf8;
-            border-block: 1px solid #eceae4;
-            font-family: 'Oswald', sans-serif;
-            font-size: 11px;
-            letter-spacing: 1.6px;
-            text-transform: uppercase;
-            color: #555;
-        }
-        .cs-panehead small {
-            font-family: 'Oswald', sans-serif;
-            letter-spacing: 0.5px;
-            text-transform: none;
-            color: #a0a0a0;
-        }
-        .cs-code {
-            width: 100%;
-            height: 100%;
-            border: 0;
-            resize: none;
-            padding: 14px 16px;
-            font-family: 'Consolas', 'Menlo', monospace !important;
-            font-size: 13px;
-            line-height: 1.6;
-            direction: ltr;
-            text-align: left;
-            tab-size: 4;
-            outline: none;
-            background: #fff;
-            color: #1b1b1b;
-        }
-
-        /* ---- Controls strip ---- */
-        .cs-controls {
-            direction: rtl;
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            flex-wrap: wrap;
-            padding: 10px 26px;
-            background: #fff;
-            border-bottom: 1px solid #e6e4de;
-            font-family: 'Oswald', sans-serif;
-            font-size: 11px;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            color: #666;
-        }
-        .cs-controls label { display: flex; align-items: center; gap: 8px; }
-        .cs-controls select, .cs-controls input[type="range"] { font: inherit; }
-        .cs-controls select {
-            border: 1px solid #d8d5cc;
-            border-radius: 6px;
-            padding: 6px 8px;
-            background: #fff;
-        }
-        .cs-saved { color: #9a9a9a; }
+        .pc-right, .pc-left { display: contents; }
+        .product-seller { grid-area: 1/1; height: var(--row-1); display: flex; align-items: center; font-size: var(--pc-seller-size); font-weight: 400; letter-spacing: 0.4px; text-transform: uppercase; color: var(--pc-seller-color); }
+        .product-name   { grid-area: 2/1; height: var(--row-2); display: flex; align-items: center; font-size: var(--pc-name-size); font-weight: 400; letter-spacing: 0.6px; color: var(--pc-name-color); }
+        .product-price  { grid-area: 1/2; height: var(--row-1); display: flex; align-items: center; justify-content: flex-end; font-size: var(--pc-price-size); font-weight: 700; letter-spacing: 0.4px; color: var(--pc-price-color); }
+        .product-rating { grid-area: 2/2; height: var(--row-2); display: flex; align-items: center; justify-content: flex-end; font-size: var(--pc-rating-size); font-weight: 400; letter-spacing: 0.6px; color: var(--pc-rating-color); opacity: var(--pc-rating-opacity); }
+        .product-seller, .product-name, .product-rating, .product-price { margin: 0; min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     </style>
 </head>
 <body>
 
-<div class="cs-head">
-    <h1 class="cs-title"><span>/</span> Card Studio</h1>
-    <p class="cs-sub">גיליון ריק לכרטיס המוצר. כותבים משמאל, רואים מימין — שום דבר כאן לא נוגע באתר.</p>
-    <div class="cs-tools">
-        <button class="cs-btn" id="btnProposal">ההצעה</button>
-        <button class="cs-btn" id="btnPrev">הקודם שלי</button>
-        <button class="cs-btn" id="btnCurrent">הכרטיס הנוכחי</button>
-        <button class="cs-btn" id="btnBlank">מאפס</button>
-        <button class="cs-btn dark" id="btnCopy">העתק HTML + CSS</button>
+<div class="pd-head">
+    <h1 class="pd-title"><span>/</span> Card Studio</h1>
+    <p class="pd-sub">עורך ויזואלי לכרטיס המוצר — גדלים, צבעים, מרווחים, אייקונים, גרירה.</p>
+    <div class="pd-tools">
+        <button class="pd-btn" id="btnMove">מצב הזזה</button>
+        <button class="pd-btn" id="btnReset">איפוס</button>
+        <button class="pd-btn dark" id="btnCopy">העתק CSS</button>
     </div>
 </div>
 
-<div class="cs-body">
-    <!-- LEFT (in RTL: the visual side sits on the right of the code) -->
-    <div>
-        <div class="cs-controls">
-            <label>מוצר <select id="prodSel"></select></label>
-            <label>רוחב <input id="widthIn" type="range" min="180" max="420" value="260"><span id="widthOut">260px</span></label>
-            <label>תמונה
-                <select id="imgSel">
-                    <option value="cutout">PNG חתוך</option>
-                    <option value="emoji">אימוג׳י</option>
-                    <option value="photo">תצלום מלא</option>
-                </select>
-            </label>
-            <label>רקע
-                <select id="bgSel">
-                    <option value="light">בהיר</option>
-                    <option value="dark">כהה</option>
-                </select>
-            </label>
-            <span class="cs-saved" id="savedOut"></span>
+<div class="pd-body">
+    <div class="pd-stage" id="stage">
+        <div class="card-frame">
+            <a class="product-card" id="card">
+                <div class="product-image drag" data-el="image">
+                    👗
+                    <span class="product-icon cart" data-el="icons"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path></svg></span>
+                    <span class="product-icon heart"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></span>
+                </div>
+                <div class="product-info">
+                    <div class="pc-right">
+                        <div class="product-seller drag" data-el="seller">Designer</div>
+                        <div class="product-name drag" data-el="name">Cocktail Dress</div>
+                        <div class="product-rating drag" data-el="rating">★ 4.8</div>
+                    </div>
+                    <div class="pc-left">
+                        <div class="product-price drag" data-el="price">₪180</div>
+                    </div>
+                </div>
+            </a>
         </div>
-        <div class="cs-stage" id="stage"></div>
     </div>
 
-    <!-- RIGHT: the two code panes -->
-    <div class="cs-editors">
-        <div class="cs-panehead">HTML <small>— {{name}} {{price}} {{oldPrice}} {{discount}} {{seller}} {{store}} {{type}} {{category}} {{rating}} {{image}}</small></div>
-        <textarea class="cs-code" id="htmlIn" spellcheck="false"></textarea>
-        <div class="cs-panehead">CSS <small>— ממודר לכרטיס בלבד</small></div>
-        <textarea class="cs-code" id="cssIn" spellcheck="false"></textarea>
+    <div class="pd-controls" id="controls">
+        <div class="pd-group">
+            <h3>מוצר לתצוגה</h3>
+            <div class="pd-row"><label>מוצר</label><select id="prodSel"></select></div>
+        </div>
+
+        <div class="pd-group">
+            <h3>מסגרת הכרטיס</h3>
+            <div class="pd-row"><label>רקע כרטיס</label><input type="color" data-var="--card-ground"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>רקע דף</label><input type="color" data-var="--pd-page-bg" data-target="stage"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>עיגול פינות</label><input type="range" min="0" max="30" data-var="--pc-radius" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>יחס גובה</label><input type="range" min="0.4" max="1" step="0.01" data-var="--pc-aspect" data-unit=""><span class="pd-val"></span></div>
+            <div class="pd-row"><label>גובה כותרת</label><input type="range" min="40" max="120" data-var="--foot-h" data-unit="px"><span class="pd-val"></span></div>
+        </div>
+
+        <div class="pd-group">
+            <h3>תמונה</h3>
+            <div class="pd-row"><label>גודל אימוג׳י</label><input type="range" min="60" max="220" data-var="--pc-emoji" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>ריפוד</label><input type="range" min="0" max="24" data-var="--pc-img-pad" data-unit="%"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>צבע אייקונים</label><input type="color" data-var="--pc-icon-color"><span class="pd-val"></span></div>
+        </div>
+
+        <div class="pd-group">
+            <h3>שם החברה</h3>
+            <div class="pd-row"><label>גודל</label><input type="range" min="12" max="34" data-var="--pc-seller-size" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>צבע</label><input type="color" data-var="--pc-seller-color"><span class="pd-val"></span></div>
+        </div>
+        <div class="pd-group">
+            <h3>שם המוצר</h3>
+            <div class="pd-row"><label>גודל</label><input type="range" min="10" max="28" data-var="--pc-name-size" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>צבע</label><input type="color" data-var="--pc-name-color"><span class="pd-val"></span></div>
+        </div>
+        <div class="pd-group">
+            <h3>מחיר</h3>
+            <div class="pd-row"><label>גודל</label><input type="range" min="14" max="40" data-var="--pc-price-size" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>צבע</label><input type="color" data-var="--pc-price-color"><span class="pd-val"></span></div>
+        </div>
+        <div class="pd-group">
+            <h3>דירוג</h3>
+            <div class="pd-row"><label>גודל</label><input type="range" min="10" max="24" data-var="--pc-rating-size" data-unit="px"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>צבע</label><input type="color" data-var="--pc-rating-color"><span class="pd-val"></span></div>
+            <div class="pd-row"><label>שקיפות</label><input type="range" min="0" max="1" step="0.05" data-var="--pc-rating-opacity" data-unit=""><span class="pd-val"></span></div>
+        </div>
+
+        <div class="pd-group"><p class="pd-hint">מצב הזזה: לחצו וגררו כל רכיב. הכל נשמר אוטומטית. "העתק CSS" נותן בלוק ‎.product-card‎ להדבקה ב-product-card.css.</p></div>
     </div>
 </div>
 
 <script>
-    /* The products the studio draws with — the same shape the app's cards get. */
     const PRODUCTS = [
-        // `type` is the seller's own words for the piece — the open field in the
-        // upload form. Deliberately uneven here: short, long, Hebrew and English,
-        // because that is what the card will actually be handed.
-        { name: 'Navy Blazer',        price: '₪320.00', oldPrice: '₪420.00', discount: '-24%', seller: 'Ralph Lauren', store: 'Dana K.',   category: 'Smart Casual', type: 'בלייזר צמר',       rating: '4.7', icon: '👔' },
-        { name: 'Classic Denim Jacket', price: '₪89.99', oldPrice: '₪140.00', discount: '-36%', seller: "Levi's",      store: 'Yuval M.',  category: 'Vintage 90s',  type: 'מעיל עור',          rating: '4.5', icon: '🧥' },
-        { name: 'Pants Classic',      price: '₪190.90', oldPrice: '₪250.00', discount: '-24%', seller: 'Vero Select',  store: 'Noa B.',    category: 'Every Day',    type: 'מכנסי דגמ״ח רחבים', rating: '4.6', icon: '👖' },
-        { name: 'Watercolor Landscape', price: '₪290.00', oldPrice: '₪360.00', discount: '-19%', seller: 'Watercolor Studio', store: 'Studio 6', category: 'Watercolor', type: 'מכנס וינטג׳',   rating: '4.9', icon: '💧' }
+        { seller: 'Designer',  name: 'Cocktail Dress', price: '₪180', rating: '★ 4.8', icon: '👗' },
+        { seller: "Levi's",    name: 'Denim Jacket',   price: '₪89',  rating: '★ 4.6', icon: '🧥' },
+        { seller: 'Ralph L.',  name: 'Navy Blazer',    price: '₪320', rating: '★ 4.9', icon: '👔' },
+        { seller: 'Vero',      name: 'Classic Pants',  price: '₪190', rating: '★ 4.5', icon: '👖' }
     ];
+    const card  = document.getElementById('card');
+    const stage = document.getElementById('stage');
+    const KEY = 'veroCardStudio';
+    const VAR_INPUTS = [...document.querySelectorAll('[data-var]')];
+    const DEFAULTS = {};
 
-    /* A blank sheet — enough structure to see something, nothing decided. */
-    const BLANK_HTML = `<article class="card">
-    <div class="card-media">{{image}}</div>
-    <div class="card-body">
-        <span class="card-seller">{{seller}}</span>
-        <h3 class="card-name">{{name}}</h3>
-        <span class="card-price">{{price}}</span>
-    </div>
-</article>`;
+    function tgt(inp){ return inp.dataset.target === 'stage' ? stage : card; }
+    function readDefaults(){ const cs = getComputedStyle(card); VAR_INPUTS.forEach(i => DEFAULTS[i.dataset.var] = cs.getPropertyValue(i.dataset.var).trim()); DEFAULTS['--pd-page-bg']='#f6f5f3'; }
+    function setVar(n,v,st){ (st?stage:card).style.setProperty(n,v); }
+    function showVal(inp,t){ const v=inp.parentElement.querySelector('.pd-val'); if(v) v.textContent=t; }
 
-    const BLANK_CSS = `.card {
-    background: #fff;
-}
+    function syncRange(inp){ const raw=getComputedStyle(tgt(inp)).getPropertyValue(inp.dataset.var).trim(); const n=parseFloat(raw); if(!isNaN(n)) inp.value=n; showVal(inp, inp.value+(inp.dataset.unit||'')); }
+    function syncColor(inp){ const hex=toHex(getComputedStyle(tgt(inp)).getPropertyValue(inp.dataset.var).trim()); if(hex) inp.value=hex; showVal(inp, inp.value); }
+    function toHex(c){ if(!c) return null; if(c[0]==='#'){ return c.length===4 ? '#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3] : c.slice(0,7); } const m=c.match(/rgba?\(([^)]+)\)/); if(!m) return null; const [r,g,b]=m[1].split(',').map(x=>parseInt(x)); return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join(''); }
 
-.card-media {
-    aspect-ratio: 4 / 5;
-    display: grid;
-    place-items: center;
-    font-size: 64px;
-}
+    document.querySelectorAll('input[type="range"][data-var]').forEach(inp => inp.addEventListener('input', () => { const v=inp.value+(inp.dataset.unit||''); setVar(inp.dataset.var, v, inp.dataset.target==='stage'); showVal(inp,v); save(); }));
+    document.querySelectorAll('input[type="color"][data-var]').forEach(inp => inp.addEventListener('input', () => { setVar(inp.dataset.var, inp.value, inp.dataset.target==='stage'); showVal(inp, inp.value); save(); }));
 
-.card-body {
-    padding: 14px;
-}`;
-
-    /* The card the site ships today, to start from rather than from nothing. */
-    const CURRENT_HTML = `<a class="product-card">
-    <div class="product-image">{{image}}</div>
-    <div class="product-info">
-        <div class="pc-left">
-            <div class="product-price">{{price}}</div>
-        </div>
-        <div class="pc-right">
-            <div class="product-seller">{{seller}}</div>
-            <div class="product-name">{{name}}</div>
-            <div class="product-rating">★ {{rating}}</div>
-        </div>
-    </div>
-</a>`;
-
-    const CURRENT_CSS = `/* The live card, trimmed to what shapes it. The full rule set is in
-   product-card.css — edit freely, this copy is only a starting point. */
-.product-card {
-    background: #efece4;
-    border: 1px solid #e3dfd5;
-    border-radius: 10px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.10);
-}
-.product-image {
-    aspect-ratio: 4 / 5;
-    display: grid;
-    place-items: center;
-    font-size: 72px;
-    background: #efece4;
-}
-.product-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 12px;
-    padding: 14px 16px 16px;
-}
-.pc-right { text-align: right; }
-.product-seller {
-    font-family: 'Playfair Display', serif;
-    font-size: 12px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: #6b6b6b;
-}
-.product-name {
-    font-family: 'Oswald', sans-serif;
-    font-size: 14px;
-    color: #111;
-}
-.product-rating { font-size: 11px; color: #999; }
-.product-price {
-    font-family: 'Playfair Display', serif;
-    font-size: 20px;
-    color: #111;
-}`;
-
-    /* ---- The proposal ----
-       Read straight off the description: the whole card is one image at 3:4, the
-       copy sits inside it in black, and the two controls sit in the top corner.
-         bottom-left   company name, and the product type in bold under it
-         bottom-right  price on the same line as the company, seller under it
-         top-right     cart and wishlist
-       Everything is a plain number or a plain colour — nothing clever to unpick
-       when a line lands wrong. */
-    const PROPOSAL_HTML = `<article class="vcard">
-    <div class="vcard-media">{{image}}</div>
-
-    <!-- Only on a card marked .is-sale — otherwise it is not in the picture. -->
-    <span class="vcard-badge">{{discount}}</span>
-
-    <!-- Top right: the two controls, on the image. -->
-    <div class="vcard-tools">
-        <button class="vcard-tool" aria-label="הוסף לעגלה">
-            <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.6 12.4a1.8 1.8 0 0 0 1.8 1.4h8.4a1.8 1.8 0 0 0 1.8-1.4L22 7H6"/></svg>
-        </button>
-        <button class="vcard-tool" aria-label="הוסף לרשימת משאלות">
-            <svg viewBox="0 0 24 24"><path d="M12 20.5 4.2 12.9a4.6 4.6 0 0 1 0-6.6 4.6 4.6 0 0 1 6.5 0l1.3 1.3 1.3-1.3a4.6 4.6 0 0 1 6.5 0 4.6 4.6 0 0 1 0 6.6z"/></svg>
-        </button>
-    </div>
-
-    <!-- Bottom: a fixed 2x2 template, not two columns that size themselves.
-         Row 1 is company | price, row 2 is type | seller. The four cells are
-         siblings in one grid, so the rows are shared and the two sides can
-         never drift apart, whatever the copy is. -->
-    <div class="vcard-foot">
-        <h3 class="vcard-company">{{seller}}</h3>
-        <span class="vcard-price">{{price}}</span>
-        <p class="vcard-type">{{type}}</p>
-        <span class="vcard-seller">{{store}}</span>
-        <!-- On sale, this takes the seller's cell: the price that was, struck out,
-             directly under the price that is. -->
-        <s class="vcard-was">{{oldPrice}}</s>
-    </div>
-</article>`;
-
-    const PROPOSAL_CSS = `/* The card is one flat off-white field, 3 wide to 4 tall. The product is a
-   cut-out PNG standing on it — no photograph edge, no second background, so a
-   wall of these reads as one surface with objects on it. */
-.vcard {
-    --card-ground: #eeedeb;      /* the whitish grey the whole card is made of */
-    position: relative;
-    aspect-ratio: 3 / 4.5;       /* taller than wide — the piece gets the room */
-    overflow: hidden;
-    border-radius: 4px;
-    background: var(--card-ground);
-    cursor: pointer;
-    color: #111;
-    direction: ltr;
-}
-
-/* The product floats in the upper part of the field, clear of the copy at the
-   bottom. contain, never cover: a cut-out must not be cropped. */
-.vcard-media {
-    position: absolute;
-    inset: 0 0 46px 0;           /* the bottom strip belongs to the copy */
-    display: grid;
-    place-items: center;
-    padding: 14%;
-    font-size: 96px;             /* the emoji stand-in */
-}
-.vcard-media img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;         /* the whole piece, always */
-    display: block;
-}
-
-/* ---- Top right: cart and wishlist ---- */
-.vcard-tools {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    display: flex;
-    gap: 8px;
-    z-index: 2;
-}
-/* The controls are the drawing and nothing else — no disc behind them, no fill
-   inside them. Just the line. */
-.vcard-tool {
-    width: 30px;
-    height: 30px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-    transition: transform 0.2s, opacity 0.2s;
-}
-.vcard-tool:hover { transform: scale(1.12); }
-.vcard-tool svg {
-    width: 19px;
-    height: 19px;
-    fill: none;                  /* hollow: the outline carries it */
-    stroke: #111;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-/* ---- Bottom: a template, not a layout ----
-   Two rows of fixed height, so every card puts its title on the same line as
-   every other card's title and its subtitle on the same line as every other's.
-   A long company name is cut with an ellipsis rather than allowed to wrap —
-   wrapping is what pushed the second line down and made the cards uneven. */
-.vcard-foot {
-    position: absolute;
-    inset: auto 0 0 0;
-    z-index: 2;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;   /* copy | figure */
-    grid-template-rows: var(--row-1) var(--row-2);
-    column-gap: 12px;
-    align-items: center;
-    padding: 0 14px 14px;
-}
-
-/* The two line boxes. Change these and both sides move together. */
-.vcard { --row-1: 20px; --row-2: 16px; }
-
-/* One line, always. Every cell in the template carries it. */
-.vcard-foot > * {
-    margin: 0;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1;
-}
-
-/* The copy is quiet — one weight, no emphasis. The price is the only thing on
-   the card that is allowed to be loud. */
-
-/* Row 1, left: the company. */
-.vcard-company {
-    font-family: 'Oswald', sans-serif;
-    font-size: 15px;
-    font-weight: 400;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-}
-/* Row 1, right: the price, on the company's line — the one bold thing. Same
-   face as the titles, so the card is set in a single voice. */
-.vcard-price {
-    font-family: 'Oswald', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    text-align: right;
-}
-/* Row 2, left: what the piece is. */
-.vcard-type {
-    font-family: 'Oswald', sans-serif;
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: 0.6px;
-}
-/* ---- The sale state ----
-   The same card, marked .is-sale. Nothing moves: the old price sits beside the
-   new one on the row that already exists, and the badge is the only thing added
-   to the field. A card on sale and a card not on sale are the same object. */
-.vcard-badge,
-.vcard-was { display: none; }
-
-.vcard.is-sale .vcard-badge {
-    display: block;
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 2;
-    font-family: 'Oswald', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
-    color: #8f2230;              /* the one place a colour is spent */
-}
-/* The figure being charged, in the sale's own red. */
-.vcard.is-sale .vcard-price { color: #c0392b; }
-
-/* ---- The blinking frame ----
-   A red hairline around the card that fades in and out. Drawn on a
-   pseudo-element over the card, so the frame never moves the layout by a pixel.
-   It breathes rather than flashes: the fade is eased at both ends, so a grid
-   full of sale cards does not strobe. */
-.vcard.is-sale::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    border: 1px solid #c0392b;
-    border-radius: inherit;
-    animation: vcardBlink 2s ease-in-out infinite;
-}
-/* Held back: the frame never leaves, it only breathes. No glow — a lit haze
-   inside the card was reading as an alert rather than a price. */
-@keyframes vcardBlink {
-    0%, 100% { opacity: 0.4; }
-    50%      { opacity: 1; }
-}
-/* A frame that never stops is a lot to sit next to. */
-@media (prefers-reduced-motion: reduce) {
-    .vcard.is-sale::before { animation: none; }
-}
-
-/* The price that was, in the seller's cell — directly under the price that is,
-   so the two figures read as one column: new on top, old beneath it. The seller
-   steps aside on a sale card; the template keeps its two rows either way. */
-.vcard.is-sale .vcard-seller { display: none; }
-.vcard.is-sale .vcard-was {
-    display: block;
-    grid-column: 2;
-    grid-row: 2;
-    font-family: 'Oswald', sans-serif;
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: 0.4px;
-    text-align: right;
-    opacity: 0.55;
-    /* The strike is the red — a line drawn through the old figure. */
-    text-decoration: line-through;
-    text-decoration-color: #c0392b;
-    text-decoration-thickness: 1.5px;
-}
-
-/* Row 2, right: the seller. */
-.vcard-seller {
-    font-family: 'Oswald', sans-serif;
-    font-size: 11px;
-    font-weight: 400;
-    letter-spacing: 0.6px;
-    text-align: right;
-    opacity: 0.75;
-}`;
-
-    const state = { product: 0, width: 260, images: 'cutout', bg: 'light' };
-    const htmlIn = document.getElementById('htmlIn');
-    const cssIn  = document.getElementById('cssIn');
-    const stage  = document.getElementById('stage');
-
-    function imageFor(p) {
-        // What the card will actually be fed: a transparent PNG of the piece,
-        // standing on the card's ground. Drawn here rather than fetched, so the
-        // studio shows the real case — object with alpha, no photo edge.
-        if (state.images === 'cutout') {
-            return `<img src="${cutoutStandIn(p)}" alt="${p.name}">`;
-        }
-        if (state.images === 'photo') {
-            const seed = encodeURIComponent(p.name);
-            return `<img src="https://picsum.photos/seed/vero-${seed}/700/900" alt="${p.name}"
-                         style="width:100%;height:100%;object-fit:cover;display:block">`;
-        }
-        return p.icon;
-    }
-
-    /* A stand-in for a real cut-out: the piece's emoji drawn onto a transparent
-       square, exactly what cutout.js hands the card. Cached per product. */
-    const cutoutCache = {};
-    function cutoutStandIn(p) {
-        if (cutoutCache[p.name]) return cutoutCache[p.name];
-        const c = document.createElement('canvas');
-        c.width = c.height = 600;
-        const ctx = c.getContext('2d');          // left transparent on purpose
-        ctx.font = '460px serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(p.icon, 300, 320);
-        return (cutoutCache[p.name] = c.toDataURL('image/png'));
-    }
-
-    // The tokens are the only contract between the markup and the product.
-    function fill(tpl, p) {
-        return tpl
-            .replace(/\{\{name\}\}/g,     p.name)
-            .replace(/\{\{price\}\}/g,    p.price)
-            .replace(/\{\{seller\}\}/g,   p.seller)
-            .replace(/\{\{store\}\}/g,    p.store)
-            .replace(/\{\{category\}\}/g, p.category)
-            // What the seller typed the piece is — free text from the upload form,
-            // not one of the app's categories.
-            .replace(/\{\{type\}\}/g,     p.type)
-            .replace(/\{\{rating\}\}/g,   p.rating)
-            .replace(/\{\{oldPrice\}\}/g, p.oldPrice)
-            .replace(/\{\{discount\}\}/g, p.discount)
-            .replace(/\{\{image\}\}/g,    imageFor(p));
-    }
-
-    function render() {
-        const p = PRODUCTS[state.product];
-        const one = fill(htmlIn.value, p);
-        // Four different products in the grid: a card only works if it survives a
-        // long name next to a short one.
-        const many = PRODUCTS.map(q => fill(htmlIn.value, q)).join('');
-        // The sale row is the very same markup with the card marked. If the root
-        // class is renamed in the HTML pane, mark it by hand instead.
-        const asSale = (html) => html.replace('class="vcard"', 'class="vcard is-sale"');
-        const sale = asSale(one);
-        const saleMany = PRODUCTS.map(q => asSale(fill(htmlIn.value, q))).join('');
-
-        stage.classList.toggle('dark', state.bg === 'dark');
-        stage.style.setProperty('--card-w', state.width + 'px');
-        stage.innerHTML = `
-            <style id="cardCSS">${cssIn.value}</style>
-            <p class="cs-caption">One card · ${state.width}px · plain and on sale</p>
-            <div class="cs-pair"><div class="cs-one">${one}</div><div class="cs-one">${sale}</div></div>
-            <p class="cs-caption">In the grid · four products</p>
-            <div class="cs-grid">${many}</div>
-            <p class="cs-caption">On sale · same card, marked</p>
-            <div class="cs-grid">${saleMany}</div>
-            <p class="cs-caption">Wide row · cart &amp; wishlist</p>
-            <div class="cs-wide">${one}</div>`;
+    const prodSel = document.getElementById('prodSel');
+    prodSel.innerHTML = PRODUCTS.map((p,i)=>`<option value="${i}">${p.seller} — ${p.name}</option>`).join('');
+    prodSel.addEventListener('change', e => {
+        const p = PRODUCTS[+e.target.value];
+        card.querySelector('.product-seller').textContent = p.seller;
+        card.querySelector('.product-name').textContent   = p.name;
+        card.querySelector('.product-price').textContent  = p.price;
+        card.querySelector('.product-rating').textContent = p.rating;
+        card.querySelector('.product-image').firstChild.nodeValue = p.icon;
         save();
+    });
+
+    // Move mode
+    const offsets = {}; let moving=false, dragEl=null, sx=0, sy=0, bx=0, by=0;
+    document.getElementById('btnMove').addEventListener('click', function(){ moving=!moving; this.classList.toggle('on',moving); stage.classList.toggle('moving',moving); });
+    card.querySelectorAll('.drag').forEach(el => el.addEventListener('mousedown', e => { if(!moving) return; e.preventDefault(); dragEl=el; const o=offsets[el.dataset.el]||{x:0,y:0}; bx=o.x; by=o.y; sx=e.clientX; sy=e.clientY; }));
+    window.addEventListener('mousemove', e => { if(!dragEl) return; const k=dragEl.dataset.el; const x=bx+(e.clientX-sx), y=by+(e.clientY-sy); offsets[k]={x,y}; dragEl.style.transform=`translate(${x}px,${y}px)`; });
+    window.addEventListener('mouseup', () => { if(dragEl){ dragEl=null; save(); } });
+
+    function currentVars(){ const o={}; VAR_INPUTS.forEach(i=>o[i.dataset.var]=getComputedStyle(tgt(i)).getPropertyValue(i.dataset.var).trim()); return o; }
+    function save(){ localStorage.setItem(KEY, JSON.stringify({ vars: currentVars(), offsets, product: prodSel.value })); }
+    function load(){
+        const d = JSON.parse(localStorage.getItem(KEY)||'null'); if(!d) return;
+        Object.entries(d.vars||{}).forEach(([n,v])=>{ if(v) setVar(n,v,n==='--pd-page-bg'); });
+        Object.assign(offsets, d.offsets||{});
+        Object.entries(offsets).forEach(([k,o])=>{ const el=card.querySelector(`[data-el="${k}"]`); if(el) el.style.transform=`translate(${o.x}px,${o.y}px)`; });
+        if(d.product!=null){ prodSel.value=d.product; prodSel.dispatchEvent(new Event('change')); }
     }
+    function resyncAll(){ document.querySelectorAll('input[type="range"][data-var]').forEach(syncRange); document.querySelectorAll('input[type="color"][data-var]').forEach(syncColor); }
 
-    /* ---- What you wrote, kept ---- */
-    function save() {
-        localStorage.setItem('veroCardStudio', JSON.stringify({ html: htmlIn.value, css: cssIn.value }));
-        document.getElementById('savedOut').textContent = 'נשמר ' + new Date().toLocaleTimeString('he-IL');
-    }
-    function load(html, css) { htmlIn.value = html; cssIn.value = css; render(); }
+    document.getElementById('btnReset').addEventListener('click', () => {
+        Object.entries(DEFAULTS).forEach(([n,v])=>setVar(n,v,n==='--pd-page-bg'));
+        Object.keys(offsets).forEach(k=>delete offsets[k]);
+        card.querySelectorAll('.drag').forEach(el=>el.style.transform='');
+        resyncAll(); localStorage.removeItem(KEY);
+    });
 
-    const saved = JSON.parse(localStorage.getItem('veroCardStudio') || 'null');
-    // The proposal is shown once, the first time this version of the studio opens.
-    // Whatever was on the sheet before is kept under its own key, so nothing that
-    // was drawn by hand is lost — "המקודם" puts it back.
-    if (localStorage.getItem('veroCardStudioSeen') !== 'proposal-12') {
-        if (saved) localStorage.setItem('veroCardStudioPrev', JSON.stringify(saved));
-        localStorage.setItem('veroCardStudioSeen', 'proposal-12');
-        load(PROPOSAL_HTML, PROPOSAL_CSS);
-    } else {
-        load(saved ? saved.html : PROPOSAL_HTML, saved ? saved.css : PROPOSAL_CSS);
-    }
+    document.getElementById('btnCopy').addEventListener('click', async () => {
+        const vars = currentVars();
+        let css = '/* === Product card — paste into product-card.css ".product-card" === */\n.product-card {\n';
+        Object.entries(vars).forEach(([n,v])=>{ if(n==='--pd-page-bg') return; css += `    ${n}: ${v};\n`; });
+        css += '}\n';
+        const map = { image:'.product-image', seller:'.product-seller', name:'.product-name', price:'.product-price', rating:'.product-rating' };
+        const moved = Object.keys(offsets).filter(k=>offsets[k]&&(offsets[k].x||offsets[k].y));
+        if(moved.length){ css += '\n/* dragged positions */\n'; moved.forEach(k=>{ css += `.product-card ${map[k]} { transform: translate(${offsets[k].x}px, ${offsets[k].y}px); }\n`; }); }
+        try { await navigator.clipboard.writeText(css); const b=document.getElementById('btnCopy'); const t=b.textContent; b.textContent='הועתק ✓'; setTimeout(()=>b.textContent=t,1400); }
+        catch(e){ alert(css); }
+    });
 
-    /* ---- Wiring ---- */
-    htmlIn.addEventListener('input', render);
-    cssIn.addEventListener('input', render);
-
-    document.getElementById('btnBlank').onclick    = () => load(BLANK_HTML, BLANK_CSS);
-    document.getElementById('btnProposal').onclick = () => load(PROPOSAL_HTML, PROPOSAL_CSS);
-    document.getElementById('btnPrev').onclick = () => {
-        const prev = JSON.parse(localStorage.getItem('veroCardStudioPrev') || 'null');
-        if (prev) load(prev.html, prev.css);
-        else document.getElementById('savedOut').textContent = 'אין גרסה קודמת שמורה';
-    };
-    document.getElementById('btnCurrent').onclick = () => load(CURRENT_HTML, CURRENT_CSS);
-    document.getElementById('btnCopy').onclick = async () => {
-        await navigator.clipboard.writeText(
-            '<!-- HTML -->\n' + htmlIn.value + '\n\n/* CSS */\n' + cssIn.value);
-        document.getElementById('savedOut').textContent = 'הועתק ללוח';
-    };
-
-    const sel = document.getElementById('prodSel');
-    sel.innerHTML = PRODUCTS.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
-    sel.onchange = e => { state.product = +e.target.value; render(); };
-
-    const widthIn = document.getElementById('widthIn');
-    widthIn.oninput = e => {
-        state.width = +e.target.value;
-        document.getElementById('widthOut').textContent = state.width + 'px';
-        render();
-    };
-    document.getElementById('imgSel').onchange = e => { state.images = e.target.value; render(); };
-    document.getElementById('bgSel').onchange  = e => { state.bg = e.target.value; render(); };
-
-    // Tab types a tab instead of leaving the pane.
-    [htmlIn, cssIn].forEach(box => box.addEventListener('keydown', e => {
-        if (e.key !== 'Tab') return;
-        e.preventDefault();
-        const s = box.selectionStart;
-        box.value = box.value.slice(0, s) + '    ' + box.value.slice(box.selectionEnd);
-        box.selectionStart = box.selectionEnd = s + 4;
-        render();
-    }));
+    readDefaults(); resyncAll(); load();
 </script>
 </body>
 </html>
