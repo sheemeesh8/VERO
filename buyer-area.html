@@ -501,6 +501,26 @@
         @media (max-width: 1100px) { .dh-cards { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 700px)  { .dh-cards { grid-template-columns: repeat(2, 1fr); } }
 
+        /* Cart CTA card: same grid cell as a product card, framed in black, with a
+           button through to the full cart and a short blurb. */
+        .dh-cart-cta {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 14px; height: 100%; box-sizing: border-box;
+            border: 2px solid #000; border-radius: 4px; padding: 24px 18px;
+            text-align: center; text-decoration: none; color: #111;
+            transition: background 0.2s ease;
+        }
+        .dh-cart-cta:hover { background: #faf9f7; }
+        .dh-cta-icon { font-size: 40px; line-height: 1; }
+        .dh-cta-title { font-size: 16px; font-weight: 800; letter-spacing: 0.3px; }
+        .dh-cta-text { font-size: 13px; color: #6c6c6c; line-height: 1.5; }
+        .dh-cta-btn {
+            margin-top: 6px; background: #000; color: #fff;
+            font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 12px 18px; border-radius: 2px;
+        }
+        .dh-cart-cta:hover .dh-cta-btn { background: #222; }
+
         /* A listing card carries its status underneath the product card. */
         .dh-listing { display: flex; flex-direction: column; gap: 10px; }
         .dh-listing-foot {
@@ -863,6 +883,33 @@
                 `<div class="dh-cards">` + items.slice(0, 5).map(miniCardHTML).join('') + `</div>`;
         }
 
+        // Fisher–Yates pick of `n` random items.
+        function pickRandom(arr, n) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a.slice(0, n);
+        }
+
+        // The cart's own detail: three random pieces from the cart plus a framed
+        // CTA card that leads to the full cart.
+        function cartCtaCardHTML() {
+            return `<a class="dh-cart-cta" href="index.html?open=cart">
+                <div class="dh-cta-icon">🛒</div>
+                <div class="dh-cta-title">עגלת הקניות שלך</div>
+                <div class="dh-cta-text">כל הפריטים שאספת מחכים לך במקום אחד — מוכנים להשלמת הרכישה.</div>
+                <span class="dh-cta-btn">לעגלת הקניות המלאה</span>
+            </a>`;
+        }
+        function cartDetail() {
+            const items = recentItems('vero_cart', sampleCart);
+            const picks = pickRandom(items, 3);
+            return `<h3 class="dh-detail-title">המוצרים בעגלה</h3>` +
+                `<div class="dh-cards">` + picks.map(miniCardHTML).join('') + cartCtaCardHTML() + `</div>`;
+        }
+
         // Pool of items that could have been purchased, and a deterministic
         // per-month selection so each month shows a stable, distinct product list.
         const purchasePool = [...sampleCart, ...sampleWishlist];
@@ -1022,7 +1069,7 @@
                 cta: 'למעבר לעגלה',
                 image: () => peekHTML(recentItems('vero_cart', sampleCart)),
                 count: () => [recentItems('vero_cart', sampleCart).length, 'פריטים בעגלה'],
-                detail: () => cardsBlock('המוצרים בעגלה', recentItems('vero_cart', sampleCart)),
+                detail: cartDetail,
             },
             {
                 tab: 'רשימת משאלות',
