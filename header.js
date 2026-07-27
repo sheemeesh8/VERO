@@ -23,7 +23,7 @@
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['account', 'wishlist', 'cart', 'chats', 'mode'];
+    const ICON_ORDER = ['mode', 'account', 'cart', 'chats', 'menu'];
     const ICON_ORDER_KEY = 'vero_header_icon_order';
 
     function currentIconOrder() {
@@ -755,11 +755,59 @@
         #siteHeader.scrolled.over-dark .hdr-mode-pair .toggle-category::before { background: #fff !important; }
         #siteHeader.scrolled.over-dark .hdr-mode-pair .upload-plus { color: #fff !important; border-color: #fff !important; }
 
+        /* ===== Logo on the right, controls on the left ===== */
+        #siteHeader .header-right { flex: 0 0 auto; justify-content: flex-start; gap: 26px; }
+        @media (min-width: 901px) {
+            body:not([data-sticky="plain"]) #siteHeader .header-right {
+                left: 40px; right: auto; justify-content: flex-start;
+            }
+            body:not([data-sticky="plain"]) #siteHeader .logo {
+                left: auto; right: 58px;
+            }
+        }
+        @media (max-width: 768px) {
+            #siteHeader .header-right { order: 1; flex: 0 0 auto; }
+            #siteHeader .logo { order: 2; }
+        }
 `;
 
     // ---- Markup (identical everywhere) ----
     const MARKUP = `
         <div class="header-container">
+            <div class="header-right">
+                <a class="vero-hamburger" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu">
+                    <span></span><span></span><span></span>
+                </a>
+                <span class="hdr-mode-pair" data-icon="mode">
+                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
+                        <span class="seg active" id="segArt">Art</span>
+                        <span class="seg" id="segFashion">Fashion</span>
+                    </div>
+                    <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
+                </span>
+                <button class="icon-btn" data-icon="account" title="My Account" onclick="openBuyerArea()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" data-fill>
+                        <circle cx="12" cy="8" r="4.2"/>
+                        <path d="M12 13.5c-4.5 0-8.2 2.9-8.2 6.5h16.4c0-3.6-3.7-6.5-8.2-6.5z"/>
+                    </svg>
+                </button>
+                <span class="icon-wrap" data-icon="cart">
+                    <button class="icon-btn" title="Cart" onclick="openCart()">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke-width: 1.5;">
+                            <path d="M6 6h15l-1.5 9h-12z" fill="none"/>
+                            <path d="M6 6L5 2H2" fill="none"/>
+                            <circle cx="9" cy="20" r="1.4" data-fill/>
+                            <circle cx="17" cy="20" r="1.4" data-fill/>
+                        </svg>
+                    </button>
+                    <span class="badge" id="cartBadge">0</span>
+                </span>
+                <button class="icon-btn" data-icon="chats" title="Deal Chats" onclick="vchatOpenInbox()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"></path>
+                    </svg>
+                </button>
+            </div>
             <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.png" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
         </div>
     `;
