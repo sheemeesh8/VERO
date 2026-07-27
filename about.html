@@ -12,343 +12,344 @@
 
     <style>
         :root {
-            --bg: #ffffff;
-            --panel: #faf9f7;
-            --fg: #1a1a1a;
-            --muted: #9a958d;
-            --line: rgba(0, 0, 0, 0.14);
+            --fg: #111;
+            --muted: #7d786f;
             --sans: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
             --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
             --ease: cubic-bezier(0.22, 1, 0.36, 1);
+            --story-dur: 7s;   /* auto-advance duration per slide */
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        /* Elegant editorial: serif display titles, clean sans for everything small. */
         *, *::before, *::after { font-family: var(--sans); }
-        .ed-huge, .ed-sec-title, .ed-serif { font-family: var(--serif); }
-
-        html { scroll-behavior: smooth; }
+        html, body { height: 100%; }
         body {
-            background: var(--bg); color: var(--fg);
-            overflow-x: hidden; line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
+            background: #fff; color: var(--fg);
+            overflow: hidden; -webkit-font-smoothing: antialiased;
         }
-        .ed-wrap { max-width: 1560px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 60px); }
 
-        /* ---------------- Nav ---------------- */
-        .ed-nav {
-            position: absolute; top: 0; left: 0; right: 0; z-index: 30;
+        /* ============ Story stage ============ */
+        .story {
+            position: fixed; inset: 0;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        /* ---- Progress bars (Instagram-style segments) ---- */
+        .story-bars {
+            position: absolute; top: 18px; left: 22px; right: 22px; z-index: 40;
+            display: flex; gap: 6px; direction: ltr;
+        }
+        .story-bars .bar {
+            flex: 1; height: 3px; border-radius: 3px;
+            background: rgba(0,0,0,0.16); overflow: hidden; cursor: pointer;
+        }
+        .story-bars .bar > i {
+            display: block; height: 100%; width: 0; background: #111; border-radius: 3px;
+        }
+        /* Slides already seen: filled solid. */
+        .story-bars .bar.done > i { width: 100%; transition: none; }
+        /* The slide playing now: fill animates across the duration. */
+        .story-bars .bar.active > i {
+            width: 100%;
+            transition: width var(--story-dur) linear;
+        }
+        .story-bars .bar.paused > i { transition: none; }
+
+        /* ---- Top chrome: logo + close ---- */
+        .story-top {
+            position: absolute; top: 30px; left: 22px; right: 22px; z-index: 40;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 26px clamp(20px, 4vw, 60px); direction: ltr;
+            direction: ltr; pointer-events: none;
         }
-        .ed-mark { display: flex; flex-direction: column; gap: 4px; width: 32px; cursor: pointer; }
-        .ed-mark span { display: block; height: 2.5px; border-radius: 999px; background: var(--fg); }
-        .ed-mark span:nth-child(1) { width: 100%; }
-        .ed-mark span:nth-child(2) { width: 70%; }
-        .ed-mark span:nth-child(3) { width: 45%; }
-        .ed-nav-links { display: flex; gap: 32px; }
-        .ed-nav-links a {
-            font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500;
-            color: var(--fg); text-decoration: none; opacity: 0.75; transition: opacity 0.2s;
+        .story-logo {
+            font-family: var(--serif); font-size: 24px; font-weight: 700;
+            letter-spacing: 5px; text-transform: uppercase; color: #111;
+            cursor: pointer; pointer-events: auto; text-decoration: none;
         }
-        .ed-nav-links a:hover { opacity: 0.4; }
-        .ed-nav-right {
-            font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500;
-            cursor: pointer; opacity: 0.75; transition: opacity 0.2s;
+        .story-close {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.18); background: rgba(255,255,255,0.7);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; pointer-events: auto; color: #111; font-size: 17px;
+            transition: background 0.2s, transform 0.2s;
         }
-        .ed-nav-right:hover { opacity: 0.4; }
+        .story-close:hover { background: #fff; transform: scale(1.05); }
 
-        /* ---------------- Hero: photo left, white panel right ---------------- */
-        .ed-hero {
-            min-height: 100vh;
-            display: grid;
-            grid-template-columns: 1.32fr 1fr;
-            gap: clamp(28px, 5vw, 96px);
-            align-items: stretch;
-            padding: 118px clamp(20px, 4vw, 60px) 64px;
-        }
-        .ed-photo {
-            position: relative; overflow: hidden; min-height: 60vh;
-            background: #eceae6;
-            box-shadow: 0 50px 100px -30px rgba(0, 0, 0, 0.30);
-        }
-        .ed-photo img {
-            width: 100%; height: 100%; object-fit: cover;
-            filter: saturate(0.82) contrast(1.02);
-        }
+        /* ---- Tap zones: left = back, right = forward ---- */
+        .story-nav { position: absolute; inset: 0; z-index: 20; display: flex; }
+        .story-nav .zone { flex: 1; cursor: pointer; }
+        .story-nav .zone.prev { flex: 0 0 32%; }
 
-        .ed-panel {
-            position: relative;
+        /* Optional visible arrows for desktop */
+        .story-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 30;
+            width: 46px; height: 46px; border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.15); background: rgba(255,255,255,0.75);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #111; transition: background 0.2s, transform 0.2s;
+        }
+        .story-arrow:hover { background: #fff; transform: translateY(-50%) scale(1.06); }
+        .story-arrow.prev { left: 16px; }
+        .story-arrow.next { right: 16px; }
+        .story-arrow svg { width: 20px; height: 20px; }
+
+        /* ============ Slides ============ */
+        .ss {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: row; align-items: stretch;
+            direction: ltr;              /* content-left / image-right, like the store slider */
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.5s var(--ease);
+        }
+        .ss.on { opacity: 1; visibility: visible; }
+
+        .ss-content {
+            width: 44%;
             display: flex; flex-direction: column; justify-content: center;
-            padding: 20px clamp(30px, 3vw, 54px) 20px 0;
+            align-items: flex-start;
+            padding: 96px clamp(40px, 6vw, 110px) 96px clamp(40px, 6vw, 96px);
+            direction: rtl; text-align: right;   /* Hebrew copy reads right-to-left */
         }
-        .ed-eyebrow {
+        .ss-eyebrow {
             font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
             color: var(--muted); font-weight: 600; margin-bottom: 22px;
         }
-        .ed-huge {
-            font-weight: 500; font-size: clamp(44px, 5.6vw, 88px);
-            line-height: 1.04; letter-spacing: -0.5px; color: var(--fg);
+        .ss-num {
+            font-family: var(--sans); font-size: 13px; letter-spacing: 2px;
+            color: var(--muted); font-weight: 600; margin-bottom: 14px;
         }
-        .ed-huge .dot { color: var(--muted); }
-        .ed-hero-lead {
-            margin-top: 26px; max-width: 360px;
-            font-size: 15px; line-height: 1.9; color: #7d786f;
+        .ss-title {
+            font-family: var(--serif);
+            font-size: clamp(44px, 5.4vw, 92px); font-weight: 600;
+            line-height: 1.02; letter-spacing: -0.5px; color: #111;
         }
-        /* READ ON row: a rule, the label, then a small arrow */
-        .ed-readon {
-            display: inline-flex; align-items: center; gap: 18px;
-            margin-top: 40px; background: none; border: none; cursor: pointer;
-            font-family: var(--sans); color: var(--fg); padding: 0;
+        .ss-title .dot { color: var(--muted); }
+        .ss-text {
+            margin-top: 28px; max-width: 30em;
+            font-size: clamp(15px, 1.4vw, 18px); line-height: 1.95; color: #55514a;
         }
-        .ed-readon .ln { width: clamp(40px, 6vw, 90px); height: 1px; background: var(--fg); }
-        .ed-readon .lbl { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; font-weight: 600; }
-        .ed-readon svg { width: 16px; height: 16px; transition: transform 0.3s var(--ease); }
-        .ed-readon:hover svg { transform: translateX(-5px); }
+        .ss-cta {
+            margin-top: 40px;
+            font-family: var(--sans); font-size: 12px; font-weight: 600;
+            letter-spacing: 2px; text-transform: uppercase;
+            padding: 15px 32px; border: 1px solid #111; background: transparent;
+            color: #111; cursor: pointer; transition: background 0.3s, color 0.3s;
+        }
+        .ss-cta:hover { background: #111; color: #fff; }
 
-        /* Vertical index numbers pinned to the panel's right edge (like the ref) */
-        .ed-index-rail {
-            position: absolute; top: 50%; right: -6px; transform: translateY(-50%);
-            display: flex; flex-direction: column; gap: 14px; align-items: center;
-        }
-        .ed-index-rail button {
-            background: none; border: none; cursor: pointer; font-family: var(--sans);
-            font-size: 12px; letter-spacing: 1px; color: var(--muted); font-weight: 600;
-            opacity: 0.6; transition: opacity 0.2s, color 0.2s; padding: 2px;
-        }
-        .ed-index-rail button:hover { opacity: 1; color: var(--fg); }
-        .ed-emblem {
-            position: absolute; top: 4px; right: 0;
-            display: flex; flex-direction: column; gap: 3px; width: 26px; opacity: 0.85;
-        }
-        .ed-emblem span { display: block; height: 2px; border-radius: 999px; background: var(--fg); }
-        .ed-emblem span:nth-child(2) { width: 68%; margin-left: auto; }
-
-        /* ---------------- Content sections ---------------- */
-        .ed-section { padding: clamp(70px, 12vh, 150px) 0; border-top: 1px solid var(--line); }
-        .ed-sec-head { display: flex; align-items: baseline; gap: 22px; margin-bottom: 56px; }
-        .ed-index { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 1px; }
-        .ed-sec-title {
-            font-weight: 500; letter-spacing: -0.5px;
-            font-size: clamp(32px, 4.4vw, 68px); line-height: 1.05;
-        }
-        .ed-sec-title .dot { color: var(--muted); }
-
-        .ed-scatter { display: grid; grid-template-columns: repeat(12, 1fr);
-            gap: clamp(24px, 3vw, 56px) clamp(24px, 3vw, 48px); }
-        .ed-para { font-size: 16px; line-height: 2; color: #6f6a62; }
-        .ed-para b { color: var(--fg); font-weight: 700; }
-        .ed-para.p1 { grid-column: 1 / span 6; }
-        .ed-para.p2 { grid-column: 8 / span 5; margin-top: 84px; }
-        .ed-para.p3 { grid-column: 2 / span 5; margin-top: 28px; }
-        .ed-para.p4 { grid-column: 8 / span 4; margin-top: -18px; }
-        .ed-para.wide { grid-column: 2 / span 9;
-            font-family: var(--serif); font-size: clamp(20px, 2.3vw, 30px);
-            line-height: 1.6; color: #454138; }
-
-        .ed-values { display: grid; grid-template-columns: repeat(12, 1fr);
-            gap: clamp(30px, 3.4vw, 60px) clamp(24px, 3vw, 48px); }
-        .ed-value { grid-column: span 6; display: flex; gap: 18px; }
-        .ed-value:nth-child(even) { margin-top: 46px; }
-        .ed-value .n { font-size: 13px; font-weight: 600; color: var(--muted); padding-top: 6px; flex: 0 0 auto; }
-        .ed-value h3 { font-family: var(--serif); font-size: 21px; font-weight: 500; margin-bottom: 10px; color: var(--fg); }
-        .ed-value p { font-size: 15px; line-height: 1.85; color: #6f6a62; }
-
-        /* ---------------- Reveal animations ---------------- */
-        .mask { overflow: hidden; display: block; }
-        .mask > span { display: block; transform: translateY(115%);
-            transition: transform 1s var(--ease); transition-delay: var(--d, 0s); }
-        .in .mask > span { transform: none; }
-        .reveal { opacity: 0; transform: translateY(44px);
-            transition: opacity 0.95s var(--ease), transform 0.95s var(--ease); transition-delay: var(--d, 0s); }
-        .in.reveal, .in .reveal { opacity: 1; transform: none; }
-        .clip { clip-path: inset(0 0 100% 0); transition: clip-path 1.15s var(--ease); transition-delay: var(--d, 0s); }
-        .in .clip { clip-path: inset(0 0 0 0); }
-        .ed-photo img { transform: scale(1.14); transition: transform 1.6s var(--ease); }
-        .in .ed-photo img { transform: scale(1); }
-        @media (prefers-reduced-motion: reduce) {
-            .mask > span, .reveal, .clip, .ed-photo img { transition: none !important; transform: none !important; opacity: 1 !important; clip-path: none !important; }
+        .ss-image {
+            width: 56%; align-self: stretch;
+            background-size: cover; background-position: center;
+            filter: grayscale(1) contrast(1.03);
+            clip-path: polygon(14% 0, 100% 0, 100% 100%, 0% 100%);
         }
 
-        /* ---------------- Responsive ---------------- */
-        @media (max-width: 960px) {
-            .ed-hero { grid-template-columns: 1fr; padding-top: 96px; }
-            .ed-photo { min-height: 46vh; order: -1; }
-            .ed-panel { padding: 0; }
-            .ed-index-rail, .ed-emblem { display: none; }
-            .ed-para.p1, .ed-para.p2, .ed-para.p3, .ed-para.p4, .ed-para.wide,
-            .ed-value { grid-column: 1 / -1 !important; margin-top: 0 !important; }
-            .ed-nav-links { display: none; }
+        /* Entrance motion for the active slide's copy + image */
+        .ss .ss-eyebrow, .ss .ss-num, .ss .ss-title, .ss .ss-text, .ss .ss-cta {
+            opacity: 0; transform: translateY(26px);
+            transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+        }
+        .ss.on .ss-eyebrow { transition-delay: 0.15s; }
+        .ss.on .ss-num     { transition-delay: 0.15s; }
+        .ss.on .ss-title   { transition-delay: 0.24s; }
+        .ss.on .ss-text    { transition-delay: 0.38s; }
+        .ss.on .ss-cta     { transition-delay: 0.5s; }
+        .ss.on .ss-eyebrow, .ss.on .ss-num, .ss.on .ss-title,
+        .ss.on .ss-text, .ss.on .ss-cta { opacity: 1; transform: none; }
+        .ss-image { clip-path: polygon(30% 0, 100% 0, 100% 100%, 16% 100%); transition: clip-path 1s var(--ease); }
+        .ss.on .ss-image { clip-path: polygon(14% 0, 100% 0, 100% 100%, 0% 100%); }
+
+        /* ============ Responsive: stack, image on top ============ */
+        @media (max-width: 860px) {
+            .ss { flex-direction: column; }
+            .ss-image {
+                width: 100%; height: 42vh; order: -1;
+                clip-path: none;
+            }
+            .ss.on .ss-image { clip-path: none; }
+            .ss-content { width: 100%; padding: 40px 28px 60px; }
+            .ss-title { font-size: clamp(38px, 11vw, 64px); }
+            .story-arrow { display: none; }
         }
     </style>
-
-    <script>
-        function goBackToStore(){ if (document.referrer && history.length > 1) history.back(); else location.href = "index.html"; }
-    </script>
 </head>
 <body>
 
-    <!-- ===================== NAV ===================== -->
-    <nav class="ed-nav">
-        <div class="ed-mark" onclick="location.href='index.html'" title="VERO"><span></span><span></span><span></span></div>
-        <div class="ed-nav-links">
-            <a href="index.html">Home</a>
-            <a href="index.html">Shop</a>
-            <a href="seller-area.html">Sellers</a>
-            <a href="about.html">About</a>
-        </div>
-        <div class="ed-nav-right" onclick="goBackToStore()">Close ✕</div>
-    </nav>
+    <div class="story" id="story">
 
-    <!-- ===================== HERO ===================== -->
-    <header class="ed-hero ed-wrap" id="hero">
-        <div class="ed-photo clip">
-            <img src="https://picsum.photos/seed/vero-about-hero/1400/1700" alt="">
+        <!-- progress segments -->
+        <div class="story-bars" id="storyBars"></div>
+
+        <!-- logo + close -->
+        <div class="story-top">
+            <a class="story-logo" href="index.html">VERO</a>
+            <div class="story-close" onclick="closeStory()" title="Close" aria-label="Close">&times;</div>
         </div>
 
-        <div class="ed-panel">
-            <div class="ed-emblem"><span></span><span></span><span></span></div>
-
-            <div class="ed-eyebrow reveal">אודות — VERO</div>
-            <h1 class="ed-huge">
-                <span class="mask"><span style="--d:.05s">בית לאוצרות</span></span>
-                <span class="mask"><span style="--d:.15s">על־זמנית<span class="dot">.</span></span></span>
-            </h1>
-            <p class="ed-hero-lead reveal" style="--d:.35s">
-                אוצרות מוקפדת של פריטי אופנה ואמנות נדירים — במה מכובדת
-                ואקסקלוסיבית ליוצרים, לאספנים ולפריטים על־זמניים.
-            </p>
-            <button class="ed-readon reveal" style="--d:.5s" onclick="document.getElementById('sec1').scrollIntoView()">
-                <span class="ln"></span>
-                <span class="lbl">Read On</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            </button>
-
-            <div class="ed-index-rail reveal" style="--d:.6s">
-                <button onclick="document.getElementById('sec1').scrollIntoView()">01</button>
-                <button onclick="document.getElementById('sec2').scrollIntoView()">02</button>
-                <button onclick="document.getElementById('sec3').scrollIntoView()">03</button>
-                <button onclick="document.getElementById('sec4').scrollIntoView()">04</button>
+        <!-- ============ SLIDES ============ -->
+        <!-- 0 · Intro -->
+        <section class="ss" data-i="0">
+            <div class="ss-content">
+                <div class="ss-eyebrow">אודות — VERO</div>
+                <h1 class="ss-title">בית לאוצרות<br>על־זמנית<span class="dot">.</span></h1>
+                <p class="ss-text">אוצרות מוקפדת של פריטי אופנה ואמנות נדירים — במה מכובדת
+                    ואקסקלוסיבית ליוצרים, לאספנים ולפריטים שנושאים עמם סיפור, מורשת ויוקרה.</p>
             </div>
-        </div>
-    </header>
+            <div class="ss-image" style="background-image:url('https://picsum.photos/seed/vero-about-1/1300/1700')"></div>
+        </section>
 
-    <!-- ===================== 01 · החזון ===================== -->
-    <section class="ed-section ed-wrap" id="sec1">
-        <div class="ed-sec-head">
-            <span class="ed-index reveal">01</span>
-            <h2 class="ed-sec-title mask"><span>החזון<span class="dot">.</span></span></h2>
-        </div>
-        <div class="ed-scatter">
-            <p class="ed-para wide reveal">
-                מטרתנו היא לאגד את עולם פריטי היד השנייה והאמנות תחת קורת גג אחת,
-                המאופיינת באלגנטיות וניקיון עיצובי קפדני. חזוננו — להפוך את תרבות
-                היד השנייה לחוויית פרימיום בטוחה, שקופה ומעוררת השראה.
-            </p>
-            <p class="ed-para p3 reveal" style="--d:.1s">
-                בעולם בו אופנה ותרבות נעים במהירות, אנו מאמינים בערכם של פריטים
-                על־זמניים, כאלו הנושאים עמם מורשת, יוקרה וסיפור. אנו רואים בכל פריט
-                יצירה בפני עצמה, הראויה להמשכיות ולמקום בו מעריכים איכות ומקוריות.
-            </p>
-            <p class="ed-para p4 reveal" style="--d:.2s">
-                אנו שואפים לאפשר לכל אדם לבחור מתוך אוסף נדיר של יצירות ופריטים,
-                תוך ידיעה מוחלטת כי כל רכישה מתבצעת מול ספקים ואספנים אמינים שעברו
-                תהליך אימות מחמיר.
-            </p>
-        </div>
-    </section>
+        <!-- 1 · Vision -->
+        <section class="ss" data-i="1">
+            <div class="ss-content">
+                <div class="ss-num">01</div>
+                <h1 class="ss-title">החזון<span class="dot">.</span></h1>
+                <p class="ss-text">להפוך את תרבות היד השנייה לחוויית פרימיום בטוחה, שקופה
+                    ומעוררת השראה — ולאגד את עולם האופנה והאמנות תחת קורת גג אחת של
+                    אלגנטיות ודיוק עיצובי.</p>
+            </div>
+            <div class="ss-image" style="background-image:url('https://picsum.photos/seed/vero-about-2/1300/1700')"></div>
+        </section>
 
-    <!-- ===================== 02 · הסטנדרט שלנו ===================== -->
-    <section class="ed-section ed-wrap" id="sec2">
-        <div class="ed-sec-head">
-            <span class="ed-index reveal">02</span>
-            <h2 class="ed-sec-title mask"><span>הסטנדרט שלנו<span class="dot">.</span></span></h2>
-        </div>
-        <div class="ed-values">
-            <div class="ed-value reveal"><span class="n">01</span><div><h3>אוצרות מוקפדת</h3><p>אוסף עשיר וייחודי של פריטי לבוש ויצירות אמנות בלבד, הנבחרים בקפידה ומציעים אופי, היסטוריה וסגנון יוצא דופן.</p></div></div>
-            <div class="ed-value reveal" style="--d:.08s"><span class="n">02</span><div><h3>אמינות ללא פשרות</h3><p>סביבת המסחר שלנו מושתתת על מערכת אימות קפדנית, המבטיחה כי כל מוכר עומד בסטנדרטים הגבוהים ביותר של איכות ושקיפות.</p></div></div>
-            <div class="ed-value reveal"><span class="n">03</span><div><h3>קשר בלתי אמצעי</h3><p>מרחב בו מוכרים וקונים נפגשים ישירות, תוך הבטחת תקשורת חלקה, מכובדת ויעילה לסגירת עסקאות בדיסקרטיות ונוחות.</p></div></div>
-            <div class="ed-value reveal" style="--d:.08s"><span class="n">04</span><div><h3>חוויה אלגנטית</h3><p>עיצוב נקי ומינימליסטי המעניק חוויית גלישה שלווה ואינטואיטיבית, המותאמת לאנשים שמעריכים אסתטיקה קלאסית.</p></div></div>
-            <div class="ed-value reveal"><span class="n">05</span><div><h3>דיסקרטיות וביטחון</h3><p>אנו מקדשים את פרטיות הקהילה שלנו, ומבטיחים סביבת מסחר מוגנת, בטוחה ושקטה.</p></div></div>
-            <div class="ed-value reveal" style="--d:.08s"><span class="n">06</span><div><h3>קהילה של טעם</h3><p>מרחב המחבר בין אנשים החולקים הערכה לעיצוב על־זמני, לאמנות מקורית ולתרבות של קיימות ברמת גימור עלית.</p></div></div>
-        </div>
-    </section>
+        <!-- 2 · Standard -->
+        <section class="ss" data-i="2">
+            <div class="ss-content">
+                <div class="ss-num">02</div>
+                <h1 class="ss-title">הסטנדרט שלנו<span class="dot">.</span></h1>
+                <p class="ss-text">אוצרות מוקפדת, אמינות ללא פשרות וקשר בלתי אמצעי בין מוכר
+                    לקונה. כל מוכר עובר אימות מחמיר, וכל פריט נבחר בקפידה — סביבת מסחר שקטה,
+                    בטוחה ונטולת רעש רקע.</p>
+            </div>
+            <div class="ss-image" style="background-image:url('https://picsum.photos/seed/vero-about-3/1300/1700')"></div>
+        </section>
 
-    <!-- ===================== 03 · החותם שלנו ===================== -->
-    <section class="ed-section ed-wrap" id="sec3">
-        <div class="ed-sec-head">
-            <span class="ed-index reveal">03</span>
-            <h2 class="ed-sec-title mask"><span>החותם שלנו<span class="dot">.</span></span></h2>
-        </div>
-        <div class="ed-scatter">
-            <p class="ed-para p1 reveal">
-                בעוד שהמרחב עמוס באפשרויות, ורו בוחרת בדרך של דיוק, רלוונטיות וסגנון
-                חיים. אנו לא מציעים רק זירת מסחר, אלא מעניקים חוויה המותאמת באופן אישי
-                להעדפות ולטעם הייחודי שלכם.
-            </p>
-            <p class="ed-para p2 reveal" style="--d:.1s">
-                המומחיות שלנו נטועה עמוק באוצרות של אופנה ואמנות. הקהילה שלנו מורכבת
-                ממוכרים, אמנים ואספנים מאומתים ואמינים בלבד — סביבת רכישה בטוחה,
-                שקטה ונטולת דאגות.
-            </p>
-            <p class="ed-para p3 reveal" style="--d:.15s">
-                מה שמבדל אותנו הוא השילוב הנדיר בין הבנה אסתטית עמוקה, סינון מחמיר
-                המונע עומס ורעש רקע, ויכולת לייצר חיבורים אותנטיים ומדויקים בין אנשים
-                המעריכים איכות לבין פריטים על־זמניים המחפשים את ביתם הבא.
-            </p>
-        </div>
-    </section>
+        <!-- 3 · Signature -->
+        <section class="ss" data-i="3">
+            <div class="ss-content">
+                <div class="ss-num">03</div>
+                <h1 class="ss-title">החותם שלנו<span class="dot">.</span></h1>
+                <p class="ss-text">דיוק, רלוונטיות וסגנון חיים. ורו איננה רק זירת מסחר, אלא
+                    חוויה אישית המחברת בין אנשים המעריכים איכות לבין פריטים על־זמניים
+                    המחפשים את ביתם הבא.</p>
+            </div>
+            <div class="ss-image" style="background-image:url('https://picsum.photos/seed/vero-about-4/1300/1700')"></div>
+        </section>
 
-    <!-- ===================== 04 · השותפות בקהילה ===================== -->
-    <section class="ed-section ed-wrap" id="sec4">
-        <div class="ed-sec-head">
-            <span class="ed-index reveal">04</span>
-            <h2 class="ed-sec-title mask"><span>השותפות בקהילה<span class="dot">.</span></span></h2>
+        <!-- 4 · Community -->
+        <section class="ss" data-i="4">
+            <div class="ss-content">
+                <div class="ss-num">04</div>
+                <h1 class="ss-title">השותפות בקהילה<span class="dot">.</span></h1>
+                <p class="ss-text">קהילה של טעם המושתתת על שקיפות, תקשורת ישירה ויושרה —
+                    שותפות של הערכה הדדית לאסתטיקה, לאיכות ולתרבות של קיימות ברמת גימור עלית.</p>
+                <button class="ss-cta" onclick="location.href='index.html'">אל החנות</button>
+            </div>
+            <div class="ss-image" style="background-image:url('https://picsum.photos/seed/vero-about-5/1300/1700')"></div>
+        </section>
+
+        <!-- tap zones -->
+        <div class="story-nav">
+            <div class="zone prev" onclick="prevSlide()"></div>
+            <div class="zone next" onclick="nextSlide()"></div>
         </div>
-        <div class="ed-scatter" style="margin-bottom:20px">
-            <p class="ed-para wide reveal">
-                ורו היא בראש ובראשונה קהילה של אנשים החולקים הערכה משותפת לאסתטיקה,
-                איכות ותרבות — שותפות המושתתת על ערכים עמוקים של יושרה והערכה הדדית.
-            </p>
+
+        <!-- desktop arrows -->
+        <div class="story-arrow prev" onclick="prevSlide()" aria-label="Previous">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </div>
-        <div class="ed-values">
-            <div class="ed-value reveal"><span class="n">01</span><div><h3>שקיפות וכנות</h3><p>אותנטיות היא הבסיס לכל קשר מתמשך. אנו מצפים להצגה מדויקת, כנה ומלאה של כל פריט ויצירה.</p></div></div>
-            <div class="ed-value reveal" style="--d:.08s"><span class="n">02</span><div><h3>תקשורת ישירה</h3><p>שיח מכובד, ענייני וגלוי מונע אי־הבנות, מייעל את תהליך הרכישה ומאפשר אינטראקציה באווירה של אמון הדדי.</p></div></div>
-            <div class="ed-value reveal"><span class="n">03</span><div><h3>מענה מהיר ומסור</h3><p>היענות זריזה ויחס אדיב הם אבני היסוד של שירות יוצא דופן — מענה קשוב, זמין ואחראי.</p></div></div>
-            <div class="ed-value reveal" style="--d:.08s"><span class="n">04</span><div><h3>יושרה ואמינות</h3><p>עמידה במילים, בהבטחות ובהתחייבויות — ובכך שמירה על המוניטין הבלתי מתפשר של המותג.</p></div></div>
+        <div class="story-arrow next" onclick="nextSlide()" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </div>
-    </section>
+    </div>
 
     <script>
-        (function () {
-            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            if (reduce || !('IntersectionObserver' in window)) {
-                document.querySelectorAll('.ed-hero, .ed-section').forEach(function (t) { t.classList.add('in'); });
-                return;
-            }
-            function showHero() { var h = document.getElementById('hero'); if (h) h.classList.add('in'); }
-            requestAnimationFrame(showHero);
-            window.addEventListener('load', showHero);
-            setTimeout(showHero, 800);
+        const slides = Array.from(document.querySelectorAll('.ss'));
+        const bars = document.getElementById('storyBars');
+        let idx = 0;
+        let timer = null;
 
-            var io = new IntersectionObserver(function (entries) {
-                entries.forEach(function (e) {
-                    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-                });
-            }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
-            document.querySelectorAll('.ed-section').forEach(function (s) {
-                var r = s.getBoundingClientRect();
-                if (r.top < window.innerHeight && r.bottom > 0) s.classList.add('in');
-                else io.observe(s);
+        // Build one progress segment per slide.
+        slides.forEach((_, i) => {
+            const b = document.createElement('div');
+            b.className = 'bar';
+            b.innerHTML = '<i></i>';
+            b.addEventListener('click', (e) => { e.stopPropagation(); show(i); });
+            bars.appendChild(b);
+        });
+        const barEls = Array.from(bars.children);
+
+        function paintBars() {
+            barEls.forEach((b, i) => {
+                b.classList.remove('done', 'active', 'paused');
+                if (i < idx) b.classList.add('done');
             });
-            setTimeout(function () {
-                document.querySelectorAll('.ed-section').forEach(function (s) { s.classList.add('in'); });
-            }, 2200);
-        })();
-    </script>
+        }
 
-    <script src="footer.js"></script>
-    <script src="vero-animations.js"></script>
-    <script src="vero-editor.js"></script>
+        function play() {
+            // Restart the active bar's fill from 0, then let CSS animate it across
+            // the duration; when it's up, advance.
+            const bar = barEls[idx];
+            const fill = bar.querySelector('i');
+            bar.classList.add('paused');            // freeze transition
+            fill.style.width = '0%';
+            // next frame: enable the timed transition to 100%
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                bar.classList.remove('paused');
+                bar.classList.add('active');
+            }));
+            clearTimeout(timer);
+            const ms = parseFloat(getComputedStyle(document.documentElement)
+                .getPropertyValue('--story-dur')) * 1000;
+            timer = setTimeout(nextSlide, ms);
+        }
+
+        function show(n) {
+            idx = Math.max(0, Math.min(slides.length - 1, n));
+            slides.forEach(s => s.classList.toggle('on', +s.dataset.i === idx));
+            paintBars();
+            play();
+        }
+        function nextSlide() {
+            if (idx >= slides.length - 1) { closeStory(); return; }
+            show(idx + 1);
+        }
+        function prevSlide() { show(idx - 1); }
+        function closeStory() {
+            if (document.referrer && history.length > 1) history.back();
+            else location.href = 'index.html';
+        }
+
+        // Pause while the pointer is held down (like a real story).
+        const stage = document.getElementById('story');
+        stage.addEventListener('pointerdown', () => {
+            clearTimeout(timer);
+            const bar = barEls[idx], fill = bar.querySelector('i');
+            const w = getComputedStyle(fill).width;
+            bar.classList.add('paused'); fill.style.width = w;
+        });
+        stage.addEventListener('pointerup', () => {
+            // resume: continue the remaining time from current fill
+            const bar = barEls[idx], fill = bar.querySelector('i');
+            const pct = fill.offsetWidth / bar.offsetWidth;
+            const ms = parseFloat(getComputedStyle(document.documentElement)
+                .getPropertyValue('--story-dur')) * 1000;
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                bar.classList.remove('paused'); bar.classList.add('active');
+                fill.style.width = '100%';
+            }));
+            clearTimeout(timer);
+            timer = setTimeout(nextSlide, ms * (1 - pct));
+        });
+
+        // Keyboard: ← → to page, Esc to close (RTL-friendly: both arrows work).
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') prevSlide();
+            else if (e.key === 'ArrowLeft') nextSlide();
+            else if (e.key === 'Escape') closeStory();
+        });
+
+        show(0);
+    </script>
 </body>
 </html>
