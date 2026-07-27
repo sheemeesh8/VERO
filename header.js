@@ -435,12 +435,9 @@
             cursor: pointer; padding-left: 5px;
         }
         #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
-        /* The Vero script logo is a white-on-transparent PNG. On the light header it
-           is flipped to black; over a dark hero it stays white. */
+        /* The Vero script logo is a white-on-transparent PNG. It is flipped to black
+           everywhere — the header now reads dark on light throughout. */
         #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; filter: brightness(0); transition: filter 0.25s ease; }
-        #siteHeader.wh-over-hero .logo .logo-img,
-        #siteHeader.over-dark .logo .logo-img,
-        #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: none !important; }
         #siteHeader .header-right { display: flex; gap: 26px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but

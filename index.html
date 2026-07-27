@@ -1477,9 +1477,9 @@
             margin: 0;
             /* Cards run to the site edges; only the 6px inter-card gap remains, so the
                edge spacing matches the spacing between the cards. The gap above the
-               slider equals the header height (72px), giving a symmetric white break
-               between the two sliders. */
-            padding: 72px 6px 0;
+               slider matches that same 6px, so the break between the two sliders reads
+               as one more card gap. */
+            padding: 6px 6px 0;
             position: relative;
             direction: ltr;   /* keep info-left / image-right despite the RTL page */
             background: #ffffff;
@@ -4256,18 +4256,18 @@
             position: relative;
             width: 100vw;
             height: 100%;
-            background: url('./art-hero.png') center / cover no-repeat;
+            background: url('./hero-beach.jpg') center / cover no-repeat;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow-y: auto;
         }
-        /* Glassmorphism at 0.5 over the hero photograph */
+        /* Tinted glassmorphism at 0.5 over the home hero photograph */
         .upload-slide.final .us-final::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(248, 247, 244, 0.5);
             -webkit-backdrop-filter: blur(30px) saturate(1.1);
             backdrop-filter: blur(30px) saturate(1.1);
         }
@@ -4740,7 +4740,7 @@
                         <div class="us-inner">
                             <div class="upload-header">
                                 <h1 id="brandInput" contenteditable="true">Brand Name</h1>
-                                <p id="itemTypeDisplay">Item Type</p>
+                                <p id="itemTypeDisplay" contenteditable="true" data-placeholder="Item Type" oninput="syncItemTypeHeading()">Item Type</p>
                             </div>
                             <div class="upload-form">
                                 <div class="upload-form-group">
@@ -7314,31 +7314,53 @@
             document.getElementById('brandInput').textContent = v || 'Brand Name';
         }
 
+        // The item-type line in the header is editable too: typing in it fills the
+        // field below (and vice-versa), so it reads as one value in both places.
+        function syncItemTypeHeading() {
+            const el = document.getElementById('itemTypeDisplay');
+            const v = (el.textContent || '').trim();
+            uploadFormData.itemType = (v === 'Item Type') ? '' : v;
+            const field = document.getElementById('itemTypeSelect');
+            if (field) field.value = uploadFormData.itemType;
+            uploadFormData.size = null;
+            renderSizePanel();
+        }
+
         function colorHex(name) {
             const c = UPLOAD_COLORS.find(x => x.name === name);
             return c ? c.hex : '#e2e2e2';
         }
 
-        // Final step — the listing exactly as the feed will carry it.
+        // Final step — the listing shown exactly as the feed's product card,
+        // built from the same markup so it inherits product-card.css.
         function renderUploadPreview() {
             const d = uploadFormData;
-            const meta = (d.category === 'art'
-                ? [d.dimensions, d.year, d.material, d.style, d.framing, d.edition, d.condition]
-                : [d.gender, d.size, d.material, d.style, d.condition]).filter(Boolean).join(' · ');
             const img = d.image
                 ? `<img src="${d.image}" alt="${d.itemType || 'Product'}">`
                 : (d.category === 'art' ? '🖼️' : '👕');
+            const price = d.price ? '₪' + Number(d.price).toFixed(2) : '₪—';
             document.getElementById('uploadPreview').innerHTML = `
-                <div class="uprev-card">
-                    <div class="uprev-img">${img}</div>
-                    <div class="uprev-body">
-                        <span class="uprev-brand">${d.brand || 'Your brand'}</span>
-                        <span class="uprev-name">${d.itemType || 'Item type'}</span>
-                        ${meta ? `<span class="uprev-meta">${meta}</span>` : ''}
-                        ${d.description ? `<span class="uprev-desc">${d.description}</span>` : ''}
-                        <div class="uprev-foot">
-                            <span class="uprev-price">${d.price ? '₪' + Number(d.price).toFixed(2) : '₪—'}</span>
-                            ${d.color ? `<span class="uprev-dot"><i style="background:${colorHex(d.color)}"></i>${d.color}</span>` : ''}
+                <div class="product-card" style="width:300px">
+                    <div class="product-image">${img}
+                        <button class="product-icon cart" title="Add to Cart" onclick="return false;">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/>
+                            </svg>
+                        </button>
+                        <button class="product-icon heart" title="Add to Wishlist" onclick="return false;">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price">${price}</div>
+                        </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${d.brand || 'Artist name'}</div>
+                            <div class="product-name">${d.itemType || 'Item type'}</div>
+                            <div class="product-rating"></div>
                         </div>
                     </div>
                 </div>`;
