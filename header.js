@@ -116,7 +116,10 @@
            field, which darkens to the mode colour while it is being used. */
         #siteHeader .hdr-search {
             display: flex; align-items: center;
-            background: #fff;
+            /* Capsule with an outline only — no fill. The outline (and the text and
+               magnifier inside) is black by default and turns white on the black
+               sticky header, so it reads against whatever is behind it. */
+            background: transparent;
             border: 1.5px solid #111;
             border-radius: 999px;
             height: 46px;
@@ -157,7 +160,7 @@
         /* This block used to invert the field over the hero's dark box. No dark box
            is left, so it keeps the same black treatment as everywhere else. */
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search {
-            background: #fff;
+            background: transparent;
             border-color: #111;
             box-shadow: none;
         }
@@ -167,7 +170,7 @@
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-funnel svg { stroke: #fff; fill: #fff; }
         /* Funnel: the bare glyph beside the field, matching the magnifier. */
         #siteHeader .hdr-funnel {
-            width: 36px; height: 36px; border-radius: 50%;
+            width: 54px; height: 54px; border-radius: 50%;
             background: #111;
             border: none; cursor: pointer; flex: 0 0 auto;
             display: flex; align-items: center; justify-content: center; padding: 0;
@@ -175,7 +178,7 @@
         }
         #siteHeader .hdr-funnel:hover, #siteHeader .hdr-funnel.on { opacity: 0.6; filter: none; }
         #siteHeader .hdr-funnel svg {
-            width: 18px; height: 18px;
+            width: 27px; height: 27px;
             stroke: #fff; fill: #fff; stroke-width: 1.6;
         }
         /* The connector line has no area to fill — keep it a white stroke. */
@@ -489,6 +492,15 @@
         #siteHeader.scrolled.over-dark .icon-btn svg { stroke: #fff !important; }
         #siteHeader.scrolled.over-dark .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
         #siteHeader.scrolled.over-dark .upload-plus { color: #fff !important; }
+        /* Search magnifier reads as a line icon (no white fill) on the black header. */
+        #siteHeader.scrolled.over-dark .hdr-searchtoggle {
+            background: transparent; border-color: #fff; color: #fff;
+        }
+        /* The search capsule + its glyph/text go white on the black header. */
+        #siteHeader.scrolled.over-dark .hdr-search { border-color: #fff; }
+        #siteHeader.scrolled.over-dark .hdr-search input { color: #fff; }
+        #siteHeader.scrolled.over-dark .hdr-search input::placeholder { color: rgba(255,255,255,0.6); }
+        #siteHeader.scrolled.over-dark .hdr-searchgo svg { stroke: #fff; }
 
         /* ===== Header layout — one geometry for every header on the site =====
            White left area (hamburger + logo), the search field beside it, and the icon

@@ -939,12 +939,12 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            /* Title + CTA only, centred in the white half. */
-            align-items: center;
-            padding: 56px 48px;
+            /* Quiet-luxury: title, description and CTA all flush to the left edge. */
+            align-items: flex-start;
+            padding: 56px 64px;
             box-sizing: border-box;
             direction: ltr;
-            text-align: center;
+            text-align: left;
         }
 
         .hero-slide .hero-content > div { width: 100%; }
@@ -963,13 +963,16 @@
             letter-spacing: 1px;
         }
 
+        /* Quiet-luxury sub-line: left-aligned under the title, a touch larger and
+           set bold — confident but restrained. */
         .hero-slide .hero-sub {
-            font-size: 30px;
-            line-height: 1.55;
+            font-size: 18px;
+            line-height: 1.6;
             font-weight: 700;
-            color: #4a4a4a;
-            max-width: 680px;
-            margin: 0 0 44px;
+            color: #3a3a3a;
+            max-width: 480px;
+            margin: 0 0 34px;
+            text-align: left;
         }
 
         /* The status tiles from the top of the home page, flattened: same width,
@@ -1483,16 +1486,34 @@
             transition: transform 0.6s cubic-bezier(0.65, 0.05, 0.1, 1);
         }
 
-        /* Each slide is one full-width page holding four square cards across */
+        /* Each slide is one full-width page holding three cards across. The row is a
+           HOVER ACCORDION: at rest the three share the width equally; hovering one
+           expands it and the other two shrink, all in a single smooth glide. */
         .hp-slide {
             min-width: 100%;
             box-sizing: border-box;
-            display: grid;
-            /* Three per slide, not five: fewer, larger frames with room to breathe
-               is the quiet-luxury read. */
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
             /* Wider frames, separated by only a thin hairline of space. */
             gap: 6px;
+        }
+
+        /* Accordion panel: flex-basis 0 so flex-grow alone decides the share of the
+           row. All three start equal (grow:1); the animated property is flex-grow. */
+        .hp-slide .hp-card {
+            flex: 1 1 0;
+            min-width: 0;
+            transition: flex-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        /* While the row is hovered, the un-hovered panels give up their share... */
+        .hp-slide:hover .hp-card { flex-grow: 0.62; }
+        /* ...and the hovered panel takes it — a wide, cinematic reveal. */
+        .hp-slide .hp-card:hover { flex-grow: 2.4; }
+
+        /* Fixed, equal frame height so only the WIDTH animates (the aspect-ratio the
+           base rule sets would otherwise change the height as a panel widens). */
+        .hp-slide .hp-frame {
+            aspect-ratio: auto;
+            height: clamp(300px, 44vw, 460px);
         }
 
         /* Flat rectangle, with the title set beneath it rather than burned into the
@@ -1638,7 +1659,13 @@
 
         @media (max-width: 900px) {
             .hero-promos { padding: 0 6px; }
-            .hp-slide { grid-template-columns: repeat(2, 1fr); }
+            /* No hover on touch: fall back to a simple two-up wrapping grid of
+               equal frames rather than the desktop accordion. */
+            .hp-slide { flex-wrap: wrap; }
+            .hp-slide .hp-card { flex: 1 1 46%; }
+            .hp-slide:hover .hp-card,
+            .hp-slide .hp-card:hover { flex-grow: 1; }
+            .hp-slide .hp-frame { height: clamp(220px, 40vw, 320px); }
         }
 
         /* ==================== PROMOTED PRODUCT SLIDER ====================
@@ -1722,6 +1749,40 @@
             align-items: stretch;
             gap: var(--pd-gap, 88px);
             padding: 24px 30px;
+        }
+
+        /* ---- McLaren-style spec row: three columns spanning the full slide width,
+           a thin rule on top, each column a small grey label over a large value. ---- */
+        .promo-stats {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 26px;
+            padding-top: 26px;
+            border-top: 1px solid rgba(0, 0, 0, 0.14);
+        }
+        .promo-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 12px;
+            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+        }
+        .promo-stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2.4px;
+            text-transform: uppercase;
+            color: #9a958c;
+        }
+        .promo-stat-value {
+            font-size: clamp(20px, 2vw, 30px);
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            color: var(--pd-title-color, #111);
+            line-height: 1.1;
         }
 
         .promo-image {
@@ -5245,7 +5306,10 @@
                 desc: 'Quality denim jacket from the 90s in excellent condition. Made from thick denim with strong stitching.',
                 price: '₪89.99',
                 icon: '👕',
-                type: 'clothing'
+                type: 'clothing',
+                color: 'Indigo Blue',
+                size: 'M',
+                material: 'Cotton Denim'
             },
             {
                 brand: 'Designer Collection',
@@ -5255,7 +5319,10 @@
                 price: '₪180.00',
                 icon: '👗',
                 type: 'clothing',
-                flipped: true
+                flipped: true,
+                color: 'Burgundy',
+                size: 'S',
+                material: 'Silk Blend'
             },
             {
                 brand: 'Art Collection',
@@ -5264,7 +5331,10 @@
                 desc: 'Original oil painting in abstract technique by an Israeli artist with 20 years of experience.',
                 price: '₪450.00',
                 icon: '🎨',
-                type: 'art'
+                type: 'art',
+                color: 'Multicolor',
+                size: '70×100 cm',
+                material: 'Oil on Canvas'
             },
             {
                 brand: 'Footwear Collection',
@@ -5274,7 +5344,10 @@
                 price: '₪120.00',
                 icon: '👟',
                 type: 'clothing',
-                flipped: true
+                flipped: true,
+                color: 'White / Red',
+                size: '42',
+                material: 'Leather'
             },
             {
                 brand: 'Sculpture Collection',
@@ -5283,7 +5356,10 @@
                 desc: 'Hand-cast bronze sculpture by a renowned artist. Unique collectible item in a limited edition.',
                 price: '₪800.00',
                 icon: '✨',
-                type: 'art'
+                type: 'art',
+                color: 'Bronze',
+                size: '35 cm',
+                material: 'Cast Bronze'
             }
         ];
 
@@ -6588,6 +6664,22 @@
                         </div>
                     </div>
                     <a href="${url}" class="promo-image" style="text-decoration: none; color: inherit;">${s.icon}</a>
+                    <!-- Editorial spec row (McLaren-style): the piece's real data sits
+                         where the reference put its numbers — Colour, Size, Material. -->
+                    <div class="promo-stats">
+                        <div class="promo-stat">
+                            <span class="promo-stat-label">Colour</span>
+                            <span class="promo-stat-value">${s.color || '—'}</span>
+                        </div>
+                        <div class="promo-stat">
+                            <span class="promo-stat-label">Size</span>
+                            <span class="promo-stat-value">${s.size || 'One Size'}</span>
+                        </div>
+                        <div class="promo-stat">
+                            <span class="promo-stat-label">Material</span>
+                            <span class="promo-stat-value">${s.material || '—'}</span>
+                        </div>
+                    </div>
                 </div>`;
         }
 
@@ -7704,6 +7796,7 @@
                     <div class="hero-content">
                         <div>
                             <h1 class="hero-title">${s.name}</h1>
+                            <p class="hero-sub">${s.sub}</p>
                             ${cta}
                         </div>
                     </div>
