@@ -939,9 +939,10 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            /* Quiet-luxury: title, description and CTA all flush to the left edge. */
+            /* Quiet-luxury: title, description and CTA left-aligned, held a
+               comfortable step off the left wall (not hugging the edge). */
             align-items: flex-start;
-            padding: 56px 64px;
+            padding: 56px 56px 56px 56px;
             box-sizing: border-box;
             direction: ltr;
             text-align: left;
@@ -1497,122 +1498,129 @@
             gap: 6px;
         }
 
-        /* Accordion panel: flex-basis 0 so flex-grow alone decides the share of the
-           row. All three start equal (grow:1); the animated property is flex-grow. */
+        /* Accordion panel: flex-basis 0 so flex-grow alone decides each panel's
+           share of the row; the animated property is flex-grow. At REST the first
+           panel is open and the rest are narrow strips; hovering any panel opens it
+           and collapses the others — matching the reference video. */
         .hp-slide .hp-card {
             flex: 1 1 0;
             min-width: 0;
+            flex-grow: 0.6;              /* narrow strip by default */
             transition: flex-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
         }
-        /* While the row is hovered, the un-hovered panels give up their share... */
-        .hp-slide:hover .hp-card { flex-grow: 0.62; }
-        /* ...and the hovered panel takes it — a wide, cinematic reveal. */
-        .hp-slide .hp-card:hover { flex-grow: 2.4; }
+        .hp-slide .hp-card:first-child { flex-grow: 2.6; }        /* one open at rest */
+        .hp-slide:hover .hp-card:first-child { flex-grow: 0.6; }  /* row hovered: reset */
+        .hp-slide .hp-card:hover { flex-grow: 2.6; }             /* hovered panel opens */
 
-        /* Fixed, equal frame height so only the WIDTH animates (the aspect-ratio the
-           base rule sets would otherwise change the height as a panel widens). */
-        .hp-slide .hp-frame {
-            aspect-ratio: auto;
-            height: clamp(300px, 44vw, 460px);
-        }
-
-        /* Flat rectangle, with the title set beneath it rather than burned into the
-           photo — the caption carries the type, the frame stays quiet. No border, no
-           radius, no lift on hover: only the image reacts. */
         .hp-card {
             position: relative;
             display: block;
-            border: none;
-            border-radius: 0;
-            background: none;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
         }
 
-        /* The rectangle itself — a landscape frame, flat on the page. */
-        .hp-frame {
+        /* The dark panel itself — a tall, rounded charcoal block with a soft inner
+           glow, exactly like the reference. Height is fixed so only WIDTH animates. */
+        .hp-panel {
             position: relative;
-            /* A low, wide letterbox rather than a tall block. */
-            aspect-ratio: 16 / 9;
+            height: clamp(320px, 46vw, 480px);
+            border-radius: 16px;
             overflow: hidden;
-            background: #efeae2;
+            background: #141414;
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
-
-        .hp-image {
+        .hp-panel::before {
+            content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, #e5e0d8 0%, #efeae2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 90px;
-            color: rgba(0, 0, 0, 0.15);
+            background: radial-gradient(120% 80% at 50% 40%, rgba(255,255,255,0.10), rgba(255,255,255,0) 60%);
+            opacity: 0.7;
         }
 
-        /* Real category photo layered over the emoji fallback */
-        .hp-photo {
+        /* Collapsed label: the category name set vertically, reading bottom-to-top,
+           pinned near the top of the strip. Fades out as the panel opens. */
+        .hp-vlabel {
             position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .hp-card:hover .hp-photo { transform: scale(1.04); }
-
-        /* The caption sits beneath the photograph on the page itself — no panel, no
-           fill, nothing laid over the image. */
-        .hp-body {
-            direction: ltr;
-            padding: 14px 0 0;
-            display: flex;
-            align-items: baseline;
-            justify-content: center;
-            gap: 14px;
-        }
-        /* The category's own figure, alongside its name. */
-        .hp-count {
-            flex: 0 0 auto;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            rotate: 180deg;
             font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
-            font-size: 11px;
+            font-size: 15px;
             font-weight: 500;
-            letter-spacing: 1.6px;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
-            color: #8a8a8a;
-        }
-        .hp-count b { color: #111; font-weight: 700; }
-
-        .hp-label {
-            font-size: 10px;
-            letter-spacing: 2.4px;
-            text-transform: uppercase;
-            color: #a5a5a5;
-            font-weight: 600;
-        }
-
-        /* Flat editorial caption: heavy condensed caps on the page, reading left to
-           right under the frame. */
-        .hp-title {
-            /* Smaller, lighter, more minimalist — a quiet editorial caption. */
-            font-size: clamp(13px, 1vw, 16px);
-            font-weight: 500;
-            text-transform: uppercase;
-            line-height: 1;
-            letter-spacing: 2px;
-            margin: 0;
-            color: #222;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            color: #efefef;
+            transition: opacity 0.4s ease;
         }
 
-        .hp-desc {
-            font-size: 13px;
-            line-height: 1.5;
-            color: #8a8a8a;
-            margin: 0;
+        /* The icon sits at the foot of every panel, collapsed or open. */
+        .hp-ico {
+            position: absolute;
+            left: 24px;
+            bottom: 22px;
+            font-size: 22px;
+            line-height: 1;
+            opacity: 0.85;
+            z-index: 2;
         }
+
+        /* Expanded content: horizontal title, a blurb and a CTA, anchored to the foot
+           of the panel above the icon. Hidden until the panel opens. */
+        .hp-open {
+            position: absolute;
+            left: 24px;
+            right: 24px;
+            bottom: 58px;
+            text-align: left;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .hp-name {
+            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-size: clamp(20px, 2vw, 28px);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #fff;
+            margin: 0 0 12px;
+            white-space: nowrap;
+        }
+        .hp-blurb {
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.62);
+            margin: 0 0 16px;
+            max-width: 320px;
+        }
+        .hp-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #fff;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Open state — driven by the first-child-at-rest and :hover rules above. */
+        .hp-slide .hp-card:first-child .hp-vlabel { opacity: 0; }
+        .hp-slide .hp-card:first-child .hp-open { opacity: 1; transform: none; }
+        .hp-slide:hover .hp-card:first-child .hp-vlabel { opacity: 1; }
+        .hp-slide:hover .hp-card:first-child .hp-open { opacity: 0; transform: translateY(10px); }
+        .hp-slide .hp-card:hover .hp-vlabel { opacity: 0; }
+        .hp-slide .hp-card:hover .hp-open { opacity: 1; transform: none; }
 
         .hp-arrow {
             position: absolute;
@@ -1659,13 +1667,16 @@
 
         @media (max-width: 900px) {
             .hero-promos { padding: 0 6px; }
-            /* No hover on touch: fall back to a simple two-up wrapping grid of
-               equal frames rather than the desktop accordion. */
+            /* No hover on touch: every panel is equal-width and shows its open
+               content (title + blurb + CTA) rather than the desktop accordion. */
             .hp-slide { flex-wrap: wrap; }
-            .hp-slide .hp-card { flex: 1 1 46%; }
-            .hp-slide:hover .hp-card,
-            .hp-slide .hp-card:hover { flex-grow: 1; }
-            .hp-slide .hp-frame { height: clamp(220px, 40vw, 320px); }
+            .hp-slide .hp-card,
+            .hp-slide .hp-card:first-child { flex: 1 1 46%; }
+            .hp-slide .hp-panel { height: clamp(240px, 52vw, 340px); }
+            .hp-slide .hp-vlabel,
+            .hp-slide .hp-card:first-child .hp-vlabel { opacity: 0; }
+            .hp-slide .hp-open,
+            .hp-slide .hp-card:first-child .hp-open { opacity: 1; transform: none; }
         }
 
         /* ==================== PROMOTED PRODUCT SLIDER ====================
@@ -1692,7 +1703,7 @@
             --pd-price-size: 18px;
             --pd-emoji-size: 360px;
             --pd-img-w: 524px;
-            --pd-img-aspect: 1.2;
+            --pd-img-aspect: 1.38;
             --pd-gap: 42px;
             --pd-company-color: #000000;
             --pd-title-color: #000000;
@@ -1758,8 +1769,8 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 30px;
-            margin-top: 26px;
-            padding-top: 26px;
+            margin-top: 54px;
+            padding-top: 38px;
             border-top: 1px solid rgba(0, 0, 0, 0.14);
         }
         .promo-stat {
@@ -6693,20 +6704,20 @@
         // One flat category rectangle: the photo fills the frame, and the name sits
         // beneath it against the frame's right edge.
         function hpCardHTML(c, globalIndex, type) {
+            const count = ACAT_BLOCKS * 10;
+            const blurb = `Curated second-hand ${c.name.toLowerCase()} — pieces chosen for quality, character and value. Discover the edit.`;
+            // Dark accordion panel: collapsed shows a vertical label + an icon at the
+            // foot; expanding (hover) reveals a horizontal title, a blurb and a CTA.
             return `
                 <a class="hp-card" onclick="openCategory('${type}', ${globalIndex})">
-                    <div class="hp-frame">
-                        <div class="hp-image">${c.icon}</div>
-                        <img class="hp-photo" loading="lazy" alt="${c.name}"
-                             src="https://picsum.photos/seed/vero-cat-${encodeURIComponent(c.name)}-${globalIndex}/800/600"
-                             onerror="this.remove()">
-                    </div>
-                    <!-- Editorial caption: the name sits UNDER the photograph, set
-                         flat and horizontal — no band laid over the image. -->
-                    <div class="hp-body">
-                        <h3 class="hp-title">${c.name}</h3>
-                        <!-- What the category holds, on the caption's own line. -->
-                        <span class="hp-count"><b>${ACAT_BLOCKS * 10}</b></span>
+                    <div class="hp-panel">
+                        <span class="hp-vlabel">${c.name}</span>
+                        <div class="hp-open">
+                            <h3 class="hp-name">${c.name}</h3>
+                            <p class="hp-blurb">${blurb}</p>
+                            <span class="hp-cta">View all ${count} &rarr;</span>
+                        </div>
+                        <span class="hp-ico">${c.icon}</span>
                     </div>
                 </a>`;
         }
