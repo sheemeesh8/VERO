@@ -1102,14 +1102,9 @@
             if (!hdr) return;
             const scrolled = window.scrollY > 80;
             hdr.classList.toggle('scrolled', scrolled);
-            // Only the feed has a filter line; elsewhere the header never goes dark.
-            const filter = document.querySelector('.feed-filters');
-            let overDark = false;
-            if (scrolled && filter) {
-                const filterBottom = filter.getBoundingClientRect().bottom + window.scrollY;
-                overDark = (window.scrollY + hdr.offsetHeight) < filterBottom;
-            }
-            hdr.classList.toggle('over-dark', overDark);
+            // The feed's slider + filter bands are now white, so the header stays
+            // white with black content throughout — it never flips to the dark look.
+            hdr.classList.toggle('over-dark', false);
         };
         window.addEventListener('scroll', onScroll, { passive: true });
         onScroll();
