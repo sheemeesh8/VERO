@@ -473,22 +473,35 @@
             margin: 0 0 26px;
         }
         .dh-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 22px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
         }
+        /* Minimalist circles: thin ring, no fill, label over value, centred. */
         .dh-stat {
+            flex: 0 0 auto;
+            width: 190px;
+            height: 190px;
             border: 1px solid #e4e4e4;
-            padding: 26px 24px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 10px;
+            box-sizing: border-box;
         }
         .dh-stat .k {
-            font-size: 13px;
+            font-size: 12px;
             color: #8a8a8a;
             letter-spacing: 0.5px;
-            margin-bottom: 12px;
+            margin-bottom: 0;
+            max-width: 78%;
         }
         .dh-stat .v {
-            font-size: 30px;
+            font-size: 26px;
             font-weight: 800;
             color: #004225;
             line-height: 1;
@@ -520,6 +533,33 @@
             padding: 12px 18px; border-radius: 2px;
         }
         .dh-cart-cta:hover .dh-cta-btn { background: #222; }
+        /* CTA card with a data panel: spans two columns, body on the right, the
+           stats list on the left (order flips it in this RTL layout), a hairline
+           divider between them. */
+        .dh-cart-cta.has-stats {
+            grid-column: span 2;
+            flex-direction: row;
+            align-items: stretch;
+            gap: 22px;
+        }
+        .dh-cart-cta.has-stats .dh-cta-body {
+            order: 1;
+            flex: 1 1 auto;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 14px;
+        }
+        .dh-cta-stats {
+            order: 2;
+            flex: 0 0 auto;
+            display: flex; flex-direction: column; justify-content: center; gap: 18px;
+            padding-inline-start: 22px;
+            border-inline-start: 1px solid #ececec;
+            text-align: start;
+        }
+        .dh-cta-stat { display: flex; flex-direction: column; gap: 3px; }
+        .dh-cta-stat-v { font-size: 22px; font-weight: 800; color: #004225; line-height: 1; }
+        .dh-cta-stat-k { font-size: 11px; color: #8a8a8a; letter-spacing: 0.3px; }
+        @media (max-width: 700px) { .dh-cart-cta.has-stats { grid-column: span 2; } }
 
         /* A listing card carries its status underneath the product card. */
         .dh-listing { display: flex; flex-direction: column; gap: 10px; }
@@ -895,19 +935,54 @@
 
         // The cart's own detail: three random pieces from the cart plus a framed
         // CTA card that leads to the full cart.
-        function cartCtaCardHTML() {
-            return `<a class="dh-cart-cta" href="index.html?open=cart">
-                <div class="dh-cta-icon">🛒</div>
-                <div class="dh-cta-title">עגלת הקניות שלך</div>
-                <div class="dh-cta-text">כל הפריטים שאספת מחכים לך במקום אחד — מוכנים להשלמת הרכישה.</div>
-                <span class="dh-cta-btn">לעגלת הקניות המלאה</span>
+        // Sum a list of items by their '₪49.90'-style price strings.
+        const dhPriceNum = p => parseFloat(String(p).replace(/[^\d.]/g, '')) || 0;
+        const dhMoney = n => '₪' + Math.round(n).toLocaleString();
+        // A small data list shown on the left of a CTA card: [label, value] pairs.
+        function dhCtaStatsHTML(pairs) {
+            return `<div class="dh-cta-stats">` +
+                pairs.map(([k, v]) => `<div class="dh-cta-stat"><span class="dh-cta-stat-v">${v}</span><span class="dh-cta-stat-k">${k}</span></div>`).join('') +
+                `</div>`;
+        }
+        function cartCtaCardHTML(items) {
+            const count = items.length;
+            const total = items.reduce((s, i) => s + dhPriceNum(i.price) * (i.qty || 1), 0);
+            const avg = count ? total / count : 0;
+            return `<a class="dh-cart-cta has-stats" href="index.html?open=cart">
+                ${dhCtaStatsHTML([['סכום העגלה', dhMoney(total)], ['מספר פריטים', count], ['ממוצע לפריט', dhMoney(avg)]])}
+                <div class="dh-cta-body">
+                    <div class="dh-cta-icon">🛒</div>
+                    <div class="dh-cta-title">עגלת הקניות שלך</div>
+                    <div class="dh-cta-text">כל הפריטים שאספת מחכים לך במקום אחד — מוכנים להשלמת הרכישה.</div>
+                    <span class="dh-cta-btn">לעגלת הקניות המלאה</span>
+                </div>
+            </a>`;
+        }
+        // White CTA card for the wishlist — same frame as the cart's, linking to the
+        // full wishlist.
+        function wishlistCtaCardHTML(items) {
+            const count = items.length;
+            const total = items.reduce((s, i) => s + dhPriceNum(i.price), 0);
+            const avg = count ? total / count : 0;
+            return `<a class="dh-cart-cta has-stats" href="index.html?open=wishlist">
+                ${dhCtaStatsHTML([['פריטים שמורים', count], ['שווי כולל', dhMoney(total)], ['ממוצע לפריט', dhMoney(avg)]])}
+                <div class="dh-cta-body">
+                    <div class="dh-cta-icon">🤍</div>
+                    <div class="dh-cta-title">רשימת המשאלות שלך</div>
+                    <div class="dh-cta-text">כל הפריטים ששמרת לאחר כך — שמורים במקום אחד עד שתחליט.</div>
+                    <span class="dh-cta-btn">לרשימת המשאלות המלאה</span>
+                </div>
             </a>`;
         }
         function cartDetail() {
-            const items = recentItems('vero_cart', sampleCart);
-            const picks = pickRandom(items, 3);
+            const cartItems = recentItems('vero_cart', sampleCart);
+            const wItems = recentItems('vero_wishlist', sampleWishlist);
+            const picks = pickRandom(cartItems, 3);
+            const wPicks = pickRandom(wItems, 3);
             return `<h3 class="dh-detail-title">המוצרים בעגלה</h3>` +
-                `<div class="dh-cards">` + picks.map(miniCardHTML).join('') + cartCtaCardHTML() + `</div>`;
+                `<div class="dh-cards">` + picks.map(miniCardHTML).join('') + cartCtaCardHTML(cartItems) + `</div>` +
+                `<h3 class="dh-detail-title" style="margin-top:44px">המוצרים ברשימת המשאלות</h3>` +
+                `<div class="dh-cards">` + wPicks.map(miniCardHTML).join('') + wishlistCtaCardHTML(wItems) + `</div>`;
         }
 
         // Pool of items that could have been purchased, and a deterministic
@@ -1070,15 +1145,6 @@
                 image: () => peekHTML(recentItems('vero_cart', sampleCart)),
                 count: () => [recentItems('vero_cart', sampleCart).length, 'פריטים בעגלה'],
                 detail: cartDetail,
-            },
-            {
-                tab: 'רשימת משאלות',
-                title: 'רשימת משאלות',
-                desc: 'הצצה למוצרים ששמרת לעצמך. שלושת הפריטים האחרונים שסימנת ברשימת המשאלות.',
-                cta: 'לרשימת המשאלות',
-                image: () => peekHTML(recentItems('vero_wishlist', sampleWishlist)),
-                count: () => [recentItems('vero_wishlist', sampleWishlist).length, 'פריטים שמורים'],
-                detail: () => cardsBlock('המוצרים ברשימת המשאלות', recentItems('vero_wishlist', sampleWishlist)),
             },
             {
                 tab: 'מותגים אהובים',

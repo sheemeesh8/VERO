@@ -381,6 +381,52 @@
         }
         #siteHeader .header-left > a:hover { opacity: 1; color: rgba(0, 0, 0, 0.55); }
         #siteHeader .header-left > a .caret { width: 8px; height: 8px; opacity: 0.65; }
+        /* ---- Search bar + social icons + Add Product (nav row) ---- */
+        #siteHeader .hdr-search {
+            display: flex; align-items: center; gap: 8px;
+            height: 34px; padding: 0 14px;
+            border: 1px solid rgba(0, 0, 0, 0.2); border-radius: 999px;
+            background: rgba(0, 0, 0, 0.02); flex: 0 0 auto;
+        }
+        #siteHeader .hdr-search .hdr-search-ico { width: 15px; height: 15px; color: #111; opacity: 0.55; flex: 0 0 auto; }
+        #siteHeader .hdr-search input {
+            border: none; background: transparent; outline: none; width: 110px;
+            font-family: inherit; font-size: 13px; letter-spacing: 0.5px; color: #111;
+        }
+        #siteHeader .hdr-search input::placeholder {
+            color: rgba(0, 0, 0, 0.45); text-transform: uppercase; letter-spacing: 1.2px; font-size: 12px;
+        }
+        #siteHeader .hdr-social { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+        #siteHeader .hdr-soc { color: #111; display: flex; opacity: 0.72; transition: opacity 0.2s ease; }
+        #siteHeader .hdr-soc:hover { opacity: 1; }
+        #siteHeader .hdr-soc svg { width: 18px; height: 18px; }
+        #siteHeader .hdr-addproduct {
+            height: 34px; padding: 0 18px; border-radius: 999px;
+            background: #111; color: #fff; border: none; cursor: pointer;
+            font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 1.5px;
+            text-transform: uppercase; white-space: nowrap; flex: 0 0 auto;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        #siteHeader .hdr-addproduct:hover { background: #333; transform: translateY(-1px); }
+        /* On dark heroes the header flips to light — keep these controls legible too. */
+        #siteHeader.over-dark .hdr-search,
+        #siteHeader.wh-over-hero .hdr-search,
+        #siteHeader.sticky-look:not(.scrolled) .hdr-search { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.06); }
+        #siteHeader.over-dark .hdr-search .hdr-search-ico,
+        #siteHeader.over-dark .hdr-search input,
+        #siteHeader.over-dark .hdr-soc,
+        #siteHeader.wh-over-hero .hdr-search .hdr-search-ico,
+        #siteHeader.wh-over-hero .hdr-search input,
+        #siteHeader.wh-over-hero .hdr-soc,
+        #siteHeader.sticky-look:not(.scrolled) .hdr-search .hdr-search-ico,
+        #siteHeader.sticky-look:not(.scrolled) .hdr-search input,
+        #siteHeader.sticky-look:not(.scrolled) .hdr-soc { color: #fff; }
+        #siteHeader.over-dark .hdr-search input::placeholder,
+        #siteHeader.wh-over-hero .hdr-search input::placeholder,
+        #siteHeader.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: rgba(255,255,255,0.6); }
+        #siteHeader.over-dark .hdr-addproduct,
+        #siteHeader.wh-over-hero .hdr-addproduct,
+        #siteHeader.sticky-look:not(.scrolled) .hdr-addproduct { background: #fff; color: #111; }
         #siteHeader .logo {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
             font-size: 34px; font-weight: 700; letter-spacing: 5px; color: #111;
@@ -389,7 +435,12 @@
             cursor: pointer; padding-left: 5px;
         }
         #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
-        #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; }
+        /* The Vero script logo is a white-on-transparent PNG. On the light header it
+           is flipped to black; over a dark hero it stays white. */
+        #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; filter: brightness(0); transition: filter 0.25s ease; }
+        #siteHeader.wh-over-hero .logo .logo-img,
+        #siteHeader.over-dark .logo .logo-img,
+        #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: none !important; }
         #siteHeader .header-right { display: flex; gap: 26px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
@@ -716,8 +767,24 @@
                 <a href="about.html">About Us</a>
                 <a onclick="openMenu()">The Closet Magazine</a>
                 <a onclick="openSellerArea()">Seller Area</a>
+                <div class="hdr-search">
+                    <svg class="hdr-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="search" placeholder="Search" aria-label="Search" oninput="veroSearch(this.value)" onkeydown="if(event.key==='Enter'){ veroSearch(this.value); }">
+                </div>
+                <span class="hdr-social">
+                    <a class="hdr-soc" href="https://instagram.com" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.3" cy="6.7" r="0.9" fill="currentColor" stroke="none"></circle></svg>
+                    </a>
+                    <a class="hdr-soc" href="https://tiktok.com" target="_blank" rel="noopener" title="TikTok" aria-label="TikTok">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3c.4 2.5 2 4.2 4.5 4.5v3c-1.7 0-3.2-.5-4.5-1.4V15a5.5 5.5 0 1 1-5.5-5.5c.3 0 .6 0 .9.1v3.1a2.5 2.5 0 1 0 1.6 2.3V3H15z"></path></svg>
+                    </a>
+                    <a class="hdr-soc" href="https://facebook.com" target="_blank" rel="noopener" title="Facebook" aria-label="Facebook">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h-2.5A3.5 3.5 0 0 0 9 6.5V9H7v3h2v9h3v-9h2.5l.5-3H12V6.5a1 1 0 0 1 1-1h2V3z"></path></svg>
+                    </a>
+                </span>
+                <button class="hdr-addproduct" onclick="openUploadProduct()">Add Product</button>
             </div>
-            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vr-logo.png" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
+            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.png" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
 
 
             <div class="hdr-filters" id="veroFilters">
