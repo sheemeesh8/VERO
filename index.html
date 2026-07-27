@@ -431,6 +431,28 @@
             margin-top: -24px;
         }
 
+        /* Glassmorphism frame around the top hero image — same frosted ring as the
+           segment slider, using the padding + mask-exclude trick so the backdrop-blur
+           frosts only the border, never the photo inside. Tint at 0.5 opacity. */
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 22px;
+            border-radius: 26px;
+            padding: 14px;             /* ring thickness */
+            background: rgba(255, 255, 255, 0.5);
+            -webkit-backdrop-filter: blur(10px) saturate(140%);
+            backdrop-filter: blur(10px) saturate(140%);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+                    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+                    mask-composite: exclude;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4),
+                        0 10px 40px rgba(0, 0, 0, 0.25);
+            pointer-events: none;
+            z-index: 3;
+        }
+
         /* Water animation canvas — fills the hero, sits behind all hero content. */
         .hero .wh-canvas {
             position: absolute;
@@ -903,28 +925,6 @@
             /* Former 40px top margin is now black padding, so the gap above the
                slider stays black instead of showing the white page. */
             padding-top: 40px;
-        }
-        /* Glassmorphism frame: a frosted ring hugging the hero's edges. The padding +
-           mask-exclude trick reveals only the ring, so the backdrop-blur frosts the
-           border alone and never the hero content inside it. Tint at 0.5 opacity. */
-        .hero-slider::after {
-            content: '';
-            position: absolute;
-            inset: 16px;
-            top: 56px;                 /* clear the 40px black top padding */
-            border-radius: 24px;
-            padding: 14px;             /* ring thickness */
-            background: rgba(255, 255, 255, 0.5);
-            -webkit-backdrop-filter: blur(10px) saturate(140%);
-            backdrop-filter: blur(10px) saturate(140%);
-            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-                    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-            -webkit-mask-composite: xor;
-                    mask-composite: exclude;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4),
-                        0 10px 40px rgba(0, 0, 0, 0.25);
-            pointer-events: none;
-            z-index: 6;
         }
         /* Text sits on the black slider, so titles/labels read in light. Covers the
            women / men / kids segments and the magazine slide (same slider). */
@@ -1546,7 +1546,9 @@
            glow, exactly like the reference. Height is fixed so only WIDTH animates. */
         .hp-panel {
             position: relative;
-            height: clamp(320px, 46vw, 480px);
+            /* Same height as the hero segment slider above (min-height 720px), so the
+               two stacked sliders share one proportion. */
+            height: clamp(440px, 60vw, 720px);
             border-radius: 16px;
             overflow: hidden;
             background: #141414;
@@ -6778,10 +6780,10 @@
             if (hpTimer) clearInterval(hpTimer);
             const type = currentCategory;
             const list = type === 'clothing' ? clothingSliderCategories : artCategories;
-            // Chunk the categories into slides of three, matching the .hp-slide grid.
+            // Chunk the categories into slides of four, matching the .hp-slide grid.
             const slides = [];
-            for (let i = 0; i < list.length; i += 3) {
-                const group = list.slice(i, i + 3);
+            for (let i = 0; i < list.length; i += 4) {
+                const group = list.slice(i, i + 4);
                 const cards = group.map((c, j) => hpCardHTML(c, i + j, type)).join('');
                 slides.push(`<div class="hp-slide">${cards}</div>`);
             }
