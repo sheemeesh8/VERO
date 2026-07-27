@@ -7844,12 +7844,15 @@
         function heroSlideHTML(s, i) {
             // Stable, reliable hero image per segment (loremflickr was returning 500s
             // and blanking the slider; Lorem Picsum is seeded so each slide is consistent).
-            // The men's / women's clothing slides use supplied local photos;
-            // everything else falls back to a seeded placeholder.
-            const localHero = { men: './men-hero.jpg', women: './women-hero.jpg', magazine: './magazine-hero.jpg' };
-            const bg = (currentCategory === 'clothing' && localHero[s.key])
-                ? localHero[s.key]
-                : `https://picsum.photos/seed/vero-${currentCategory}-${s.key}/900/1100`;
+            // Supplied local photos per mode + segment; everything else falls back to
+            // a seeded placeholder. Note the magazine slide differs by mode:
+            // clothing → The Closet, art → The Gallery.
+            const localHero = {
+                clothing: { men: './men-hero.jpg', women: './women-hero.jpg', magazine: './magazine-hero.jpg' },
+                art:      { magazine: './gallery-hero.jpg' }
+            };
+            const local = localHero[currentCategory] && localHero[currentCategory][s.key];
+            const bg = local || `https://picsum.photos/seed/vero-${currentCategory}-${s.key}/900/1100`;
             // How much this segment actually has to offer — the figure in the
             // button's own counter, read from the same catalogue the feed uses.
             const count = s.magazine ? null : buildSegmentProducts(currentCategory, s.key).length;
