@@ -165,7 +165,7 @@
     /* ===== Layouts 2-6: a shared 12-column editorial grid ===== */
     /* Each layout page reads as a full magazine spread — it fills (near) the
        whole viewport, with its grid centred vertically. */
-    .mag-l { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; background: #e8e6e1; }
+    .mag-l { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; background: #ffffff; }
     /* Theme page treatments from the reference deck: light-grey content pages,
        plain-white title/divider pages, and the occasional full dark page. */
     .mag-l.pg-white { background: #ffffff; }
