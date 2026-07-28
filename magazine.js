@@ -478,7 +478,6 @@
             collection(d),
             theEdit(d),
             contributors(d),
-            back(d),
         ];
         return pages.join('\n<div class="mag-rule thin"></div>\n');
     };
