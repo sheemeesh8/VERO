@@ -4899,27 +4899,35 @@
         }
         .gp-sub { font-size: 15px; color: #7d786f; margin: 0; }
         .gp-grid {
-            display: grid; gap: clamp(16px, 1.8vw, 24px);   /* equal gaps between squares */
-            grid-template-columns: repeat(3, 1fr);
-            max-width: 1040px; margin: 0 auto; width: 100%;
+            display: grid; gap: clamp(16px, 1.8vw, 24px);   /* equal gaps between tiles */
+            grid-template-columns: repeat(2, 1fr);          /* wide layout — two per row */
+            max-width: 1160px; margin: 0 auto; width: 100%;
         }
-        /* Outline squares: frame + icon only, no fill. */
+        /* Wide outline cards: frame + icon + title, no fill. */
         .gp-tile {
-            position: relative; aspect-ratio: 1 / 1; border-radius: 16px;
+            position: relative; border-radius: 16px;
             background: transparent; border: 2px solid #1a1a1a; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-            overflow: hidden; text-align: center; padding: 20px;
+            display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 22px;
+            overflow: hidden; text-align: start; padding: 26px 30px; min-height: 116px;
             transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease, border-color 0.25s ease;
             animation: gpTileIn 0.55s cubic-bezier(0.22,1,0.36,1) both;
         }
         @keyframes gpTileIn { from { opacity: 0; transform: translateY(26px) scale(0.96); } to { opacity: 1; transform: none; } }
-        .gp-tile:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.10); }
-        /* Art squares carry a red frame; clothing keep the default black one. */
+        .gp-tile:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,0.10); }
+        /* Art cards carry a red frame; clothing keep the default black one. */
         .gp-tile.art { border-color: #c0392b; }
         .gp-tile.art .nm { color: #c0392b; }
-        .gp-tile .ic { font-size: clamp(48px, 6vw, 76px); line-height: 1; transition: transform 0.35s cubic-bezier(0.22,1,0.36,1); }
-        .gp-tile:hover .ic { transform: scale(1.12) rotate(-4deg); }
-        .gp-tile .nm { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+        .gp-tile.art:hover .ic { transform: scale(1.12) rotate(-4deg); }
+        .gp-tile .ic {
+            font-size: 40px; line-height: 1; flex: 0 0 auto;
+            width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; background: rgba(0,0,0,0.035);
+            transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+        }
+        .gp-tile:hover .ic { transform: scale(1.08) rotate(-4deg); }
+        .gp-tile.art .ic { background: rgba(192,57,43,0.08); }
+        .gp-tile .nm { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+            font-size: 24px; font-weight: 500; color: #1a1a1a; line-height: 1.15; }
         .gp-tile .ct { font-size: 11px; letter-spacing: 1px; color: #a29c92; font-weight: 600; }
         .gp-tile .badge {
             position: absolute; top: 12px; inset-inline-start: 12px;
@@ -4994,7 +5002,10 @@
         .gp-step-label { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #7d786f; min-width: 90px; text-align: center; }
 
         @media (max-width: 760px) {
-            .gp-grid { grid-template-columns: repeat(2, 1fr); }
+            .gp-grid { grid-template-columns: 1fr; }
+            .gp-tile { min-height: 92px; padding: 18px 20px; }
+            .gp-tile .ic { width: 52px; height: 52px; font-size: 32px; }
+            .gp-tile .nm { font-size: 20px; }
             .gp-slide { grid-template-columns: 1fr; }
             .gp-slide-figure { min-height: 180px; max-height: 34vh; order: -1; }
         }
@@ -7531,10 +7542,11 @@
             if (grid.dataset.built) return;
             grid.innerHTML = GUIDE_CATS.map(([k, l, ic, type], i) => {
                 const art = type === 'art' ? ' art' : '';
-                // Frame + icon only — no fill, no labels (title kept for accessibility).
+                // Frame + icon + title, no fill.
                 return `<div class="gp-tile${art}" style="animation-delay:${i * 0.06}s"
                              title="${l}" aria-label="${l}" onclick="openGuideCategory('${k}')">
                             <span class="ic">${ic}</span>
+                            <span class="nm">${l}</span>
                         </div>`;
             }).join('');
             grid.dataset.built = '1';
