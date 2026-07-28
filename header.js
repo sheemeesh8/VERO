@@ -441,10 +441,8 @@
            makes every pixel render as the inverse of whatever sits behind it, so the
            logo is always the opposite colour of its background — black on light,
            white on dark — with no per-context filter needed. */
-        #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; filter: none; mix-blend-mode: difference; transition: filter 0.25s ease; }
-        /* Home page (header wears .sticky-look): force the logo solid black regardless
-           of the hero behind it — drop the blend and paint the white PNG black. */
-        #siteHeader.sticky-look .logo .logo-img { mix-blend-mode: normal !important; filter: brightness(0) !important; }
+        /* The logo art is a white-on-transparent PNG; paint it solid black everywhere. */
+        #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; mix-blend-mode: normal !important; filter: brightness(0) !important; transition: filter 0.25s ease; }
         #siteHeader .header-right { display: flex; gap: 26px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
