@@ -7489,11 +7489,36 @@
 
         // FEATURE 2 — the "Guide" chooser card opens a full page: a grid of
         // product tiles, then an animated step slider for the chosen type.
+        // key, label, icon, type ('clothing' default | 'art' → red frame).
+        // Add / reorder freely — the grid scrolls and keeps equal gaps. Any key
+        // without a VERO_PHOTO_GUIDE entry falls back to a generic 4-shot guide.
         const GUIDE_CATS = [
-            ['shoes', 'נעליים', '👟'], ['tops', 'חולצות / טופים', '👕'],
-            ['outerwear', 'מעילים', '🧥'], ['bags', 'תיקים', '👜'],
-            ['bottoms', 'מכנסיים', '👖'], ['accessories', 'משקפיים / שעונים', '🕶️'],
+            // ---- Clothing (black frame) ----
+            ['tops', 'חולצות וטופים', '👕'],
+            ['knitwear', 'סוודרים ועליוניות', '🧶'],
+            ['bottoms', 'מכנסיים', '👖'],
+            ['outerwear', 'מעילים וז׳קטים', '🧥'],
+            ['dresses', 'שמלות וחצאיות', '👗'],
+            ['shoes', 'נעליים', '👟'],
+            ['bags', 'תיקים', '👜'],
+            ['accessories', 'משקפיים / שעונים', '🕶️'],
+            // ---- Art (red frame) ----
+            ['paintings', 'ציורים', '🎨', 'art'],
+            ['prints', 'הדפסים', '🖼️', 'art'],
+            ['sculpture', 'פיסול', '🗿', 'art'],
+            ['photography', 'צילום', '📷', 'art'],
+            ['ceramics', 'קרמיקה', '🏺', 'art'],
         ];
+        // Guide data for the categories photo-guide.js doesn't define yet.
+        Object.assign(window.VERO_PHOTO_GUIDE || (window.VERO_PHOTO_GUIDE = {}), {
+            knitwear:    { title: 'סוודרים ועליוניות', slots: ['חזית מלאה', 'גב הסוודר', 'תווית מותג ומידה', 'תקריב סריגה / בד'] },
+            dresses:     { title: 'שמלות וחצאיות', slots: ['חזית מלאה', 'גב', 'תווית מידה', 'תקריב בד / דוגמה'] },
+            paintings:   { title: 'ציורים', slots: ['היצירה במלואה (חזית)', 'תקריב מרקם / משיכות מכחול', 'חתימת האמן', 'צד / עומק המסגרת'] },
+            prints:      { title: 'הדפסים', slots: ['ההדפס במלואו', 'תקריב איכות הדפסה', 'מספור / חתימה', 'שוליים ונייר'] },
+            sculpture:   { title: 'פיסול', slots: ['חזית', 'זווית 45°', 'גב / צד', 'בסיס וחתימה'] },
+            photography: { title: 'צילום', slots: ['הצילום במלואו', 'תקריב פרט', 'חתימה / מספור', 'מסגור / נייר'] },
+            ceramics:    { title: 'קרמיקה', slots: ['חזית', 'מבט מלמעלה', 'תחתית וחותמת', 'תקריב זיגוג / פגמים'] },
+        });
         const GUIDE_CORE_TIPS = [
             { icon: '☀', title: 'תאורה טבעית', text: 'אור יום רך ליד חלון, בלי פלאש ישיר.' },
             { icon: '◐', title: 'רקע נקי', text: 'רקע אחיד בקונטרסט שמפריד את הפריט.' },
@@ -7504,13 +7529,12 @@
         function buildGuideGrid() {
             const grid = document.getElementById('gpGrid');
             if (grid.dataset.built) return;
-            grid.innerHTML = GUIDE_CATS.map(([k, l, ic], i) => {
-                const slots = (window.VERO_PHOTO_GUIDE[k] || {}).slots || [];
-                return `<div class="gp-tile" style="animation-delay:${i * 0.06}s" onclick="openGuideCategory('${k}')">
-                            <span class="badge">${slots.length} תמונות</span>
+            grid.innerHTML = GUIDE_CATS.map(([k, l, ic, type], i) => {
+                const art = type === 'art' ? ' art' : '';
+                // Frame + icon only — no fill, no labels (title kept for accessibility).
+                return `<div class="gp-tile${art}" style="animation-delay:${i * 0.06}s"
+                             title="${l}" aria-label="${l}" onclick="openGuideCategory('${k}')">
                             <span class="ic">${ic}</span>
-                            <span class="nm">${l}</span>
-                            <span class="ct">${(window.VERO_PHOTO_GUIDE[k] || {}).title || ''}</span>
                         </div>`;
             }).join('');
             grid.dataset.built = '1';
@@ -7533,10 +7557,14 @@
         // Build the per-step slides for a category: an overview slide, then one
         // slide per required shot.
         function openGuideCategory(cat) {
-            const data = window.VERO_PHOTO_GUIDE[cat];
-            if (!data) return;
-            const meta = GUIDE_CATS.find(c => c[0] === cat) || [cat, data.title, '📷'];
-            const icon = meta[2];
+            const meta = GUIDE_CATS.find(c => c[0] === cat);
+            // Any category without dedicated data gets a generic 4-shot guide, so a
+            // tile is never a dead click.
+            const data = window.VERO_PHOTO_GUIDE[cat] || {
+                title: meta ? meta[1] : cat,
+                slots: ['חזית מלאה', 'זווית / צד', 'תקריב פרט', 'תווית / חתימה'],
+            };
+            const icon = meta ? meta[2] : '📷';
 
             const overview = `
                 <div class="gp-slide" data-i="0">
