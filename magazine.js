@@ -161,6 +161,41 @@
         .contrib-grid { grid-template-columns: repeat(2,1fr); }
         .edit-grid { grid-template-columns: repeat(2,1fr); }
     }
+
+    /* ===== Layouts 2-6: a shared 12-column editorial grid ===== */
+    .mag-l { }
+    .mag-l-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(16px,2vw,36px); align-items: start; }
+    .mag-l .mag-plate { border-radius: 0; }
+    .mag-l-plate { position: relative; background: #b8b8b8; overflow: hidden; }
+    .mag-l-plate .glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(60px,10vw,150px); color: rgba(0,0,0,.18); }
+    .mag-l-plate img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .mag-l-body { font-size: 13px; line-height: 1.85; color: #333; margin: 0 0 14px; }
+    .mag-l-body + .mag-l-body { margin-top: 0; }
+    .mag-l-cols { column-count: 2; column-gap: clamp(20px,3vw,44px); }
+    .mag-l-cols .mag-l-body { break-inside: avoid; }
+    .mag-l-kicker { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #111; font-weight: 700; display: block; margin: 0 0 10px; }
+    .mag-l-title { font-size: clamp(22px,3vw,40px); font-weight: 500; line-height: 1.12; margin: 0 0 18px; }
+    .mag-l-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a9a; border-top: 1px solid #e2e2e2; margin-top: clamp(24px,4vh,50px); padding-top: 12px; }
+    /* per-page placement helpers */
+    .gc-1-7  { grid-column: 1 / 7; }
+    .gc-7-13 { grid-column: 7 / 13; }
+    .gc-1-6  { grid-column: 1 / 6; }
+    .gc-6-13 { grid-column: 6 / 13; }
+    .gc-1-8  { grid-column: 1 / 8; }
+    .gc-8-13 { grid-column: 8 / 13; }
+    .gc-1-13 { grid-column: 1 / 13; }
+    .gc-1-5  { grid-column: 1 / 5; }
+    .gc-5-13 { grid-column: 5 / 13; }
+    .ar-tall { aspect-ratio: 3/4; }
+    .ar-wide { aspect-ratio: 16/10; }
+    .ar-sq   { aspect-ratio: 1/1; }
+    .ar-big  { aspect-ratio: 4/3; }
+
+    @media (max-width: 820px) {
+        .mag-l-grid { grid-template-columns: 1fr; }
+        .mag-l-grid > * { grid-column: 1 / -1 !important; }
+        .mag-l-cols { column-count: 1; }
+    }
     `;
 
     function ensureStyles() {
@@ -426,9 +461,14 @@
         </section>`;
     }
 
-    // ---- Assemble + mount ---------------------------------------------------
-    function render(mode) {
-        const d = getData(mode);
+    // ---- Layout registry ----------------------------------------------------
+    // The issue is composed of numbered layouts, rendered in order 1..N. Each
+    // layout is a function(d) -> HTML string of one or more magazine pages.
+    // Layout 1 is the original editorial design; layouts 2-6 are added below as
+    // their wireframes come in, and the magazine "works by them" in numeric order.
+    const LAYOUTS = {};
+
+    LAYOUTS[1] = function (d) {
         const pages = [
             cover(d),
             contents(d),
@@ -441,6 +481,141 @@
             back(d),
         ];
         return pages.join('\n<div class="mag-rule thin"></div>\n');
+    };
+
+    // ---- Helpers shared by layouts 2-6 -------------------------------------
+    const L_LOREM = 'Composed entirely from pieces currently living a second life on VERO. Each garment carries the marks of where it has been — a study in wear, provenance and the quiet value of things kept well.';
+    // A grey editorial plate (photo over a glyph fallback) at a given column span
+    // + aspect ratio.
+    function lPlate(item, gc, ar) {
+        item = item || {};
+        const img = item.img ? `<img src="${esc(item.img)}" alt="" onerror="this.style.display='none'">` : '';
+        return `<div class="mag-l-plate ${gc} ${ar}"><span class="glyph">${esc(item.icon || '◼')}</span>${img}</div>`;
+    }
+    // One or more body paragraphs, seeded from the item's own copy then padded.
+    function lBody(item, n) {
+        item = item || {};
+        const first = item.desc || `${item.name || 'This piece'} — ${L_LOREM}`;
+        const out = [first];
+        for (let i = 1; i < (n || 1); i++) out.push(L_LOREM);
+        return out.map(t => `<p class="mag-l-body">${esc(t)}</p>`).join('');
+    }
+    function lFoot(d, page) {
+        return `<div class="mag-l-foot"><span>${esc(d.masthead)} Magazine</span><span>Page ${page}</span><span>vero.style</span></div>`;
+    }
+    // Cycle through the issue's items so each layout shows different pieces.
+    function lItem(d, i) { return d.items.length ? d.items[i % d.items.length] : {}; }
+
+    // ---- Layout 2: image-lead — a large image beside a short text column, then
+    // a wide image with three small plates and a caption column. ----
+    LAYOUTS[2] = function (d) {
+        return `
+        <section class="mag-page mag-l mag-l2">
+            <div class="mag-l-grid">
+                ${lPlate(lItem(d, 0), 'gc-1-7', 'ar-tall')}
+                <div class="gc-8-13">
+                    <span class="mag-l-kicker">Feature 01</span>
+                    <h2 class="mag-l-title mag-serif">${esc(lItem(d, 0).name || 'The Feature')}</h2>
+                    ${lBody(lItem(d, 0), 2)}
+                </div>
+                ${lFoot(d, '02')}
+            </div>
+        </section>
+        <section class="mag-page mag-l mag-l2">
+            <div class="mag-l-grid">
+                ${lPlate(lItem(d, 1), 'gc-1-8', 'ar-big')}
+                ${lPlate(lItem(d, 2), 'gc-8-13', 'ar-tall')}
+                <div class="gc-1-8"><div class="mag-l-cols">${lBody(lItem(d, 1), 2)}</div></div>
+                <div class="gc-8-13">${lBody(lItem(d, 2), 1)}</div>
+                ${lFoot(d, '03')}
+            </div>
+        </section>`;
+    };
+
+    // ---- Layout 3: split — a full-height image on one side, an editorial text
+    // block on the other, then a dominant image with a small caption. ----
+    LAYOUTS[3] = function (d) {
+        return `
+        <section class="mag-page mag-l mag-l3">
+            <div class="mag-l-grid">
+                ${lPlate(lItem(d, 3), 'gc-1-6', 'ar-tall')}
+                <div class="gc-6-13">
+                    <span class="mag-l-kicker">The Story</span>
+                    <h2 class="mag-l-title mag-serif">${esc(lItem(d, 3).name || 'On Provenance')}</h2>
+                    <div class="mag-l-cols">${lBody(lItem(d, 3), 3)}</div>
+                </div>
+                ${lFoot(d, '04')}
+            </div>
+        </section>
+        <section class="mag-page mag-l mag-l3">
+            <div class="mag-l-grid">
+                ${lPlate(lItem(d, 4), 'gc-1-13', 'ar-wide')}
+                <div class="gc-1-8">${lBody(lItem(d, 4), 1)}</div>
+                <div class="gc-8-13"><span class="mag-l-kicker">Detail</span>${lBody(lItem(d, 5), 1)}</div>
+                ${lFoot(d, '05')}
+            </div>
+        </section>`;
+    };
+
+    // ---- Layout 4: grid of four — a 2x2 plate grid with a running caption. ----
+    LAYOUTS[4] = function (d) {
+        return `
+        <section class="mag-page mag-l mag-l4">
+            <div class="mag-l-grid">
+                <div class="gc-1-8">
+                    <span class="mag-l-kicker">The Collection</span>
+                    <h2 class="mag-l-title mag-serif">Four Ways</h2>
+                    ${lBody(lItem(d, 0), 1)}
+                </div>
+                ${lPlate(lItem(d, 0), 'gc-1-7', 'ar-sq')}
+                ${lPlate(lItem(d, 1), 'gc-7-13', 'ar-sq')}
+                ${lPlate(lItem(d, 2), 'gc-1-7', 'ar-sq')}
+                ${lPlate(lItem(d, 3), 'gc-7-13', 'ar-sq')}
+                ${lFoot(d, '06')}
+            </div>
+        </section>`;
+    };
+
+    // ---- Layout 5: editorial columns — two body columns beside a tall image. ----
+    LAYOUTS[5] = function (d) {
+        return `
+        <section class="mag-page mag-l mag-l5">
+            <div class="mag-l-grid">
+                <div class="gc-1-8">
+                    <span class="mag-l-kicker">Essay</span>
+                    <h2 class="mag-l-title mag-serif">${esc(lItem(d, 2).name || 'A Second Life')}</h2>
+                    <div class="mag-l-cols">${lBody(lItem(d, 2), 4)}</div>
+                </div>
+                ${lPlate(lItem(d, 2), 'gc-8-13', 'ar-tall')}
+                ${lFoot(d, '07')}
+            </div>
+        </section>`;
+    };
+
+    // ---- Layout 6: full-bleed feature — one dominant image with a lead text. ----
+    LAYOUTS[6] = function (d) {
+        return `
+        <section class="mag-page mag-l mag-l6">
+            <div class="mag-l-grid">
+                <div class="gc-1-13">
+                    <span class="mag-l-kicker">Closing Feature</span>
+                    <h2 class="mag-l-title mag-serif">${esc(lItem(d, 1).name || 'The Last Word')}</h2>
+                </div>
+                ${lPlate(lItem(d, 1), 'gc-1-13', 'ar-wide')}
+                <div class="gc-1-6">${lBody(lItem(d, 1), 1)}</div>
+                <div class="gc-7-13">${lBody(lItem(d, 5), 1)}</div>
+                ${lFoot(d, '08')}
+            </div>
+        </section>`;
+    };
+
+    // ---- Assemble + mount ---------------------------------------------------
+    function render(mode) {
+        const d = getData(mode);
+        const nums = Object.keys(LAYOUTS).map(Number).sort((a, b) => a - b);
+        return nums
+            .map(n => `<div class="mag-layout" data-layout="${n}">${LAYOUTS[n](d)}</div>`)
+            .join('\n<div class="mag-rule thin"></div>\n');
     }
 
     function openMagazine(mode) {
