@@ -166,7 +166,9 @@
     .mag-l { }
     .mag-l-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(16px,2vw,36px); align-items: start; }
     .mag-l .mag-plate { border-radius: 0; }
-    .mag-l-plate { position: relative; background: #b8b8b8; overflow: hidden; }
+    /* Cap plate height so a full-width image never fills the whole screen —
+       it stays in normal desktop proportions. */
+    .mag-l-plate { position: relative; background: #b8b8b8; overflow: hidden; max-height: 66vh; }
     .mag-l-plate .glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(60px,10vw,150px); color: rgba(0,0,0,.18); }
     .mag-l-plate img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .mag-l-body { font-size: 13px; line-height: 1.85; color: #333; margin: 0 0 14px; }
@@ -483,7 +485,9 @@
     };
 
     // ---- Helpers shared by layouts 2-6 -------------------------------------
-    const L_LOREM = 'Composed entirely from pieces currently living a second life on VERO. Each garment carries the marks of where it has been — a study in wear, provenance and the quiet value of things kept well.';
+    // The data for the issue currently rendering, so lBody can pull additional
+    // real seller descriptions when a layout asks for more than one paragraph.
+    let _md = null;
     // A grey editorial plate (photo over a glyph fallback) at a given column span
     // + aspect ratio.
     function lPlate(item, gc, ar) {
@@ -491,13 +495,21 @@
         const img = item.img ? `<img src="${esc(item.img)}" alt="" onerror="this.style.display='none'">` : '';
         return `<div class="mag-l-plate ${gc} ${ar}"><span class="glyph">${esc(item.icon || '◼')}</span>${img}</div>`;
     }
-    // One or more body paragraphs, seeded from the item's own copy then padded.
+    // Body paragraphs built ONLY from the descriptions the sellers actually wrote
+    // for their products. If a layout wants more paragraphs than this item has,
+    // we fill from other items' real descriptions — never lorem.
     function lBody(item, n) {
         item = item || {};
-        const first = item.desc || `${item.name || 'This piece'} — ${L_LOREM}`;
-        const out = [first];
-        for (let i = 1; i < (n || 1); i++) out.push(L_LOREM);
-        return out.map(t => `<p class="mag-l-body">${esc(t)}</p>`).join('');
+        n = n || 1;
+        const parts = [];
+        if (item.desc) parts.push(item.desc);
+        const pool = (_md && _md.items) || [];
+        for (const it of pool) {
+            if (parts.length >= n) break;
+            if (it && it.desc && parts.indexOf(it.desc) === -1) parts.push(it.desc);
+        }
+        if (!parts.length) parts.push(`${item.name || 'This piece'} — available now on VERO.`);
+        return parts.slice(0, n).map(t => `<p class="mag-l-body">${esc(t)}</p>`).join('');
     }
     function lFoot(d, page) {
         return `<div class="mag-l-foot"><span>${esc(d.masthead)} Magazine</span><span>Page ${page}</span><span>vero.style</span></div>`;
@@ -611,6 +623,7 @@
     // ---- Assemble + mount ---------------------------------------------------
     function render(mode) {
         const d = getData(mode);
+        _md = d;   // so lBody can draw on the issue's real seller descriptions
         const nums = Object.keys(LAYOUTS).map(Number).sort((a, b) => a - b);
         return nums
             .map(n => `<div class="mag-layout" data-layout="${n}">${LAYOUTS[n](d)}</div>`)
