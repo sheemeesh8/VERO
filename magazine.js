@@ -39,10 +39,10 @@
     /* Grayscale image plate — the emoji stands in for the shoot. */
     .mag-plate {
         position: relative; background: #ededeb; display: flex; align-items: center; justify-content: center;
-        overflow: hidden; filter: grayscale(1) contrast(1.02);
+        overflow: hidden; filter: contrast(1.02);
     }
-    .mag-plate .glyph { font-size: clamp(90px,16vw,190px); line-height: 1; filter: grayscale(1); opacity: .92; }
-    .mag-plate .plate-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.03); }
+    .mag-plate .glyph { font-size: clamp(90px,16vw,190px); line-height: 1; filter: none; opacity: .92; }
+    .mag-plate .plate-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: contrast(1.03); }
     .mag-plate.tall { aspect-ratio: 3/4; }
     .mag-plate.wide { aspect-ratio: 4/3; }
     .mag-plate.sq { aspect-ratio: 1/1; }
@@ -59,7 +59,7 @@
     .mag-cover h1 { font-size: clamp(52px,8vw,112px); line-height: .92; margin: 0; font-weight: 500; letter-spacing: -1px; }
     .mag-cover h1 .sub { display: block; font-size: clamp(20px,2.6vw,34px); letter-spacing: 8px; font-weight: 400; margin-top: 10px; }
     .mag-cover .cov-right { position: relative; background: #ededeb; }
-    .mag-cover .cov-right .glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(120px,22vw,300px); filter: grayscale(1); }
+    .mag-cover .cov-right .glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(120px,22vw,300px); filter: none; }
     .mag-cover .cov-tag { position: absolute; z-index: 1; bottom: 26px; left: 26px; right: 26px; color: #111; }
 
     /* --- Contents --- */
@@ -103,13 +103,13 @@
     /* --- Contributors --- */
     .mag-contrib h2 { font-size: clamp(30px,4.5vw,60px); margin: 0 0 30px; font-weight: 500; }
     .contrib-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: clamp(16px,2.5vw,34px); }
-    .contrib-card .sq2 { aspect-ratio: 1/1; background: #ededeb; display: flex; align-items: center; justify-content: center; font-size: 46px; filter: grayscale(1); }
+    .contrib-card .sq2 { aspect-ratio: 1/1; background: #ededeb; display: flex; align-items: center; justify-content: center; font-size: 46px; filter: none; }
     .contrib-card .nm { margin-top: 12px; font-weight: 600; font-size: 14px; }
     .contrib-card .rl { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #8a8a8a; margin-top: 3px; }
 
     /* --- Full-bleed editorial photo page --- */
     .mag-photo { position: relative; width: 100%; height: 88vh; overflow: hidden; background: #ededeb; }
-    .mag-photo-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.04); }
+    .mag-photo-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: contrast(1.04); }
     .mag-photo-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(28px,5vw,72px);
         background: linear-gradient(0deg, rgba(0,0,0,.6), transparent 65%); color: #fff; }
     .mag-photo-cap .mag-kicker.light { color: #fff; opacity: .85; }
@@ -275,8 +275,11 @@
 
     function contents(d) {
         const rows = [];
-        d.items.forEach((it, i) => rows.push({ n: i + 1, t: it.name, p: (i + 1) * 6 + 2 }));
-        d.collections.slice(0, 6).forEach((c, i) => rows.push({ n: d.items.length + i + 1, t: c.name + ' — Collection', p: 40 + i * 4 }));
+        // Styles first (the clothing collections), then the individual items.
+        d.collections.slice(0, 6).forEach((c) => rows.push({ t: c.name + ' — Collection' }));
+        d.items.forEach((it) => rows.push({ t: it.name }));
+        // Number and paginate sequentially in the final order.
+        rows.forEach((r, i) => { r.n = i + 1; r.p = (i + 1) * 6 + 2; });
         return `
         <section class="mag-page mag-contents">
             <div class="con-grid">
