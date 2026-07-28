@@ -437,7 +437,11 @@
         #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
         /* The Vero script logo is a white-on-transparent PNG. It is flipped to black
            everywhere — the header now reads dark on light throughout. */
-        #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; filter: brightness(0); transition: filter 0.25s ease; }
+        /* The Vero script logo art is white-on-transparent. mix-blend-mode:difference
+           makes every pixel render as the inverse of whatever sits behind it, so the
+           logo is always the opposite colour of its background — black on light,
+           white on dark — with no per-context filter needed. */
+        #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; filter: none; mix-blend-mode: difference; transition: filter 0.25s ease; }
         #siteHeader .header-right { display: flex; gap: 26px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
@@ -530,7 +534,8 @@
         #siteHeader.scrolled.over-dark .header-left > a,
         #siteHeader.scrolled.over-dark .logo,
         #siteHeader.scrolled.over-dark .toggle-category { color: #fff; }
-        #siteHeader.scrolled.over-dark .logo-img { filter: invert(1) brightness(1.15); }
+        /* mix-blend-mode already inverts the logo against the dark header — no filter. */
+        #siteHeader.scrolled.over-dark .logo-img { filter: none; }
         #siteHeader.scrolled.over-dark .header-left > a:hover { color: rgba(255,255,255,0.6); }
         #siteHeader.scrolled.over-dark .toggle-category { border-color: rgba(255,255,255,0.28); }
         #siteHeader.scrolled.over-dark .toggle-category::before { background: #fff; }
@@ -684,8 +689,9 @@
         }
         .vero-drawer-head .vero-drawer-logo .vero-drawer-logo-img {
             height: 34px; width: auto; display: block;
-            /* logo art is black; drawer background is dark, so flip it to white */
-            filter: invert(1) brightness(2);
+            /* Same white-on-transparent logo art as the header. difference blend makes
+               it render as the inverse of the background — white on the dark drawer. */
+            filter: none; mix-blend-mode: difference;
         }
         .vero-drawer-close {
             background: none; border: none; cursor: pointer; font-size: 28px;
@@ -699,6 +705,15 @@
             transition: color 0.2s ease, padding-left 0.2s ease;
         }
         .vero-drawer-nav a:hover { color: rgba(255,255,255,0.6); padding-left: 6px; }
+        /* Seller Area stands out — a fluorescent-yellow highlighter swipe behind the
+           text, like a marker drawn over the word. */
+        .vero-drawer-nav a.vero-drawer-seller {
+            color: #111; font-weight: 700;
+            background: #eaff00;
+            box-shadow: -4px 0 0 #eaff00, 4px 0 0 #eaff00;
+            align-self: flex-start; border-bottom-color: rgba(255,255,255,0.14);
+        }
+        .vero-drawer-nav a.vero-drawer-seller:hover { color: #111; background: #f2ff4d; box-shadow: -4px 0 0 #f2ff4d, 4px 0 0 #f2ff4d; }
         .vero-drawer-social {
             margin-top: auto; padding-top: 28px;
             display: flex; align-items: center; gap: 20px;
@@ -820,14 +835,17 @@
         <div class="vero-drawer-overlay" id="veroDrawerOverlay" onclick="veroCloseDrawer()"></div>
         <aside class="vero-drawer" id="veroDrawer" aria-hidden="true">
             <div class="vero-drawer-head">
-                <span class="vero-drawer-logo"><img src="vr-logo.png" alt="VERO" class="vero-drawer-logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></span>
+                <span class="vero-drawer-logo"><img src="vero-logo.png" alt="VERO" class="vero-drawer-logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></span>
                 <button class="vero-drawer-close" aria-label="Close menu" onclick="veroCloseDrawer()">&times;</button>
             </div>
             <nav class="vero-drawer-nav">
                 <a onclick="veroCloseDrawer(); showMain()">Home</a>
+                <a onclick="veroCloseDrawer(); veroGoSegment('men')">Men</a>
+                <a onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
+                <a onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
                 <a href="about.html">About Us</a>
                 <a onclick="veroCloseDrawer(); openMenu()">The Closet Magazine</a>
-                <a onclick="veroCloseDrawer(); openSellerArea()">Seller Area</a>
+                <a class="vero-drawer-seller" onclick="veroCloseDrawer(); openSellerArea()">Seller Area</a>
                 <a onclick="veroCloseDrawer(); openBuyerArea()">My Account</a>
             </nav>
             <div class="vero-drawer-social">
@@ -1055,6 +1073,10 @@
     ensure('openSellerArea', () => nav('seller-area.html'));
     ensure('openUploadProduct', () => nav('index.html?open=upload'));
     ensure('openMenu', () => nav('index.html?open=magazine'));
+    // Men / Women / Kids drawer links → open that segment on the home feed. Always
+    // routes through index.html?seg=… so it works from any page; index reads the
+    // param on load and selects the segment.
+    window.veroGoSegment = function (key) { nav('index.html?seg=' + encodeURIComponent(key)); };
     ensure('showToast', msg => window.alert(msg));
     ensure('toggleSwitch', () => {
         const next = localStorage.getItem('vero_category') === 'clothing' ? 'art' : 'clothing';

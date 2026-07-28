@@ -3437,6 +3437,12 @@
             margin: 64px auto;
             width: min(100%, calc(min(1600px, 100vw) - var(--spacing-2xl) * 2));
         }
+        /* Render the category's first slider 1:1 with the feed's lead slider: same
+           inner geometry (viewport gutters, slide gap + padding) so the designer's
+           baked drag offsets land exactly as they do on the feed. Layout only —
+           never type or copy (see the promo-slider single-definition rule). */
+        #acatContent .promo-viewport { margin: 0 44px; }
+        #acatContent .promo-slide { gap: 44px; padding: 12px 10px; }
         /* Five across → each block of 10 products reads as two rows of five,
            followed by that category's promoted slider (see showCategoryPage). */
         .acat-grid {
@@ -3750,6 +3756,18 @@
         }
         .vpill:hover { border-color: #fff; background: rgba(255,255,255,0.12); }
         .vpill.special { color: #E9A0A0; border-color: rgba(233,160,160,0.5); }
+        .vpill.offer { color: #F4D58D; border-color: rgba(244,213,141,0.55); font-weight: 600; }
+        .vpill.offer:hover { border-color: #F4D58D; background: rgba(244,213,141,0.12); }
+        /* Make-an-Offer modal internals */
+        .voffer-quick { display: flex; gap: 8px; margin: 0 0 16px; }
+        .voffer-quick .vpill { flex: 1 1 auto; color: var(--c-ink); border-color: rgba(0,0,0,0.18); padding: 10px 8px; font-size: 14px; }
+        .voffer-quick .vpill:hover { border-color: var(--c-ink); background: rgba(0,0,0,0.04); }
+        .voffer-input { display: flex; align-items: center; gap: 8px; border: 1px solid rgba(0,0,0,0.22);
+            border-radius: 4px; padding: 12px 14px; margin-bottom: 10px; font-size: 22px; font-family: var(--f-serif); }
+        .voffer-input span { color: var(--c-mute); }
+        .voffer-input input { flex: 1; border: none; outline: none; font: inherit; width: 100%; background: transparent; text-align: right; }
+        .voffer-note { font-size: 12.5px; color: var(--c-mute); min-height: 18px; margin-bottom: 16px; }
+        .voffer-note.bad { color: #C0392B; }
         .vchat-upper.empty { padding: 12px 24px; }
         /* Bot "typing" dots, shown while a canned answer is on its way. */
         .vtyping {
@@ -4303,6 +4321,38 @@
         .photo-slot .plus { font-size: 34px; line-height: 1; }
         .photo-main .cap { font-size: 15px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700; }
         .photo-slot .cap { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; }
+
+        /* ---- AI Auto-Listing: scan overlay + auto-fill banner ---- */
+        .ai-scan {
+            position: absolute; inset: 0; border-radius: 10px; overflow: hidden;
+            background: rgba(0,66,37,0.28); backdrop-filter: blur(1px);
+            display: flex; align-items: flex-end; justify-content: center;
+            z-index: 5; transition: opacity 0.4s;
+        }
+        .ai-scan.done { opacity: 0; }
+        .ai-scan-line {
+            position: absolute; left: 0; right: 0; top: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, #7fe0b0, #fff, #7fe0b0, transparent);
+            box-shadow: 0 0 14px 3px rgba(127,224,176,0.7);
+            animation: aiScan 1.4s ease-in-out infinite;
+        }
+        @keyframes aiScan { 0% { top: 4%; } 50% { top: 94%; } 100% { top: 4%; } }
+        .ai-scan-status {
+            margin-bottom: 14px; padding: 7px 14px; border-radius: 999px;
+            background: rgba(0,0,0,0.62); color: #fff; font-size: 13px; font-weight: 600;
+            letter-spacing: 0.2px; white-space: nowrap;
+        }
+        .ai-fill-banner {
+            border: 1px solid rgba(0,66,37,0.35); background: linear-gradient(180deg, #f2f9f4, #eef6f0);
+            border-radius: 10px; padding: 13px 15px; margin-bottom: 18px; direction: rtl;
+            animation: aiBannerIn 0.4s ease;
+        }
+        @keyframes aiBannerIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        .ai-fill-head { display: flex; align-items: center; gap: 8px; color: #004225; font-size: 15px; }
+        .ai-fill-spark { font-size: 16px; }
+        .ai-fill-x { margin-inline-start: auto; border: none; background: transparent; cursor: pointer;
+            font-size: 15px; color: #4a6b5b; line-height: 1; }
+        .ai-fill-sub { margin-top: 6px; font-size: 13px; color: #3d5c4d; }
         .photo-main.filled, .photo-slot.filled { border-style: solid; border-color: #004225; }
         .photo-main.filled .plus, .photo-main.filled .cap,
         .photo-slot.filled .plus, .photo-slot.filled .cap { display: none; }
@@ -7486,6 +7536,7 @@
             document.getElementById('uploadContainer').style.display = 'none';
             currentSlide = 0;
             uploadFormData = blankUploadForm();
+            aiListingRan = false;
             buildUploadPalette();
         }
 
@@ -7503,6 +7554,9 @@
         // Wiping uploadFormData isn't enough — the inputs and chips keep whatever the
         // last listing put there, so the next one has to start from a clean form.
         function resetUploadFields() {
+            // A fresh listing may run the AI auto-fill again.
+            aiListingRan = false;
+            document.querySelectorAll('.ai-fill-banner, .ai-scan').forEach(el => el.remove());
             // itemTypeSelect is an open field now, so it clears like the other text ones.
             ['brandNameInput', 'priceInput', 'descriptionInput', 'yearInput', 'dimH', 'dimW', 'dimD', 'itemTypeSelect']
                 .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -7580,6 +7634,126 @@
         // undone without asking the seller to shoot the piece again.
         const uploadOriginals = {};
 
+        /* ==================== AI Auto-Listing (simulated) ====================
+           On a static site there is no server to run real Computer-Vision / OCR,
+           so this stages a believable analysis and auto-fills the whole listing
+           from a small library of plausible results. The seller uploads a photo
+           and lands on a form that is already ~90% complete. */
+        const AI_LISTING_CLOTHING = [
+            { brand: "Levi's", type: "Denim Jacket", gender: 'Unisex', style: 'Vintage 90s',
+              color: 'Navy', material: 'Denim', condition: 'Excellent', price: 220,
+              title: "ג'קט ג'ינס וינטג' של Levi's במצב מעולה",
+              desc: "ג'קט ג'ינס קלאסי מבית Levi's, גזרה ישרה, שמור שמירה קפדנית ללא כתמים. מושלם ללוק קז'ואל." },
+            { brand: 'Nike', type: 'Sneakers', gender: 'Unisex', style: 'Athleisure',
+              color: 'White', material: 'Canvas', condition: 'Like new', price: 180,
+              title: 'סניקרס Nike לבנות — כמו חדשות',
+              desc: 'זוג סניקרס Nike במצב כמעט חדש, נעולות פעמים ספורות. נוחות ורב-שימושיות לכל אאוטפיט יומיומי.' },
+            { brand: 'Zara', type: 'Wool Coat', gender: 'Women', style: 'Old Money',
+              color: 'Beige', material: 'Wool', condition: 'Excellent', price: 260,
+              title: "מעיל צמר בז' של Zara בגזרה קלאסית",
+              desc: 'מעיל צמר חם ואלגנטי מבית Zara, גוון בז\' ניטרלי שמשתלב בכל ארון. מצב מעולה, ללא בלאי.' },
+            { brand: 'Ralph Lauren', type: 'Polo Shirt', gender: 'Men', style: 'Smart Casual',
+              color: 'Green', material: 'Cotton', condition: 'Good', price: 120,
+              title: 'חולצת פולו של Ralph Lauren',
+              desc: 'חולצת פולו כותנה איכותית מבית Ralph Lauren. גזרה קלאסית, בלאי קל בהתאם לשימוש.' },
+        ];
+        const AI_LISTING_ART = {
+            brand: 'Studio Vero', type: 'Acrylic Painting', gender: null, style: 'Acrylic',
+            color: 'Blue', material: 'Canvas', condition: 'Excellent', price: 380,
+            title: 'ציור אקריליק מקורי בגווני כחול',
+            desc: 'יצירת אקריליק מקורית על קנבס, קומפוזיציה אבסטרקטית בגווני כחול עמוקים. חתומה ומוכנה לתלייה.'
+        };
+
+        const AI_SCAN_STEPS = [
+            'מנתח תמונה…', 'מזהה מותג ותווית (OCR)…', 'מזהה צבע וטקסטיל…',
+            'מעריך מצב הפריט…', 'מרכיב טופס מכירה…',
+        ];
+
+        let aiListingRan = false;
+        function veroAiAutolist(slotEl) {
+            if (aiListingRan) return;            // one pass per listing
+            aiListingRan = true;
+
+            // Scanning overlay drawn over the cover photo.
+            const scan = document.createElement('div');
+            scan.className = 'ai-scan';
+            scan.innerHTML = `<div class="ai-scan-line"></div><div class="ai-scan-status">${AI_SCAN_STEPS[0]}</div>`;
+            slotEl.appendChild(scan);
+            const status = scan.querySelector('.ai-scan-status');
+
+            let i = 0;
+            const stepId = setInterval(() => {
+                i++;
+                if (i < AI_SCAN_STEPS.length) status.textContent = AI_SCAN_STEPS[i];
+            }, 620);
+
+            setTimeout(() => {
+                clearInterval(stepId);
+                scan.classList.add('done');
+                setTimeout(() => scan.remove(), 500);
+                const isArt = uploadFormData.category === 'art';
+                const r = isArt ? AI_LISTING_ART
+                    : AI_LISTING_CLOTHING[Math.floor(Math.random() * AI_LISTING_CLOTHING.length)];
+                aiApplyListing(r);
+            }, AI_SCAN_STEPS.length * 620 + 200);
+        }
+
+        // Push the detected values into every field, honouring the existing setters
+        // so the visible chips / swatches / heading all update in lock-step.
+        function aiApplyListing(r) {
+            if (typeof buildUploadPalette === 'function' &&
+                !document.querySelector('#styleChips .chip')) buildUploadPalette();
+
+            const setInput = (id, val) => {
+                const el = document.getElementById(id);
+                if (el != null && val != null) el.value = val;
+            };
+            // Brand + heading
+            setInput('brandNameInput', r.brand); if (typeof syncBrandHeading === 'function') syncBrandHeading();
+            // Item type + its heading line
+            setInput('itemTypeSelect', r.type);
+            const disp = document.getElementById('itemTypeDisplay');
+            if (disp) disp.textContent = r.type;
+            if (typeof syncItemTypeHeading === 'function') syncItemTypeHeading();
+            // Gender
+            if (r.gender) {
+                const g = document.getElementById('genderSelect');
+                if (g) [...g.options].forEach((o, idx) => { if (o.text === r.gender) g.selectedIndex = idx; });
+            }
+            // The look
+            if (r.style && typeof selectUploadStyle === 'function') selectUploadStyle(r.style);
+            if (r.color && typeof selectUploadColor === 'function') selectUploadColor(r.color);
+            if (r.material && typeof selectUploadMaterial === 'function') selectUploadMaterial(r.material);
+            // Price & condition & description
+            setInput('priceInput', r.price);
+            uploadFormData.price = r.price;
+            if (r.condition && typeof selectUploadCondition === 'function') selectUploadCondition(r.condition);
+            setInput('descriptionInput', r.desc);
+            uploadFormData.description = r.desc;
+
+            aiShowFillBanner(r);
+        }
+
+        // A dismissible banner at the top of the form telling the seller the listing
+        // was auto-filled — and, crucially, to review it before publishing.
+        function aiShowFillBanner(r) {
+            document.querySelectorAll('.ai-fill-banner').forEach(b => b.remove());
+            const host = document.querySelector('#slide-0 .upload-form') || document.querySelector('#slide-0 .us-inner');
+            if (!host) return;
+            const priceTxt = r.price != null ? ` · מחיר מוצע ₪${r.price}` : '';
+            const banner = document.createElement('div');
+            banner.className = 'ai-fill-banner';
+            banner.innerHTML = `
+                <div class="ai-fill-head">
+                    <span class="ai-fill-spark">✦</span>
+                    <strong>הטופס מולא אוטומטית ע״י AI</strong>
+                    <button class="ai-fill-x" onclick="this.closest('.ai-fill-banner').remove()">✕</button>
+                </div>
+                <div class="ai-fill-sub">זיהינו: <b>${r.brand}</b> · ${r.type}${priceTxt}. עברו על הפרטים, תקנו במידת הצורך, והוסיפו מידה.</div>`;
+            host.prepend(banner);
+            showToast('✦ AI מילא את פרטי הפריט — בדקו ותקנו');
+        }
+
         function handleSlotUpload(event, slot) {
             const file = event.target.files[0];
             if (!file) return;
@@ -7604,6 +7778,9 @@
                 el.classList.add('cutting');
 
                 if (slot === 0) {
+                    // AI Auto-Listing — the cover photo also drives the simulated
+                    // analysis that fills the whole form in one pass.
+                    veroAiAutolist(el);
                     // FEATURE 1 — the cover gets the full studio treatment: subject
                     // lifted onto the #F4F4F2 canvas with padding + a contact shadow.
                     uploadFormData.original_cover = e.target.result;
@@ -9206,6 +9383,137 @@
             vchatRenderDeck();
         }
 
+        /* ==================== Make an Offer ==================== */
+        // Low-ball protection: an offer may not drop below 20% off the item price.
+        const OFFER_FLOOR = 0.80;
+        // An offer / counter-offer is valid for 24h, then it expires on its own.
+        const OFFER_TTL = 24 * 3600 * 1000;
+
+        function vchatOfferExpired(o) {
+            return !!o && o.state === 'PENDING' && Date.now() > o.expiresAt;
+        }
+        // The side that still has to answer the live offer (null if none is open).
+        function vchatOfferResponder() {
+            const o = VCHAT.offer;
+            if (!o || o.state !== 'PENDING' || vchatOfferExpired(o)) return null;
+            return o.by === 'buyer' ? 'seller' : 'buyer';
+        }
+        function vchatOfferHoursLeft(o) {
+            return Math.max(0, Math.ceil((o.expiresAt - Date.now()) / 3600000));
+        }
+
+        // Input modal used for both the buyer's offer and the seller's counter.
+        // base   – the price the quick -5/-10/-15% buttons are figured from
+        // floor  – lowest amount the field will accept
+        // ceil   – highest amount (counters can't exceed the original price)
+        function vchatOfferModal(opts, cb) {
+            const cur = VCHAT.product.currency;
+            const card = document.getElementById('vchatModalCard');
+            const start = opts.start != null ? opts.start : Math.round(opts.base * 0.9);
+            card.innerHTML = `
+                <h3>${opts.title}</h3>
+                <p>מחיר הפריט: <strong>${cur}${opts.base}</strong> · מינימום מותר: <strong>${cur}${opts.floor}</strong></p>
+                <div class="voffer-quick">
+                    ${[5, 10, 15].map(p => `<button class="vpill" data-pct="${p}">${p}%-</button>`).join('')}
+                </div>
+                <div class="voffer-input">
+                    <span>${cur}</span>
+                    <input type="number" id="vofferAmount" value="${start}" min="${opts.floor}" max="${opts.ceil}" step="1">
+                </div>
+                <div class="voffer-note" id="vofferNote"></div>
+                <button class="vbtn primary" id="vofferSend">שליחת הצעה</button>
+                <button class="vbtn ghost-cancel" id="vofferCancel">ביטול</button>`;
+            const input = card.querySelector('#vofferAmount');
+            const note = card.querySelector('#vofferNote');
+            const validate = () => {
+                const v = Math.round(+input.value || 0);
+                if (v < opts.floor) { note.textContent = `המינימום המותר הוא ${cur}${opts.floor} (20%- ממחיר הפריט).`; note.className = 'voffer-note bad'; return null; }
+                if (v > opts.ceil) { note.textContent = `לא ניתן להציע מעל ${cur}${opts.ceil}.`; note.className = 'voffer-note bad'; return null; }
+                const off = Math.round((1 - v / opts.base) * 100);
+                note.textContent = off > 0 ? `הנחה של ${off}% ממחיר הפריט.` : 'במחיר המלא.';
+                note.className = 'voffer-note';
+                return v;
+            };
+            card.querySelectorAll('[data-pct]').forEach(b =>
+                b.addEventListener('click', () => {
+                    input.value = Math.round(opts.base * (1 - (+b.dataset.pct) / 100));
+                    validate();
+                }));
+            input.addEventListener('input', validate);
+            validate();
+            card.querySelector('#vofferCancel').addEventListener('click', vchatCloseModal);
+            card.querySelector('#vofferSend').addEventListener('click', () => {
+                const v = validate();
+                if (v == null) return;
+                vchatCloseModal();
+                cb(v);
+            });
+            document.getElementById('vchatModal').style.display = 'flex';
+        }
+
+        // Buyer opens an offer. One live offer per item at a time.
+        function vchatMakeOffer() {
+            if (vchatOfferResponder()) { showToast('כבר קיימת הצעה פעילה על הפריט.'); return; }
+            const base = VCHAT.product.original;
+            vchatOfferModal({
+                title: 'הגשת הצעת מחיר',
+                base,
+                floor: Math.ceil(base * OFFER_FLOOR),
+                ceil: base,
+            }, amount => vchatSubmitOffer('buyer', amount));
+        }
+        // Seller answers a buyer's offer with a counter (or the reverse).
+        function vchatCounterOffer() {
+            const o = VCHAT.offer;
+            const base = VCHAT.product.original;
+            const isSeller = VCHAT.role === 'seller';
+            vchatOfferModal({
+                title: 'הצעת נגד',
+                base,
+                // A seller counters up from the buyer's offer; a buyer counters down from the seller's.
+                floor: isSeller ? o.amount : Math.ceil(base * OFFER_FLOOR),
+                ceil: isSeller ? base : o.amount,
+                start: isSeller ? Math.round((o.amount + base) / 2) : o.amount,
+            }, amount => vchatSubmitOffer(isSeller ? 'seller' : 'buyer', amount));
+        }
+
+        function vchatSubmitOffer(by, amount) {
+            const cur = VCHAT.product.currency;
+            VCHAT.offer = { amount, by, state: 'PENDING', expiresAt: Date.now() + OFFER_TTL };
+            if (VCHAT.status === 'INITIATED') VCHAT.status = 'ACTIVE';
+            const who = by === 'buyer' ? 'הקונה' : 'המוכר';
+            vchatAdd(by.toUpperCase(), 'TEXT', `💰 ${who} מציע/ה ${cur}${amount} על הפריט.`);
+            vchatAdd('SYSTEM', 'TEXT', `הצעה חדשה: ${cur}${amount}. תקפה ל-24 שעות. הכדור עובר לצד השני.`);
+            vchatRenderDeck();
+        }
+        function vchatAcceptOffer() {
+            const o = VCHAT.offer;
+            const cur = VCHAT.product.currency;
+            o.state = 'ACCEPTED';
+            VCHAT.product.current = o.amount;
+            vchatAdd(VCHAT.role.toUpperCase(), 'TEXT', '✅ ההצעה אושרה.');
+            vchatAdd('SYSTEM', 'TEXT', `המחיר ננעל על ${cur}${o.amount}. הפריט שמור להשלמת רכישה ב-24 השעות הקרובות.`, 'good');
+            vchatRenderHead();
+            vchatRenderDeck();
+        }
+        function vchatDeclineOffer() {
+            VCHAT.offer.state = 'DECLINED';
+            vchatAdd(VCHAT.role.toUpperCase(), 'TEXT', '✕ ההצעה נדחתה.');
+            vchatAdd('SYSTEM', 'TEXT', 'ההצעה נדחתה. אפשר להגיש הצעה חדשה.', 'alert');
+            vchatRenderDeck();
+        }
+
+        // Accept / Decline / Counter buttons for whoever has to answer the live offer.
+        function vchatOfferDeckHTML() {
+            const o = VCHAT.offer;
+            const cur = VCHAT.product.currency;
+            const from = o.by === 'buyer' ? 'הקונה' : 'המוכר';
+            return `<div class="vchat-hint" style="width:100%">${from} מציע/ה <strong>${cur}${o.amount}</strong> · פוקע בעוד ${vchatOfferHoursLeft(o)} שע׳</div>
+                <button class="vpill" onclick="vchatAcceptOffer()">✅ אישור</button>
+                <button class="vpill special" onclick="vchatDeclineOffer()">✕ דחייה</button>
+                <button class="vpill" onclick="vchatCounterOffer()">🔄 הצעת נגד</button>`;
+        }
+
         /* ---- Action deck ---- */
         function vchatRenderDeck() {
             const upper = document.getElementById('vchatUpper');
@@ -9214,9 +9522,19 @@
             upper.className = 'vchat-upper';
 
             // Upper deck
+            const offerResponder = vchatOfferResponder();
             if (locked) {
                 upper.classList.add('empty');
                 upper.innerHTML = `<div class="vchat-hint">${VCHAT.status === 'COMPLETED' ? 'העסקה הושלמה — הצ׳אט נעול (Read-Only).' : 'השיחה נסגרה — הצ׳אט נעול (Read-Only).'}</div>`;
+            } else if (offerResponder) {
+                // A live offer overrides the normal deck: the side that must answer
+                // sees Accept / Decline / Counter, the other side waits.
+                if (VCHAT.role === offerResponder) {
+                    upper.innerHTML = vchatOfferDeckHTML();
+                } else {
+                    upper.classList.add('empty');
+                    upper.innerHTML = `<div class="vchat-hint">ההצעה נשלחה — ממתין לתשובת הצד השני… (${vchatOfferHoursLeft(VCHAT.offer)} שע׳)</div>`;
+                }
             } else if (VCHAT.role === 'buyer') {
                 if (VCHAT.submenu) {
                     upper.innerHTML =
@@ -9226,7 +9544,8 @@
                          <button class="vpill" onclick="VCHAT.submenu=false;vchatRenderDeck()">← חזרה</button>`;
                 } else {
                     upper.innerHTML =
-                        `<button class="vpill" onclick="vchatBuyerQuery('LOCATION')">📍 מיקום המפגש</button>
+                        `<button class="vpill offer" onclick="vchatMakeOffer()">💰 הגש הצעת מחיר</button>
+                         <button class="vpill" onclick="vchatBuyerQuery('LOCATION')">📍 מיקום המפגש</button>
                          <button class="vpill" onclick="vchatBuyerQuery('HOURS')">🕒 שעות הגעה</button>
                          <button class="vpill" onclick="vchatBuyerQuery('RECHECK')">✅ זמין כרגע?</button>
                          <button class="vpill" onclick="vchatBuyerQuery('SIMILAR')">👗 פריטים דומים</button>
@@ -9392,6 +9711,13 @@
             renderCategories();
             renderFeedFilters();
             initializeApp(); // Shows onboarding if needed, then renders feed
+            // Deep-link from the drawer: index.html?seg=men|women|kids selects that
+            // segment's feed on load.
+            const segParam = catParams.get('seg');
+            if (segParam && filterSegments[currentCategory] &&
+                filterSegments[currentCategory].some(s => s.key === segParam)) {
+                selectSegment(segParam);
+            }
         }
         updateBadges();
         // Deep-link: index.html?open=cart (or ?open=wishlist) opens that view on
