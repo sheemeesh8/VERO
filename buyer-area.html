@@ -685,6 +685,79 @@
             .hero-title { font-size: 32px; }
         }
 
+        /* ==================== PROFILE (Instagram / Depop style) ==================== */
+        .pf-hero-av {
+            width: 100%; height: 100%; min-height: 280px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 150px; line-height: 1;
+            background: radial-gradient(circle at 50% 40%, #efece4 0%, #e4dfd4 100%);
+            border-radius: 12px;
+        }
+        .pf-top {
+            display: flex; align-items: flex-start; gap: 34px;
+            padding-bottom: 30px; margin-bottom: 10px; border-bottom: 1px solid #ececec;
+            flex-wrap: wrap;
+        }
+        .pf-avatar {
+            width: 132px; height: 132px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 74px; line-height: 1;
+            background: #efece4; border-radius: 50%;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+        .pf-main { flex: 1; min-width: 260px; }
+        .pf-idrow { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+        .pf-name { font-size: 26px; font-weight: 800; color: #111; letter-spacing: -0.3px; }
+        .pf-handle { font-size: 15px; color: #8a8a8a; margin-top: 2px; }
+        .pf-edit {
+            background: none; border: 1px solid #111; color: #111;
+            font: inherit; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+            padding: 9px 20px; border-radius: 40px; cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .pf-edit:hover { background: #111; color: #fff; }
+        .pf-stats { display: flex; gap: 40px; margin: 22px 0 16px; flex-wrap: wrap; }
+        .pf-stat { display: flex; flex-direction: column; }
+        .pf-stat b { font-size: 22px; font-weight: 800; color: #111; }
+        .pf-stat span { font-size: 13px; color: #8a8a8a; }
+        .pf-bio { font-size: 15px; color: #333; line-height: 1.6; max-width: 560px; }
+        .pf-meta { font-size: 13px; color: #9a9a9a; margin-top: 10px; }
+
+        /* Profile editor sheet */
+        .pf-edit-back {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px;
+        }
+        .pf-editor {
+            background: #fff; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+            border-radius: 12px; padding: 30px 30px 26px;
+        }
+        .pf-editor h3 { font-size: 22px; font-weight: 800; color: #111; margin: 0 0 4px; }
+        .pf-edit-sub { font-size: 13px; color: #8a8a8a; margin-bottom: 18px; }
+        .pf-edit-label { display: block; font-size: 12px; letter-spacing: 1px; color: #8a8a8a; text-transform: uppercase; margin: 14px 0 6px; }
+        .pf-editor input, .pf-editor textarea {
+            width: 100%; box-sizing: border-box; border: 1px solid #dcdcdc; border-radius: 8px;
+            padding: 11px 13px; font: inherit; font-size: 15px; background: #fafafa; color: #111; resize: vertical;
+        }
+        .pf-editor input:focus, .pf-editor textarea:focus { outline: none; border-color: #111; background: #fff; }
+        .pf-av-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .pf-av-opt {
+            width: 46px; height: 46px; font-size: 24px; line-height: 1;
+            border: 2px solid transparent; border-radius: 50%; background: #f2f0ec; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: border-color 0.15s, transform 0.15s;
+        }
+        .pf-av-opt:hover { transform: scale(1.08); }
+        .pf-av-opt.sel { border-color: #111; background: #fff; }
+        .pf-edit-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .pf-save { flex: 1; background: #111; color: #fff; border: 1px solid #111; }
+        .pf-cancel { background: #fff; color: #111; border: 1px solid #dcdcdc; }
+        .pf-save, .pf-cancel { font: inherit; font-size: 14px; font-weight: 700; padding: 12px; border-radius: 8px; cursor: pointer; }
+        @media (max-width: 700px) {
+            .pf-avatar { width: 96px; height: 96px; font-size: 52px; }
+            .pf-stats { gap: 26px; }
+        }
+
     </style>
     <link rel="stylesheet" href="cards.css">
     <!-- Site-wide design line (single source: design-system.css). Ferrari-inspired
@@ -1127,7 +1200,145 @@
             ]) + listingsBlock('כל הפריטים שסגרו מעגל', listingHistory);
         }
 
+        // ==================== PROFILE (per-user, Instagram / Depop style) ====================
+        // The profile is stored per browser under `vero_profile`, so every user has
+        // their own handle, avatar, bio and follower figures. Seeded once on first
+        // visit and persisted, so the numbers stay stable and unique to each user.
+        function profileDefaults() {
+            const rnd = (min, max) => Math.floor(min + Math.random() * (max - min));
+            return {
+                name: 'המשתמש שלי',
+                handle: 'vero_' + rnd(1000, 9999),
+                bio: 'אספן/ית אופנה · וינטג׳ · חובב/ת עיצוב ✨',
+                avatar: '🧑',
+                location: 'תל אביב, ישראל',
+                joined: new Date().getFullYear(),
+                followers: rnd(40, 620),
+                following: rnd(20, 300),
+            };
+        }
+        function getProfile() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('vero_profile') || 'null');
+                if (saved && saved.handle) return { ...profileDefaults(), ...saved };
+            } catch (e) {}
+            const p = profileDefaults();
+            try { localStorage.setItem('vero_profile', JSON.stringify(p)); } catch (e) {}
+            return p;
+        }
+        function saveProfilePatch(patch) {
+            const p = { ...getProfile(), ...patch };
+            try { localStorage.setItem('vero_profile', JSON.stringify(p)); } catch (e) {}
+            return p;
+        }
+
+        // Hero side for the profile slide: the avatar, large.
+        function profileImage() {
+            const p = getProfile();
+            return `<div class="pf-hero-av">${p.avatar}</div>`;
+        }
+
+        // The profile itself — an Instagram / Depop style header (avatar, name,
+        // @handle, stats, bio) followed by a grid of the user's own items.
+        function profileDetail() {
+            const p = getProfile();
+            const items = liveListings();
+            const sold = listingHistory.filter(l => l.status === 'sold').length;
+            const stat = (n, l) => `<div class="pf-stat"><b>${n}</b><span>${l}</span></div>`;
+            return `
+                <div class="pf">
+                    <div class="pf-top">
+                        <div class="pf-avatar">${p.avatar}</div>
+                        <div class="pf-main">
+                            <div class="pf-idrow">
+                                <div class="pf-names">
+                                    <div class="pf-name">${p.name}</div>
+                                    <div class="pf-handle">@${p.handle}</div>
+                                </div>
+                                <button class="pf-edit" onclick="openProfileEditor()">ערוך פרופיל</button>
+                            </div>
+                            <div class="pf-stats">
+                                ${stat(items.length, 'פריטים')}
+                                ${stat(sold, 'נמכרו')}
+                                ${stat(p.followers, 'עוקבים')}
+                                ${stat(p.following, 'עוקב/ת')}
+                            </div>
+                            <div class="pf-bio">${p.bio}</div>
+                            <div class="pf-meta">📍 ${p.location} · הצטרף/ה ${p.joined}</div>
+                        </div>
+                    </div>
+                    <h3 class="dh-detail-title">הפריטים שלי</h3>
+                    <div class="dh-cards">${items.map(miniCardHTML).join('')}</div>
+                </div>`;
+        }
+
+        const AVATAR_CHOICES = ['🧑', '👩', '🧔', '👱‍♀️', '🧑‍🎨', '🕶️', '👗', '🧥', '🎩', '🦄', '🌸', '🔥'];
+        function openProfileEditor() {
+            const p = getProfile();
+            const wrap = document.createElement('div');
+            wrap.className = 'pf-edit-back';
+            wrap.id = 'pfEditBack';
+            wrap.onclick = e => { if (e.target === wrap) closeProfileEditor(); };
+            const avatars = AVATAR_CHOICES.map(a =>
+                `<button type="button" class="pf-av-opt${a === p.avatar ? ' sel' : ''}" onclick="pfPickAvatar(this, '${a}')">${a}</button>`
+            ).join('');
+            wrap.innerHTML = `
+                <div class="pf-editor">
+                    <h3>עריכת פרופיל</h3>
+                    <div class="pf-edit-sub">כך הפרופיל שלך ייראה לשאר המשתמשים</div>
+                    <label class="pf-edit-label">תמונת פרופיל</label>
+                    <div class="pf-av-grid" id="pfAvGrid" data-avatar="${p.avatar}">${avatars}</div>
+                    <label class="pf-edit-label">שם תצוגה</label>
+                    <input id="pfName" type="text" value="${p.name}" maxlength="40">
+                    <label class="pf-edit-label">שם משתמש</label>
+                    <input id="pfHandle" type="text" value="${p.handle}" maxlength="24">
+                    <label class="pf-edit-label">ביו</label>
+                    <textarea id="pfBio" rows="3" maxlength="160">${p.bio}</textarea>
+                    <label class="pf-edit-label">מיקום</label>
+                    <input id="pfLocation" type="text" value="${p.location}" maxlength="60">
+                    <div class="pf-edit-actions">
+                        <button class="pf-save" onclick="saveProfileEditor()">שמירה</button>
+                        <button class="pf-cancel" onclick="closeProfileEditor()">ביטול</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(wrap);
+        }
+        function pfPickAvatar(btn, a) {
+            document.querySelectorAll('#pfAvGrid .pf-av-opt').forEach(b => b.classList.remove('sel'));
+            btn.classList.add('sel');
+            document.getElementById('pfAvGrid').dataset.avatar = a;
+        }
+        function closeProfileEditor() {
+            const el = document.getElementById('pfEditBack');
+            if (el) el.remove();
+        }
+        function saveProfileEditor() {
+            const handle = document.getElementById('pfHandle').value.trim().replace(/^@/, '').replace(/\s+/g, '_');
+            const name = document.getElementById('pfName').value.trim();
+            if (!name) { alert('נא להזין שם תצוגה'); return; }
+            if (!handle) { alert('נא להזין שם משתמש'); return; }
+            saveProfilePatch({
+                name,
+                handle,
+                bio: document.getElementById('pfBio').value.trim(),
+                location: document.getElementById('pfLocation').value.trim(),
+                avatar: document.getElementById('pfAvGrid').dataset.avatar || '🧑',
+            });
+            closeProfileEditor();
+            dhRender(false);
+        }
+
         const dhSlides = [
+            {
+                tab: 'פרופיל',
+                title: 'הפרופיל שלי',
+                desc: 'הפרופיל האישי שלך — התמונה, שם המשתמש, הביו והפריטים שלך. כך שאר הקהילה רואה אותך.',
+                cta: 'לעריכת הפרופיל',
+                image: () => profileImage(),
+                count: () => [liveListings().length, 'פריטים בפרופיל'],
+                detail: profileDetail,
+                action: openProfileEditor,
+            },
             {
                 tab: 'הוצאות חודשיות',
                 title: 'הנתוני רכישה החודשיים',
@@ -1260,7 +1471,9 @@
             document.getElementById('dhDesc').textContent = s.desc;
             const c = s.count ? s.count() : null;
             document.getElementById('dhCount').innerHTML = c ? `<b>${c[0]}</b> ${c[1]}` : '';
-            document.getElementById('dhBuy').textContent = s.cta;
+            const buy = document.getElementById('dhBuy');
+            buy.textContent = s.cta;
+            buy.onclick = s.action ? (e => { e.preventDefault(); s.action(); }) : null;
             document.getElementById('dhImg').innerHTML = s.image();
             renderDetail();
             document.getElementById('dhIdx').textContent = pad2(dhIndex + 1);
