@@ -176,6 +176,97 @@
         .promo-wish:hover { border-color: #111; }
         .promo-wish.active { border-color: #111; background: #f1f1ef; }
 
+        /* Make-an-offer bar — dark, like Depop's "Make Offer". */
+        .promo-offer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: var(--pd-btn-h, 66px);
+            box-sizing: border-box;
+            border-radius: var(--pd-btn-radius, 16px);
+            background: #111;
+            border: 2px solid #111;
+            cursor: pointer;
+            font-size: var(--pd-price-size, 18px);
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #fff;
+            padding: 0 24px;
+            transition: filter 0.2s, transform 0.2s;
+        }
+        .promo-offer:hover { filter: brightness(1.15); transform: translateY(-2px); }
+
+        /* ---- Offer dialog ---- */
+        .offer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 400;
+            direction: rtl;
+        }
+        .offer-overlay.show { display: flex; }
+        .offer-modal {
+            background: #fff;
+            width: 100%;
+            max-width: 420px;
+            margin: 20px;
+            padding: 34px 30px 30px;
+            border-radius: 4px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        }
+        .offer-modal h3 {
+            font-size: 22px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .offer-sub { font-size: 14px; color: #8a857c; margin-bottom: 22px; }
+        .offer-input-wrap {
+            display: flex;
+            align-items: center;
+            border: 1px solid #d9d7d2;
+            border-radius: 4px;
+            padding: 0 16px;
+            height: 56px;
+            margin-bottom: 22px;
+        }
+        .offer-input-wrap .cur { font-size: 22px; color: #8a857c; margin-left: 8px; }
+        .offer-input-wrap input {
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 22px;
+            font-weight: 600;
+            width: 100%;
+            background: transparent;
+            color: #111;
+            direction: ltr;
+            text-align: right;
+        }
+        .offer-actions { display: flex; gap: 12px; }
+        .offer-send, .offer-cancel {
+            flex: 1;
+            height: 52px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: filter 0.2s, background 0.2s;
+        }
+        .offer-send { background: #111; color: #fff; border: 2px solid #111; }
+        .offer-send:hover { filter: brightness(1.15); }
+        .offer-cancel { background: #fff; color: #111; border: 1px solid #d9d7d2; }
+        .offer-cancel:hover { border-color: #111; }
+
         /* Image panel — flat neutral, icon centred huge. */
         .promo-image {
             position: relative;
@@ -300,6 +391,7 @@
                             <span class="promo-buylabel">הוסף לעגלה</span>
                             <span class="promo-buyprice" id="productPrice">₪0.00</span>
                         </button>
+                        <button class="promo-offer" id="offerBtn" onclick="openOffer()">הצע מחיר</button>
                         <button class="promo-wish" id="wishBtn" onclick="toggleWishlist()">הוסף לרשימת המשאלות</button>
                     </div>
                 </div>
@@ -329,6 +421,22 @@
 
         <!-- the other shots, under the image panel; click to swap them in -->
         <div class="pd-thumbs" id="pdThumbs"></div>
+    </div>
+
+    <!-- ==================== OFFER DIALOG ==================== -->
+    <div class="offer-overlay" id="offerOverlay" onclick="if(event.target===this)closeOffer()">
+        <div class="offer-modal" role="dialog" aria-modal="true" aria-labelledby="offerTitle">
+            <h3 id="offerTitle">הצע מחיר</h3>
+            <p class="offer-sub" id="offerSub">שלח למוכר הצעת מחיר להתמקחות</p>
+            <div class="offer-input-wrap">
+                <span class="cur">₪</span>
+                <input type="number" id="offerInput" min="1" step="1" placeholder="0" inputmode="numeric">
+            </div>
+            <div class="offer-actions">
+                <button class="offer-send" onclick="sendOffer()">שלח הצעה</button>
+                <button class="offer-cancel" onclick="closeOffer()">ביטול</button>
+            </div>
+        </div>
     </div>
 
     <!-- ==================== TOASTS ==================== -->
@@ -451,6 +559,41 @@
         }
 
         function goHome() { window.location.href = 'index.html'; }
+
+        // ---- Make an offer (Depop-style) ----
+        function openOffer() {
+            const input = document.getElementById('offerInput');
+            const sub = document.getElementById('offerSub');
+            if (currentProduct) {
+                sub.textContent = `מחיר מבוקש: ₪${currentProduct.price} · שלח למוכר הצעה`;
+                // Pre-fill with a friendly starting offer (~90% of asking).
+                input.placeholder = Math.max(1, Math.round(currentProduct.price * 0.9)).toString();
+            }
+            document.getElementById('offerOverlay').classList.add('show');
+            setTimeout(() => input.focus(), 50);
+        }
+        function closeOffer() {
+            document.getElementById('offerOverlay').classList.remove('show');
+        }
+        function sendOffer() {
+            const input = document.getElementById('offerInput');
+            const amount = parseFloat(input.value);
+            if (!amount || amount <= 0) { input.focus(); return; }
+            // Save the offer locally so the seller area can pick it up later.
+            const offers = JSON.parse(localStorage.getItem('vero_offers') || '[]');
+            offers.push({
+                name: currentProduct ? currentProduct.name : '',
+                seller: currentProduct ? currentProduct.seller : '',
+                askPrice: currentProduct ? currentProduct.price : null,
+                offer: amount,
+                at: Date.now()
+            });
+            localStorage.setItem('vero_offers', JSON.stringify(offers));
+            input.value = '';
+            closeOffer();
+            showToast(`ההצעה נשלחה: ₪${amount}`);
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOffer(); });
 
         // Fit the company/seller name to its column, matching the slider's fitter.
         function fitLabel() {
