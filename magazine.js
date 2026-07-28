@@ -193,6 +193,14 @@
     .mag-l-cols .mag-l-body { break-inside: avoid; }
     .mag-l-kicker { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #111; font-weight: 700; display: block; margin: 0 0 10px; }
     .mag-l-title { font-size: clamp(22px,3vw,40px); font-weight: 500; line-height: 1.12; margin: 0 0 18px; }
+    /* Feature elements reused in every layout: big ascending number + spec table. */
+    .mag-l-num { font-size: clamp(46px,7vw,104px); font-weight: 500; line-height: .9; margin: 6px 0 8px; }
+    .mag-l-specs { list-style: none; padding: 0; margin: 16px 0 0; }
+    .mag-l-specs li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid #e2e2e2; font-size: 12px; }
+    .mag-l-specs li span:first-child { text-transform: uppercase; letter-spacing: 2px; color: #9a9a9a; font-size: 10px; }
+    .mag-l-price { font-size: 18px; font-weight: 600; margin-top: 14px; }
+    .pg-dark .mag-l-specs li { border-top-color: #333; }
+    .pg-dark .mag-l-specs li span:first-child { color: #7a7a7a; }
     .mag-l-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a9a; border-top: 1px solid #e2e2e2; margin-top: clamp(24px,4vh,50px); padding-top: 12px; }
     /* per-page placement helpers */
     .gc-1-7  { grid-column: 1 / 7; }
@@ -532,6 +540,29 @@
     }
     // Cycle through the issue's items so each layout shows different pieces.
     function lItem(d, i) { return d.items.length ? d.items[i % d.items.length] : {}; }
+    // Ascending feature number, shared across every layout (reset each render).
+    let _lnum = 0;
+    // The feature header — kicker · category, a big ascending number, name, desc —
+    // the same set of elements the Layout 1 feature page uses.
+    function lHead(d, item) {
+        item = item || {};
+        _lnum++;
+        return `
+            <span class="mag-l-kicker">${esc(d.isArt ? 'The Work' : 'The Piece')}${item.category ? ' · ' + esc(item.category) : ''}</span>
+            <div class="mag-l-num mag-serif">${String(_lnum).padStart(2, '0')}</div>
+            <h2 class="mag-l-title mag-serif">${esc(item.name || '')}</h2>
+            ${lBody(item, 1)}`;
+    }
+    // The spec table + price, exactly like the Layout 1 feature page.
+    function lSpecs(item) {
+        item = item || {};
+        const specs = [
+            ['Category', item.category], ['Colour', item.color], ['Material', item.material],
+            ['Size', item.size], ['Seller', item.brand ? brandChip(item.brand) : '', true],
+        ].filter(s => s[1]);
+        if (!specs.length && !item.price) return '';
+        return `<ul class="mag-l-specs">${specs.map(s => `<li><span>${esc(s[0])}</span><span>${s[2] ? s[1] : esc(s[1])}</span></li>`).join('')}</ul>${item.price ? `<div class="mag-l-price mag-serif">${esc(item.price)}</div>` : ''}`;
+    }
     // A section-divider page: one big centred word (Introduction, Proposal, …).
     function lDivider(d, kicker, word, page, cls) {
         return `
@@ -564,20 +595,18 @@
             <div class="mag-l-grid">
                 ${lPlate(lItem(d, 0), 'gc-1-7', 'ar-tall')}
                 <div class="gc-8-13">
-                    <span class="mag-l-kicker">Feature 01</span>
-                    <h2 class="mag-l-title mag-serif">${esc(lItem(d, 0).name || 'The Feature')}</h2>
-                    ${lBody(lItem(d, 0), 2)}
+                    ${lHead(d, lItem(d, 0))}
+                    ${lSpecs(lItem(d, 0))}
                 </div>
-                ${lFoot(d, '02')}
+                ${lFoot(d, '04')}
             </div>
         </section>
         <section class="mag-page mag-l mag-l2">
             <div class="mag-l-grid">
                 ${lPlate(lItem(d, 1), 'gc-1-8', 'ar-big')}
-                ${lPlate(lItem(d, 2), 'gc-8-13', 'ar-tall')}
+                <div class="gc-8-13">${lHead(d, lItem(d, 2))}${lSpecs(lItem(d, 2))}</div>
                 <div class="gc-1-8"><div class="mag-l-cols">${lBody(lItem(d, 1), 2)}</div></div>
-                <div class="gc-8-13">${lBody(lItem(d, 2), 1)}</div>
-                ${lFoot(d, '03')}
+                ${lFoot(d, '05')}
             </div>
         </section>`;
     };
@@ -590,11 +619,11 @@
             <div class="mag-l-grid">
                 ${lPlate(lItem(d, 3), 'gc-1-6', 'ar-tall')}
                 <div class="gc-6-13">
-                    <span class="mag-l-kicker">The Story</span>
-                    <h2 class="mag-l-title mag-serif">${esc(lItem(d, 3).name || 'On Provenance')}</h2>
-                    <div class="mag-l-cols">${lBody(lItem(d, 3), 3)}</div>
+                    ${lHead(d, lItem(d, 3))}
+                    <div class="mag-l-cols">${lBody(lItem(d, 3), 2)}</div>
+                    ${lSpecs(lItem(d, 3))}
                 </div>
-                ${lFoot(d, '04')}
+                ${lFoot(d, '06')}
             </div>
         </section>
         <section class="mag-page mag-l mag-l3">
@@ -613,9 +642,8 @@
         <section class="mag-page mag-l mag-l4">
             <div class="mag-l-grid">
                 <div class="gc-1-8">
-                    <span class="mag-l-kicker">The Collection</span>
-                    <h2 class="mag-l-title mag-serif">Four Ways</h2>
-                    ${lBody(lItem(d, 0), 1)}
+                    ${lHead(d, lItem(d, 0))}
+                    ${lSpecs(lItem(d, 0))}
                 </div>
                 ${lPlate(lItem(d, 0), 'gc-1-7', 'ar-sq')}
                 ${lPlate(lItem(d, 1), 'gc-7-13', 'ar-sq')}
@@ -644,12 +672,12 @@
         <section class="mag-page mag-l mag-l5">
             <div class="mag-l-grid">
                 <div class="gc-1-8">
-                    <span class="mag-l-kicker">Essay</span>
-                    <h2 class="mag-l-title mag-serif">${esc(lItem(d, 2).name || 'A Second Life')}</h2>
-                    <div class="mag-l-cols">${lBody(lItem(d, 2), 4)}</div>
+                    ${lHead(d, lItem(d, 2))}
+                    <div class="mag-l-cols">${lBody(lItem(d, 2), 3)}</div>
+                    ${lSpecs(lItem(d, 2))}
                 </div>
                 ${lPlate(lItem(d, 2), 'gc-8-13', 'ar-tall')}
-                ${lFoot(d, '08')}
+                ${lFoot(d, '10')}
             </div>
         </section>
         <section class="mag-page mag-l mag-l5">
@@ -670,8 +698,7 @@
         <section class="mag-page mag-l mag-l6">
             <div class="mag-l-grid">
                 <div class="gc-1-13">
-                    <span class="mag-l-kicker">Closing Feature</span>
-                    <h2 class="mag-l-title mag-serif">${esc(lItem(d, 1).name || 'The Last Word')}</h2>
+                    ${lHead(d, lItem(d, 1))}
                 </div>
                 ${lPlate(lItem(d, 1), 'gc-1-13', 'ar-wide')}
                 <div class="gc-1-6">${lBody(lItem(d, 1), 1)}</div>
@@ -696,6 +723,7 @@
     function render(mode) {
         const d = getData(mode);
         _md = d;   // so lBody can draw on the issue's real seller descriptions
+        _lnum = 0; // ascending feature number restarts for each issue
         const nums = Object.keys(LAYOUTS).map(Number).sort((a, b) => a - b);
         return nums
             .map(n => `<div class="mag-layout" data-layout="${n}">${LAYOUTS[n](d)}</div>`)
