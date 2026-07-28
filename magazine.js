@@ -163,8 +163,10 @@
     }
 
     /* ===== Layouts 2-6: a shared 12-column editorial grid ===== */
-    .mag-l { }
-    .mag-l-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(16px,2vw,36px); align-items: start; }
+    /* Each layout page reads as a full magazine spread — it fills (near) the
+       whole viewport, with its grid centred vertically. */
+    .mag-l { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; }
+    .mag-l-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(16px,2vw,36px); align-items: start; width: 100%; }
     .mag-l .mag-plate { border-radius: 0; }
     /* Cap plate height so a full-width image never fills the whole screen —
        it stays in normal desktop proportions. */
@@ -584,6 +586,16 @@
                 ${lPlate(lItem(d, 3), 'gc-7-13', 'ar-sq')}
                 ${lFoot(d, '06')}
             </div>
+        </section>
+        <section class="mag-page mag-l mag-l4">
+            <div class="mag-l-grid">
+                ${lPlate(lItem(d, 4), 'gc-1-8', 'ar-big')}
+                <div class="gc-8-13">
+                    <span class="mag-l-kicker">In Detail</span>
+                    ${lBody(lItem(d, 4), 2)}
+                </div>
+                ${lFoot(d, '07')}
+            </div>
         </section>`;
     };
 
@@ -598,7 +610,17 @@
                     <div class="mag-l-cols">${lBody(lItem(d, 2), 4)}</div>
                 </div>
                 ${lPlate(lItem(d, 2), 'gc-8-13', 'ar-tall')}
-                ${lFoot(d, '07')}
+                ${lFoot(d, '08')}
+            </div>
+        </section>
+        <section class="mag-page mag-l mag-l5">
+            <div class="mag-l-grid">
+                ${lPlate(lItem(d, 3), 'gc-1-6', 'ar-tall')}
+                <div class="gc-6-13">
+                    <span class="mag-l-kicker">Continued</span>
+                    <div class="mag-l-cols">${lBody(lItem(d, 3), 3)}</div>
+                </div>
+                ${lFoot(d, '09')}
             </div>
         </section>`;
     };
@@ -615,7 +637,18 @@
                 ${lPlate(lItem(d, 1), 'gc-1-13', 'ar-wide')}
                 <div class="gc-1-6">${lBody(lItem(d, 1), 1)}</div>
                 <div class="gc-7-13">${lBody(lItem(d, 5), 1)}</div>
-                ${lFoot(d, '08')}
+                ${lFoot(d, '10')}
+            </div>
+        </section>
+        <section class="mag-page mag-l mag-l6">
+            <div class="mag-l-grid">
+                <div class="gc-1-6">
+                    <span class="mag-l-kicker">Colophon</span>
+                    <h2 class="mag-l-title mag-serif">${esc(d.masthead)}</h2>
+                    ${lBody(lItem(d, 0), 2)}
+                </div>
+                ${lPlate(lItem(d, 0), 'gc-7-13', 'ar-tall')}
+                ${lFoot(d, '11')}
             </div>
         </section>`;
     };
