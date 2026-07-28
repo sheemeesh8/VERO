@@ -165,7 +165,21 @@
     /* ===== Layouts 2-6: a shared 12-column editorial grid ===== */
     /* Each layout page reads as a full magazine spread — it fills (near) the
        whole viewport, with its grid centred vertically. */
-    .mag-l { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; }
+    .mag-l { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; background: #e8e6e1; }
+    /* Theme page treatments from the reference deck: light-grey content pages,
+       plain-white title/divider pages, and the occasional full dark page. */
+    .mag-l.pg-white { background: #ffffff; }
+    .mag-l.pg-dark  { background: #191919; color: #e8e6e1; }
+    .mag-l.pg-dark .mag-l-kicker, .mag-l.pg-dark .mag-l-title { color: #ffffff; }
+    .mag-l.pg-dark .mag-l-body { color: #c9c6c0; }
+    .mag-l.pg-dark .mag-l-foot { color: #6a6a6a; border-top-color: #333; }
+    .mag-l.pg-dark .mag-l-plate { background: #2b2b2b; }
+    .mag-l.pg-dark .mag-l-plate .glyph { color: rgba(255,255,255,.18); }
+    /* Section divider — one big centred word on its own page (Introduction, Proposal). */
+    .mag-l-dvwrap { width: 100%; text-align: center; }
+    .mag-l-dvwrap .dv { font-size: clamp(40px,7vw,96px); font-weight: 500; line-height: 1.05; margin: 0; }
+    /* Big centred statement/quote page. */
+    .mag-l-stmt { max-width: 26ch; margin: 0 auto; text-align: center; font-size: clamp(22px,3.2vw,44px); font-weight: 500; line-height: 1.28; }
     .mag-l-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(16px,2vw,36px); align-items: start; width: 100%; }
     .mag-l .mag-plate { border-radius: 0; }
     /* Cap plate height so a full-width image never fills the whole screen —
@@ -518,11 +532,34 @@
     }
     // Cycle through the issue's items so each layout shows different pieces.
     function lItem(d, i) { return d.items.length ? d.items[i % d.items.length] : {}; }
+    // A section-divider page: one big centred word (Introduction, Proposal, …).
+    function lDivider(d, kicker, word, page, cls) {
+        return `
+        <section class="mag-page mag-l ${cls || 'pg-white'}">
+            <div class="mag-l-dvwrap">
+                <span class="mag-l-kicker" style="display:block;margin-bottom:16px">${esc(kicker)}</span>
+                <div class="dv mag-serif">${esc(word)}</div>
+            </div>
+            ${lFoot(d, page)}
+        </section>`;
+    }
+    // A centred statement/quote page.
+    function lStatement(d, text, page, cls) {
+        return `
+        <section class="mag-page mag-l ${cls || 'pg-white'}">
+            <p class="mag-l-stmt mag-serif">${esc(text)}</p>
+            ${lFoot(d, page)}
+        </section>`;
+    }
 
     // ---- Layout 2: image-lead — a large image beside a short text column, then
     // a wide image with three small plates and a caption column. ----
     LAYOUTS[2] = function (d) {
         return `
+        ${lDivider(d, 'The Issue', 'Introduction', '02', 'pg-white')}
+        <div class="mag-rule thin"></div>
+        ${lStatement(d, d.statement, '03', 'pg-white')}
+        <div class="mag-rule thin"></div>
         <section class="mag-page mag-l mag-l2">
             <div class="mag-l-grid">
                 ${lPlate(lItem(d, 0), 'gc-1-7', 'ar-tall')}
@@ -602,6 +639,8 @@
     // ---- Layout 5: editorial columns — two body columns beside a tall image. ----
     LAYOUTS[5] = function (d) {
         return `
+        ${lDivider(d, 'Part Two', 'Proposal', '08', 'pg-white')}
+        <div class="mag-rule thin"></div>
         <section class="mag-page mag-l mag-l5">
             <div class="mag-l-grid">
                 <div class="gc-1-8">
@@ -640,7 +679,7 @@
                 ${lFoot(d, '10')}
             </div>
         </section>
-        <section class="mag-page mag-l mag-l6">
+        <section class="mag-page mag-l mag-l6 pg-dark">
             <div class="mag-l-grid">
                 <div class="gc-1-6">
                     <span class="mag-l-kicker">Colophon</span>
