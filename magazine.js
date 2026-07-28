@@ -32,7 +32,7 @@
     .mag-kicker { font-size: 11px; letter-spacing: 3.5px; text-transform: uppercase; color: #111; font-weight: 600; }
     .mag-muted { color: #7c7c7c; }
 
-    .mag-page { max-width: 1120px; margin: 0 auto; padding: clamp(56px,9vh,120px) clamp(24px,6vw,72px); box-sizing: border-box; }
+    .mag-page { max-width: none; margin: 0 auto; padding: clamp(56px,9vh,120px) clamp(28px,5vw,110px); box-sizing: border-box; }
     .mag-rule { height: 1px; background: #111; width: 100%; }
     .mag-rule.thin { background: #dcdcdc; }
 
@@ -42,6 +42,7 @@
         overflow: hidden; filter: grayscale(1) contrast(1.02);
     }
     .mag-plate .glyph { font-size: clamp(90px,16vw,190px); line-height: 1; filter: grayscale(1); opacity: .92; }
+    .mag-plate .plate-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.03); }
     .mag-plate.tall { aspect-ratio: 3/4; }
     .mag-plate.wide { aspect-ratio: 4/3; }
     .mag-plate.sq { aspect-ratio: 1/1; }
@@ -59,7 +60,7 @@
     .mag-cover h1 .sub { display: block; font-size: clamp(20px,2.6vw,34px); letter-spacing: 8px; font-weight: 400; margin-top: 10px; }
     .mag-cover .cov-right { position: relative; background: #ededeb; }
     .mag-cover .cov-right .glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(120px,22vw,300px); filter: grayscale(1); }
-    .mag-cover .cov-tag { position: absolute; bottom: 26px; left: 26px; right: 26px; color: #111; }
+    .mag-cover .cov-tag { position: absolute; z-index: 1; bottom: 26px; left: 26px; right: 26px; color: #111; }
 
     /* --- Contents --- */
     .mag-contents .con-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(30px,5vw,70px); align-items: start; }
@@ -106,6 +107,45 @@
     .contrib-card .nm { margin-top: 12px; font-weight: 600; font-size: 14px; }
     .contrib-card .rl { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #8a8a8a; margin-top: 3px; }
 
+    /* --- Full-bleed editorial photo page --- */
+    .mag-photo { position: relative; width: 100%; height: 88vh; overflow: hidden; background: #ededeb; }
+    .mag-photo-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.04); }
+    .mag-photo-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(28px,5vw,72px);
+        background: linear-gradient(0deg, rgba(0,0,0,.6), transparent 65%); color: #fff; }
+    .mag-photo-cap .mag-kicker.light { color: #fff; opacity: .85; }
+    .mag-photo-line { font-size: clamp(30px,5vw,72px); line-height: 1.02; font-weight: 500; margin: 10px 0 0; max-width: 22ch; }
+
+    /* --- The Edit (big product grid) --- */
+    .mag-edit h2 { font-size: clamp(34px,5vw,72px); margin: 0 0 6px; font-weight: 500; }
+    .edit-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: clamp(16px,2vw,30px); margin-top: 34px; }
+    .edit-card { margin: 0; }
+    .edit-card figcaption { margin-top: 12px; }
+    .edit-card .ec-name { font-size: 17px; font-weight: 500; line-height: 1.2; }
+    .edit-card .ec-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 6px; }
+    .edit-card .ec-price { font-size: 13px; font-weight: 600; }
+
+    /* Tappable seller name */
+    .mag-brand {
+        border: none; background: none; padding: 0; cursor: pointer; font: inherit;
+        color: #111; text-decoration: underline; text-decoration-thickness: 1px;
+        text-underline-offset: 3px; text-decoration-color: #b5b5b5; transition: text-decoration-color .2s;
+    }
+    .mag-brand:hover { text-decoration-color: #111; }
+
+    /* Brand-fact popup */
+    .mag-pop { position: fixed; inset: 0; z-index: 720; display: none; }
+    .mag-pop.open { display: block; animation: magFade .25s ease both; }
+    .mag-pop-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.55); }
+    .mag-pop-card {
+        position: relative; z-index: 1; background: #fff; color: #111; max-width: 460px; width: calc(100% - 48px);
+        margin: 16vh auto 0; padding: 34px 34px 38px; border: 1px solid #111;
+        box-shadow: 0 30px 80px rgba(0,0,0,.3); animation: magPopIn .3s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes magPopIn { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+    .mag-pop-card h3 { font-size: 34px; font-weight: 500; margin: 8px 0 0; }
+    .mag-pop-x { position: absolute; top: 14px; right: 16px; border: none; background: none; font-size: 18px; cursor: pointer; color: #111; }
+    .mag-pop-fact { font-size: 15.5px; line-height: 1.75; color: #333; margin: 0; }
+
     /* --- Back cover --- */
     .mag-back { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-top: 1px solid #111; }
     .mag-back .bk { font-size: clamp(40px,7vw,96px); font-weight: 500; letter-spacing: 6px; }
@@ -119,6 +159,7 @@
         .mag-feature.flip .feat-grid { direction: ltr; }
         .col-grid { grid-template-columns: repeat(2,1fr); }
         .contrib-grid { grid-template-columns: repeat(2,1fr); }
+        .edit-grid { grid-template-columns: repeat(2,1fr); }
     }
     `;
 
@@ -138,6 +179,8 @@
         const featured = (pick('featuredProducts') || []);
         const items = featured.filter(p => p.type === (isArt ? 'art' : 'clothing'));
         const collections = (isArt ? pick('artCategories') : pick('clothingCategories')) || [];
+        // The full site catalogue — the "lots of products" behind the big edit grid.
+        const catalog = (isArt ? pick('artProducts') : pick('clothingProducts')) || [];
         return {
             isArt,
             masthead: isArt ? 'THE GALLERY' : 'THE CLOSET',
@@ -147,11 +190,66 @@
                 : 'Clothes carry stories. We follow the pieces from one wardrobe to the next — and the people who choose to pass them on.',
             items,
             collections,
+            catalog,
+            // The same editorial image the feed's magazine slide uses.
+            coverImg: isArt ? 'gallery-hero.jpg' : 'magazine-hero.jpg',
+            // Real editorial photographs already in the project — cycled through the
+            // feature plates so the issue reads like a shot magazine (emoji fallback).
+            heroImgs: isArt
+                ? ['gallery-hero.jpg', 'art-hero.png', 'magazine-hero.jpg']
+                : ['men-hero.jpg', 'women-hero.jpg', 'hero-beach.jpg', 'clothing-hero.png', 'magazine-hero.jpg'],
         };
     }
 
     // ---- Page builders ------------------------------------------------------
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    // Facts about the clothing companies behind the pieces — shown in a popup
+    // when a seller's name is tapped anywhere in the issue.
+    const BRAND_FACTS = {
+        'Nike': 'Founded 1964 as Blue Ribbon Sports. The Swoosh was designed in 1971 by student Carolyn Davidson — for a flat $35.',
+        'Adidas': 'Founded 1949 by Adi Dassler in Bavaria. Its three stripes were bought from Finnish brand Karhu in 1952 for two bottles of whisky.',
+        'Zara': 'Founded 1975 in Galicia by Amancio Ortega. It can take a design from sketch to store shelf in roughly two to three weeks.',
+        'H&M': 'Opened 1947 in Sweden as “Hennes” (women only). It became Hennes & Mauritz after buying a hunting-and-fishing store in 1968.',
+        "Levi's": 'Founded 1853. In 1873 Levi Strauss and tailor Jacob Davis patented copper-riveted work trousers — the first blue jeans.',
+        'Ralph Lauren': 'Founded 1967. Ralph Lauren began by selling neckties, and named his label “Polo” for the sport’s air of prestige.',
+        'Calvin Klein': 'Founded 1968 in New York. Its stark, minimalist advertising in the 1980s–90s made the logo waistband a cultural icon.',
+        'Supreme': 'Founded 1994 as a downtown NYC skate shop. Its red box logo and weekly “drops” built one of streetwear’s biggest resale markets.',
+        'Tommy Hilfiger': 'Founded 1985. Hilfiger’s red-white-and-blue flag logo made preppy American style a 1990s hip-hop staple.',
+        'Burberry': 'Founded 1856 by 21-year-old Thomas Burberry, who invented weatherproof gabardine — the fabric of the classic trench coat.',
+        'Lacoste': 'Founded 1933 by tennis champion René Lacoste, nicknamed “the Crocodile.” He helped invent the modern piqué polo shirt.',
+        'Diesel': 'Founded 1978 in Italy by Renzo Rosso. The name was chosen as an “alternative fuel” — a word that reads the same worldwide.',
+        'Carhartt': 'Founded 1889 in Detroit making overalls for railroad workers. Its heavy-duty workwear later became a streetwear staple.',
+        'The North Face': 'Founded 1966 in San Francisco. It’s named for the coldest, most unforgiving face of a mountain in the northern hemisphere.',
+        "Arc'teryx": 'Founded 1989 near Vancouver. It’s named after Archaeopteryx, the first known feathered dinosaur to take to the air.',
+        'Hugo Boss': 'Founded 1924 in Metzingen, Germany. Today it’s best known for sharp tailoring and menswear suiting.',
+        'Stüssy': 'Began in the early 1980s when surfer Shawn Stussy scrawled his name on boards and tees — a founding label of streetwear.',
+        'COS': 'Short for “Collection of Style,” launched in 2007 by the H&M group as its minimalist, design-led line.',
+        'Massimo Dutti': 'Founded 1985 and now part of Inditex, the same group as Zara — known for understated tailored basics.',
+        'AllSaints': 'A British label founded 1994 in London, recognised for its dark, edgy leather-and-denim aesthetic.',
+        'Rick Owens': 'The American designer’s avant-garde label, based in Paris, is known for a draped, monochrome “glunge” look.',
+        'Free People': 'A US bohemian brand founded 1984, part of the URBN group alongside Urban Outfitters and Anthropologie.',
+        'Zimmermann': 'An Australian label founded 1991 by sisters Nicky and Simone Zimmermann, famous for romantic resort dresses.',
+        'Juicy Couture': 'Founded 1997 in Los Angeles. Its velour tracksuit became the defining Y2K status symbol.',
+        'Hugo': 'Part of Hugo Boss — the younger, more contemporary line.',
+        'Lacoste ': 'Founded 1933 by tennis champion René Lacoste.',
+    };
+
+    // A grayscale image plate with an emoji fallback (photo layered over the glyph;
+    // if the photo 404s it hides itself and the glyph shows through).
+    function plate(icon, opts) {
+        opts = opts || {};
+        const img = opts.img
+            ? `<img class="plate-img" src="${esc(opts.img)}" alt="" onerror="this.style.display='none'">` : '';
+        const tag = opts.tag ? `<span class="plate-tag">${esc(opts.tag)}</span>` : '';
+        return `<div class="mag-plate ${opts.cls || 'tall'}"><span class="glyph">${esc(icon)}</span>${img}${tag}</div>`;
+    }
+
+    // A tappable seller name (data-brand drives the delegated popup handler).
+    function brandChip(name) {
+        if (!name) return '';
+        return `<button type="button" class="mag-brand" data-brand="${esc(name)}">${esc(name)}</button>`;
+    }
 
     function cover(d) {
         const hero = d.items[0] || { icon: d.isArt ? '🎨' : '👕' };
@@ -209,10 +307,23 @@
         </section>`;
     }
 
+    // A standalone full-bleed editorial photograph — its own page, never over a product.
+    function photoSpread(img, kicker, line) {
+        return `
+        <section class="mag-photo">
+            <img class="mag-photo-img" src="${esc(img)}" alt="" onerror="this.closest('.mag-photo').remove()">
+            <div class="mag-photo-cap">
+                <span class="mag-kicker light">${esc(kicker)}</span>
+                <p class="mag-photo-line mag-serif">${esc(line)}</p>
+            </div>
+        </section>`;
+    }
+
     function feature(it, index, d) {
         const flip = index % 2 === 1;
         const specs = [
-            ['Category', it.category], ['Colour', it.color], ['Material', it.material], ['Size', it.size], ['Seller', it.brand],
+            ['Category', it.category], ['Colour', it.color], ['Material', it.material], ['Size', it.size],
+            ['Seller', it.brand ? brandChip(it.brand) : '', true],   // value is raw HTML
         ].filter(s => s[1]);
         return `
         <section class="mag-page mag-feature${flip ? ' flip' : ''}">
@@ -225,7 +336,7 @@
                     <h3 class="feat-title mag-serif">${esc(it.name)}</h3>
                     <p class="feat-body">${esc(it.desc || '')}</p>
                     <ul class="feat-specs">
-                        ${specs.map(s => `<li><span>${esc(s[0])}</span><span>${esc(s[1])}</span></li>`).join('')}
+                        ${specs.map(s => `<li><span>${esc(s[0])}</span><span>${s[2] ? s[1] : esc(s[1])}</span></li>`).join('')}
                     </ul>
                     <div class="feat-price mag-serif">${esc(it.price || '')}</div>
                 </div>
@@ -263,6 +374,27 @@
         </section>`;
     }
 
+    // The big product spread — many real pieces from the catalogue, same B&W line.
+    function theEdit(d) {
+        const items = d.catalog.slice(0, 24);
+        return `
+        <section class="mag-page mag-edit">
+            <span class="mag-kicker">${d.isArt ? 'Every work on VERO' : 'Every piece on VERO'}</span>
+            <h2 class="mag-serif">The Edit</h2>
+            <p class="mag-muted" style="max-width:46ch;font-size:14px;line-height:1.7">${items.length} pieces from the current catalogue — tap a seller to read about the house behind it.</p>
+            <div class="edit-grid">
+                ${items.map(it => `
+                    <figure class="edit-card">
+                        <div class="mag-plate tall"><span class="glyph">${esc(it.icon)}</span></div>
+                        <figcaption>
+                            <div class="ec-name mag-serif">${esc(it.name)}</div>
+                            <div class="ec-meta">${brandChip(it.seller)}<span class="ec-price">${esc(it.price)}</span></div>
+                        </figcaption>
+                    </figure>`).join('')}
+            </div>
+        </section>`;
+    }
+
     function contributors(d) {
         // "Contributors" = the sellers/brands behind the featured pieces.
         const seen = new Set(); const list = [];
@@ -275,7 +407,7 @@
                 ${list.map(it => `
                     <div class="contrib-card">
                         <div class="sq2">${esc(it.icon)}</div>
-                        <div class="nm">${esc(it.brand)}</div>
+                        <div class="nm">${brandChip(it.brand)}</div>
                         <div class="rl">${esc(it.category || 'Seller')}</div>
                     </div>`).join('')}
             </div>
@@ -301,10 +433,11 @@
             ...d.items.map((it, i) => feature(it, i, d)),
             pull(d),
             collection(d),
+            theEdit(d),
             contributors(d),
             back(d),
         ];
-        return pages.join('\n<div class="mag-rule thin" style="max-width:1120px;margin:0 auto"></div>\n');
+        return pages.join('\n<div class="mag-rule thin"></div>\n');
     }
 
     function openMagazine(mode) {
@@ -321,6 +454,40 @@
         root.classList.add('open');
         root.scrollTop = 0;
         document.body.style.overflow = 'hidden';
+        // One delegated handler for every tappable seller name in the issue.
+        if (!root.dataset.brandBound) {
+            root.addEventListener('click', e => {
+                const b = e.target.closest('[data-brand]');
+                if (b) magBrandPopup(b.getAttribute('data-brand'));
+            });
+            root.dataset.brandBound = '1';
+        }
+    }
+
+    // Popup with a fact about the clothing company (same B&W editorial line).
+    function magBrandPopup(name) {
+        const fact = BRAND_FACTS[name] || `${name} is one of the houses whose pieces find a second life on VERO.`;
+        let pop = document.getElementById('magBrandPop');
+        if (!pop) {
+            pop = document.createElement('div');
+            pop.id = 'magBrandPop';
+            pop.className = 'mag-pop';
+            document.body.appendChild(pop);
+        }
+        pop.innerHTML = `
+            <div class="mag-pop-backdrop" onclick="closeMagBrand()"></div>
+            <div class="mag-pop-card" role="dialog" aria-modal="true">
+                <button class="mag-pop-x" aria-label="Close" onclick="closeMagBrand()">✕</button>
+                <span class="mag-kicker">The House</span>
+                <h3 class="mag-serif">${esc(name)}</h3>
+                <div class="mag-rule thin" style="margin:14px 0 18px"></div>
+                <p class="mag-pop-fact">${esc(fact)}</p>
+            </div>`;
+        pop.classList.add('open');
+    }
+    function closeMagBrand() {
+        const pop = document.getElementById('magBrandPop');
+        if (pop) pop.classList.remove('open');
     }
 
     function closeMagazine() {
@@ -331,4 +498,6 @@
 
     window.openMagazine = openMagazine;
     window.closeMagazine = closeMagazine;
+    window.magBrandPopup = magBrandPopup;
+    window.closeMagBrand = closeMagBrand;
 })();
