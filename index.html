@@ -1613,10 +1613,10 @@
            a big serif ascending number, a serif title and a hairline rule. ---- */
         /* Raised into the empty right side of the slider above, so the foot of
            "The Edit" lines up with the spec-values row — and no gap is left. */
-        .ed-head { margin: -175px 80px 14px; position: relative; }
+        .ed-head { margin: -262px 40px 14px; position: relative; }
         .ed-kicker { font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 11px; letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; font-weight: 700; display: block; }
-        .ed-num { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: clamp(40px, 6vw, 84px); font-weight: 500; line-height: .95; margin: 8px 0 2px; color: #111; }
-        .ed-title { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(20px, 2.4vw, 34px); font-weight: 500; margin: 0 0 16px; color: #111; }
+        .ed-num { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: clamp(27px, 4vw, 56px); font-weight: 500; line-height: .95; margin: 8px 0 2px; color: #111; }
+        .ed-title { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(13px, 1.6vw, 23px); font-weight: 500; margin: 0 0 16px; color: #111; }
         .ed-rule { height: 1px; background: #e2e2e2; }
         @media (max-width: 768px) { .ed-head { margin: 32px 20px 16px; } }
 
@@ -2246,10 +2246,10 @@
         .products-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 24px;
+            gap: 28px;
             margin-bottom: 20px;
-            margin-left: 80px;
-            margin-right: 80px;
+            margin-left: 40px;
+            margin-right: 40px;
         }
 
         .product-card {
@@ -9923,6 +9923,27 @@
                 else if (open === 'wishlist' && typeof openWishlist === 'function') openWishlist();
             } catch (e) {}
         });
+
+        // Guarantee the header icons open the right views. The shared header
+        // (header.js) provides page-agnostic fallbacks that can win over these
+        // SPA functions depending on load order / cache; here we forcibly wire the
+        // rendered buttons to the real functions so the hamburger opens the drawer,
+        // the cart opens My Cart and the heart opens My Wishlist.
+        (function bindHeaderIcons() {
+            function wire() {
+                const wl = document.querySelector('#siteHeader [data-icon="wishlist"] .icon-btn');
+                if (wl) wl.onclick = function (e) { e && e.preventDefault(); openWishlist(); };
+                const ct = document.querySelector('#siteHeader [data-icon="cart"] .icon-btn');
+                if (ct) ct.onclick = function (e) { e && e.preventDefault(); openCart(); };
+                const mn = document.querySelector('#siteHeader .vero-hamburger');
+                if (mn && typeof veroToggleDrawer === 'function') mn.onclick = function (e) { e && e.preventDefault(); veroToggleDrawer(); };
+            }
+            // The header may mount a moment after this script runs, so retry briefly.
+            let n = 0;
+            const t = setInterval(() => { wire(); if (++n > 25) clearInterval(t); }, 150);
+            document.addEventListener('DOMContentLoaded', wire);
+            window.addEventListener('load', wire);
+        })();
     </script>
     <!-- Shared site footer (single source: footer.js) — shown on cart & wishlist views -->
     <script src="footer.js"></script>
