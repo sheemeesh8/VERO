@@ -814,6 +814,14 @@
                     </button>
                     <span class="badge" id="cartBadge">0</span>
                 </span>
+                <span class="icon-wrap" data-icon="wishlist">
+                    <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
+                        </svg>
+                    </button>
+                    <span class="badge" id="wishlistBadge">0</span>
+                </span>
                 <button class="icon-btn" data-icon="chats" title="Deal Chats" onclick="vchatOpenInbox()">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"></path>

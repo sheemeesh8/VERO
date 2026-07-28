@@ -4354,6 +4354,12 @@
         .ai-fill-x { margin-inline-start: auto; border: none; background: transparent; cursor: pointer;
             font-size: 15px; color: #4a6b5b; line-height: 1; }
         .ai-fill-sub { margin-top: 6px; font-size: 13px; color: #3d5c4d; }
+        .ai-price-rec { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(0,66,37,0.25);
+            font-size: 13px; color: #3d5c4d; }
+        .ai-price-apply { margin-inline-start: auto; border: 1px solid #004225; background: #004225;
+            color: #fff; border-radius: 7px; padding: 6px 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .ai-price-apply:hover { opacity: 0.88; }
         .photo-main.filled, .photo-slot.filled { border-style: solid; border-color: #004225; }
         .photo-main.filled .plus, .photo-main.filled .cap,
         .photo-slot.filled .plus, .photo-slot.filled .cap { display: none; }
@@ -4665,6 +4671,17 @@
             cursor: pointer;
             transition: all 0.25s;
         }
+
+        /* AI quick-listing button — full-width rectangle under Back / Next. */
+        .quick-list-btn {
+            display: block; width: 100%; margin-top: 14px;
+            padding: 18px 24px; border-radius: 10px;
+            border: 1.5px solid #004225; background: #fff; color: #004225;
+            font-size: 16px; font-weight: 700; letter-spacing: 0.3px;
+            cursor: pointer; transition: background 0.2s, color 0.2s, opacity 0.2s;
+        }
+        .quick-list-btn:hover { background: #004225; color: #fff; }
+        .quick-list-btn:disabled { opacity: 0.55; cursor: default; }
 
         .upload-btn.back {
             background: #f0f0ec;
@@ -5244,6 +5261,10 @@
                                 <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
                                 <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
                             </div>
+                            <!-- AI quick-listing: detects type / colour / brand / material only. -->
+                            <button type="button" id="quickListBtn" class="quick-list-btn" onclick="veroQuickListing()">
+                                ✦ העלאה מהירה — זיהוי אוטומטי
+                            </button>
                         </div>
                     </div>
 
@@ -7324,11 +7345,13 @@
         // Build a fresh slider element (not yet mounted) and register its state.
         // Pass a custom slide list (e.g. per-category) or default to featuredProducts.
         function createPromoSlider(slides = featuredProducts) {
-            const uid = 'p' + (promoUidCounter++);
+            const seq = promoUidCounter++;
+            const uid = 'p' + seq;
             const el = document.createElement('div');
             el.className = 'promo-slider';
             el.innerHTML = promoSliderInner(uid, slides);
-            promoState[uid] = { index: 0, timer: null, slides };
+            // Alternate direction by build order: even sliders step forward, odd ones back.
+            promoState[uid] = { index: 0, timer: null, slides, dir: seq % 2 === 0 ? 1 : -1 };
             el.dataset.uid = uid;
             return el;
         }
@@ -7383,8 +7406,44 @@
                 dot.classList.toggle('active', active);
                 dot.innerHTML = active ? promoRingSVG : '';
             });
-            clearInterval(st.timer);
-            st.timer = setInterval(() => promoGo(uid, st.index + 1), PROMO_INTERVAL);
+            // Autoplay is driven by one shared clock (promoSyncStart), not a per-slider
+            // timer, so every slider on the page steps at the same instant.
+            promoSyncStart();
+        }
+
+        // One global clock advances every mounted slider together. Each slider carries
+        // its own direction (+1 / -1, alternating by build order), so they move in sync
+        // but toward opposite sides.
+        let promoSyncTimer = null;
+        function promoSyncTick() {
+            for (const uid in promoState) {
+                const st = promoState[uid];
+                if (!document.getElementById('promoTrack-' + uid)) continue;   // not mounted
+                promoAdvance(uid, st.index + (st.dir || 1));
+            }
+        }
+        // Move a slider without restarting the shared clock (avoids recursion with promoGo).
+        function promoAdvance(uid, i) {
+            const st = promoState[uid];
+            const track = document.getElementById('promoTrack-' + uid);
+            if (!st || !track) return;
+            const n = st.slides.length;
+            st.index = (i + n) % n;
+            track.style.transform = `translateX(-${st.index * 100}%)`;
+            const slides = track.querySelectorAll('.promo-slide');
+            slides.forEach(s => s.classList.remove('is-current'));
+            const cur = slides[st.index];
+            if (cur) { void cur.offsetWidth; cur.classList.add('is-current'); }
+            promoFitLabels(track);
+            document.querySelectorAll('#promoDots-' + uid + ' .promo-dot').forEach((dot, idx) => {
+                const active = idx === st.index;
+                dot.classList.toggle('active', active);
+                dot.innerHTML = active ? promoRingSVG : '';
+            });
+        }
+        function promoSyncStart() {
+            if (promoSyncTimer) return;   // already ticking — keep the shared cadence
+            promoSyncTimer = setInterval(promoSyncTick, PROMO_INTERVAL);
         }
 
         // Stop and forget every slider (called before the feed is rebuilt).
@@ -7559,9 +7618,11 @@
         // Wiping uploadFormData isn't enough — the inputs and chips keep whatever the
         // last listing put there, so the next one has to start from a clean form.
         function resetUploadFields() {
-            // A fresh listing may run the AI auto-fill again.
+            // A fresh listing may run the AI quick-listing again.
             aiListingRan = false;
             document.querySelectorAll('.ai-fill-banner, .ai-scan').forEach(el => el.remove());
+            const qbtn = document.getElementById('quickListBtn');
+            if (qbtn) { qbtn.disabled = false; qbtn.textContent = '✦ העלאה מהירה — זיהוי אוטומטי'; }
             // itemTypeSelect is an open field now, so it clears like the other text ones.
             ['brandNameInput', 'priceInput', 'descriptionInput', 'yearInput', 'dimH', 'dimW', 'dimD', 'itemTypeSelect']
                 .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -7675,9 +7736,21 @@
         ];
 
         let aiListingRan = false;
-        function veroAiAutolist(slotEl) {
-            if (aiListingRan) return;            // one pass per listing
+        // Button-driven quick listing. The AI detects only the four visual traits —
+        // item type, colour, brand and material. Size and price stay with the seller,
+        // who gets a suggested price to work from.
+        function veroQuickListing() {
+            const slotEl = document.getElementById('photoSlot0');
+            // Need a cover photo to "analyse" — if there is none, open the picker first.
+            if (!uploadFormData.photos || !uploadFormData.photos[0]) {
+                showToast('העלו קודם תמונת פריט אחת לזיהוי');
+                document.getElementById('photoInput0').click();
+                return;
+            }
+            if (aiListingRan) { showToast('הפריט כבר זוהה. תקנו ידנית במידת הצורך.'); return; }
             aiListingRan = true;
+            const btn = document.getElementById('quickListBtn');
+            if (btn) { btn.disabled = true; btn.textContent = '✦ מזהה…'; }
 
             // Scanning overlay drawn over the cover photo.
             const scan = document.createElement('div');
@@ -7700,65 +7773,64 @@
                 const r = isArt ? AI_LISTING_ART
                     : AI_LISTING_CLOTHING[Math.floor(Math.random() * AI_LISTING_CLOTHING.length)];
                 aiApplyListing(r);
+                if (btn) btn.textContent = '✦ זוהה בהצלחה';
             }, AI_SCAN_STEPS.length * 620 + 200);
         }
 
-        // Push the detected values into every field, honouring the existing setters
-        // so the visible chips / swatches / heading all update in lock-step.
+        // Fill ONLY the four detected fields (type, colour, brand, material) via the
+        // existing setters so the visible chips / swatches / heading update in step.
+        // Size, price and the rest are left for the seller.
         function aiApplyListing(r) {
             if (typeof buildUploadPalette === 'function' &&
                 !document.querySelector('#styleChips .chip')) buildUploadPalette();
 
-            const setInput = (id, val) => {
-                const el = document.getElementById(id);
-                if (el != null && val != null) el.value = val;
-            };
-            // Brand + heading
-            setInput('brandNameInput', r.brand); if (typeof syncBrandHeading === 'function') syncBrandHeading();
-            // Item type + its heading line
-            setInput('itemTypeSelect', r.type);
+            const brandEl = document.getElementById('brandNameInput');
+            if (brandEl && r.brand != null) brandEl.value = r.brand;
+            if (typeof syncBrandHeading === 'function') syncBrandHeading();
+
+            const typeEl = document.getElementById('itemTypeSelect');
+            if (typeEl && r.type != null) typeEl.value = r.type;
             const disp = document.getElementById('itemTypeDisplay');
             if (disp) disp.textContent = r.type;
             if (typeof syncItemTypeHeading === 'function') syncItemTypeHeading();
-            // Gender
-            if (r.gender) {
-                const g = document.getElementById('genderSelect');
-                if (g) [...g.options].forEach((o, idx) => { if (o.text === r.gender) g.selectedIndex = idx; });
-            }
-            // The look
-            if (r.style && typeof selectUploadStyle === 'function') selectUploadStyle(r.style);
+
             if (r.color && typeof selectUploadColor === 'function') selectUploadColor(r.color);
             if (r.material && typeof selectUploadMaterial === 'function') selectUploadMaterial(r.material);
-            // Price & condition & description
-            setInput('priceInput', r.price);
-            uploadFormData.price = r.price;
-            if (r.condition && typeof selectUploadCondition === 'function') selectUploadCondition(r.condition);
-            setInput('descriptionInput', r.desc);
-            uploadFormData.description = r.desc;
 
             aiShowFillBanner(r);
         }
 
-        // A dismissible banner at the top of the form telling the seller the listing
-        // was auto-filled — and, crucially, to review it before publishing.
+        // Banner under the Back / Next buttons: what was detected, plus a suggested
+        // price the seller can apply with one tap (they can also just type their own).
         function aiShowFillBanner(r) {
             document.querySelectorAll('.ai-fill-banner').forEach(b => b.remove());
-            // The banner lives below the Back / Next buttons, so the form fields stay
-            // directly under the heading.
-            const buttons = document.querySelector('#slide-0 .upload-buttons');
-            const priceTxt = r.price != null ? ` · מחיר מוצע ₪${r.price}` : '';
+            const anchor = document.getElementById('quickListBtn')
+                || document.querySelector('#slide-0 .upload-buttons');
+            const rec = r.price;
             const banner = document.createElement('div');
             banner.className = 'ai-fill-banner';
             banner.innerHTML = `
                 <div class="ai-fill-head">
                     <span class="ai-fill-spark">✦</span>
-                    <strong>הטופס מולא אוטומטית ע״י AI</strong>
+                    <strong>זוהה אוטומטית ע״י AI</strong>
                     <button class="ai-fill-x" onclick="this.closest('.ai-fill-banner').remove()">✕</button>
                 </div>
-                <div class="ai-fill-sub">זיהינו: <b>${r.brand}</b> · ${r.type}${priceTxt}. עברו על הפרטים, תקנו במידת הצורך, והוסיפו מידה.</div>`;
-            if (buttons) buttons.insertAdjacentElement('afterend', banner);
+                <div class="ai-fill-sub">מולאו: <b>${r.brand}</b> · ${r.type} · ${r.color} · ${r.material}. השלימו <b>מידה</b> ו<b>מחיר</b>.</div>
+                ${rec != null ? `<div class="ai-price-rec">
+                    <span>מחיר מומלץ לפי פריטים דומים ב-VERO: <b>₪${rec}</b></span>
+                    <button class="ai-price-apply" onclick="aiApplyRecommendedPrice(${rec})">החל מחיר</button>
+                </div>` : ''}`;
+            if (anchor) anchor.insertAdjacentElement('afterend', banner);
             else (document.querySelector('#slide-0 .us-inner') || document.body).appendChild(banner);
-            showToast('✦ AI מילא את פרטי הפריט — בדקו ותקנו');
+            showToast('✦ זוהו סוג, צבע, מותג וחומר — הוסיפו מידה ומחיר');
+        }
+
+        // Seller taps to accept the AI's suggested price.
+        function aiApplyRecommendedPrice(v) {
+            const p = document.getElementById('priceInput');
+            if (p) p.value = v;
+            uploadFormData.price = v;
+            showToast(`המחיר עודכן ל-₪${v}`);
         }
 
         function handleSlotUpload(event, slot) {
@@ -7785,9 +7857,6 @@
                 el.classList.add('cutting');
 
                 if (slot === 0) {
-                    // AI Auto-Listing — the cover photo also drives the simulated
-                    // analysis that fills the whole form in one pass.
-                    veroAiAutolist(el);
                     // FEATURE 1 — the cover gets the full studio treatment: subject
                     // lifted onto the #F4F4F2 canvas with padding + a contact shadow.
                     uploadFormData.original_cover = e.target.result;
