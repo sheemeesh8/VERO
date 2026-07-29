@@ -10144,42 +10144,10 @@
             lastY = y;
         }, { passive: true });
 
-        // Mouse-wheel / trackpad: take over the gesture in the hero↔feed zone and run
-        // our own glide, blocking the native scroll so a hard flick can't fight the
-        // animation or overshoot. Outside the zone the wheel scrolls normally.
-        // Going back UP to the hero takes two flicks, like an unlock: the first
-        // upward gesture only arms it, the second (after a brief pause) glides.
-        // A continuous burst of wheel events counts as one gesture; a >260ms gap
-        // starts a new one. The arm resets if you pause too long or scroll down.
-        let upArm = 0, upArmTime = 0;
-        window.addEventListener('wheel', function (e) {
-            const y = window.scrollY || window.pageYOffset;
-            const h = H();
-
-            // While a glide is running, swallow the wheel so momentum can't stutter it.
-            if (animating || performance.now() < lockUntil) {
-                if (y < h * 2.2) e.preventDefault();
-                return;
-            }
-            if (e.deltaY > 0 && y < h * 0.5) {
-                e.preventDefault();
-                upArm = 0;                 // any downward intent clears the unlock
-                glideDown();               // flick down on the hero → glide into the feed
-            } else if (e.deltaY < 0 && y > 40 && y < h * 2.2) {
-                e.preventDefault();
-                const now = performance.now();
-                // A new flick if there was a pause since the last upward wheel event,
-                // or if the arm went stale.
-                if (now - upArmTime > 260 || now - upArmTime > 1400) upArm++;
-                upArmTime = now;
-                if (upArm >= 2) {          // second flick → unlock and glide up
-                    upArm = 0;
-                    glideUp();
-                }
-            } else {
-                upArm = 0;                 // left the zone → reset
-            }
-        }, { passive: false });
+        // The special mouse-wheel / trackpad scroll-jacking between the hero and the
+        // feed has been removed — scrolling in that zone is now fully native. The
+        // "slide down" cue button (glideDown on click) and the header behaviour above
+        // are kept.
     })();
     </script>
 </body>
