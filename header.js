@@ -23,7 +23,7 @@
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['mode', 'account', 'cart'];
+    const ICON_ORDER = ['menu', 'mode', 'account', 'cart'];
     const ICON_ORDER_KEY = 'vero_header_icon_order';
 
     function currentIconOrder() {
@@ -658,7 +658,11 @@
             background: currentColor; transition: width 0.25s ease, opacity 0.2s ease;
         }
         #siteHeader .vero-hamburger span:nth-child(1) { width: 100%; }
-        #siteHeader .vero-hamburger span:nth-child(2) { width: 72%; }
+        #siteHeader .vero-hamburger span:nth-child(2) {
+            width: 72%;
+            background: #eaff00;
+            border: 1px solid #111;
+        }
         #siteHeader .vero-hamburger span:nth-child(3) { width: 46%; }
         #siteHeader .vero-hamburger:hover span:nth-child(2) { width: 100%; }
         #siteHeader .vero-hamburger:hover span:nth-child(3) { width: 100%; }
@@ -788,6 +792,9 @@
     const MARKUP = `
         <div class="header-container">
             <div class="header-right">
+                <a class="vero-hamburger" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu">
+                    <span></span><span></span><span></span>
+                </a>
                 <button class="icon-btn upload-plus" data-icon="mode" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
                 <button class="icon-btn" data-icon="account" title="My Account" onclick="openBuyerArea()">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" data-fill>
