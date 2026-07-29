@@ -74,16 +74,26 @@
             transition: background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
         }
         #siteHeader .header-container {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
-            justify-content: space-between;
             max-width: 100%;
             margin: 0;
-            padding: 0 16px;
-            gap: 48px;
+            padding: 0 32px;
+            gap: 24px;
             direction: ltr;
         }
-        #siteHeader .header-left { display: flex; gap: 32px; align-items: center; flex: 1; }
+        #siteHeader .header-left { display: flex; gap: 30px; align-items: center; justify-self: start; }
+        /* "Menu" / "Search" text buttons on the left, à la couture navigation. */
+        #siteHeader .hdr-textbtn {
+            display: inline-flex; align-items: center; gap: 9px;
+            color: #111; cursor: pointer; text-decoration: none;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-size: 15px; font-weight: 500; letter-spacing: 0.3px;
+            transition: opacity 0.2s ease;
+        }
+        #siteHeader .hdr-textbtn:hover { opacity: 0.6; }
+        #siteHeader .hdr-textbtn .vero-hamburger { width: 20px; height: 15px; gap: 4px; align-items: stretch; }
 
         /* ===== Search + filter (sticky header only) =====
            Hidden by default; the sticky/sticky-look header reveals it. The panel is
@@ -572,30 +582,18 @@
             --hdr-spread-right: 128px; /* icon group offset from the right edge */
         }
         @media (min-width: 901px) {
+            /* Three-column couture layout: Menu/Search left, logo centred, icons right.
+               All three groups live in the CSS grid on .header-container. */
             body:not([data-sticky="plain"]) #siteHeader .header-container {
-                position: relative;
-                min-height: 56px; /* all groups go absolute below → keep header height */
+                min-height: 56px;
                 z-index: 1;
             }
-            /* left: hamburger + logo only (nav links live in the drawer here) */
-            body:not([data-sticky="plain"]) #siteHeader .header-left {
-                position: absolute; left: 16px; top: 50%;
-                transform: translateY(-50%); margin: 0;
-            }
-            body:not([data-sticky="plain"]) #siteHeader .header-left > a:not(.vero-hamburger) {
-                display: none;
-            }
             body:not([data-sticky="plain"]) #siteHeader .logo {
-                position: absolute; left: 58px; top: 0; height: 56px;
+                justify-self: center; height: 56px;
                 display: flex; align-items: center; margin: 0; padding-left: 0; color: #111;
             }
-            /* right: the icon group sits tight against the right edge, close together
-               rather than spread across the bar. */
             body:not([data-sticky="plain"]) #siteHeader .header-right {
-                position: absolute; top: 50%; transform: translateY(-50%);
-                right: 40px; left: auto;
-                width: auto;
-                justify-content: flex-end; gap: 26px;
+                justify-self: end; justify-content: flex-end; gap: 22px;
             }
             body:not([data-sticky="plain"]) #siteHeader .upload-plus {
                 animation: none !important; box-shadow: none !important;
@@ -728,12 +726,8 @@
         .vero-drawer-social svg { width: 21px; height: 21px; }
 
         @media (max-width: 768px) {
-            #siteHeader .header-container { flex-wrap: wrap; gap: 20px; }
-            #siteHeader .header-left { display: flex; flex: 1 1 100%; order: 1; justify-content: center; gap: 15px; font-size: 11px; }
-            #siteHeader .header-left > a { font-size: 11px; }
-            #siteHeader .logo { font-size: 20px; letter-spacing: 3px; order: 2; flex: 0 1 auto; }
+            #siteHeader .logo { font-size: 20px; letter-spacing: 3px; justify-self: center; }
             #siteHeader .logo .logo-img { height: 32px; }
-            #siteHeader .header-right { order: 3; flex: 1 1 100%; justify-content: center; gap: 15px; }
         }
 
         /* ===== The switch and the + =====
@@ -772,30 +766,40 @@
         #siteHeader.scrolled.over-dark .hdr-mode-pair .toggle-category::before { background: #fff !important; }
         #siteHeader.scrolled.over-dark .hdr-mode-pair .upload-plus { color: #fff !important; border-color: #fff !important; }
 
-        /* ===== Logo on the right, controls on the left ===== */
-        #siteHeader .header-right { flex: 0 0 auto; justify-content: flex-start; gap: 26px; }
-        @media (min-width: 901px) {
-            body:not([data-sticky="plain"]) #siteHeader .header-right {
-                left: 40px; right: auto; justify-content: flex-start;
-            }
-            body:not([data-sticky="plain"]) #siteHeader .logo {
-                left: auto; right: 58px;
-            }
-        }
+        /* ===== Icons pinned to the right, logo centred ===== */
+        #siteHeader .header-right { justify-self: end; justify-content: flex-end; gap: 22px; }
         @media (max-width: 768px) {
-            #siteHeader .header-right { order: 1; flex: 0 0 auto; }
-            #siteHeader .logo { order: 2; }
+            #siteHeader .header-container { grid-template-columns: auto 1fr auto; padding: 0 16px; gap: 12px; }
+            #siteHeader .header-left { gap: 16px; }
+            #siteHeader .hdr-textbtn-label { display: none; }
+            #siteHeader .header-right { gap: 14px; }
         }
 `;
 
     // ---- Markup (identical everywhere) ----
     const MARKUP = `
         <div class="header-container">
-            <div class="header-right">
-                <a class="vero-hamburger" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu">
-                    <span></span><span></span><span></span>
+            <div class="header-left">
+                <a class="hdr-textbtn" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu">
+                    <span class="vero-hamburger"><span></span><span></span><span></span></span>
+                    <span class="hdr-textbtn-label">Menu</span>
                 </a>
-                <button class="icon-btn upload-plus" data-icon="mode" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
+                <a class="hdr-textbtn" onclick="veroToggleSearch()" aria-label="Search" role="button" tabindex="0" data-icon="search">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span class="hdr-textbtn-label">Search</span>
+                </a>
+            </div>
+            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.png?v=2" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
+            <div class="header-right">
+                <span class="hdr-mode-pair" data-icon="mode">
+                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
+                        <span class="seg active" id="segArt">Art</span>
+                        <span class="seg" id="segFashion">Fashion</span>
+                    </div>
+                    <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
+                </span>
                 <button class="icon-btn" data-icon="account" title="My Account" onclick="openBuyerArea()">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" data-fill>
                         <circle cx="12" cy="8" r="4.2"/>
@@ -814,7 +818,6 @@
                     <span class="badge" id="cartBadge">0</span>
                 </span>
             </div>
-            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.png?v=2" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
         </div>
     `;
 
