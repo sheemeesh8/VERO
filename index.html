@@ -414,6 +414,76 @@
         .category-image,
         .hp-photo { display: none !important; }
 
+        /* ===== Two wide rectangles — each an auto-rotating category slider ===== */
+        /* The gap above the rectangles (from the slider above) matches the 20px gap
+           between the two rectangles. */
+        #heroPromos { padding: 20px 0 0 !important; }
+        .two-rects {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            padding: 0 24px;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        #heroPromos .two-rects .wide-rect {
+            flex: 1 1 0;
+            min-width: 0;
+            height: 620px;
+            min-height: 620px;
+            border-radius: 6px;
+            background: #ededed;
+            position: relative;
+            overflow: hidden;   /* the slide-up/fade is clipped to the rectangle */
+        }
+        /* Each category is a stacked slide: text left, image right. */
+        .wide-rect .rect-slide {
+            position: absolute; inset: 0;
+            display: flex; align-items: stretch;
+            text-decoration: none;
+            opacity: 0; transform: translateY(42px);
+            transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+        }
+        .wide-rect .rect-slide.active { opacity: 1; transform: none; pointer-events: auto; }
+        .wide-rect .rect-slide.exit  { opacity: 0; transform: translateY(-42px); }
+        .wide-rect .rect-info {
+            flex: 1 1 55%; min-width: 0;
+            display: flex; flex-direction: column; justify-content: center;
+            gap: 16px; padding: 48px 44px;
+        }
+        .wide-rect .rect-kicker {
+            font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+            color: #8a8a8a; font-weight: 700;
+        }
+        .wide-rect .rect-name {
+            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+            font-size: 40px; font-weight: 700; letter-spacing: 1px;
+            text-transform: uppercase; color: #111; line-height: 1.1; margin: 0;
+        }
+        .wide-rect .rect-desc {
+            font-size: 15px; line-height: 1.7; color: #5f5f5f; max-width: 360px; margin: 0;
+        }
+        .wide-rect .rect-cta {
+            margin-top: 10px; font-size: 12px; font-weight: 700; letter-spacing: 1.6px;
+            text-transform: uppercase; color: #111;
+            display: inline-flex; align-items: center; gap: 8px; transition: gap 0.25s ease;
+        }
+        .wide-rect .rect-slide:hover .rect-cta { gap: 14px; }
+        /* Right half: a place for the category image. */
+        .wide-rect .rect-img {
+            flex: 1 1 45%; min-width: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: #e0ddd4; font-size: 128px; color: rgba(0,0,0,0.85);
+        }
+        @media (max-width: 760px) {
+            .two-rects { flex-direction: column; }
+            #heroPromos .two-rects .wide-rect { height: 300px; }
+            .wide-rect .rect-info { padding: 28px 26px; }
+            .wide-rect .rect-name { font-size: 28px; }
+            .wide-rect .rect-img { font-size: 78px; }
+        }
+
         /* ==================== HERO ==================== */
         .hero {
             width: 100vw;
@@ -1071,7 +1141,8 @@
             display: flex;
             width: 100%;
             direction: ltr;
-            transition: transform 0.8s cubic-bezier(0.65, 0.05, 0.1, 1);
+            /* Slower, drawn-out slide so the change between Men / Women / Kids reads clearly. */
+            transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .hero-slide {
@@ -1202,17 +1273,24 @@
             position: relative;
             clip-path: polygon(14% 0, 100% 0, 100% 100%, 0% 100%);
         }
+        /* Segments with no curated photo (e.g. Kids) get a clean neutral panel — never
+           a broken url('undefined') / random stock image. */
+        .hero-slide .hero-image-empty {
+            background-image: none;
+            background-color: #e6e2da;
+        }
 
-        /* Entrance animations, retriggered per active slide */
+        /* Entrance animations, retriggered per active slide — slowed for a clearer,
+           more drawn-out reveal on each segment change. */
         .hero-slide.animate .hero-image {
-            animation: heroClip 1.1s cubic-bezier(0.16,1,0.3,1) both;
+            animation: heroClip 1.6s cubic-bezier(0.16,1,0.3,1) both;
         }
         .hero-slide.animate .hero-title,
         .hero-slide.animate .hero-sub,
         .hero-slide.animate .hero-cta {
-            animation: heroRise 0.6s ease both;
+            animation: heroRise 0.95s ease both;
         }
-        .hero-slide.animate .hero-title { animation-delay: 0.12s; }
+        .hero-slide.animate .hero-title { animation-delay: 0.18s; }
         .hero-slide.animate .hero-sub   { animation-delay: 0.24s; }
         .hero-slide.animate .hero-cta   { animation-delay: 0.36s; }
 
@@ -5210,7 +5288,7 @@
     <!-- ==================== HEADER ==================== -->
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
-    <script src="header.js?v=3"></script>
+    <script src="header.js?v=4"></script>
 
 <!-- ==================== UPLOAD PRODUCT VIEW ==================== -->
     <div id="uploadProductView">
@@ -7387,32 +7465,62 @@
                 </a>`;
         }
 
+        let rectTimers = [];
+        const RECT_INTERVAL = 4200;
+
         function renderHeroPromos() {
             const wrap = document.getElementById('heroPromos');
             if (!wrap) return;
             if (hpTimer) clearInterval(hpTimer);
+            rectTimers.forEach(clearInterval); rectTimers = [];
             const type = currentCategory;
             const list = type === 'clothing' ? clothingSliderCategories : artCategories;
-            // Chunk the categories into slides of four, matching the .hp-slide grid.
-            const slides = [];
-            for (let i = 0; i < list.length; i += 4) {
-                const group = list.slice(i, i + 4);
-                const cards = group.map((c, j) => hpCardHTML(c, i + j, type)).join('');
-                slides.push(`<div class="hp-slide">${cards}</div>`);
-            }
-            hpSlideCount = slides.length;
-            wrap.innerHTML = `
-                <button class="hp-arrow prev" aria-label="Previous" onclick="hpGo(hpIndex - 1)">&#8249;</button>
-                <div class="hp-viewport">
-                    <div class="hp-track" id="hpTrack">${slides.join('')}</div>
-                </div>
-                <button class="hp-arrow next" aria-label="Next" onclick="hpGo(hpIndex + 1)">&#8250;</button>
-                <div class="hp-dots" id="hpDots">
-                    ${slides.map((_, i) => `<button class="hp-dot" aria-label="Slide ${i + 1}" onclick="hpGo(${i})"></button>`).join('')}
+            // Two wide rectangles side by side. Each is its own auto-rotating slider:
+            // text (category name + blurb) on the left, image on the right. The list
+            // is split in two so the rectangles cycle through different categories.
+            const half = Math.ceil(list.length / 2);
+            const groups = [{ items: list.slice(0, half), offset: 0 },
+                            { items: list.slice(half), offset: half }];
+
+            const slideHTML = (c, globalIdx, first) => `
+                <a class="rect-slide${first ? ' active' : ''}" onclick="openCategory('${type}', ${globalIdx})">
+                    <div class="rect-info">
+                        <div class="rect-kicker">Collection</div>
+                        <h3 class="rect-name">${c.name}</h3>
+                        <p class="rect-desc">Curated second-hand ${c.name.toLowerCase()} — pieces chosen for quality, character and value.</p>
+                        <span class="rect-cta">View all &rarr;</span>
+                    </div>
+                    <div class="rect-img">${c.icon || '🛍️'}</div>
+                </a>`;
+
+            const rectHTML = (g, gi) => `
+                <div class="wide-rect" data-rect="${gi}">
+                    ${g.items.map((c, i) => slideHTML(c, g.offset + i, i === 0)).join('')}
                 </div>`;
-            hpIndex = 0;
-            hpGo(0);
-            hpTimer = setInterval(() => hpGo(hpIndex + 1), HP_INTERVAL);
+
+            wrap.innerHTML = `<div class="two-rects">${groups.map(rectHTML).join('')}</div>`;
+            // Stagger the two rectangles so they don't flip in unison.
+            groups.forEach((g, gi) => setTimeout(() => startRectRotation(gi, g.items.length), gi * (RECT_INTERVAL / 2)));
+        }
+
+        // Rotate one rectangle's slides with a slide-up + fade, clipped to the rect.
+        function startRectRotation(gi, count) {
+            if (count <= 1) return;
+            const rect = document.querySelector(`#heroPromos .wide-rect[data-rect="${gi}"]`);
+            if (!rect) return;
+            const slides = rect.querySelectorAll('.rect-slide');
+            let idx = 0;
+            const timer = setInterval(() => {
+                const cur = slides[idx];
+                const nextIdx = (idx + 1) % count;
+                const nxt = slides[nextIdx];
+                cur.classList.add('exit');
+                cur.classList.remove('active');
+                nxt.classList.add('active');
+                setTimeout(() => cur.classList.remove('exit'), 750);
+                idx = nextIdx;
+            }, RECT_INTERVAL);
+            rectTimers.push(timer);
         }
 
         function hpGo(i) {
@@ -8813,6 +8921,34 @@
             return [...new Set(values.filter(Boolean))].sort();
         }
 
+        // Live results for the header Search page. It calls this with the current
+        // selections (even partial) and drops the returned cards below the filter.
+        // We match on the attributes the catalogue actually carries — text, gender,
+        // colour, material and price — so results refine as the buyer chooses.
+        window.veroSearchResults = function (state) {
+            state = state || {};
+            let list = (currentCategory === 'clothing' ? clothingProducts : artProducts).slice();
+            const q = (state.query || '').trim().toLowerCase();
+            if (q) list = list.filter(p =>
+                (p.name || '').toLowerCase().includes(q) ||
+                (p.seller || '').toLowerCase().includes(q) ||
+                (p.category || '').toLowerCase().includes(q));
+            if (state.gender) list = list.filter(p => {
+                const g = productGender(p);
+                return g === state.gender || g === 'Unisex' || state.gender === 'Unisex';
+            });
+            if (state.color)    list = list.filter(p => productColor(p) === state.color);
+            if (state.material) list = list.filter(p => productFabric(p) === state.material);
+            if (state.maxPrice != null) list = list.filter(p => priceToNum(p.price) <= state.maxPrice);
+            // A soft type match: only narrow by it when the catalogue has such pieces,
+            // so an unmatched Depop label doesn't blank the results.
+            if (state.type) {
+                const byType = list.filter(p => (p.category || '').toLowerCase().includes(state.type.toLowerCase()));
+                if (byType.length) list = byType;
+            }
+            return list.slice(0, 12).map(productCardHTML).join('');
+        };
+
         // Minimal filter bar above the feed; every change re-renders the feed.
         function renderFeedFilters() {
             const wrap = document.getElementById('feedFilters');
@@ -8914,7 +9050,7 @@
                             ${cta}
                         </div>
                     </div>
-                    <div class="hero-image" style="background-image:url('${bg}'); cursor:pointer;"
+                    <div class="hero-image${bg ? '' : ' hero-image-empty'}" style="${bg ? `background-image:url('${bg}');` : ''} cursor:pointer;"
                          onclick="${s.magazine ? 'openMagazine()' : `selectSegment('${s.key}')`}"></div>
                 </div>`;
         }

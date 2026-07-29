@@ -774,6 +774,133 @@
             #siteHeader .hdr-textbtn-label { display: none; }
             #siteHeader .header-right { gap: 14px; }
         }
+
+        /* ================= SEARCH PAGE (opens on the header Search button) =================
+           Full-screen white page that slides down from the top: logo, a wide open search
+           field, then the filter chosen in fade-in stages (gender → type → size →
+           material/price/colour), each stacked under the last. */
+        .vsp-overlay {
+            position: fixed; inset: 0; z-index: 300;
+            background: #fff;
+            transform: translateY(-100%);
+            transition: transform 0.55s cubic-bezier(0.65, 0.05, 0.1, 1);
+            overflow-y: auto;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            visibility: hidden;
+        }
+        .vsp-overlay.open { transform: translateY(0); visibility: visible; }
+        .vsp-close {
+            position: absolute; top: 22px; right: 28px;
+            background: none; border: none; cursor: pointer;
+            font-size: 34px; line-height: 1; color: #111; padding: 0;
+            width: 40px; height: 40px; transition: opacity 0.2s;
+        }
+        .vsp-close:hover { opacity: 0.55; }
+        .vsp-inner {
+            max-width: 1320px; margin: 0 auto;
+            padding: 64px 40px 110px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .vsp-logo img { height: 46px; width: auto; display: block; filter: brightness(0); }
+        .vsp-logo .vsp-logo-txt {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 34px; font-weight: 700; letter-spacing: 6px; text-transform: uppercase; color: #111;
+        }
+        /* Wide open search field — a thin outlined pill. */
+        .vsp-searchbar {
+            margin-top: 40px; width: 100%;
+            display: flex; align-items: center; gap: 12px;
+            border: 1.5px solid #111; border-radius: 999px;
+            height: 60px; padding: 0 24px; box-sizing: border-box;
+        }
+        .vsp-searchbar input {
+            flex: 1; min-width: 0; border: none; outline: none; background: none;
+            font-family: inherit; font-size: 16px; font-weight: 500; color: #111;
+        }
+        .vsp-searchbar input::placeholder { color: #9a9a9a; letter-spacing: 0.4px; }
+        .vsp-searchbar button {
+            background: none; border: none; cursor: pointer; padding: 4px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .vsp-searchbar button svg { width: 22px; height: 22px; stroke: #111; fill: none; stroke-width: 1.8; }
+        .vsp-searchbar button:hover { opacity: 0.6; }
+
+        /* The filter split into two halves of the page. */
+        .vsp-cols {
+            width: 100%; margin-top: 58px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 44px 96px;
+            align-items: start;
+        }
+        .vsp-col { display: flex; flex-direction: column; gap: 52px; min-width: 0; }
+        @media (max-width: 760px) { .vsp-cols { grid-template-columns: 1fr; } }
+        .vsp-step {
+            opacity: 0; transform: translateY(16px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            pointer-events: none;
+        }
+        .vsp-step.show { opacity: 1; transform: none; pointer-events: auto; }
+        .vsp-step-label {
+            font-size: 14px; letter-spacing: 2.5px; text-transform: uppercase;
+            color: #111; font-weight: 800; margin-bottom: 20px; text-align: center;
+        }
+        .vsp-chips { display: flex; flex-wrap: wrap; gap: 14px 16px; justify-content: center; }
+        .vsp-chip {
+            border: none; background: #fff; color: #333;
+            border-radius: 10px; padding: 12px 22px; cursor: pointer;
+            font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: 0.2px;
+            transition: color 0.2s, transform 0.15s;
+        }
+        .vsp-chip:hover { color: #111; transform: translateY(-1px); }
+        .vsp-chip.active { background: #fff; color: #111; font-weight: 700; }
+
+        /* Final stage: material / price / colour, still stacked. */
+        .vsp-final { display: flex; flex-direction: column; gap: 34px; }
+        .vsp-price-out { font-weight: 800; color: #d40000; font-size: 15px; }
+        /* Emphasised, accessible price slider — a thick red track and a large red
+           thumb with a white ring, so the control reads clearly. */
+        .vsp-range {
+            width: 100%; -webkit-appearance: none; appearance: none;
+            height: 8px; border-radius: 999px; cursor: pointer; margin-top: 16px;
+            background: #f0c9c9; accent-color: #d40000;
+        }
+        .vsp-range:focus-visible { outline: 3px solid rgba(212,0,0,0.35); outline-offset: 4px; }
+        .vsp-range::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%;
+            background: #d40000; border: 3px solid #fff; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(212,0,0,0.5);
+        }
+        .vsp-range::-moz-range-thumb {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: #d40000; border: 3px solid #fff; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(212,0,0,0.5);
+        }
+        .vsp-range::-moz-range-track { height: 8px; border-radius: 999px; background: #f0c9c9; }
+
+        /* Results, below the two-column filter. */
+        .vsp-results-wrap { width: 100%; margin-top: 56px; display: flex; flex-direction: column; align-items: center; }
+        .vsp-results-head {
+            font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
+            color: #111; font-weight: 800; margin-bottom: 24px;
+        }
+        .vsp-results {
+            width: 100%;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 22px;
+        }
+        .vsp-results .product-card { width: 100%; margin: 0; }
+        .vsp-results-empty { color: #9a9a9a; font-size: 14px; letter-spacing: 1px; padding: 30px 0; text-align: center; }
+        .vsp-apply {
+            align-self: center; margin-top: 8px;
+            background: #111; color: #fff; border: 1.5px solid #111;
+            border-radius: 999px; padding: 15px 46px; cursor: pointer;
+            font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+            transition: background 0.2s, color 0.2s;
+        }
+        .vsp-apply:hover { background: #fff; color: #111; }
+        @media (max-width: 600px) {
+            .vsp-inner { padding: 48px 18px 80px; }
+            .vsp-searchbar { height: 52px; }
+        }
 `;
 
     // ---- Markup (identical everywhere) ----
@@ -784,7 +911,7 @@
                     <span class="vero-hamburger"><span></span><span></span><span></span></span>
                     <span class="hdr-textbtn-label">Menu</span>
                 </a>
-                <a class="hdr-textbtn" onclick="veroToggleSearch()" aria-label="Search" role="button" tabindex="0" data-icon="search">
+                <a class="hdr-textbtn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
@@ -879,6 +1006,246 @@
         document.body.style.overflow = '';
     };
     document.addEventListener('keydown', e => { if (e.key === 'Escape') window.veroCloseDrawer(); });
+
+    // ================= SEARCH PAGE (staged, fade-in filters) =================
+    // Category data for the staged filter. Product types depend on the chosen
+    // gender; sizes / materials / colours are shared.
+    // Product categories per department, following Depop's taxonomy for richer,
+    // more precise filtering.
+    const VSP_TYPES = {
+        Men:    ['Tops', 'T-Shirts', 'Shirts', 'Hoodies & Sweatshirts', 'Jumpers & Knitwear', 'Jeans', 'Trousers', 'Shorts', 'Coats & Jackets', 'Suits & Blazers', 'Activewear', 'Shoes', 'Bags', 'Hats', 'Accessories'],
+        Women:  ['Tops', 'T-Shirts', 'Dresses', 'Skirts', 'Jeans', 'Trousers & Leggings', 'Shorts', 'Playsuits & Jumpsuits', 'Jumpers & Knitwear', 'Hoodies & Sweatshirts', 'Coats & Jackets', 'Blazers', 'Activewear', 'Swimwear', 'Lingerie & Nightwear', 'Shoes', 'Bags & Purses', 'Jewellery', 'Accessories'],
+        Kids:   ['Tops', 'T-Shirts', 'Dresses', 'Jeans', 'Trousers', 'Shorts', 'Jumpers & Knitwear', 'Coats & Jackets', 'Shoes', 'Accessories'],
+        Unisex: ['Tops', 'T-Shirts', 'Hoodies & Sweatshirts', 'Jumpers & Knitwear', 'Jeans', 'Trousers', 'Shorts', 'Coats & Jackets', 'Shoes', 'Bags', 'Hats', 'Accessories']
+    };
+    const VSP_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+    // Depop's condition ladder.
+    const VSP_CONDITIONS = ['Brand new', 'Like new', 'Used – excellent', 'Used – good', 'Used – fair'];
+    // Depop's style / aesthetic tags.
+    const VSP_STYLES = ['Y2K', 'Vintage', 'Streetwear', 'Grunge', 'Minimalist', 'Boho', 'Preppy', 'Cottagecore', 'Sportswear', 'Gorpcore', 'Retro', 'Punk'];
+    const VSP_MATERIALS = ['Cotton', 'Wool', 'Silk', 'Leather', 'Denim', 'Linen', 'Cashmere', 'Polyester'];
+    const VSP_COLORS = ['Black', 'White', 'Beige', 'Grey', 'Blue', 'Green', 'Red', 'Brown', 'Pink'];
+    const VSP_PRICE_MAX = 3000;
+
+    let vspState = { query: '', gender: '', type: '', size: '', style: '', condition: '', material: '', color: '', maxPrice: VSP_PRICE_MAX };
+
+    function chip(group, value, active) {
+        return `<button class="vsp-chip${active ? ' active' : ''}" onclick="vspPick('${group}', this)" data-value="${value}">${value}</button>`;
+    }
+
+    const SEARCH_MARKUP = `
+        <div class="vsp-overlay" id="veroSearchPage" aria-hidden="true" role="dialog" aria-label="Search">
+            <button class="vsp-close" aria-label="Close search" onclick="veroCloseSearchPage()">&times;</button>
+            <div class="vsp-inner">
+                <div class="vsp-logo"><img src="vero-logo.png?v=2" alt="VERO" class="vsp-logo-img" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'vsp-logo-txt',textContent:'VERO'}))"></div>
+                <div class="vsp-searchbar">
+                    <input id="vspInput" type="text" placeholder="Search for a product" autocomplete="off"
+                           oninput="vspState_query(this.value)" onkeydown="if(event.key==='Enter')vspApply()">
+                    <button aria-label="Search" onclick="vspApply()">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="vsp-cols">
+                    <!-- Left half of the page: the sequential choices. -->
+                    <div class="vsp-col">
+                        <div class="vsp-step show" data-step="gender">
+                            <div class="vsp-step-label">Who are you shopping for?</div>
+                            <div class="vsp-chips">
+                                ${['Men', 'Women', 'Kids', 'Unisex'].map(g => chip('gender', g)).join('')}
+                            </div>
+                        </div>
+                        <div class="vsp-step" data-step="type">
+                            <div class="vsp-step-label">Product type</div>
+                            <div class="vsp-chips" id="vspTypeChips"></div>
+                        </div>
+                        <div class="vsp-step" data-step="size">
+                            <div class="vsp-step-label">Size</div>
+                            <div class="vsp-chips">${VSP_SIZES.map(s => chip('size', s)).join('')}</div>
+                        </div>
+                    </div>
+                    <!-- Right half of the page: the attribute filters. -->
+                    <div class="vsp-col">
+                        <div class="vsp-step" data-step="final">
+                            <div class="vsp-final">
+                                <div>
+                                    <div class="vsp-step-label">Style</div>
+                                    <div class="vsp-chips">${VSP_STYLES.map(s => chip('style', s)).join('')}</div>
+                                </div>
+                                <div>
+                                    <div class="vsp-step-label">Condition</div>
+                                    <div class="vsp-chips">${VSP_CONDITIONS.map(c => chip('condition', c)).join('')}</div>
+                                </div>
+                                <div>
+                                    <div class="vsp-step-label">Material</div>
+                                    <div class="vsp-chips">${VSP_MATERIALS.map(m => chip('material', m)).join('')}</div>
+                                </div>
+                                <div>
+                                    <div class="vsp-step-label">Price — up to <span class="vsp-price-out" id="vspPriceOut">₪${VSP_PRICE_MAX}</span></div>
+                                    <input class="vsp-range" type="range" min="0" max="${VSP_PRICE_MAX}" value="${VSP_PRICE_MAX}" oninput="vspPrice(this.value)" aria-label="Maximum price">
+                                </div>
+                                <div>
+                                    <div class="vsp-step-label">Colour</div>
+                                    <div class="vsp-chips">${VSP_COLORS.map(c => chip('color', c)).join('')}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Results, below the filter, updated live as choices are made. -->
+                <div class="vsp-results-wrap">
+                    <div class="vsp-results-head" id="vspResultsHead">Matching pieces</div>
+                    <div class="vsp-results" id="vspResults"></div>
+                    <button class="vsp-apply" onclick="vspApply()">Show all results</button>
+                </div>
+            </div>
+        </div>`;
+
+    function mountSearchPage() {
+        if (document.getElementById('veroSearchPage')) return;
+        const wrap = document.createElement('div');
+        wrap.id = 'veroSearchPageRoot';
+        wrap.innerHTML = SEARCH_MARKUP;
+        document.body.appendChild(wrap);
+    }
+
+    // The stages, in order. material + colour + price all live in the 'final' stage.
+    const VSP_STAGES = ['gender', 'type', 'size', 'final'];
+    function vspStageOf(group) { return (group === 'material' || group === 'color') ? 'final' : group; }
+
+    // Reveal a stage with its fade-in.
+    function vspReveal(step) {
+        const el = document.querySelector(`#veroSearchPage .vsp-step[data-step="${step}"]`);
+        if (el) el.classList.add('show');
+    }
+    function vspStepEl(step) { return document.querySelector(`#veroSearchPage .vsp-step[data-step="${step}"]`); }
+
+    // Everything below the given group is now invalid — hide those stages and wipe
+    // their selections, so changing an early choice cascades cleanly down.
+    function vspCollapseAfter(group) {
+        const start = VSP_STAGES.indexOf(vspStageOf(group)) + 1;
+        for (let i = start; i < VSP_STAGES.length; i++) {
+            const el = vspStepEl(VSP_STAGES[i]);
+            if (!el) continue;
+            el.classList.remove('show');
+            el.querySelectorAll('.vsp-chip.active').forEach(c => c.classList.remove('active'));
+        }
+        const after = {
+            gender:   ['type', 'size', 'style', 'condition', 'material', 'color', 'price'],
+            type:     ['size', 'style', 'condition', 'material', 'color', 'price'],
+            size:     ['style', 'condition', 'material', 'color', 'price'],
+            // Terminal groups (all inside the 'final' stage) open nothing further.
+            style: [], condition: [], material: [], color: []
+        };
+        (after[group] || []).forEach(g => {
+            if (g === 'price') {
+                vspState.maxPrice = VSP_PRICE_MAX;
+                const out = document.getElementById('vspPriceOut');
+                const rng = document.querySelector('#veroSearchPage .vsp-range');
+                if (out) out.textContent = '₪' + VSP_PRICE_MAX;
+                if (rng) rng.value = VSP_PRICE_MAX;
+            } else { vspState[g] = ''; }
+        });
+    }
+
+    window.vspState_query = function (v) { vspState.query = v; vspUpdateResults(); };
+    window.vspPrice = function (v) {
+        vspState.maxPrice = Number(v);
+        const out = document.getElementById('vspPriceOut');
+        if (out) out.textContent = '₪' + v;
+        vspUpdateResults();
+    };
+
+    // Live results below the filter — refreshed on every change, even before the
+    // buyer is done. The page supplies matches via window.veroSearchResults(state),
+    // returning ready product-card HTML so the results match the feed exactly.
+    function vspUpdateResults() {
+        const host = document.getElementById('vspResults');
+        if (!host) return;
+        if (typeof window.veroSearchResults !== 'function') {
+            host.closest('.vsp-results-wrap').style.display = 'none';
+            return;
+        }
+        const html = window.veroSearchResults({ ...vspState });
+        host.innerHTML = html || '<div class="vsp-results-empty">No matching pieces yet — adjust your filters</div>';
+    }
+
+    // A chip was clicked.
+    //  • clicking the ACTIVE chip again deselects it and closes the stages it opened;
+    //  • picking a different value cascades: everything below is reset and rebuilt.
+    window.vspPick = function (group, btn) {
+        const wrap = btn.parentElement;
+        const value = btn.dataset.value;
+
+        // Toggle off — deselect and collapse the stages this choice had opened.
+        if (btn.classList.contains('active')) {
+            btn.classList.remove('active');
+            vspState[group] = '';
+            vspCollapseAfter(group);
+            vspUpdateResults();
+            return;
+        }
+
+        // Select / change within this group.
+        wrap.querySelectorAll('.vsp-chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        vspState[group] = value;
+        // Any earlier change invalidates every downstream stage.
+        vspCollapseAfter(group);
+
+        if (group === 'gender') {
+            // Product types depend on the gender — rebuild them for the new choice.
+            const chips = document.getElementById('vspTypeChips');
+            if (chips) chips.innerHTML = (VSP_TYPES[value] || []).map(t => chip('type', t)).join('');
+            vspReveal('type');
+        } else if (group === 'type') {
+            vspReveal('size');
+        } else if (group === 'size') {
+            vspReveal('final');
+        }
+        // material / colour sit in the terminal stage — they open nothing further.
+        vspUpdateResults();
+    };
+
+    window.veroOpenSearchPage = function () {
+        mountSearchPage();
+        const page = document.getElementById('veroSearchPage');
+        // Fresh each open.
+        requestAnimationFrame(() => {
+            page.classList.add('open');
+            page.setAttribute('aria-hidden', 'false');
+            vspUpdateResults();
+            const input = document.getElementById('vspInput');
+            if (input) setTimeout(() => input.focus(), 250);
+        });
+        document.body.style.overflow = 'hidden';
+    };
+    window.veroCloseSearchPage = function () {
+        const page = document.getElementById('veroSearchPage');
+        if (page) { page.classList.remove('open'); page.setAttribute('aria-hidden', 'true'); }
+        document.body.style.overflow = '';
+    };
+
+    // Apply the chosen search + filters. On the home page we drive the feed through
+    // its header hooks; elsewhere we route to the home feed carrying the query.
+    window.vspApply = function () {
+        const f = {
+            gender: vspState.gender, type: vspState.type,
+            color: vspState.color, maxPrice: vspState.maxPrice
+        };
+        if (typeof window.veroOnSearch === 'function') window.veroOnSearch(vspState.query || '');
+        if (typeof window.veroOnFilters === 'function') {
+            window.veroOnFilters(f);
+            veroCloseSearchPage();
+        } else {
+            const params = new URLSearchParams();
+            if (vspState.query) params.set('q', vspState.query);
+            if (vspState.gender) params.set('seg', vspState.gender.toLowerCase());
+            location.href = 'index.html?' + params.toString();
+        }
+    };
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') window.veroCloseSearchPage(); });
 
     // ---- Search + filter panel ----
     // The header owns the UI only. A page opts in by defining:
