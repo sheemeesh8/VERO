@@ -23,7 +23,7 @@
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['mode', 'account', 'cart', 'chats', 'menu'];
+    const ICON_ORDER = ['mode', 'account', 'cart'];
     const ICON_ORDER_KEY = 'vero_header_icon_order';
 
     function currentIconOrder() {
@@ -788,16 +788,7 @@
     const MARKUP = `
         <div class="header-container">
             <div class="header-right">
-                <a class="vero-hamburger" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu">
-                    <span></span><span></span><span></span>
-                </a>
-                <span class="hdr-mode-pair" data-icon="mode">
-                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
-                        <span class="seg active" id="segArt">Art</span>
-                        <span class="seg" id="segFashion">Fashion</span>
-                    </div>
-                    <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
-                </span>
+                <button class="icon-btn upload-plus" data-icon="mode" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
                 <button class="icon-btn" data-icon="account" title="My Account" onclick="openBuyerArea()">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" data-fill>
                         <circle cx="12" cy="8" r="4.2"/>
@@ -815,19 +806,6 @@
                     </button>
                     <span class="badge" id="cartBadge">0</span>
                 </span>
-                <span class="icon-wrap" data-icon="wishlist">
-                    <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
-                        </svg>
-                    </button>
-                    <span class="badge" id="wishlistBadge">0</span>
-                </span>
-                <button class="icon-btn" data-icon="chats" title="Deal Chats" onclick="vchatOpenInbox()">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"></path>
-                    </svg>
-                </button>
             </div>
             <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.png?v=2" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
         </div>
