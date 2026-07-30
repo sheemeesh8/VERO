@@ -876,6 +876,46 @@
             .hero-slide .hero-sub { font-size: 17px; }
         }
 
+        /* ==================== FULL-LIST SLIDE-UP ==================== */
+        .fl-open-wrap { margin-top: 30px; }
+        .fl-open-btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: #004225; color: #fff; border: none; cursor: pointer;
+            font: inherit; font-size: 14px; font-weight: 700; letter-spacing: 1px;
+            padding: 15px 30px; border-radius: 4px; transition: background 0.2s, transform 0.2s;
+        }
+        .fl-open-btn:hover { background: #0a6b3f; transform: translateY(-2px); }
+        .fl-open-btn .fl-arrow { font-size: 16px; }
+
+        .fl-back {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s;
+        }
+        .fl-back.open { opacity: 1; visibility: visible; }
+        .fl-sheet {
+            position: fixed; left: 0; right: 0; bottom: 0; height: 92vh;
+            background: #fff; z-index: 1001; border-radius: 20px 20px 0 0;
+            transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow-y: auto; box-shadow: 0 -20px 60px rgba(0,0,0,0.25);
+            direction: rtl;
+        }
+        .fl-back.open .fl-sheet { transform: translateY(0); }
+        .fl-head {
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; background: #fff; z-index: 2;
+            padding: 26px 7vw 20px; border-bottom: 1px solid #eee;
+        }
+        .fl-title { font-size: 26px; font-weight: 800; color: #004225; }
+        .fl-sub { font-size: 14px; color: #8a8a8a; margin-top: 4px; }
+        .fl-close {
+            flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%;
+            border: 1px solid #ddd; background: #fff; color: #111; font-size: 18px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: background 0.2s, color 0.2s;
+        }
+        .fl-close:hover { background: #111; color: #fff; }
+        .fl-body { padding: 34px 7vw 70px; }
+        .fl-grip { width: 44px; height: 5px; border-radius: 3px; background: #e0e0e0; margin: 10px auto 0; }
+
     </style>
     <link rel="stylesheet" href="cards.css">
     <!-- Site-wide design line (single source: design-system.css). Ferrari-inspired
@@ -1377,7 +1417,24 @@
             const items = liveListings();
             return `<h3 class="dh-detail-title">הפריטים שלי</h3>` +
                 `<div class="dh-cards">${items.map(miniCardHTML).join('')}</div>` +
+                `<div class="fl-open-wrap"><button class="fl-open-btn" onclick="openFullListings()">לרשימה המלאה <span class="fl-arrow">&darr;</span></button></div>` +
                 `<div style="margin-top:44px">${settingsDetail()}</div>`;
+        }
+
+        // A slide-up sheet with every one of the user's on-air items, each carrying
+        // its own status line under the card (reuses the listing card).
+        function openFullListings() {
+            const items = liveListings();
+            const onAir = items.filter(l => l.status === 'live').length;
+            document.getElementById('flSub').textContent = `${items.length} פריטים · ${onAir} באוויר עכשיו`;
+            document.getElementById('flBody').innerHTML =
+                `<div class="dh-cards">${items.map(listingCardHTML).join('')}</div>`;
+            document.getElementById('flBack').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeFullListings() {
+            document.getElementById('flBack').classList.remove('open');
+            document.body.style.overflow = '';
         }
 
         const AVATAR_CHOICES = ['🧑', '👩', '🧔', '👱‍♀️', '🧑‍🎨', '🕶️', '👗', '🧥', '🎩', '🦄', '🌸', '🔥'];
@@ -1601,6 +1658,22 @@
         // Initialize
         paRender();
     </script>
+
+    <!-- ==================== FULL-LIST SLIDE-UP SHEET ==================== -->
+    <div class="fl-back" id="flBack" onclick="if(event.target===this)closeFullListings()">
+        <div class="fl-sheet" id="flSheet">
+            <div class="fl-grip"></div>
+            <div class="fl-head">
+                <div>
+                    <div class="fl-title">כל הפריטים שלי</div>
+                    <div class="fl-sub" id="flSub"></div>
+                </div>
+                <button class="fl-close" onclick="closeFullListings()" aria-label="סגירה">&#10005;</button>
+            </div>
+            <div class="fl-body" id="flBody"></div>
+        </div>
+    </div>
+
     <!-- Shared site footer (single source: footer.js) -->
     <script src="footer.js"></script>
     <script src="vero-animations.js"></script>
