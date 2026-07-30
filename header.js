@@ -453,6 +453,9 @@
            white on dark — with no per-context filter needed. */
         /* The logo art is a white-on-transparent PNG; paint it solid black everywhere. */
         #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; mix-blend-mode: normal !important; filter: brightness(0) !important; transition: filter 0.25s ease; }
+        /* While the header floats transparent over the hero image, the logo is white;
+           once the header turns solid (scrolled), it reverts to black (rule above). */
+        #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: brightness(0) invert(1) !important; }
         #siteHeader .header-right { display: flex; gap: 26px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
@@ -752,10 +755,14 @@
         #siteHeader .hdr-mode-pair .upload-plus,
         #siteHeader.scrolled .hdr-mode-pair .upload-plus,
         #siteHeader.force-dark .hdr-mode-pair .upload-plus,
-        #siteHeader.force-light .hdr-mode-pair .upload-plus,
-        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .upload-plus {
+        #siteHeader.force-light .hdr-mode-pair .upload-plus {
             color: #111 !important;
             border-color: #111 !important;
+        }
+        /* Over the transparent hero the + turns white like the rest of the icons. */
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .upload-plus {
+            color: #fff !important;
+            border-color: #fff !important;
         }
         #siteHeader .hdr-mode-pair .upload-plus { animation: none !important; }
 

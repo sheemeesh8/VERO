@@ -185,6 +185,22 @@
             transform: scale(1.02);
         }
 
+        /* The centered logo image. White while the header is transparent over the
+           hero, black once the header turns solid (sticky / scrolled). */
+        .logo .logo-img {
+            height: 30px;
+            width: auto;
+            display: block;
+            transition: filter 0.3s ease;
+        }
+        #siteHeader.sticky-look:not(.scrolled) .logo .logo-img,
+        #siteHeader:not(.scrolled):not(.sticky-look) .logo .logo-img {
+            filter: brightness(0) invert(1);   /* white over the hero image */
+        }
+        header.scrolled .logo .logo-img {
+            filter: brightness(0);             /* black in the sticky header */
+        }
+
         .search-container {
             display: none;
         }
@@ -487,11 +503,13 @@
         /* ==================== HERO ==================== */
         .hero {
             width: 100vw;
-            /* Full-bleed hero: fills the entire screen. The +24px compensates for the
-               -24px margin-top below, so no white strip peeks under the water. */
-            height: calc(100vh + 24px);
+            /* Wide full-bleed landscape hero (~2:1), like the reference — the image
+               spans the full width and sits well short of a full-screen height. */
+            height: 52vw;
+            max-height: 92vh;
+            min-height: 460px;
             background-size: cover;
-            background-position: center 10%;
+            background-position: center 30%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -504,19 +522,12 @@
             right: 50%;
             margin-left: -50vw;
             margin-right: -50vw;
-            margin-top: -24px;
+            margin-top: 0;
         }
 
-        /* Solid black frame around the top hero image, stretched to the very edges of
-           the site (full-bleed ring, no radius). */
-        .hero::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border: 16px solid #000;
-            pointer-events: none;
-            z-index: 3;
-        }
+        /* Black frame removed — the hero now runs full-bleed to the edges, like the
+           reference. */
+        .hero::after { content: none; }
 
         /* Darken the top of the hero so the transparent header reads clearly over
            the image — a soft top-down scrim that fades out by mid-frame. */
@@ -1132,17 +1143,19 @@
             margin-left: -50vw;
             margin-right: -50vw;
             direction: ltr;
-            background: #000000;
+            background: #ffffff;
             overflow: hidden;
             padding-top: 40px;
         }
-        /* Text sits on the black slider, so titles/labels read in white. Covers the
+        /* The stacked second slider sits flush under the first — no gap between. */
+        .hero-slider-stacked { padding-top: 0; }
+        /* Text sits on the white slider, so titles/labels read in dark. Covers the
            women / men / kids segments and the magazine slide (same slider). */
-        .hero-slider .hero-slide .hero-title { color: #fff; }
-        .hero-slider .hero-slide .hero-sub { color: #cfcfcf; }
-        .hero-slider .hero-count { color: #9a9a9a; }
-        .hero-slider .hero-count-num { color: #fff; }
-        .hero-slider .hero-foot { border-top-color: rgba(255,255,255,0.16); }
+        .hero-slider .hero-slide .hero-title { color: #111; }
+        .hero-slider .hero-slide .hero-sub { color: #444; }
+        .hero-slider .hero-count { color: #666; }
+        .hero-slider .hero-count-num { color: #111; }
+        .hero-slider .hero-foot { border-top-color: rgba(0,0,0,0.14); }
 
         .hero-viewport {
             overflow: hidden;
@@ -5607,6 +5620,10 @@
     <div class="hero-slider" id="filterGrid">
         <!-- Segment hero slides, populated by JavaScript -->
     </div>
+    <!-- Second, identical slider stacked directly beneath the first (no gap). -->
+    <div class="hero-slider hero-slider-stacked" id="filterGrid2">
+        <!-- Segment hero slides, populated by JavaScript -->
+    </div>
 
     <!-- ==================== HERO PROMO CARDS (two feature cards) ==================== -->
     <div class="hero-promos" id="heroPromos">
@@ -8993,47 +9010,71 @@
                 </div>`;
         }
 
+        // Both sliders share one renderer; each instance carries its own IDs and
+        // index state so its arrows/dots move only itself.
+        const heroInstances = [
+            { grid: 'filterGrid',  track: 'heroTrack',  dots: 'heroDots',  state: heroState },
+            { grid: 'filterGrid2', track: 'heroTrack2', dots: 'heroDots2', state: { index: 0, timer: null } }
+        ];
+
         function renderFilters() {
-            const grid = document.getElementById('filterGrid');
-            if (!grid) return;
             const segs = filterSegments[currentCategory].concat(magazineSlides[currentCategory]);
-            heroState.index = 0;
-            if (heroState.timer) clearInterval(heroState.timer);
-            grid.innerHTML = `
-                <div class="hero-viewport">
-                    <div class="hero-track" id="heroTrack">
-                        ${segs.map(heroSlideHTML).join('')}
-                    </div>
-                </div>
-                <button class="hero-arrow prev" aria-label="Previous" onclick="heroGo(heroState.index - 1)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"></polyline></svg>
-                </button>
-                <button class="hero-arrow next" aria-label="Next" onclick="heroGo(heroState.index + 1)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
-                </button>
-                <div class="hero-dots" id="heroDots">
-                    ${segs.map((s, i) => `<button class="hero-dot" aria-label="${s.name}" onclick="heroGo(${i})"></button>`).join('')}
-                </div>`;
-            heroGo(0);
+            heroInstances.forEach(renderHeroInstance);
             // Auto-advance disabled — the slider only moves via the arrows / dots.
             renderHeroPromos();
         }
 
-        // Move the hero slider to slide `i` (wraps around) and retrigger animations.
-        function heroGo(i) {
-            const track = document.getElementById('heroTrack');
+        function renderHeroInstance(inst) {
+            const grid = document.getElementById(inst.grid);
+            if (!grid) return;
+            const segs = filterSegments[currentCategory].concat(magazineSlides[currentCategory]);
+            inst.state.index = 0;
+            if (inst.state.timer) clearInterval(inst.state.timer);
+            grid.innerHTML = `
+                <div class="hero-viewport">
+                    <div class="hero-track" id="${inst.track}">
+                        ${segs.map(heroSlideHTML).join('')}
+                    </div>
+                </div>
+                <button class="hero-arrow prev" aria-label="Previous" onclick="heroGo('${inst.grid}', -1)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"></polyline></svg>
+                </button>
+                <button class="hero-arrow next" aria-label="Next" onclick="heroGo('${inst.grid}', 1)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+                </button>
+                <div class="hero-dots" id="${inst.dots}">
+                    ${segs.map((s, i) => `<button class="hero-dot" aria-label="${s.name}" onclick="heroGoTo('${inst.grid}', ${i})"></button>`).join('')}
+                </div>`;
+            heroGoTo(inst.grid, 0);
+        }
+
+        function heroInstanceOf(gridId) {
+            return heroInstances.find(x => x.grid === gridId) || heroInstances[0];
+        }
+
+        // Step the named slider by a delta (arrows). Back-compat: heroGo(delta).
+        function heroGo(gridOrDelta, delta) {
+            if (typeof gridOrDelta === 'number') { gridOrDelta = 'filterGrid'; delta = arguments[0]; }
+            const inst = heroInstanceOf(gridOrDelta);
+            heroGoTo(gridOrDelta, inst.state.index + delta);
+        }
+
+        // Move a slider to slide `i` (wraps around) and retrigger animations.
+        function heroGoTo(gridId, i) {
+            const inst = heroInstanceOf(gridId);
+            const track = document.getElementById(inst.track);
             if (!track) return;
             const slides = track.querySelectorAll('.hero-slide');
-            const dots = document.querySelectorAll('#heroDots .hero-dot');
+            const dots = document.querySelectorAll('#' + inst.dots + ' .hero-dot');
             const n = slides.length;
             if (!n) return;
-            heroState.index = (i % n + n) % n;
-            track.style.transform = `translateX(-${heroState.index * 100}%)`;
+            inst.state.index = (i % n + n) % n;
+            track.style.transform = `translateX(-${inst.state.index * 100}%)`;
             slides.forEach((sl, idx) => {
                 sl.classList.remove('animate');
-                if (idx === heroState.index) { void sl.offsetWidth; sl.classList.add('animate'); }
+                if (idx === inst.state.index) { void sl.offsetWidth; sl.classList.add('animate'); }
             });
-            dots.forEach((d, idx) => d.classList.toggle('active', idx === heroState.index));
+            dots.forEach((d, idx) => d.classList.toggle('active', idx === inst.state.index));
         }
 
         // Select (or toggle off) a primary filter; the whole feed follows.
