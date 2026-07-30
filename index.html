@@ -1195,9 +1195,6 @@
 
         .hero-slide .hero-content > div { width: 100%; }
 
-        /* Image-less slide: the text content spans the full width of the slider. */
-        .hero-slide-noimg .hero-content { width: 100%; }
-
         /* Scoped to the slide: a second, unrelated .hero-title rule lives further
            down this file and would otherwise win on source order. */
         .hero-slide .hero-title {
@@ -1995,8 +1992,8 @@
             --pd-title-size: 32px;
             --pd-desc-size: 21px;
             --pd-price-size: 18px;
-            --pd-emoji-size: 360px;
-            --pd-img-w: 524px;
+            --pd-emoji-size: 410px;
+            --pd-img-w: 600px;
             --pd-img-aspect: 1.38;
             --pd-gap: 42px;
             --pd-company-color: #000000;
@@ -2360,6 +2357,17 @@
             margin-bottom: 20px;
             margin-left: 40px;
             margin-right: 40px;
+        }
+
+        /* Five rectangles under the slider — same footprint as a feed product card
+           (the .products-grid gives them the same column width and gutters; the
+           aspect-ratio + ground match the card itself). */
+        .slider-rects { margin-top: 28px; }
+        .slider-rect {
+            aspect-ratio: 0.7;          /* width / height, same as .product-card */
+            background: #efece4;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
         .product-card {
@@ -5625,6 +5633,18 @@
     <!-- ==================== INFINITE FEED ==================== -->
     <div class="feed-section">
         <div class="container">
+            <!-- A row of five rectangles under the slider, in the same feed-block +
+                 products-grid context as the feed so each is the exact size of a
+                 product card. -->
+            <div class="feed-block">
+                <div class="products-grid slider-rects">
+                    <div class="slider-rect"></div>
+                    <div class="slider-rect"></div>
+                    <div class="slider-rect"></div>
+                    <div class="slider-rect"></div>
+                    <div class="slider-rect"></div>
+                </div>
+            </div>
             <!-- The first promoted slider sits on the left; the filters run as a
                  vertical column on its right. loadMoreFeedBlocks mounts the first
                  slider into #feedLeadSlider (later sliders precede their grids in
@@ -8964,19 +8984,15 @@
         const HERO_INTERVAL = 8000;   // both modes share this slider
 
         function heroSlideHTML(s, i) {
-            // Stable, reliable hero image per segment (loremflickr was returning 500s
-            // and blanking the slider; Lorem Picsum is seeded so each slide is consistent).
-            // Supplied local photos per mode + segment; everything else falls back to
-            // a seeded placeholder. Note the magazine slide differs by mode:
-            // clothing → The Closet, art → The Gallery.
-            const localHero = {
-                clothing: { men: './men-hero.jpg', women: './women-hero.jpg', magazine: './magazine-hero.jpg' },
-                art:      { magazine: './gallery-hero.jpg' }
+            // Random topical photo per segment — men / women / kids and the magazine
+            // slide each pull a random image on the matching keyword (loremflickr).
+            const heroKeyword = {
+                men: 'man,fashion', women: 'woman,fashion', kids: 'kids,children,fashion',
+                magazine: 'magazine,fashion'
             };
-            // Only curated local photos are used. Segments without one get a clean
-            // neutral panel rather than a random Lorem Picsum image (which was
-            // surfacing an unrelated stock photo — e.g. buildings — on those slides).
-            const bg = localHero[currentCategory] && localHero[currentCategory][s.key];
+            const kw = heroKeyword[s.key] || (s.magazine ? 'magazine' : 'fashion');
+            // ?random cache-buster so each slide gets its own random shot.
+            const bg = `https://loremflickr.com/900/1100/${encodeURIComponent(kw)}?random=${s.key}`;
             // How much this segment actually has to offer — the figure in the
             // button's own counter, read from the same catalogue the feed uses.
             const count = s.magazine ? null : buildSegmentProducts(currentCategory, s.key).length;
@@ -8987,9 +9003,9 @@
                        <span class="hero-cta-label">Shop Now</span>
                    </button>
                    <div class="hero-count"><span class="hero-count-num">${count}</span></div>`;
-            // Minimal slide: just a title, the text under it, and the CTA — no image.
+            // Slide: title, text, CTA — plus a random topical photo on the right.
             return `
-                <div class="hero-slide hero-slide-noimg">
+                <div class="hero-slide">
                     <div class="hero-content">
                         <div>
                             <h1 class="hero-title">${s.name}</h1>
@@ -8997,6 +9013,8 @@
                             ${cta}
                         </div>
                     </div>
+                    <div class="hero-image" style="background-image:url('${bg}'); cursor:pointer;"
+                         onclick="${s.magazine ? 'openMagazine()' : `selectSegment('${s.key}')`}"></div>
                 </div>`;
         }
 
