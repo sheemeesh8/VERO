@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO - הדאשבורד השנתי</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Oswald', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: #fafafa; direction: rtl; color: #111;
+        }
+        .wrap { max-width: 1500px; margin: 0 auto; padding: 60px 40px 100px; }
+
+        /* ---- Header ---- */
+        .dash-head { margin-bottom: 8px; }
+        .dash-kicker {
+            font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+            color: #9a9a9a; margin-bottom: 14px;
+        }
+        .dash-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: clamp(38px, 5vw, 66px); font-weight: 500; line-height: 1.02; margin-bottom: 14px;
+        }
+        .dash-lead { font-size: 17px; color: #555; max-width: 620px; line-height: 1.6; }
+
+        /* ---- Stat tiles ---- */
+        .stat-row {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+            margin: 44px 0 40px;
+        }
+        .stat {
+            background: #fff; border: 1px solid #eee; padding: 22px 24px;
+        }
+        .stat b { display: block; font-size: 30px; font-weight: 700; color: #111; line-height: 1; }
+        .stat span { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #9a9a9a; margin-top: 8px; display: block; }
+
+        /* ==================== THE YEAR IN 365 LINES ==================== */
+        .year-chart {
+            background: #fff; border: 1px solid #eee; padding: 40px 34px 26px;
+            position: relative;
+        }
+        .yc-head {
+            display: flex; align-items: baseline; justify-content: space-between;
+            margin-bottom: 30px; gap: 20px; flex-wrap: wrap;
+        }
+        .yc-title { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+        .yc-legend { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #9a9a9a; }
+        .yc-legend .swatch { display: flex; gap: 2px; }
+        .yc-legend .swatch i { width: 8px; height: 14px; display: block; }
+
+        /* The plot: 12 month blocks, each a row of day-lines. */
+        .yc-plot { display: flex; align-items: stretch; gap: 10px; height: 300px; direction: ltr; }
+        .yc-month { display: flex; flex-direction: column; min-width: 0; }
+        .yc-days {
+            flex: 1; display: flex; align-items: flex-end; gap: 1px;
+            border-bottom: 1px solid #ececec;
+        }
+        .yc-day { flex: 1; min-width: 0; display: flex; align-items: flex-end; justify-content: center; height: 100%; cursor: pointer; }
+        .yc-line {
+            width: 2px; min-height: 1px; background: #111; border-radius: 0;
+            transition: background 0.15s, width 0.15s;
+        }
+        .yc-day:hover .yc-line { background: #eb2323; width: 3px; }
+        .yc-day.sel .yc-line { background: #eb2323; width: 3px; }
+        .yc-month-label {
+            text-align: center; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+            color: #9a9a9a; padding-top: 12px; direction: rtl;
+        }
+
+        /* Floating tooltip */
+        .yc-tip {
+            position: fixed; z-index: 50; background: #111; color: #fff;
+            font-size: 12px; padding: 8px 12px; border-radius: 4px; pointer-events: none;
+            opacity: 0; transform: translate(-50%, -100%); transition: opacity 0.12s; white-space: nowrap;
+        }
+        .yc-tip b { color: #fff; font-size: 14px; }
+
+        /* Selected-day detail */
+        .yc-detail {
+            margin-top: 28px; border-top: 1px solid #eee; padding-top: 24px;
+            display: flex; align-items: center; gap: 40px; flex-wrap: wrap;
+        }
+        .yc-detail .d-date { font-size: 22px; font-weight: 700; }
+        .yc-detail .d-item { display: flex; flex-direction: column; }
+        .yc-detail .d-item b { font-size: 24px; font-weight: 700; color: #eb2323; }
+        .yc-detail .d-item span { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #9a9a9a; }
+        .yc-hint { color: #9a9a9a; font-size: 14px; }
+
+        @media (max-width: 900px) {
+            .stat-row { grid-template-columns: repeat(2, 1fr); }
+            .yc-plot { height: 220px; gap: 5px; }
+            .yc-month-label { font-size: 9px; letter-spacing: 0; }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="wrap">
+        <div class="dash-head">
+            <div class="dash-kicker">VERO · Dashboard</div>
+            <h1 class="dash-title">השנה שלך ב־365 קווים</h1>
+            <p class="dash-lead">כל קו הוא יום אחד בשנה. הגובה שלו הוא כמה היית פעיל/ה ב־VERO באותו יום — רכישות, צפיות ומכירות, יחד. מעבר עם העכבר על יום, או לחיצה עליו, פותח את הפרטים שלו.</p>
+        </div>
+
+        <div class="stat-row" id="statRow"></div>
+
+        <div class="year-chart">
+            <div class="yc-head">
+                <div class="yc-title" id="ycTitle">הפעילות היומית · 2026</div>
+                <div class="yc-legend">
+                    <span>נמוך</span>
+                    <span class="swatch" id="ycSwatch"></span>
+                    <span>גבוה</span>
+                </div>
+            </div>
+            <div class="yc-plot" id="ycPlot"></div>
+            <div class="yc-detail" id="ycDetail"><span class="yc-hint">בחר יום בגרף כדי לראות את הפרטים שלו.</span></div>
+        </div>
+    </div>
+
+    <div class="yc-tip" id="ycTip"></div>
+
+    <script>
+        // ==================== DATA MODEL ====================
+        // One value per day of the year. This is the piece we'll define together —
+        // right now it's a synthetic "daily activity" score with a weekly rhythm
+        // (weekends run higher) and a gentle seasonal wave, seeded so it's stable.
+        const YEAR = 2026;
+        const monthNames = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+        const monthShort = ['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
+        const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+        function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+        const daysInMonth = m => [31, isLeap(YEAR) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m];
+
+        // Deterministic pseudo-random in [0,1) from an integer seed.
+        function rnd(seed) { const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+        // Build the 365 (or 366) daily records.
+        function buildYear() {
+            const days = [];
+            let idx = 0;
+            for (let m = 0; m < 12; m++) {
+                for (let d = 1; d <= daysInMonth(m); d++) {
+                    const date = new Date(YEAR, m, d);
+                    const dow = date.getDay();                 // 0=Sun..6=Sat
+                    const seasonal = 0.5 + 0.5 * Math.sin((idx / 365) * Math.PI * 2 - Math.PI / 2); // low winter → high summer
+                    const weekend = (dow === 5 || dow === 6) ? 1.35 : (dow === 0 ? 1.1 : 1);
+                    const noise = 0.4 + rnd(idx + 1) * 0.9;
+                    const value = Math.round((10 + seasonal * 55) * weekend * noise);
+                    days.push({ idx, m, d, dow, date, value });
+                    idx++;
+                }
+            }
+            return days;
+        }
+
+        const yearDays = buildYear();
+        const maxVal = Math.max(...yearDays.map(d => d.value));
+        const totalVal = yearDays.reduce((s, d) => s + d.value, 0);
+        const activeDays = yearDays.filter(d => d.value > 0).length;
+        const peak = yearDays.reduce((a, b) => (b.value > a.value ? b : a), yearDays[0]);
+
+        // ==================== STAT TILES ====================
+        function fmt(n) { return n.toLocaleString('he-IL'); }
+        function renderStats() {
+            const tiles = [
+                [fmt(yearDays.length), 'ימים בשנה'],
+                [fmt(totalVal), 'סה"כ פעילות'],
+                [fmt(Math.round(totalVal / yearDays.length)), 'ממוצע ליום'],
+                [`${peak.d} ב${monthShort[peak.m]}`, 'היום השיא'],
+            ];
+            document.getElementById('statRow').innerHTML = tiles.map(t =>
+                `<div class="stat"><b>${t[0]}</b><span>${t[1]}</span></div>`).join('');
+        }
+
+        // ==================== THE 365-LINE PLOT ====================
+        // Grayscale intensity by value (light = low, black = high), so the year reads
+        // as a texture even before you hover.
+        function shade(v) {
+            const t = maxVal ? v / maxVal : 0;         // 0..1
+            const lightness = Math.round(78 - t * 70); // 78% (faint) → 8% (near-black)
+            return `hsl(0 0% ${lightness}%)`;
+        }
+        function renderPlot() {
+            let html = '';
+            let idx = 0;
+            for (let m = 0; m < 12; m++) {
+                const n = daysInMonth(m);
+                let daysHTML = '';
+                for (let d = 1; d <= n; d++) {
+                    const rec = yearDays[idx];
+                    const h = maxVal ? (rec.value / maxVal) * 100 : 0;
+                    daysHTML += `<div class="yc-day" data-idx="${rec.idx}">
+                        <div class="yc-line" style="height:${h}%;background:${shade(rec.value)}"></div>
+                    </div>`;
+                    idx++;
+                }
+                // Month block grows in proportion to how many days it has.
+                html += `<div class="yc-month" style="flex-grow:${n}">
+                    <div class="yc-days">${daysHTML}</div>
+                    <div class="yc-month-label">${monthShort[m]}</div>
+                </div>`;
+            }
+            const plot = document.getElementById('ycPlot');
+            plot.innerHTML = html;
+
+            // Legend swatch: five steps of the same scale.
+            document.getElementById('ycSwatch').innerHTML =
+                [0.15, 0.35, 0.55, 0.75, 0.95].map(t => `<i style="background:${shade(t * maxVal)}"></i>`).join('');
+
+            // Hover tooltip + click to select.
+            const tip = document.getElementById('ycTip');
+            plot.querySelectorAll('.yc-day').forEach(el => {
+                const rec = yearDays[+el.dataset.idx];
+                el.addEventListener('mousemove', e => {
+                    tip.innerHTML = `${dayNames[rec.dow]}, ${rec.d} ב${monthNames[rec.m]} · <b>${fmt(rec.value)}</b>`;
+                    tip.style.left = e.clientX + 'px';
+                    tip.style.top = (e.clientY - 12) + 'px';
+                    tip.style.opacity = '1';
+                });
+                el.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+                el.addEventListener('click', () => selectDay(rec.idx));
+            });
+        }
+
+        function selectDay(i) {
+            const rec = yearDays[i];
+            document.querySelectorAll('.yc-day').forEach(el => el.classList.toggle('sel', +el.dataset.idx === i));
+            const rank = yearDays.filter(d => d.value > rec.value).length + 1;
+            document.getElementById('ycDetail').innerHTML = `
+                <div class="d-date">${dayNames[rec.dow]}, ${rec.d} ב${monthNames[rec.m]} ${YEAR}</div>
+                <div class="d-item"><b>${fmt(rec.value)}</b><span>פעילות ביום זה</span></div>
+                <div class="d-item"><b>${rank}</b><span>מדורג מתוך ${yearDays.length}</span></div>
+                <div class="d-item"><b>${Math.round((rec.value / maxVal) * 100)}%</b><span>מהיום השיא</span></div>`;
+        }
+
+        // ==================== INIT ====================
+        renderStats();
+        renderPlot();
+    </script>
+</body>
+</html>
