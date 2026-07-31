@@ -66,6 +66,7 @@
                 rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 28%,
                 rgba(0,0,0,0) 68%, rgba(0,0,0,0.5) 100%);
         }
+        .panel:hover .panel-media { transform: translateY(0); }   /* slide up in, slide down out */
         .panel-head, .panel-desc { transition: color 0.3s; }
         .panel:hover .panel-head { color: #fff; }
         .panel:hover .panel-desc { color: #fff; }
@@ -239,32 +240,6 @@
             requestAnimationFrame(() => requestAnimationFrame(() => tile.classList.add('grow')));
             setTimeout(() => { window.location.href = url; }, 640);
         }
-
-        // Hover image: slides up into view on enter; on leave it keeps sliding up
-        // and out of the top (never back down), then silently parks below again.
-        document.querySelectorAll('.panel').forEach(panel => {
-            const media = panel.querySelector('.panel-media');
-            if (!media) return;
-            panel.addEventListener('mouseenter', () => {
-                media.style.transition = 'none';
-                media.style.transform = 'translateY(100%)';   // start below
-                void media.offsetWidth;                        // force reflow
-                media.style.transition = '';
-                media.style.transform = 'translateY(0)';       // slide up into view
-            });
-            panel.addEventListener('mouseleave', () => {
-                media.style.transform = 'translateY(-100%)';   // keep sliding up and out
-                const reset = (e) => {
-                    if (e.propertyName !== 'transform') return;
-                    media.removeEventListener('transitionend', reset);
-                    media.style.transition = 'none';
-                    media.style.transform = 'translateY(100%)';  // park below, ready again
-                    void media.offsetWidth;
-                    media.style.transition = '';
-                };
-                media.addEventListener('transitionend', reset);
-            });
-        });
     </script>
 
     <!-- Manual edit mode (✎ button bottom-left, or Ctrl+Shift+E) — same editor as the feed. -->
