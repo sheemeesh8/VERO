@@ -46,26 +46,6 @@
         /* Collapse the shared edge so adjacent frames read as one thin line. */
         .panel + .panel { margin-left: -1px; }
 
-        /* Image that slides up from the bottom of the rectangle on hover. */
-        .panel-media {
-            position: absolute;
-            inset: 0;
-            background-size: cover;
-            background-position: center;
-            transform: scaleY(0);
-            transform-origin: bottom;
-            transition: transform 1.15s cubic-bezier(0.22, 1, 0.36, 1);
-            z-index: 1;
-        }
-        /* Dark scrim at the base so the bottom heading stays readable over the photo. */
-        .panel-media::after {
-            content: "";
-            position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 40%);
-        }
-        .panel-head { transition: color 0.3s; }
-        .panel:hover .panel-head { color: #fff; }
-
         /* Giant thin word running off the bottom edge of every rectangle. */
         .panel-word {
             position: absolute;
@@ -84,7 +64,7 @@
            a big thin heading with a pill-outline button beneath it. ===== */
         .panel-inner {
             position: absolute;
-            bottom: 40px; left: 12px; right: 12px;
+            top: 40px; left: 20px; right: 20px;   /* raised to the top of each rectangle */
             z-index: 2;
         }
         .panel-head {
@@ -96,6 +76,15 @@
             color: #1c1c1c;
             margin: 0;
             text-align: left;              /* pinned to the left of each rectangle */
+        }
+        .panel-desc {
+            margin: 14px 0 0;
+            font-size: 13px;
+            font-weight: 300;
+            line-height: 1.5;
+            letter-spacing: 0.3px;
+            color: #6b6b66;
+            text-align: left;
         }
         .panel-cta {
             display: inline-block;
@@ -170,27 +159,27 @@
         <!-- The four long equal rectangles across the full width of the page -->
         <div class="panels">
             <div class="panel" onclick="goPanel('profile.html', this)">
-                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/portrait,fashion,studio')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Profile</h2>
+                    <p class="panel-desc">Your details, preferences and account settings.</p>
                 </div>
             </div>
             <div class="panel" onclick="goPanel('products.html', this)">
-                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/fashion,clothing,rail')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Products</h2>
+                    <p class="panel-desc">The pieces you've purchased and followed.</p>
                 </div>
             </div>
             <div class="panel" onclick="goPanel('expenses.html', this)">
-                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/minimal,beige,still')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Expenses</h2>
+                    <p class="panel-desc">A summary of your purchases and spending.</p>
                 </div>
             </div>
             <div class="panel" onclick="goPanel('cart.html', this)">
-                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/shopping,bag,fashion')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Cart</h2>
+                    <p class="panel-desc">The items you've gathered, ready to check out.</p>
                 </div>
             </div>
         </div>
@@ -212,37 +201,6 @@
             requestAnimationFrame(() => requestAnimationFrame(() => tile.classList.add('grow')));
             setTimeout(() => { window.location.href = url; }, 640);
         }
-
-        // Hover image: rises up on enter; on leave it keeps travelling up and out
-        // (never slides back down), then silently resets below for the next hover.
-        document.querySelectorAll('.panel').forEach(panel => {
-            const media = panel.querySelector('.panel-media');
-            if (!media) return;
-            panel.addEventListener('mouseenter', () => {
-                // Stretch up from the bottom edge into full view.
-                media.style.transition = 'none';
-                media.style.transformOrigin = 'bottom';
-                media.style.transform = 'scaleY(0)';
-                void media.offsetWidth;               // force reflow
-                media.style.transition = '';
-                media.style.transform = 'scaleY(1)';
-            });
-            panel.addEventListener('mouseleave', () => {
-                // Keep the same upward feel: retract by stretching toward the top.
-                media.style.transformOrigin = 'top';
-                media.style.transform = 'scaleY(0)';
-                const reset = (e) => {
-                    if (e.propertyName !== 'transform') return;
-                    media.removeEventListener('transitionend', reset);
-                    media.style.transition = 'none';
-                    media.style.transformOrigin = 'bottom';
-                    media.style.transform = 'scaleY(0)';   // park collapsed at the base, ready again
-                    void media.offsetWidth;
-                    media.style.transition = '';
-                };
-                media.addEventListener('transitionend', reset);
-            });
-        });
     </script>
 
     <!-- Manual edit mode (✎ button bottom-left, or Ctrl+Shift+E) — same editor as the feed. -->
