@@ -852,13 +852,13 @@
         }
         .vsp-chips { display: flex; flex-wrap: wrap; gap: 14px 16px; justify-content: center; }
         .vsp-chip {
-            border: none; background: #fff; color: #333;
+            border: 1px solid #111; background: #fff; color: #111;
             border-radius: 10px; padding: 12px 22px; cursor: pointer;
             font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: 0.2px;
-            transition: color 0.2s, transform 0.15s;
+            transition: background 0.2s, color 0.2s, transform 0.15s;
         }
-        .vsp-chip:hover { color: #111; transform: translateY(-1px); }
-        .vsp-chip.active { background: #fff; color: #111; font-weight: 700; }
+        .vsp-chip:hover { transform: translateY(-1px); }
+        .vsp-chip.active { background: #111; color: #fff; border-color: #111; font-weight: 700; }
 
         /* Final stage: material / price / colour, still stacked. */
         .vsp-final { display: flex; flex-direction: column; gap: 34px; }
