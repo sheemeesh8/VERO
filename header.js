@@ -975,7 +975,7 @@
                 <a onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
                 <a onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
                 <a href="about.html">About Us</a>
-                <a onclick="veroCloseDrawer(); openMenu()">The Closet Magazine</a>
+                <a onclick="veroCloseDrawer(); openMagazine()">The Closet Magazine</a>
                 <a class="vero-drawer-seller" onclick="veroCloseDrawer(); openSellerArea()">Seller Area</a>
                 <a onclick="veroCloseDrawer(); openBuyerArea()">My Account</a>
             </nav>
@@ -1444,6 +1444,9 @@
     ensure('openSellerArea', () => nav('seller-area.html'));
     ensure('openUploadProduct', () => nav('index.html?open=upload'));
     ensure('openMenu', () => nav('index.html?open=magazine'));
+    // The magazine reader (magazine.js defines the real window.openMagazine on
+    // pages that load it; elsewhere fall back to opening it on the home page).
+    ensure('openMagazine', () => nav('index.html?open=magazine'));
     // Men / Women / Kids drawer links → open that segment on the home feed. Always
     // routes through index.html?seg=… so it works from any page; index reads the
     // param on load and selects the segment.
@@ -1514,7 +1517,7 @@
         window.addEventListener('load', () => {
             const open = new URLSearchParams(location.search).get('open');
             if (!open) return;
-            const map = { cart: 'openCart', wishlist: 'openWishlist', chats: 'vchatOpenInbox', upload: 'openUploadProduct', magazine: 'openMenu' };
+            const map = { cart: 'openCart', wishlist: 'openWishlist', chats: 'vchatOpenInbox', upload: 'openUploadProduct', magazine: 'openMagazine' };
             const fn = map[open];
             if (fn && typeof window[fn] === 'function') window[fn]();
         });
