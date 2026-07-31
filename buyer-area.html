@@ -52,7 +52,8 @@
             inset: 0;
             background-size: cover;
             background-position: center;
-            transform: translateY(100%);
+            transform: scaleY(0);
+            transform-origin: bottom;
             transition: transform 1.15s cubic-bezier(0.22, 1, 0.36, 1);
             z-index: 1;
         }
@@ -218,21 +219,24 @@
             const media = panel.querySelector('.panel-media');
             if (!media) return;
             panel.addEventListener('mouseenter', () => {
-                // Make sure it starts from below, then rise into view.
+                // Stretch up from the bottom edge into full view.
                 media.style.transition = 'none';
-                media.style.transform = 'translateY(100%)';
+                media.style.transformOrigin = 'bottom';
+                media.style.transform = 'scaleY(0)';
                 void media.offsetWidth;               // force reflow
                 media.style.transition = '';
-                media.style.transform = 'translateY(0)';
+                media.style.transform = 'scaleY(1)';
             });
             panel.addEventListener('mouseleave', () => {
-                // Continue the same upward motion out of the top.
-                media.style.transform = 'translateY(-100%)';
+                // Keep the same upward feel: retract by stretching toward the top.
+                media.style.transformOrigin = 'top';
+                media.style.transform = 'scaleY(0)';
                 const reset = (e) => {
                     if (e.propertyName !== 'transform') return;
                     media.removeEventListener('transitionend', reset);
                     media.style.transition = 'none';
-                    media.style.transform = 'translateY(100%)';  // park below, ready again
+                    media.style.transformOrigin = 'bottom';
+                    media.style.transform = 'scaleY(0)';   // park collapsed at the base, ready again
                     void media.offsetWidth;
                     media.style.transition = '';
                 };
