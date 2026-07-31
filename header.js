@@ -925,6 +925,12 @@
                     </div>
                     <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
                 </span>
+                <button class="icon-btn" data-icon="account" title="My Account" onclick="openBuyerArea()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" data-fill>
+                        <circle cx="12" cy="8" r="4.2"/>
+                        <path d="M12 13.5c-4.5 0-8.2 2.9-8.2 6.5h16.4c0-3.6-3.7-6.5-8.2-6.5z"/>
+                    </svg>
+                </button>
                 <span class="icon-wrap" data-icon="cart">
                     <button class="icon-btn" title="Cart" onclick="openCart()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke-width: 1.5;">
@@ -1423,6 +1429,7 @@
     ensure('openWishlist', () => nav('index.html?open=wishlist'));
     ensure('openCart', () => nav('index.html?open=cart'));
     ensure('vchatOpenInbox', () => nav('index.html?open=chats'));
+    ensure('openBuyerArea', () => nav('buyer-area.html'));
     ensure('openUploadProduct', () => nav('index.html?open=upload'));
     ensure('openMenu', () => nav('index.html?open=magazine'));
     // The magazine reader (magazine.js defines the real window.openMagazine on
