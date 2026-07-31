@@ -46,6 +46,30 @@
         /* Collapse the shared edge so adjacent frames read as one thin line. */
         .panel + .panel { margin-left: -1px; }
 
+        /* Black-and-white image that slides up on hover and keeps sliding up on exit. */
+        .panel-media {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            filter: grayscale(1);
+            transform: translateY(100%);
+            transition: transform 1.15s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 1;
+        }
+        /* Scrims at top and bottom so the title (top) and description (bottom)
+           stay readable over the photo. */
+        .panel-media::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(to bottom,
+                rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 28%,
+                rgba(0,0,0,0) 68%, rgba(0,0,0,0.5) 100%);
+        }
+        .panel-head, .panel-desc { transition: color 0.3s; }
+        .panel:hover .panel-head { color: #fff; }
+        .panel:hover .panel-desc { color: #fff; }
+
         /* Giant thin word running off the bottom edge of every rectangle. */
         .panel-word {
             position: absolute;
@@ -162,30 +186,35 @@
         <!-- The four long equal rectangles across the full width of the page -->
         <div class="panels">
             <div class="panel" onclick="goPanel('profile.html', this)">
+                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/portrait,fashion,studio')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Profile</h2>
                 </div>
                 <p class="panel-desc">Your details, preferences<br>and account settings.</p>
             </div>
             <div class="panel" onclick="goPanel('products.html', this)">
+                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/fashion,clothing,rail')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Products</h2>
                 </div>
                 <p class="panel-desc">The pieces you've<br>purchased and followed.</p>
             </div>
             <div class="panel" onclick="goPanel('expenses.html', this)">
+                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/minimal,beige,still')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Expenses</h2>
                 </div>
                 <p class="panel-desc">A summary of your<br>purchases and spending.</p>
             </div>
             <div class="panel" onclick="goPanel('cart.html', this)">
+                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/shopping,bag,fashion')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Cart</h2>
                 </div>
                 <p class="panel-desc">The items you've gathered,<br>ready to check out.</p>
             </div>
             <div class="panel" onclick="goPanel('chats.html', this)">
+                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/conversation,people,minimal')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Chats</h2>
                 </div>
@@ -210,6 +239,32 @@
             requestAnimationFrame(() => requestAnimationFrame(() => tile.classList.add('grow')));
             setTimeout(() => { window.location.href = url; }, 640);
         }
+
+        // Hover image: slides up into view on enter; on leave it keeps sliding up
+        // and out of the top (never back down), then silently parks below again.
+        document.querySelectorAll('.panel').forEach(panel => {
+            const media = panel.querySelector('.panel-media');
+            if (!media) return;
+            panel.addEventListener('mouseenter', () => {
+                media.style.transition = 'none';
+                media.style.transform = 'translateY(100%)';   // start below
+                void media.offsetWidth;                        // force reflow
+                media.style.transition = '';
+                media.style.transform = 'translateY(0)';       // slide up into view
+            });
+            panel.addEventListener('mouseleave', () => {
+                media.style.transform = 'translateY(-100%)';   // keep sliding up and out
+                const reset = (e) => {
+                    if (e.propertyName !== 'transform') return;
+                    media.removeEventListener('transitionend', reset);
+                    media.style.transition = 'none';
+                    media.style.transform = 'translateY(100%)';  // park below, ready again
+                    void media.offsetWidth;
+                    media.style.transition = '';
+                };
+                media.addEventListener('transitionend', reset);
+            });
+        });
     </script>
 
     <!-- Manual edit mode (✎ button bottom-left, or Ctrl+Shift+E) — same editor as the feed. -->
