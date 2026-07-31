@@ -133,7 +133,6 @@
         ]},
         { title: 'Company', links: [
             { name: 'About Us', href: 'about.html' },
-            { name: 'Seller Area', href: 'seller-area.html' },
             { name: 'The Closet Magazine', href: '#' },
             { name: 'Careers', href: '#' },
         ]},

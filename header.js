@@ -711,15 +711,6 @@
             transition: color 0.2s ease, padding-left 0.2s ease;
         }
         .vero-drawer-nav a:hover { color: rgba(255,255,255,0.6); padding-left: 6px; }
-        /* Seller Area stands out — a fluorescent-yellow highlighter swipe behind the
-           text, like a marker drawn over the word. */
-        .vero-drawer-nav a.vero-drawer-seller {
-            color: #111; font-weight: 700;
-            background: #eaff00;
-            box-shadow: -4px 0 0 #eaff00, 4px 0 0 #eaff00;
-            align-self: flex-start; border-bottom-color: rgba(255,255,255,0.14);
-        }
-        .vero-drawer-nav a.vero-drawer-seller:hover { color: #111; background: #f2ff4d; box-shadow: -4px 0 0 #f2ff4d, 4px 0 0 #f2ff4d; }
         .vero-drawer-social {
             margin-top: auto; padding-top: 28px;
             display: flex; align-items: center; gap: 20px;
@@ -934,12 +925,6 @@
                     </div>
                     <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
                 </span>
-                <button class="icon-btn" data-icon="account" title="My Account" onclick="openBuyerArea()">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" data-fill>
-                        <circle cx="12" cy="8" r="4.2"/>
-                        <path d="M12 13.5c-4.5 0-8.2 2.9-8.2 6.5h16.4c0-3.6-3.7-6.5-8.2-6.5z"/>
-                    </svg>
-                </button>
                 <span class="icon-wrap" data-icon="cart">
                     <button class="icon-btn" title="Cart" onclick="openCart()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke-width: 1.5;">
@@ -976,8 +961,6 @@
                 <a onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
                 <a href="about.html">About Us</a>
                 <a onclick="veroCloseDrawer(); openMagazine()">The Closet Magazine</a>
-                <a class="vero-drawer-seller" onclick="veroCloseDrawer(); openSellerArea()">Seller Area</a>
-                <a onclick="veroCloseDrawer(); openBuyerArea()">My Account</a>
             </nav>
             <div class="vero-drawer-social">
                 <a href="#" aria-label="Instagram">${DRAWER_ICONS.instagram}</a>
@@ -1440,8 +1423,6 @@
     ensure('openWishlist', () => nav('index.html?open=wishlist'));
     ensure('openCart', () => nav('index.html?open=cart'));
     ensure('vchatOpenInbox', () => nav('index.html?open=chats'));
-    ensure('openBuyerArea', () => nav('buyer-area.html'));
-    ensure('openSellerArea', () => nav('seller-area.html'));
     ensure('openUploadProduct', () => nav('index.html?open=upload'));
     ensure('openMenu', () => nav('index.html?open=magazine'));
     // The magazine reader (magazine.js defines the real window.openMagazine on
