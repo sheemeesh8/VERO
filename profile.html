@@ -32,26 +32,10 @@
         .back:hover { background: #000; color: #fff; }
 
         .wrap {
-            max-width: none; margin: 0;
+            max-width: 1180px; margin: 0 auto;
             padding: 120px 40px 80px;
             animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
         }
-
-        /* Same grayscale portrait as the My Profile rectangle — held on the LEFT,
-           full height and one-rectangle wide (1/5 of the screen), so the expand
-           transition flows straight into it. */
-        .side-image {
-            position: fixed; top: 0; left: 0; bottom: 0;
-            width: 20vw;
-            background: url('https://loremflickr.com/800/1200/portrait,fashion,studio?lock=7') center / cover no-repeat;
-            filter: grayscale(1);
-            border-right: 1px solid #000;
-            z-index: 0;
-            animation: fadeIn 0.9s ease 0.35s both;
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @media (min-width: 1001px) { .wrap { padding-left: calc(20vw + 60px); } }
-        @media (max-width: 1000px) { .side-image { display: none; } }
         @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 
         .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
@@ -68,11 +52,9 @@
         .card { border: 1px solid #000; padding: 34px; }
 
         .avatar {
-            width: 100%; height: 190px;
-            border: 1px solid #000;
-            background: url('https://loremflickr.com/800/600/portrait,fashion,studio?lock=7') center / cover no-repeat;
-            filter: grayscale(1);
-            margin-bottom: 26px;
+            width: 78px; height: 78px; border-radius: 50%;
+            border: 1.5px solid #000; display: flex; align-items: center; justify-content: center;
+            font-size: 34px; font-weight: 300; text-transform: uppercase; margin-bottom: 18px;
         }
         .card-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
 
@@ -114,7 +96,6 @@
 </head>
 <body>
     <div class="page-cover"></div>
-    <div class="side-image"></div>
     <a class="back" href="buyer-area.html">&#8592; חזרה</a>
 
     <div class="wrap">
@@ -124,7 +105,7 @@
         <div class="grid">
             <!-- Identity card (editable, saved to localStorage) -->
             <div class="card">
-                <div class="avatar" id="avatar"></div>
+                <div class="avatar" id="avatar">V</div>
                 <div class="field">
                     <div class="card-label">Name</div>
                     <input id="pf-name" type="text" placeholder="Your name">
@@ -209,11 +190,19 @@
             if (profile[key]) el.value = profile[key];
         });
 
+        // Circle avatar shows the first letter of the name (falls back to V).
+        function refreshAvatar() {
+            const n = (profile.name || '').trim();
+            document.getElementById('avatar').textContent = n ? n[0] : 'V';
+        }
+        refreshAvatar();
+
         let saveTimer;
         Object.entries(fields).forEach(([key, id]) => {
             document.getElementById(id).addEventListener('input', (e) => {
                 profile[key] = e.target.value;
                 localStorage.setItem('vero_profile', JSON.stringify(profile));
+                if (key === 'name') refreshAvatar();
                 const note = document.getElementById('saveNote');
                 note.textContent = 'Saved ✓';
                 clearTimeout(saveTimer);
