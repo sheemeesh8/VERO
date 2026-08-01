@@ -102,9 +102,67 @@
         .stat-num { font-size: 40px; font-weight: 200; line-height: 1; }
         .stat-name { margin-top: 12px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
 
+        .chat-row { cursor: pointer; transition: background 0.15s; }
+        .chat-row:hover { background: #fafafa; }
+
+        /* ===== Slide-in chat panel — one conversation with a seller ===== */
+        .chat-panel {
+            position: fixed; inset: 0; z-index: 70;
+            background: #fff; display: flex; flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.45s cubic-bezier(0.65, 0.05, 0.1, 1);
+        }
+        .chat-panel.open { transform: translateX(0); }
+        .cp-head {
+            display: flex; align-items: center; gap: 16px;
+            padding: 20px clamp(20px, 5vw, 60px); border-bottom: 1px solid #000;
+        }
+        .cp-back {
+            border: 1.4px solid #000; border-radius: 999px; background: #fff; cursor: pointer;
+            font-family: inherit; font-size: 12px; letter-spacing: 1.5px; padding: 10px 18px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .cp-back:hover { background: #000; color: #fff; }
+        .cp-avatar {
+            width: 46px; height: 46px; border-radius: 50%; border: 1px solid #000;
+            display: flex; align-items: center; justify-content: center; font-size: 22px;
+        }
+        .cp-who { line-height: 1.2; }
+        .cp-name { font-size: 17px; font-weight: 500; }
+        .cp-status { font-size: 12px; color: #9a9a95; letter-spacing: 0.3px; }
+        .cp-feed {
+            flex: 1; overflow-y: auto; background: #fafafa;
+            padding: 30px clamp(20px, 5vw, 60px);
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .cp-bubble {
+            max-width: 68%; padding: 12px 16px; font-size: 14px; line-height: 1.5;
+            border: 1px solid #000; animation: bubbleIn 0.35s ease both;
+        }
+        @keyframes bubbleIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .cp-bubble.seller { align-self: flex-start; background: #fff; color: #1c1c1c; }
+        .cp-bubble.buyer  { align-self: flex-end; background: #000; color: #fff; border-color: #000; }
+        .cp-time { display: block; margin-top: 6px; font-size: 10px; letter-spacing: 0.5px; opacity: 0.55; }
+        .cp-input-row {
+            display: flex; gap: 12px; padding: 20px clamp(20px, 5vw, 60px);
+            border-top: 1px solid #000; background: #fff;
+        }
+        .cp-input {
+            flex: 1; border: 1px solid #000; background: #fff; font-family: inherit;
+            font-size: 14px; padding: 13px 16px;
+        }
+        .cp-input:focus { outline: none; }
+        .cp-send {
+            border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
+            font-family: inherit; font-size: 12px; letter-spacing: 1.5px; padding: 0 26px;
+            transition: opacity 0.2s;
+        }
+        .cp-send:hover { opacity: 0.75; }
+
         @media (max-width: 780px) {
             .grid { grid-template-columns: 1fr; }
             .stats { grid-template-columns: 1fr; }
+            .cp-bubble { max-width: 82%; }
         }
     </style>
 </head>
@@ -154,6 +212,23 @@
         </div>
     </div>
 
+    <!-- Slide-in chat panel — one conversation with a seller. -->
+    <div class="chat-panel" id="chatPanel">
+        <div class="cp-head">
+            <button class="cp-back" id="cpBack">&#8594; חזרה</button>
+            <div class="cp-avatar" id="cpAvatar">💬</div>
+            <div class="cp-who">
+                <div class="cp-name" id="cpName">Seller</div>
+                <div class="cp-status">Usually replies within a day</div>
+            </div>
+        </div>
+        <div class="cp-feed" id="cpFeed"></div>
+        <div class="cp-input-row">
+            <input class="cp-input" id="cpInput" type="text" placeholder="Write a message…" autocomplete="off">
+            <button class="cp-send" id="cpSend">SEND</button>
+        </div>
+    </div>
+
     <script>
         const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
         const cart   = readJSON('vero_cart', []);
@@ -199,11 +274,13 @@
         document.getElementById('lastActive').textContent  = lastAt ? (timeAgo(lastAt) + ' ago') : '—';
 
         const el = document.getElementById('chatList');
-        if (!list.length) {
-            el.innerHTML = '<div class="chat-empty">No conversations yet — start one from any product page.</div>';
-        } else {
-            el.innerHTML = list.map(t => `
-                <div class="chat-row">
+        function renderList() {
+            if (!list.length) {
+                el.innerHTML = '<div class="chat-empty">No conversations yet — start one from any product page.</div>';
+                return;
+            }
+            el.innerHTML = list.map((t, i) => `
+                <div class="chat-row" data-i="${i}">
                     <div class="chat-avatar">${t.icon}</div>
                     <div class="chat-body">
                         <div class="chat-name">${t.seller}</div>
@@ -212,6 +289,83 @@
                     <div class="chat-time">${timeAgo(t.at)}</div>
                 </div>`).join('');
         }
+        renderList();
+        el.addEventListener('click', (e) => {
+            const row = e.target.closest('.chat-row');
+            if (row) openChat(+row.dataset.i);
+        });
+
+        // ===== Chat with a seller — persisted to vero_chats, works like the deal room =====
+        const CHATS = readJSON('vero_chats', {});   // { sellerName: [ {sender, content, at} ] }
+        const saveChats = () => localStorage.setItem('vero_chats', JSON.stringify(CHATS));
+        const panel = document.getElementById('chatPanel');
+        const feedEl = document.getElementById('cpFeed');
+        const inputEl = document.getElementById('cpInput');
+        let openSeller = null;
+
+        // Canned seller replies, cycled for a life-like conversation.
+        const SELLER_LINES = [
+            'Hi! Thanks for reaching out — how can I help?',
+            'Yes, it\'s still available. Would you like to arrange a pickup?',
+            'I can hold it for you until tomorrow evening.',
+            'The condition is excellent, barely worn. Happy to send more photos.',
+            'Sure, let me check and get back to you shortly.',
+        ];
+
+        const timeShort = ms => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+        function seedThread(t) {
+            // First time opening: seed with the thread's preview as a seller message.
+            if (!CHATS[t.seller] || !CHATS[t.seller].length) {
+                CHATS[t.seller] = [{ sender: 'seller', content: t.preview || `Hi, this is ${t.seller}. How can I help?`, at: t.at || Date.now() }];
+                saveChats();
+            }
+        }
+
+        function renderFeed() {
+            const msgs = CHATS[openSeller] || [];
+            feedEl.innerHTML = msgs.map(m => `
+                <div class="cp-bubble ${m.sender}">${m.content}
+                    <span class="cp-time">${timeShort(m.at)}</span>
+                </div>`).join('');
+            feedEl.scrollTop = feedEl.scrollHeight;
+        }
+
+        function openChat(i) {
+            const t = list[i];
+            openSeller = t.seller;
+            seedThread(t);
+            document.getElementById('cpName').textContent = t.seller;
+            document.getElementById('cpAvatar').textContent = t.icon || '💬';
+            renderFeed();
+            panel.classList.add('open');
+            setTimeout(() => inputEl.focus(), 300);
+        }
+
+        function closeChat() { panel.classList.remove('open'); openSeller = null; }
+
+        function sendMessage() {
+            const text = inputEl.value.trim();
+            if (!text || !openSeller) return;
+            CHATS[openSeller].push({ sender: 'buyer', content: text, at: Date.now() });
+            saveChats();
+            inputEl.value = '';
+            renderFeed();
+            // Seller auto-reply, so the conversation feels alive.
+            const reply = SELLER_LINES[CHATS[openSeller].filter(m => m.sender === 'seller').length % SELLER_LINES.length];
+            setTimeout(() => {
+                if (openSeller && CHATS[openSeller]) {
+                    CHATS[openSeller].push({ sender: 'seller', content: reply, at: Date.now() });
+                    saveChats();
+                    renderFeed();
+                }
+            }, 900);
+        }
+
+        document.getElementById('cpBack').addEventListener('click', closeChat);
+        document.getElementById('cpSend').addEventListener('click', sendMessage);
+        inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel.classList.contains('open')) closeChat(); });
 
         // Exit = same upward white-cover wipe as the entry animation.
         const back = document.querySelector('.back');
