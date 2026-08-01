@@ -99,9 +99,74 @@
         .stat-num { font-size: 40px; font-weight: 200; line-height: 1; }
         .stat-name { margin-top: 12px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
 
+        /* ===== Sections below the summary — same framed-card language ===== */
+        .section { margin-top: 24px; }
+        .section-head {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+        }
+        .section-note { font-size: 12px; letter-spacing: 0.5px; color: #9a9a95; }
+
+        /* Monthly spend bar chart. */
+        .chart {
+            display: flex; align-items: flex-end; gap: clamp(10px, 2vw, 28px);
+            height: 220px; margin-top: 30px;
+        }
+        .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+        .bar-val { font-size: 12px; color: #6b6b66; margin-bottom: 8px; white-space: nowrap; }
+        .bar {
+            width: 100%; max-width: 60px; background: #d9d9d4; min-height: 2px;
+            transition: height 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .bar.current { background: #1c1c1c; }
+        .bar-label { margin-top: 12px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; }
+        .bar-col.current .bar-label { color: #1c1c1c; font-weight: 500; }
+
+        /* Two side-by-side cards: dimensions + followed sellers. */
+        .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+
+        /* My Dimensions form. */
+        .dim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 28px; margin-top: 20px; }
+        .dim-field .card-label { margin-bottom: 6px; }
+        .dim-field input, .dim-field select {
+            width: 100%; border: none; border-bottom: 1px solid #d9d9d4;
+            background: transparent; font-family: inherit; font-size: 16px; font-weight: 400;
+            color: #1c1c1c; padding: 6px 0; transition: border-color 0.2s;
+        }
+        .dim-field input:focus, .dim-field select:focus { outline: none; border-bottom-color: #000; }
+        .dim-note { margin-top: 22px; font-size: 12px; letter-spacing: 0.5px; color: #9a9a95; }
+        .dim-fit {
+            display: inline-block; margin-top: 16px; padding: 8px 16px;
+            border: 1px solid #000; border-radius: 999px; font-size: 11px; letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* Followed sellers list. */
+        .seller-list { display: flex; flex-direction: column; margin-top: 8px; }
+        .seller-row { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid #eee; }
+        .seller-row:last-child { border-bottom: none; }
+        .seller-avatar {
+            width: 44px; height: 44px; flex: 0 0 auto; border-radius: 50%;
+            border: 1px solid #000; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; text-transform: uppercase; font-weight: 300;
+        }
+        .seller-body { min-width: 0; flex: 1; }
+        .seller-name { font-size: 15px; font-weight: 500; }
+        .seller-meta { font-size: 12px; color: #9a9a95; letter-spacing: 0.3px; margin-top: 2px; }
+        .seller-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .s-btn {
+            border: 1px solid #000; background: #fff; cursor: pointer; font-family: inherit;
+            border-radius: 999px; padding: 7px 14px; font-size: 11px; letter-spacing: 1px;
+            color: #1c1c1c; transition: background 0.2s, color 0.2s;
+        }
+        .s-btn:hover { background: #000; color: #fff; }
+        .s-btn.on { background: #1c1c1c; color: #fff; border-color: #1c1c1c; }
+        .seller-empty { font-size: 14px; color: #9a9a95; padding: 8px 0; }
+
         @media (max-width: 780px) {
             .grid { grid-template-columns: 1fr; }
             .stats { grid-template-columns: 1fr; }
+            .duo { grid-template-columns: 1fr; }
+            .dim-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -160,6 +225,68 @@
                 </div>
             </div>
         </div>
+
+        <!-- Monthly Spend Tracker -->
+        <div class="section">
+            <div class="card">
+                <div class="section-head">
+                    <div class="card-label" style="margin:0;">Monthly spend tracker</div>
+                    <div class="section-note" id="monthNote">This month vs. previous months</div>
+                </div>
+                <div class="chart" id="chart"></div>
+            </div>
+        </div>
+
+        <div class="duo">
+            <!-- My Dimensions -->
+            <div class="card">
+                <div class="section-head">
+                    <div class="card-label" style="margin:0;">My dimensions</div>
+                    <div class="section-note">Perfect Fit AI</div>
+                </div>
+                <div class="dim-grid">
+                    <div class="dim-field">
+                        <div class="card-label">Height (cm)</div>
+                        <input id="dim-height" type="number" inputmode="numeric" placeholder="170">
+                    </div>
+                    <div class="dim-field">
+                        <div class="card-label">Weight (kg)</div>
+                        <input id="dim-weight" type="number" inputmode="numeric" placeholder="65">
+                    </div>
+                    <div class="dim-field">
+                        <div class="card-label">Chest (cm)</div>
+                        <input id="dim-chest" type="number" inputmode="numeric" placeholder="92">
+                    </div>
+                    <div class="dim-field">
+                        <div class="card-label">Waist (cm)</div>
+                        <input id="dim-waist" type="number" inputmode="numeric" placeholder="78">
+                    </div>
+                    <div class="dim-field">
+                        <div class="card-label">Clothing size</div>
+                        <select id="dim-clothing">
+                            <option value="">—</option>
+                            <option>XS</option><option>S</option><option>M</option>
+                            <option>L</option><option>XL</option><option>XXL</option>
+                        </select>
+                    </div>
+                    <div class="dim-field">
+                        <div class="card-label">Shoe size (EU)</div>
+                        <input id="dim-shoe" type="number" inputmode="numeric" placeholder="42">
+                    </div>
+                </div>
+                <div class="dim-note" id="dimNote">Your measurements save automatically.</div>
+                <span class="dim-fit" id="dimFit">Perfect Fit · not set</span>
+            </div>
+
+            <!-- Followed Sellers -->
+            <div class="card">
+                <div class="section-head">
+                    <div class="card-label" style="margin:0;">My shops · followed sellers</div>
+                    <div class="section-note" id="followNote">0 followed</div>
+                </div>
+                <div class="seller-list" id="sellerList"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -203,6 +330,118 @@
                     <div class="exp-price">${nis(priceOf(it))}</div>
                 </div>`).join('');
         }
+
+        // ===== Monthly Spend Tracker — group cart spend by month =====
+        (function buildChart() {
+            const now = new Date();
+            const months = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({ key: d.getFullYear() + '-' + d.getMonth(), label: d.toLocaleDateString('en-GB', { month: 'short' }), total: 0 });
+            }
+            const idxOf = {};
+            months.forEach((m, i) => idxOf[m.key] = i);
+            items.forEach(it => {
+                const t = it.addedAt || it.at || Date.now();
+                const d = new Date(t);
+                const k = d.getFullYear() + '-' + d.getMonth();
+                if (k in idxOf) months[idxOf[k]].total += priceOf(it);
+            });
+            const max = Math.max(1, ...months.map(m => m.total));
+            const chart = document.getElementById('chart');
+            chart.innerHTML = months.map((m, i) => {
+                const isCurrent = i === months.length - 1;
+                const h = Math.round((m.total / max) * 100);
+                return `<div class="bar-col${isCurrent ? ' current' : ''}">
+                    <div class="bar-val">${m.total ? nis(m.total) : ''}</div>
+                    <div class="bar${isCurrent ? ' current' : ''}" data-h="${h}" style="height:0"></div>
+                    <div class="bar-label">${m.label}</div>
+                </div>`;
+            }).join('');
+            // Animate bars up after layout.
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                chart.querySelectorAll('.bar').forEach(b => { b.style.height = (b.dataset.h || 0) + '%'; });
+            }));
+            const thisMonth = months[months.length - 1].total;
+            document.getElementById('monthNote').textContent =
+                thisMonth ? `${nis(thisMonth)} this month` : 'No spend yet this month';
+        })();
+
+        // ===== My Dimensions — persisted to vero_dimensions, drives Perfect Fit AI =====
+        (function dimensions() {
+            const dims = readJSON('vero_dimensions', {});
+            const map = { height: 'dim-height', weight: 'dim-weight', chest: 'dim-chest',
+                          waist: 'dim-waist', clothing: 'dim-clothing', shoe: 'dim-shoe' };
+            const fitEl = document.getElementById('dimFit');
+            const refreshFit = () => {
+                const ready = dims.clothing && dims.shoe;
+                fitEl.textContent = ready ? `Perfect Fit · ${dims.clothing} · EU ${dims.shoe}` : 'Perfect Fit · not set';
+                fitEl.style.background = ready ? '#000' : 'transparent';
+                fitEl.style.color = ready ? '#fff' : '#1c1c1c';
+            };
+            Object.entries(map).forEach(([key, id]) => {
+                const el = document.getElementById(id);
+                if (dims[key] != null) el.value = dims[key];
+                el.addEventListener('input', () => {
+                    dims[key] = el.value;
+                    localStorage.setItem('vero_dimensions', JSON.stringify(dims));
+                    const note = document.getElementById('dimNote');
+                    note.textContent = 'Saved ✓';
+                    clearTimeout(el._t);
+                    el._t = setTimeout(() => { note.textContent = 'Your measurements save automatically.'; }, 1400);
+                    refreshFit();
+                });
+            });
+            refreshFit();
+        })();
+
+        // ===== Followed Sellers — seed from cart/offers, priority + unfollow =====
+        (function followedSellers() {
+            let follows = readJSON('vero_follows', null);
+            if (!Array.isArray(follows)) {
+                const seen = new Set();
+                follows = [];
+                [...items, ...offs].forEach(x => {
+                    const s = x.seller;
+                    if (s && !seen.has(s)) { seen.add(s); follows.push({ name: s, priority: false }); }
+                });
+                localStorage.setItem('vero_follows', JSON.stringify(follows));
+            }
+            const listEl = document.getElementById('sellerList');
+            const noteEl = document.getElementById('followNote');
+            const save = () => localStorage.setItem('vero_follows', JSON.stringify(follows));
+
+            function render() {
+                if (!follows.length) {
+                    listEl.innerHTML = '<div class="seller-empty">No shops followed yet — follow sellers from any product page.</div>';
+                } else {
+                    // Prioritised sellers first.
+                    follows.sort((a, b) => (b.priority ? 1 : 0) - (a.priority ? 1 : 0));
+                    listEl.innerHTML = follows.map((f, i) => `
+                        <div class="seller-row">
+                            <div class="seller-avatar">${(f.name || '?')[0]}</div>
+                            <div class="seller-body">
+                                <div class="seller-name">${f.name}</div>
+                                <div class="seller-meta">${f.priority ? 'Priority · notified on new stock' : 'Following'}</div>
+                            </div>
+                            <div class="seller-actions">
+                                <button class="s-btn${f.priority ? ' on' : ''}" data-act="prio" data-i="${i}">${f.priority ? '★ Priority' : '☆ Prioritise'}</button>
+                                <button class="s-btn" data-act="unfollow" data-i="${i}">Unfollow</button>
+                            </div>
+                        </div>`).join('');
+                }
+                noteEl.textContent = `${follows.length} followed`;
+            }
+            listEl.addEventListener('click', (e) => {
+                const btn = e.target.closest('.s-btn');
+                if (!btn) return;
+                const i = +btn.dataset.i;
+                if (btn.dataset.act === 'prio') follows[i].priority = !follows[i].priority;
+                else if (btn.dataset.act === 'unfollow') follows.splice(i, 1);
+                save(); render();
+            });
+            render();
+        })();
 
         // Exit = same upward white-cover wipe as the entry animation.
         const back = document.querySelector('.back');
