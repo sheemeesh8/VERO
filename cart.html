@@ -151,14 +151,30 @@
             cart = [
                 { name: 'Cotton Oxford Shirt', seller: 'Studio Vero', icon: '👕', price: 220, rating: 4.7, type: 'clothing', category: 'Shirts' },
                 { name: 'Linen Overshirt',     seller: 'Atelier Nord', icon: '👔', price: 340, rating: 4.5, type: 'clothing', category: 'Shirts' },
+                { name: 'Striped Tee',         seller: 'Basics Co.',   icon: '👕', price: 130, rating: 4.2, type: 'clothing', category: 'Shirts' },
                 { name: 'Slim Selvedge Jeans', seller: 'Denim Lab',    icon: '👖', price: 410, rating: 4.8, type: 'clothing', category: 'Pants' },
+                { name: 'Wool Trousers',       seller: 'Atelier Nord', icon: '👖', price: 380, rating: 4.6, type: 'clothing', category: 'Pants' },
+                { name: 'Cargo Pants',         seller: 'Urban Thread', icon: '🩳', price: 260, rating: 4.1, type: 'clothing', category: 'Pants' },
                 { name: 'Leather Sneakers',    seller: 'Sole Society', icon: '👟', price: 520, rating: 4.6, type: 'clothing', category: 'Shoes' },
                 { name: 'Chelsea Boots',       seller: 'Sole Society', icon: '🥾', price: 690, rating: 4.9, type: 'clothing', category: 'Shoes' },
+                { name: 'Suede Loafers',       seller: 'Milano Feet',  icon: '👞', price: 610, rating: 4.7, type: 'clothing', category: 'Shoes' },
                 { name: 'Automatic Watch',     seller: 'Horology Co.', icon: '⌚', price: 1250, rating: 5.0, type: 'clothing', category: 'Watches' },
+                { name: 'Diver Chronograph',   seller: 'Horology Co.', icon: '⌚', price: 1680, rating: 4.8, type: 'clothing', category: 'Watches' },
+                { name: 'Wool Overcoat',       seller: 'Atelier Nord', icon: '🧥', price: 980, rating: 4.9, type: 'clothing', category: 'Jackets' },
+                { name: 'Denim Jacket',        seller: 'Denim Lab',    icon: '🧥', price: 450, rating: 4.4, type: 'clothing', category: 'Jackets' },
+                { name: 'Leather Belt',        seller: 'Milano Feet',  icon: '👜', price: 190, rating: 4.3, type: 'clothing', category: 'Accessories' },
+                { name: 'Silk Scarf',          seller: 'Studio Vero',  icon: '🧣', price: 210, rating: 4.5, type: 'clothing', category: 'Accessories' },
+
                 { name: 'Sunset Landscape',    seller: 'Art House',    icon: '🖼️', price: 900, rating: 4.8, type: 'art', category: 'Oil' },
+                { name: 'Harbour at Dawn',     seller: 'Art House',    icon: '🖼️', price: 1150, rating: 4.7, type: 'art', category: 'Oil' },
                 { name: 'Abstract No. 4',      seller: 'Designer Collection', icon: '🎨', price: 650, rating: 4.4, type: 'art', category: 'Acrylic' },
+                { name: 'Colour Field II',     seller: 'Gallery Nine', icon: '🎨', price: 720, rating: 4.6, type: 'art', category: 'Acrylic' },
+                { name: 'Morning Mist',        seller: 'Gallery Nine', icon: '💧', price: 480, rating: 4.5, type: 'art', category: 'Watercolor' },
                 { name: 'Marble Bust',         seller: 'Studio Vero',  icon: '🗿', price: 1800, rating: 4.9, type: 'art', category: 'Stone Sculpture' },
+                { name: 'Bronze Figure',       seller: 'Forge Studio', icon: '⚙️', price: 2200, rating: 5.0, type: 'art', category: 'Metal Sculpture' },
                 { name: 'Neon Print',          seller: 'Pixel Works',  icon: '💻', price: 300, rating: 4.3, type: 'art', category: 'Digital' },
+                { name: 'Generative Grid',     seller: 'Pixel Works',  icon: '💻', price: 360, rating: 4.2, type: 'art', category: 'Digital' },
+                { name: 'City Nights',         seller: 'Frame & Co.',  icon: '📷', price: 540, rating: 4.6, type: 'art', category: 'Photography' },
             ];
         }
 
@@ -242,6 +258,7 @@
             host.innerHTML = `
                 <div class="checkout">
                     <div class="checkout-total">Total <b>₪${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></div>
+                    <button class="checkout-btn" onclick="veroCheckout()">Checkout &#8594;</button>
                 </div>`;
         }
 
@@ -250,6 +267,36 @@
             cart.splice(idx, 1);
             if (!DEMO) localStorage.setItem('vero_cart', JSON.stringify(cart));
             render();
+        };
+
+        // Checkout — turns the active cart into conversations with each seller,
+        // written to the same vero_chats store the Chats page reads, then opens it.
+        window.veroCheckout = function () {
+            const mine = cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
+            if (!mine.length) return;
+
+            const store = readJSON('vero_chats', {});
+            const now = Date.now();
+            mine.forEach(({ it }, n) => {
+                const seller = it.seller || 'Vero Store';
+                if (!Array.isArray(store[seller])) store[seller] = [];
+                store[seller].push({ sender: 'buyer',  content: `Order placed — ${it.name} · ${priceStr(it.price)}`, at: now + n * 2 });
+                store[seller].push({ sender: 'seller', content: `Thanks for your order of “${it.name}”! Let's arrange pickup or delivery.`, at: now + n * 2 + 1 });
+            });
+            localStorage.setItem('vero_chats', JSON.stringify(store));
+
+            // Clear the purchased items from the real cart (demo items aren't saved).
+            if (!DEMO) {
+                mine.map(m => m.idx).sort((a, b) => b - a).forEach(i => cart.splice(i, 1));
+                localStorage.setItem('vero_cart', JSON.stringify(cart));
+            }
+
+            // Slide out and open the Chats page to show the synced conversations.
+            const cover = document.createElement('div');
+            cover.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:60;transform:translateY(100%);transition:transform .6s cubic-bezier(.76,0,.24,1)';
+            document.body.appendChild(cover);
+            requestAnimationFrame(() => requestAnimationFrame(() => { cover.style.transform = 'translateY(0)'; }));
+            setTimeout(() => { window.location.href = 'chats.html'; }, 640);
         };
 
         // Clothing / Art toggle — two carts, built the same way.
