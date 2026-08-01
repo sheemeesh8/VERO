@@ -1427,7 +1427,7 @@
     function ensure(name, fn) { if (typeof window[name] !== 'function') window[name] = fn; }
     ensure('showMain', () => nav('index.html'));
     ensure('openWishlist', () => nav('index.html?open=wishlist'));
-    ensure('openCart', () => nav('index.html?open=cart'));
+    ensure('openCart', () => nav('cart.html'));
     ensure('vchatOpenInbox', () => nav('index.html?open=chats'));
     ensure('openBuyerArea', () => nav('buyer-area.html'));
     ensure('openUploadProduct', () => nav('index.html?open=upload'));
