@@ -3,71 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VERO — עגלת הקניות</title>
+    <title>VERO — My Cart</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&family=Oswald:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; }
+        html, body { min-height: 100%; }
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            color: #1c1c1c; background: #fff; overflow: hidden;
+            color: #1c1c1c; background: #fff;
         }
-        /* White cover that lifts away on load — continues the expand from the panel. */
+
+        /* Entry: white cover lifts away — same as the other personal-area pages. */
         .page-cover {
             position: fixed; inset: 0; background: #fff; z-index: 50;
             animation: coverOut 0.6s cubic-bezier(0.76, 0, 0.24, 1) 0.05s forwards;
         }
         @keyframes coverOut { to { transform: translateY(-100%); } }
 
-        .split { display: grid; grid-template-columns: 1fr 1fr; height: 100vh; }
-        .col { position: relative; overflow: hidden; }
-        .text {
-            display: flex; flex-direction: column; justify-content: center;
-            padding: 0 clamp(40px, 6vw, 120px);
-            animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
-        }
-        @keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
-        .p-title {
-            font-size: clamp(44px, 6vw, 96px); font-weight: 200;
-            letter-spacing: 1px; line-height: 0.98; text-transform: none;
-        }
-        .p-sub {
-            margin-top: 22px; font-size: 15px; font-weight: 400;
-            letter-spacing: 1px; color: #6b6b66;
-        }
-        .media {
-            background-size: cover; background-position: center;
-            border-left: 1px solid #000;
-            animation: fadeIn 0.9s ease 0.3s both;
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .back {
-            position: fixed; top: 26px; left: 34px; z-index: 40;
+            position: fixed; top: 26px; right: 34px; z-index: 40;
             display: inline-flex; align-items: center; gap: 8px;
             padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
             font-size: 12px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
             background: #fff; transition: background 0.25s, color 0.25s;
         }
         .back:hover { background: #000; color: #fff; }
-        @media (max-width: 720px) {
-            .split { grid-template-columns: 1fr; }
-            .media { border-left: none; border-top: 1px solid #000; }
+
+        .wrap {
+            max-width: none; margin: 0;
+            padding: 120px 40px 80px;
+            animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
         }
+
+        /* Image on the left, one-rectangle width, matching the other pages. */
+        .side-image {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 20vw;
+            background: url('https://loremflickr.com/800/1200/shopping,bag,fashion?lock=44') center / cover no-repeat;
+            filter: grayscale(1);
+            border-right: 1px solid #000;
+            z-index: 0;
+            animation: fadeInImg 0.9s ease 0.35s both;
+        }
+        @keyframes fadeInImg { from { opacity: 0; } to { opacity: 1; } }
+        @media (min-width: 1001px) { .wrap { padding-left: calc(20vw + 60px); } }
+        @media (max-width: 1000px) { .side-image { display: none; } }
+        @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+        .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+        .head-sub { margin-top: 16px; font-size: 15px; color: #6b6b66; letter-spacing: 0.5px; }
+
+        /* A grid of the site's product cards — same object as the feed. */
+        .cart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 28px;
+            margin-top: 52px;
+        }
+        .cart-empty {
+            margin-top: 52px; border: 1px solid #000; padding: 60px 40px;
+            font-size: 15px; color: #9a9a95; text-align: center;
+        }
+
+        /* Checkout bar — same framed language as the other cards. */
+        .checkout {
+            display: flex; align-items: center; justify-content: space-between; gap: 24px;
+            border: 1px solid #000; padding: 28px 34px; margin-top: 40px; flex-wrap: wrap;
+        }
+        .checkout-total { font-size: 15px; letter-spacing: 0.5px; }
+        .checkout-total b { font-size: 30px; font-weight: 300; margin-left: 10px; }
+        .checkout-btn {
+            border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
+            font-family: inherit; font-size: 12px; letter-spacing: 2px; padding: 15px 40px;
+            text-transform: uppercase; transition: opacity 0.2s;
+        }
+        .checkout-btn:hover { opacity: 0.78; }
     </style>
+    <!-- The product card, shared by every page (single source: product-card.css). -->
+    <link rel="stylesheet" href="product-card.css">
 </head>
 <body>
     <div class="page-cover"></div>
+    <div class="side-image"></div>
     <a class="back" href="buyer-area.html">&#8592; חזרה</a>
-    <div class="split">
-        <div class="col text">
-            <h1 class="p-title">עגלת<br>הקניות</h1>
-            <p class="p-sub">הפריטים שאספת — מוכנים לרכישה.</p>
-        </div>
-        <div class="col media" style="background-image:url('https://loremflickr.com/1200/1600/shopping,bag,fashion')"></div>
+
+    <div class="wrap">
+        <h1 class="head-title">My Cart</h1>
+        <p class="head-sub" id="headSub">The items you've gathered, ready to check out.</p>
+
+        <div class="cart-grid" id="cartGrid"></div>
+        <div id="checkoutHost"></div>
     </div>
+
     <script>
+        const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
+        let cart = readJSON('vero_cart', []);
+        if (!Array.isArray(cart)) cart = [];
+
+        const priceNum = p => parseFloat(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
+        const priceStr = p => {
+            const s = String(p == null ? '' : p).trim();
+            return s.startsWith('₪') ? s : '₪' + priceNum(p).toFixed(2);
+        };
+
+        // Same product page link the feed builds.
+        function productPageUrl(item) {
+            const data = {
+                name: item.name, price: item.price, icon: item.icon,
+                category: item.category, seller: item.seller, rating: item.rating, type: item.type
+            };
+            return `product.html?product=${encodeURIComponent(JSON.stringify(data))}`;
+        }
+
+        // One feed product-card per cart item — the exact markup product-card.css expects.
+        function cartCardHTML(item, idx) {
+            const rating = item.rating || 4.5;
+            const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+            return `
+                <a href="${productPageUrl(item)}" class="product-card cart-item" data-idx="${idx}">
+                    <div class="product-image">${item.icon || '🛍️'}
+                        <button class="product-icon remove" title="Remove from cart"
+                                onclick="event.preventDefault(); event.stopPropagation(); removeItem(${idx})">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price"><span class="vprice">${priceStr(item.price)}</span></div>
+                        </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${item.seller || 'Vero Store'}</div>
+                            <div class="product-name">${item.name || 'Item'}</div>
+                            <div class="product-rating">${stars}</div>
+                        </div>
+                    </div>
+                </a>`;
+        }
+
+        function render() {
+            const grid = document.getElementById('cartGrid');
+            const host = document.getElementById('checkoutHost');
+            const sub = document.getElementById('headSub');
+
+            if (!cart.length) {
+                grid.innerHTML = '';
+                grid.style.display = 'none';
+                host.innerHTML = '';
+                document.querySelector('.cart-empty')?.remove();
+                const empty = document.createElement('div');
+                empty.className = 'cart-empty';
+                empty.textContent = 'Your cart is empty — pieces you add from the feed appear here.';
+                grid.after(empty);
+                sub.textContent = "The items you've gathered, ready to check out.";
+                return;
+            }
+            document.querySelector('.cart-empty')?.remove();
+            grid.style.display = 'grid';
+            grid.innerHTML = cart.map((it, i) => cartCardHTML(it, i)).join('');
+
+            const count = cart.reduce((s, it) => s + (it.qty || 1), 0);
+            const total = cart.reduce((s, it) => s + priceNum(it.price) * (it.qty || 1), 0);
+            sub.textContent = `${count} item${count === 1 ? '' : 's'} · ready to check out.`;
+            host.innerHTML = `
+                <div class="checkout">
+                    <div class="checkout-total">Total <b>₪${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></div>
+                    <button class="checkout-btn" onclick="alert('Checkout — coming soon')">Checkout</button>
+                </div>`;
+        }
+
+        // Remove keeps the site's own cart storage in sync.
+        window.removeItem = function (idx) {
+            cart.splice(idx, 1);
+            localStorage.setItem('vero_cart', JSON.stringify(cart));
+            render();
+        };
+
+        render();
+
         // Exit = same upward white-cover wipe as the entry animation.
         const back = document.querySelector('.back');
         if (back) back.addEventListener('click', (e) => {
