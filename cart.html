@@ -55,12 +55,32 @@
         .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
         .head-sub { margin-top: 16px; font-size: 15px; color: #6b6b66; letter-spacing: 0.5px; }
 
+        /* Title row with the Clothing / Art cart toggle beside it. */
+        .head-row { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+        .mode-toggle {
+            display: inline-flex; border: 1.4px solid #000; border-radius: 999px; overflow: hidden;
+        }
+        .mode-btn {
+            padding: 11px 26px; font-family: inherit; font-size: 12px; letter-spacing: 1.5px;
+            text-transform: uppercase; background: #fff; color: #1c1c1c; border: none; cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .mode-btn.active { background: #000; color: #fff; }
+
+        /* Category sections within a cart. */
+        .cat-section { margin-top: 44px; }
+        .cat-label {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+            font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95;
+            border-bottom: 1px solid #000; padding-bottom: 12px; margin-bottom: 26px;
+        }
+        .cat-label b { color: #1c1c1c; font-weight: 500; letter-spacing: 2px; }
+
         /* A grid of the site's product cards — same object as the feed. */
         .cart-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 28px;
-            margin-top: 52px;
         }
         .cart-empty {
             margin-top: 52px; border: 1px solid #000; padding: 60px 40px;
@@ -90,10 +110,16 @@
     <a class="back" href="buyer-area.html">&#8592; חזרה</a>
 
     <div class="wrap">
-        <h1 class="head-title">My Cart</h1>
+        <div class="head-row">
+            <h1 class="head-title">My Cart</h1>
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="clothing">Clothing</button>
+                <button class="mode-btn" data-mode="art">Art</button>
+            </div>
+        </div>
         <p class="head-sub" id="headSub">The items you've gathered, ready to check out.</p>
 
-        <div class="cart-grid" id="cartGrid"></div>
+        <div id="cartBody"></div>
         <div id="checkoutHost"></div>
     </div>
 
@@ -101,6 +127,34 @@
         const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
         let cart = readJSON('vero_cart', []);
         if (!Array.isArray(cart)) cart = [];
+
+        // The art categories from the site — anything else counts as clothing.
+        const ART_CATS = new Set(['Acrylic','Oil','Watercolor','Mixed Media','Digital','Gouache',
+            'Pastel','Epoxy','Stone Sculpture','Metal Sculpture','Ceramic','Photography','Sculpture','Painting']);
+        const typeOf = it => it.type === 'art' || it.type === 'clothing'
+            ? it.type
+            : (ART_CATS.has(it.category) ? 'art' : 'clothing');
+
+        // Demo pieces so both carts show their categories when nothing's saved yet.
+        // (In-memory only — never written to the real cart.)
+        let DEMO = false;
+        if (!cart.length) {
+            DEMO = true;
+            cart = [
+                { name: 'Cotton Oxford Shirt', seller: 'Studio Vero', icon: '👕', price: 220, rating: 4.7, type: 'clothing', category: 'Shirts' },
+                { name: 'Linen Overshirt',     seller: 'Atelier Nord', icon: '👔', price: 340, rating: 4.5, type: 'clothing', category: 'Shirts' },
+                { name: 'Slim Selvedge Jeans', seller: 'Denim Lab',    icon: '👖', price: 410, rating: 4.8, type: 'clothing', category: 'Pants' },
+                { name: 'Leather Sneakers',    seller: 'Sole Society', icon: '👟', price: 520, rating: 4.6, type: 'clothing', category: 'Shoes' },
+                { name: 'Chelsea Boots',       seller: 'Sole Society', icon: '🥾', price: 690, rating: 4.9, type: 'clothing', category: 'Shoes' },
+                { name: 'Automatic Watch',     seller: 'Horology Co.', icon: '⌚', price: 1250, rating: 5.0, type: 'clothing', category: 'Watches' },
+                { name: 'Sunset Landscape',    seller: 'Art House',    icon: '🖼️', price: 900, rating: 4.8, type: 'art', category: 'Oil' },
+                { name: 'Abstract No. 4',      seller: 'Designer Collection', icon: '🎨', price: 650, rating: 4.4, type: 'art', category: 'Acrylic' },
+                { name: 'Marble Bust',         seller: 'Studio Vero',  icon: '🗿', price: 1800, rating: 4.9, type: 'art', category: 'Stone Sculpture' },
+                { name: 'Neon Print',          seller: 'Pixel Works',  icon: '💻', price: 300, rating: 4.3, type: 'art', category: 'Digital' },
+            ];
+        }
+
+        let MODE = 'clothing';
 
         const priceNum = p => parseFloat(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
         const priceStr = p => {
@@ -146,29 +200,37 @@
         }
 
         function render() {
-            const grid = document.getElementById('cartGrid');
+            const body = document.getElementById('cartBody');
             const host = document.getElementById('checkoutHost');
             const sub = document.getElementById('headSub');
 
-            if (!cart.length) {
-                grid.innerHTML = '';
-                grid.style.display = 'none';
+            // This cart = the items whose type matches the active toggle.
+            const mine = cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
+
+            if (!mine.length) {
+                body.innerHTML = `<div class="cart-empty">Your ${MODE} cart is empty — pieces you add from the feed appear here.</div>`;
                 host.innerHTML = '';
-                document.querySelector('.cart-empty')?.remove();
-                const empty = document.createElement('div');
-                empty.className = 'cart-empty';
-                empty.textContent = 'Your cart is empty — pieces you add from the feed appear here.';
-                grid.after(empty);
                 sub.textContent = "The items you've gathered, ready to check out.";
                 return;
             }
-            document.querySelector('.cart-empty')?.remove();
-            grid.style.display = 'grid';
-            grid.innerHTML = cart.map((it, i) => cartCardHTML(it, i)).join('');
 
-            const count = cart.reduce((s, it) => s + (it.qty || 1), 0);
-            const total = cart.reduce((s, it) => s + priceNum(it.price) * (it.qty || 1), 0);
-            sub.textContent = `${count} item${count === 1 ? '' : 's'} · ready to check out.`;
+            // Group the cart into product categories (Shirts, Shoes, Pants, Watches…).
+            const groups = new Map();
+            mine.forEach(row => {
+                const c = row.it.category || 'Other';
+                if (!groups.has(c)) groups.set(c, []);
+                groups.get(c).push(row);
+            });
+
+            body.innerHTML = [...groups.entries()].map(([cat, rows]) => `
+                <div class="cat-section">
+                    <div class="cat-label"><b>${cat}</b><span>${rows.length} item${rows.length === 1 ? '' : 's'}</span></div>
+                    <div class="cart-grid">${rows.map(r => cartCardHTML(r.it, r.idx)).join('')}</div>
+                </div>`).join('');
+
+            const count = mine.reduce((s, { it }) => s + (it.qty || 1), 0);
+            const total = mine.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
+            sub.textContent = `${count} item${count === 1 ? '' : 's'} in your ${MODE} cart · ready to check out.`;
             host.innerHTML = `
                 <div class="checkout">
                     <div class="checkout-total">Total <b>₪${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></div>
@@ -176,12 +238,21 @@
                 </div>`;
         }
 
-        // Remove keeps the site's own cart storage in sync.
+        // Remove keeps the site's own cart storage in sync (demo items aren't saved).
         window.removeItem = function (idx) {
             cart.splice(idx, 1);
-            localStorage.setItem('vero_cart', JSON.stringify(cart));
+            if (!DEMO) localStorage.setItem('vero_cart', JSON.stringify(cart));
             render();
         };
+
+        // Clothing / Art toggle — two carts, built the same way.
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                MODE = btn.dataset.mode;
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+                render();
+            });
+        });
 
         render();
 
