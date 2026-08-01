@@ -105,6 +105,20 @@
         .chat-row { cursor: pointer; transition: background 0.15s; }
         .chat-row:hover { background: #fafafa; }
 
+        /* Search bar beside the My Chats title. */
+        .head-row { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+        .chat-search {
+            border: 1.4px solid #000; background: #fff; border-radius: 999px;
+            font-family: inherit; font-size: 14px; padding: 12px 20px; min-width: 260px;
+            color: #1c1c1c;
+        }
+        .chat-search::placeholder { color: #9a9a95; letter-spacing: 0.5px; }
+        .chat-search:focus { outline: none; }
+
+        /* Show 3 conversations at a time; the rest scroll into view. */
+        .chat-list { max-height: 264px; overflow-y: auto; }
+        .chat-list .chat-row { height: 88px; }
+
         /* ===== Slide-in chat panel — one conversation with a seller ===== */
         .chat-panel {
             position: fixed; inset: 0; z-index: 70;
@@ -172,7 +186,10 @@
     <a class="back" href="buyer-area.html">&#8592; חזרה</a>
 
     <div class="wrap">
-        <h1 class="head-title">My Chats</h1>
+        <div class="head-row">
+            <h1 class="head-title">My Chats</h1>
+            <input class="chat-search" id="chatSearch" type="text" placeholder="Search sellers…" autocomplete="off">
+        </div>
         <p class="head-sub">Your conversations with sellers and buyers.</p>
 
         <div class="grid">
@@ -253,6 +270,18 @@
         items.forEach(it => touch(it.seller, it.name, it.icon, it.addedAt,
             `About “${it.name || 'item'}” in your cart`));
 
+        // A few standing conversations so the inbox always has sellers to browse.
+        const H = 3600 * 1000, D = 24 * H;
+        const DEMO = [
+            { seller: 'Designer Collection', icon: '👗', at: Date.now() - 2 * H,  preview: 'The cocktail dress is still available.' },
+            { seller: 'Vintage Vault',       icon: '🧥', at: Date.now() - 5 * H,  preview: 'I can hold the denim jacket for you.' },
+            { seller: 'Studio Vero',         icon: '🏺', at: Date.now() - 1 * D,  preview: 'Thanks for your purchase! 🌿' },
+            { seller: 'Luxe Atelier',        icon: '👜', at: Date.now() - 2 * D,  preview: 'New bags arriving this week.' },
+            { seller: 'Art House',           icon: '🎨', at: Date.now() - 3 * D,  preview: 'The painting ships tomorrow.' },
+            { seller: 'Sole Society',        icon: '👟', at: Date.now() - 4 * D,  preview: 'Size 42 is back in stock.' },
+        ];
+        DEMO.forEach(d => touch(d.seller, d.seller, d.icon, d.at, d.preview));
+
         const list = [...threads.values()].sort((a, b) => b.at - a.at);
         const sellers = list.length;
 
@@ -274,12 +303,21 @@
         document.getElementById('lastActive').textContent  = lastAt ? (timeAgo(lastAt) + ' ago') : '—';
 
         const el = document.getElementById('chatList');
-        function renderList() {
+        function renderList(query = '') {
+            const q = query.trim().toLowerCase();
+            // Only sellers that exist in the chat inbox are searchable.
+            const rows = list
+                .map((t, i) => ({ t, i }))
+                .filter(({ t }) => !q || t.seller.toLowerCase().includes(q));
             if (!list.length) {
                 el.innerHTML = '<div class="chat-empty">No conversations yet — start one from any product page.</div>';
                 return;
             }
-            el.innerHTML = list.map((t, i) => `
+            if (!rows.length) {
+                el.innerHTML = `<div class="chat-empty">No sellers match “${query}”.</div>`;
+                return;
+            }
+            el.innerHTML = rows.map(({ t, i }) => `
                 <div class="chat-row" data-i="${i}">
                     <div class="chat-avatar">${t.icon}</div>
                     <div class="chat-body">
@@ -294,6 +332,8 @@
             const row = e.target.closest('.chat-row');
             if (row) openChat(+row.dataset.i);
         });
+        // Search sellers — restricted to those already in the chat inbox.
+        document.getElementById('chatSearch').addEventListener('input', (e) => renderList(e.target.value));
 
         // ===== Chat with a seller — persisted to vero_chats, works like the deal room =====
         const CHATS = readJSON('vero_chats', {});   // { sellerName: [ {sender, content, at} ] }
