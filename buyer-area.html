@@ -192,19 +192,32 @@
         .expand { width: 26px; height: 26px; cursor: pointer; color: #1c1c1c; }
         .expand svg { width: 100%; height: 100%; }
 
-        /* ===== Page-transition tile: grows from the clicked rectangle to fill
-           the screen, then the target page loads (same expand feel as the video). */
-        .panel-transition {
-            position: fixed;
-            background: #ffffff;
-            border: 1px solid #000;
-            z-index: 60;
-            transition: left 0.6s cubic-bezier(0.76, 0, 0.24, 1),
-                        top 0.6s cubic-bezier(0.76, 0, 0.24, 1),
-                        width 0.6s cubic-bezier(0.76, 0, 0.24, 1),
-                        height 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+        /* ===== Page transition =====
+           On click: the clicked rectangle's image stays static, its siblings
+           slide down out of view, and a white page rises in from the image's
+           side, sliding open to the right — then the target page loads. */
+
+        /* Siblings drop straight down. */
+        .panel.slide-down {
+            transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+            transform: translateY(100%);
         }
-        .panel-transition.grow { left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; }
+        /* The clicked panel is frozen exactly where it is while the rest leave. */
+        .panel.hold { z-index: 40; }
+        .panel.hold .panel-media { transition: none; }
+
+        /* White page sheet: pinned to the right edge of the static image,
+           opens rightward to fill the remaining width. */
+        .page-sheet {
+            position: fixed;
+            top: 0; bottom: 0;
+            background: #ffffff;
+            border-left: 1px solid #000;
+            z-index: 50;
+            width: 0;
+            overflow: hidden;
+            transition: width 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+        }
 
         @media (max-width: 720px) {
             body { overflow: auto; }
@@ -260,29 +273,32 @@
     </div>
 
     <script>
-        // Click a rectangle → it expands from its own position to fill the screen,
-        // then the matching page loads (the expand transition seen in the video).
+        // Click a rectangle → its image holds static, the other rectangles slide
+        // down, and a white page sheet rises in beside the image, opening to the
+        // right — then the matching page loads.
         function goPanel(url, el) {
             const r = el.getBoundingClientRect();
-            const tile = document.createElement('div');
-            tile.className = 'panel-transition';
-            tile.style.left = r.left + 'px';
-            tile.style.top = r.top + 'px';
-            tile.style.width = r.width + 'px';
-            tile.style.height = r.height + 'px';
-            // Expand THROUGH the panel's own image: the growing tile carries the
-            // same grayscale photo, so the transition flows into the page's side image.
+            const panels = document.querySelectorAll('.panel');
+
+            // Freeze the clicked panel; the image slid up on hover stays put.
+            el.classList.add('hold');
             const media = el.querySelector('.panel-media');
-            if (media && media.style.backgroundImage) {
-                tile.style.backgroundImage = media.style.backgroundImage;
-                tile.style.backgroundSize = 'cover';
-                tile.style.backgroundPosition = 'center';
-                tile.style.filter = 'grayscale(1)';
-            }
-            document.body.appendChild(tile);
-            // Force layout, then trigger the grow on the next frame.
-            requestAnimationFrame(() => requestAnimationFrame(() => tile.classList.add('grow')));
-            setTimeout(() => { window.location.href = url; }, 640);
+            if (media) media.style.transform = 'translateY(0)';
+
+            // Every other rectangle drops straight down and out.
+            panels.forEach(p => { if (p !== el) p.classList.add('slide-down'); });
+
+            // A white page sheet opens rightward from the image's right edge,
+            // filling the rest of the screen (the new page arriving).
+            const sheet = document.createElement('div');
+            sheet.className = 'page-sheet';
+            sheet.style.left = r.right + 'px';
+            document.body.appendChild(sheet);
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                sheet.style.width = (window.innerWidth - r.right) + 'px';
+            }));
+
+            setTimeout(() => { window.location.href = url; }, 660);
         }
     </script>
 

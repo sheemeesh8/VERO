@@ -67,6 +67,10 @@
         }
         .mode-btn.active { background: #000; color: #fff; }
 
+        /* Cart total shown up top, beside the title. */
+        .head-total { margin-left: auto; font-size: 14px; letter-spacing: 0.5px; color: #1c1c1c; }
+        .head-total b { font-size: 30px; font-weight: 300; margin-left: 8px; }
+
         /* Category sections within a cart. */
         .cat-section { margin-top: 44px; }
         .cat-label {
@@ -105,9 +109,6 @@
         div.wrap:nth-of-type(3) > div.head-row:nth-of-type(1) > div.mode-toggle {
             transform: translate(-353px, -79px);
         }
-        #checkoutHost > div.checkout {
-            transform: translate(-42px, -522px) scale(0.75);
-        }
     </style>
     <!-- The product card, shared by every page (single source: product-card.css). -->
     <link rel="stylesheet" href="product-card.css">
@@ -124,6 +125,7 @@
                 <button class="mode-btn active" data-mode="clothing">Clothing</button>
                 <button class="mode-btn" data-mode="art">Art</button>
             </div>
+            <div class="head-total" id="headTotal"></div>
         </div>
         <p class="head-sub" id="headSub">The items you've gathered, ready to check out.</p>
 
@@ -237,6 +239,7 @@
             if (!mine.length) {
                 body.innerHTML = `<div class="cart-empty">Your ${MODE} cart is empty — pieces you add from the feed appear here.</div>`;
                 host.innerHTML = '';
+                document.getElementById('headTotal').innerHTML = '';
                 sub.textContent = "The items you've gathered, ready to check out.";
                 return;
             }
@@ -258,9 +261,9 @@
             const count = mine.reduce((s, { it }) => s + (it.qty || 1), 0);
             const total = mine.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
             sub.textContent = `${count} item${count === 1 ? '' : 's'} in your ${MODE} cart · ready to check out.`;
+            document.getElementById('headTotal').innerHTML = `Total <b>₪${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>`;
             host.innerHTML = `
                 <div class="checkout">
-                    <div class="checkout-total">Total <b>₪${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></div>
                     <button class="checkout-btn" onclick="veroCheckout()">Checkout &#8594;</button>
                 </div>`;
         }

@@ -103,9 +103,28 @@
         .col-right { display: flex; flex-direction: column; }
         .divider { height: 1px; background: #eee; margin: 26px 0; }
 
+        /* My Dimensions form. */
+        .section-head { display: flex; align-items: baseline; justify-content: space-between; }
+        .section-note { font-size: 12px; letter-spacing: 0.5px; color: #9a9a95; }
+        .dim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 28px; margin-top: 20px; }
+        .dim-field .card-label { margin-bottom: 6px; }
+        .dim-field input, .dim-field select {
+            width: 100%; border: none; border-bottom: 1px solid #d9d9d4;
+            background: transparent; font-family: inherit; font-size: 16px; font-weight: 400;
+            color: #1c1c1c; padding: 6px 0; transition: border-color 0.2s;
+        }
+        .dim-field input:focus, .dim-field select:focus { outline: none; border-bottom-color: #000; }
+        .dim-note { margin-top: 22px; font-size: 12px; letter-spacing: 0.5px; color: #9a9a95; }
+        .dim-fit {
+            display: inline-block; margin-top: 16px; padding: 8px 16px;
+            border: 1px solid #000; border-radius: 999px; font-size: 11px; letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
         @media (max-width: 780px) {
             .grid { grid-template-columns: 1fr; }
             .stats { grid-template-columns: 1fr; }
+            .dim-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -164,6 +183,46 @@
                         <div class="stat-num" id="stat-listings">0</div>
                         <div class="stat-name">Listings</div>
                     </a>
+                </div>
+
+                <!-- My Dimensions -->
+                <div class="card" style="margin-top:24px;">
+                    <div class="section-head">
+                        <div class="card-label" style="margin:0;">My dimensions</div>
+                        <div class="section-note">Perfect Fit AI</div>
+                    </div>
+                    <div class="dim-grid">
+                        <div class="dim-field">
+                            <div class="card-label">Height (cm)</div>
+                            <input id="dim-height" type="number" inputmode="numeric" placeholder="170">
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Weight (kg)</div>
+                            <input id="dim-weight" type="number" inputmode="numeric" placeholder="65">
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Chest (cm)</div>
+                            <input id="dim-chest" type="number" inputmode="numeric" placeholder="92">
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Waist (cm)</div>
+                            <input id="dim-waist" type="number" inputmode="numeric" placeholder="78">
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Clothing size</div>
+                            <select id="dim-clothing">
+                                <option value="">—</option>
+                                <option>XS</option><option>S</option><option>M</option>
+                                <option>L</option><option>XL</option><option>XXL</option>
+                            </select>
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Shoe size (EU)</div>
+                            <input id="dim-shoe" type="number" inputmode="numeric" placeholder="42">
+                        </div>
+                    </div>
+                    <div class="dim-note" id="dimNote">Your measurements save automatically.</div>
+                    <span class="dim-fit" id="dimFit">Perfect Fit · not set</span>
                 </div>
             </div>
         </div>
@@ -225,6 +284,34 @@
                 saveTimer = setTimeout(() => { note.textContent = 'Changes save automatically.'; }, 1400);
             });
         });
+
+        // ===== My Dimensions — persisted to vero_dimensions, drives Perfect Fit AI =====
+        (function dimensions() {
+            const dims = readJSON('vero_dimensions', {});
+            const map = { height: 'dim-height', weight: 'dim-weight', chest: 'dim-chest',
+                          waist: 'dim-waist', clothing: 'dim-clothing', shoe: 'dim-shoe' };
+            const fitEl = document.getElementById('dimFit');
+            const refreshFit = () => {
+                const ready = dims.clothing && dims.shoe;
+                fitEl.textContent = ready ? `Perfect Fit · ${dims.clothing} · EU ${dims.shoe}` : 'Perfect Fit · not set';
+                fitEl.style.background = ready ? '#000' : 'transparent';
+                fitEl.style.color = ready ? '#fff' : '#1c1c1c';
+            };
+            Object.entries(map).forEach(([key, id]) => {
+                const el = document.getElementById(id);
+                if (dims[key] != null) el.value = dims[key];
+                el.addEventListener('input', () => {
+                    dims[key] = el.value;
+                    localStorage.setItem('vero_dimensions', JSON.stringify(dims));
+                    const note = document.getElementById('dimNote');
+                    note.textContent = 'Saved ✓';
+                    clearTimeout(el._t);
+                    el._t = setTimeout(() => { note.textContent = 'Your measurements save automatically.'; }, 1400);
+                    refreshFit();
+                });
+            });
+            refreshFit();
+        })();
 
         // Exit = same upward white-cover wipe as the entry animation.
         const back = document.querySelector('.back');
