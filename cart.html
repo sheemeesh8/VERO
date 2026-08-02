@@ -13,14 +13,12 @@
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             color: #1c1c1c; background: #fff;
+            overflow-x: hidden;
         }
 
-        /* Entry: white cover lifts away — same as the other personal-area pages. */
-        .page-cover {
-            position: fixed; inset: 0; background: #fff; z-index: 50;
-            animation: coverOut 0.6s cubic-bezier(0.76, 0, 0.24, 1) 0.05s forwards;
-        }
-        @keyframes coverOut { to { transform: translateY(-100%); } }
+        /* Entry: the image holds static on the left while the content slides in
+           from the left — nothing covers the image on load. */
+        .page-cover { display: none; }
 
         .back {
             position: fixed; top: 26px; right: 34px; z-index: 40;
@@ -34,23 +32,26 @@
         .wrap {
             max-width: none; margin: 0;
             padding: 120px 40px 80px;
-            animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+            /* The data slides in from the left, out from behind the static image. */
+            animation: slideInLeft 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-18vw); }
+            to   { opacity: 1; transform: none; }
         }
 
         /* Image on the left, one-rectangle width, matching the other pages. */
         .side-image {
             position: fixed; top: 0; left: 0; bottom: 0;
             width: 20vw;
-            background: url('https://loremflickr.com/800/1200/shopping,bag,fashion?lock=44') center / cover no-repeat;
+            background: #2a2a28 url('assets/cart-hero.jpg') center / cover no-repeat;
             filter: grayscale(1);
             border-right: 1px solid #000;
-            z-index: 0;
-            animation: fadeInImg 0.9s ease 0.35s both;
+            /* Sits above the content so the data slides out from behind it. */
+            z-index: 5;
         }
-        @keyframes fadeInImg { from { opacity: 0; } to { opacity: 1; } }
         @media (min-width: 1001px) { .wrap { padding-left: calc(20vw + 60px); } }
         @media (max-width: 1000px) { .side-image { display: none; } }
-        @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 
         .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
         .head-sub { margin-top: 16px; font-size: 15px; color: #6b6b66; letter-spacing: 0.5px; }
@@ -316,15 +317,18 @@
 
         render();
 
-        // Exit = same upward white-cover wipe as the entry animation.
+        // Exit mirrors the entry: the image holds static while the data slides
+        // back out to the left, then the personal area loads.
         const back = document.querySelector('.back');
         if (back) back.addEventListener('click', (e) => {
             e.preventDefault();
-            const cover = document.createElement('div');
-            cover.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:60;transform:translateY(100%);transition:transform .6s cubic-bezier(.76,0,.24,1)';
-            document.body.appendChild(cover);
-            requestAnimationFrame(() => requestAnimationFrame(() => { cover.style.transform = 'translateY(0)'; }));
-            setTimeout(() => { window.location.href = back.getAttribute('href'); }, 620);
+            const wrap = document.querySelector('.wrap');
+            wrap.style.animation = 'none';
+            void wrap.offsetWidth;
+            wrap.style.transition = 'opacity 0.55s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+            wrap.style.opacity = '0';
+            wrap.style.transform = 'translateX(-18vw)';
+            setTimeout(() => { window.location.href = back.getAttribute('href'); }, 560);
         });
     </script>
     <script src="vero-editor.js"></script>

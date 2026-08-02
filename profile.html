@@ -46,7 +46,7 @@
         .side-image {
             position: fixed; top: 0; left: 0; bottom: 0;
             width: 20vw;
-            background: #2a2a28 url('https://loremflickr.com/800/1200/portrait,fashion,studio?lock=7') center / cover no-repeat;
+            background: #2a2a28 url('assets/profile-hero.jpg') center / cover no-repeat;
             filter: grayscale(1);
             border-right: 1px solid #000;
             /* Sits above the content so the data slides out from behind it. */
@@ -97,6 +97,9 @@
             display: block; transition: background 0.25s, color 0.25s;
         }
         .stat:hover { background: #000; color: #fff; }
+        /* Plain stat cards (followers / following / empty) — no link, no hover invert. */
+        .stat--plain { cursor: default; }
+        .stat--plain:hover { background: transparent; color: #1c1c1c; }
         .stat-num { font-size: 46px; font-weight: 200; line-height: 1; }
         .stat-name { margin-top: 12px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
 
@@ -174,18 +177,15 @@
                 </div>
 
                 <div class="stats">
-                    <a class="stat" href="cart.html">
-                        <div class="stat-num" id="stat-cart">0</div>
-                        <div class="stat-name">In Cart</div>
-                    </a>
-                    <a class="stat" href="products.html">
-                        <div class="stat-num" id="stat-wish">0</div>
-                        <div class="stat-name">Saved</div>
-                    </a>
-                    <a class="stat" href="products.html">
-                        <div class="stat-num" id="stat-listings">0</div>
-                        <div class="stat-name">Listings</div>
-                    </a>
+                    <div class="stat stat--plain"></div>
+                    <div class="stat stat--plain">
+                        <div class="stat-num" id="stat-followers">0</div>
+                        <div class="stat-name">Followers</div>
+                    </div>
+                    <div class="stat stat--plain">
+                        <div class="stat-num" id="stat-following">0</div>
+                        <div class="stat-name">Following</div>
+                    </div>
                 </div>
 
                 <!-- My Dimensions -->
@@ -237,13 +237,14 @@
         const cart     = readJSON('vero_cart', []);
         const wishlist = readJSON('vero_wishlist', []);
         const drafts   = readJSON('vero_drafts', []);
+        const follows  = readJSON('vero_follows', []);
         const prefs    = readJSON('userPreferences', {});
         const profile  = readJSON('vero_profile', {});
 
-        // Live counts pulled from the site's own data.
-        document.getElementById('stat-cart').textContent     = Array.isArray(cart) ? cart.length : 0;
-        document.getElementById('stat-wish').textContent     = Array.isArray(wishlist) ? wishlist.length : 0;
-        document.getElementById('stat-listings').textContent = Array.isArray(drafts) ? drafts.length : 0;
+        // Follow counts: "following" = shops the user follows (vero_follows);
+        // "followers" = people following the user (stored on the profile).
+        document.getElementById('stat-following').textContent = Array.isArray(follows) ? follows.length : 0;
+        document.getElementById('stat-followers').textContent = Number(profile.followers) || 0;
 
         // Preferences → readable chips.
         const catMap = { clothing: 'Fashion', art: 'Art', both: 'Fashion & Art' };

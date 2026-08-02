@@ -8493,7 +8493,7 @@
             // Put the listing into the catalogue it belongs to, so the feed and the
             // "items listed" figure both account for it straight away.
             const list = uploadFormData.category === 'art' ? artProducts : clothingProducts;
-            list.push({
+            const listing = {
                 id: 'user-' + Date.now(),
                 name: [uploadFormData.brand, uploadFormData.itemType].filter(Boolean).join(' ') || 'New listing',
                 price: uploadFormData.price,
@@ -8502,7 +8502,15 @@
                 type: uploadFormData.category === 'art' ? 'art' : 'clothing',
                 image: uploadFormData.image,
                 icon: uploadFormData.category === 'art' ? '🖼️' : '🛍️'
-            });
+            };
+            list.push(listing);
+            // Persist to the seller's own listings so "My Products" can show it,
+            // with a status that starts out active/live.
+            try {
+                const mine = JSON.parse(localStorage.getItem('vero_listings') || '[]');
+                mine.push({ ...listing, status: 'active', listedAt: Date.now() });
+                localStorage.setItem('vero_listings', JSON.stringify(mine));
+            } catch (e) { /* storage blocked — listing still shows in the live feed */ }
             renderSiteStats();
             closeUploadProduct();
             showToast('Product listed successfully!');
@@ -10009,6 +10017,29 @@
                 const open = new URLSearchParams(location.search).get('open');
                 if (open === 'cart' && typeof openCart === 'function') openCart();
                 else if (open === 'wishlist' && typeof openWishlist === 'function') openWishlist();
+                else if (open === 'upload' && typeof openUploadProduct === 'function') openUploadProduct();
+            } catch (e) {}
+
+            // Resume a saved draft handed over from the Drafts page.
+            try {
+                const raw = localStorage.getItem('vero_resume_draft');
+                if (raw && typeof openUploadProduct === 'function' && typeof selectCategoryInit === 'function') {
+                    const d = JSON.parse(raw);
+                    localStorage.removeItem('vero_resume_draft');
+                    openUploadProduct();
+                    if (d.category) selectCategoryInit(d.category);
+                    // Merge the draft's saved values back into the live form.
+                    uploadFormData = Object.assign(blankUploadForm(), d);
+                    const set = (id, val) => { const el = document.getElementById(id); if (el && val != null && val !== '') el.value = val; };
+                    set('brandNameInput', d.brand);
+                    set('priceInput', d.price);
+                    set('descriptionInput', d.description);
+                    set('itemTypeSelect', d.itemType);
+                    set('yearInput', d.year);
+                    const disp = document.getElementById('itemTypeDisplay');
+                    if (disp && d.itemType) disp.textContent = d.itemType;
+                    if (typeof showToast === 'function') showToast('Draft loaded — continue where you left off');
+                }
             } catch (e) {}
         });
 

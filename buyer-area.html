@@ -222,35 +222,35 @@
         <!-- The four long equal rectangles across the full width of the page -->
         <div class="panels">
             <div class="panel" onclick="goPanel('profile.html', this)">
-                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/portrait,fashion,studio?lock=7')"></div>
+                <div class="panel-media" style="background-image:url('assets/profile-hero.jpg')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Profile</h2>
                 </div>
                 <p class="panel-desc">Your details, preferences<br>and account settings.</p>
             </div>
             <div class="panel" onclick="goPanel('products.html', this)">
-                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/fashion,clothing,rail')"></div>
+                <div class="panel-media" style="background-image:url('assets/products-hero.jpg')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Products</h2>
                 </div>
                 <p class="panel-desc">The pieces you've<br>purchased and followed.</p>
             </div>
             <div class="panel" onclick="goPanel('expenses.html', this)">
-                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/minimal,beige,still')"></div>
+                <div class="panel-media" style="background-image:url('assets/expenses-hero.jpg')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Expenses</h2>
                 </div>
                 <p class="panel-desc">A summary of your<br>purchases and spending.</p>
             </div>
             <div class="panel" onclick="goPanel('cart.html', this)">
-                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/shopping,bag,fashion')"></div>
+                <div class="panel-media" style="background-image:url('assets/cart-hero.jpg')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Cart</h2>
                 </div>
                 <p class="panel-desc">The items you've gathered,<br>ready to check out.</p>
             </div>
             <div class="panel" onclick="goPanel('chats.html', this)">
-                <div class="panel-media" style="background-image:url('https://loremflickr.com/800/1200/conversation,people,minimal')"></div>
+                <div class="panel-media" style="background-image:url('assets/chats-hero.jpg')"></div>
                 <div class="panel-inner">
                     <h2 class="panel-head">My Chats</h2>
                 </div>
@@ -260,17 +260,15 @@
     </div>
 
     <script>
-        // Click a rectangle → its image holds static, the other rectangles slide
-        // down, and a white page sheet rises in beside the image, opening to the
-        // right — then the matching page loads.
+        // Click a rectangle → the other rectangles slide down, and the clicked
+        // rectangle's image is pulled to the left edge of the screen (to the
+        // side-image slot, 20vw wide), revealing the page behind it as it moves.
+        // The matching page then loads, its data already sliding in from the left
+        // and its side-image (the same local photo) resting exactly where the
+        // rectangle ended — so the image reads as one continuous static element.
         function goPanel(url, el) {
             const r = el.getBoundingClientRect();
             const panels = document.querySelectorAll('.panel');
-
-            // Freeze the clicked panel; the image slid up on hover stays put.
-            el.classList.add('hold');
-            const media = el.querySelector('.panel-media');
-            if (media) media.style.transform = 'translateY(0)';
 
             // Every other rectangle drops straight down and out. The entry
             // animation (panelFly) still owns `transform` via its fill, so clear
@@ -285,9 +283,25 @@
                 p.style.transform = 'translateY(100%)';
             });
 
-            // No overlay tile — the image simply holds while the siblings drop,
-            // then the target page loads and its data slides in from the left.
-            setTimeout(() => { window.location.href = url; }, 620);
+            // Freeze the clicked panel's image (the hover slide-up stays put),
+            // lift the panel out of the grid into fixed positioning at its current
+            // spot, then glide it to the left edge — width unchanged (20vw).
+            el.classList.add('hold');
+            const media = el.querySelector('.panel-media');
+            if (media) media.style.transform = 'translateY(0)';
+            el.style.animation = 'none';
+            el.style.position = 'fixed';
+            el.style.top = r.top + 'px';
+            el.style.left = r.left + 'px';
+            el.style.width = r.width + 'px';
+            el.style.height = r.height + 'px';
+            el.style.margin = '0';
+            el.style.zIndex = '50';
+            void el.offsetWidth;                    // reflow before transitioning left
+            el.style.transition = 'left 0.6s cubic-bezier(0.76, 0, 0.24, 1)';
+            el.style.left = '0px';                   // pull to the left edge
+
+            setTimeout(() => { window.location.href = url; }, 640);
         }
     </script>
 
