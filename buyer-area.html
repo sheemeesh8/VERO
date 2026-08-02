@@ -285,8 +285,18 @@
             const media = el.querySelector('.panel-media');
             if (media) media.style.transform = 'translateY(0)';
 
-            // Every other rectangle drops straight down and out.
-            panels.forEach(p => { if (p !== el) p.classList.add('slide-down'); });
+            // Every other rectangle drops straight down and out. The entry
+            // animation (panelFly) still owns `transform` via its fill, so clear
+            // it first — pinning the panel at its resting spot — then transition
+            // it down.
+            panels.forEach(p => {
+                if (p === el) return;
+                p.style.animation = 'none';
+                p.style.transform = 'translateY(0)';
+                void p.offsetWidth;                 // force reflow so the next value transitions
+                p.style.transition = 'transform 0.6s cubic-bezier(0.76, 0, 0.24, 1)';
+                p.style.transform = 'translateY(100%)';
+            });
 
             // A white page sheet opens rightward from the image's right edge,
             // filling the rest of the screen (the new page arriving).
