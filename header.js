@@ -61,6 +61,17 @@
 
     // ---- Styles (injected once; appended late so it wins over any page CSS) ----
     const CSS = `
+        /* The header shows on every page, but not every page loads Poppins — pull it
+           in here so the personal-area type voice is guaranteed wherever the header
+           renders. design-system.css forces its own face on every element with a
+           universal !important rule, so Poppins is reasserted the same way, scoped
+           to #siteHeader, so only the header changes. */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap');
+        #siteHeader, #siteHeader *, #siteHeader *::before, #siteHeader *::after,
+        #veroDrawerRoot, #veroDrawerRoot *, #veroDrawerRoot *::before, #veroDrawerRoot *::after,
+        #veroSearchPageRoot, #veroSearchPageRoot *, #veroSearchPageRoot *::before, #veroSearchPageRoot *::after {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        }
         #siteHeader {
             background: transparent;
             border-bottom: none;

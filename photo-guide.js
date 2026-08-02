@@ -27,47 +27,81 @@
     const VERO_PHOTO_GUIDE = {
         shoes: {
             title: 'נעליים',
-            heroAngle: 'זווית 45° מורמת (הצד הראשי + החרטום)',
-            tip: 'הנח נעל אחת מעט קדימה מהשנייה ליצירת נפח תלת-ממדי.',
-            slots: ['תמונת שער (זווית 45°)', 'פרופיל צד מלא', 'סוליה תחתית', 'תווית מידה'],
+            heroAngle: 'שתי הנעליים יחד, מזווית 45° מלמעלה',
+            tip: 'הנח נעל אחת מעט קדימה מהשנייה — כך מקבלים נפח ולא תמונה "שטוחה".',
+            slots: ['תמונה ראשית (זווית 45°)', 'צד מלא', 'סוליה תחתית', 'תווית מידה'],
+            help: [
+                'שתי הנעליים יחד, מלמעלה בזווית 45°. זו התמונה שרואים ראשונה, אז שתהיה חדה ומוארת.',
+                'נעל אחת מהצד, כל האורך בתוך הפריים — מראה את הגזרה ואת מצב הפריט.',
+                'הפוך נעל אחת וצלם את הסוליה — כך הקונה רואה כמה היא שחוקה.',
+                'תקריב לתווית שבתוך הנעל, שבה מופיעה המידה, שתהיה קריאה.',
+            ],
         },
         tops: {
             title: 'חולצות שטוחות / טופים',
-            heroAngle: 'פריסה שטוחה (Flat Lay) או תלייה על קולב עץ',
-            tip: 'מתח את השרוולים בצורה סימטרית וודא שאין קמטים בולטים.',
+            heroAngle: 'פרוסה שטוח על משטח, או תלויה על קולב עץ',
+            tip: 'מתח את השרוולים בצורה סימטרית וּודא שאין קמטים בולטים.',
             slots: ['חזית מלאה', 'גב החולצה', 'תווית מותג ומידה', 'תקריב בד'],
+            help: [
+                'החולצה פרוסה שטוח, כל החזית בפריים ומיושרת. זו התמונה הראשית.',
+                'הפוך את החולצה וצלם את הגב באותה צורה בדיוק.',
+                'תקריב לתווית שבצווארון — שם המותג והמידה צריכים להיות קריאים.',
+                'התקרב לאריג כדי להראות את המרקם ואת המצב (בלי כתמים או בלאי).',
+            ],
         },
         outerwear: {
             title: "מעילים וז'קטים",
-            heroAngle: 'תלייה על קולב איכותי או רכוס מלא',
-            tip: "צלם רכוס בתמונת השער, וצלם ז'קט פתוח בתמונה משנית להצגת הבטנה.",
+            heroAngle: 'רכוס ומלא, תלוי על קולב איכותי',
+            tip: 'צלם את התמונה הראשית רכוס, ובתמונה נוספת פתוח — כדי להראות את הבטנה.',
             slots: ['חזית רכוסה', 'בטנה פנימית', 'רוכסן / כפתורים', 'תווית הרכב בד'],
+            help: [
+                'המעיל רכוס ומלא על קולב, כל החזית בפריים. זו התמונה הראשית.',
+                'פתח את המעיל וצלם את הבטנה מבפנים.',
+                'תקריב לרוכסן או לכפתורים כדי להראות שהם שלמים ותקינים.',
+                'תקריב לתווית עם הרכב הבד והוראות הכביסה.',
+            ],
         },
         bags: {
             title: 'תיקים ואביזרי עור',
-            heroAngle: 'חזית ישרה בגובה העיניים',
-            tip: 'מלא את התיק בנייר סופג/בד כדי שישמור על צורתו הטבעית ולא ייראה מעוך.',
+            heroAngle: 'חזית ישרה, בגובה העיניים',
+            tip: 'מלא את התיק בנייר או בד כדי שישמור על צורתו ולא ייראה מעוך.',
             slots: ['חזית התיק', 'גב ותחתית', 'פנים התיק ותאים', 'מספר סידורי / אבזם'],
+            help: [
+                'התיק עומד מלא (מרופד מבפנים) לשמירת צורה, חזית מלאה. זו התמונה הראשית.',
+                'צלם את הגב ואת התחתית — שם בדרך כלל נראה הבלאי.',
+                'פתח את התיק וצלם את הפנים ואת התאים.',
+                'תקריב למספר הסידורי או לאבזם/לוגו — עוזר לאמת מקוריות.',
+            ],
         },
         bottoms: {
             title: "מכנסיים וג'ינסים",
-            heroAngle: 'פריסה שטוחה ישרה (Flat Lay)',
-            tip: 'ישר את הרגליים בצורה מקבילה וצלם תקריב של הכפתור/רוכסן הראשי.',
+            heroAngle: 'פרוסים שטוח וישר על משטח',
+            tip: 'ישר את הרגליים במקביל וצלם תקריב של הכפתור/רוכסן הראשי.',
             slots: ['חזית מלאה', 'גב וכיסים', 'תווית מידה במותן'],
+            help: [
+                'המכנס פרוס שטוח וישר, כל האורך בפריים. זו התמונה הראשית.',
+                'הפוך וצלם את הגב ואת הכיסים.',
+                'תקריב לתווית המידה שבתוך המותן.',
+            ],
         },
         accessories: {
             title: 'משקפיים ושעונים',
-            heroAngle: 'תקריב זוויתי (Macro)',
-            tip: 'הימנע מהשתקפות ישירה של תאורה או הפלאש על הזכוכית/מתכת.',
+            heroAngle: 'תקריב חד מהחזית (מאקרו)',
+            tip: 'הימנע מהשתקפות של אור או פלאש על הזכוכית/מתכת — הטה מעט את הפריט.',
             slots: ['תקריב חזיתי', 'חריטת מותג / גב', 'אריזה / קופסה מקורית'],
+            help: [
+                'תקריב חד מהחזית, בלי השתקפות אור על הזכוכית או המתכת. זו התמונה הראשית.',
+                'צלם את החריטה או הסימון שבגב — הם מאמתים את המותג.',
+                'צלם את הקופסה/האריזה המקורית אם יש — מעלה ערך ואמון.',
+            ],
         },
     };
 
     // The three core tips shown for every category.
     const VERO_CORE_TIPS = [
-        { icon: '☀', title: 'תאורה טבעית', text: 'צלם ליד חלון באור יום רך, ללא פלאש ישיר.' },
-        { icon: '◐', title: 'רקע בקונטרסט גבוה', text: 'רקע נקי ואחיד שמפריד את הפריט מהסביבה.' },
-        { icon: '⧉', title: 'שוליים בטוחים (15%)', text: 'השאר כ-15% אוויר מסביב לפריט, בלי לחתוך קצוות.' },
+        { icon: '☀', title: 'אור יום, בלי פלאש', text: 'צלם ליד חלון באור טבעי. כבה את הפלאש — הוא משטח את הפריט ומשנה צבע.' },
+        { icon: '◐', title: 'רקע נקי ואחיד', text: 'הנח על קיר או סדין חלק בצבע אחיד, בלי חפצים מסביב שמסיחים את העין.' },
+        { icon: '⧉', title: 'השאר אוויר (15%)', text: 'אל תמלא את כל הפריים בפריט — השאר מעט שוליים ואל תחתוך קצוות.' },
     ];
 
     // Expose the schema so the rest of the site (and tests) can read it.
@@ -81,8 +115,8 @@
             direction: rtl;
             font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             color: #1a1a1a;
-            --pg-accent: #004225;
-            --pg-line: rgba(0,0,0,0.10);
+            --pg-accent: #1c1c1c;
+            --pg-line: rgba(0,0,0,0.14);
             --pg-muted: #8a857c;
         }
         * { box-sizing: border-box; }
@@ -109,7 +143,7 @@
         .pg-head .tt span { display: block; font-size: 12px; color: var(--pg-muted); }
         .pg-head .count {
             font-size: 12px; font-weight: 700; color: var(--pg-accent);
-            background: rgba(0,66,37,0.08); border-radius: 999px; padding: 4px 10px;
+            background: rgba(0,0,0,0.06); border-radius: 999px; padding: 4px 10px;
             flex: 0 0 auto;
         }
         .pg-head .chev {
@@ -145,23 +179,27 @@
 
         .pg-slots-h {
             font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-            color: var(--pg-muted); font-weight: 700; margin-bottom: 10px;
+            color: var(--pg-muted); font-weight: 700; margin-bottom: 4px;
         }
+        .pg-slots-sub { font-size: 12px; color: var(--pg-muted); line-height: 1.5; margin-bottom: 12px; }
         .pg-slots { display: flex; flex-direction: column; gap: 8px; }
         .pg-slot {
-            display: flex; align-items: center; gap: 12px;
+            display: flex; align-items: flex-start; gap: 12px;
             border: 1px solid var(--pg-line); border-radius: 9px;
-            padding: 11px 13px; transition: background 0.2s, border-color 0.2s;
+            padding: 12px 13px; transition: background 0.2s, border-color 0.2s;
         }
         .pg-slot .dot {
-            width: 22px; height: 22px; flex: 0 0 auto; border-radius: 50%;
+            width: 22px; height: 22px; flex: 0 0 auto; border-radius: 50%; margin-top: 1px;
             border: 1.5px dashed #cfccc4; display: grid; place-items: center;
             color: #fff;
         }
         .pg-slot .dot svg { width: 13px; height: 13px; fill: none; stroke: #fff;
             stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
-        .pg-slot .lbl { flex: 1; font-size: 13.5px; }
-        .pg-slot .num { font-size: 11px; color: var(--pg-muted); font-weight: 700; }
+        .pg-slot .lbl { flex: 1; min-width: 0; }
+        .pg-slot .lbl b { display: block; font-size: 13.5px; font-weight: 700; line-height: 1.35; }
+        .pg-slot .lbl .hint { display: block; font-size: 12px; color: var(--pg-muted); line-height: 1.5; margin-top: 3px; }
+        .pg-slot.done .lbl .hint { color: #6f8a7e; }
+        .pg-slot .num { font-size: 11px; color: var(--pg-muted); font-weight: 700; margin-top: 2px; }
         .pg-slot.done {
             background: rgba(0,66,37,0.05); border-color: rgba(0,66,37,0.25);
         }
@@ -206,6 +244,7 @@
         render() {
             const data = VERO_PHOTO_GUIDE[this.category] || VERO_PHOTO_GUIDE.shoes;
             const slots = data.slots;
+            const help = data.help || [];
             const doneCount = Array.from(this._done).filter(i => i < slots.length).length;
 
             const core = VERO_CORE_TIPS.map(t => `
@@ -215,7 +254,7 @@
             const slotRows = slots.map((label, i) => `
                 <div class="pg-slot ${this._done.has(i) ? 'done' : ''}">
                     <span class="dot">${CHECK}</span>
-                    <span class="lbl">${label}</span>
+                    <span class="lbl"><b>${label}</b>${help[i] ? `<span class="hint">${help[i]}</span>` : ''}</span>
                     <span class="num">${String(i + 1).padStart(2, '0')}</span>
                 </div>
             `).join('');
@@ -234,11 +273,12 @@
                     </button>
                     <div class="pg-body"><div class="inner"><div class="pg-pad">
                         <div class="pg-hero">
-                            <b>זווית שער:</b> ${data.heroAngle}
+                            <b>התמונה הראשית:</b> ${data.heroAngle}
                             <span class="tip">💡 ${data.tip}</span>
                         </div>
                         <div class="pg-core">${core}</div>
-                        <div class="pg-slots-h">תמונות נדרשות</div>
+                        <div class="pg-slots-h">תמונות נדרשות · ${slots.length}</div>
+                        <div class="pg-slots-sub">צלמו את כל התמונות הבאות. כל אחת מסומנת ב-✓ אוטומטית כשמעלים אותה למעלה.</div>
                         <div class="pg-slots">${slotRows}</div>
                     </div></div></div>
                 </div>
