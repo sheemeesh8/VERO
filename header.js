@@ -1430,6 +1430,28 @@
         veroCloseSearch();
     });
 
+    // ---- Cart slide-in transition ----
+    // Accessing the cart from the header glides a white panel in from the right,
+    // then navigates — cart-store.html continues the motion by sliding its own
+    // content in from the same side, so the cart reads as one panel sliding in.
+    // Defined on window so every page's openCart (the SPA one on index.html and
+    // the fallback below) can share the exact same transition.
+    window.veroSlideToCart = function (url) {
+        const dest = url || 'cart-store.html';
+        // Respect users who asked for less motion — just navigate.
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            location.href = dest; return;
+        }
+        if (document.getElementById('veroCartSlide')) return;   // already transitioning
+        const panel = document.createElement('div');
+        panel.id = 'veroCartSlide';
+        panel.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:99999;' +
+            'transform:translateX(100%);transition:transform .5s cubic-bezier(.22,1,.36,1);will-change:transform';
+        document.body.appendChild(panel);
+        requestAnimationFrame(() => requestAnimationFrame(() => { panel.style.transform = 'translateX(0)'; }));
+        setTimeout(() => { location.href = dest; }, 470);
+    };
+
     // ---- Fallback handlers ----
     // On index.html these globals are the real SPA functions and win (their
     // function declarations override these). On every other page they navigate
@@ -1438,7 +1460,7 @@
     function ensure(name, fn) { if (typeof window[name] !== 'function') window[name] = fn; }
     ensure('showMain', () => nav('index.html'));
     ensure('openWishlist', () => nav('index.html?open=wishlist'));
-    ensure('openCart', () => nav('cart-store.html'));
+    ensure('openCart', () => window.veroSlideToCart());
     ensure('vchatOpenInbox', () => nav('index.html?open=chats'));
     ensure('openBuyerArea', () => nav('buyer-area.html'));
     ensure('openUploadProduct', () => nav('index.html?open=upload'));
