@@ -135,6 +135,37 @@
             color: #9a9a95; font-size: 14px; letter-spacing: 0.3px;
         }
 
+        /* Sale details on sold cards. */
+        .sale-line { font-size: 12px; color: #1c1c1c; letter-spacing: 0.2px; }
+        .sale-line b { font-weight: 600; }
+        .sale-line .lbl { color: #9a9a95; }
+
+        /* Draft cards (inline on this page, like the personal area). */
+        .draft-card { border: 1px dashed #8a8a85; }
+        .draft-card .prod-img { border-bottom: 1px dashed #8a8a85; }
+        .draft-card .badge { border-style: dashed; color: #8a8a85; }
+
+        /* Negotiation popup. */
+        .pop-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.42);
+            display: none; align-items: center; justify-content: center; z-index: 90; padding: 20px;
+        }
+        .pop-overlay.open { display: flex; }
+        .pop { background: #fff; border: 1px solid #000; width: 100%; max-width: 460px; max-height: 86vh; overflow-y: auto; }
+        .pop-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 26px 18px; border-bottom: 1px solid #eee; }
+        .pop-title { font-size: 20px; font-weight: 500; }
+        .pop-sub { font-size: 12px; color: #9a9a95; margin-top: 5px; letter-spacing: 0.3px; }
+        .pop-close { border: none; background: none; font-size: 26px; line-height: 1; cursor: pointer; color: #1c1c1c; }
+        .pop-body { padding: 20px 26px 26px; }
+        .nego-step { display: flex; align-items: baseline; gap: 12px; padding: 13px 0; border-bottom: 1px solid #f1f1ef; }
+        .nego-step:last-child { border-bottom: none; }
+        .nego-who { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; width: 64px; flex: none; }
+        .nego-who.buyer { color: #3b6ea5; }
+        .nego-who.seller { color: #1f8f4e; }
+        .nego-text { font-size: 14px; }
+        .nego-amt { margin-inline-start: auto; font-weight: 600; white-space: nowrap; }
+        .nego-final { margin-top: 18px; padding: 15px; background: #1c1c1c; color: #fff; text-align: center; border-radius: 8px; font-size: 14px; letter-spacing: 0.5px; }
+
         @media (max-width: 780px) {
             .prod-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
         }
@@ -170,7 +201,19 @@
             </div>
         </div>
 
-        <!-- History: sold or deleted -->
+        <!-- Drafts — attached inline on this page, like the personal area -->
+        <div class="section">
+            <div class="section-head">
+                <div class="section-title">Drafts</div>
+                <div class="section-note" id="draftsNote">0 drafts</div>
+            </div>
+            <div class="prod-grid" id="draftsGrid"></div>
+            <div class="empty" id="draftsEmpty" style="display:none;">
+                No drafts yet. Save a listing as a draft from the upload page to continue it later.
+            </div>
+        </div>
+
+        <!-- History: sold or deleted, with buyer + closed price -->
         <div class="section">
             <div class="section-head">
                 <div class="section-title">History · sold &amp; removed</div>
@@ -183,12 +226,26 @@
         </div>
     </div>
 
+    <!-- Negotiation popup — the deal's offer/counter timeline for a sold item -->
+    <div class="pop-overlay" id="negoPop">
+        <div class="pop">
+            <div class="pop-head">
+                <div>
+                    <div class="pop-title" id="negoTitle">—</div>
+                    <div class="pop-sub" id="negoSub">—</div>
+                </div>
+                <button class="pop-close" onclick="closeNego()" aria-label="Close">&times;</button>
+            </div>
+            <div class="pop-body" id="negoBody"></div>
+        </div>
+    </div>
+
     <script>
         // ---- Which area did we come from? Keep the back path and internal links
         // in that same area so buyer and seller flows never cross. ----
         const isSeller = new URLSearchParams(location.search).get('from') === 'seller';
         if (isSeller) {
-            document.querySelector('.head-title').textContent = 'My Listings';
+            document.querySelector('.head-title').textContent = 'My Products';
             const back = document.querySelector('.back');
             if (back) back.setAttribute('href', 'seller-area.html');
             // Keep the seller flag on the drafts link so drafts returns here in-context.
@@ -212,6 +269,27 @@
             return ts ? new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
         }
 
+        // ---- Synthesize a plausible sale record (buyer, closed price, negotiation
+        // timeline) for a sold item that doesn't have one yet. ----
+        const BUYERS = ['Daniel K.', 'Maya L.', 'Ron S.', 'Noa B.', 'Itai M.', 'Shira P.', 'Omer T.', 'Yael R.'];
+        function synthSale(p) {
+            const ask = Number(p.price) || 0;
+            const first  = Math.max(1, Math.round(ask * 0.78));
+            const counter = Math.round(ask * 0.9);
+            const closed = counter;
+            return {
+                buyer: BUYERS[Math.floor(Math.random() * BUYERS.length)],
+                closedPrice: closed,
+                negotiation: [
+                    { who: 'system', text: 'Buyer opened a chat about the item', amount: null },
+                    { who: 'buyer',  text: 'Made an offer',      amount: first },
+                    { who: 'seller', text: 'Sent a counter-offer', amount: counter },
+                    { who: 'buyer',  text: 'Accepted the counter', amount: closed },
+                    { who: 'system', text: 'Deal closed & item marked sold', amount: closed },
+                ],
+            };
+        }
+
         function card(p, idx, past) {
             const src = imgOf(p);
             const status = p.status || 'active';
@@ -221,11 +299,25 @@
             else if (status === 'deleted') dateLine = 'Removed · ' + fmtDate(p.deletedAt);
             else dateLine = 'Listed · ' + fmtDate(p.listedAt);
 
-            const actions = past
-                ? `<button class="p-btn" data-act="relist" data-i="${idx}">Relist</button>
-                   <button class="p-btn danger" data-act="purge" data-i="${idx}">Delete</button>`
-                : `<button class="p-btn" data-act="sold" data-i="${idx}">Mark sold</button>
-                   <button class="p-btn danger" data-act="remove" data-i="${idx}">Remove</button>`;
+            // Sold items carry buyer + closed price + a negotiation button.
+            let saleBlock = '';
+            if (status === 'sold' && p.sale) {
+                saleBlock = `
+                    <div class="sale-line"><span class="lbl">Buyer</span> · <b>${p.sale.buyer}</b></div>
+                    <div class="sale-line"><span class="lbl">Closed at</span> · <b>${nis(p.sale.closedPrice)}</b></div>`;
+            }
+
+            let actions;
+            if (past && status === 'sold') {
+                actions = `<button class="p-btn" data-act="nego" data-i="${idx}">Negotiation</button>
+                           <button class="p-btn danger" data-act="purge" data-i="${idx}">Delete</button>`;
+            } else if (past) {
+                actions = `<button class="p-btn" data-act="relist" data-i="${idx}">Relist</button>
+                           <button class="p-btn danger" data-act="purge" data-i="${idx}">Delete</button>`;
+            } else {
+                actions = `<button class="p-btn" data-act="sold" data-i="${idx}">Mark sold</button>
+                           <button class="p-btn danger" data-act="remove" data-i="${idx}">Remove</button>`;
+            }
 
             return `
                 <div class="prod ${past ? 'past' : ''}">
@@ -238,12 +330,43 @@
                         <div class="prod-meta">${[p.seller, p.category].filter(Boolean).join(' · ') || '—'}</div>
                         <div class="prod-price">${nis(p.price)}</div>
                         <div class="prod-meta">${dateLine}</div>
+                        ${saleBlock}
                         <div class="prod-actions">${actions}</div>
                     </div>
                 </div>`;
         }
 
+        // ---- Draft card (inline preview, links into the drafts editor) ----
+        function draftCard(d, i) {
+            const src = imgOf(d);
+            const name = d.name || d.itemType || d.brand || 'Untitled draft';
+            const draftsHref = isSeller ? 'drafts.html?from=seller' : 'drafts.html';
+            return `
+                <div class="prod draft-card">
+                    <div class="prod-img" ${src ? `style="background-image:url('${src}')"` : ''}>
+                        ${src ? '' : `<div class="placeholder">${d.icon || '📝'}</div>`}
+                        <span class="badge">Draft</span>
+                    </div>
+                    <div class="prod-body">
+                        <div class="prod-name">${name}</div>
+                        <div class="prod-meta">${[d.brand, d.category].filter(Boolean).join(' · ') || 'Not finished'}</div>
+                        <div class="prod-price">${d.price ? nis(d.price) : 'No price yet'}</div>
+                        <div class="prod-actions">
+                            <a class="p-btn" href="${draftsHref}" style="text-align:center;text-decoration:none;line-height:1.6;">Continue</a>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
         function render() {
+            // Backfill a sale record for any sold item missing one, so the buyer,
+            // closed price and negotiation timeline are always available.
+            let touched = false;
+            listings.forEach(p => {
+                if ((p.status || 'active') === 'sold' && !p.sale) { p.sale = synthSale(p); touched = true; }
+            });
+            if (touched) save('vero_listings', listings);
+
             const active = [];
             const history = [];
             listings.forEach((p, i) => {
@@ -263,9 +386,34 @@
             document.getElementById('activeEmpty').style.display  = active.length ? 'none' : 'block';
             document.getElementById('historyEmpty').style.display = history.length ? 'none' : 'block';
 
-            const drafts = readJSON('vero_drafts', []);
-            document.getElementById('draftCount').textContent = Array.isArray(drafts) ? drafts.length : 0;
+            // Drafts — inline section + the header pill count.
+            let drafts = readJSON('vero_drafts', []);
+            if (!Array.isArray(drafts)) drafts = [];
+            document.getElementById('draftCount').textContent = drafts.length;
+            document.getElementById('draftsNote').textContent = `${drafts.length} draft${drafts.length === 1 ? '' : 's'}`;
+            document.getElementById('draftsGrid').innerHTML = drafts.map((d, i) => draftCard(d, i)).join('');
+            document.getElementById('draftsEmpty').style.display = drafts.length ? 'none' : 'block';
         }
+
+        // ---- Negotiation popup ----
+        function openNego(i) {
+            const p = listings[i];
+            if (!p || !p.sale) return;
+            document.getElementById('negoTitle').textContent = p.name || 'Untitled listing';
+            document.getElementById('negoSub').textContent =
+                `Buyer · ${p.sale.buyer} · asked ${nis(p.price)}`;
+            const steps = p.sale.negotiation.map(s => `
+                <div class="nego-step">
+                    <span class="nego-who ${s.who}">${s.who}</span>
+                    <span class="nego-text">${s.text}</span>
+                    ${s.amount != null ? `<span class="nego-amt">${nis(s.amount)}</span>` : ''}
+                </div>`).join('');
+            document.getElementById('negoBody').innerHTML = steps +
+                `<div class="nego-final">Closed at ${nis(p.sale.closedPrice)} · ${fmtDate(p.soldAt)}</div>`;
+            document.getElementById('negoPop').classList.add('open');
+        }
+        function closeNego() { document.getElementById('negoPop').classList.remove('open'); }
+        document.getElementById('negoPop').addEventListener('click', (e) => { if (e.target.id === 'negoPop') closeNego(); });
 
         // Status actions.
         document.querySelector('.wrap').addEventListener('click', (e) => {
@@ -273,8 +421,10 @@
             if (!btn) return;
             const i = Number(btn.dataset.i);
             const act = btn.dataset.act;
+            if (act === 'nego') { openNego(i); return; }
             if (!listings[i]) return;
-            if (act === 'sold')       { listings[i].status = 'sold';    listings[i].soldAt = Date.now(); }
+            if (act === 'sold')       { listings[i].status = 'sold';    listings[i].soldAt = Date.now();
+                                        listings[i].sale = synthSale(listings[i]); }
             else if (act === 'remove'){ listings[i].status = 'deleted'; listings[i].deletedAt = Date.now(); }
             else if (act === 'relist'){ listings[i].status = 'active';  listings[i].listedAt = Date.now();
                                         delete listings[i].soldAt; delete listings[i].deletedAt; }
