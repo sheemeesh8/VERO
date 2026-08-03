@@ -120,6 +120,56 @@
         .chat-list { max-height: 264px; overflow-y: auto; }
         .chat-list .chat-row { height: 88px; }
 
+        /* ===== My offers — Depop-style cubes below the chats ===== */
+        .offers-sec { margin-top: 44px; }
+        .offers-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 22px; }
+        .offers-note { font-size: 12px; letter-spacing: 0.5px; color: #9a9a95; }
+        .offers-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+        }
+        .offer-cube { border: 1px solid #000; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+        .oc-top { display: flex; gap: 16px; align-items: center; }
+        .oc-img {
+            width: 66px; height: 66px; flex: 0 0 auto; border: 1px solid #000;
+            display: flex; align-items: center; justify-content: center; font-size: 34px;
+            background: #f4f4f2; overflow: hidden;
+        }
+        .oc-img img { width: 100%; height: 100%; object-fit: cover; }
+        .oc-info { min-width: 0; flex: 1; }
+        .oc-name { font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .oc-seller { font-size: 12px; color: #9a9a95; letter-spacing: 0.5px; margin-top: 2px; }
+        .oc-prices { display: flex; gap: 16px; margin-top: 10px; }
+        .oc-ask { font-size: 13px; color: #6b6b66; }
+        .oc-your { font-size: 13px; font-weight: 600; color: #1c1c1c; }
+        .oc-your b { font-weight: 600; }
+
+        .oc-others { border-top: 1px solid #eee; padding-top: 12px; }
+        .oc-others-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
+        .oc-other { display: flex; justify-content: space-between; font-size: 13px; color: #6b6b66; padding: 3px 0; }
+        .oc-other .amt { font-weight: 500; color: #1c1c1c; }
+        .oc-other.top .amt { color: #1f8f4e; }
+
+        .oc-edit {
+            align-self: flex-start; border: 1px solid #000; background: #fff; cursor: pointer;
+            font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 10px 20px; border-radius: 999px; transition: background 0.2s, color 0.2s;
+        }
+        .oc-edit:hover { background: #000; color: #fff; }
+        .oc-editbox { display: none; flex-direction: column; gap: 10px; }
+        .oc-editbox.open { display: flex; }
+        .oc-input {
+            border: none; border-bottom: 1.4px solid #000; background: transparent;
+            font-family: inherit; font-size: 18px; padding: 8px 2px; color: #1c1c1c;
+        }
+        .oc-input:focus { outline: none; }
+        .oc-submit {
+            align-self: flex-start; border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
+            font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 11px 22px; border-radius: 999px; transition: opacity 0.2s;
+        }
+        .oc-submit:hover { opacity: 0.8; }
+        .offers-empty { font-size: 14px; color: #9a9a95; padding: 8px 0; }
+
         /* ===== Slide-in chat panel — one conversation with a seller ===== */
         .chat-panel {
             position: fixed; inset: 0; z-index: 70;
@@ -227,6 +277,15 @@
                     <div class="chat-list" id="chatList"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- Price offers the buyer has made — Depop-style, below the chats. -->
+        <div class="offers-sec">
+            <div class="offers-head">
+                <div class="card-label" style="margin:0;">My offers</div>
+                <div class="offers-note" id="offersNote">Pieces you've made an offer on</div>
+            </div>
+            <div class="offers-grid" id="offersGrid"></div>
         </div>
     </div>
 
@@ -352,6 +411,97 @@
         });
         // Search sellers — restricted to those already in the chat inbox.
         document.getElementById('chatSearch').addEventListener('input', (e) => renderList(e.target.value));
+
+        // ===== My offers (Depop-style) =====
+        // Icon for a product, matched from the cart by name where possible.
+        const iconByName = {};
+        items.forEach(it => { if (it.name && it.icon) iconByName[it.name] = it.icon; });
+        const strHash = s => { let h = 0; for (let i = 0; i < String(s).length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+
+        // Working copy of the buyer's offers. Seed a few if none exist yet so the
+        // section always demonstrates the flow (kept in memory unless edited).
+        let myOffers = offs.map(o => ({ ...o }));
+        if (!myOffers.length) {
+            myOffers = [
+                { name: 'Neon Print',   seller: 'Pixel Works',    askPrice: 300,  offer: 240,  at: Date.now() - 3 * H },
+                { name: 'Denim Jacket', seller: 'Vintage Vault',  askPrice: 450,  offer: 390,  at: Date.now() - 8 * H },
+                { name: 'Marble Bust',  seller: 'Studio Vero',    askPrice: 1800, offer: 1500, at: Date.now() - 26 * H },
+            ];
+        }
+
+        // Deterministic "other people's offers" for a piece, so the list is stable.
+        function otherOffers(o) {
+            const NAMES = ['Maya', 'Daniel', 'Noa', 'Omer', 'Tal', 'Yael', 'Ari', 'Shira'];
+            const seed = strHash(o.name + o.seller);
+            const n = 2 + (seed % 3);                 // 2–4 other offers
+            const out = [];
+            for (let i = 0; i < n; i++) {
+                const pct = 0.62 + ((seed >> (i * 4)) % 30) / 100;   // 62–91% of ask
+                out.push({ who: NAMES[(seed + i * 7) % NAMES.length], amount: Math.round(o.askPrice * pct / 5) * 5 });
+            }
+            return out.sort((a, b) => b.amount - a.amount);
+        }
+
+        const offersGrid = document.getElementById('offersGrid');
+        function renderOffers() {
+            document.getElementById('offersNote').textContent =
+                `${myOffers.length} piece${myOffers.length === 1 ? '' : 's'} you've made an offer on`;
+            if (!myOffers.length) {
+                offersGrid.innerHTML = '<div class="offers-empty">No offers yet — make one from any product page.</div>';
+                return;
+            }
+            offersGrid.innerHTML = myOffers.map((o, i) => {
+                const ic = iconByName[o.name] || '🛍️';
+                const others = otherOffers(o);
+                const topAmt = Math.max(o.offer, ...others.map(x => x.amount));
+                const othersHTML = others.map(x =>
+                    `<div class="oc-other${x.amount === topAmt ? ' top' : ''}"><span>${x.who}</span><span class="amt">${nis(x.amount)}</span></div>`).join('');
+                return `
+                    <div class="offer-cube" data-i="${i}">
+                        <div class="oc-top">
+                            <div class="oc-img">${ic}</div>
+                            <div class="oc-info">
+                                <div class="oc-name">${o.name || 'Item'}</div>
+                                <div class="oc-seller">${o.seller || 'VERO'}</div>
+                                <div class="oc-prices">
+                                    <span class="oc-ask">Asking ${nis(o.askPrice)}</span>
+                                    <span class="oc-your">Your offer <b>${nis(o.offer)}</b></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="oc-others">
+                            <div class="oc-others-label">Other offers on this piece</div>
+                            ${othersHTML}
+                        </div>
+                        <button class="oc-edit" data-act="edit" data-i="${i}">Edit offer</button>
+                        <div class="oc-editbox" data-i="${i}">
+                            <input class="oc-input" type="number" min="1" placeholder="New offer (₪)" value="${o.offer}">
+                            <button class="oc-submit" data-act="submit" data-i="${i}">Send new offer</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+        renderOffers();
+
+        offersGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-act]');
+            if (!btn) return;
+            const i = Number(btn.dataset.i);
+            if (btn.dataset.act === 'edit') {
+                const box = offersGrid.querySelector(`.oc-editbox[data-i="${i}"]`);
+                box.classList.toggle('open');
+                if (box.classList.contains('open')) box.querySelector('.oc-input').focus();
+            } else if (btn.dataset.act === 'submit') {
+                const box = offersGrid.querySelector(`.oc-editbox[data-i="${i}"]`);
+                const val = parseFloat(box.querySelector('.oc-input').value);
+                if (!val || val <= 0) { box.querySelector('.oc-input').focus(); return; }
+                myOffers[i].offer = val;
+                myOffers[i].at = Date.now();
+                // Persist the whole set back to the shared store so the seller sees it.
+                localStorage.setItem('vero_offers', JSON.stringify(myOffers));
+                renderOffers();
+            }
+        });
 
         // ===== Chat with a seller — persisted to vero_chats, works like the deal room =====
         const CHATS = readJSON('vero_chats', {});   // { sellerName: [ {sender, content, at} ] }

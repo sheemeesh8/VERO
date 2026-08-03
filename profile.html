@@ -148,13 +148,15 @@
             margin-bottom: 0; overflow: hidden;
             background-size: cover; background-position: center;
         }
-        .avatar-edit {
-            position: absolute; right: -4px; bottom: -4px;
-            width: 26px; height: 26px; border-radius: 50%; border: 1.4px solid #000;
-            background: #fff; display: none; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 12px;
+        /* Circle photo + a Change photo button beside it. */
+        .avatar-row { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+        .avatar-row .avatar-wrap { margin-bottom: 0; }
+        .change-photo {
+            border: 1.4px solid #000; background: #fff; cursor: pointer;
+            font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 10px 18px; border-radius: 999px; color: #1c1c1c; transition: background 0.2s, color 0.2s;
         }
-        body.is-seller .avatar-edit { display: flex; }
+        .change-photo:hover { background: #000; color: #fff; }
 
         .char-count { font-size: 11px; color: #b0b0aa; text-align: right; margin-top: 4px; }
         .card-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
@@ -223,9 +225,12 @@
         <div class="grid">
             <!-- Identity card (editable, saved to localStorage) -->
             <div class="card">
-                <div class="avatar-wrap">
-                    <div class="avatar" id="avatar">V</div>
-                    <label class="avatar-edit" title="Change photo">&#9998;<input id="pf-photo" type="file" accept="image/*" hidden></label>
+                <div class="avatar-row">
+                    <div class="avatar-wrap">
+                        <div class="avatar" id="avatar">V</div>
+                    </div>
+                    <button type="button" class="change-photo" id="changePhoto">Change photo</button>
+                    <input id="pf-photo" type="file" accept="image/*" hidden>
                 </div>
                 <div class="field">
                     <div class="card-label" id="nameLabel">Name</div>
@@ -441,17 +446,28 @@
         // Circle avatar: an uploaded photo when set, otherwise the first letter of
         // the name (falls back to V).
         const avatarEl = document.getElementById('avatar');
+        const sideImageEl = document.querySelector('.side-image');
         function refreshAvatar() {
             if (profile.avatarImg) {
                 avatarEl.style.backgroundImage = `url('${profile.avatarImg}')`;
                 avatarEl.textContent = '';
+                // The big side image mirrors the profile photo, in full colour.
+                if (sideImageEl) {
+                    sideImageEl.style.backgroundImage = `url('${profile.avatarImg}')`;
+                    sideImageEl.style.filter = 'none';
+                }
             } else {
                 avatarEl.style.backgroundImage = '';
                 const n = (profile.name || '').trim();
                 avatarEl.textContent = n ? n[0] : 'V';
+                if (sideImageEl) { sideImageEl.style.backgroundImage = ''; sideImageEl.style.filter = ''; }
             }
         }
         refreshAvatar();
+
+        // The visible "Change photo" button just opens the hidden file picker.
+        const changeBtn = document.getElementById('changePhoto');
+        if (changeBtn) changeBtn.addEventListener('click', () => document.getElementById('pf-photo').click());
 
         // ---- Profile picture upload (stored as a data URL on the profile) ----
         const photoInput = document.getElementById('pf-photo');
