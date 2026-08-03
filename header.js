@@ -1463,6 +1463,7 @@
     ensure('openCart', () => window.veroSlideToCart());
     ensure('vchatOpenInbox', () => nav('index.html?open=chats'));
     ensure('openBuyerArea', () => nav('buyer-area.html'));
+    ensure('openSellerArea', () => nav('seller-area.html'));
     ensure('openUploadProduct', () => nav('index.html?open=upload'));
     ensure('openMenu', () => nav('index.html?open=magazine'));
     // The magazine reader (magazine.js defines the real window.openMagazine on

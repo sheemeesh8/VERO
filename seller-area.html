@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VERO — Personal Area</title>
+    <title>VERO — Seller Area</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500&display=swap" rel="stylesheet">
@@ -246,45 +246,45 @@
     <a class="home-btn" href="index.html">&#8592; דף הבית</a>
 
     <div class="stage">
-        <!-- The four long equal rectangles across the full width of the page -->
+        <!-- The five long equal rectangles across the full width of the page -->
         <div class="panels">
             <div class="panel" onclick="goPanel('profile.html', this)">
                 <div class="panel-media" style="background-image:url('assets/profile-hero.jpg')"></div>
                 <div class="panel-inner">
-                    <h2 class="panel-head">My Profile</h2>
-                    <p class="panel-desc">Your details, preferences<br>and account settings.</p>
+                    <h2 class="panel-head">My Shop</h2>
+                    <p class="panel-desc">Your seller profile,<br>ratings and settings.</p>
                     <div class="panel-peek" data-peek="profile"></div>
                 </div>
             </div>
             <div class="panel" onclick="goPanel('products.html', this)">
                 <div class="panel-media" style="background-image:url('assets/products-hero.jpg')"></div>
                 <div class="panel-inner">
-                    <h2 class="panel-head">My Products</h2>
-                    <p class="panel-desc">The pieces you've<br>purchased and followed.</p>
-                    <div class="panel-peek" data-peek="products"></div>
+                    <h2 class="panel-head">My Listings</h2>
+                    <p class="panel-desc">The pieces you've<br>put up for sale.</p>
+                    <div class="panel-peek" data-peek="listings"></div>
                 </div>
             </div>
-            <div class="panel" onclick="goPanel('expenses.html', this)">
+            <div class="panel" onclick="goPanel('dashboard.html', this)">
                 <div class="panel-media" style="background-image:url('assets/expenses-hero.jpg')"></div>
                 <div class="panel-inner">
-                    <h2 class="panel-head">My Expenses</h2>
-                    <p class="panel-desc">A summary of your<br>purchases and spending.</p>
-                    <div class="panel-peek" data-peek="expenses"></div>
+                    <h2 class="panel-head">Sales</h2>
+                    <p class="panel-desc">Your numbers across<br>the year, at a glance.</p>
+                    <div class="panel-peek" data-peek="sales"></div>
                 </div>
             </div>
-            <div class="panel" onclick="goPanel('cart.html', this)">
-                <div class="panel-media" style="background-image:url('assets/cart-hero.jpg')"></div>
+            <div class="panel" onclick="goPanel('drafts.html', this)">
+                <div class="panel-media" style="background-image:url('assets/products-hero.jpg')"></div>
                 <div class="panel-inner">
-                    <h2 class="panel-head">My Cart</h2>
-                    <p class="panel-desc">The items you've gathered,<br>ready to check out.</p>
-                    <div class="panel-peek" data-peek="cart"></div>
+                    <h2 class="panel-head">My Drafts</h2>
+                    <p class="panel-desc">Listings you've started<br>but not published yet.</p>
+                    <div class="panel-peek" data-peek="drafts"></div>
                 </div>
             </div>
             <div class="panel" onclick="goPanel('chats.html', this)">
                 <div class="panel-media" style="background-image:url('assets/chats-hero.jpg')"></div>
                 <div class="panel-inner">
-                    <h2 class="panel-head">My Chats</h2>
-                    <p class="panel-desc">Your conversations<br>with sellers and buyers.</p>
+                    <h2 class="panel-head">Buyer Chats</h2>
+                    <p class="panel-desc">Your conversations<br>with interested buyers.</p>
                     <div class="panel-peek" data-peek="chats"></div>
                 </div>
             </div>
@@ -300,24 +300,24 @@
             catch (e) { return fallback; }
         }
         const money = n => '₪' + Math.round(n).toLocaleString('en-US');
+        // Listing prices are stored as strings ("₪49.90") or numbers — strip to a value.
+        const priceOf = p => Number(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
 
         function fillPeeks() {
-            const cart = readJSON('vero_cart', []);
-            const cartArr = Array.isArray(cart) ? cart : [];
-            const cartCount = cartArr.reduce((n, it) => n + (it.qty || 1), 0);
-            const cartTotal = cartArr.reduce((s, it) => s + (Number(it.price) || 0) * (it.qty || 1), 0);
-
-            const wishlist = readJSON('vero_wishlist', []);
-            const listings = readJSON('vero_listings', []);
+            const listingsRaw = readJSON('vero_listings', []);
+            const listings = Array.isArray(listingsRaw) ? listingsRaw : [];
             const drafts   = readJSON('vero_drafts', []);
             const chats    = readJSON('vero_chats', {});
             const len = v => Array.isArray(v) ? v.length : (v && typeof v === 'object' ? Object.keys(v).length : 0);
 
+            // Total value sitting on the shelf across every live listing.
+            const shelfValue = listings.reduce((s, p) => s + priceOf(p.price), 0);
+
             const DATA = {
-                profile:  [[len(wishlist), 'saved']],
-                products: [[len(listings), 'listed'], [len(drafts), 'drafts']],
-                expenses: [[money(cartTotal), 'spent'], [cartCount, 'purchases']],
-                cart:     [[cartCount, 'items'], [money(cartTotal), 'to pay']],
+                profile:  [[len(listings), 'listed']],
+                listings: [[len(listings), 'listed'], [len(drafts), 'drafts']],
+                sales:    [[money(shelfValue), 'shelf value'], [len(listings), 'live']],
+                drafts:   [[len(drafts), 'drafts']],
                 chats:    [[len(chats), 'chats']],
             };
 
