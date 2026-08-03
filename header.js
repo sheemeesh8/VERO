@@ -722,6 +722,10 @@
             transition: color 0.2s ease, padding-left 0.2s ease;
         }
         .vero-drawer-nav a:hover { color: rgba(255,255,255,0.6); padding-left: 6px; }
+        .vero-drawer-nav .vero-drawer-heading {
+            font-size: 11px; font-weight: 700; letter-spacing: 2.4px; text-transform: uppercase;
+            color: rgba(255,255,255,0.4); padding: 22px 0 4px; margin-top: 6px;
+        }
         .vero-drawer-social {
             margin-top: auto; padding-top: 28px;
             display: flex; align-items: center; gap: 20px;
@@ -978,6 +982,8 @@
                 <a onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
                 <a href="about.html">About Us</a>
                 <a onclick="veroCloseDrawer(); openMagazine()">The Closet Magazine</a>
+                <span class="vero-drawer-heading">Sellers Area</span>
+                <a onclick="veroCloseDrawer(); openSellerArea()">Enter Seller Area</a>
             </nav>
             <div class="vero-drawer-social">
                 <a href="#" aria-label="Instagram">${DRAWER_ICONS.instagram}</a>
