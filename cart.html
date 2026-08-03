@@ -119,6 +119,34 @@
             font-size: 15px; color: #9a9a95; text-align: center;
         }
 
+        /* Per-card select box — a black square that shows a white ✓ when the item
+           is chosen for checkout. Sits opposite the trash control. */
+        .product-card .pc-check {
+            position: absolute; top: 10px; left: 10px; z-index: 3;
+            width: 30px; height: 30px; border-radius: 6px;
+            border: 1.6px solid #111; background: #fff; cursor: pointer;
+            display: grid; place-items: center; padding: 0; transition: background 0.15s, transform 0.15s;
+        }
+        .product-card .pc-check:hover { transform: scale(1.08); }
+        .product-card .pc-check.on { background: #111; }
+        .product-card .pc-check svg { width: 18px; height: 18px; stroke: #fff; stroke-width: 3; fill: none; display: none; }
+        .product-card .pc-check.on svg { display: block; }
+
+        /* Sticky selection summary — same black/Oswald language as the checkout,
+           pinned to the viewport and faded in/out as items are ticked. */
+        .sel-bar {
+            position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 22px);
+            z-index: 80; display: flex; align-items: center; gap: 20px;
+            background: #111; color: #fff; padding: 15px 30px; border-radius: 999px;
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            box-shadow: 0 14px 40px rgba(0,0,0,0.28);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.22,1,0.36,1), visibility 0.32s;
+        }
+        .sel-bar.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+        .sel-bar .sel-count { font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+        .sel-bar .sel-total { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+
         /* Checkout bar — same framed language as the other cards. */
         .checkout {
             display: flex; align-items: center; justify-content: space-between; gap: 24px;
@@ -159,6 +187,12 @@
 
         <div id="cartBody"></div>
         <div id="checkoutHost"></div>
+    </div>
+
+    <!-- Sticky selection summary — fades in while items are ticked for checkout. -->
+    <div class="sel-bar" id="selBar" aria-live="polite">
+        <span class="sel-count" id="selBarCount"></span>
+        <span class="sel-total" id="selBarTotal"></span>
     </div>
 
     <script>
@@ -216,6 +250,14 @@
         let MODE = cart.some(it => typeOf(it) === 'clothing') ? 'clothing'
                  : cart.some(it => typeOf(it) === 'art') ? 'art' : 'clothing';
 
+        // Which cart items (by index) are ticked for checkout. Everything starts
+        // selected, so the total matches the whole cart until the buyer unticks.
+        const selected = new Set(cart.map((_, i) => i));
+        window.toggleSelect = function (idx) {
+            if (selected.has(idx)) selected.delete(idx); else selected.add(idx);
+            render();
+        };
+
         const priceNum = p => parseFloat(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
         const priceStr = p => {
             const s = String(p == null ? '' : p).trim();
@@ -235,9 +277,16 @@
         function cartCardHTML(item, idx) {
             const rating = item.rating || 4.5;
             const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+            const on = selected.has(idx) ? ' on' : '';
             return `
                 <a href="${productPageUrl(item)}" class="product-card cart-item" data-idx="${idx}">
                     <div class="product-image">${item.icon || '🛍️'}
+                        <button class="pc-check${on}" title="Select for checkout" aria-label="Select for checkout"
+                                onclick="event.preventDefault(); event.stopPropagation(); toggleSelect(${idx})">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </button>
                         <button class="product-icon remove" title="Remove from cart"
                                 onclick="event.preventDefault(); event.stopPropagation(); removeItem(${idx})">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -272,6 +321,7 @@
                 host.innerHTML = '';
                 document.getElementById('headTotal').innerHTML = '';
                 sub.textContent = "The items you've gathered, ready to check out.";
+                document.getElementById('selBar').classList.remove('show');
                 return;
             }
 
@@ -300,23 +350,40 @@
             const total = mine.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
             sub.textContent = `${count} item${count === 1 ? '' : 's'} in your ${MODE} cart · ready to check out.`;
             document.getElementById('headTotal').innerHTML = `Total <b>₪${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>`;
+
+            // Checkout pinned at the end, with the ticked items' count + sum beside it.
+            const chosen = mine.filter(({ idx }) => selected.has(idx));
+            const selCount = chosen.reduce((s, { it }) => s + (it.qty || 1), 0);
+            const selTotal = chosen.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
+            const selTotalStr = selTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             host.innerHTML = `
                 <div class="checkout">
-                    <button class="checkout-btn" onclick="veroCheckout()">Checkout &#8594;</button>
+                    <button class="checkout-btn" onclick="veroCheckout()"${selCount ? '' : ' disabled style="opacity:.4;cursor:not-allowed;"'}>Checkout &#8594;</button>
+                    <div class="checkout-total">${selCount} selected <b>₪${selTotalStr}</b></div>
                 </div>`;
+
+            // Sticky summary popup — visible only while something is ticked.
+            document.getElementById('selBarCount').textContent = `${selCount} selected`;
+            document.getElementById('selBarTotal').innerHTML = `₪${selTotalStr}`;
+            document.getElementById('selBar').classList.toggle('show', selCount > 0);
         }
 
         // Remove keeps the site's own cart storage in sync (demo items aren't saved).
         window.removeItem = function (idx) {
             cart.splice(idx, 1);
             if (!DEMO) localStorage.setItem('vero_cart', JSON.stringify(cart));
+            // Indices shifted — resync the selection to the remaining items.
+            selected.clear();
+            cart.forEach((_, i) => selected.add(i));
             render();
         };
 
         // Checkout — turns the active cart into conversations with each seller,
         // written to the same vero_chats store the Chats page reads, then opens it.
         window.veroCheckout = function () {
-            const mine = cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
+            // Only the ticked items go through checkout.
+            const mine = cart.map((it, idx) => ({ it, idx }))
+                .filter(({ it, idx }) => typeOf(it) === MODE && selected.has(idx));
             if (!mine.length) return;
 
             const store = readJSON('vero_chats', {});
