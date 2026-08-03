@@ -669,15 +669,7 @@
             display: block; height: 3.5px; border-radius: 999px;
             background: currentColor; transition: width 0.25s ease, opacity 0.2s ease;
         }
-        #siteHeader .vero-hamburger span:nth-child(1) { width: 100%; }
-        #siteHeader .vero-hamburger span:nth-child(2) {
-            width: 72%;
-            background: #eaff00;
-            border: 1px solid #111;
-        }
-        #siteHeader .vero-hamburger span:nth-child(3) { width: 46%; }
-        #siteHeader .vero-hamburger:hover span:nth-child(2) { width: 100%; }
-        #siteHeader .vero-hamburger:hover span:nth-child(3) { width: 100%; }
+        #siteHeader .vero-hamburger span { width: 100%; }
 
         /* Slide-in side drawer */
         .vero-drawer-overlay {
