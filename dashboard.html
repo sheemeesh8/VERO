@@ -195,8 +195,8 @@
         .switch input { opacity: 0; width: 0; height: 0; }
         .switch .slider { position: absolute; inset: 0; border: 1.4px solid #000; border-radius: 999px; background: #fff; transition: 0.2s; cursor: pointer; }
         .switch .slider::before { content: ""; position: absolute; width: 15px; height: 15px; right: 3px; top: 2.5px; background: #000; border-radius: 50%; transition: 0.2s; }
-        .switch input:checked + .slider { background: #000; }
-        .switch input:checked + .slider::before { transform: translateX(-20px); background: #fff; }
+        .switch input:checked + .slider { background: #fff; }
+        .switch input:checked + .slider::before { transform: translateX(-20px); background: #000; }
 
         /* ---- MY TIME ---- */
         .mytime { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
@@ -797,46 +797,69 @@
              + `<div class="sec-note" style="margin-top:6px;">${buckets[2].n} פריטים תקועים מעל 30 יום ודורשים טיפול.</div>`;
     }
 
-    // Sales trend with three ranges: yearly (12 months), monthly (last ~30 days by
-    // week), weekly (last 7 days). Both series derived from real dates only.
+    // Sales trend as a GROUPED BAR chart with a ₪ axis. Three ranges: yearly (12
+    // months, labelled by month), monthly (last 30 days in 6 date buckets), weekly
+    // (7 days, labelled by weekday). Bars measure value in ₪ (listed vs sold);
+    // the left axis runs from the highest value down to 0. Real dates only.
     let trendRange = 'year';
     const RANGE_CFG = {
-        year:  { n: 12, ms: 30 * DAY,  start: 'לפני שנה',    end: 'החודש' },
-        month: { n: 4,  ms: 7 * DAY,   start: 'לפני חודש',   end: 'השבוע' },
-        week:  { n: 7,  ms: DAY,       start: 'לפני שבוע',    end: 'היום' },
+        year:  { n: 12, ms: 30 * DAY, kind: 'month' },
+        month: { n: 6,  ms: 5 * DAY,  kind: 'date' },
+        week:  { n: 7,  ms: DAY,      kind: 'weekday' },
     };
+    const HE_MONTHS = ['ינו׳','פבר׳','מרץ','אפר׳','מאי','יוני','יולי','אוג׳','ספט׳','אוק׳','נוב׳','דצמ׳'];
+    const HE_DAYS = ['א','ב','ג','ד','ה','ו','ש'];
     function bucketIndex(ts, cfg, now) {
         const b = Math.floor((now - ts) / cfg.ms);
         return (b >= 0 && b < cfg.n) ? cfg.n - 1 - b : -1;
     }
+    function bucketLabel(i, cfg, now) {
+        const dt = new Date(now - (cfg.n - 1 - i) * cfg.ms);
+        if (cfg.kind === 'month')   return HE_MONTHS[dt.getMonth()];
+        if (cfg.kind === 'weekday') return HE_DAYS[dt.getDay()];
+        return dt.getDate() + '.' + (dt.getMonth() + 1);
+    }
+    const kMoney = v => v >= 1000 ? '₪' + (v / 1000).toFixed(v % 1000 ? 1 : 0) + 'k' : '₪' + Math.round(v);
     function renderTrend() {
-        const cfg = RANGE_CFG[trendRange], now = Date.now();
-        const listed = new Array(cfg.n).fill(0), sold = new Array(cfg.n).fill(0);
+        const cfg = RANGE_CFG[trendRange], now = Date.now(), n = cfg.n;
+        const listed = new Array(n).fill(0), sold = new Array(n).fill(0);
         INVENTORY.forEach(it => {
             const li = bucketIndex(it.listedAt, cfg, now);
-            if (li >= 0) listed[li]++;
+            if (li >= 0) listed[li] += priceOf(it.price);
             if (it.status === 'sold' && it.soldAt) {
                 const si = bucketIndex(it.soldAt, cfg, now);
-                if (si >= 0) sold[si]++;
+                if (si >= 0) sold[si] += priceOf(it.price);
             }
         });
-        const W = 460, H = 180, pad = 26;
-        const max = Math.max(1, ...listed, ...sold);
-        const x = i => cfg.n === 1 ? W / 2 : pad + (i * (W - pad * 2)) / (cfg.n - 1);
-        const y = v => H - pad - (v / max) * (H - pad * 2);
-        const path = arr => arr.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
-        const dots = (arr, c) => arr.map((v, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${c}"/>`).join('');
-        const hasData = listed.some(Boolean) || sold.some(Boolean);
-        document.getElementById('trendChart').innerHTML = hasData ?
+        const max = Math.max(...listed, ...sold);
+        if (max <= 0) { document.getElementById('trendChart').innerHTML = '<div class="empty-note">אין עדיין נתוני מכירות בטווח הזה.</div>'; return; }
+
+        const W = 480, H = 210, padL = 48, padR = 10, padT = 14, padB = 28;
+        const plotW = W - padL - padR, plotH = H - padT - padB;
+        const groupW = plotW / n, barW = Math.min(15, groupW * 0.3);
+        const yOf = v => padT + plotH - (v / max) * plotH;
+
+        // Left ₪ axis — 4 gridlines from 0 up to the highest value.
+        const TICKS = 4;
+        let axis = '';
+        for (let t = 0; t <= TICKS; t++) {
+            const val = (max / TICKS) * t, y = yOf(val);
+            axis += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="#f2f2f0"/>
+                     <text x="${padL - 6}" y="${(y + 3).toFixed(1)}" font-size="9" fill="#b7b7b2" text-anchor="end">${kMoney(val)}</text>`;
+        }
+        let bars = '';
+        for (let i = 0; i < n; i++) {
+            const cx = padL + i * groupW + groupW / 2;
+            const lx = cx - barW - 1.5, sx = cx + 1.5;
+            bars += `<rect x="${lx.toFixed(1)}" y="${yOf(listed[i]).toFixed(1)}" width="${barW.toFixed(1)}" height="${((listed[i] / max) * plotH).toFixed(1)}" rx="2" fill="#111"><title>הועלו · ${kMoney(listed[i])}</title></rect>
+                     <rect x="${sx.toFixed(1)}" y="${yOf(sold[i]).toFixed(1)}" width="${barW.toFixed(1)}" height="${((sold[i] / max) * plotH).toFixed(1)}" rx="2" fill="#1f8f4e"><title>נמכרו · ${kMoney(sold[i])}</title></rect>
+                     <text x="${cx.toFixed(1)}" y="${H - 9}" font-size="10" fill="#9a9a95" text-anchor="middle">${bucketLabel(i, cfg, now)}</text>`;
+        }
+        document.getElementById('trendChart').innerHTML =
             `<svg viewBox="0 0 ${W} ${H}" role="img">
-                <line x1="${pad}" y1="${H - pad}" x2="${W - pad}" y2="${H - pad}" stroke="#eee"/>
-                <path d="${path(listed)}" fill="none" stroke="#111" stroke-width="2"/>
-                <path d="${path(sold)}" fill="none" stroke="#1f8f4e" stroke-width="2"/>
-                ${dots(listed, '#111')}${dots(sold, '#1f8f4e')}
-                <text x="${pad}" y="${H - 6}" font-size="10" fill="#b7b7b2">${cfg.start}</text>
-                <text x="${W - pad}" y="${H - 6}" font-size="10" fill="#b7b7b2" text-anchor="end">${cfg.end}</text>
-             </svg>` :
-            '<div class="empty-note">אין עדיין נתוני מכירות בטווח הזה.</div>';
+                <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="#e4e4e0"/>
+                ${axis}${bars}
+             </svg>`;
     }
     document.querySelectorAll('#trendToggle button').forEach(b => b.addEventListener('click', () => {
         trendRange = b.dataset.range;
