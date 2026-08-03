@@ -78,8 +78,14 @@
         .divider { height: 1px; background: #eee; margin: 26px 0; }
         .col-right { display: flex; flex-direction: column; }
 
-        /* Purchases list. */
-        .exp-list { display: flex; flex-direction: column; }
+        /* Purchases list — horizontal slider, three rows per slide. */
+        .exp-list { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .exp-list::-webkit-scrollbar { height: 4px; }
+        .exp-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 999px; }
+        .exp-slide { flex: 0 0 100%; scroll-snap-align: start; display: flex; flex-direction: column; }
+        .exp-dots { display: flex; justify-content: center; gap: 7px; margin-top: 14px; }
+        .exp-dots .d { width: 7px; height: 7px; border-radius: 50%; background: #ddd; border: none; cursor: pointer; padding: 0; transition: background 0.2s; }
+        .exp-dots .d.on { background: #111; }
         .exp-row {
             display: flex; align-items: center; gap: 16px;
             padding: 16px 0; border-bottom: 1px solid #eee;
@@ -260,7 +266,7 @@
         if (!items.length) {
             list.innerHTML = '<div class="exp-empty">No purchases yet — items you add to your cart appear here.</div>';
         } else {
-            list.innerHTML = items.map(it => `
+            const rowHTML = it => `
                 <div class="exp-row">
                     <div class="exp-emoji">${it.icon || '🛍️'}</div>
                     <div>
@@ -268,7 +274,28 @@
                         <div class="exp-seller">${it.seller || 'VERO'}</div>
                     </div>
                     <div class="exp-price">${nis(priceOf(it))}</div>
-                </div>`).join('');
+                </div>`;
+            // Three purchases per slide so the list stays compact.
+            const slides = [];
+            for (let i = 0; i < items.length; i += 3) slides.push(items.slice(i, i + 3));
+            list.innerHTML = slides.map(group =>
+                `<div class="exp-slide">${group.map(rowHTML).join('')}</div>`).join('');
+
+            // Dots to page between slides (only when there's more than one).
+            if (slides.length > 1) {
+                const dots = document.createElement('div');
+                dots.className = 'exp-dots';
+                dots.innerHTML = slides.map((_, i) => `<button class="d${i === 0 ? ' on' : ''}" aria-label="Slide ${i + 1}"></button>`).join('');
+                list.after(dots);
+                const dotEls = [...dots.children];
+                dotEls.forEach((d, i) => d.addEventListener('click', () => {
+                    list.scrollTo({ left: list.clientWidth * i, behavior: 'smooth' });
+                }));
+                list.addEventListener('scroll', () => {
+                    const i = Math.round(list.scrollLeft / list.clientWidth);
+                    dotEls.forEach((d, j) => d.classList.toggle('on', j === i));
+                });
+            }
         }
 
         // ===== Monthly Spend Tracker — group cart spend by month =====

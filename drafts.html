@@ -98,7 +98,19 @@
         @media (max-width: 780px) {
             .prod-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
         }
+
+        /* Draft badge riding on the shared feed card. */
+        .draft-card { cursor: pointer; }
+        .draft-card .draft-badge {
+            position: absolute; top: 12px; left: 12px; z-index: 3;
+            padding: 6px 12px; border-radius: 999px; font-size: 10px; letter-spacing: 1.5px;
+            text-transform: uppercase; font-weight: 500;
+            border: 1px dashed #8a8a85; background: #fff; color: #8a8a85;
+            font-family: 'Oswald', 'Segoe UI', sans-serif !important;
+        }
     </style>
+    <!-- The shared product card: drafts render as the same object as the feed. -->
+    <link rel="stylesheet" href="product-card.css">
 </head>
 <body>
     <div class="page-cover"></div>
@@ -151,20 +163,27 @@
             const src = imgOf(p);
             const cat = p.category === 'art' ? 'Art' : p.category === 'clothing' ? 'Clothing' : '—';
             const icon = p.category === 'art' ? '🖼️' : '🛍️';
+            const fig = src ? `<img src="${src}" alt="">` : icon;
+            // The same object as the feed card — click to continue, trash to delete.
             return `
-                <div class="prod">
-                    <div class="prod-img" ${src ? `style="background-image:url('${src}')"` : ''}>
-                        ${src ? '' : `<div class="placeholder">${icon}</div>`}
-                        <span class="badge">Draft</span>
+                <div class="product-card draft-card" data-i="${i}" role="button" tabindex="0" title="Continue this draft">
+                    <div class="product-image">${fig}
+                        <span class="draft-badge">Draft</span>
+                        <button class="product-icon remove" title="Delete draft" data-act="delete" data-i="${i}">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
                     </div>
-                    <div class="prod-body">
-                        <div class="prod-name">${titleOf(p)}</div>
-                        <div class="prod-meta">${cat}</div>
-                        <div class="prod-price">${nis(p.price)}</div>
-                        <div class="prod-meta">Saved · ${fmtDate(p.savedAt)}</div>
-                        <div class="prod-actions">
-                            <button class="p-btn" data-act="continue" data-i="${i}">Continue</button>
-                            <button class="p-btn danger" data-act="delete" data-i="${i}">Delete</button>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price"><span class="vprice">${nis(p.price)}</span></div>
+                        </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${p.brand || 'Draft'}</div>
+                            <div class="product-name">${p.itemType || cat}</div>
+                            <div class="product-rating">Saved · ${fmtDate(p.savedAt)}</div>
                         </div>
                     </div>
                 </div>`;
@@ -178,19 +197,24 @@
         }
 
         document.querySelector('.wrap').addEventListener('click', (e) => {
-            const btn = e.target.closest('.p-btn');
-            if (!btn) return;
-            const i = Number(btn.dataset.i);
-            if (!drafts[i]) return;
-            if (btn.dataset.act === 'delete') {
+            // Trash icon → delete the draft.
+            const del = e.target.closest('[data-act="delete"]');
+            if (del) {
+                e.preventDefault(); e.stopPropagation();
+                const i = Number(del.dataset.i);
+                if (!drafts[i]) return;
                 drafts.splice(i, 1);
                 save('vero_drafts', drafts);
                 render();
-            } else if (btn.dataset.act === 'continue') {
-                // Hand the draft to the upload page, which picks it up on load.
-                save('vero_resume_draft', drafts[i]);
-                window.location.href = 'index.html';
+                return;
             }
+            // Click anywhere else on the card → continue it on the upload page.
+            const card = e.target.closest('.product-card');
+            if (!card) return;
+            const i = Number(card.dataset.i);
+            if (!drafts[i]) return;
+            save('vero_resume_draft', drafts[i]);
+            window.location.href = 'index.html';
         });
 
         render();

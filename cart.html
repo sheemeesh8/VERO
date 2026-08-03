@@ -87,6 +87,29 @@
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 28px;
         }
+        /* First card of every category: a black cover the exact size of a product
+           card, carrying the category name. */
+        .cat-cover {
+            aspect-ratio: 7 / 10;              /* matches .product-card (0.7 w/h) */
+            background: #111; color: #fff;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 26px; box-sizing: border-box; position: relative; overflow: hidden;
+        }
+        .cat-cover .cc-kicker {
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+            color: rgba(255,255,255,0.6); position: absolute; top: 26px; left: 26px;
+        }
+        .cat-cover .cc-title {
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: clamp(26px, 3.4vw, 40px); font-weight: 600; line-height: 1.05;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+        .cat-cover .cc-count {
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+            color: rgba(255,255,255,0.6); position: absolute; bottom: 26px; left: 26px;
+        }
         .cart-empty {
             margin-top: 52px; border: 1px solid #000; padding: 60px 40px;
             font-size: 15px; color: #9a9a95; text-align: center;
@@ -184,7 +207,10 @@
             localStorage.setItem('vero_cart_seeded', '1');
         }
 
-        let MODE = 'clothing';
+        // Open the tab that actually has items, so the cart never reads "empty"
+        // while the personal-area peek counts items of the other type.
+        let MODE = cart.some(it => typeOf(it) === 'clothing') ? 'clothing'
+                 : cart.some(it => typeOf(it) === 'art') ? 'art' : 'clothing';
 
         const priceNum = p => parseFloat(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
         const priceStr = p => {
@@ -256,7 +282,14 @@
             body.innerHTML = [...groups.entries()].map(([cat, rows]) => `
                 <div class="cat-section">
                     <div class="cat-label"><b>${cat}</b><span>${rows.length} item${rows.length === 1 ? '' : 's'}</span></div>
-                    <div class="cart-grid">${rows.map(r => cartCardHTML(r.it, r.idx)).join('')}</div>
+                    <div class="cart-grid">
+                        <div class="cat-cover">
+                            <span class="cc-kicker">VERO</span>
+                            <div class="cc-title">${cat}</div>
+                            <span class="cc-count">${rows.length} piece${rows.length === 1 ? '' : 's'}</span>
+                        </div>
+                        ${rows.map(r => cartCardHTML(r.it, r.idx)).join('')}
+                    </div>
                 </div>`).join('');
 
             const count = mine.reduce((s, { it }) => s + (it.qty || 1), 0);
@@ -314,6 +347,9 @@
                 render();
             });
         });
+
+        // Reflect the auto-chosen tab in the toggle UI before the first render.
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === MODE));
 
         render();
 

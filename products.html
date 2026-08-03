@@ -145,6 +145,16 @@
         .draft-card .prod-img { border-bottom: 1px dashed #8a8a85; }
         .draft-card .badge { border-style: dashed; color: #8a8a85; }
 
+        /* Draft badge riding on the shared feed card (feed-CSS drafts). */
+        .product-card.draft-card { border: none; cursor: pointer; }
+        .product-card.draft-card .draft-badge {
+            position: absolute; top: 12px; left: 12px; z-index: 3;
+            padding: 6px 12px; border-radius: 999px; font-size: 10px; letter-spacing: 1.5px;
+            text-transform: uppercase; font-weight: 500;
+            border: 1px dashed #8a8a85; background: #fff; color: #8a8a85;
+            font-family: 'Oswald', 'Segoe UI', sans-serif !important;
+        }
+
         /* Negotiation popup. */
         .pop-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.42);
@@ -170,6 +180,8 @@
             .prod-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
         }
     </style>
+    <!-- The shared product card, so drafts render as the same object as the feed. -->
+    <link rel="stylesheet" href="product-card.css">
 </head>
 <body>
     <div class="page-cover"></div>
@@ -341,21 +353,24 @@
             const src = imgOf(d);
             const name = d.name || d.itemType || d.brand || 'Untitled draft';
             const draftsHref = isSeller ? 'drafts.html?from=seller' : 'drafts.html';
+            const fig = src ? `<img src="${src}" alt="">` : (d.icon || '📝');
+            // Same object as the feed card — clicking continues the draft.
             return `
-                <div class="prod draft-card">
-                    <div class="prod-img" ${src ? `style="background-image:url('${src}')"` : ''}>
-                        ${src ? '' : `<div class="placeholder">${d.icon || '📝'}</div>`}
-                        <span class="badge">Draft</span>
+                <a class="product-card draft-card" href="${draftsHref}" title="Continue this draft">
+                    <div class="product-image">${fig}
+                        <span class="draft-badge">Draft</span>
                     </div>
-                    <div class="prod-body">
-                        <div class="prod-name">${name}</div>
-                        <div class="prod-meta">${[d.brand, d.category].filter(Boolean).join(' · ') || 'Not finished'}</div>
-                        <div class="prod-price">${d.price ? nis(d.price) : 'No price yet'}</div>
-                        <div class="prod-actions">
-                            <a class="p-btn" href="${draftsHref}" style="text-align:center;text-decoration:none;line-height:1.6;">Continue</a>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price"><span class="vprice">${d.price ? nis(d.price) : 'No price yet'}</span></div>
+                        </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${d.brand || 'Draft'}</div>
+                            <div class="product-name">${d.itemType || d.category || name}</div>
+                            <div class="product-rating">Not finished</div>
                         </div>
                     </div>
-                </div>`;
+                </a>`;
         }
 
         function render() {
