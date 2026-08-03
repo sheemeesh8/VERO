@@ -132,6 +132,83 @@
             .stats { grid-template-columns: 1fr; }
             .dim-grid { grid-template-columns: 1fr; }
         }
+
+        /* ===================== Shop settings (seller mode) =====================
+           Everything marked .seller-only is hidden until the page is opened from
+           the seller hub (?from=seller → body.is-seller); the buyer-only fit card
+           steps aside in that mode. */
+        .seller-only { display: none; }
+        body.is-seller .seller-only { display: block; }
+        body.is-seller .field.seller-only { display: block; }
+        body.is-seller .buyer-only { display: none; }
+
+        /* Uploadable avatar with a small edit badge. */
+        .avatar-wrap { position: relative; width: 78px; height: 78px; margin-bottom: 18px; }
+        .avatar-wrap .avatar {
+            margin-bottom: 0; overflow: hidden;
+            background-size: cover; background-position: center;
+        }
+        .avatar-edit {
+            position: absolute; right: -4px; bottom: -4px;
+            width: 26px; height: 26px; border-radius: 50%; border: 1.4px solid #000;
+            background: #fff; display: none; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 12px;
+        }
+        body.is-seller .avatar-edit { display: flex; }
+
+        .char-count { font-size: 11px; color: #b0b0aa; text-align: right; margin-top: 4px; }
+        .card-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
+        .card-hint { font-size: 12px; color: #9a9a95; line-height: 1.5; margin-bottom: 16px; }
+
+        /* Favorite-brand chips + free-text add field. */
+        .chip-input { display: flex; flex-wrap: wrap; gap: 10px; }
+        .brand-chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            border: 1px solid #000; border-radius: 999px; padding: 8px 10px 8px 16px;
+            font-size: 12px; letter-spacing: 0.5px;
+        }
+        .brand-chip button { border: none; background: none; cursor: pointer; font-size: 15px; line-height: 1; color: #9a9a95; padding: 0; }
+        .brand-chip button:hover { color: #000; }
+
+        /* Notification toggle rows. */
+        .toggle-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 15px 0; border-bottom: 1px solid #eee;
+        }
+        .toggle-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .toggle-row .t-label { font-size: 14px; }
+        .toggle-row .t-desc { font-size: 12px; color: #9a9a95; margin-top: 3px; }
+        .switch { position: relative; width: 44px; height: 24px; flex: none; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch .slider {
+            position: absolute; inset: 0; border: 1.4px solid #000; border-radius: 999px;
+            background: #fff; transition: background 0.2s; cursor: pointer;
+        }
+        .switch .slider::before {
+            content: ""; position: absolute; width: 15px; height: 15px; left: 3px; top: 2.5px;
+            background: #000; border-radius: 50%; transition: transform 0.2s, background 0.2s;
+        }
+        .switch input:checked + .slider { background: #000; }
+        .switch input:checked + .slider::before { transform: translateX(20px); background: #fff; }
+
+        .btn-dark {
+            margin-top: 18px; padding: 12px 26px; border: 1.4px solid #000; border-radius: 999px;
+            background: #000; color: #fff; font-family: inherit; font-size: 12px; letter-spacing: 1.5px;
+            text-transform: uppercase; cursor: pointer; transition: background 0.2s, color 0.2s;
+        }
+        .btn-dark:hover { background: #fff; color: #000; }
+
+        /* Connected accounts. */
+        .acct-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #eee; }
+        .acct-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .acct-id { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+        .acct-logo { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 15px; border: 1px solid #ddd; border-radius: 50%; }
+        .acct-btn {
+            padding: 8px 18px; border: 1.4px solid #000; border-radius: 999px; background: #fff; color: #000;
+            font-family: inherit; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: 0.2s;
+        }
+        .acct-btn:hover { background: #000; color: #fff; }
+        .acct-btn.connected { background: #000; color: #fff; }
     </style>
 </head>
 <body>
@@ -146,22 +223,32 @@
         <div class="grid">
             <!-- Identity card (editable, saved to localStorage) -->
             <div class="card">
-                <div class="avatar" id="avatar">V</div>
+                <div class="avatar-wrap">
+                    <div class="avatar" id="avatar">V</div>
+                    <label class="avatar-edit" title="Change photo">&#9998;<input id="pf-photo" type="file" accept="image/*" hidden></label>
+                </div>
                 <div class="field">
-                    <div class="card-label">Name</div>
+                    <div class="card-label" id="nameLabel">Name</div>
                     <input id="pf-name" type="text" placeholder="Your name">
+                    <div class="card-hint seller-only" style="margin:6px 0 0;">The name shown publicly on your feed and products.</div>
                 </div>
                 <div class="field">
                     <div class="card-label">Email</div>
                     <input id="pf-email" type="email" placeholder="you@email.com">
                 </div>
+                <div class="field seller-only">
+                    <div class="card-label">Phone</div>
+                    <input id="pf-phone" type="tel" placeholder="+972 5X-XXX-XXXX">
+                </div>
                 <div class="field">
                     <div class="card-label">Location</div>
                     <input id="pf-location" type="text" placeholder="City, Country">
+                    <div class="card-hint seller-only" style="margin:6px 0 0;">Helps buyers know if local pickup is an option.</div>
                 </div>
                 <div class="field">
                     <div class="card-label">About</div>
-                    <textarea id="pf-bio" rows="3" placeholder="A short line about you"></textarea>
+                    <textarea id="pf-bio" rows="3" maxlength="200" placeholder="A short line about you"></textarea>
+                    <div class="char-count seller-only"><span id="bioCount">0</span>/200</div>
                 </div>
                 <div class="save-note" id="saveNote">Changes save automatically.</div>
             </div>
@@ -188,8 +275,8 @@
                     </div>
                 </div>
 
-                <!-- My Dimensions -->
-                <div class="card" style="margin-top:24px;">
+                <!-- My Dimensions (buyer fit — hidden in shop mode) -->
+                <div class="card buyer-only" style="margin-top:24px;">
                     <div class="section-head">
                         <div class="card-label" style="margin:0;">My dimensions</div>
                         <div class="section-note">Perfect Fit AI</div>
@@ -227,6 +314,72 @@
                     <div class="dim-note" id="dimNote">Your measurements save automatically.</div>
                     <span class="dim-fit" id="dimFit">Perfect Fit · not set</span>
                 </div>
+
+                <!-- ===== Personal style / favorite brands ===== -->
+                <div class="card seller-only" style="margin-top:24px;">
+                    <div class="card-title">Personal style &amp; favorite brands</div>
+                    <div class="card-hint">Tag the brands and sizes you stock — VERO tailors feed recommendations to match.</div>
+                    <div class="chip-input" id="brandChips"></div>
+                    <div class="field" style="margin:16px 0 0;">
+                        <input id="brandInput" type="text" placeholder="Add a brand and press Enter — e.g. Zara, Nike">
+                    </div>
+                </div>
+
+                <!-- ===== Push & email notifications ===== -->
+                <div class="card seller-only" style="margin-top:24px;">
+                    <div class="card-title">Push &amp; email notifications</div>
+                    <div class="card-hint">Choose what reaches you by push and email.</div>
+                    <label class="toggle-row">
+                        <div><div class="t-label">New chat messages</div><div class="t-desc">When a buyer messages you.</div></div>
+                        <span class="switch"><input type="checkbox" data-notif="chat"><span class="slider"></span></span>
+                    </label>
+                    <label class="toggle-row">
+                        <div><div class="t-label">Order &amp; shipping status</div><div class="t-desc">Updates on orders and deliveries.</div></div>
+                        <span class="switch"><input type="checkbox" data-notif="orders"><span class="slider"></span></span>
+                    </label>
+                    <label class="toggle-row">
+                        <div><div class="t-label">Wishlist price drops</div><div class="t-desc">When a saved item drops in price.</div></div>
+                        <span class="switch"><input type="checkbox" data-notif="price"><span class="slider"></span></span>
+                    </label>
+                    <label class="toggle-row">
+                        <div><div class="t-label">New offers</div><div class="t-desc">New price offers from buyers and sellers.</div></div>
+                        <span class="switch"><input type="checkbox" data-notif="offers"><span class="slider"></span></span>
+                    </label>
+                </div>
+
+                <!-- ===== Change password ===== -->
+                <div class="card seller-only" style="margin-top:24px;">
+                    <div class="card-title">Change password</div>
+                    <div class="card-hint">Manage your account security.</div>
+                    <div class="field">
+                        <div class="card-label">Current password</div>
+                        <input id="pw-current" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
+                    </div>
+                    <div class="field">
+                        <div class="card-label">New password</div>
+                        <input id="pw-new" type="password" placeholder="At least 8 characters">
+                    </div>
+                    <div class="field">
+                        <div class="card-label">Confirm new password</div>
+                        <input id="pw-confirm" type="password" placeholder="Repeat new password">
+                    </div>
+                    <button class="btn-dark" id="pwSave" type="button">Update password</button>
+                    <div class="save-note" id="pwNote"></div>
+                </div>
+
+                <!-- ===== Connected accounts ===== -->
+                <div class="card seller-only" style="margin-top:24px;">
+                    <div class="card-title">Connected accounts</div>
+                    <div class="card-hint">Link an account to sign in faster.</div>
+                    <div class="acct-row">
+                        <div class="acct-id"><span class="acct-logo">G</span> Google</div>
+                        <button class="acct-btn" data-acct="google" type="button">Connect</button>
+                    </div>
+                    <div class="acct-row">
+                        <div class="acct-id"><span class="acct-logo">&#63743;</span> Apple</div>
+                        <button class="acct-btn" data-acct="apple" type="button">Connect</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -235,9 +388,15 @@
         // ---- Seller-area context ----
         // Reached from the seller hub (?from=seller): the page reads as the seller's
         // shop, so swap the title and send "back" to the seller area, not the buyer one.
-        if (new URLSearchParams(location.search).get('from') === 'seller') {
+        const isSeller = new URLSearchParams(location.search).get('from') === 'seller';
+        if (isSeller) {
+            document.body.classList.add('is-seller');
             const title = document.querySelector('.head-title');
             if (title) title.textContent = 'My Shop';
+            const sub = document.querySelector('.head-sub');
+            if (sub) sub.textContent = 'Your shop details, preferences and settings.';
+            const nameLabel = document.getElementById('nameLabel');
+            if (nameLabel) nameLabel.textContent = 'Display name';
             const back = document.querySelector('.back');
             if (back) back.setAttribute('href', 'seller-area.html');
         }
@@ -273,18 +432,46 @@
             new Date(profile.since).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 
         // ---- Editable identity fields, persisted to vero_profile ----
-        const fields = { name: 'pf-name', email: 'pf-email', location: 'pf-location', bio: 'pf-bio' };
+        const fields = { name: 'pf-name', email: 'pf-email', phone: 'pf-phone', location: 'pf-location', bio: 'pf-bio' };
         Object.entries(fields).forEach(([key, id]) => {
             const el = document.getElementById(id);
-            if (profile[key]) el.value = profile[key];
+            if (el && profile[key]) el.value = profile[key];
         });
 
-        // Circle avatar shows the first letter of the name (falls back to V).
+        // Circle avatar: an uploaded photo when set, otherwise the first letter of
+        // the name (falls back to V).
+        const avatarEl = document.getElementById('avatar');
         function refreshAvatar() {
-            const n = (profile.name || '').trim();
-            document.getElementById('avatar').textContent = n ? n[0] : 'V';
+            if (profile.avatarImg) {
+                avatarEl.style.backgroundImage = `url('${profile.avatarImg}')`;
+                avatarEl.textContent = '';
+            } else {
+                avatarEl.style.backgroundImage = '';
+                const n = (profile.name || '').trim();
+                avatarEl.textContent = n ? n[0] : 'V';
+            }
         }
         refreshAvatar();
+
+        // ---- Profile picture upload (stored as a data URL on the profile) ----
+        const photoInput = document.getElementById('pf-photo');
+        if (photoInput) photoInput.addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                profile.avatarImg = reader.result;
+                localStorage.setItem('vero_profile', JSON.stringify(profile));
+                refreshAvatar();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // ---- Bio character counter (max 200) ----
+        const bioEl = document.getElementById('pf-bio');
+        const bioCount = document.getElementById('bioCount');
+        function refreshBioCount() { if (bioCount) bioCount.textContent = bioEl.value.length; }
+        if (bioEl) { bioEl.addEventListener('input', refreshBioCount); refreshBioCount(); }
 
         let saveTimer;
         Object.entries(fields).forEach(([key, id]) => {
@@ -325,6 +512,82 @@
                 });
             });
             refreshFit();
+        })();
+
+        // ===== Shop settings (seller mode) — all persisted to vero_profile =====
+        const saveProfile = () => localStorage.setItem('vero_profile', JSON.stringify(profile));
+
+        // ---- Favorite brands: chips added by typing + Enter, removed with × ----
+        (function brands() {
+            const wrap = document.getElementById('brandChips');
+            const input = document.getElementById('brandInput');
+            if (!wrap || !input) return;
+            if (!Array.isArray(profile.brands)) profile.brands = [];
+            const render = () => {
+                wrap.innerHTML = profile.brands.map((b, i) =>
+                    `<span class="brand-chip">${b}<button type="button" data-i="${i}" aria-label="Remove">&times;</button></span>`
+                ).join('');
+            };
+            render();
+            input.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                const val = input.value.trim();
+                if (val && !profile.brands.includes(val)) { profile.brands.push(val); saveProfile(); render(); }
+                input.value = '';
+            });
+            wrap.addEventListener('click', (e) => {
+                const btn = e.target.closest('button[data-i]');
+                if (!btn) return;
+                profile.brands.splice(Number(btn.dataset.i), 1); saveProfile(); render();
+            });
+        })();
+
+        // ---- Notifications: four push/email toggles, default on ----
+        (function notifications() {
+            if (!profile.notifications) profile.notifications = { chat: true, orders: true, price: true, offers: true };
+            document.querySelectorAll('input[data-notif]').forEach(box => {
+                const key = box.dataset.notif;
+                box.checked = profile.notifications[key] !== false;
+                box.addEventListener('change', () => {
+                    profile.notifications[key] = box.checked; saveProfile();
+                });
+            });
+        })();
+
+        // ---- Change password: validate only (no password is ever stored) ----
+        (function password() {
+            const btn = document.getElementById('pwSave');
+            if (!btn) return;
+            const cur = document.getElementById('pw-current');
+            const nw  = document.getElementById('pw-new');
+            const cf  = document.getElementById('pw-confirm');
+            const note = document.getElementById('pwNote');
+            btn.addEventListener('click', () => {
+                if (!cur.value || !nw.value || !cf.value) { note.textContent = 'Please fill in all three fields.'; return; }
+                if (nw.value.length < 8) { note.textContent = 'New password must be at least 8 characters.'; return; }
+                if (nw.value !== cf.value) { note.textContent = 'New passwords do not match.'; return; }
+                cur.value = nw.value = cf.value = '';
+                note.textContent = 'Password updated ✓';
+                setTimeout(() => { note.textContent = ''; }, 2000);
+            });
+        })();
+
+        // ---- Connected accounts: link/unlink Google & Apple (mock, state only) ----
+        (function connected() {
+            if (!profile.connected) profile.connected = { google: false, apple: false };
+            document.querySelectorAll('.acct-btn[data-acct]').forEach(btn => {
+                const key = btn.dataset.acct;
+                const paint = () => {
+                    const on = !!profile.connected[key];
+                    btn.textContent = on ? 'Connected' : 'Connect';
+                    btn.classList.toggle('connected', on);
+                };
+                paint();
+                btn.addEventListener('click', () => {
+                    profile.connected[key] = !profile.connected[key]; saveProfile(); paint();
+                });
+            });
         })();
 
         // Exit mirrors the entry: the image holds static while the data slides
