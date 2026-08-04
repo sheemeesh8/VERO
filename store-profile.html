@@ -122,58 +122,6 @@
             .feat-slider .product-card { width: calc((100% - 14px) / 2); }
         }
 
-        /* Audience banner — a full-bleed image slider, edge to edge of the page,
-           cycling Women / Men / Kids. Same treatment as the hero: grayscale
-           photo, bottom scrim, big label over it. */
-        .aud-banner {
-            position: relative; width: 100%; height: 58vh; min-height: 420px;
-            overflow: hidden; border-top: 1px solid #000; border-bottom: 1px solid #000;
-        }
-        .aud-slide {
-            position: absolute; inset: 0; cursor: pointer;
-            background: #23231f center / cover no-repeat; filter: grayscale(1);
-            opacity: 0; transition: opacity 1s ease; z-index: 1;
-        }
-        .aud-slide.is-active { opacity: 1; z-index: 2; }
-        .aud-slide::after {
-            content: ""; position: absolute; inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%);
-        }
-        .aud-label {
-            position: absolute; left: 40px; bottom: 34px; z-index: 3; color: #fff;
-            font-size: clamp(34px, 5vw, 62px); font-weight: 200; letter-spacing: 1px;
-            line-height: 1; pointer-events: none;
-        }
-        .aud-arrow {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
-            width: 46px; height: 46px; border-radius: 999px; cursor: pointer;
-            display: grid; place-items: center;
-            border: 1px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.25);
-            color: #fff; font-size: 20px; line-height: 1;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        .aud-arrow:hover { background: rgba(0,0,0,0.55); border-color: #fff; }
-        .aud-arrow.prev { left: 24px; }
-        .aud-arrow.next { right: 24px; }
-        @media (max-width: 700px) {
-            .aud-arrow { width: 38px; height: 38px; }
-            .aud-arrow.prev { left: 14px; }
-            .aud-arrow.next { right: 14px; }
-        }
-        .aud-dots {
-            position: absolute; right: 40px; bottom: 40px; z-index: 4;
-            display: flex; gap: 10px;
-        }
-        .aud-dot {
-            width: 9px; height: 9px; border-radius: 999px; padding: 0; cursor: pointer;
-            border: 1px solid #fff; background: transparent; transition: background 0.3s;
-        }
-        .aud-dot.is-active { background: #fff; }
-        @media (max-width: 700px) {
-            .aud-label { left: 20px; bottom: 24px; }
-            .aud-dots  { right: 20px; bottom: 28px; }
-        }
-
         /* ===================== AD BANNER =====================
            The seller's own promo, but a FIXED size on every store profile. */
         .ad-band {
@@ -253,10 +201,12 @@
             <div class="feat-slider" id="featSlider"></div>
         </div>
 
-        <!-- AUDIENCE BANNER — a full-bleed image slider that reaches both edges of
-             the page, cycling Women / Men / Kids. Clicking a slide filters the
-             feed by that audience. -->
-        <div class="aud-banner" id="audBanner"></div>
+        <!-- MORE PRODUCTS — another five pieces, same product card + rail as the
+             featured slider above. -->
+        <div class="slider-block">
+            <div class="slider-label">More from the store</div>
+            <div class="feat-slider" id="featSlider2"></div>
+        </div>
 
         <!-- AD BANNER (fixed size across all stores) -->
         <div class="ad-band" id="adBand">
@@ -349,46 +299,6 @@
             });
         }
 
-        // Audience banner — a full-bleed image slider cycling Women / Men / Kids.
-        // Auto-rotates every 6s; clicking a slide (or a dot) filters the feed by
-        // that audience and keeps the "Shop for" chips in sync.
-        (function buildAudBanner() {
-            const el = document.getElementById('audBanner');
-            const AUD_IMG = { women:'women-hero.jpg', men:'men-hero.jpg', kids:'clothing-hero.png' };
-            const auds = STORE.audiences;   // ['women','men','kids']
-            el.innerHTML = auds.map((a, i) => `
-                <div class="aud-slide ${i===0?'is-active':''}" data-v="${a}"
-                     style="background-image:url('${AUD_IMG[a]||STORE.hero}')">
-                    <span class="aud-label">${AUD_LABEL[a]||a}</span>
-                </div>`).join('') +
-                `<button class="aud-arrow prev" aria-label="Previous">&#8249;</button>` +
-                `<button class="aud-arrow next" aria-label="Next">&#8250;</button>` +
-                `<div class="aud-dots">${auds.map((a,i)=>
-                    `<button class="aud-dot ${i===0?'is-active':''}" data-i="${i}" aria-label="${AUD_LABEL[a]||a}"></button>`).join('')}</div>`;
-
-            const slides = el.querySelectorAll('.aud-slide');
-            const dots   = el.querySelectorAll('.aud-dot');
-            let idx = 0, timer;
-
-            function show(i) {
-                idx = (i + slides.length) % slides.length;
-                slides.forEach((s, n) => s.classList.toggle('is-active', n === idx));
-                dots.forEach((d, n)   => d.classList.toggle('is-active', n === idx));
-            }
-            function pick(a) {
-                // Filter the feed by the chosen audience.
-                activeAud = a; renderFeed();
-            }
-            function start() { timer = setInterval(() => show(idx + 1), 6000); }
-            function reset() { clearInterval(timer); start(); }
-
-            slides.forEach(s => s.addEventListener('click', () => pick(s.dataset.v)));
-            dots.forEach(d => d.addEventListener('click', () => { show(+d.dataset.i); reset(); }));
-            el.querySelector('.aud-arrow.prev').addEventListener('click', () => { show(idx - 1); reset(); });
-            el.querySelector('.aud-arrow.next').addEventListener('click', () => { show(idx + 1); reset(); });
-            start();
-        })();
-
         // The card — same markup + shared product-card.css as the rest of the site.
         function card(p) {
             return `
@@ -428,6 +338,10 @@
         // same card() as the feed so they stay identical to it.
         const FEATURED = PRODUCTS.slice(0, 5);
         document.getElementById('featSlider').innerHTML = FEATURED.map(card).join('');
+
+        // Another five pieces, in the second rail.
+        const MORE = PRODUCTS.slice(5, 10);
+        document.getElementById('featSlider2').innerHTML = MORE.map(card).join('');
 
         // Follow toggle (demo only).
         document.getElementById('followBtn').addEventListener('click', function(){
