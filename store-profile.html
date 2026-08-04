@@ -171,16 +171,43 @@
             .aud-arrow.next { right: 14px; }
         }
 
-        /* Clothing-category slider — a paged rail of clothing types. The leftmost
-           (lead) card scales up a little and is the selected category. Vertical
-           padding leaves room for the scaled lead so it is not clipped. */
-        .clo-slider { position: relative; overflow: hidden; padding: 18px 0; }
+        /* Clothing-category slider — a quarter-width info panel on the left and a
+           three-quarter viewport on the right showing three cards. The leftmost
+           (lead) card scales up and is the selected category. */
+        .clo-block { display: flex; gap: 28px; align-items: stretch; }
+        .clo-info {
+            flex: 0 0 25%; max-width: 25%;
+            display: flex; flex-direction: column; justify-content: center;
+            padding-right: 8px;
+        }
+        .clo-kicker {
+            font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+            color: #9a9a95; margin-bottom: 14px;
+        }
+        .clo-info-title { font-size: 34px; font-weight: 300; line-height: 1.05; color: #1c1c1c; }
+        .clo-info-desc {
+            margin-top: 14px; font-size: 14px; font-weight: 300; line-height: 1.6;
+            color: #55554f; max-width: 320px;
+        }
+        .clo-nav { display: flex; gap: 10px; margin-top: 26px; }
+        .clo-arrow {
+            width: 42px; height: 42px; border-radius: 999px; cursor: pointer;
+            display: grid; place-items: center;
+            border: 1px solid #000; background: transparent;
+            color: #111; font-size: 20px; line-height: 1;
+            transition: background 0.2s, color 0.2s;
+        }
+        .clo-arrow:hover { background: #000; color: #fff; }
+
+        /* The viewport takes the remaining three quarters; three cards fill it. */
+        .clo-slider { flex: 1 1 75%; position: relative; overflow: hidden; padding: 18px 0; }
         .clo-track {
             display: flex; gap: 16px;
             transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .clo-card {
-            flex: none; width: calc((100% - 64px) / 5); cursor: pointer;
+            /* Three across the 75% viewport. */
+            flex: none; width: calc((100% - 32px) / 3); cursor: pointer;
             background: none; border: none; padding: 0; font-family: inherit; text-align: left;
             transform-origin: left center;
             transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -190,7 +217,7 @@
             background: #23231f center / cover no-repeat; filter: grayscale(1);
             transition: filter 0.4s;
         }
-        .clo-card.is-lead { transform: scale(1.08); z-index: 3; }
+        .clo-card.is-lead { transform: scale(1.06); z-index: 3; }
         .clo-card.is-lead .clo-thumb { filter: grayscale(0); }
         .clo-cap {
             display: flex; align-items: baseline; gap: 8px; margin-top: 12px;
@@ -198,17 +225,12 @@
         }
         .clo-num { font-size: 12px; color: #9a9a95; letter-spacing: 1px; }
         .clo-card.is-lead .clo-cap { font-weight: 600; }
-        .clo-arrow {
-            position: absolute; top: calc(50% - 12px); transform: translateY(-50%); z-index: 5;
-            width: 42px; height: 42px; border-radius: 999px; cursor: pointer;
-            display: grid; place-items: center;
-            border: 1px solid #000; background: rgba(255,255,255,0.9);
-            color: #111; font-size: 20px; line-height: 1;
-            transition: background 0.2s, color 0.2s;
+
+        @media (max-width: 700px) {
+            .clo-block { flex-direction: column; gap: 18px; }
+            .clo-info, .clo-slider { flex-basis: auto; max-width: none; }
+            .clo-card { width: calc((100% - 16px) / 2); }
         }
-        .clo-arrow:hover { background: #000; color: #fff; }
-        .clo-arrow.prev { left: 8px; }
-        .clo-arrow.next { right: 8px; }
 
         /* ===================== AD BANNER =====================
            The seller's own promo, but a FIXED size on every store profile. */
@@ -301,15 +323,24 @@
             <div class="feat-slider" id="featSlider2"></div>
         </div>
 
-        <!-- CLOTHING CATEGORIES — a paged slider of clothing types. The leftmost
-             card is always scaled up a little and is the selected category; each
-             page shifts which card leads and filters the feed by it. -->
+        <!-- CLOTHING CATEGORIES — three cards per view across three quarters of the
+             row; the remaining quarter (left) carries the section title and the
+             lead category's name + description. The leftmost card is scaled up and
+             is the selected category; each page shifts the lead. -->
         <div class="slider-block">
-            <div class="slider-label">Shop by category</div>
-            <div class="clo-slider">
-                <div class="clo-track" id="cloTrack"></div>
-                <button class="clo-arrow prev" id="cloPrev" aria-label="Previous">&#8249;</button>
-                <button class="clo-arrow next" id="cloNext" aria-label="Next">&#8250;</button>
+            <div class="clo-block">
+                <div class="clo-info">
+                    <div class="clo-kicker">Shop by category</div>
+                    <div class="clo-info-title" id="cloTitle">—</div>
+                    <div class="clo-info-desc" id="cloDesc">—</div>
+                    <div class="clo-nav">
+                        <button class="clo-arrow prev" id="cloPrev" aria-label="Previous">&#8249;</button>
+                        <button class="clo-arrow next" id="cloNext" aria-label="Next">&#8250;</button>
+                    </div>
+                </div>
+                <div class="clo-slider">
+                    <div class="clo-track" id="cloTrack"></div>
+                </div>
             </div>
         </div>
 
@@ -352,6 +383,16 @@
                 Denim:     'hero-beach.jpg',
                 Shoes:     'gallery-hero.jpg',
                 Bags:      'magazine-hero.jpg',
+            },
+            // A short line the seller writes for each category, shown in the
+            // clothing slider's info panel.
+            catDesc: {
+                Dresses:   'From slip to structured — one-off dresses for day and night.',
+                Outerwear: 'Coats and jackets built to layer through the season.',
+                Knitwear:  'Hand-finished knits in wool, cotton and cashmere blends.',
+                Denim:     'Raw and washed denim, cut clean and made to last.',
+                Shoes:     'Everyday runners to evening leather, chosen with care.',
+                Bags:      'Totes and crossbodies — quiet shapes, honest materials.',
             },
         };
 
@@ -498,12 +539,18 @@
             const cards = track.querySelectorAll('.clo-card');
             let lead = 0;
 
+            const titleEl = document.getElementById('cloTitle');
+            const descEl  = document.getElementById('cloDesc');
+
             function update() {
                 cards.forEach((c, n) => c.classList.toggle('is-lead', n === lead));
                 // Bring the lead card to the left edge (scale doesn't affect offsetLeft).
                 track.style.transform = `translateX(${-cards[lead].offsetLeft}px)`;
-                // The lead card is the selected category.
-                activeCat = cards[lead].dataset.v; renderFeed();
+                // The lead card is the selected category — fill the info panel and feed.
+                const c = cards[lead].dataset.v;
+                titleEl.textContent = c;
+                descEl.textContent = (STORE.catDesc && STORE.catDesc[c]) || '';
+                activeCat = c; renderFeed();
             }
             function go(i) { lead = (i + cards.length) % cards.length; update(); }
 
