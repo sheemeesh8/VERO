@@ -96,6 +96,33 @@
         .chip:hover { background: #efefec; }
         .chip.active { background: #000; color: #fff; }
 
+        /* Category slider — image tiles in a horizontal row, like the feed's
+           category strip. Thin black frame, numbered caption beneath. */
+        .cat-slider {
+            display: flex; gap: 16px; overflow-x: auto; padding-bottom: 6px;
+            scrollbar-width: none;
+        }
+        .cat-slider::-webkit-scrollbar { display: none; }
+        .cat-card {
+            flex: none; width: 240px; cursor: pointer;
+            background: none; border: none; padding: 0; font-family: inherit; text-align: left;
+        }
+        .cat-thumb {
+            width: 100%; aspect-ratio: 4 / 3; border: 1px solid #000;
+            background: #23231f center / cover no-repeat; filter: grayscale(1);
+            transition: filter 0.3s;
+        }
+        .cat-card:hover .cat-thumb,
+        .cat-card.active .cat-thumb { filter: grayscale(0); }
+        .cat-cap {
+            display: flex; align-items: baseline; gap: 8px; margin-top: 10px;
+            font-size: 12px; letter-spacing: 1px; color: #1c1c1c;
+        }
+        .cat-num { font-size: 11px; color: #9a9a95; letter-spacing: 1px; }
+        .cat-card.active .cat-cap { font-weight: 500; }
+        .cat-card.active .cat-num { color: #1c1c1c; }
+        @media (max-width: 700px) { .cat-card { width: 180px; } }
+
         /* ===================== AD BANNER =====================
            The seller's own promo, but a FIXED size on every store profile. */
         .ad-band {
@@ -169,7 +196,7 @@
         <!-- CATEGORY SLIDER -->
         <div class="slider-block">
             <div class="slider-label">Shop by category</div>
-            <div class="slider" id="catSlider"></div>
+            <div class="cat-slider" id="catSlider"></div>
         </div>
 
         <!-- AUDIENCE SLIDER -->
@@ -209,6 +236,15 @@
             // Only the categories / audiences the seller actually offers get chips.
             categories: ['Dresses', 'Outerwear', 'Knitwear', 'Denim', 'Shoes', 'Bags'],
             audiences:  ['women', 'men', 'kids'],
+            // Cover image per category (set by the seller; falls back to a neutral tile).
+            catImages: {
+                Dresses:   'women-hero.jpg',
+                Outerwear: 'men-hero.jpg',
+                Knitwear:  'clothing-hero.png',
+                Denim:     'hero-beach.jpg',
+                Shoes:     'gallery-hero.jpg',
+                Bags:      'magazine-hero.jpg',
+            },
         };
 
         // A pool of demo products, each tagged with a category + audience so the
@@ -259,8 +295,25 @@
                 onPick(b.dataset.v);
             });
         }
-        buildSlider(document.getElementById('catSlider'), STORE.categories, v=>v, v => { activeCat=v; renderFeed(); });
         buildSlider(document.getElementById('audSlider'), STORE.audiences, v=>AUD_LABEL[v]||v, v => { activeAud=v; renderFeed(); });
+
+        // Category slider — image tiles with a numbered caption. "All" first,
+        // then only the categories the seller offers.
+        (function buildCatSlider() {
+            const el = document.getElementById('catSlider');
+            const items = [['all', 'All', STORE.hero], ...STORE.categories.map(c => [c, c, STORE.catImages[c]])];
+            el.innerHTML = items.map(([v, label, img], i) => `
+                <button class="cat-card ${v==='all'?'active':''}" data-v="${v}">
+                    <div class="cat-thumb" style="background-image:url('${img}')"></div>
+                    <div class="cat-cap"><span class="cat-num">${String(i).padStart(2,'0')}</span> ${label}</div>
+                </button>`).join('');
+            el.addEventListener('click', e => {
+                const b = e.target.closest('.cat-card'); if (!b) return;
+                el.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active'));
+                b.classList.add('active');
+                activeCat = b.dataset.v; renderFeed();
+            });
+        })();
 
         // The card — same markup + shared product-card.css as the rest of the site.
         function card(p) {
