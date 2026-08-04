@@ -49,32 +49,37 @@
         .hero-inner { position: relative; z-index: 2; padding: 0 40px 34px; color: #fff; width: 100%; }
         .hero-name { font-size: clamp(38px, 6vw, 78px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
         .hero-tag  { margin-top: 14px; font-size: 15px; font-weight: 300; letter-spacing: 0.5px; max-width: 620px; opacity: 0.92; }
+        .hero-badges { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
         .verified {
-            display: inline-flex; align-items: center; gap: 6px; margin-top: 16px;
+            display: inline-flex; align-items: center; gap: 6px;
             padding: 6px 14px; border: 1px solid rgba(255,255,255,0.7); border-radius: 999px;
             font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
         }
 
         /* ===================== STATS =====================
-           Followers + item count, just under the hero. */
-        .stats-row {
-            display: flex; gap: 0; border-bottom: 1px solid #000;
+           Followers + item count, bottom-left of the hero, on a slider that
+           auto-rotates every 8 seconds. Only one stat shows at a time. */
+        .hero-stats {
+            position: relative; margin-top: 22px; height: 52px; overflow: hidden;
         }
-        .stat {
-            flex: 1; padding: 26px 40px; border-right: 1px solid #000;
-            display: flex; flex-direction: column; gap: 6px;
+        .hero-stat {
+            position: absolute; left: 0; bottom: 0;
+            display: flex; flex-direction: column; gap: 4px;
+            opacity: 0; transform: translateY(12px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            pointer-events: none;
         }
-        .stat:last-child { border-right: none; }
-        .stat-num  { font-size: 40px; font-weight: 200; line-height: 1; }
-        .stat-lbl  { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; }
+        .hero-stat.is-active { opacity: 1; transform: translateY(0); }
+        .hs-num { font-size: 38px; font-weight: 200; line-height: 1; }
+        .hs-lbl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.8; }
         .follow-btn {
-            align-self: flex-start; margin-top: 4px; padding: 11px 26px;
-            border: 1.4px solid #000; border-radius: 999px; background: #000; color: #fff;
-            font-family: inherit; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 6px 20px;
+            border: 1px solid rgba(255,255,255,0.7); border-radius: 999px; background: #fff; color: #000;
+            font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
             cursor: pointer; transition: background 0.2s, color 0.2s;
         }
-        .follow-btn:hover { background: #fff; color: #000; }
-        .follow-btn.following { background: #fff; color: #000; }
+        .follow-btn:hover { background: transparent; color: #fff; }
+        .follow-btn.following { background: transparent; color: #fff; }
 
         /* ===================== SLIDERS =====================
            A horizontally-scrolling row of outline chips. Two of them: the
@@ -99,13 +104,13 @@
         /* Category slider — image tiles in a horizontal row, like the feed's
            category strip. Thin black frame, numbered caption beneath. */
         .cat-slider {
-            display: flex; gap: 16px; overflow-x: auto; padding-bottom: 6px;
+            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px;
             scrollbar-width: none;
         }
         .cat-slider::-webkit-scrollbar { display: none; }
         .cat-card {
-            /* Five per slide: full width minus the four 16px gaps, split five ways. */
-            flex: none; width: calc((100% - 64px) / 5); cursor: pointer;
+            /* Four per slide: full width minus the three 8px gaps, split four ways. */
+            flex: none; width: calc((100% - 24px) / 4); cursor: pointer;
             background: none; border: none; padding: 0; font-family: inherit; text-align: left;
         }
         .cat-thumb {
@@ -162,8 +167,7 @@
             .feed { grid-template-columns: repeat(2, 1fr); padding: 20px; gap: 14px; }
             .hero-inner, .slider-block, .feed-head { padding-left: 20px; padding-right: 20px; }
             .ad-band, .feed-head { margin-left: 20px; margin-right: 20px; }
-            .stat { padding: 20px; }
-            .stats-row { flex-wrap: wrap; }
+            .hs-num { font-size: 32px; }
         }
     </style>
     <link rel="stylesheet" href="product-card.css">
@@ -177,20 +181,20 @@
             <div class="hero-inner">
                 <h1 class="hero-name" id="storeName">Studio Noir</h1>
                 <p class="hero-tag" id="storeTag">Curated wardrobe & one-off pieces. Tel Aviv.</p>
-                <span class="verified">✓ VERO Verified Store</span>
-            </div>
-        </div>
-
-        <!-- STATS -->
-        <div class="stats-row">
-            <div class="stat">
-                <div class="stat-num" id="followers">1,284</div>
-                <div class="stat-lbl">Followers</div>
-                <button class="follow-btn" id="followBtn">Follow</button>
-            </div>
-            <div class="stat">
-                <div class="stat-num" id="itemCount">0</div>
-                <div class="stat-lbl">Items in store</div>
+                <div class="hero-badges">
+                    <span class="verified">✓ VERO Verified Store</span>
+                    <button class="follow-btn" id="followBtn">Follow</button>
+                </div>
+                <div class="hero-stats" id="heroStats">
+                    <div class="hero-stat is-active">
+                        <span class="hs-num" id="followers">1,284</span>
+                        <span class="hs-lbl">Followers</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hs-num" id="itemCount">0</span>
+                        <span class="hs-lbl">Items in store</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -358,6 +362,18 @@
             const f = document.getElementById('followers');
             f.textContent = (STORE.followers + (on?1:0)).toLocaleString('en-US');
         });
+
+        // Hero stats slider — rotate the visible stat every 8 seconds.
+        (function(){
+            const slides = document.querySelectorAll('#heroStats .hero-stat');
+            if (slides.length < 2) return;
+            let i = 0;
+            setInterval(function(){
+                slides[i].classList.remove('is-active');
+                i = (i + 1) % slides.length;
+                slides[i].classList.add('is-active');
+            }, 8000);
+        })();
 
         // Exit like the other pages.
         document.querySelector('.back').addEventListener('click', e => {
