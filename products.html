@@ -140,6 +140,20 @@
         .sale-line b { font-weight: 600; }
         .sale-line .lbl { color: #9a9a95; }
 
+        /* Active/history listings now use the shared feed card (product-card.css);
+           only the wrapper (card + actions row) and the status badge live here. */
+        .prod-cell { display: flex; flex-direction: column; gap: 12px; }
+        .prod-cell.past .product-card { filter: grayscale(1); opacity: 0.72; }
+        .product-card .status-badge {
+            position: absolute; top: 12px; left: 12px; z-index: 3;
+            padding: 6px 12px; border-radius: 999px; font-size: 10px; letter-spacing: 1.5px;
+            text-transform: uppercase; font-weight: 500; border: 1px solid #000; background: #fff; color: #1c1c1c;
+            font-family: 'Oswald', 'Segoe UI', sans-serif !important;
+        }
+        .product-card .status-badge.sold    { background: #1c1c1c; color: #fff; }
+        .product-card .status-badge.deleted { background: #efeeec; color: #8a8a85; border-color: #cfcfca; }
+        .prod-sale { display: flex; flex-direction: column; gap: 3px; }
+
         /* Draft cards (inline on this page, like the personal area). */
         .draft-card { border: 1px dashed #8a8a85; }
         .draft-card .prod-img { border-bottom: 1px dashed #8a8a85; }
@@ -272,6 +286,17 @@
         let listings = readJSON('vero_listings', []);
         if (!Array.isArray(listings)) listings = [];
 
+        // Seed two demo listings so a fresh account shows real cards to work with.
+        if (!listings.some(p => (p.status || 'active') === 'active')) {
+            const now = Date.now();
+            listings = [
+                { id: 'demo1', name: 'Wool coat', seller: 'Studio Noir', category: 'Outerwear', price: 269, icon: '🧥', status: 'active', listedAt: now - 2 * 864e5 },
+                { id: 'demo2', name: 'Raw denim', seller: 'Studio Noir', category: 'Denim', price: 129, icon: '👖', status: 'active', listedAt: now - 5 * 864e5 },
+                ...listings,
+            ];
+            save('vero_listings', listings);
+        }
+
         // Best available image for a listing.
         function imgOf(p) {
             return p.image || p.processed_cover || p.original_cover
@@ -331,20 +356,28 @@
                            <button class="p-btn danger" data-act="remove" data-i="${idx}">Remove</button>`;
             }
 
+            // Same object as the feed — the shared product card + product-card.css,
+            // with the listing's actions in a row beneath it.
+            const fig = src ? `<img src="${src}" alt="">` : (p.icon || '🛍️');
             return `
-                <div class="prod ${past ? 'past' : ''}">
-                    <div class="prod-img" ${src ? `style="background-image:url('${src}')"` : ''}>
-                        ${src ? '' : `<div class="placeholder">${p.icon || '🛍️'}</div>`}
-                        <span class="badge ${status}">${badgeText}</span>
-                    </div>
-                    <div class="prod-body">
-                        <div class="prod-name">${p.name || 'Untitled listing'}</div>
-                        <div class="prod-meta">${[p.seller, p.category].filter(Boolean).join(' · ') || '—'}</div>
-                        <div class="prod-price">${nis(p.price)}</div>
-                        <div class="prod-meta">${dateLine}</div>
-                        ${saleBlock}
-                        <div class="prod-actions">${actions}</div>
-                    </div>
+                <div class="prod-cell ${past ? 'past' : ''}">
+                    <a class="product-card" href="#" title="${p.name || 'Untitled listing'}">
+                        <div class="product-image">${fig}
+                            <span class="status-badge ${status}">${badgeText}</span>
+                        </div>
+                        <div class="product-info">
+                            <div class="pc-left">
+                                <div class="product-price"><span class="vprice">${nis(p.price)}</span></div>
+                            </div>
+                            <div class="pc-right">
+                                <div class="product-seller">${p.seller || p.brand || '—'}</div>
+                                <div class="product-name">${p.name || 'Untitled listing'}</div>
+                                <div class="product-rating">${p.category || dateLine}</div>
+                            </div>
+                        </div>
+                    </a>
+                    ${saleBlock ? `<div class="prod-sale">${saleBlock}</div>` : ''}
+                    <div class="prod-actions">${actions}</div>
                 </div>`;
         }
 
