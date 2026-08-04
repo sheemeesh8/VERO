@@ -15,6 +15,43 @@
             color: #1c1c1c; background: #fff; overflow-x: hidden;
         }
 
+        /* Sticky header — a thin bar pinned to the top of the viewport, carrying
+           the brand and a store search. Stays above everything while scrolling. */
+        .store-header {
+            position: sticky; top: 0; z-index: 45;
+            display: flex; align-items: center; gap: 20px;
+            padding: 12px 34px;
+            background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+            border-bottom: 1px solid #000;
+        }
+        .sh-brand {
+            font-size: 20px; font-weight: 500; letter-spacing: 3px;
+            text-decoration: none; color: #1c1c1c; flex: none;
+        }
+        .sh-search {
+            flex: 1; max-width: 520px; margin: 0 auto;
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 18px; border: 1.4px solid #000; border-radius: 999px;
+            background: #fff; transition: box-shadow 0.2s;
+        }
+        .sh-search:focus-within { box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+        .sh-search svg {
+            width: 18px; height: 18px; flex: none;
+            fill: none; stroke: #1c1c1c; stroke-width: 1.6;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+        .sh-search input {
+            border: none; outline: none; background: none; flex: 1; min-width: 0;
+            font-family: inherit; font-size: 14px; color: #1c1c1c;
+        }
+        /* The floating back pill sits inside the header row; keep it above the bar. */
+        .store-header ~ .back { top: 16px; z-index: 46; }
+        @media (max-width: 700px) {
+            .store-header { padding: 10px 18px; gap: 12px; }
+            .sh-brand { font-size: 17px; }
+            .store-header ~ .back { top: 12px; right: 18px; padding: 8px 14px; }
+        }
+
         /* Back button — same pill language as the rest of the site. */
         .back {
             position: fixed; top: 26px; right: 34px; z-index: 40;
@@ -282,6 +319,16 @@
     <link rel="stylesheet" href="product-card.css">
 </head>
 <body>
+    <!-- STICKY HEADER — brand on the left, a store search in the middle. Sticks to
+         the top of the viewport while the profile scrolls under it. -->
+    <header class="store-header">
+        <a class="sh-brand" href="index.html">VERO</a>
+        <div class="sh-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+            <input type="search" id="storeSearch" placeholder="Search this store…" autocomplete="off">
+        </div>
+    </header>
+
     <a class="back" href="index.html">&#8592; חזרה</a>
 
     <div class="wrap">
@@ -426,6 +473,7 @@
         const nis = n => '₪' + (Number(n)||0).toLocaleString('en-US');
         let activeCat = 'all';
         let activeAud = 'all';
+        let searchTerm = '';
 
         // Hero + ad + header text.
         document.getElementById('storeName').textContent = STORE.name;
@@ -471,9 +519,14 @@
 
         // Feed = 5 across × 2 rows = 10, filtered by the two chips.
         function renderFeed() {
-            const filtered = PRODUCTS.filter(p =>
-                (activeCat === 'all' || p.cat === activeCat) &&
-                (activeAud === 'all' || p.aud === activeAud));
+            const filtered = PRODUCTS.filter(p => {
+                // A live search spans the whole store, so it overrides the category
+                // filter; without a search, the category / audience filters apply.
+                const nameOk = searchTerm === '' || p.name.toLowerCase().includes(searchTerm);
+                const catOk  = searchTerm !== '' || activeCat === 'all' || p.cat === activeCat;
+                const audOk  = activeAud === 'all' || p.aud === activeAud;
+                return nameOk && catOk && audOk;
+            });
             const shown = filtered.slice(0, 10);   // two rows of five
             const feed = document.getElementById('feed');
             const empty = document.getElementById('feedEmpty');
@@ -485,6 +538,12 @@
                 (filtered.length > 10 ? ` · showing 10` : '');
         }
         renderFeed();
+
+        // Sticky-header search — filters the feed live as the buyer types.
+        document.getElementById('storeSearch').addEventListener('input', function(){
+            searchTerm = this.value.trim().toLowerCase();
+            renderFeed();
+        });
 
         // Featured — the five pieces the seller highlighted, rendered with the
         // same card() as the feed so they stay identical to it.
