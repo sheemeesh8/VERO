@@ -122,6 +122,94 @@
             .feat-slider .product-card { width: calc((100% - 14px) / 2); }
         }
 
+        /* Audience banner — a full-bleed image slider, edge to edge of the page,
+           cycling Women / Men / Kids. Same treatment as the hero. */
+        .aud-banner {
+            position: relative; width: 100%; height: 58vh; min-height: 420px;
+            overflow: hidden; border-top: 1px solid #000; border-bottom: 1px solid #000;
+        }
+        .aud-slide {
+            position: absolute; inset: 0; cursor: pointer;
+            background: #23231f center / cover no-repeat; filter: grayscale(1);
+            opacity: 0; transition: opacity 1s ease; z-index: 1;
+        }
+        .aud-slide.is-active { opacity: 1; z-index: 2; }
+        .aud-slide::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%);
+        }
+        .aud-label {
+            position: absolute; left: 40px; bottom: 34px; z-index: 3; color: #fff;
+            font-size: clamp(34px, 5vw, 62px); font-weight: 200; letter-spacing: 1px;
+            line-height: 1; pointer-events: none;
+        }
+        .aud-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
+            width: 46px; height: 46px; border-radius: 999px; cursor: pointer;
+            display: grid; place-items: center;
+            border: 1px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.25);
+            color: #fff; font-size: 20px; line-height: 1;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .aud-arrow:hover { background: rgba(0,0,0,0.55); border-color: #fff; }
+        .aud-arrow.prev { left: 24px; }
+        .aud-arrow.next { right: 24px; }
+        .aud-dots {
+            position: absolute; right: 40px; bottom: 40px; z-index: 4;
+            display: flex; gap: 10px;
+        }
+        .aud-dot {
+            width: 9px; height: 9px; border-radius: 999px; padding: 0; cursor: pointer;
+            border: 1px solid #fff; background: transparent; transition: background 0.3s;
+        }
+        .aud-dot.is-active { background: #fff; }
+        @media (max-width: 700px) {
+            .aud-label { left: 20px; bottom: 24px; }
+            .aud-dots  { right: 20px; bottom: 28px; }
+            .aud-arrow { width: 38px; height: 38px; }
+            .aud-arrow.prev { left: 14px; }
+            .aud-arrow.next { right: 14px; }
+        }
+
+        /* Clothing-category slider — a paged rail of clothing types. The leftmost
+           (lead) card scales up a little and is the selected category. Vertical
+           padding leaves room for the scaled lead so it is not clipped. */
+        .clo-slider { position: relative; overflow: hidden; padding: 18px 0; }
+        .clo-track {
+            display: flex; gap: 16px;
+            transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .clo-card {
+            flex: none; width: calc((100% - 64px) / 5); cursor: pointer;
+            background: none; border: none; padding: 0; font-family: inherit; text-align: left;
+            transform-origin: left center;
+            transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .clo-thumb {
+            width: 100%; aspect-ratio: 3 / 4; border: 1px solid #000;
+            background: #23231f center / cover no-repeat; filter: grayscale(1);
+            transition: filter 0.4s;
+        }
+        .clo-card.is-lead { transform: scale(1.08); z-index: 3; }
+        .clo-card.is-lead .clo-thumb { filter: grayscale(0); }
+        .clo-cap {
+            display: flex; align-items: baseline; gap: 8px; margin-top: 12px;
+            font-size: 15px; letter-spacing: 0.5px; color: #1c1c1c;
+        }
+        .clo-num { font-size: 12px; color: #9a9a95; letter-spacing: 1px; }
+        .clo-card.is-lead .clo-cap { font-weight: 600; }
+        .clo-arrow {
+            position: absolute; top: calc(50% - 12px); transform: translateY(-50%); z-index: 5;
+            width: 42px; height: 42px; border-radius: 999px; cursor: pointer;
+            display: grid; place-items: center;
+            border: 1px solid #000; background: rgba(255,255,255,0.9);
+            color: #111; font-size: 20px; line-height: 1;
+            transition: background 0.2s, color 0.2s;
+        }
+        .clo-arrow:hover { background: #000; color: #fff; }
+        .clo-arrow.prev { left: 8px; }
+        .clo-arrow.next { right: 8px; }
+
         /* ===================== AD BANNER =====================
            The seller's own promo, but a FIXED size on every store profile. */
         .ad-band {
@@ -201,11 +289,28 @@
             <div class="feat-slider" id="featSlider"></div>
         </div>
 
+        <!-- AUDIENCE BANNER — a full-bleed image slider that reaches both edges of
+             the page, cycling Women / Men / Kids. Clicking a slide filters the
+             feed by that audience. -->
+        <div class="aud-banner" id="audBanner"></div>
+
         <!-- MORE PRODUCTS — another five pieces, same product card + rail as the
              featured slider above. -->
         <div class="slider-block">
             <div class="slider-label">More from the store</div>
             <div class="feat-slider" id="featSlider2"></div>
+        </div>
+
+        <!-- CLOTHING CATEGORIES — a paged slider of clothing types. The leftmost
+             card is always scaled up a little and is the selected category; each
+             page shifts which card leads and filters the feed by it. -->
+        <div class="slider-block">
+            <div class="slider-label">Shop by category</div>
+            <div class="clo-slider">
+                <div class="clo-track" id="cloTrack"></div>
+                <button class="clo-arrow prev" id="cloPrev" aria-label="Previous">&#8249;</button>
+                <button class="clo-arrow next" id="cloNext" aria-label="Next">&#8250;</button>
+            </div>
         </div>
 
         <!-- AD BANNER (fixed size across all stores) -->
@@ -342,6 +447,71 @@
         // Another five pieces, in the second rail.
         const MORE = PRODUCTS.slice(5, 10);
         document.getElementById('featSlider2').innerHTML = MORE.map(card).join('');
+
+        // Audience banner — full-bleed image slider cycling Women / Men / Kids.
+        // Auto-rotates every 6s; a slide, dot or arrow selects it and filters the feed.
+        (function buildAudBanner() {
+            const el = document.getElementById('audBanner');
+            const AUD_IMG = { women:'women-hero.jpg', men:'men-hero.jpg', kids:'clothing-hero.png' };
+            const auds = STORE.audiences;   // ['women','men','kids']
+            el.innerHTML = auds.map((a, i) => `
+                <div class="aud-slide ${i===0?'is-active':''}" data-v="${a}"
+                     style="background-image:url('${AUD_IMG[a]||STORE.hero}')">
+                    <span class="aud-label">${AUD_LABEL[a]||a}</span>
+                </div>`).join('') +
+                `<button class="aud-arrow prev" aria-label="Previous">&#8249;</button>` +
+                `<button class="aud-arrow next" aria-label="Next">&#8250;</button>` +
+                `<div class="aud-dots">${auds.map((a,i)=>
+                    `<button class="aud-dot ${i===0?'is-active':''}" data-i="${i}" aria-label="${AUD_LABEL[a]||a}"></button>`).join('')}</div>`;
+
+            const slides = el.querySelectorAll('.aud-slide');
+            const dots   = el.querySelectorAll('.aud-dot');
+            let idx = 0, timer;
+
+            function show(i) {
+                idx = (i + slides.length) % slides.length;
+                slides.forEach((s, n) => s.classList.toggle('is-active', n === idx));
+                dots.forEach((d, n)   => d.classList.toggle('is-active', n === idx));
+            }
+            function start() { timer = setInterval(() => show(idx + 1), 6000); }
+            function reset() { clearInterval(timer); start(); }
+
+            slides.forEach(s => s.addEventListener('click', () => { activeAud = s.dataset.v; renderFeed(); }));
+            dots.forEach(d => d.addEventListener('click', () => { show(+d.dataset.i); reset(); }));
+            el.querySelector('.aud-arrow.prev').addEventListener('click', () => { show(idx - 1); reset(); });
+            el.querySelector('.aud-arrow.next').addEventListener('click', () => { show(idx + 1); reset(); });
+            start();
+        })();
+
+        // Clothing-category slider — a paged rail of clothing types. The leftmost
+        // (lead) card scales up and is the selected category; each page shifts the
+        // lead and filters the feed by it.
+        (function buildCloSlider() {
+            const track = document.getElementById('cloTrack');
+            const cats = STORE.categories;   // clothing types
+            track.innerHTML = cats.map((c, i) => `
+                <button class="clo-card" data-v="${c}">
+                    <div class="clo-thumb" style="background-image:url('${STORE.catImages[c]||STORE.hero}')"></div>
+                    <div class="clo-cap"><span class="clo-num">${String(i+1).padStart(2,'0')}</span> ${c}</div>
+                </button>`).join('');
+
+            const cards = track.querySelectorAll('.clo-card');
+            let lead = 0;
+
+            function update() {
+                cards.forEach((c, n) => c.classList.toggle('is-lead', n === lead));
+                // Bring the lead card to the left edge (scale doesn't affect offsetLeft).
+                track.style.transform = `translateX(${-cards[lead].offsetLeft}px)`;
+                // The lead card is the selected category.
+                activeCat = cards[lead].dataset.v; renderFeed();
+            }
+            function go(i) { lead = (i + cards.length) % cards.length; update(); }
+
+            cards.forEach((c, n) => c.addEventListener('click', () => go(n)));
+            document.getElementById('cloPrev').addEventListener('click', () => go(lead - 1));
+            document.getElementById('cloNext').addEventListener('click', () => go(lead + 1));
+            update();
+        })();
 
         // Follow toggle (demo only).
         document.getElementById('followBtn').addEventListener('click', function(){
