@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO — Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1c1c1c; background: #fff; overflow-x: hidden;
+        }
+
+        /* Back button — same pill language as the rest of the site. */
+        .back {
+            position: fixed; top: 26px; right: 34px; z-index: 40;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
+            font-size: 12px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
+            background: rgba(255,255,255,0.9); backdrop-filter: blur(6px);
+            transition: background 0.25s, color 0.25s;
+        }
+        .back:hover { background: #000; color: #fff; }
+
+        /* The whole page slides in from the left, like every other area. */
+        .wrap { animation: slideInLeft 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-6vw); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        /* ===================== HERO =====================
+           The store's background image (set in settings), full-bleed, with the
+           store name and tagline laid over a bottom scrim. No profile picture. */
+        .hero {
+            position: relative; width: 100%; height: 46vh; min-height: 320px;
+            background: #23231f center / cover no-repeat;
+            border-bottom: 1px solid #000;
+            display: flex; align-items: flex-end;
+        }
+        .hero::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.55) 100%);
+        }
+        .hero-inner { position: relative; z-index: 2; padding: 0 40px 34px; color: #fff; width: 100%; }
+        .hero-name { font-size: clamp(38px, 6vw, 78px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+        .hero-tag  { margin-top: 14px; font-size: 15px; font-weight: 300; letter-spacing: 0.5px; max-width: 620px; opacity: 0.92; }
+        .verified {
+            display: inline-flex; align-items: center; gap: 6px; margin-top: 16px;
+            padding: 6px 14px; border: 1px solid rgba(255,255,255,0.7); border-radius: 999px;
+            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+        }
+
+        /* ===================== STATS =====================
+           Followers + item count, just under the hero. */
+        .stats-row {
+            display: flex; gap: 0; border-bottom: 1px solid #000;
+        }
+        .stat {
+            flex: 1; padding: 26px 40px; border-right: 1px solid #000;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .stat:last-child { border-right: none; }
+        .stat-num  { font-size: 40px; font-weight: 200; line-height: 1; }
+        .stat-lbl  { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; }
+        .follow-btn {
+            align-self: flex-start; margin-top: 4px; padding: 11px 26px;
+            border: 1.4px solid #000; border-radius: 999px; background: #000; color: #fff;
+            font-family: inherit; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+            cursor: pointer; transition: background 0.2s, color 0.2s;
+        }
+        .follow-btn:hover { background: #fff; color: #000; }
+        .follow-btn.following { background: #fff; color: #000; }
+
+        /* ===================== SLIDERS =====================
+           A horizontally-scrolling row of outline chips. Two of them: the
+           store's categories and the audiences it serves. Only what the seller
+           offers is rendered. */
+        .slider-block { padding: 26px 40px 0; }
+        .slider-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; margin-bottom: 12px; }
+        .slider {
+            display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px;
+            scrollbar-width: none;
+        }
+        .slider::-webkit-scrollbar { display: none; }
+        .chip {
+            flex: none; padding: 10px 22px; border: 1.4px solid #000; border-radius: 999px;
+            background: #fff; color: #1c1c1c; cursor: pointer; white-space: nowrap;
+            font-family: inherit; font-size: 12px; letter-spacing: 1px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .chip:hover { background: #efefec; }
+        .chip.active { background: #000; color: #fff; }
+
+        /* ===================== AD BANNER =====================
+           The seller's own promo, but a FIXED size on every store profile. */
+        .ad-band {
+            margin: 30px 40px 0; height: 150px; border: 1px solid #000;
+            background: #23231f center / cover no-repeat; position: relative;
+            display: flex; align-items: center; overflow: hidden;
+        }
+        .ad-band::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.05) 70%);
+        }
+        .ad-copy { position: relative; z-index: 2; padding: 0 40px; color: #fff; }
+        .ad-kicker { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.85; }
+        .ad-title { font-size: clamp(22px, 3vw, 34px); font-weight: 300; margin-top: 6px; line-height: 1.1; }
+
+        /* ===================== FEED =====================
+           Five across, two rows. Filters live off the category + audience chips,
+           exactly like the main feed. */
+        .feed-head {
+            display: flex; align-items: baseline; justify-content: space-between;
+            margin: 44px 40px 0; padding-bottom: 14px; border-bottom: 1px solid #000;
+        }
+        .feed-title { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; }
+        .feed-note  { font-size: 12px; letter-spacing: 0.5px; color: #9a9a95; }
+        .feed {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;
+            padding: 26px 40px 70px;
+        }
+        .feed-empty {
+            margin: 26px 40px 70px; padding: 44px; border: 1px dashed #cfcfca;
+            text-align: center; color: #9a9a95; font-size: 14px;
+        }
+
+        @media (max-width: 1100px) { .feed { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 700px)  {
+            .feed { grid-template-columns: repeat(2, 1fr); padding: 20px; gap: 14px; }
+            .hero-inner, .slider-block, .feed-head { padding-left: 20px; padding-right: 20px; }
+            .ad-band, .feed-head { margin-left: 20px; margin-right: 20px; }
+            .stat { padding: 20px; }
+            .stats-row { flex-wrap: wrap; }
+        }
+    </style>
+    <link rel="stylesheet" href="product-card.css">
+</head>
+<body>
+    <a class="back" href="index.html">&#8592; חזרה</a>
+
+    <div class="wrap">
+        <!-- HERO -->
+        <div class="hero" id="hero">
+            <div class="hero-inner">
+                <h1 class="hero-name" id="storeName">Studio Noir</h1>
+                <p class="hero-tag" id="storeTag">Curated wardrobe & one-off pieces. Tel Aviv.</p>
+                <span class="verified">✓ VERO Verified Store</span>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-row">
+            <div class="stat">
+                <div class="stat-num" id="followers">1,284</div>
+                <div class="stat-lbl">Followers</div>
+                <button class="follow-btn" id="followBtn">Follow</button>
+            </div>
+            <div class="stat">
+                <div class="stat-num" id="itemCount">0</div>
+                <div class="stat-lbl">Items in store</div>
+            </div>
+        </div>
+
+        <!-- CATEGORY SLIDER -->
+        <div class="slider-block">
+            <div class="slider-label">Shop by category</div>
+            <div class="slider" id="catSlider"></div>
+        </div>
+
+        <!-- AUDIENCE SLIDER -->
+        <div class="slider-block">
+            <div class="slider-label">Shop for</div>
+            <div class="slider" id="audSlider"></div>
+        </div>
+
+        <!-- AD BANNER (fixed size across all stores) -->
+        <div class="ad-band" id="adBand">
+            <div class="ad-copy">
+                <div class="ad-kicker" id="adKicker">End of season</div>
+                <div class="ad-title" id="adTitle">Up to 40% off selected pieces</div>
+            </div>
+        </div>
+
+        <!-- FEED -->
+        <div class="feed-head">
+            <div class="feed-title">The collection</div>
+            <div class="feed-note" id="feedNote">—</div>
+        </div>
+        <div class="feed" id="feed"></div>
+        <div class="feed-empty" id="feedEmpty" style="display:none;">
+            Nothing here in this filter yet.
+        </div>
+    </div>
+
+    <script>
+        // ===================== DEMO DATA =====================
+        // In the real build this comes from the store's own record + vero_listings.
+        const STORE = {
+            name: 'Studio Noir',
+            tag: 'Curated wardrobe & one-off pieces. Tel Aviv.',
+            followers: 1284,
+            hero: 'women-hero.jpg',        // background set in settings
+            ad:   { image: 'men-hero.jpg', kicker: 'End of season', title: 'Up to 40% off selected pieces' },
+            // Only the categories / audiences the seller actually offers get chips.
+            categories: ['Dresses', 'Outerwear', 'Knitwear', 'Denim', 'Shoes', 'Bags'],
+            audiences:  ['women', 'men', 'kids'],
+        };
+
+        // A pool of demo products, each tagged with a category + audience so the
+        // sliders can filter the feed like the main feed does.
+        const CATS = STORE.categories;
+        const AUDS = STORE.audiences;
+        const ICONS = { Dresses:'👗', Outerwear:'🧥', Knitwear:'🧶', Denim:'👖', Shoes:'👟', Bags:'👜' };
+        const NAMES = ['Wrap dress','Wool coat','Ribbed sweater','Raw denim','Runner','Tote','Silk shirt','Blazer','Cardigan','Slim jean','Loafer','Crossbody'];
+        function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
+        const PRODUCTS = Array.from({length: 40}, (_, i) => {
+            const cat = rnd(CATS);
+            return {
+                id: i,
+                name: NAMES[i % NAMES.length],
+                cat,
+                aud: rnd(AUDS),
+                icon: ICONS[cat] || '🛍️',
+                price: 79 + Math.floor(Math.random()*22)*10,
+                rating: (4 + Math.random()).toFixed(1),
+            };
+        });
+
+        // ===================== RENDER =====================
+        const nis = n => '₪' + (Number(n)||0).toLocaleString('en-US');
+        let activeCat = 'all';
+        let activeAud = 'all';
+
+        // Hero + ad + header text.
+        document.getElementById('storeName').textContent = STORE.name;
+        document.getElementById('storeTag').textContent = STORE.tag;
+        document.getElementById('followers').textContent = STORE.followers.toLocaleString('en-US');
+        document.getElementById('hero').style.backgroundImage = `url('${STORE.hero}')`;
+        document.getElementById('adBand').style.backgroundImage = `url('${STORE.ad.image}')`;
+        document.getElementById('adKicker').textContent = STORE.ad.kicker;
+        document.getElementById('adTitle').textContent = STORE.ad.title;
+        document.getElementById('itemCount').textContent = PRODUCTS.length;
+
+        // Build the two sliders. "All" first, then only what the seller offers.
+        const AUD_LABEL = { women:'Women', men:'Men', kids:'Kids' };
+        function buildSlider(el, values, labelFn, onPick, key) {
+            const chips = [['all','All'], ...values.map(v => [v, labelFn(v)])];
+            el.innerHTML = chips.map(([v,l]) =>
+                `<button class="chip ${v==='all'?'active':''}" data-v="${v}">${l}</button>`).join('');
+            el.addEventListener('click', e => {
+                const b = e.target.closest('.chip'); if (!b) return;
+                el.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                b.classList.add('active');
+                onPick(b.dataset.v);
+            });
+        }
+        buildSlider(document.getElementById('catSlider'), STORE.categories, v=>v, v => { activeCat=v; renderFeed(); });
+        buildSlider(document.getElementById('audSlider'), STORE.audiences, v=>AUD_LABEL[v]||v, v => { activeAud=v; renderFeed(); });
+
+        // The card — same markup + shared product-card.css as the rest of the site.
+        function card(p) {
+            return `
+                <a class="product-card" href="#" title="${p.name}">
+                    <div class="product-image">${p.icon}</div>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price"><span class="vprice">${nis(p.price)}</span></div>
+                        </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${STORE.name}</div>
+                            <div class="product-name">${p.name}</div>
+                            <div class="product-rating">★ ${p.rating}</div>
+                        </div>
+                    </div>
+                </a>`;
+        }
+
+        // Feed = 5 across × 2 rows = 10, filtered by the two chips.
+        function renderFeed() {
+            const filtered = PRODUCTS.filter(p =>
+                (activeCat === 'all' || p.cat === activeCat) &&
+                (activeAud === 'all' || p.aud === activeAud));
+            const shown = filtered.slice(0, 10);   // two rows of five
+            const feed = document.getElementById('feed');
+            const empty = document.getElementById('feedEmpty');
+            feed.innerHTML = shown.map(card).join('');
+            feed.style.display = shown.length ? 'grid' : 'none';
+            empty.style.display = shown.length ? 'none' : 'block';
+            document.getElementById('feedNote').textContent =
+                `${filtered.length} item${filtered.length===1?'':'s'}` +
+                (filtered.length > 10 ? ` · showing 10` : '');
+        }
+        renderFeed();
+
+        // Follow toggle (demo only).
+        document.getElementById('followBtn').addEventListener('click', function(){
+            const on = this.classList.toggle('following');
+            this.textContent = on ? 'Following' : 'Follow';
+            const f = document.getElementById('followers');
+            f.textContent = (STORE.followers + (on?1:0)).toLocaleString('en-US');
+        });
+
+        // Exit like the other pages.
+        document.querySelector('.back').addEventListener('click', e => {
+            e.preventDefault();
+            const wrap = document.querySelector('.wrap');
+            wrap.style.transition = 'opacity 0.5s ease, transform 0.55s cubic-bezier(0.22,1,0.36,1)';
+            wrap.style.opacity = '0'; wrap.style.transform = 'translateX(-6vw)';
+            setTimeout(() => location.href = e.currentTarget.getAttribute('href'), 520);
+        });
+    </script>
+</body>
+</html>
