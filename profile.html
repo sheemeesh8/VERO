@@ -64,6 +64,12 @@
             grid-template-columns: 340px 1fr;
             gap: 24px;
             margin-top: 52px;
+            align-items: start;
+        }
+        /* The identity column is short; pin it so it fills the left area while the
+           taller right column scrolls past, instead of leaving the left blank. */
+        @media (min-width: 1001px) {
+            .grid > .card:first-child { position: sticky; top: 24px; }
         }
 
         /* Thin black framed cards — same language as the rectangles. */
@@ -211,6 +217,63 @@
         }
         .acct-btn:hover { background: #000; color: #fff; }
         .acct-btn.connected { background: #000; color: #fff; }
+
+        /* ===== Storefront editor ===== */
+        .stf-open { font-size: 12px; letter-spacing: 0.5px; color: #1c1c1c; text-decoration: none; border-bottom: 1px solid currentColor; }
+        .stf-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0 18px; }
+        .stf-tab {
+            padding: 8px 16px; border: 1.4px solid rgba(0,0,0,0.15); border-radius: 999px;
+            background: #fff; color: #555; font-family: inherit; font-size: 12px; letter-spacing: 0.5px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .stf-tab.is-active { background: #000; color: #fff; border-color: #000; }
+        .stf-panel { display: none; }
+        .stf-panel.is-active { display: block; }
+        .stf-hint { font-size: 12px; color: #9a9a95; margin-bottom: 14px; }
+        .stf-add {
+            margin-top: 12px; padding: 9px 18px; border: 1.4px dashed rgba(0,0,0,0.3); border-radius: 10px;
+            background: #fafafa; color: #1c1c1c; font-family: inherit; font-size: 13px; cursor: pointer; transition: 0.2s;
+        }
+        .stf-add:hover { border-color: #000; background: #f0f0f0; }
+        .stf-item {
+            display: flex; gap: 14px; align-items: flex-start;
+            padding: 14px; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; margin-bottom: 12px; background: #fff;
+        }
+        .stf-thumb {
+            width: 76px; height: 92px; flex: none; border-radius: 8px; cursor: pointer;
+            background: #eeedeb center/cover no-repeat; filter: grayscale(1);
+            border: 1px solid rgba(0,0,0,0.12); display: grid; place-items: center;
+            font-size: 11px; color: #9a9a95; text-align: center; overflow: hidden;
+        }
+        .stf-thumb.round { width: 76px; height: 76px; border-radius: 50%; }
+        .stf-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+        .stf-fields input, .stf-fields textarea, .stf-fields select {
+            width: 100%; padding: 8px 10px; border: 1px solid rgba(0,0,0,0.15); border-radius: 8px;
+            font-family: inherit; font-size: 13px; background: #fff; color: #1c1c1c;
+        }
+        .stf-row { display: flex; gap: 8px; align-items: center; }
+        .stf-paid {
+            display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+            background: #1c1c1c; color: #fff; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .stf-remove {
+            border: none; background: none; color: #c0392b; cursor: pointer; font-size: 12px; padding: 4px 0; align-self: flex-start;
+        }
+        .stf-remove:hover { text-decoration: underline; }
+        .stf-coll { margin-bottom: 18px; }
+        .stf-coll-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: capitalize; }
+        .stf-checks { display: flex; flex-wrap: wrap; gap: 8px; }
+        .stf-check {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+            border: 1.4px solid rgba(0,0,0,0.15); border-radius: 999px; font-size: 12px; cursor: pointer; user-select: none;
+        }
+        .stf-check.on { background: #000; color: #fff; border-color: #000; }
+        .stf-prod {
+            display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .stf-prod-name { font-size: 13px; }
+        .stf-prod select { padding: 6px 8px; border: 1px solid rgba(0,0,0,0.15); border-radius: 8px; font-family: inherit; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -350,6 +413,44 @@
                         <div><div class="t-label">New offers</div><div class="t-desc">New price offers from buyers and sellers.</div></div>
                         <span class="switch"><input type="checkbox" data-notif="offers"><span class="slider"></span></span>
                     </label>
+                </div>
+
+                <!-- ===== Storefront editor ===== -->
+                <div class="card seller-only stf-editor" style="margin-top:24px;">
+                    <div class="section-head">
+                        <div class="card-title" style="margin:0;">Storefront editor</div>
+                        <a class="stf-open" href="store-profile.html" target="_blank" rel="noopener">Open storefront ↗</a>
+                    </div>
+                    <div class="card-hint">Edit the store page buyers see — the same layout, your content. Changes save automatically.</div>
+
+                    <div class="stf-tabs" id="stfTabs">
+                        <button class="stf-tab is-active" data-tab="banners">Banners</button>
+                        <button class="stf-tab" data-tab="categories">Categories</button>
+                        <button class="stf-tab" data-tab="collections">Collections</button>
+                        <button class="stf-tab" data-tab="products">Products</button>
+                    </div>
+
+                    <div class="stf-panel is-active" data-panel="banners">
+                        <div class="stf-hint">Your first banner is included. Each additional banner is a paid add-on.</div>
+                        <div id="stfBanners"></div>
+                        <button class="stf-add" id="stfAddBanner">+ Add banner</button>
+                    </div>
+
+                    <div class="stf-panel" data-panel="categories">
+                        <div class="stf-hint">The clothing categories shown on your storefront, with a cover image each.</div>
+                        <div id="stfCategories"></div>
+                        <button class="stf-add" id="stfAddCategory">+ Add category</button>
+                    </div>
+
+                    <div class="stf-panel" data-panel="collections">
+                        <div class="stf-hint">Choose which categories appear for Women, Men and Kids.</div>
+                        <div id="stfCollections"></div>
+                    </div>
+
+                    <div class="stf-panel" data-panel="products">
+                        <div class="stf-hint">Assign each product to a category and a collection (audience).</div>
+                        <div id="stfProducts"></div>
+                    </div>
                 </div>
 
                 <!-- ===== Change password ===== -->
@@ -604,6 +705,156 @@
                     profile.connected[key] = !profile.connected[key]; saveProfile(); paint();
                 });
             });
+        })();
+
+        // ---- Storefront editor: edits vero_store_config, which store-profile.html
+        //      reads to render the buyer-facing store. Everything autosaves. ----
+        (function storefront() {
+            const root = document.querySelector('.stf-editor');
+            if (!root) return;
+
+            const CAT_POOL = ['Dresses','Outerwear','Knitwear','Denim','Shoes','Bags'];
+            const AUDS = ['women','men','kids'];
+            // Default config seeds from the same demo store-profile.html ships with.
+            const DEFAULT = {
+                banners: [{ id: 'b1', kicker: 'End of season', title: 'Up to 40% off selected pieces', image: '' }],
+                categories: CAT_POOL.map(c => ({ name: c, image: '', desc: '' })),
+                collections: {
+                    women: ['Dresses','Outerwear','Knitwear','Bags'],
+                    men:   ['Outerwear','Knitwear','Denim','Shoes'],
+                    kids:  ['Knitwear','Denim','Shoes','Bags'],
+                },
+                products: ['Wrap dress','Wool coat','Ribbed sweater','Raw denim','Runner','Tote','Silk shirt','Blazer','Cardigan','Slim jean']
+                    .map((n, i) => ({ id: 'p' + i, name: n, cat: CAT_POOL[i % CAT_POOL.length], aud: AUDS[i % 3] })),
+            };
+            const cfg = Object.assign({}, DEFAULT, readJSON('vero_store_config', {}));
+            // Fill any missing top-level keys (older/partial saves).
+            for (const k in DEFAULT) if (cfg[k] == null) cfg[k] = DEFAULT[k];
+            const save = () => localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+            const uid = () => Math.random().toString(36).slice(2, 8);
+
+            // Read a chosen image file into a data URL and hand it back.
+            function pickImage(cb) {
+                const inp = document.createElement('input');
+                inp.type = 'file'; inp.accept = 'image/*';
+                inp.addEventListener('change', () => {
+                    const f = inp.files && inp.files[0]; if (!f) return;
+                    const r = new FileReader(); r.onload = () => cb(r.result); r.readAsDataURL(f);
+                });
+                inp.click();
+            }
+            const catNames = () => cfg.categories.map(c => c.name);
+
+            // ---- Banners ----
+            function renderBanners() {
+                const box = document.getElementById('stfBanners');
+                box.innerHTML = cfg.banners.map((b, i) => `
+                    <div class="stf-item" data-i="${i}">
+                        <div class="stf-thumb" data-act="img" style="${b.image ? `background-image:url('${b.image}');filter:none` : ''}">${b.image ? '' : 'Add<br>image'}</div>
+                        <div class="stf-fields">
+                            <div class="stf-row">
+                                <strong style="font-size:13px;">Banner ${i + 1}</strong>
+                                ${i === 0 ? '<span style="font-size:11px;color:#9a9a95;">Included</span>' : '<span class="stf-paid">Paid add-on</span>'}
+                            </div>
+                            <input data-f="kicker" placeholder="Kicker — e.g. End of season" value="${b.kicker || ''}">
+                            <input data-f="title" placeholder="Title — e.g. Up to 40% off" value="${b.title || ''}">
+                            ${i > 0 ? '<button class="stf-remove" data-act="del">Remove banner</button>' : ''}
+                        </div>
+                    </div>`).join('');
+            }
+            document.getElementById('stfBanners').addEventListener('input', e => {
+                const item = e.target.closest('.stf-item'); if (!item) return;
+                const b = cfg.banners[+item.dataset.i]; const f = e.target.dataset.f;
+                if (f) { b[f] = e.target.value; save(); }
+            });
+            document.getElementById('stfBanners').addEventListener('click', e => {
+                const item = e.target.closest('.stf-item'); if (!item) return;
+                const i = +item.dataset.i;
+                if (e.target.dataset.act === 'img') pickImage(url => { cfg.banners[i].image = url; save(); renderBanners(); });
+                if (e.target.dataset.act === 'del') { cfg.banners.splice(i, 1); save(); renderBanners(); }
+            });
+            document.getElementById('stfAddBanner').addEventListener('click', () => {
+                const paid = cfg.banners.length >= 1;
+                if (paid && !confirm('Additional banners are a paid add-on. Add one to your plan?')) return;
+                cfg.banners.push({ id: uid(), kicker: '', title: '', image: '' }); save(); renderBanners();
+            });
+
+            // ---- Categories ----
+            function renderCategories() {
+                const box = document.getElementById('stfCategories');
+                box.innerHTML = cfg.categories.map((c, i) => `
+                    <div class="stf-item" data-i="${i}">
+                        <div class="stf-thumb" data-act="img" style="${c.image ? `background-image:url('${c.image}');filter:none` : ''}">${c.image ? '' : 'Add<br>image'}</div>
+                        <div class="stf-fields">
+                            <input data-f="name" placeholder="Category name" value="${c.name || ''}">
+                            <textarea data-f="desc" rows="2" placeholder="Short description">${c.desc || ''}</textarea>
+                            <button class="stf-remove" data-act="del">Remove category</button>
+                        </div>
+                    </div>`).join('');
+            }
+            document.getElementById('stfCategories').addEventListener('input', e => {
+                const item = e.target.closest('.stf-item'); if (!item) return;
+                const c = cfg.categories[+item.dataset.i]; const f = e.target.dataset.f;
+                if (f) { c[f] = e.target.value; save(); }
+            });
+            document.getElementById('stfCategories').addEventListener('click', e => {
+                const item = e.target.closest('.stf-item'); if (!item) return;
+                const i = +item.dataset.i;
+                if (e.target.dataset.act === 'img') pickImage(url => { cfg.categories[i].image = url; save(); renderCategories(); });
+                if (e.target.dataset.act === 'del') { cfg.categories.splice(i, 1); save(); renderCategories(); renderCollections(); renderProducts(); }
+            });
+            document.getElementById('stfAddCategory').addEventListener('click', () => {
+                cfg.categories.push({ name: 'New category', image: '', desc: '' }); save();
+                renderCategories(); renderCollections(); renderProducts();
+            });
+
+            // ---- Collections (women / men / kids ↔ categories) ----
+            function renderCollections() {
+                const box = document.getElementById('stfCollections');
+                box.innerHTML = AUDS.map(a => `
+                    <div class="stf-coll" data-aud="${a}">
+                        <div class="stf-coll-title">${a}</div>
+                        <div class="stf-checks">${catNames().map(c => {
+                            const on = (cfg.collections[a] || []).includes(c);
+                            return `<span class="stf-check ${on ? 'on' : ''}" data-cat="${c}">${c}</span>`;
+                        }).join('')}</div>
+                    </div>`).join('');
+            }
+            document.getElementById('stfCollections').addEventListener('click', e => {
+                const chip = e.target.closest('.stf-check'); if (!chip) return;
+                const a = e.target.closest('.stf-coll').dataset.aud; const c = chip.dataset.cat;
+                const list = cfg.collections[a] = cfg.collections[a] || [];
+                const at = list.indexOf(c);
+                if (at >= 0) list.splice(at, 1); else list.push(c);
+                save(); chip.classList.toggle('on');
+            });
+
+            // ---- Products → category + audience ----
+            function renderProducts() {
+                const box = document.getElementById('stfProducts');
+                const cats = catNames();
+                box.innerHTML = cfg.products.map((p, i) => `
+                    <div class="stf-prod" data-i="${i}">
+                        <div class="stf-prod-name">${p.name}</div>
+                        <select data-f="cat">${cats.map(c => `<option ${c === p.cat ? 'selected' : ''}>${c}</option>`).join('')}</select>
+                        <select data-f="aud">${AUDS.map(a => `<option value="${a}" ${a === p.aud ? 'selected' : ''}>${a}</option>`).join('')}</select>
+                    </div>`).join('');
+            }
+            document.getElementById('stfProducts').addEventListener('change', e => {
+                const row = e.target.closest('.stf-prod'); if (!row) return;
+                const p = cfg.products[+row.dataset.i]; const f = e.target.dataset.f;
+                if (f) { p[f] = e.target.value; save(); }
+            });
+
+            // Tabs.
+            document.getElementById('stfTabs').addEventListener('click', e => {
+                const t = e.target.closest('.stf-tab'); if (!t) return;
+                document.querySelectorAll('.stf-tab').forEach(x => x.classList.toggle('is-active', x === t));
+                document.querySelectorAll('.stf-panel').forEach(p =>
+                    p.classList.toggle('is-active', p.dataset.panel === t.dataset.tab));
+            });
+
+            renderBanners(); renderCategories(); renderCollections(); renderProducts(); save();
         })();
 
         // Exit mirrors the entry: the image holds static while the data slides

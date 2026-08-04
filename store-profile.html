@@ -15,51 +15,42 @@
             color: #1c1c1c; background: #fff; overflow-x: hidden;
         }
 
-        /* Sticky header — a thin bar pinned to the top of the viewport, carrying
-           the brand and a store search. Stays above everything while scrolling. */
-        .store-header {
-            position: sticky; top: 0; z-index: 45;
-            display: flex; align-items: center; gap: 20px;
-            padding: 14px 34px;
-            /* Starts fully transparent over the hero, then turns solid white with a
-               soft shadow once you scroll past it. The search keeps black text in
-               both states so it is readable over the hero's light sky. */
-            background: transparent; border-bottom: 1px solid transparent;
-            transition: background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+        /* Sticky search — a floating round button fixed to the viewport that opens
+           a search pill. Both stay put while the page scrolls. */
+        .search-fab {
+            position: fixed; bottom: 28px; right: 28px; z-index: 60;
+            width: 54px; height: 54px; border-radius: 999px; border: none; cursor: pointer;
+            background: #000; color: #fff; display: grid; place-items: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25); transition: transform 0.2s, opacity 0.2s;
         }
-        .store-header.scrolled {
-            background: #fff;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-            box-shadow: 0 1px 12px rgba(0, 0, 0, 0.05);
-        }
-        .sh-search {
-            flex: 1; max-width: 520px; margin: 0 auto;
-            display: flex; align-items: center; gap: 10px;
-            padding: 9px 18px; border-radius: 999px;
-            border: 1.4px solid rgba(0, 0, 0, 0.55);
-            /* Transparent over the hero; fills to solid white once scrolled. */
-            background: transparent;
-            transition: background 0.35s ease, box-shadow 0.2s;
-        }
-        .store-header.scrolled .sh-search { background: #fff; }
-        .sh-search:focus-within { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08); }
-        .sh-search svg {
-            width: 18px; height: 18px; flex: none;
-            fill: none; stroke: #1c1c1c; stroke-width: 1.6;
+        .search-fab:hover { transform: scale(1.06); }
+        .search-fab.hidden { opacity: 0; pointer-events: none; transform: scale(0.8); }
+        .search-fab svg {
+            width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 1.8;
             stroke-linecap: round; stroke-linejoin: round;
         }
-        .sh-search input {
+        .search-pop {
+            position: fixed; bottom: 28px; right: 28px; z-index: 61;
+            display: none; align-items: center; gap: 10px;
+            width: min(420px, calc(100vw - 56px));
+            padding: 11px 16px; border-radius: 999px;
+            background: #fff; border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .search-pop.open { display: flex; }
+        .search-pop svg {
+            width: 18px; height: 18px; flex: none; fill: none; stroke: #1c1c1c;
+            stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .search-pop input {
             border: none; outline: none; background: none; flex: 1; min-width: 0;
-            font-family: inherit; font-size: 14px; color: #1c1c1c;
+            font-family: inherit; font-size: 15px; color: #1c1c1c;
         }
-        .sh-search input::placeholder { color: #6b6b6b; }
-        /* The floating back pill sits inside the header row; keep it above the bar. */
-        .store-header ~ .back { top: 16px; z-index: 46; }
-        @media (max-width: 700px) {
-            .store-header { padding: 10px 18px; gap: 12px; }
-            .sh-brand { font-size: 17px; }
-            .store-header ~ .back { top: 12px; right: 18px; padding: 8px 14px; }
+        .search-pop-close {
+            border: none; background: none; cursor: pointer; flex: none;
+            font-size: 24px; line-height: 1; color: #6b6b6b;
         }
+        .search-pop-close:hover { color: #1c1c1c; }
 
         /* Back button — same pill language as the rest of the site. */
         .back {
@@ -168,6 +159,46 @@
             .feat-slider .product-card { width: calc((100% - 14px) / 2); }
         }
 
+        /* Per-product edit button — rides on top of the shared card (store-profile
+           only; product-card.css is untouched). */
+        .sp-edit {
+            position: absolute; top: 10px; left: 10px; z-index: 3;
+            width: 34px; height: 34px; border-radius: 999px; cursor: pointer;
+            display: grid; place-items: center; padding: 0;
+            border: none; background: rgba(255,255,255,0.92); backdrop-filter: blur(4px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.15s, background 0.2s;
+        }
+        .sp-edit:hover { transform: scale(1.08); background: #fff; }
+        .sp-edit svg { width: 17px; height: 17px; fill: none; stroke: #1c1c1c; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* Edit dialog. */
+        .pe-overlay {
+            position: fixed; inset: 0; z-index: 80; display: none;
+            align-items: center; justify-content: center; padding: 20px;
+            background: rgba(0,0,0,0.45); backdrop-filter: blur(2px);
+        }
+        .pe-overlay.open { display: flex; }
+        .pe-modal {
+            width: min(400px, 100%); background: #fff; border-radius: 16px; padding: 26px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .pe-title { font-size: 18px; font-weight: 500; margin-bottom: 20px; }
+        .pe-field { display: block; margin-bottom: 16px; }
+        .pe-field span { display: block; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; margin-bottom: 7px; }
+        .pe-field select {
+            width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.2); border-radius: 9px;
+            font-family: inherit; font-size: 14px; background: #fff; color: #1c1c1c;
+        }
+        .pe-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+        .pe-btn {
+            padding: 10px 22px; border-radius: 999px; font-family: inherit; font-size: 13px;
+            letter-spacing: 0.5px; cursor: pointer; transition: 0.2s; border: 1.4px solid #000;
+        }
+        .pe-btn.ghost { background: #fff; color: #1c1c1c; }
+        .pe-btn.ghost:hover { background: #f0f0f0; }
+        .pe-btn.solid { background: #000; color: #fff; }
+        .pe-btn.solid:hover { opacity: 0.85; }
+
         /* Audience banner — a full-bleed image slider, edge to edge of the page,
            cycling Women / Men / Kids. Same treatment as the hero. */
         .aud-banner {
@@ -242,6 +273,20 @@
             color: #55554f; max-width: 320px;
         }
         .clo-nav { display: flex; gap: 10px; margin-top: 26px; }
+        .clo-socials { margin-top: 30px; }
+        .clo-socials-label {
+            font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+            color: #9a9a95; margin-bottom: 12px;
+        }
+        .clo-socials-links { display: flex; gap: 12px; }
+        .clo-socials-links a {
+            width: 40px; height: 40px; border-radius: 999px;
+            display: grid; place-items: center;
+            border: 1px solid rgba(0,0,0,0.18); color: #1c1c1c;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .clo-socials-links a:hover { background: #000; color: #fff; border-color: #000; }
+        .clo-socials-links svg { width: 19px; height: 19px; fill: currentColor; display: block; }
         .clo-arrow {
             width: 42px; height: 42px; border-radius: 999px; cursor: pointer;
             display: grid; place-items: center;
@@ -328,16 +373,18 @@
     <link rel="stylesheet" href="product-card.css">
 </head>
 <body>
-    <!-- STICKY HEADER — brand on the left, a store search in the middle. Sticks to
-         the top of the viewport while the profile scrolls under it. -->
-    <header class="store-header">
-        <div class="sh-search">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
-            <input type="search" id="storeSearch" placeholder="Search this store…" autocomplete="off">
-        </div>
-    </header>
-
     <a class="back" href="index.html">&#8592; חזרה</a>
+
+    <!-- STICKY SEARCH POPUP — a floating button pinned to the viewport; clicking it
+         opens a search field that filters the feed live. -->
+    <button class="search-fab" id="searchFab" aria-label="Search this store">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+    </button>
+    <div class="search-pop" id="searchPop" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+        <input type="search" id="storeSearch" placeholder="Search this store…" autocomplete="off">
+        <button class="search-pop-close" id="searchClose" aria-label="Close">&times;</button>
+    </div>
 
     <div class="wrap">
         <!-- HERO -->
@@ -391,6 +438,12 @@
                         <button class="clo-arrow prev" id="cloPrev" aria-label="Previous">&#8249;</button>
                         <button class="clo-arrow next" id="cloNext" aria-label="Next">&#8250;</button>
                     </div>
+                    <!-- SOCIALS — the seller's links, entered in the seller area
+                         (My Shop). Rendered from STORE.socials. -->
+                    <div class="clo-socials">
+                        <div class="clo-socials-label">Socials</div>
+                        <div class="clo-socials-links" id="cloSocials"></div>
+                    </div>
                 </div>
                 <div class="clo-slider">
                     <div class="clo-track" id="cloTrack"></div>
@@ -441,6 +494,20 @@
                 Shoes:     'Everyday runners to evening leather, chosen with care.',
                 Bags:      'Totes and crossbodies — quiet shapes, honest materials.',
             },
+            // Which clothing categories each audience shows. Selecting Women / Men /
+            // Kids in the banner re-builds the category slider from its list.
+            audCategories: {
+                women: ['Dresses', 'Outerwear', 'Knitwear', 'Bags'],
+                men:   ['Outerwear', 'Knitwear', 'Denim', 'Shoes'],
+                kids:  ['Knitwear', 'Denim', 'Shoes', 'Bags'],
+            },
+            // The seller's social links, entered in the seller area (My Shop). Only
+            // the ones the seller fills in are shown.
+            socials: {
+                instagram: 'https://instagram.com/',
+                tiktok:    'https://tiktok.com/',
+                website:   'https://vero.example/',
+            },
         };
 
         // A pool of demo products, each tagged with a category + audience so the
@@ -462,6 +529,44 @@
                 rating: (4 + Math.random()).toFixed(1),
             };
         });
+
+        // ===================== SELLER CONFIG =====================
+        // Anything the seller set in the Storefront editor (My Shop) overrides the
+        // demo above. Stored as vero_store_config in localStorage.
+        (function applyStoreConfig() {
+            let cfg; try { cfg = JSON.parse(localStorage.getItem('vero_store_config')); } catch (e) { cfg = null; }
+            if (!cfg) return;
+
+            // Banners → the ad band uses the first banner (the hero image is separate).
+            if (Array.isArray(cfg.banners) && cfg.banners[0]) {
+                const b = cfg.banners[0];
+                STORE.ad = { image: b.image || STORE.ad.image, kicker: b.kicker || STORE.ad.kicker, title: b.title || STORE.ad.title };
+            }
+            // Categories → names, cover images and descriptions.
+            if (Array.isArray(cfg.categories) && cfg.categories.length) {
+                STORE.categories = cfg.categories.map(c => c.name);
+                STORE.catImages = {}; STORE.catDesc = {};
+                cfg.categories.forEach(c => {
+                    if (c.image) STORE.catImages[c.name] = c.image;
+                    if (c.desc)  STORE.catDesc[c.name]  = c.desc;
+                });
+            }
+            // Collections → which categories each audience shows.
+            if (cfg.collections) STORE.audCategories = cfg.collections;
+
+            // Products → rebuild the feed pool from the seller's division, keeping a
+            // demo price/rating/icon for anything not carried in the config.
+            if (Array.isArray(cfg.products) && cfg.products.length) {
+                PRODUCTS.length = 0;
+                cfg.products.forEach((p, i) => PRODUCTS.push({
+                    id: i, name: p.name,
+                    cat: p.cat, aud: p.aud,
+                    icon: ICONS[p.cat] || '🛍️',
+                    price: p.price != null ? p.price : 79 + ((i * 7) % 22) * 10,
+                    rating: p.rating != null ? p.rating : (4 + (i % 10) / 10).toFixed(1),
+                }));
+            }
+        })();
 
         // ===================== RENDER =====================
         const nis = n => '₪' + (Number(n)||0).toLocaleString('en-US');
@@ -491,9 +596,14 @@
         }
 
         // The card — same markup + shared product-card.css as the rest of the site.
+        // A local edit button rides on top (store-profile only; it does not touch
+        // the shared card component). It carries the product's id.
         function card(p) {
             return `
                 <a class="product-card" href="#" title="${p.name}">
+                    <button class="sp-edit" data-edit="${p.id}" title="Edit product" aria-label="Edit product">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg>
+                    </button>
                     <div class="product-image">${p.icon}</div>
                     <div class="product-info">
                         <div class="pc-left">
@@ -530,28 +640,71 @@
         }
         renderFeed();
 
-        // Sticky header — transparent over the hero, turns solid on scroll (same
-        // effect as the main site header).
-        (function(){
-            const hdr = document.querySelector('.store-header');
-            const onScroll = () => hdr.classList.toggle('scrolled', window.scrollY > 80);
-            window.addEventListener('scroll', onScroll, { passive: true });
-            onScroll();
-        })();
-
-        // Sticky-header search — filters the feed live as the buyer types.
-        document.getElementById('storeSearch').addEventListener('input', function(){
-            searchTerm = this.value.trim().toLowerCase();
-            renderFeed();
-        });
-
         // Featured — the five pieces the seller highlighted, rendered with the
         // same card() as the feed so they stay identical to it.
         const FEATURED = PRODUCTS.slice(0, 5);
         document.getElementById('featSlider').innerHTML = FEATURED.map(card).join('');
 
+        // Clothing-category slider — re-buildable so the audience banner can swap
+        // its category list. The leftmost (lead) card is the selected category.
+        const cloNav = { prev(){}, next(){} };
+        function buildCloSlider(cats) {
+            const track = document.getElementById('cloTrack');
+            track.innerHTML = cats.map(c => `
+                <button class="clo-card" data-v="${c}">
+                    <div class="clo-thumb" style="background-image:url('${STORE.catImages[c]||STORE.hero}')"></div>
+                </button>`).join('');
+
+            const cards = track.querySelectorAll('.clo-card');
+            const titleEl = document.getElementById('cloTitle');
+            const descEl  = document.getElementById('cloDesc');
+            let lead = 0;
+
+            function update() {
+                cards.forEach((c, n) => c.classList.toggle('is-lead', n === lead));
+                track.style.transform = `translateX(${-cards[lead].offsetLeft}px)`;
+                const c = cards[lead].dataset.v;
+                titleEl.textContent = c;
+                descEl.textContent = (STORE.catDesc && STORE.catDesc[c]) || '';
+                activeCat = c; renderFeed();
+            }
+            function go(i) { lead = (i + cards.length) % cards.length; update(); }
+
+            cards.forEach((c, n) => c.addEventListener('click', () => go(n)));
+            cloNav.prev = () => go(lead - 1);
+            cloNav.next = () => go(lead + 1);
+            update();
+        }
+        // The category arrows are wired once; they call whichever slider is current.
+        document.getElementById('cloPrev').addEventListener('click', () => cloNav.prev());
+        document.getElementById('cloNext').addEventListener('click', () => cloNav.next());
+        buildCloSlider(STORE.categories);
+
+        // Socials — render only the links the seller filled in (My Shop). Icons are
+        // inline SVG so nothing loads from outside.
+        (function buildSocials(){
+            const ICON = {
+                instagram: '<svg viewBox="0 0 24 24"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16Zm0 1.62c-3.15 0-3.5.01-4.74.07-.9.04-1.38.19-1.71.32-.43.17-.74.37-1.06.69-.32.32-.52.63-.69 1.06-.13.33-.28.81-.32 1.71-.06 1.24-.07 1.59-.07 4.74s.01 3.5.07 4.74c.04.9.19 1.38.32 1.71.17.43.37.74.69 1.06.32.32.63.52 1.06.69.33.13.81.28 1.71.32 1.24.06 1.59.07 4.74.07s3.5-.01 4.74-.07c.9-.04 1.38-.19 1.71-.32.43-.17.74-.37 1.06-.69.32-.32.52-.63.69-1.06.13-.33.28-.81.32-1.71.06-1.24.07-1.59.07-4.74s-.01-3.5-.07-4.74c-.04-.9-.19-1.38-.32-1.71a2.85 2.85 0 0 0-.69-1.06 2.85 2.85 0 0 0-1.06-.69c-.33-.13-.81-.28-1.71-.32-1.24-.06-1.59-.07-4.74-.07Zm0 2.76a5.3 5.3 0 1 1 0 10.6 5.3 5.3 0 0 1 0-10.6Zm0 8.74a3.44 3.44 0 1 0 0-6.88 3.44 3.44 0 0 0 0 6.88Zm6.74-8.94a1.24 1.24 0 1 1-2.48 0 1.24 1.24 0 0 1 2.48 0Z"/></svg>',
+                tiktok:    '<svg viewBox="0 0 24 24"><path d="M16.6 5.82a4.28 4.28 0 0 1-1.06-2.82h-3.3v13.4a2.53 2.53 0 0 1-2.53 2.36 2.53 2.53 0 1 1 .7-4.96V8.4a5.9 5.9 0 0 0-.7-.04A5.86 5.86 0 1 0 15.5 14.2V8.9a7.53 7.53 0 0 0 4.4 1.4V7a4.28 4.28 0 0 1-3.3-1.18Z"/></svg>',
+                website:   '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8ZM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96ZM4.26 14a7.99 7.99 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26Zm.81 2h2.95c.34 1.27.8 2.47 1.38 3.56A8.03 8.03 0 0 1 5.07 16Zm2.95-8H5.07a8.03 8.03 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.02 8ZM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96ZM14.34 14H9.66a14.7 14.7 0 0 1 0-4h4.68a14.7 14.7 0 0 1 0 4Zm.28 5.56c.58-1.09 1.04-2.29 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56ZM16.36 14a16.5 16.5 0 0 0 0-4h3.38a7.99 7.99 0 0 1 0 4h-3.38Z"/></svg>',
+            };
+            const LABEL = { instagram:'Instagram', tiktok:'TikTok', website:'Website' };
+            const s = STORE.socials || {};
+            document.getElementById('cloSocials').innerHTML = Object.keys(s)
+                .filter(k => s[k])
+                .map(k => `<a href="${s[k]}" target="_blank" rel="noopener noreferrer" aria-label="${LABEL[k]||k}" title="${LABEL[k]||k}">${ICON[k]||''}</a>`)
+                .join('');
+        })();
+
+        // Selecting an audience filters the feed AND rebuilds the categories from
+        // that audience's list.
+        function applyAudience(a) {
+            activeAud = a;
+            buildCloSlider((STORE.audCategories && STORE.audCategories[a]) || STORE.categories);
+        }
+
         // Audience banner — full-bleed image slider cycling Women / Men / Kids.
-        // Auto-rotates every 6s; a slide, dot or arrow selects it and filters the feed.
+        // Auto-rotates every 6s; a click, dot, arrow OR swipe selects that audience.
         (function buildAudBanner() {
             const el = document.getElementById('audBanner');
             const AUD_IMG = { women:'women-hero.jpg', men:'men-hero.jpg', kids:'clothing-hero.png' };
@@ -570,54 +723,53 @@
             const dots   = el.querySelectorAll('.aud-dot');
             let idx = 0, timer;
 
-            function show(i) {
+            // select=true also applies the audience (feed + categories follow).
+            function show(i, select) {
                 idx = (i + slides.length) % slides.length;
                 slides.forEach((s, n) => s.classList.toggle('is-active', n === idx));
                 dots.forEach((d, n)   => d.classList.toggle('is-active', n === idx));
+                if (select) applyAudience(slides[idx].dataset.v);
             }
-            function start() { timer = setInterval(() => show(idx + 1), 6000); }
+            function start() { timer = setInterval(() => show(idx + 1, false), 6000); }
             function reset() { clearInterval(timer); start(); }
 
-            slides.forEach(s => s.addEventListener('click', () => { activeAud = s.dataset.v; renderFeed(); }));
-            dots.forEach(d => d.addEventListener('click', () => { show(+d.dataset.i); reset(); }));
-            el.querySelector('.aud-arrow.prev').addEventListener('click', () => { show(idx - 1); reset(); });
-            el.querySelector('.aud-arrow.next').addEventListener('click', () => { show(idx + 1); reset(); });
+            slides.forEach((s, n) => s.addEventListener('click', () => { show(n, true); reset(); }));
+            dots.forEach(d => d.addEventListener('click', () => { show(+d.dataset.i, true); reset(); }));
+            el.querySelector('.aud-arrow.prev').addEventListener('click', () => { show(idx - 1, true); reset(); });
+            el.querySelector('.aud-arrow.next').addEventListener('click', () => { show(idx + 1, true); reset(); });
+
+            // Swipe / drag — pointer events cover both touch and mouse.
+            let startX = null;
+            el.addEventListener('pointerdown', e => { startX = e.clientX; });
+            el.addEventListener('pointerup', e => {
+                if (startX === null) return;
+                const dx = e.clientX - startX; startX = null;
+                if (Math.abs(dx) < 40) return;               // ignore taps / tiny drags
+                show(idx + (dx < 0 ? 1 : -1), true); reset();
+            });
+            el.addEventListener('pointercancel', () => { startX = null; });
+
             start();
         })();
 
-        // Clothing-category slider — a paged rail of clothing types. The leftmost
-        // (lead) card scales up and is the selected category; each page shifts the
-        // lead and filters the feed by it.
-        (function buildCloSlider() {
-            const track = document.getElementById('cloTrack');
-            const cats = STORE.categories;   // clothing types
-            track.innerHTML = cats.map((c, i) => `
-                <button class="clo-card" data-v="${c}">
-                    <div class="clo-thumb" style="background-image:url('${STORE.catImages[c]||STORE.hero}')"></div>
-                </button>`).join('');
-
-            const cards = track.querySelectorAll('.clo-card');
-            let lead = 0;
-
-            const titleEl = document.getElementById('cloTitle');
-            const descEl  = document.getElementById('cloDesc');
-
-            function update() {
-                cards.forEach((c, n) => c.classList.toggle('is-lead', n === lead));
-                // Bring the lead card to the left edge (scale doesn't affect offsetLeft).
-                track.style.transform = `translateX(${-cards[lead].offsetLeft}px)`;
-                // The lead card is the selected category — fill the info panel and feed.
-                const c = cards[lead].dataset.v;
-                titleEl.textContent = c;
-                descEl.textContent = (STORE.catDesc && STORE.catDesc[c]) || '';
-                activeCat = c; renderFeed();
-            }
-            function go(i) { lead = (i + cards.length) % cards.length; update(); }
-
-            cards.forEach((c, n) => c.addEventListener('click', () => go(n)));
-            document.getElementById('cloPrev').addEventListener('click', () => go(lead - 1));
-            document.getElementById('cloNext').addEventListener('click', () => go(lead + 1));
-            update();
+        // Sticky search popup — opens the search pill, filters the feed live.
+        (function(){
+            const fab = document.getElementById('searchFab');
+            const pop = document.getElementById('searchPop');
+            const inp = document.getElementById('storeSearch');
+            const open  = () => { pop.classList.add('open'); fab.classList.add('hidden'); inp.focus(); };
+            const close = () => {
+                pop.classList.remove('open'); fab.classList.remove('hidden');
+                inp.value = ''; searchTerm = ''; renderFeed();
+            };
+            fab.addEventListener('click', open);
+            document.getElementById('searchClose').addEventListener('click', close);
+            inp.addEventListener('input', function(){
+                searchTerm = this.value.trim().toLowerCase(); renderFeed();
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && pop.classList.contains('open')) close();
+            });
         })();
 
         // Follow toggle (demo only).
@@ -649,6 +801,91 @@
             setTimeout(() => location.href = e.currentTarget.getAttribute('href'), 520);
         });
     </script>
+
+    <!-- Per-product edit dialog — set the product's category and collection. Saves
+         to vero_store_config (the same store the seller edits in My Shop). -->
+    <div class="pe-overlay" id="peOverlay">
+        <div class="pe-modal" role="dialog" aria-modal="true" aria-label="Edit product">
+            <div class="pe-title" id="peTitle">Edit product</div>
+            <label class="pe-field">
+                <span>Category</span>
+                <select id="peCat"></select>
+            </label>
+            <label class="pe-field">
+                <span>Collection (audience)</span>
+                <select id="peAud">
+                    <option value="women">Women</option>
+                    <option value="men">Men</option>
+                    <option value="kids">Kids</option>
+                </select>
+            </label>
+            <div class="pe-actions">
+                <button class="pe-btn ghost" id="peCancel">Cancel</button>
+                <button class="pe-btn solid" id="peSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Per-product edit — opens a dialog to place a product in a category and a
+        // collection, then persists to vero_store_config and re-renders.
+        (function productEdit(){
+            const overlay = document.getElementById('peOverlay');
+            const catSel = document.getElementById('peCat');
+            const audSel = document.getElementById('peAud');
+            const titleEl = document.getElementById('peTitle');
+            let editing = null;   // product id being edited
+
+            const close = () => { overlay.classList.remove('open'); editing = null; };
+
+            function open(id) {
+                const p = PRODUCTS.find(x => String(x.id) === String(id));
+                if (!p) return;
+                editing = p.id;
+                titleEl.textContent = 'Edit — ' + p.name;
+                catSel.innerHTML = STORE.categories
+                    .map(c => `<option ${c === p.cat ? 'selected' : ''}>${c}</option>`).join('');
+                audSel.value = p.aud;
+                overlay.classList.add('open');
+            }
+
+            // Persist the change to vero_store_config.products (matched by name).
+            function persist(p) {
+                let cfg; try { cfg = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch(e){ cfg = {}; }
+                if (!Array.isArray(cfg.products)) {
+                    cfg.products = PRODUCTS.map(x => ({ id:x.id, name:x.name, cat:x.cat, aud:x.aud, price:x.price, rating:x.rating }));
+                }
+                const rec = cfg.products.find(x => x.name === p.name);
+                if (rec) { rec.cat = p.cat; rec.aud = p.aud; }
+                else cfg.products.push({ id:p.id, name:p.name, cat:p.cat, aud:p.aud, price:p.price, rating:p.rating });
+                localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+            }
+
+            document.getElementById('peSave').addEventListener('click', () => {
+                const p = PRODUCTS.find(x => String(x.id) === String(editing));
+                if (p) {
+                    p.cat = catSel.value; p.aud = audSel.value;
+                    p.icon = { Dresses:'👗', Outerwear:'🧥', Knitwear:'🧶', Denim:'👖', Shoes:'👟', Bags:'👜' }[p.cat] || p.icon;
+                    persist(p);
+                    renderFeed();
+                    document.getElementById('featSlider').innerHTML = PRODUCTS.slice(0,5).map(card).join('');
+                }
+                close();
+            });
+            document.getElementById('peCancel').addEventListener('click', close);
+            overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) close(); });
+
+            // Delegate clicks from any edit button on a product card.
+            document.addEventListener('click', e => {
+                const btn = e.target.closest('.sp-edit');
+                if (!btn) return;
+                e.preventDefault(); e.stopPropagation();
+                open(btn.dataset.edit);
+            });
+        })();
+    </script>
+
     <!-- Manual edit mode (✎ button bottom-left, or Ctrl+Shift+E) with Copy CSS — same editor as the rest of the site. -->
     <script src="vero-editor.js"></script>
 </body>
