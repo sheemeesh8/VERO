@@ -164,6 +164,36 @@
         }
         .change-photo:hover { background: #000; color: #fff; }
 
+        /* Store background image — a wide preview beside a change button. */
+        .store-bg { display: flex; align-items: center; gap: 16px; }
+        .store-bg-preview {
+            width: 128px; height: 74px; flex: none; border: 1px solid #000;
+            background: #eeedeb center / cover no-repeat; filter: grayscale(1);
+            display: grid; place-items: center; font-size: 11px; letter-spacing: 0.5px;
+            color: #9a9a95; text-align: center;
+        }
+        .store-bg-preview.has-img { color: transparent; filter: none; }
+
+        /* Per-product size entry (seller). */
+        .size-item { padding: 16px 0; border-bottom: 1px solid #eee; }
+        .size-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .size-name { font-size: 14px; margin-bottom: 11px; }
+        .size-name .size-cat { color: #9a9a95; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-left: 10px; }
+        .size-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .size-chip {
+            border: 1.4px solid rgba(0,0,0,0.2); border-radius: 999px; padding: 6px 15px;
+            font-size: 12px; letter-spacing: 0.5px; cursor: pointer; user-select: none;
+            background: #fff; color: #1c1c1c; transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .size-chip:hover { border-color: #000; }
+        .size-chip.on { background: #000; color: #fff; border-color: #000; }
+        .size-range { display: flex; align-items: center; gap: 10px; }
+        .size-range span { font-size: 12px; color: #9a9a95; }
+        .size-range select {
+            padding: 7px 10px; border: 1px solid rgba(0,0,0,0.2); border-radius: 8px;
+            font-family: inherit; font-size: 13px; background: #fff; color: #1c1c1c;
+        }
+
         .char-count { font-size: 11px; color: #b0b0aa; text-align: right; margin-top: 4px; }
         .card-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
         .card-hint { font-size: 12px; color: #9a9a95; line-height: 1.5; margin-bottom: 16px; }
@@ -288,13 +318,6 @@
         <div class="grid">
             <!-- Identity card (editable, saved to localStorage) -->
             <div class="card">
-                <div class="avatar-row">
-                    <div class="avatar-wrap">
-                        <div class="avatar" id="avatar">V</div>
-                    </div>
-                    <button type="button" class="change-photo" id="changePhoto">Change photo</button>
-                    <input id="pf-photo" type="file" accept="image/*" hidden>
-                </div>
                 <div class="field">
                     <div class="card-label" id="nameLabel">Name</div>
                     <input id="pf-name" type="text" placeholder="Your name">
@@ -324,11 +347,22 @@
             <!-- Right column: preferences + live stats from the site -->
             <div class="col-right">
                 <div class="card">
-                    <div class="card-label">Shopping preferences</div>
-                    <div class="prefs" id="prefs"></div>
+                    <div class="card-label">Store photo</div>
+                    <div class="avatar-row">
+                        <div class="avatar-wrap">
+                            <div class="avatar" id="avatar">V</div>
+                        </div>
+                        <button type="button" class="change-photo" id="changePhoto">Change photo</button>
+                        <input id="pf-photo" type="file" accept="image/*" hidden>
+                    </div>
                     <div class="divider"></div>
-                    <div class="card-label">Member since</div>
-                    <div id="since" style="font-size:16px;">—</div>
+                    <div class="card-label">Store background</div>
+                    <div class="card-hint" style="margin-bottom:14px;">The full-width image behind your store name on the storefront.</div>
+                    <div class="store-bg">
+                        <div class="store-bg-preview" id="storeBgPreview">No image</div>
+                        <button type="button" class="change-photo" id="changeBg">Change background</button>
+                        <input id="storeBgInput" type="file" accept="image/*" hidden>
+                    </div>
                 </div>
 
                 <div class="stats">
@@ -343,44 +377,14 @@
                     </div>
                 </div>
 
-                <!-- My Dimensions (buyer fit — hidden in shop mode) -->
-                <div class="card buyer-only" style="margin-top:24px;">
+                <!-- Product sizes (seller) — set the sizes carried for each item -->
+                <div class="card seller-only" id="sizeCard" style="margin-top:24px;">
                     <div class="section-head">
-                        <div class="card-label" style="margin:0;">My dimensions</div>
-                        <div class="section-note">Perfect Fit AI</div>
+                        <div class="card-label" style="margin:0;">Product sizes</div>
+                        <div class="section-note">What you carry</div>
                     </div>
-                    <div class="dim-grid">
-                        <div class="dim-field">
-                            <div class="card-label">Height (cm)</div>
-                            <input id="dim-height" type="number" inputmode="numeric" placeholder="170">
-                        </div>
-                        <div class="dim-field">
-                            <div class="card-label">Weight (kg)</div>
-                            <input id="dim-weight" type="number" inputmode="numeric" placeholder="65">
-                        </div>
-                        <div class="dim-field">
-                            <div class="card-label">Chest (cm)</div>
-                            <input id="dim-chest" type="number" inputmode="numeric" placeholder="92">
-                        </div>
-                        <div class="dim-field">
-                            <div class="card-label">Waist (cm)</div>
-                            <input id="dim-waist" type="number" inputmode="numeric" placeholder="78">
-                        </div>
-                        <div class="dim-field">
-                            <div class="card-label">Clothing size</div>
-                            <select id="dim-clothing">
-                                <option value="">—</option>
-                                <option>XS</option><option>S</option><option>M</option>
-                                <option>L</option><option>XL</option><option>XXL</option>
-                            </select>
-                        </div>
-                        <div class="dim-field">
-                            <div class="card-label">Shoe size (EU)</div>
-                            <input id="dim-shoe" type="number" inputmode="numeric" placeholder="42">
-                        </div>
-                    </div>
-                    <div class="dim-note" id="dimNote">Your measurements save automatically.</div>
-                    <span class="dim-fit" id="dimFit">Perfect Fit · not set</span>
+                    <div class="card-hint" style="margin-top:8px;">For each item choose the sizes you stock — the buyer sees exactly these. Clothing runs XS–XXXL; shoes are an EU range.</div>
+                    <div id="sizeList"></div>
                 </div>
 
                 <!-- ===== Personal style / favorite brands ===== -->
@@ -521,21 +525,36 @@
         document.getElementById('stat-following').textContent = Array.isArray(follows) ? follows.length : 0;
         document.getElementById('stat-followers').textContent = Number(profile.followers) || 0;
 
-        // Preferences → readable chips.
-        const catMap = { clothing: 'Fashion', art: 'Art', both: 'Fashion & Art' };
-        const purposeMap = { buy: 'Buying', sell: 'Selling', both: 'Buying & Selling' };
-        const chips = [];
-        if (prefs.category) chips.push(catMap[prefs.category] || prefs.category);
-        if (prefs.purpose)  chips.push(purposeMap[prefs.purpose] || prefs.purpose);
-        const prefsEl = document.getElementById('prefs');
-        prefsEl.innerHTML = chips.length
-            ? chips.map(c => `<span class="pref-chip">${c}</span>`).join('')
-            : '<span class="pref-chip">Not set yet</span>';
-
-        // Member-since: set once on first visit, then remembered.
+        // Member-since: set once on first visit, then remembered (kept for stats).
         if (!profile.since) { profile.since = Date.now(); localStorage.setItem('vero_profile', JSON.stringify(profile)); }
-        document.getElementById('since').textContent =
-            new Date(profile.since).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+        // ---- Store background image → saved on vero_store_config.hero, which
+        //      store-profile.html reads to paint the storefront hero. ----
+        (function storeBackground() {
+            const preview = document.getElementById('storeBgPreview');
+            const btn = document.getElementById('changeBg');
+            const input = document.getElementById('storeBgInput');
+            if (!preview || !btn || !input) return;
+            const readCfg = () => { try { return JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { return {}; } };
+            function paint(url) {
+                if (url) { preview.style.backgroundImage = `url('${url}')`; preview.classList.add('has-img'); }
+                else { preview.style.backgroundImage = ''; preview.classList.remove('has-img'); }
+            }
+            paint(readCfg().hero);
+            btn.addEventListener('click', () => input.click());
+            input.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const cfg = readCfg();
+                    cfg.hero = reader.result;
+                    localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+                    paint(cfg.hero);
+                };
+                reader.readAsDataURL(file);
+            });
+        })();
 
         // ---- Editable identity fields, persisted to vero_profile ----
         const fields = { name: 'pf-name', email: 'pf-email', phone: 'pf-phone', location: 'pf-location', bio: 'pf-bio' };
@@ -603,32 +622,68 @@
             });
         });
 
-        // ===== My Dimensions — persisted to vero_dimensions, drives Perfect Fit AI =====
-        (function dimensions() {
-            const dims = readJSON('vero_dimensions', {});
-            const map = { height: 'dim-height', weight: 'dim-weight', chest: 'dim-chest',
-                          waist: 'dim-waist', clothing: 'dim-clothing', shoe: 'dim-shoe' };
-            const fitEl = document.getElementById('dimFit');
-            const refreshFit = () => {
-                const ready = dims.clothing && dims.shoe;
-                fitEl.textContent = ready ? `Perfect Fit · ${dims.clothing} · EU ${dims.shoe}` : 'Perfect Fit · not set';
-                fitEl.style.background = ready ? '#000' : 'transparent';
-                fitEl.style.color = ready ? '#fff' : '#1c1c1c';
-            };
-            Object.entries(map).forEach(([key, id]) => {
-                const el = document.getElementById(id);
-                if (dims[key] != null) el.value = dims[key];
-                el.addEventListener('input', () => {
-                    dims[key] = el.value;
-                    localStorage.setItem('vero_dimensions', JSON.stringify(dims));
-                    const note = document.getElementById('dimNote');
-                    note.textContent = 'Saved ✓';
-                    clearTimeout(el._t);
-                    el._t = setTimeout(() => { note.textContent = 'Your measurements save automatically.'; }, 1400);
-                    refreshFit();
-                });
+        // ===== Product sizes — per-item availability, saved on vero_store_config
+        //       .products[i] (sizes[] for clothing, shoeFrom/shoeTo for footwear). =====
+        (function productSizes() {
+            const card = document.getElementById('sizeCard');
+            const list = document.getElementById('sizeList');
+            if (!card || !list) return;
+            const CLO = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+            const EU = []; for (let s = 34; s <= 48; s++) EU.push(s);
+            const readCfg = () => { try { return JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { return {}; } };
+            const isShoe = c => /shoe|נעל|footwear|sneaker|boot/i.test(c || '');
+
+            function render() {
+                const cfg = readCfg();
+                const prods = Array.isArray(cfg.products) ? cfg.products : [];
+                if (!prods.length) {
+                    list.innerHTML = '<div class="card-hint" style="margin:8px 0 0;">Add products in the storefront editor first — they’ll appear here.</div>';
+                    return;
+                }
+                list.innerHTML = prods.map((p, i) => {
+                    const cat = p.cat || '';
+                    if (isShoe(cat)) {
+                        const from = p.shoeFrom || 36, to = p.shoeTo || 44;
+                        return `<div class="size-item" data-i="${i}">
+                            <div class="size-name">${p.name}<span class="size-cat">${cat}</span></div>
+                            <div class="size-range">
+                                <span>EU</span>
+                                <select data-f="shoeFrom">${EU.map(s => `<option ${s == from ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                                <span>to</span>
+                                <select data-f="shoeTo">${EU.map(s => `<option ${s == to ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                            </div>
+                        </div>`;
+                    }
+                    const sizes = Array.isArray(p.sizes) ? p.sizes : [];
+                    return `<div class="size-item" data-i="${i}">
+                        <div class="size-name">${p.name}<span class="size-cat">${cat}</span></div>
+                        <div class="size-chips">${CLO.map(s => `<span class="size-chip ${sizes.includes(s) ? 'on' : ''}" data-s="${s}">${s}</span>`).join('')}</div>
+                    </div>`;
+                }).join('');
+            }
+            // Defer the first paint: the storefront editor (later in this script)
+            // seeds default products into vero_store_config on load.
+            requestAnimationFrame(render);
+
+            list.addEventListener('click', e => {
+                const chip = e.target.closest('.size-chip'); if (!chip) return;
+                const i = +chip.closest('.size-item').dataset.i;
+                const cfg = readCfg(); const p = cfg.products && cfg.products[i]; if (!p) return;
+                if (!Array.isArray(p.sizes)) p.sizes = [];
+                const s = chip.dataset.s; const at = p.sizes.indexOf(s);
+                if (at >= 0) p.sizes.splice(at, 1); else p.sizes.push(s);
+                localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+                chip.classList.toggle('on');
             });
-            refreshFit();
+            list.addEventListener('change', e => {
+                const sel = e.target.closest('select[data-f]'); if (!sel) return;
+                const i = +sel.closest('.size-item').dataset.i;
+                const cfg = readCfg(); const p = cfg.products && cfg.products[i]; if (!p) return;
+                p[sel.dataset.f] = +sel.value;
+                localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+            });
+            // Products may be edited elsewhere on the page; refresh when the tab regains focus.
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
         })();
 
         // ===== Shop settings (seller mode) — all persisted to vero_profile =====

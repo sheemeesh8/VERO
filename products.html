@@ -154,6 +154,81 @@
         .product-card .status-badge.deleted { background: #efeeec; color: #8a8a85; border-color: #cfcfca; }
         .prod-sale { display: flex; flex-direction: column; gap: 3px; }
 
+        /* Edit pencil riding on the shared card (top-right), same language as the
+           storefront's per-product edit button. */
+        .product-card { position: relative; }
+        .product-card .pe-edit {
+            position: absolute; top: 12px; right: 12px; z-index: 4;
+            width: 34px; height: 34px; border-radius: 999px; cursor: pointer;
+            display: grid; place-items: center; padding: 0;
+            border: none; background: rgba(255,255,255,0.92); backdrop-filter: blur(4px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.15s, background 0.2s;
+        }
+        .product-card .pe-edit:hover { transform: scale(1.08); background: #fff; }
+        .product-card .pe-edit svg {
+            width: 17px; height: 17px; fill: none; stroke: #1c1c1c;
+            stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+        }
+        /* Discount pill (bottom-left of the image) + struck original price. */
+        .product-card .disc-badge {
+            position: absolute; left: 12px; bottom: 12px; z-index: 3;
+            padding: 5px 11px; border-radius: 999px; font-size: 10px; letter-spacing: 1px;
+            font-weight: 600; background: #b23b3b; color: #fff;
+        }
+        .old-price { text-decoration: line-through; color: #9a9a95; font-size: 0.78em; margin-left: 6px; }
+
+        /* History controls: sort toggle + date-range trigger. */
+        .hist-controls { display: flex; align-items: center; gap: 12px; }
+        .hist-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 8px 14px; border: 1.4px solid #000; border-radius: 999px;
+            background: #fff; color: #1c1c1c; cursor: pointer; font-family: inherit;
+            font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+            transition: background 0.2s, color 0.2s;
+        }
+        .hist-btn:hover, .hist-btn.on { background: #000; color: #fff; }
+        .hist-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+        .hist-btn.desc svg { transform: rotate(180deg); }
+
+        /* Calendar-style date-range popup. */
+        .cal-pop {
+            position: relative; margin-top: 16px; width: 300px; max-width: 100%;
+            border: 1px solid #000; background: #fff; padding: 16px; z-index: 20;
+            box-shadow: 0 12px 34px rgba(0,0,0,0.16);
+        }
+        .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .cal-title { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+        .cal-nav {
+            width: 30px; height: 30px; border: 1px solid #000; border-radius: 999px; background: #fff;
+            cursor: pointer; font-size: 16px; line-height: 1; color: #1c1c1c; transition: background 0.2s, color 0.2s;
+        }
+        .cal-nav:hover { background: #000; color: #fff; }
+        .cal-dow, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+        .cal-dow { margin-bottom: 6px; }
+        .cal-dow span { text-align: center; font-size: 10px; letter-spacing: 0.5px; color: #9a9a95; }
+        .cal-cell {
+            aspect-ratio: 1; border: none; background: none; cursor: pointer; font-family: inherit;
+            font-size: 12px; color: #1c1c1c; border-radius: 999px; display: grid; place-items: center;
+            transition: background 0.15s, color 0.15s;
+        }
+        .cal-cell:hover:not(:disabled) { background: #eee; }
+        .cal-cell:disabled { color: #d2d2ce; cursor: default; }
+        .cal-cell.in-range { background: #ececea; border-radius: 0; }
+        .cal-cell.end-pt { background: #000; color: #fff; }
+        .cal-cell.today { text-decoration: underline; }
+        .cal-cell.empty { visibility: hidden; }
+        .cal-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
+        .cal-range { font-size: 11px; color: #9a9a95; letter-spacing: 0.3px; }
+        .cal-actions { display: flex; gap: 8px; }
+        .cal-clear, .cal-apply {
+            padding: 7px 14px; border: 1.4px solid #000; border-radius: 999px; cursor: pointer;
+            font-family: inherit; font-size: 11px; letter-spacing: 0.5px; transition: 0.2s;
+        }
+        .cal-clear { background: #fff; color: #1c1c1c; }
+        .cal-clear:hover { background: #f0f0f0; }
+        .cal-apply { background: #000; color: #fff; }
+        .cal-apply:hover { opacity: 0.85; }
+
         /* Draft cards (inline on this page, like the personal area). */
         .draft-card { border: 1px dashed #8a8a85; }
         .draft-card .prod-img { border-bottom: 1px dashed #8a8a85; }
@@ -227,24 +302,43 @@
             </div>
         </div>
 
-        <!-- Drafts — attached inline on this page, like the personal area -->
-        <div class="section">
-            <div class="section-head">
-                <div class="section-title">Drafts</div>
-                <div class="section-note" id="draftsNote">0 drafts</div>
-            </div>
-            <div class="prod-grid" id="draftsGrid"></div>
-            <div class="empty" id="draftsEmpty" style="display:none;">
-                No drafts yet. Save a listing as a draft from the upload page to continue it later.
-            </div>
-        </div>
-
-        <!-- History: sold or deleted, with buyer + closed price -->
+        <!-- History: sold or deleted, sortable + filterable by date -->
         <div class="section">
             <div class="section-head">
                 <div class="section-title">History · sold &amp; removed</div>
-                <div class="section-note" id="historyNote">0 items</div>
+                <div class="hist-controls">
+                    <button class="hist-btn" id="histSort" type="button" title="Toggle sort order">
+                        <span id="histSortLabel">Newest first</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <button class="hist-btn" id="histDate" type="button" title="Filter by date">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span id="histDateLabel">Any date</span>
+                    </button>
+                    <div class="section-note" id="historyNote">0 items</div>
+                </div>
             </div>
+
+            <!-- Calendar-style date-range popup -->
+            <div class="cal-pop" id="calPop" hidden>
+                <div class="cal-head">
+                    <button class="cal-nav" id="calPrev" type="button" aria-label="Previous month">&#8249;</button>
+                    <div class="cal-title" id="calTitle">—</div>
+                    <button class="cal-nav" id="calNext" type="button" aria-label="Next month">&#8250;</button>
+                </div>
+                <div class="cal-dow">
+                    <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+                </div>
+                <div class="cal-grid" id="calGrid"></div>
+                <div class="cal-foot">
+                    <span class="cal-range" id="calRange">Pick a start and end date</span>
+                    <div class="cal-actions">
+                        <button class="cal-clear" id="calClear" type="button">Clear</button>
+                        <button class="cal-apply" id="calApply" type="button">Apply</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="prod-grid" id="historyGrid"></div>
             <div class="empty" id="historyEmpty" style="display:none;">
                 Nothing here yet. Items you mark as sold or remove will be kept here.
@@ -336,48 +430,42 @@
             else if (status === 'deleted') dateLine = 'Removed · ' + fmtDate(p.deletedAt);
             else dateLine = 'Listed · ' + fmtDate(p.listedAt);
 
-            // Sold items carry buyer + closed price + a negotiation button.
-            let saleBlock = '';
-            if (status === 'sold' && p.sale) {
-                saleBlock = `
-                    <div class="sale-line"><span class="lbl">Buyer</span> · <b>${p.sale.buyer}</b></div>
-                    <div class="sale-line"><span class="lbl">Closed at</span> · <b>${nis(p.sale.closedPrice)}</b></div>`;
-            }
+            // Discounted price: p.discount is a percentage off the asking price.
+            const price = Number(p.price) || 0;
+            const disc = Number(p.discount) || 0;
+            const hasDisc = disc > 0 && disc < 100 && price > 0;
+            const finalPrice = hasDisc ? Math.round(price * (1 - disc / 100)) : price;
+            const priceHtml = hasDisc
+                ? `<span class="vprice">${nis(finalPrice)}</span><span class="old-price">${nis(price)}</span>`
+                : `<span class="vprice">${nis(price)}</span>`;
 
-            let actions;
-            if (past && status === 'sold') {
-                actions = `<button class="p-btn" data-act="nego" data-i="${idx}">Negotiation</button>
-                           <button class="p-btn danger" data-act="purge" data-i="${idx}">Delete</button>`;
-            } else if (past) {
-                actions = `<button class="p-btn" data-act="relist" data-i="${idx}">Relist</button>
-                           <button class="p-btn danger" data-act="purge" data-i="${idx}">Delete</button>`;
-            } else {
-                actions = `<button class="p-btn" data-act="sold" data-i="${idx}">Mark sold</button>
-                           <button class="p-btn danger" data-act="remove" data-i="${idx}">Remove</button>`;
-            }
-
-            // Same object as the feed — the shared product card + product-card.css,
-            // with the listing's actions in a row beneath it.
+            // Right column line: category for live items, the sale/removed date for
+            // history items so the timeline reads on the card itself.
+            const metaLine = past ? dateLine : (p.category || dateLine);
+            const editHref = `product-edit.html?i=${idx}${isSeller ? '&from=seller' : ''}`;
             const fig = src ? `<img src="${src}" alt="">` : (p.icon || '🛍️');
+            // The shared feed card — no buttons; an edit pencil opens the editor.
             return `
                 <div class="prod-cell ${past ? 'past' : ''}">
-                    <a class="product-card" href="#" title="${p.name || 'Untitled listing'}">
+                    <a class="product-card" href="${editHref}" title="${p.name || 'Untitled listing'}">
                         <div class="product-image">${fig}
                             <span class="status-badge ${status}">${badgeText}</span>
+                            ${hasDisc ? `<span class="disc-badge">-${disc}%</span>` : ''}
+                            <span class="pe-edit" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg>
+                            </span>
                         </div>
                         <div class="product-info">
                             <div class="pc-left">
-                                <div class="product-price"><span class="vprice">${nis(p.price)}</span></div>
+                                <div class="product-price">${priceHtml}</div>
                             </div>
                             <div class="pc-right">
                                 <div class="product-seller">${p.seller || p.brand || '—'}</div>
                                 <div class="product-name">${p.name || 'Untitled listing'}</div>
-                                <div class="product-rating">${p.category || dateLine}</div>
+                                <div class="product-rating">${metaLine}</div>
                             </div>
                         </div>
                     </a>
-                    ${saleBlock ? `<div class="prod-sale">${saleBlock}</div>` : ''}
-                    <div class="prod-actions">${actions}</div>
                 </div>`;
         }
 
@@ -406,6 +494,11 @@
                 </a>`;
         }
 
+        // History sort + date filter state.
+        let histSortDesc = true;                 // true = newest first
+        let dateRange = { start: null, end: null };
+        const histTs = p => p.soldAt || p.deletedAt || p.listedAt || 0;
+
         function render() {
             // Backfill a sale record for any sold item missing one, so the buyer,
             // closed price and negotiation timeline are always available.
@@ -416,13 +509,24 @@
             if (touched) save('vero_listings', listings);
 
             const active = [];
-            const history = [];
+            let history = [];
             listings.forEach((p, i) => {
                 const rec = { ...p, _i: i };
                 if ((p.status || 'active') === 'active') active.push(rec); else history.push(rec);
             });
-            // Newest first.
-            history.sort((a, b) => (b.soldAt || b.deletedAt || 0) - (a.soldAt || a.deletedAt || 0));
+
+            // Date-range filter (inclusive) on the history timeline.
+            const total = history.length;
+            if (dateRange.start != null || dateRange.end != null) {
+                history = history.filter(p => {
+                    const t = histTs(p);
+                    if (dateRange.start != null && t < dateRange.start) return false;
+                    if (dateRange.end != null && t > dateRange.end) return false;
+                    return true;
+                });
+            }
+            // Sort by date, direction driven by the toggle.
+            history.sort((a, b) => histSortDesc ? histTs(b) - histTs(a) : histTs(a) - histTs(b));
 
             const ag = document.getElementById('activeGrid');
             const hg = document.getElementById('historyGrid');
@@ -430,17 +534,16 @@
             hg.innerHTML = history.map(p => card(p, p._i, true)).join('');
 
             document.getElementById('activeNote').textContent = `${active.length} live`;
-            document.getElementById('historyNote').textContent = `${history.length} item${history.length === 1 ? '' : 's'}`;
+            const filtered = (dateRange.start != null || dateRange.end != null);
+            document.getElementById('historyNote').textContent =
+                `${history.length}${filtered ? ' of ' + total : ''} item${history.length === 1 ? '' : 's'}`;
             document.getElementById('activeEmpty').style.display  = active.length ? 'none' : 'block';
             document.getElementById('historyEmpty').style.display = history.length ? 'none' : 'block';
 
-            // Drafts — inline section + the header pill count.
+            // Drafts now live only on the dedicated Drafts page — keep the pill count.
             let drafts = readJSON('vero_drafts', []);
             if (!Array.isArray(drafts)) drafts = [];
             document.getElementById('draftCount').textContent = drafts.length;
-            document.getElementById('draftsNote').textContent = `${drafts.length} draft${drafts.length === 1 ? '' : 's'}`;
-            document.getElementById('draftsGrid').innerHTML = drafts.map((d, i) => draftCard(d, i)).join('');
-            document.getElementById('draftsEmpty').style.display = drafts.length ? 'none' : 'block';
         }
 
         // ---- Negotiation popup ----
@@ -480,6 +583,98 @@
             save('vero_listings', listings);
             render();
         });
+
+        // ===== History: sort toggle + date-range calendar popup =====
+        (function historyControls() {
+            const sortBtn = document.getElementById('histSort');
+            const sortLbl = document.getElementById('histSortLabel');
+            const dateBtn = document.getElementById('histDate');
+            const dateLbl = document.getElementById('histDateLabel');
+            const pop = document.getElementById('calPop');
+            const grid = document.getElementById('calGrid');
+            const title = document.getElementById('calTitle');
+            const rangeLbl = document.getElementById('calRange');
+            if (!sortBtn || !pop) return;
+
+            sortBtn.addEventListener('click', () => {
+                histSortDesc = !histSortDesc;
+                sortLbl.textContent = histSortDesc ? 'Newest first' : 'Oldest first';
+                sortBtn.classList.toggle('desc', !histSortDesc);
+                render();
+            });
+
+            const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            const dayMs = 864e5;
+            const stripTime = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+            const fmt = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            let view = stripTime(new Date()); view.setDate(1);
+            let selStart = null, selEnd = null;
+
+            function buildCal() {
+                title.textContent = `${MONTHS[view.getMonth()]} ${view.getFullYear()}`;
+                const first = new Date(view.getFullYear(), view.getMonth(), 1);
+                const lead = (first.getDay() + 6) % 7;   // Monday-first
+                const daysIn = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+                const today = stripTime(new Date());
+                let html = '';
+                for (let i = 0; i < lead; i++) html += '<span class="cal-cell empty"></span>';
+                for (let d = 1; d <= daysIn; d++) {
+                    const cur = stripTime(new Date(view.getFullYear(), view.getMonth(), d));
+                    const future = cur > today;
+                    const isEnd = (selStart && cur.getTime() === selStart.getTime()) ||
+                                  (selEnd && cur.getTime() === selEnd.getTime());
+                    const inRange = selStart && selEnd && cur > selStart && cur < selEnd;
+                    const cls = ['cal-cell'];
+                    if (cur.getTime() === today.getTime()) cls.push('today');
+                    if (inRange) cls.push('in-range');
+                    if (isEnd) cls.push('end-pt');
+                    html += `<button class="${cls.join(' ')}" data-d="${cur.getTime()}" ${future ? 'disabled' : ''}>${d}</button>`;
+                }
+                grid.innerHTML = html;
+                rangeLbl.textContent = selStart
+                    ? (selEnd ? `${fmt(selStart)} → ${fmt(selEnd)}` : `${fmt(selStart)} → …`)
+                    : 'Pick a start and end date';
+            }
+            const openCal = () => { pop.hidden = false; buildCal(); };
+            const closeCal = () => { pop.hidden = true; };
+
+            dateBtn.addEventListener('click', () => { pop.hidden ? openCal() : closeCal(); });
+            document.getElementById('calPrev').addEventListener('click', () => { view.setMonth(view.getMonth() - 1); buildCal(); });
+            document.getElementById('calNext').addEventListener('click', () => { view.setMonth(view.getMonth() + 1); buildCal(); });
+
+            grid.addEventListener('click', e => {
+                const cell = e.target.closest('button.cal-cell');
+                if (!cell || cell.disabled) return;
+                const d = stripTime(new Date(Number(cell.dataset.d)));
+                if (!selStart || (selStart && selEnd)) { selStart = d; selEnd = null; }
+                else if (d < selStart) { selEnd = selStart; selStart = d; }
+                else { selEnd = d; }
+                buildCal();
+            });
+
+            document.getElementById('calApply').addEventListener('click', () => {
+                if (selStart) {
+                    dateRange.start = selStart.getTime();
+                    dateRange.end = (selEnd || selStart).getTime() + dayMs - 1;   // include the whole end day
+                    dateLbl.textContent = selEnd ? `${fmt(selStart)} – ${fmt(selEnd)}` : fmt(selStart);
+                    dateBtn.classList.add('on');
+                }
+                closeCal(); render();
+            });
+            document.getElementById('calClear').addEventListener('click', () => {
+                selStart = selEnd = null; dateRange.start = null; dateRange.end = null;
+                dateLbl.textContent = 'Any date'; dateBtn.classList.remove('on');
+                buildCal(); closeCal(); render();
+            });
+
+            // Close when clicking outside the popup or its trigger.
+            document.addEventListener('click', e => {
+                if (pop.hidden) return;
+                if (pop.contains(e.target) || dateBtn.contains(e.target)) return;
+                closeCal();
+            });
+        })();
 
         render();
 
