@@ -122,34 +122,41 @@
             .feat-slider .product-card { width: calc((100% - 14px) / 2); }
         }
 
-        /* Category slider — image tiles in a horizontal row, like the feed's
-           category strip. Thin black frame, numbered caption beneath. */
-        .cat-slider {
-            display: flex; gap: 16px; overflow-x: auto; padding-bottom: 6px;
-            scrollbar-width: none;
+        /* Audience banner — a full-bleed image slider, edge to edge of the page,
+           cycling Women / Men / Kids. Same treatment as the hero: grayscale
+           photo, bottom scrim, big label over it. */
+        .aud-banner {
+            position: relative; width: 100%; height: 46vh; min-height: 340px;
+            overflow: hidden; border-top: 1px solid #000; border-bottom: 1px solid #000;
         }
-        .cat-slider::-webkit-scrollbar { display: none; }
-        .cat-card {
-            /* Five per slide, matching the product card / featured rail width. */
-            flex: none; width: calc((100% - 64px) / 5); cursor: pointer;
-            background: none; border: none; padding: 0; font-family: inherit; text-align: left;
-        }
-        .cat-thumb {
-            /* Same box as the product card: --pc-aspect 0.7 (width / height). */
-            width: 100%; aspect-ratio: 1 / calc(1 / 0.7); border: 1px solid #000;
+        .aud-slide {
+            position: absolute; inset: 0; cursor: pointer;
             background: #23231f center / cover no-repeat; filter: grayscale(1);
-            transition: filter 0.3s;
+            opacity: 0; transition: opacity 1s ease; z-index: 1;
         }
-        .cat-card:hover .cat-thumb,
-        .cat-card.active .cat-thumb { filter: grayscale(0); }
-        .cat-cap {
-            display: flex; align-items: baseline; gap: 8px; margin-top: 12px;
-            font-size: 18px; letter-spacing: 0.5px; color: #1c1c1c;
+        .aud-slide.is-active { opacity: 1; z-index: 2; }
+        .aud-slide::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%);
         }
-        .cat-num { font-size: 14px; color: #9a9a95; letter-spacing: 1px; }
-        .cat-card.active .cat-cap { font-weight: 500; }
-        .cat-card.active .cat-num { color: #1c1c1c; }
-        @media (max-width: 700px) { .cat-card { width: 180px; } }
+        .aud-label {
+            position: absolute; left: 40px; bottom: 34px; z-index: 3; color: #fff;
+            font-size: clamp(34px, 5vw, 62px); font-weight: 200; letter-spacing: 1px;
+            line-height: 1; pointer-events: none;
+        }
+        .aud-dots {
+            position: absolute; right: 40px; bottom: 40px; z-index: 4;
+            display: flex; gap: 10px;
+        }
+        .aud-dot {
+            width: 9px; height: 9px; border-radius: 999px; padding: 0; cursor: pointer;
+            border: 1px solid #fff; background: transparent; transition: background 0.3s;
+        }
+        .aud-dot.is-active { background: #fff; }
+        @media (max-width: 700px) {
+            .aud-label { left: 20px; bottom: 24px; }
+            .aud-dots  { right: 20px; bottom: 28px; }
+        }
 
         /* ===================== AD BANNER =====================
            The seller's own promo, but a FIXED size on every store profile. */
@@ -230,11 +237,10 @@
             <div class="feat-slider" id="featSlider"></div>
         </div>
 
-        <!-- CATEGORY SLIDER -->
-        <div class="slider-block">
-            <div class="slider-label">Shop by category</div>
-            <div class="cat-slider" id="catSlider"></div>
-        </div>
+        <!-- AUDIENCE BANNER — a full-bleed image slider that reaches both edges of
+             the page, cycling Women / Men / Kids. Clicking a slide filters the
+             feed by that audience. -->
+        <div class="aud-banner" id="audBanner"></div>
 
         <!-- AUDIENCE SLIDER -->
         <div class="slider-block">
@@ -334,22 +340,42 @@
         }
         buildSlider(document.getElementById('audSlider'), STORE.audiences, v=>AUD_LABEL[v]||v, v => { activeAud=v; renderFeed(); });
 
-        // Category slider — image tiles with a numbered caption. "All" first,
-        // then only the categories the seller offers.
-        (function buildCatSlider() {
-            const el = document.getElementById('catSlider');
-            const items = [['all', 'All', STORE.hero], ...STORE.categories.map(c => [c, c, STORE.catImages[c]])];
-            el.innerHTML = items.map(([v, label, img], i) => `
-                <button class="cat-card ${v==='all'?'active':''}" data-v="${v}">
-                    <div class="cat-thumb" style="background-image:url('${img}')"></div>
-                    <div class="cat-cap"><span class="cat-num">${String(i).padStart(2,'0')}</span> ${label}</div>
-                </button>`).join('');
-            el.addEventListener('click', e => {
-                const b = e.target.closest('.cat-card'); if (!b) return;
-                el.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active'));
-                b.classList.add('active');
-                activeCat = b.dataset.v; renderFeed();
-            });
+        // Audience banner — a full-bleed image slider cycling Women / Men / Kids.
+        // Auto-rotates every 6s; clicking a slide (or a dot) filters the feed by
+        // that audience and keeps the "Shop for" chips in sync.
+        (function buildAudBanner() {
+            const el = document.getElementById('audBanner');
+            const AUD_IMG = { women:'women-hero.jpg', men:'men-hero.jpg', kids:'clothing-hero.png' };
+            const auds = STORE.audiences;   // ['women','men','kids']
+            el.innerHTML = auds.map((a, i) => `
+                <div class="aud-slide ${i===0?'is-active':''}" data-v="${a}"
+                     style="background-image:url('${AUD_IMG[a]||STORE.hero}')">
+                    <span class="aud-label">${AUD_LABEL[a]||a}</span>
+                </div>`).join('') +
+                `<div class="aud-dots">${auds.map((a,i)=>
+                    `<button class="aud-dot ${i===0?'is-active':''}" data-i="${i}" aria-label="${AUD_LABEL[a]||a}"></button>`).join('')}</div>`;
+
+            const slides = el.querySelectorAll('.aud-slide');
+            const dots   = el.querySelectorAll('.aud-dot');
+            let idx = 0, timer;
+
+            function show(i) {
+                idx = (i + slides.length) % slides.length;
+                slides.forEach((s, n) => s.classList.toggle('is-active', n === idx));
+                dots.forEach((d, n)   => d.classList.toggle('is-active', n === idx));
+            }
+            function pick(a) {
+                // Filter the feed and mirror the choice onto the "Shop for" chips.
+                activeAud = a; renderFeed();
+                document.querySelectorAll('#audSlider .chip').forEach(c =>
+                    c.classList.toggle('active', c.dataset.v === a));
+            }
+            function start() { timer = setInterval(() => show(idx + 1), 6000); }
+            function reset() { clearInterval(timer); start(); }
+
+            slides.forEach(s => s.addEventListener('click', () => pick(s.dataset.v)));
+            dots.forEach(d => d.addEventListener('click', () => { show(+d.dataset.i); reset(); }));
+            start();
         })();
 
         // The card — same markup + shared product-card.css as the rest of the site.
