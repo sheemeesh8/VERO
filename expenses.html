@@ -101,10 +101,40 @@
         .exp-price { margin-left: auto; font-size: 17px; font-weight: 400; white-space: nowrap; }
         .exp-empty { font-size: 14px; color: #9a9a95; padding: 8px 0; }
 
+        /* The three boxes below the cart double as the spend-graph mode switch. */
         .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px; }
-        .stat { border: 1px solid #000; padding: 30px 24px; }
+        .stat {
+            border: 1px solid #000; padding: 30px 24px; background: #fff; color: #1c1c1c;
+            font-family: inherit; text-align: left; cursor: pointer; transition: background 0.2s, color 0.2s;
+        }
+        .stat.mode:hover { background: #f4f4f2; }
+        .stat.mode.on { background: #1c1c1c; color: #fff; }
         .stat-num { font-size: 40px; font-weight: 200; line-height: 1; }
         .stat-name { margin-top: 12px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+        /* Period spend slider (left card): This week / month / year. */
+        .spend-slider { overflow: hidden; }
+        .spend-track { display: flex; transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+        .spend-slide { flex: 0 0 100%; }
+        .spend-nav { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+        .spend-arrow {
+            width: 34px; height: 34px; border: 1.4px solid #000; border-radius: 999px; background: #fff;
+            cursor: pointer; font-size: 15px; line-height: 1; color: #1c1c1c; transition: background 0.2s, color 0.2s;
+        }
+        .spend-arrow:hover { background: #000; color: #fff; }
+        .spend-dots { display: flex; gap: 7px; margin-left: 4px; }
+        .spend-dots .d { width: 7px; height: 7px; border-radius: 50%; background: #ddd; border: none; cursor: pointer; padding: 0; transition: background 0.2s; }
+        .spend-dots .d.on { background: #111; }
+
+        /* Prev/next arrows on the cart list header. */
+        .exp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+        .exp-arrows { display: flex; gap: 8px; }
+        .exp-arrow {
+            width: 30px; height: 30px; border: 1.4px solid #000; border-radius: 999px; background: #fff;
+            cursor: pointer; font-size: 14px; line-height: 1; color: #1c1c1c; transition: background 0.2s, color 0.2s;
+        }
+        .exp-arrow:hover { background: #000; color: #fff; }
+        .exp-arrow:disabled { opacity: 0.3; cursor: default; background: #fff; color: #1c1c1c; }
 
         /* ===== Sections below the summary — same framed-card language ===== */
         .section { margin-top: 24px; }
@@ -166,11 +196,16 @@
         <p class="head-sub">A summary of your purchases and spending.</p>
 
         <div class="grid">
-            <!-- Left: spend summary -->
+            <!-- Left: spend summary — a week / month / year slider -->
             <div class="card">
-                <div class="card-label">Total spend</div>
-                <div class="total-num" id="totalNum">₪0</div>
-                <div class="total-sub" id="totalSub">across 0 items</div>
+                <div class="spend-slider">
+                    <div class="spend-track" id="spendTrack"></div>
+                </div>
+                <div class="spend-nav">
+                    <button class="spend-arrow" id="spendPrev" aria-label="Previous">&#8249;</button>
+                    <button class="spend-arrow" id="spendNext" aria-label="Next">&#8250;</button>
+                    <div class="spend-dots" id="spendDots"></div>
+                </div>
 
                 <div class="divider"></div>
 
@@ -188,26 +223,33 @@
                 </div>
             </div>
 
-            <!-- Right: item breakdown + stats -->
+            <!-- Right: item breakdown + graph-mode switch -->
             <div class="col-right">
                 <div class="card">
-                    <div class="card-label">In your cart</div>
+                    <div class="exp-head">
+                        <div class="card-label" style="margin:0;">In your cart</div>
+                        <div class="exp-arrows">
+                            <button class="exp-arrow" id="expPrev" aria-label="Previous">&#8249;</button>
+                            <button class="exp-arrow" id="expNext" aria-label="Next">&#8250;</button>
+                        </div>
+                    </div>
                     <div class="exp-list" id="expList"></div>
                 </div>
 
-                <div class="stats">
-                    <div class="stat">
-                        <div class="stat-num" id="stat-total">₪0</div>
-                        <div class="stat-name">Total</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-num" id="stat-offers">0</div>
-                        <div class="stat-name">Offers</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-num" id="stat-highest">₪0</div>
-                        <div class="stat-name">Highest</div>
-                    </div>
+                <!-- These three boxes switch the spend graph below. -->
+                <div class="stats" id="modeSel">
+                    <button class="stat mode" data-mode="weekly" type="button">
+                        <div class="stat-num" id="mode-weekly">₪0</div>
+                        <div class="stat-name">Weekly</div>
+                    </button>
+                    <button class="stat mode" data-mode="monthly" type="button">
+                        <div class="stat-num" id="mode-monthly">₪0</div>
+                        <div class="stat-name">Monthly</div>
+                    </button>
+                    <button class="stat mode" data-mode="yearly" type="button">
+                        <div class="stat-num" id="mode-yearly">₪0</div>
+                        <div class="stat-name">Yearly</div>
+                    </button>
                 </div>
             </div>
         </div>
@@ -237,34 +279,85 @@
 
     <script>
         const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
-        const cart   = readJSON('vero_cart', []);
+        let cart     = readJSON('vero_cart', []);
         const offers = readJSON('vero_offers', []);
+        const offs   = Array.isArray(offers) ? offers : [];
 
-        const items = Array.isArray(cart) ? cart : [];
+        let items = Array.isArray(cart) ? cart : [];
         const nis = n => '₪' + Math.round(n).toLocaleString('en-US');
-
-        // Totals across the cart (price × qty).
         const priceOf = it => (parseFloat(it.price) || 0) * (it.qty || 1);
+        const tsOf    = it => it.addedAt || it.at || Date.now();
+
+        // Seed a spread of clothing items so the cart + graphs always demonstrate
+        // (only when the cart is genuinely empty — a real cart is never touched).
+        if (!items.length) {
+            const now = Date.now(), DAY = 864e5;
+            items = [
+                { name: 'Wool coat',      seller: 'Studio Noir',   icon: '🧥', price: 269, qty: 1, addedAt: now - 1 * DAY },
+                { name: 'Raw denim',      seller: 'Studio Noir',   icon: '👖', price: 129, qty: 1, addedAt: now - 3 * DAY },
+                { name: 'Ribbed sweater', seller: 'Knit & Co',     icon: '🧶', price: 95,  qty: 1, addedAt: now - 5 * DAY },
+                { name: 'Silk shirt',     seller: 'Atelier V',     icon: '👔', price: 150, qty: 1, addedAt: now - 20 * DAY },
+                { name: 'Leather boots',  seller: 'Sole Society',  icon: '🥾', price: 340, qty: 1, addedAt: now - 44 * DAY },
+                { name: 'Denim jacket',   seller: 'Vintage Vault', icon: '🧥', price: 210, qty: 1, addedAt: now - 120 * DAY },
+                { name: 'Linen trousers', seller: 'Studio Noir',   icon: '👖', price: 160, qty: 1, addedAt: now - 250 * DAY },
+            ];
+            localStorage.setItem('vero_cart', JSON.stringify(items));
+        }
+
+        // Period boundaries (Sunday-start week).
+        const startOfWeek  = () => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - d.getDay()); return d.getTime(); };
+        const startOfMonth = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).getTime(); };
+        const startOfYear  = () => { const d = new Date(); return new Date(d.getFullYear(), 0, 1).getTime(); };
+        const sumSince = ts => items.filter(it => tsOf(it) >= ts).reduce((s, it) => s + priceOf(it), 0);
+        const cntSince = ts => items.filter(it => tsOf(it) >= ts).reduce((s, it) => s + (it.qty || 1), 0);
+
         const total   = items.reduce((s, it) => s + priceOf(it), 0);
         const count   = items.reduce((s, it) => s + (it.qty || 1), 0);
         const sellers = new Set(items.map(it => it.seller).filter(Boolean)).size;
         const avg     = count ? total / count : 0;
-        const highest = items.reduce((m, it) => Math.max(m, parseFloat(it.price) || 0), 0);
 
-        document.getElementById('totalNum').textContent  = nis(total);
-        document.getElementById('totalSub').textContent  = `across ${count} item${count === 1 ? '' : 's'}`;
-        document.getElementById('itemCount').textContent = count;
-        document.getElementById('avgPrice').textContent  = nis(avg);
+        document.getElementById('itemCount').textContent   = count;
+        document.getElementById('avgPrice').textContent    = nis(avg);
         document.getElementById('sellerCount').textContent = sellers;
 
-        document.getElementById('stat-total').textContent   = nis(total);
-        document.getElementById('stat-offers').textContent  = Array.isArray(offers) ? offers.length : 0;
-        document.getElementById('stat-highest').textContent = nis(highest);
+        // ===== Left card: This week / month / year spend slider =====
+        const periods = [
+            { label: 'This week',  ts: startOfWeek() },
+            { label: 'This month', ts: startOfMonth() },
+            { label: 'This year',  ts: startOfYear() },
+        ];
+        (function spendSlider() {
+            const track = document.getElementById('spendTrack');
+            track.innerHTML = periods.map(p => {
+                const sum = sumSince(p.ts), c = cntSince(p.ts);
+                return `<div class="spend-slide">
+                    <div class="card-label">${p.label}</div>
+                    <div class="total-num">${nis(sum)}</div>
+                    <div class="total-sub">across ${c} item${c === 1 ? '' : 's'}</div>
+                </div>`;
+            }).join('');
+            const dots = document.getElementById('spendDots');
+            dots.innerHTML = periods.map((_, i) => `<button class="d${i === 0 ? ' on' : ''}" aria-label="${periods[i].label}"></button>`).join('');
+            const dotEls = [...dots.children];
+            let idx = 0;
+            function go(n) {
+                idx = (n + periods.length) % periods.length;
+                track.style.transform = `translateX(-${idx * 100}%)`;
+                dotEls.forEach((d, j) => d.classList.toggle('on', j === idx));
+            }
+            document.getElementById('spendPrev').addEventListener('click', () => go(idx - 1));
+            document.getElementById('spendNext').addEventListener('click', () => go(idx + 1));
+            dotEls.forEach((d, i) => d.addEventListener('click', () => go(i)));
+            go(0);   // start on This week
+        })();
 
-        // Item breakdown list.
+        // ===== Cart list — three per slide, prev/next arrows + dots =====
         const list = document.getElementById('expList');
+        const prevBtn = document.getElementById('expPrev');
+        const nextBtn = document.getElementById('expNext');
         if (!items.length) {
             list.innerHTML = '<div class="exp-empty">No purchases yet — items you add to your cart appear here.</div>';
+            prevBtn.style.display = nextBtn.style.display = 'none';
         } else {
             const rowHTML = it => `
                 <div class="exp-row">
@@ -275,64 +368,82 @@
                     </div>
                     <div class="exp-price">${nis(priceOf(it))}</div>
                 </div>`;
-            // Three purchases per slide so the list stays compact.
             const slides = [];
             for (let i = 0; i < items.length; i += 3) slides.push(items.slice(i, i + 3));
-            list.innerHTML = slides.map(group =>
-                `<div class="exp-slide">${group.map(rowHTML).join('')}</div>`).join('');
+            list.innerHTML = slides.map(group => `<div class="exp-slide">${group.map(rowHTML).join('')}</div>`).join('');
 
-            // Dots to page between slides (only when there's more than one).
-            if (slides.length > 1) {
-                const dots = document.createElement('div');
-                dots.className = 'exp-dots';
-                dots.innerHTML = slides.map((_, i) => `<button class="d${i === 0 ? ' on' : ''}" aria-label="Slide ${i + 1}"></button>`).join('');
-                list.after(dots);
-                const dotEls = [...dots.children];
-                dotEls.forEach((d, i) => d.addEventListener('click', () => {
-                    list.scrollTo({ left: list.clientWidth * i, behavior: 'smooth' });
-                }));
-                list.addEventListener('scroll', () => {
-                    const i = Math.round(list.scrollLeft / list.clientWidth);
-                    dotEls.forEach((d, j) => d.classList.toggle('on', j === i));
-                });
+            const dots = document.createElement('div');
+            dots.className = 'exp-dots';
+            dots.innerHTML = slides.map((_, i) => `<button class="d${i === 0 ? ' on' : ''}" aria-label="Slide ${i + 1}"></button>`).join('');
+            list.after(dots);
+            const dotEls = [...dots.children];
+            let cur = 0;
+            function sync() {
+                prevBtn.disabled = cur === 0;
+                nextBtn.disabled = cur === slides.length - 1;
+                dotEls.forEach((d, j) => d.classList.toggle('on', j === cur));
             }
+            function goCart(i) { cur = Math.max(0, Math.min(slides.length - 1, i)); list.scrollTo({ left: list.clientWidth * cur, behavior: 'smooth' }); sync(); }
+            prevBtn.addEventListener('click', () => goCart(cur - 1));
+            nextBtn.addEventListener('click', () => goCart(cur + 1));
+            dotEls.forEach((d, i) => d.addEventListener('click', () => goCart(i)));
+            list.addEventListener('scroll', () => { cur = Math.round(list.scrollLeft / list.clientWidth); sync(); });
+            sync();
         }
 
-        // ===== Monthly Spend Tracker — group cart spend by month =====
-        (function buildChart() {
-            const now = new Date();
-            const months = [];
-            for (let i = 5; i >= 0; i--) {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                months.push({ key: d.getFullYear() + '-' + d.getMonth(), label: d.toLocaleDateString('en-GB', { month: 'short' }), total: 0 });
+        // ===== Spend graph — three modes, switched by the boxes above =====
+        document.getElementById('mode-weekly').textContent  = nis(sumSince(startOfWeek()));
+        document.getElementById('mode-monthly').textContent = nis(sumSince(startOfMonth()));
+        document.getElementById('mode-yearly').textContent  = nis(sumSince(startOfYear()));
+
+        let chartMode = 'monthly';
+        function buckets(mode) {
+            const arr = []; const now = new Date();
+            if (mode === 'weekly') {
+                const base = new Date(); base.setHours(0, 0, 0, 0); base.setDate(base.getDate() - base.getDay());
+                for (let i = 7; i >= 0; i--) {
+                    const s = new Date(base); s.setDate(base.getDate() - i * 7); const st = s.getTime();
+                    arr.push({ start: st, end: st + 7 * 864e5, label: s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), total: 0 });
+                }
+            } else if (mode === 'monthly') {
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    arr.push({ start: d.getTime(), end: new Date(now.getFullYear(), now.getMonth() - i + 1, 1).getTime(), label: d.toLocaleDateString('en-GB', { month: 'short' }), total: 0 });
+                }
+            } else {
+                for (let i = 4; i >= 0; i--) {
+                    const y = now.getFullYear() - i;
+                    arr.push({ start: new Date(y, 0, 1).getTime(), end: new Date(y + 1, 0, 1).getTime(), label: String(y), total: 0 });
+                }
             }
-            const idxOf = {};
-            months.forEach((m, i) => idxOf[m.key] = i);
-            items.forEach(it => {
-                const t = it.addedAt || it.at || Date.now();
-                const d = new Date(t);
-                const k = d.getFullYear() + '-' + d.getMonth();
-                if (k in idxOf) months[idxOf[k]].total += priceOf(it);
-            });
-            const max = Math.max(1, ...months.map(m => m.total));
+            items.forEach(it => { const t = tsOf(it); const b = arr.find(x => t >= x.start && t < x.end); if (b) b.total += priceOf(it); });
+            return arr;
+        }
+        function renderChart() {
+            const data = buckets(chartMode);
+            const max = Math.max(1, ...data.map(b => b.total));
             const chart = document.getElementById('chart');
-            chart.innerHTML = months.map((m, i) => {
-                const isCurrent = i === months.length - 1;
-                const h = Math.round((m.total / max) * 100);
+            chart.innerHTML = data.map((b, i) => {
+                const isCurrent = i === data.length - 1;
+                const h = Math.round((b.total / max) * 100);
                 return `<div class="bar-col${isCurrent ? ' current' : ''}">
-                    <div class="bar-val">${m.total ? nis(m.total) : ''}</div>
+                    <div class="bar-val">${b.total ? nis(b.total) : ''}</div>
                     <div class="bar${isCurrent ? ' current' : ''}" data-h="${h}" style="height:0"></div>
-                    <div class="bar-label">${m.label}</div>
+                    <div class="bar-label">${b.label}</div>
                 </div>`;
             }).join('');
-            // Animate bars up after layout.
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 chart.querySelectorAll('.bar').forEach(b => { b.style.height = (b.dataset.h || 0) + '%'; });
             }));
-            const thisMonth = months[months.length - 1].total;
-            document.getElementById('monthNote').textContent =
-                thisMonth ? `${nis(thisMonth)} this month` : 'No spend yet this month';
-        })();
+            const noteMap = { weekly: 'Last 8 weeks', monthly: 'Last 6 months', yearly: 'Last 5 years' };
+            document.getElementById('monthNote').textContent = noteMap[chartMode];
+            document.querySelectorAll('#modeSel .mode').forEach(m => m.classList.toggle('on', m.dataset.mode === chartMode));
+        }
+        document.getElementById('modeSel').addEventListener('click', e => {
+            const b = e.target.closest('.mode'); if (!b) return;
+            chartMode = b.dataset.mode; renderChart();
+        });
+        renderChart();
 
         // ===== Followed Sellers — seed from cart/offers, priority + unfollow =====
         (function followedSellers() {

@@ -116,9 +116,21 @@
         .chat-search::placeholder { color: #9a9a95; letter-spacing: 0.5px; }
         .chat-search:focus { outline: none; }
 
-        /* Show 3 conversations at a time; the rest scroll into view. */
-        .chat-list { max-height: 264px; overflow-y: auto; }
+        /* Conversations as a horizontal slider — exactly 5 per slide. */
+        .chat-list { display: flex; overflow: hidden; }
+        .chat-track { display: flex; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); width: 100%; }
+        .chat-slide { flex: 0 0 100%; display: flex; flex-direction: column; }
         .chat-list .chat-row { height: 88px; }
+        .chat-nav { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+        .chat-arrow {
+            width: 34px; height: 34px; border: 1.4px solid #000; border-radius: 999px; background: #fff;
+            cursor: pointer; font-size: 15px; line-height: 1; color: #1c1c1c; transition: background 0.2s, color 0.2s;
+        }
+        .chat-arrow:hover:not(:disabled) { background: #000; color: #fff; }
+        .chat-arrow:disabled { opacity: 0.3; cursor: default; }
+        .chat-dots { display: flex; gap: 7px; margin-left: 4px; }
+        .chat-dots .d { width: 7px; height: 7px; border-radius: 50%; background: #ddd; border: none; cursor: pointer; padding: 0; transition: background 0.2s; }
+        .chat-dots .d.on { background: #111; }
 
         /* ===== My offers — Depop-style cubes below the chats ===== */
         .offers-sec { margin-top: 44px; }
@@ -169,6 +181,26 @@
         }
         .oc-submit:hover { opacity: 0.8; }
         .offers-empty { font-size: 14px; color: #9a9a95; padding: 8px 0; }
+
+        /* Received-offer actions: accept / decline + resolved state. */
+        .oc-actions { display: flex; gap: 10px; }
+        .oc-accept, .oc-decline {
+            border: 1px solid #000; cursor: pointer; font-family: inherit;
+            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 10px 20px; border-radius: 999px; transition: background 0.2s, color 0.2s, opacity 0.2s;
+        }
+        .oc-accept { background: #000; color: #fff; }
+        .oc-accept:hover { opacity: 0.82; }
+        .oc-decline { background: #fff; color: #1c1c1c; }
+        .oc-decline:hover { background: #f0f0f0; }
+        .oc-resolved {
+            align-self: flex-start; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 10px 18px; border-radius: 999px;
+        }
+        .oc-resolved.accepted { background: #e8f5ec; color: #1f8f4e; border: 1px solid #bfe4cd; }
+        .oc-resolved.declined { background: #f4eaea; color: #b23b3b; border: 1px solid #e6cccc; }
+        .oc-buyer { font-size: 13px; color: #6b6b66; }
+        .oc-buyer b { font-weight: 600; color: #1c1c1c; }
 
         /* ===== Slide-in chat panel — one conversation with a seller ===== */
         .chat-panel {
@@ -279,13 +311,22 @@
             </div>
         </div>
 
-        <!-- Price offers the buyer has made — Depop-style, below the chats. -->
+        <!-- Offers YOU made — Depop-style, below the chats. -->
         <div class="offers-sec">
             <div class="offers-head">
-                <div class="card-label" style="margin:0;">My offers</div>
+                <div class="card-label" style="margin:0;">Offers you made</div>
                 <div class="offers-note" id="offersNote">Pieces you've made an offer on</div>
             </div>
             <div class="offers-grid" id="offersGrid"></div>
+        </div>
+
+        <!-- Offers made TO you — buyers bidding on your pieces. -->
+        <div class="offers-sec">
+            <div class="offers-head">
+                <div class="card-label" style="margin:0;">Offers you received</div>
+                <div class="offers-note" id="recvNote">Buyers who’ve made an offer on your pieces</div>
+            </div>
+            <div class="offers-grid" id="recvGrid"></div>
         </div>
     </div>
 
@@ -380,12 +421,16 @@
         document.getElementById('lastActive').textContent  = lastAt ? (timeAgo(lastAt) + ' ago') : '—';
 
         const el = document.getElementById('chatList');
+        let chatSlide = 0;
+        const CHATS_PER_SLIDE = 5;
         function renderList(query = '') {
             const q = query.trim().toLowerCase();
             // Only sellers that exist in the chat inbox are searchable.
             const rows = list
                 .map((t, i) => ({ t, i }))
                 .filter(({ t }) => !q || t.seller.toLowerCase().includes(q));
+            const oldNav = document.getElementById('chatNav');
+            if (oldNav) oldNav.remove();
             if (!list.length) {
                 el.innerHTML = '<div class="chat-empty">No conversations yet — start one from any product page.</div>';
                 return;
@@ -394,15 +439,45 @@
                 el.innerHTML = `<div class="chat-empty">No sellers match “${query}”.</div>`;
                 return;
             }
-            el.innerHTML = rows.map(({ t, i }) => `
-                <div class="chat-row" data-i="${i}">
-                    <div class="chat-avatar">${t.icon}</div>
-                    <div class="chat-body">
-                        <div class="chat-name">${t.seller}</div>
-                        <div class="chat-preview">${t.preview}</div>
-                    </div>
-                    <div class="chat-time">${timeAgo(t.at)}</div>
-                </div>`).join('');
+            // Exactly five conversations per slide.
+            const slides = [];
+            for (let i = 0; i < rows.length; i += CHATS_PER_SLIDE) slides.push(rows.slice(i, i + CHATS_PER_SLIDE));
+            if (chatSlide >= slides.length) chatSlide = 0;
+            el.innerHTML = '<div class="chat-track" id="chatTrack">' + slides.map(group =>
+                '<div class="chat-slide">' + group.map(({ t, i }) => `
+                    <div class="chat-row" data-i="${i}">
+                        <div class="chat-avatar">${t.icon}</div>
+                        <div class="chat-body">
+                            <div class="chat-name">${t.seller}</div>
+                            <div class="chat-preview">${t.preview}</div>
+                        </div>
+                        <div class="chat-time">${timeAgo(t.at)}</div>
+                    </div>`).join('') + '</div>').join('') + '</div>';
+
+            const track = document.getElementById('chatTrack');
+            let nav = null;
+            function go(n) {
+                chatSlide = Math.max(0, Math.min(slides.length - 1, n));
+                track.style.transform = `translateX(-${chatSlide * 100}%)`;
+                if (nav) {
+                    nav.querySelector('.prev').disabled = chatSlide === 0;
+                    nav.querySelector('.next').disabled = chatSlide === slides.length - 1;
+                    nav.querySelectorAll('.chat-dots .d').forEach((d, j) => d.classList.toggle('on', j === chatSlide));
+                }
+            }
+            if (slides.length > 1) {
+                nav = document.createElement('div');
+                nav.className = 'chat-nav'; nav.id = 'chatNav';
+                nav.innerHTML = `
+                    <button class="chat-arrow prev" aria-label="Previous">&#8249;</button>
+                    <button class="chat-arrow next" aria-label="Next">&#8250;</button>
+                    <div class="chat-dots">${slides.map((_, i) => `<button class="d${i === 0 ? ' on' : ''}" aria-label="Slide ${i + 1}"></button>`).join('')}</div>`;
+                el.after(nav);
+                nav.querySelector('.prev').addEventListener('click', () => go(chatSlide - 1));
+                nav.querySelector('.next').addEventListener('click', () => go(chatSlide + 1));
+                nav.querySelectorAll('.chat-dots .d').forEach((d, i) => d.addEventListener('click', () => go(i)));
+            }
+            go(chatSlide);
         }
         renderList();
         el.addEventListener('click', (e) => {
@@ -501,6 +576,69 @@
                 localStorage.setItem('vero_offers', JSON.stringify(myOffers));
                 renderOffers();
             }
+        });
+
+        // ===== Offers you received — buyers bidding on your pieces =====
+        // Persisted to vero_received_offers so accept/decline decisions stick.
+        let recvOffers = readJSON('vero_received_offers', null);
+        if (!Array.isArray(recvOffers) || !recvOffers.length) {
+            recvOffers = [
+                { name: 'Wool coat',     icon: '🧥', buyer: 'Maya L.',   askPrice: 269,  offer: 230,  at: Date.now() - 4 * H,  status: 'pending' },
+                { name: 'Raw denim',     icon: '👖', buyer: 'Omer T.',   askPrice: 129,  offer: 100,  at: Date.now() - 9 * H,  status: 'pending' },
+                { name: 'Silk scarf',    icon: '🧣', buyer: 'Noa B.',    askPrice: 210,  offer: 175,  at: Date.now() - 1 * D,  status: 'pending' },
+                { name: 'Leather tote',  icon: '👜', buyer: 'Daniel K.', askPrice: 540,  offer: 480,  at: Date.now() - 2 * D,  status: 'pending' },
+                { name: 'Knit sweater',  icon: '🧶', buyer: 'Shira P.',  askPrice: 180,  offer: 150,  at: Date.now() - 3 * D,  status: 'pending' },
+            ];
+        }
+        const recvGrid = document.getElementById('recvGrid');
+        const saveRecv = () => localStorage.setItem('vero_received_offers', JSON.stringify(recvOffers));
+
+        function renderRecv() {
+            const pending = recvOffers.filter(o => o.status === 'pending').length;
+            document.getElementById('recvNote').textContent =
+                `${recvOffers.length} offer${recvOffers.length === 1 ? '' : 's'} · ${pending} awaiting you`;
+            if (!recvOffers.length) {
+                recvGrid.innerHTML = '<div class="offers-empty">No offers on your pieces yet.</div>';
+                return;
+            }
+            recvGrid.innerHTML = recvOffers.map((o, i) => {
+                const pct = o.askPrice ? Math.round((o.offer / o.askPrice) * 100) : 0;
+                const action = o.status === 'pending'
+                    ? `<div class="oc-actions">
+                           <button class="oc-accept" data-ract="accept" data-i="${i}">Accept</button>
+                           <button class="oc-decline" data-ract="decline" data-i="${i}">Decline</button>
+                       </div>`
+                    : `<div class="oc-resolved ${o.status}">${o.status === 'accepted' ? 'Accepted ✓' : 'Declined'}</div>`;
+                return `
+                    <div class="offer-cube" data-i="${i}">
+                        <div class="oc-top">
+                            <div class="oc-img">${o.icon || '🛍️'}</div>
+                            <div class="oc-info">
+                                <div class="oc-name">${o.name || 'Item'}</div>
+                                <div class="oc-buyer">From <b>${o.buyer}</b> · ${timeAgo(o.at)}</div>
+                                <div class="oc-prices">
+                                    <span class="oc-ask">Asking ${nis(o.askPrice)}</span>
+                                    <span class="oc-your">Their offer <b>${nis(o.offer)}</b></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="oc-others">
+                            <div class="oc-others-label">Offer strength</div>
+                            <div class="oc-other${pct >= 85 ? ' top' : ''}"><span>${pct}% of your asking price</span><span class="amt">${nis(o.offer)}</span></div>
+                        </div>
+                        ${action}
+                    </div>`;
+            }).join('');
+        }
+        renderRecv();
+
+        recvGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-ract]');
+            if (!btn) return;
+            const i = Number(btn.dataset.i);
+            recvOffers[i].status = btn.dataset.ract === 'accept' ? 'accepted' : 'declined';
+            saveRecv();
+            renderRecv();
         });
 
         // ===== Chat with a seller — persisted to vero_chats, works like the deal room =====

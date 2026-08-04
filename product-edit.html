@@ -133,13 +133,17 @@
 
         let listings = readJSON('vero_listings', []);
         if (!Array.isArray(listings)) listings = [];
-        const p = listings[idx];
-
-        if (!p) {
-            document.getElementById('missing').style.display = 'block';
-        } else {
-            renderEditor(p);
+        // Seed the same demo listings My Products uses, so opening the editor
+        // directly (or before any listing exists) still shows something to edit.
+        if (!listings.length) {
+            const now = Date.now();
+            listings = [
+                { id: 'demo1', name: 'Wool coat', seller: 'Studio Noir', category: 'Outerwear', price: 269, icon: '🧥', status: 'active', listedAt: now - 2 * 864e5 },
+                { id: 'demo2', name: 'Raw denim', seller: 'Studio Noir', category: 'Denim', price: 129, icon: '👖', status: 'active', listedAt: now - 5 * 864e5 },
+            ];
+            save('vero_listings', listings);
         }
+        const p = listings[Number.isInteger(idx) && listings[idx] ? idx : 0];
 
         function imgOf(x) {
             return x.image || x.processed_cover || x.original_cover
@@ -149,6 +153,13 @@
         const CLOTHING = ['Shirts', 'Pants', 'Dresses', 'Skirts', 'Sweaters', 'Coats', 'Jackets',
             'Outerwear', 'Knitwear', 'Denim', 'Shoes', 'Boots', 'Sneakers', 'Sandals', 'Bags'];
         const STATUSES = [['active', 'Active'], ['sold', 'Sold'], ['deleted', 'Removed']];
+
+        // Render only after the constants above exist (avoids a temporal-dead-zone throw).
+        if (!p) {
+            document.getElementById('missing').style.display = 'block';
+        } else {
+            renderEditor(p);
+        }
 
         function renderEditor(p) {
             const src = imgOf(p);

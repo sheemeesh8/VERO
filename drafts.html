@@ -100,7 +100,7 @@
         }
 
         /* Draft badge riding on the shared feed card. */
-        .draft-card { cursor: pointer; }
+        .draft-card { cursor: pointer; position: relative; }
         .draft-card .draft-badge {
             position: absolute; top: 12px; left: 12px; z-index: 3;
             padding: 6px 12px; border-radius: 999px; font-size: 10px; letter-spacing: 1.5px;
@@ -108,6 +108,28 @@
             border: 1px dashed #8a8a85; background: #fff; color: #8a8a85;
             font-family: 'Oswald', 'Segoe UI', sans-serif !important;
         }
+
+        /* Draft cell = card + a publish button beneath it. */
+        .draft-cell { display: flex; flex-direction: column; gap: 12px; }
+        /* Edit pencil, top-right, same as the My Products cards. */
+        .draft-card .pe-edit {
+            position: absolute; top: 12px; right: 12px; z-index: 4;
+            width: 34px; height: 34px; border-radius: 999px; cursor: pointer;
+            display: grid; place-items: center; padding: 0;
+            border: none; background: rgba(255,255,255,0.92); backdrop-filter: blur(4px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.15s, background 0.2s;
+        }
+        .draft-card .pe-edit:hover { transform: scale(1.08); background: #fff; }
+        .draft-card .pe-edit svg {
+            width: 17px; height: 17px; fill: none; stroke: #1c1c1c;
+            stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .publish-btn {
+            width: 100%; border: 1.4px solid #000; background: #1c1c1c; color: #fff; cursor: pointer;
+            font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 12px 14px; border-radius: 999px; transition: background 0.2s, color 0.2s;
+        }
+        .publish-btn:hover { background: #fff; color: #1c1c1c; }
     </style>
     <!-- The shared product card: drafts render as the same object as the feed. -->
     <link rel="stylesheet" href="product-card.css">
@@ -164,29 +186,61 @@
             const cat = p.category === 'art' ? 'Art' : p.category === 'clothing' ? 'Clothing' : '—';
             const icon = p.category === 'art' ? '🖼️' : '🛍️';
             const fig = src ? `<img src="${src}" alt="">` : icon;
-            // The same object as the feed card — click to continue, trash to delete.
+            // The same object as the feed card — click (or the pencil) to continue,
+            // trash to delete, and a Publish button beneath to send it to the feed.
             return `
-                <div class="product-card draft-card" data-i="${i}" role="button" tabindex="0" title="Continue this draft">
-                    <div class="product-image">${fig}
-                        <span class="draft-badge">Draft</span>
-                        <button class="product-icon remove" title="Delete draft" data-act="delete" data-i="${i}">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="product-info">
-                        <div class="pc-left">
-                            <div class="product-price"><span class="vprice">${nis(p.price)}</span></div>
+                <div class="draft-cell">
+                    <div class="product-card draft-card" data-i="${i}" role="button" tabindex="0" title="Continue this draft">
+                        <div class="product-image">${fig}
+                            <span class="draft-badge">Draft</span>
+                            <span class="pe-edit" data-act="edit" data-i="${i}" title="Edit draft" aria-label="Edit draft">
+                                <svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg>
+                            </span>
+                            <button class="product-icon remove" title="Delete draft" data-act="delete" data-i="${i}">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
                         </div>
-                        <div class="pc-right">
-                            <div class="product-seller">${p.brand || 'Draft'}</div>
-                            <div class="product-name">${p.itemType || cat}</div>
-                            <div class="product-rating">Saved · ${fmtDate(p.savedAt)}</div>
+                        <div class="product-info">
+                            <div class="pc-left">
+                                <div class="product-price"><span class="vprice">${nis(p.price)}</span></div>
+                            </div>
+                            <div class="pc-right">
+                                <div class="product-seller">${p.brand || 'Draft'}</div>
+                                <div class="product-name">${p.itemType || cat}</div>
+                                <div class="product-rating">Saved · ${fmtDate(p.savedAt)}</div>
+                            </div>
                         </div>
                     </div>
+                    <button class="publish-btn" data-act="publish" data-i="${i}">Publish to feed ↑</button>
                 </div>`;
+        }
+
+        // Move a draft into the live listings (vero_listings) and drop it from drafts.
+        function publishDraft(i) {
+            const d = drafts[i];
+            if (!d) return;
+            let listings = readJSON('vero_listings', []);
+            if (!Array.isArray(listings)) listings = [];
+            listings.unshift({
+                id: 'l' + Date.now(),
+                name: titleOf(d),
+                seller: d.brand || 'You',
+                brand: d.brand || '',
+                category: d.itemType || (d.category === 'art' ? 'Art' : 'Clothing'),
+                price: Number(d.price) || 0,
+                image: imgOf(d) || null,
+                icon: d.category === 'art' ? '🖼️' : '🛍️',
+                description: d.description || '',
+                status: 'active',
+                listedAt: Date.now(),
+            });
+            save('vero_listings', listings);
+            drafts.splice(i, 1);
+            save('vero_drafts', drafts);
+            render();
         }
 
         function render() {
@@ -208,7 +262,14 @@
                 render();
                 return;
             }
-            // Click anywhere else on the card → continue it on the upload page.
+            // Publish button → push the draft to the live feed.
+            const pub = e.target.closest('[data-act="publish"]');
+            if (pub) {
+                e.preventDefault(); e.stopPropagation();
+                publishDraft(Number(pub.dataset.i));
+                return;
+            }
+            // Click anywhere else on the card (incl. the edit pencil) → continue it.
             const card = e.target.closest('.product-card');
             if (!card) return;
             const i = Number(card.dataset.i);

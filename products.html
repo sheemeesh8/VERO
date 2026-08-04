@@ -190,34 +190,34 @@
         .hist-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
         .hist-btn.desc svg { transform: rotate(180deg); }
 
-        /* Calendar-style date-range popup. */
+        /* Calendar-style date-range popup — white rounded card, docked to the right. */
         .cal-pop {
-            position: relative; margin-top: 16px; width: 300px; max-width: 100%;
-            border: 1px solid #000; background: #fff; padding: 16px; z-index: 20;
-            box-shadow: 0 12px 34px rgba(0,0,0,0.16);
+            position: relative; margin: 16px 0 0 auto; width: 340px; max-width: 100%;
+            border: 1px solid #ececec; border-radius: 20px; background: #fff; padding: 22px; z-index: 20;
+            box-shadow: 0 18px 44px rgba(20,20,40,0.14);
         }
-        .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .cal-title { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+        .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .cal-title { font-size: 17px; letter-spacing: 0; text-transform: none; font-weight: 600; }
         .cal-nav {
-            width: 30px; height: 30px; border: 1px solid #000; border-radius: 999px; background: #fff;
-            cursor: pointer; font-size: 16px; line-height: 1; color: #1c1c1c; transition: background 0.2s, color 0.2s;
+            width: 36px; height: 36px; border: 1px solid #e4e4ea; border-radius: 999px; background: #fff;
+            cursor: pointer; font-size: 17px; line-height: 1; color: #1c1c1c; transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
-        .cal-nav:hover { background: #000; color: #fff; }
-        .cal-dow, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-        .cal-dow { margin-bottom: 6px; }
-        .cal-dow span { text-align: center; font-size: 10px; letter-spacing: 0.5px; color: #9a9a95; }
+        .cal-nav:hover { background: #f2f2f7; border-color: #d4d4dc; }
+        .cal-dow, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .cal-dow { margin-bottom: 8px; }
+        .cal-dow span { text-align: center; font-size: 12px; font-weight: 500; letter-spacing: 0; color: #9a9aa5; }
         .cal-cell {
             aspect-ratio: 1; border: none; background: none; cursor: pointer; font-family: inherit;
-            font-size: 12px; color: #1c1c1c; border-radius: 999px; display: grid; place-items: center;
+            font-size: 14px; font-weight: 500; color: #1c1c1c; border-radius: 10px; display: grid; place-items: center;
             transition: background 0.15s, color 0.15s;
         }
-        .cal-cell:hover:not(:disabled) { background: #eee; }
-        .cal-cell:disabled { color: #d2d2ce; cursor: default; }
-        .cal-cell.in-range { background: #ececea; border-radius: 0; }
-        .cal-cell.end-pt { background: #000; color: #fff; }
+        .cal-cell:hover:not(:disabled) { background: #f0f0f5; }
+        .cal-cell:disabled { color: #cfcfd6; cursor: default; font-weight: 400; }
+        .cal-cell.in-range { background: #ececf5; border-radius: 0; }
+        .cal-cell.end-pt { background: #1c1c1c; color: #fff; border-radius: 10px; }
         .cal-cell.today { text-decoration: underline; }
         .cal-cell.empty { visibility: hidden; }
-        .cal-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
+        .cal-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }
         .cal-range { font-size: 11px; color: #9a9a95; letter-spacing: 0.3px; }
         .cal-actions { display: flex; gap: 8px; }
         .cal-clear, .cal-apply {
@@ -327,7 +327,7 @@
                     <button class="cal-nav" id="calNext" type="button" aria-label="Next month">&#8250;</button>
                 </div>
                 <div class="cal-dow">
-                    <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+                    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
                 </div>
                 <div class="cal-grid" id="calGrid"></div>
                 <div class="cal-foot">
@@ -444,29 +444,28 @@
             const metaLine = past ? dateLine : (p.category || dateLine);
             const editHref = `product-edit.html?i=${idx}${isSeller ? '&from=seller' : ''}`;
             const fig = src ? `<img src="${src}" alt="">` : (p.icon || '🛍️');
-            // The shared feed card — no buttons; an edit pencil opens the editor.
-            return `
-                <div class="prod-cell ${past ? 'past' : ''}">
-                    <a class="product-card" href="${editHref}" title="${p.name || 'Untitled listing'}">
-                        <div class="product-image">${fig}
-                            <span class="status-badge ${status}">${badgeText}</span>
-                            ${hasDisc ? `<span class="disc-badge">-${disc}%</span>` : ''}
-                            <span class="pe-edit" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg>
-                            </span>
+            // Live listings open the editor (whole card is the link + a pencil).
+            // History items are read-only — no edit link, no pencil.
+            const inner = `
+                    <div class="product-image">${fig}
+                        <span class="status-badge ${status}">${badgeText}</span>
+                        ${hasDisc ? `<span class="disc-badge">-${disc}%</span>` : ''}
+                        ${past ? '' : `<span class="pe-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg></span>`}
+                    </div>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price">${priceHtml}</div>
                         </div>
-                        <div class="product-info">
-                            <div class="pc-left">
-                                <div class="product-price">${priceHtml}</div>
-                            </div>
-                            <div class="pc-right">
-                                <div class="product-seller">${p.seller || p.brand || '—'}</div>
-                                <div class="product-name">${p.name || 'Untitled listing'}</div>
-                                <div class="product-rating">${metaLine}</div>
-                            </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${p.seller || p.brand || '—'}</div>
+                            <div class="product-name">${p.name || 'Untitled listing'}</div>
+                            <div class="product-rating">${metaLine}</div>
                         </div>
-                    </a>
-                </div>`;
+                    </div>`;
+            const cardEl = past
+                ? `<div class="product-card" title="${p.name || 'Untitled listing'}">${inner}</div>`
+                : `<a class="product-card" href="${editHref}" title="${p.name || 'Untitled listing'}">${inner}</a>`;
+            return `<div class="prod-cell ${past ? 'past' : ''}">${cardEl}</div>`;
         }
 
         // ---- Draft card (inline preview, links into the drafts editor) ----
@@ -614,7 +613,7 @@
             function buildCal() {
                 title.textContent = `${MONTHS[view.getMonth()]} ${view.getFullYear()}`;
                 const first = new Date(view.getFullYear(), view.getMonth(), 1);
-                const lead = (first.getDay() + 6) % 7;   // Monday-first
+                const lead = first.getDay();   // Sunday-first (matches the header)
                 const daysIn = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
                 const today = stripTime(new Date());
                 let html = '';
