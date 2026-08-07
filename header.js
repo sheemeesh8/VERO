@@ -811,30 +811,51 @@
             font-family: 'Playfair Display', Georgia, serif;
             font-size: 34px; font-weight: 700; letter-spacing: 6px; text-transform: uppercase; color: #111;
         }
-        /* Wide open search field — a thin outlined pill. */
+        /* Two half-width search pills, side by side: products | sellers. */
         .vsp-searchbar {
             margin-top: 40px; width: 100%;
+            display: flex; align-items: stretch; gap: 16px;
+        }
+        .vsp-searchfield {
+            flex: 1 1 50%; min-width: 0;
             display: flex; align-items: center; gap: 12px;
             border: 1.5px solid #111; border-radius: 999px;
             height: 60px; padding: 0 24px; box-sizing: border-box;
         }
-        .vsp-searchbar input {
+        @media (max-width: 620px) { .vsp-searchbar { flex-direction: column; } }
+        .vsp-searchfield {
+            transition: flex-grow 0.4s ease, opacity 0.3s ease, padding 0.35s ease, border-width 0.35s ease, margin 0.35s ease;
+            overflow: hidden;
+        }
+        /* Focusing one field expands it to full width and collapses the other. */
+        .vsp-searchbar.mode-product #vspFieldSeller,
+        .vsp-searchbar.mode-seller #vspFieldProduct {
+            flex: 0 0 0 !important; opacity: 0; padding: 0; margin: 0; border-width: 0; pointer-events: none;
+        }
+        .vsp-searchbar.mode-product #vspFieldProduct,
+        .vsp-searchbar.mode-seller #vspFieldSeller { flex: 1 1 100%; }
+        .vsp-searchfield input {
             flex: 1; min-width: 0; border: none; outline: none; background: none;
             font-family: inherit; font-size: 16px; font-weight: 500; color: #111;
         }
-        .vsp-searchbar input::placeholder { color: #9a9a9a; letter-spacing: 0.4px; }
-        .vsp-searchbar button {
+        .vsp-searchfield input::placeholder { color: #9a9a9a; letter-spacing: 0.4px; }
+        .vsp-searchfield button {
             background: none; border: none; cursor: pointer; padding: 4px;
             display: flex; align-items: center; justify-content: center;
         }
-        .vsp-searchbar button svg { width: 22px; height: 22px; stroke: #111; fill: none; stroke-width: 1.8; }
-        .vsp-searchbar button:hover { opacity: 0.6; }
+        .vsp-searchfield button svg { width: 20px; height: 20px; stroke: #111; fill: none; stroke-width: 1.8; }
+        .vsp-searchfield button:hover { opacity: 0.6; }
 
-        /* The filter split into two halves of the page. */
+        /* The filter split into two halves of the page. Fades out once the buyer
+           starts typing a search. */
         .vsp-cols {
             width: 100%; margin-top: 58px;
             display: grid; grid-template-columns: 1fr 1fr; gap: 44px 96px;
             align-items: start;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        #veroSearchPage.searching .vsp-cols {
+            opacity: 0; transform: translateY(-10px); pointer-events: none;
         }
         .vsp-col { display: flex; flex-direction: column; gap: 52px; min-width: 0; }
         @media (max-width: 760px) { .vsp-cols { grid-template-columns: 1fr; } }
@@ -881,8 +902,33 @@
         }
         .vsp-range::-moz-range-track { height: 8px; border-radius: 999px; background: #f0c9c9; }
 
-        /* Results, below the two-column filter. */
-        .vsp-results-wrap { width: 100%; margin-top: 56px; display: flex; flex-direction: column; align-items: center; }
+        /* Results, below the search — hidden until Enter, then fade/rise in. */
+        .vsp-results-wrap {
+            width: 100%; margin-top: 40px; display: flex; flex-direction: column; align-items: center;
+            opacity: 0; transform: translateY(34px); pointer-events: none;
+            transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .vsp-results-wrap.revealed { opacity: 1; transform: none; pointer-events: auto; }
+
+        /* Seller result cards — two per row, profile image + name + rating. */
+        .vsp-sellers { width: 100%; grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        @media (max-width: 620px) { .vsp-sellers { grid-template-columns: 1fr; } }
+        .vsp-seller-card {
+            display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+            border: 1.5px solid #111; border-radius: 14px; text-decoration: none; color: #111;
+            transition: background 0.2s, color 0.2s;
+            animation: vspFadeUp 0.5s ease both;
+        }
+        @keyframes vspFadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+        .vsp-seller-card:hover { background: #111; color: #fff; }
+        .vsp-seller-ava {
+            width: 52px; height: 52px; flex: 0 0 auto; border-radius: 50%; border: 1px solid currentColor;
+            display: grid; place-items: center; font-size: 20px; text-transform: uppercase; background: #f4f4f2;
+        }
+        .vsp-seller-card:hover .vsp-seller-ava { background: rgba(255,255,255,0.14); }
+        .vsp-seller-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .vsp-seller-name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vsp-seller-rating { font-size: 13px; opacity: 0.72; letter-spacing: 0.5px; }
         .vsp-results-head {
             font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
             color: #111; font-weight: 800; margin-bottom: 24px;
@@ -1043,14 +1089,29 @@
             <button class="vsp-close" aria-label="Close search" onclick="veroCloseSearchPage()">&times;</button>
             <div class="vsp-inner">
                 <div class="vsp-logo"><img src="vero-logo.png?v=2" alt="VERO" class="vsp-logo-img" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'vsp-logo-txt',textContent:'VERO'}))"></div>
+                <!-- Two half-width fields: products on the left, sellers on the right.
+                     Enter in either slides the matching results up from the bottom. -->
                 <div class="vsp-searchbar">
-                    <input id="vspInput" type="text" placeholder="Search for a product" autocomplete="off"
-                           oninput="vspState_query(this.value)" onkeydown="if(event.key==='Enter')vspApply()">
-                    <button aria-label="Search" onclick="vspApply()">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </button>
+                    <div class="vsp-searchfield" id="vspFieldProduct">
+                        <input id="vspInput" type="text" placeholder="Search for a product" autocomplete="off"
+                               onfocus="vspFocusField('product')" onblur="vspBlurField('product')"
+                               oninput="vspState_query(this.value)" onkeydown="if(event.key==='Enter')vspSearchProducts()">
+                        <button aria-label="Search products" onclick="vspSearchProducts()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="vsp-searchfield" id="vspFieldSeller">
+                        <input id="vspSellerInput" type="text" placeholder="Search sellers" autocomplete="off"
+                               onfocus="vspFocusField('seller')" onblur="vspBlurField('seller')"
+                               oninput="window.vspMarkSearching()" onkeydown="if(event.key==='Enter')vspSearchSellers()">
+                        <button aria-label="Search sellers" onclick="vspSearchSellers()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="vsp-cols">
                     <!-- Left half of the page: the sequential choices. -->
@@ -1154,7 +1215,98 @@
         });
     }
 
-    window.vspState_query = function (v) { vspState.query = v; vspUpdateResults(); };
+    // Clicking a field expands it and collapses the other.
+    window.vspFocusField = function (which) {
+        const bar = document.querySelector('#veroSearchPage .vsp-searchbar');
+        if (!bar) return;
+        bar.classList.remove('mode-product', 'mode-seller');
+        bar.classList.add(which === 'seller' ? 'mode-seller' : 'mode-product');
+    };
+    // When a field is left empty and neither field is focused, restore both.
+    window.vspBlurField = function () {
+        setTimeout(() => {
+            const bar = document.querySelector('#veroSearchPage .vsp-searchbar');
+            if (!bar) return;
+            const p = document.getElementById('vspInput');
+            const s = document.getElementById('vspSellerInput');
+            const active = document.activeElement;
+            if (active === p || active === s) return;             // focus moved to the other field
+            if ((p && p.value.trim()) || (s && s.value.trim())) return;  // keep expanded while there's text
+            bar.classList.remove('mode-product', 'mode-seller');
+        }, 160);
+    };
+
+    // Fade the filter columns out as soon as either search field has text.
+    window.vspMarkSearching = function () {
+        const page = document.getElementById('veroSearchPage');
+        if (!page) return;
+        const a = (document.getElementById('vspInput')?.value || '').trim();
+        const b = (document.getElementById('vspSellerInput')?.value || '').trim();
+        page.classList.toggle('searching', !!(a || b));
+    };
+    window.vspState_query = function (v) { vspState.query = v; window.vspMarkSearching(); vspUpdateResults(); };
+
+    // Reveal the results wrap (rise + fade in below the search bar).
+    function vspRevealResults() {
+        const host = document.getElementById('vspResults');
+        if (!host) return;
+        const wrap = host.closest('.vsp-results-wrap');
+        wrap.style.display = '';
+        requestAnimationFrame(() => wrap.classList.add('revealed'));
+    }
+
+    // Enter in the product field → matching pieces rise in below the bar.
+    window.vspSearchProducts = function () {
+        const host = document.getElementById('vspResults');
+        const head = document.getElementById('vspResultsHead');
+        if (!host) return;
+        const q = (vspState.query || '').trim();
+        let html = '';
+        if (typeof window.veroSearchResults === 'function') html = window.veroSearchResults({ ...vspState });
+        head.textContent = q ? `Pieces matching “${q}”` : 'Matching pieces';
+        host.innerHTML = html || '<div class="vsp-results-empty">No products match your search.</div>';
+        document.getElementById('veroSearchPage')?.classList.add('searching');
+        vspRevealResults();
+    };
+
+    // Sellers are gathered from what the site already knows (listings, cart, offers)
+    // plus a few standing storefronts, so seller search always has something to find.
+    function vspGatherSellers() {
+        const names = new Set();
+        const add = s => { if (s) names.add(String(s).trim()); };
+        const grab = (key, field) => { try { (JSON.parse(localStorage.getItem(key)) || []).forEach(x => add(x[field] || x.brand)); } catch (e) {} };
+        grab('vero_listings', 'seller'); grab('vero_cart', 'seller'); grab('vero_offers', 'seller');
+        ['Studio Noir', 'Studio Vero', 'Atelier Nord', 'Denim Lab', 'Sole Society', 'Milano Feet',
+            'Art House', 'Designer Collection', 'Gallery Nine', 'Vintage Vault', 'Pixel Works',
+            'Luxe Atelier', 'Basics Co.', 'Urban Thread', 'Horology Co.', 'Forge Studio', 'Frame & Co.'].forEach(add);
+        return [...names];
+    }
+
+    // Enter in the seller field → matching sellers rise in below the bar.
+    window.vspSearchSellers = function () {
+        const host = document.getElementById('vspResults');
+        const head = document.getElementById('vspResultsHead');
+        if (!host) return;
+        const q = (document.getElementById('vspSellerInput')?.value || '').trim().toLowerCase();
+        let sellers = vspGatherSellers();
+        if (q) sellers = sellers.filter(s => s.toLowerCase().includes(q));
+        sellers.sort((a, b) => a.localeCompare(b));
+        head.textContent = q ? `Sellers matching “${q}”` : 'All sellers';
+        // Deterministic 4.0–5.0 rating per seller, so it's stable across searches.
+        const rate = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return (4 + (h % 10) / 10).toFixed(1); };
+        host.innerHTML = sellers.length
+            ? '<div class="vsp-sellers">' + sellers.map(s =>
+                `<a class="vsp-seller-card" href="store-profile.html">
+                    <span class="vsp-seller-ava">${(s[0] || '?')}</span>
+                    <span class="vsp-seller-meta">
+                        <span class="vsp-seller-name">${s}</span>
+                        <span class="vsp-seller-rating">★ ${rate(s)}</span>
+                    </span>
+                </a>`).join('') + '</div>'
+            : '<div class="vsp-results-empty">No sellers match your search.</div>';
+        document.getElementById('veroSearchPage')?.classList.add('searching');
+        vspRevealResults();
+    };
     window.vspPrice = function (v) {
         vspState.maxPrice = Number(v);
         const out = document.getElementById('vspPriceOut');

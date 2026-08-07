@@ -343,6 +343,9 @@
         .ad-copy { position: relative; z-index: 2; padding: 0 40px; color: #fff; }
         .ad-kicker { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.85; }
         .ad-title { font-size: clamp(22px, 3vw, 34px); font-weight: 300; margin-top: 6px; line-height: 1.1; }
+        /* Inside the feed grid the ad band spans the full row, between every
+           two rows of five products. */
+        .feed .ad-band { grid-column: 1 / -1; margin: 10px 0; }
 
         /* ===================== FEED =====================
            Five across, two rows. Filters live off the category + audience chips,
@@ -633,7 +636,20 @@
                 </a>`;
         }
 
-        // Feed = 5 across × 2 rows = 10, filtered by the two chips.
+        // The seller's promo banner, inserted into the feed as a full-width row.
+        function adBand() {
+            return `
+                <div class="ad-band" style="background-image:url('${STORE.ad.image}')">
+                    <div class="ad-copy">
+                        <div class="ad-kicker">${STORE.ad.kicker}</div>
+                        <div class="ad-title">${STORE.ad.title}</div>
+                    </div>
+                </div>`;
+        }
+
+        // Feed = 5 across, filtered by the two chips. The seller's ad banner is
+        // dropped in after every 10 products (two rows of five).
+        const AD_EVERY = 10;
         function renderFeed() {
             const filtered = PRODUCTS.filter(p => {
                 // A live search spans the whole store, so it overrides the category
@@ -643,15 +659,20 @@
                 const audOk  = activeAud === 'all' || p.aud === activeAud;
                 return nameOk && catOk && audOk;
             });
-            const shown = filtered.slice(0, 10);   // two rows of five
             const feed = document.getElementById('feed');
             const empty = document.getElementById('feedEmpty');
-            feed.innerHTML = shown.map(card).join('');
-            feed.style.display = shown.length ? 'grid' : 'none';
-            empty.style.display = shown.length ? 'none' : 'block';
+            let html = '';
+            filtered.forEach((p, i) => {
+                html += card(p);
+                // After every full block of ten products, insert a banner — but not
+                // when that block is also the very last product (no trailing banner).
+                if ((i + 1) % AD_EVERY === 0 && i + 1 < filtered.length) html += adBand();
+            });
+            feed.innerHTML = html;
+            feed.style.display = filtered.length ? 'grid' : 'none';
+            empty.style.display = filtered.length ? 'none' : 'block';
             document.getElementById('feedNote').textContent =
-                `${filtered.length} item${filtered.length===1?'':'s'}` +
-                (filtered.length > 10 ? ` · showing 10` : '');
+                `${filtered.length} item${filtered.length===1?'':'s'}`;
         }
         renderFeed();
 

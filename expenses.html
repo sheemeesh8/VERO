@@ -158,6 +158,17 @@
         .bar-label { margin-top: 12px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; }
         .bar-col.current .bar-label { color: #1c1c1c; font-weight: 500; }
 
+        /* Preference charts — horizontal bars for styles + brands. */
+        .pref-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 26px; }
+        @media (max-width: 780px) { .pref-charts { grid-template-columns: 1fr; gap: 30px; } }
+        .pref-chart-title { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #1c1c1c; font-weight: 500; margin-bottom: 18px; }
+        .hbar { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .hbar:last-child { margin-bottom: 0; }
+        .hbar-label { font-size: 13px; color: #6b6b66; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hbar-track { height: 10px; background: #f0f0ee; position: relative; }
+        .hbar-fill { height: 100%; background: #1c1c1c; width: 0; transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+        .hbar-val { font-size: 12px; color: #9a9a95; white-space: nowrap; }
+
         /* Followed sellers list. */
         .seller-list { display: flex; flex-direction: column; margin-top: 8px; }
         .seller-row { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid #eee; }
@@ -266,13 +277,22 @@
         </div>
 
         <div class="section">
-            <!-- Followed Sellers -->
+            <!-- Preferences — where your spend goes, by style and by brand -->
             <div class="card">
                 <div class="section-head">
-                    <div class="card-label" style="margin:0;">My shops · followed sellers</div>
-                    <div class="section-note" id="followNote">0 followed</div>
+                    <div class="card-label" style="margin:0;">Your preferences</div>
+                    <div class="section-note">Where your spend goes</div>
                 </div>
-                <div class="seller-list" id="sellerList"></div>
+                <div class="pref-charts">
+                    <div class="pref-chart">
+                        <div class="pref-chart-title">By style</div>
+                        <div id="styleChart"></div>
+                    </div>
+                    <div class="pref-chart">
+                        <div class="pref-chart-title">By brand</div>
+                        <div id="brandChart"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -445,52 +465,30 @@
         });
         renderChart();
 
-        // ===== Followed Sellers — seed from cart/offers, priority + unfollow =====
-        (function followedSellers() {
-            let follows = readJSON('vero_follows', null);
-            if (!Array.isArray(follows)) {
-                const seen = new Set();
-                follows = [];
-                [...items, ...offs].forEach(x => {
-                    const s = x.seller;
-                    if (s && !seen.has(s)) { seen.add(s); follows.push({ name: s, priority: false }); }
-                });
-                localStorage.setItem('vero_follows', JSON.stringify(follows));
+        // ===== Preference charts — spend broken down by style and by brand =====
+        (function preferenceCharts() {
+            function agg(keyFn) {
+                const m = new Map();
+                items.forEach(it => { const k = (keyFn(it) || 'Other'); m.set(k, (m.get(k) || 0) + priceOf(it)); });
+                return [...m.entries()].sort((a, b) => b[1] - a[1]);
             }
-            const listEl = document.getElementById('sellerList');
-            const noteEl = document.getElementById('followNote');
-            const save = () => localStorage.setItem('vero_follows', JSON.stringify(follows));
-
-            function render() {
-                if (!follows.length) {
-                    listEl.innerHTML = '<div class="seller-empty">No shops followed yet — follow sellers from any product page.</div>';
-                } else {
-                    // Prioritised sellers first.
-                    follows.sort((a, b) => (b.priority ? 1 : 0) - (a.priority ? 1 : 0));
-                    listEl.innerHTML = follows.map((f, i) => `
-                        <div class="seller-row">
-                            <div class="seller-avatar">${(f.name || '?')[0]}</div>
-                            <div class="seller-body">
-                                <div class="seller-name">${f.name}</div>
-                                <div class="seller-meta">${f.priority ? 'Priority · notified on new stock' : 'Following'}</div>
-                            </div>
-                            <div class="seller-actions">
-                                <button class="s-btn${f.priority ? ' on' : ''}" data-act="prio" data-i="${i}">${f.priority ? '★ Priority' : '☆ Prioritise'}</button>
-                                <button class="s-btn" data-act="unfollow" data-i="${i}">Unfollow</button>
-                            </div>
-                        </div>`).join('');
-                }
-                noteEl.textContent = `${follows.length} followed`;
+            function draw(elId, data) {
+                const el = document.getElementById(elId); if (!el) return;
+                if (!data.length) { el.innerHTML = '<div class="seller-empty">Nothing to show yet.</div>'; return; }
+                const max = Math.max(1, ...data.map(d => d[1]));
+                el.innerHTML = data.map(([label, val]) => `
+                    <div class="hbar">
+                        <div class="hbar-label" title="${label}">${label}</div>
+                        <div class="hbar-track"><div class="hbar-fill" data-w="${Math.round(val / max * 100)}"></div></div>
+                        <div class="hbar-val">${nis(val)}</div>
+                    </div>`).join('');
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    el.querySelectorAll('.hbar-fill').forEach(b => { b.style.width = (b.dataset.w || 0) + '%'; });
+                }));
             }
-            listEl.addEventListener('click', (e) => {
-                const btn = e.target.closest('.s-btn');
-                if (!btn) return;
-                const i = +btn.dataset.i;
-                if (btn.dataset.act === 'prio') follows[i].priority = !follows[i].priority;
-                else if (btn.dataset.act === 'unfollow') follows.splice(i, 1);
-                save(); render();
-            });
-            render();
+            // "Style" ≈ the item category; "brand" ≈ the seller. Top six each.
+            draw('styleChart', agg(it => it.category).slice(0, 6));
+            draw('brandChart', agg(it => it.seller).slice(0, 6));
         })();
 
         // Exit mirrors the entry: the image holds static while the data slides
