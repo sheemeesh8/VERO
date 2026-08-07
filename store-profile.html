@@ -100,7 +100,9 @@
             display: flex; align-items: flex-end; justify-content: space-between;
             gap: 24px; margin-top: 14px;
         }
-        .hero-tag-row .hero-tag { margin-top: 0; }
+        /* Name + tagline stacked, so the title sits just above the description. */
+        .hero-lead { display: flex; flex-direction: column; min-width: 0; }
+        .hero-tag-row .hero-tag { margin-top: 12px; }
         /* Right column of the hero: the stats slider with the socials sitting
            directly beneath it, both right-aligned. */
         .hero-right {
@@ -110,15 +112,42 @@
         .hero-stats {
             position: relative; height: 74px; width: 240px; flex: none; overflow: hidden;
         }
-        .hero-socials { display: flex; gap: 10px; justify-content: flex-end; }
-        .hero-socials a {
-            width: 40px; height: 40px; border-radius: 999px;
-            display: grid; place-items: center;
-            border: 1px solid rgba(255,255,255,0.55); color: #fff;
+        .hero-socials { display: flex; justify-content: flex-end; }
+        .hero-socials-btn {
+            padding: 9px 20px; border-radius: 999px; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.55); background: transparent; color: #fff;
+            font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
             transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
-        .hero-socials a:hover { background: #fff; color: #000; border-color: #fff; }
-        .hero-socials svg { width: 19px; height: 19px; fill: currentColor; display: block; }
+        .hero-socials-btn:hover { background: #fff; color: #000; border-color: #fff; }
+
+        /* SOCIALS popup — a small centred dialog listing each network. */
+        .soc-overlay {
+            position: fixed; inset: 0; z-index: 85; display: none;
+            align-items: center; justify-content: center; padding: 20px;
+            background: rgba(0,0,0,0.45); backdrop-filter: blur(2px);
+        }
+        .soc-overlay.open { display: flex; }
+        .soc-modal {
+            width: min(360px, 100%); background: #fff; border-radius: 16px; padding: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .soc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .soc-title { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; }
+        .soc-x {
+            width: 30px; height: 30px; border: none; background: none; cursor: pointer;
+            font-size: 24px; line-height: 1; color: #9a9a95; border-radius: 999px;
+        }
+        .soc-x:hover { background: #f0f0f0; color: #1c1c1c; }
+        .soc-links { display: flex; flex-direction: column; gap: 10px; }
+        .soc-links a {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 14px; border: 1px solid rgba(0,0,0,0.14); border-radius: 12px;
+            color: #1c1c1c; text-decoration: none; font-size: 14px; letter-spacing: 0.4px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .soc-links a:hover { background: #f6f6f3; border-color: #000; }
+        .soc-links svg { width: 22px; height: 22px; fill: currentColor; display: block; flex: none; }
         .hero-stat {
             position: absolute; right: 0; bottom: 0; text-align: right;
             display: flex; flex-direction: column; gap: 6px;
@@ -395,9 +424,13 @@
         <!-- HERO -->
         <div class="hero" id="hero">
             <div class="hero-inner">
-                <h1 class="hero-name" id="storeName">Studio Noir</h1>
                 <div class="hero-tag-row">
-                    <p class="hero-tag" id="storeTag">Curated wardrobe & one-off pieces. Tel Aviv.</p>
+                    <!-- Name + tagline grouped so the title sits directly above the
+                         description instead of being stranded at the top. -->
+                    <div class="hero-lead">
+                        <h1 class="hero-name" id="storeName">Studio Noir</h1>
+                        <p class="hero-tag" id="storeTag">Curated wardrobe & one-off pieces. Tel Aviv.</p>
+                    </div>
                     <div class="hero-right">
                         <div class="hero-stats" id="heroStats">
                             <div class="hero-stat is-active">
@@ -409,9 +442,11 @@
                                 <span class="hs-lbl">Items in store</span>
                             </div>
                         </div>
-                        <!-- SOCIALS — the seller's links (My Shop), sitting beside
-                             the followers / items slider. Rendered from STORE.socials. -->
-                        <div class="hero-socials" id="heroSocials"></div>
+                        <!-- SOCIALS — one button beside the followers / items slider;
+                             it opens a popup to choose a network. Built from STORE.socials. -->
+                        <div class="hero-socials">
+                            <button class="hero-socials-btn" id="socialsBtn" type="button" aria-haspopup="dialog">Our Socials</button>
+                        </div>
                     </div>
                 </div>
                 <div class="hero-badges">
@@ -464,6 +499,19 @@
         <div class="feed" id="feed"></div>
         <div class="feed-empty" id="feedEmpty" style="display:none;">
             Nothing here in this filter yet.
+        </div>
+    </div>
+
+    <!-- SOCIALS popup — opened by the "Our Socials" button in the hero; lists the
+         seller's networks to choose from. Links are built from STORE.socials. Placed
+         before the main script so #socLinks exists when buildSocials runs. -->
+    <div class="soc-overlay" id="socOverlay">
+        <div class="soc-modal" role="dialog" aria-modal="true" aria-label="Our socials">
+            <div class="soc-head">
+                <div class="soc-title">Our Socials</div>
+                <button class="soc-x" id="socClose" type="button" aria-label="Close">&times;</button>
+            </div>
+            <div class="soc-links" id="socLinks"></div>
         </div>
     </div>
 
@@ -548,13 +596,16 @@
                 const b = cfg.banners[0];
                 STORE.ad = { image: b.image || STORE.ad.image, kicker: b.kicker || STORE.ad.kicker, title: b.title || STORE.ad.title };
             }
-            // Categories → names, cover images and descriptions.
+            // Categories → names, cover images, descriptions and type. The type is
+            // the base kind (Dresses, Shoes…) the seller picked; it drives the icon
+            // even when the category is given a custom name.
             if (Array.isArray(cfg.categories) && cfg.categories.length) {
                 STORE.categories = cfg.categories.map(c => c.name);
-                STORE.catImages = {}; STORE.catDesc = {};
+                STORE.catImages = {}; STORE.catDesc = {}; STORE.catType = {};
                 cfg.categories.forEach(c => {
                     if (c.image) STORE.catImages[c.name] = c.image;
                     if (c.desc)  STORE.catDesc[c.name]  = c.desc;
+                    if (c.type)  STORE.catType[c.name]  = c.type;
                 });
             }
             // Collections → which categories each audience shows.
@@ -567,7 +618,7 @@
                 cfg.products.forEach((p, i) => PRODUCTS.push({
                     id: i, name: p.name,
                     cat: p.cat, aud: p.aud,
-                    icon: ICONS[p.cat] || '🛍️',
+                    icon: ICONS[p.cat] || ICONS[(STORE.catType && STORE.catType[p.cat])] || '🛍️',
                     price: p.price != null ? p.price : 79 + ((i * 7) % 22) * 10,
                     rating: p.rating != null ? p.rating : (4 + (i % 10) / 10).toFixed(1),
                 }));
@@ -616,7 +667,6 @@
                             <div class="product-price"><span class="vprice">${nis(p.price)}</span></div>
                         </div>
                         <div class="pc-right">
-                            <div class="product-seller">${STORE.name}</div>
                             <div class="product-name">${p.name}</div>
                             <div class="product-rating">★ ${p.rating}</div>
                         </div>
@@ -674,9 +724,10 @@
         const cloNav = { prev(){}, next(){} };
         function buildCloSlider(cats) {
             const track = document.getElementById('cloTrack');
-            track.innerHTML = cats.map(c => `
+            track.innerHTML = cats.map((c, i) => `
                 <button class="clo-card" data-v="${c}">
                     <div class="clo-thumb" style="background-image:url('${STORE.catImages[c]||STORE.hero}')"></div>
+                    <div class="clo-cap"><span class="clo-num">${String(i+1).padStart(2,'0')}</span><span class="clo-name">${c}</span></div>
                 </button>`).join('');
 
             const cards = track.querySelectorAll('.clo-card');
@@ -714,10 +765,22 @@
             };
             const LABEL = { instagram:'Instagram', tiktok:'TikTok', website:'Website' };
             const s = STORE.socials || {};
-            document.getElementById('heroSocials').innerHTML = Object.keys(s)
-                .filter(k => s[k])
-                .map(k => `<a href="${s[k]}" target="_blank" rel="noopener noreferrer" aria-label="${LABEL[k]||k}" title="${LABEL[k]||k}">${ICON[k]||''}</a>`)
+            const links = Object.keys(s).filter(k => s[k]);
+            document.getElementById('socLinks').innerHTML = links
+                .map(k => `<a href="${s[k]}" target="_blank" rel="noopener noreferrer">${ICON[k]||''}<span>${LABEL[k]||k}</span></a>`)
                 .join('');
+
+            // The "Our Socials" button opens the popup; the button hides itself if
+            // the seller filled in no links at all.
+            const btn = document.getElementById('socialsBtn');
+            const overlay = document.getElementById('socOverlay');
+            if (!links.length) { btn.style.display = 'none'; return; }
+            const openPop  = () => overlay.classList.add('open');
+            const closePop = () => overlay.classList.remove('open');
+            btn.addEventListener('click', openPop);
+            document.getElementById('socClose').addEventListener('click', closePop);
+            overlay.addEventListener('click', e => { if (e.target === overlay) closePop(); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
         })();
 
         // Selecting an audience filters the feed AND rebuilds the categories from
