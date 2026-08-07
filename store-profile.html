@@ -101,9 +101,24 @@
             gap: 24px; margin-top: 14px;
         }
         .hero-tag-row .hero-tag { margin-top: 0; }
+        /* Right column of the hero: the stats slider with the socials sitting
+           directly beneath it, both right-aligned. */
+        .hero-right {
+            flex: none; display: flex; flex-direction: column;
+            align-items: flex-end; gap: 16px;
+        }
         .hero-stats {
             position: relative; height: 74px; width: 240px; flex: none; overflow: hidden;
         }
+        .hero-socials { display: flex; gap: 10px; justify-content: flex-end; }
+        .hero-socials a {
+            width: 40px; height: 40px; border-radius: 999px;
+            display: grid; place-items: center;
+            border: 1px solid rgba(255,255,255,0.55); color: #fff;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .hero-socials a:hover { background: #fff; color: #000; border-color: #fff; }
+        .hero-socials svg { width: 19px; height: 19px; fill: currentColor; display: block; }
         .hero-stat {
             position: absolute; right: 0; bottom: 0; text-align: right;
             display: flex; flex-direction: column; gap: 6px;
@@ -273,20 +288,6 @@
             color: #55554f; max-width: 320px;
         }
         .clo-nav { display: flex; gap: 10px; margin-top: 26px; }
-        .clo-socials { margin-top: 30px; }
-        .clo-socials-label {
-            font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-            color: #9a9a95; margin-bottom: 12px;
-        }
-        .clo-socials-links { display: flex; gap: 12px; }
-        .clo-socials-links a {
-            width: 40px; height: 40px; border-radius: 999px;
-            display: grid; place-items: center;
-            border: 1px solid rgba(0,0,0,0.18); color: #1c1c1c;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-        }
-        .clo-socials-links a:hover { background: #000; color: #fff; border-color: #000; }
-        .clo-socials-links svg { width: 19px; height: 19px; fill: currentColor; display: block; }
         .clo-arrow {
             width: 42px; height: 42px; border-radius: 999px; cursor: pointer;
             display: grid; place-items: center;
@@ -373,18 +374,6 @@
             .hs-num { font-size: 32px; }
         }
 
-        /* VERO manual placement — from the site editor. Selectors rewritten to
-           stable unique targets (the page has one .clo-block / .clo-info), so the
-           placement holds regardless of surrounding element order. */
-        #storeName { transform: translate(-5px, 56px); }
-        #heroStats { transform: translate(19px, 58px); }
-        #featSlider { transform: translate(-2px, -25px); }
-        .wrap { transform: translate(1px, 0px); }
-        .wrap .clo-block { transform: translate(2px, -21px); }
-        .wrap .clo-block > .clo-info { transform: translate(79px, -10px) scale(1.25); }
-        #cloTitle { transform: translate(106px, 0px) scale(1.35); }
-        #cloDesc { transform: translate(-2px, -1px); }
-        .wrap .clo-block > .clo-info > .clo-nav { transform: translate(-8px, -10px); }
     </style>
     <link rel="stylesheet" href="product-card.css">
 </head>
@@ -409,15 +398,20 @@
                 <h1 class="hero-name" id="storeName">Studio Noir</h1>
                 <div class="hero-tag-row">
                     <p class="hero-tag" id="storeTag">Curated wardrobe & one-off pieces. Tel Aviv.</p>
-                    <div class="hero-stats" id="heroStats">
-                        <div class="hero-stat is-active">
-                            <span class="hs-num" id="followers">1,284</span>
-                            <span class="hs-lbl">Followers</span>
+                    <div class="hero-right">
+                        <div class="hero-stats" id="heroStats">
+                            <div class="hero-stat is-active">
+                                <span class="hs-num" id="followers">1,284</span>
+                                <span class="hs-lbl">Followers</span>
+                            </div>
+                            <div class="hero-stat">
+                                <span class="hs-num" id="itemCount">0</span>
+                                <span class="hs-lbl">Items in store</span>
+                            </div>
                         </div>
-                        <div class="hero-stat">
-                            <span class="hs-num" id="itemCount">0</span>
-                            <span class="hs-lbl">Items in store</span>
-                        </div>
+                        <!-- SOCIALS — the seller's links (My Shop), sitting beside
+                             the followers / items slider. Rendered from STORE.socials. -->
+                        <div class="hero-socials" id="heroSocials"></div>
                     </div>
                 </div>
                 <div class="hero-badges">
@@ -453,12 +447,6 @@
                     <div class="clo-nav">
                         <button class="clo-arrow prev" id="cloPrev" aria-label="Previous">&#8249;</button>
                         <button class="clo-arrow next" id="cloNext" aria-label="Next">&#8250;</button>
-                    </div>
-                    <!-- SOCIALS — the seller's links, entered in the seller area
-                         (My Shop). Rendered from STORE.socials. -->
-                    <div class="clo-socials">
-                        <div class="clo-socials-label">Socials</div>
-                        <div class="clo-socials-links" id="cloSocials"></div>
                     </div>
                 </div>
                 <div class="clo-slider">
@@ -726,7 +714,7 @@
             };
             const LABEL = { instagram:'Instagram', tiktok:'TikTok', website:'Website' };
             const s = STORE.socials || {};
-            document.getElementById('cloSocials').innerHTML = Object.keys(s)
+            document.getElementById('heroSocials').innerHTML = Object.keys(s)
                 .filter(k => s[k])
                 .map(k => `<a href="${s[k]}" target="_blank" rel="noopener noreferrer" aria-label="${LABEL[k]||k}" title="${LABEL[k]||k}">${ICON[k]||''}</a>`)
                 .join('');
