@@ -462,6 +462,69 @@
                     </div>
                 </div>
 
+                <!-- ===== My profile page editor — buyers set up the page other
+                     users see (buyer-profile.html), saved to vero_buyer_config. ===== -->
+                <div class="card buyer-only" id="bpfEditor" style="margin-top:24px;">
+                    <div class="section-head">
+                        <div class="card-title" style="margin:0;">My profile page</div>
+                        <a class="stf-open" href="buyer-profile.html" target="_blank" rel="noopener">Open my profile ↗</a>
+                    </div>
+                    <div class="card-hint">Set up the profile other users see — your picture, bio, socials and the items you're selling. Changes save automatically.</div>
+
+                    <div class="stf-tabs" id="bpfTabs">
+                        <button class="stf-tab is-active" data-tab="details">Details</button>
+                        <button class="stf-tab" data-tab="items">Items</button>
+                        <button class="stf-tab" data-tab="banner">Banner</button>
+                    </div>
+
+                    <!-- Details: avatar, name, bio, cover, socials -->
+                    <div class="stf-panel is-active" data-panel="details">
+                        <div class="stf-item">
+                            <div class="stf-thumb" id="bpfAvatar">Add<br>photo</div>
+                            <div class="stf-fields">
+                                <input id="bpfName" placeholder="Your name">
+                                <input id="bpfTag" placeholder="Short bio">
+                            </div>
+                        </div>
+                        <div class="stf-hint" style="margin-top:16px;">Cover image — shown full-width behind your name.</div>
+                        <div class="stf-item">
+                            <div class="stf-thumb" id="bpfHero">Add<br>image</div>
+                            <div class="stf-fields">
+                                <div class="card-hint" style="margin:0;">Optional. A neutral tile is used if left empty.</div>
+                            </div>
+                        </div>
+                        <div class="stf-hint" style="margin-top:16px;">Socials — only the ones you fill in are shown.</div>
+                        <div class="stf-fields">
+                            <input id="bpfInstagram" placeholder="Instagram URL">
+                            <input id="bpfTiktok" placeholder="TikTok URL">
+                            <input id="bpfWebsite" placeholder="Website URL">
+                        </div>
+                    </div>
+
+                    <!-- Items the buyer is selling -->
+                    <div class="stf-panel" data-panel="items">
+                        <div class="stf-hint">The pieces you're selling. Tap the icon to change it.</div>
+                        <div id="bpfItems"></div>
+                        <button class="stf-add" id="bpfAddItem">+ Add item</button>
+                    </div>
+
+                    <!-- Optional promo banner -->
+                    <div class="stf-panel" data-panel="banner">
+                        <div class="stf-hint">An optional promo banner shown after every five items on your profile.</div>
+                        <label class="toggle-row">
+                            <div><div class="t-label">Show a banner</div><div class="t-desc">Turn on to display it in your feed.</div></div>
+                            <span class="switch"><input type="checkbox" id="bpfBannerOn"><span class="slider"></span></span>
+                        </label>
+                        <div class="stf-item" id="bpfBannerFields" style="margin-top:14px;">
+                            <div class="stf-thumb" id="bpfBannerImg">Add<br>image</div>
+                            <div class="stf-fields">
+                                <input id="bpfBannerKicker" placeholder="Kicker — e.g. Moving sale">
+                                <input id="bpfBannerTitle" placeholder="Title — e.g. Everything must go">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ===== Change password — buyer's My Profile only ===== -->
                 <div class="card buyer-only" style="margin-top:24px;">
                     <div class="card-title">Change password</div>
@@ -908,6 +971,111 @@
             });
 
             renderBanners(); renderCategories(); renderCollections(); renderProducts(); save();
+        })();
+
+        // ---- My profile page editor: edits vero_buyer_config, which
+        //      buyer-profile.html reads to render the buyer's public page. ----
+        (function buyerProfile() {
+            const root = document.getElementById('bpfEditor');
+            if (!root) return;
+
+            const DEFAULT = { name:'', tag:'', hero:'', avatar:'', followers:0,
+                socials:{}, banner:{ enabled:false, image:'', kicker:'', title:'' }, products:[] };
+            const cfg = Object.assign({}, DEFAULT, readJSON('vero_buyer_config', {}));
+            if (!cfg.socials) cfg.socials = {};
+            if (!cfg.banner)  cfg.banner  = Object.assign({}, DEFAULT.banner);
+            if (!Array.isArray(cfg.products)) cfg.products = [];
+            const save = () => localStorage.setItem('vero_buyer_config', JSON.stringify(cfg));
+
+            function pickImage(cb) {
+                const inp = document.createElement('input');
+                inp.type = 'file'; inp.accept = 'image/*';
+                inp.addEventListener('change', () => {
+                    const f = inp.files && inp.files[0]; if (!f) return;
+                    const r = new FileReader(); r.onload = () => cb(r.result); r.readAsDataURL(f);
+                });
+                inp.click();
+            }
+            function paintThumb(el, url, label) {
+                if (url) { el.style.backgroundImage = `url('${url}')`; el.style.filter = 'none'; el.innerHTML = ''; }
+                else { el.style.backgroundImage = ''; el.style.filter = ''; el.innerHTML = label; }
+            }
+            const ICON_POOL = ['🛍️','👗','🧥','👖','👟','👜','🧶','🧣','🕶️','👒','👚','👔'];
+
+            // ---- Details ----
+            const nameI = root.querySelector('#bpfName'), tagI = root.querySelector('#bpfTag');
+            const igI = root.querySelector('#bpfInstagram'), ttI = root.querySelector('#bpfTiktok'), wsI = root.querySelector('#bpfWebsite');
+            const avatarThumb = root.querySelector('#bpfAvatar'), heroThumb = root.querySelector('#bpfHero');
+            function fillDetails() {
+                nameI.value = cfg.name || ''; tagI.value = cfg.tag || '';
+                igI.value = cfg.socials.instagram || ''; ttI.value = cfg.socials.tiktok || ''; wsI.value = cfg.socials.website || '';
+                paintThumb(avatarThumb, cfg.avatar, 'Add<br>photo');
+                paintThumb(heroThumb, cfg.hero, 'Add<br>image');
+            }
+            nameI.addEventListener('input', () => { cfg.name = nameI.value; save(); });
+            tagI.addEventListener('input',  () => { cfg.tag = tagI.value; save(); });
+            igI.addEventListener('input', () => { cfg.socials.instagram = igI.value.trim(); save(); });
+            ttI.addEventListener('input', () => { cfg.socials.tiktok = ttI.value.trim(); save(); });
+            wsI.addEventListener('input', () => { cfg.socials.website = wsI.value.trim(); save(); });
+            avatarThumb.addEventListener('click', () => pickImage(url => { cfg.avatar = url; save(); paintThumb(avatarThumb, url, 'Add<br>photo'); }));
+            heroThumb.addEventListener('click',   () => pickImage(url => { cfg.hero = url; save(); paintThumb(heroThumb, url, 'Add<br>image'); }));
+
+            // ---- Items ----
+            const itemsBox = root.querySelector('#bpfItems');
+            function renderItems() {
+                itemsBox.innerHTML = cfg.products.map((p, i) => `
+                    <div class="stf-item" data-i="${i}">
+                        <div class="stf-thumb" data-act="icon" style="filter:none;background:#f4f4f1;font-size:32px;">${p.icon || '🛍️'}</div>
+                        <div class="stf-fields">
+                            <input data-f="name" placeholder="Item name" value="${p.name || ''}">
+                            <input data-f="price" type="number" min="0" placeholder="Price ₪" value="${p.price != null ? p.price : ''}">
+                            <button class="stf-remove" data-act="del">Remove item</button>
+                        </div>
+                    </div>`).join('');
+            }
+            itemsBox.addEventListener('input', e => {
+                const item = e.target.closest('.stf-item'); if (!item) return;
+                const p = cfg.products[+item.dataset.i]; const f = e.target.dataset.f;
+                if (f === 'price') p.price = Number(e.target.value) || 0;
+                else if (f) p[f] = e.target.value;
+                save();
+            });
+            itemsBox.addEventListener('click', e => {
+                const item = e.target.closest('.stf-item'); if (!item) return;
+                const i = +item.dataset.i;
+                if (e.target.dataset.act === 'del') { cfg.products.splice(i, 1); save(); renderItems(); }
+                if (e.target.dataset.act === 'icon') {
+                    const cur = ICON_POOL.indexOf(cfg.products[i].icon);
+                    cfg.products[i].icon = ICON_POOL[(cur + 1) % ICON_POOL.length]; save(); renderItems();
+                }
+            });
+            root.querySelector('#bpfAddItem').addEventListener('click', () => {
+                cfg.products.push({ name: 'New item', price: 0, icon: '🛍️', rating: '5.0' }); save(); renderItems();
+            });
+
+            // ---- Banner ----
+            const bOn = root.querySelector('#bpfBannerOn'), bImg = root.querySelector('#bpfBannerImg');
+            const bKick = root.querySelector('#bpfBannerKicker'), bTitle = root.querySelector('#bpfBannerTitle');
+            const bFields = root.querySelector('#bpfBannerFields');
+            function fillBanner() {
+                bOn.checked = !!cfg.banner.enabled; bKick.value = cfg.banner.kicker || ''; bTitle.value = cfg.banner.title || '';
+                paintThumb(bImg, cfg.banner.image, 'Add<br>image');
+                bFields.style.opacity = cfg.banner.enabled ? '1' : '0.5';
+                bFields.style.pointerEvents = cfg.banner.enabled ? 'auto' : 'none';
+            }
+            bOn.addEventListener('change', () => { cfg.banner.enabled = bOn.checked; save(); fillBanner(); });
+            bKick.addEventListener('input',  () => { cfg.banner.kicker = bKick.value; save(); });
+            bTitle.addEventListener('input', () => { cfg.banner.title = bTitle.value; save(); });
+            bImg.addEventListener('click', () => pickImage(url => { cfg.banner.image = url; save(); paintThumb(bImg, url, 'Add<br>image'); }));
+
+            // Tabs — scoped to this editor so it never touches the seller storefront.
+            root.querySelector('#bpfTabs').addEventListener('click', e => {
+                const t = e.target.closest('.stf-tab'); if (!t) return;
+                root.querySelectorAll('.stf-tab').forEach(x => x.classList.toggle('is-active', x === t));
+                root.querySelectorAll('.stf-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === t.dataset.tab));
+            });
+
+            fillDetails(); renderItems(); fillBanner(); save();
         })();
 
         // Exit mirrors the entry: the image holds static while the data slides
