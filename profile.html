@@ -148,28 +148,14 @@
         body.is-seller .field.seller-only { display: block; }
         body.is-seller .buyer-only { display: none; }
 
-        /* ---- My Shop tabs: Profile / Sales ---- */
-        .shop-tabs {
-            display: none;                 /* buyer view has no tabs */
-            gap: 6px;
-            border-bottom: 1px solid #000;
-            margin: 34px 0 24px;
+        /* ---- My Sales section, laid out directly under the profile grid ---- */
+        .shop-sales { margin-top: 64px; }
+        .shop-sales-title {
+            font-size: clamp(30px, 4.5vw, 56px); font-weight: 200; letter-spacing: 1px;
+            line-height: 1; margin: 0 0 22px; border-top: 1px solid #000; padding-top: 40px;
         }
-        body.is-seller .shop-tabs { display: flex; }
-        .shop-tab {
-            appearance: none; background: none; border: none;
-            padding: 12px 22px 14px; margin-bottom: -1px;
-            font: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
-            color: #6b6b66; cursor: pointer; border-bottom: 2px solid transparent;
-            transition: color 0.2s, border-color 0.2s;
-        }
-        .shop-tab:hover { color: #1c1c1c; }
-        .shop-tab.active { color: #000; border-bottom-color: #000; }
-        .shop-panel { animation: shopTabIn 0.25s ease both; }
-        .shop-panel[hidden] { display: none; }
-        @keyframes shopTabIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
         #salesFrame {
-            width: 100%; height: calc(100vh - 240px); min-height: 520px;
+            width: 100%; height: 1600px;
             border: 1px solid #000; background: #fff; display: block;
         }
 
@@ -363,17 +349,6 @@
         <h1 class="head-title">My Profile</h1>
         <p class="head-sub">Your details, preferences and account at a glance.</p>
 
-        <!-- Tabs sit only in the seller version (see body.is-seller in JS), letting
-             the seller flip between the shop's own settings and its sales dashboard
-             without leaving My Shop. Buyer view drops the tab bar entirely. -->
-        <div class="shop-tabs seller-only" role="tablist" aria-label="My Shop sections">
-            <button type="button" class="shop-tab active" role="tab"
-                    aria-selected="true" data-tab="profile">Profile</button>
-            <button type="button" class="shop-tab" role="tab"
-                    aria-selected="false" data-tab="sales">Sales</button>
-        </div>
-
-        <div class="shop-panel" id="shopPanel-profile" role="tabpanel">
         <div class="grid">
             <!-- Identity card (editable, saved to localStorage) -->
             <div class="card">
@@ -630,13 +605,13 @@
 
             </div>
         </div>
-        </div><!-- /#shopPanel-profile -->
 
-        <!-- Sales panel — embeds the standalone dashboard so the numbers stay in
-             one source of truth. Loads lazily the first time the tab is opened. -->
-        <div class="shop-panel seller-only" id="shopPanel-sales" role="tabpanel" hidden>
-            <iframe id="salesFrame" title="Sales dashboard" src="about:blank" loading="lazy"></iframe>
-        </div>
+        <!-- My Sales sits directly under the profile, seller-only. The dashboard
+             is embedded as-is so its own JS and numbers stay the single source. -->
+        <section class="shop-sales seller-only">
+            <h2 class="shop-sales-title">My Sales</h2>
+            <iframe id="salesFrame" title="Sales dashboard" src="dashboard.html?embed=1&from=seller" loading="lazy"></iframe>
+        </section>
     </div>
 
     <script>
@@ -656,32 +631,6 @@
             if (back) back.setAttribute('href', 'seller-area.html');
         }
 
-        // ---- Tabs: Profile ↔ Sales (seller only) ----
-        // The sales dashboard is a full standalone page — embed it in an iframe so
-        // its own JS keeps running and the two views share no globals. The frame
-        // loads on the first click and then stays warm.
-        (function wireShopTabs() {
-            const tabs = document.querySelectorAll('.shop-tab');
-            if (!tabs.length) return;
-            const panels = { profile: document.getElementById('shopPanel-profile'),
-                             sales:   document.getElementById('shopPanel-sales') };
-            const frame  = document.getElementById('salesFrame');
-            const openTab = (name) => {
-                Object.entries(panels).forEach(([k, el]) => { if (el) el.hidden = k !== name; });
-                tabs.forEach(t => {
-                    const on = t.dataset.tab === name;
-                    t.classList.toggle('active', on);
-                    t.setAttribute('aria-selected', on ? 'true' : 'false');
-                });
-                if (name === 'sales' && frame && frame.getAttribute('src') === 'about:blank') {
-                    frame.setAttribute('src', 'dashboard.html?embed=1&from=seller');
-                }
-            };
-            tabs.forEach(t => t.addEventListener('click', () => openTab(t.dataset.tab)));
-            // Deep-link support: profile.html?from=seller&tab=sales lands on Sales.
-            const wanted = new URLSearchParams(location.search).get('tab');
-            if (wanted && panels[wanted]) openTab(wanted);
-        })();
 
         // ---- Read whatever the site already stores ----
         const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
