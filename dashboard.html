@@ -97,12 +97,47 @@
         }
         .filter-chip:hover { border-color: #000; color: #000; }
         .filter-chip.on { background: #000; color: #fff; border-color: #000; }
-        .view-toggle { display: inline-flex; border: 1.4px solid #000; border-radius: 999px; overflow: hidden; }
-        .view-toggle button {
-            padding: 9px 20px; border: none; background: #fff; font-family: inherit; font-size: 12px;
-            letter-spacing: 1px; text-transform: uppercase; cursor: pointer; color: #111; transition: 0.2s;
+        /* ---- Slider navigation arrows ---- */
+        .slider-nav { display: inline-flex; gap: 8px; }
+        .sl-arrow {
+            width: 40px; height: 40px; border: 1.4px solid #000; border-radius: 999px; background: #fff;
+            font-size: 22px; line-height: 1; cursor: pointer; color: #111; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
         }
-        .view-toggle button.on { background: #000; color: #fff; }
+        .sl-arrow:hover { background: #000; color: #fff; }
+        .sl-arrow:disabled { opacity: 0.3; cursor: default; background: #fff; color: #111; }
+
+        /* ---- Products slider: two products at a time, each a card with its data ---- */
+        .prod-slider {
+            display: grid; grid-auto-flow: column; grid-auto-columns: calc(50% - 9px); gap: 18px;
+            overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding-bottom: 8px;
+        }
+        .prod-slider::-webkit-scrollbar { height: 6px; }
+        .prod-slider::-webkit-scrollbar-thumb { background: #ccc; border-radius: 999px; }
+        .prod-unit {
+            scroll-snap-align: start; display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px;
+            background: transparent; padding: 8px; cursor: pointer; transition: transform 0.15s;
+        }
+        .prod-unit:hover { transform: translateY(-2px); }
+        /* Card face (right side in RTL) — the product fills the image, no frame. */
+        .pcf-img {
+            width: 100%; aspect-ratio: 3 / 4; background: #f2f2ef; border-radius: 10px;
+            background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center;
+            font-size: clamp(90px, 13vw, 150px);
+        }
+        .pcf-name { font-weight: 500; font-size: 15px; margin-top: 12px; }
+        .pcf-brand { font-size: 12px; color: #9a9a9a; margin-top: 2px; }
+        .pcf-price { font-weight: 600; font-size: 16px; margin-top: 8px; }
+        /* Data panel (left side in RTL). */
+        .prod-data { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+        .pd-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+        .pd-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .pd-k { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #9a9a9a; font-weight: 600; }
+        .pd-v { font-size: 14px; }
+        @media (max-width: 760px) {
+            .prod-slider { grid-auto-columns: calc(100% - 4px); }
+            .prod-unit { grid-template-columns: 1fr; }
+        }
 
         /* ---- Grid (table) view ---- */
         .inv-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #000; }
@@ -357,22 +392,12 @@
             </div>
             <div class="inv-controls">
                 <div class="filters" id="invFilters"></div>
-                <div class="view-toggle" id="viewToggle">
-                    <button data-view="grid" class="on">Grid</button>
-                    <button data-view="kanban">Kanban</button>
+                <div class="slider-nav">
+                    <button class="sl-arrow" id="slPrev" aria-label="הקודם">‹</button>
+                    <button class="sl-arrow" id="slNext" aria-label="הבא">›</button>
                 </div>
             </div>
-            <div id="invGrid"></div>
-            <div id="invKanban" style="display:none;"></div>
-        </div>
-
-        <!-- ===== Drafts — time-in-draft timers ===== -->
-        <div class="section">
-            <div class="sec-head">
-                <div class="sec-title">טיוטות</div>
-                <div class="sec-note">כמה זמן כל טיוטה ממתינה לפרסום — טיימר חי</div>
-            </div>
-            <div class="draft-strip" id="draftStrip"></div>
+            <div id="invSlider"></div>
         </div>
 
         <!-- ===== Private analytics ===== -->
@@ -621,7 +646,6 @@
 
     let INVENTORY = buildInventory();
     let activeFilter = 'all';
-    let currentView = 'grid';
 
     // ---- Age helpers ----
     const ageDays = it => Math.floor((Date.now() - (it.listedAt || Date.now())) / DAY);
@@ -665,60 +689,66 @@
         return it.image ? `style="background-image:url('${it.image}')"` : '';
     }
 
-    function renderGrid() {
-        const items = filteredItems();
-        if (!items.length) { document.getElementById('invGrid').innerHTML = '<div class="empty-note">אין פריטים בסטטוס הזה.</div>'; return; }
-        const rows = items.map(it => {
-            const d = ageDays(it);
-            const stuck = it.status === 'active' && d > 30;
-            return `<tr data-id="${it.id}">
-                <td><div class="inv-item"><div class="inv-thumb" ${thumbStyle(it)}>${it.image ? '' : (it.icon || '🛍️')}</div>
-                    <div><div class="inv-name">${it.name}</div><div class="inv-brand">${it.brand || '—'}</div></div></div></td>
-                <td><span class="tag ${statusCls(it.status)}">${statusHe(it.status)}</span></td>
-                <td>${it.price ? nis(it.price) : '—'}</td>
-                <td>${it.floor ? nis(it.floor) : '<span style="color:#bbb">—</span>'}</td>
-                <td><span class="age-pill ${stuck ? 'stuck' : ''}">${ageLabel(d)}${stuck ? ' ⚠' : ''}</span></td>
-                <td><div class="health"><div class="bar"><i style="width:${it.health}%"></i></div><span class="pct">${it.health}%</span></div></td>
-                <td>${it.bin ? `<span class="bin-tag">${it.bin}</span>` : '<span class="bin-tag empty">ללא מיקום</span>'}</td>
-                <td>${it.views || 0} 👁</td>
-            </tr>`;
-        }).join('');
-        document.getElementById('invGrid').innerHTML = `<table class="inv-table">
-            <thead><tr><th>פריט</th><th>סטטוס</th><th>מחיר</th><th>רצפת מחיר</th><th>גיל מלאי</th><th>איכות</th><th>מיקום</th><th>צפיות</th></tr></thead>
-            <tbody>${rows}</tbody></table>`;
-        document.querySelectorAll('#invGrid tbody tr').forEach(tr =>
-            tr.addEventListener('click', () => openItemModal(tr.dataset.id)));
+    // Each product is shown as a product card (right, in RTL) with its data panel
+    // to its left. The slider shows two products at a time.
+    function unitHTML(it) {
+        const d = ageDays(it);
+        const stuck = it.status === 'active' && d > 30;
+        // A price offer standing on this piece, if any (matched by item name).
+        const off = readOffers().find(o => o.item === it.name && o.status === 'pending');
+        return `<div class="prod-unit" data-id="${it.id}">
+            <div class="prod-cardface">
+                <div class="pcf-img" ${thumbStyle(it)}>${it.image ? '' : (it.icon || '🛍️')}</div>
+                <div class="pcf-name">${it.name}</div>
+                <div class="pcf-brand">${it.brand || '—'}</div>
+                <div class="pcf-price">${it.price ? nis(it.price) : '—'}</div>
+            </div>
+            <div class="prod-data">
+                <div class="pd-row"><span class="pd-k">סטטוס</span><span class="tag ${statusCls(it.status)}">${statusHe(it.status)}</span></div>
+                <div class="pd-row"><span class="pd-k">מחיר</span><span class="pd-v">${it.price ? nis(it.price) : '—'}</span></div>
+                <div class="pd-row"><span class="pd-k">הצעות מחיר</span><span class="pd-v">${off ? nis(off.offer) : '<span style="color:#bbb">—</span>'}</span></div>
+                <div class="pd-row"><span class="pd-k">גיל מלאי</span><span class="age-pill ${stuck ? 'stuck' : ''}">${ageLabel(d)}${stuck ? ' ⚠' : ''}</span></div>
+                <div class="pd-row"><span class="pd-k">צפיות</span><span class="pd-v">${it.views || 0} 👁</span></div>
+            </div>
+        </div>`;
     }
 
-    function renderKanban() {
-        const cols = STATUSES.map(s => {
-            const items = INVENTORY.filter(i => i.status === s.key);
-            const cards = items.map(it => {
-                const d = ageDays(it);
-                return `<div class="kan-card" data-id="${it.id}">
-                    <div class="kc-top"><div class="inv-thumb" ${thumbStyle(it)}>${it.image ? '' : (it.icon || '🛍️')}</div>
-                        <div><div class="kc-name">${it.name}</div><div class="kc-brand">${it.brand || '—'}</div></div></div>
-                    <div class="kc-meta"><span class="kc-price">${it.price ? nis(it.price) : '—'}</span><span>${ageLabel(d)} · ${it.health}%</span></div>
-                </div>`;
-            }).join('') || '<div class="empty-note" style="padding:14px;font-size:12px;">—</div>';
-            return `<div class="kan-col"><div class="kan-col-head"><span class="tag ${s.cls}">${s.he}</span><span class="kan-count">${items.length}</span></div>${cards}</div>`;
-        }).join('');
-        document.getElementById('invKanban').innerHTML = `<div class="kanban">${cols}</div>`;
-        document.querySelectorAll('#invKanban .kan-card').forEach(c =>
-            c.addEventListener('click', () => openItemModal(c.dataset.id)));
+    function renderSlider() {
+        const host = document.getElementById('invSlider');
+        const items = filteredItems();
+        if (!items.length) { host.innerHTML = '<div class="empty-note">אין פריטים בסטטוס הזה.</div>'; updateArrows(); return; }
+        host.innerHTML = `<div class="prod-slider" id="prodSlider">${items.map(unitHTML).join('')}</div>`;
+        host.querySelectorAll('.prod-unit').forEach(u =>
+            u.addEventListener('click', () => openItemModal(u.dataset.id)));
+        const sl = document.getElementById('prodSlider');
+        sl.addEventListener('scroll', updateArrows);
+        updateArrows();
     }
+
+    // Move the slider by one page (two products). In RTL the track grows to the
+    // left, so scrollLeft runs negative — the signs below account for that.
+    function slideBy(dir) {
+        const sl = document.getElementById('prodSlider'); if (!sl) return;
+        sl.scrollBy({ left: dir * sl.clientWidth, behavior: 'smooth' });
+    }
+    function updateArrows() {
+        const sl = document.getElementById('prodSlider');
+        const prev = document.getElementById('slPrev');
+        const next = document.getElementById('slNext');
+        if (!sl) { prev.disabled = next.disabled = true; return; }
+        const max = sl.scrollWidth - sl.clientWidth;      // total scrollable distance
+        const pos = Math.abs(sl.scrollLeft);              // RTL scrollLeft is ≤ 0
+        prev.disabled = pos <= 1;                          // at the start (right edge)
+        next.disabled = pos >= max - 1;                    // at the end (left edge)
+    }
+    // ‹ (prev) goes back toward the start (right); › (next) advances (left).
+    document.getElementById('slPrev').addEventListener('click', () => slideBy(1));
+    document.getElementById('slNext').addEventListener('click', () => slideBy(-1));
 
     function renderInventory() {
         renderFilters();
-        if (currentView === 'grid') { renderGrid(); document.getElementById('invGrid').style.display = ''; document.getElementById('invKanban').style.display = 'none'; }
-        else { renderKanban(); document.getElementById('invGrid').style.display = 'none'; document.getElementById('invKanban').style.display = ''; }
+        renderSlider();
     }
-
-    document.querySelectorAll('#viewToggle button').forEach(b => b.addEventListener('click', () => {
-        currentView = b.dataset.view;
-        document.querySelectorAll('#viewToggle button').forEach(x => x.classList.toggle('on', x === b));
-        renderInventory();
-    }));
 
     // ============================ Item modal ============================
     let modalId = null;
@@ -1105,7 +1135,6 @@
     function renderAll() {
         renderKPIs();
         renderInventory();
-        renderDrafts();
         renderTrend(); renderAging(); renderHeat(); renderMix();
         renderOfferHub();
         renderTasks(); renderReminders();
