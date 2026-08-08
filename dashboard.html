@@ -67,13 +67,16 @@
         .card { background: #fff; border: 1px solid #000; }
 
         /* ---- KPI bar ---- */
-        .kpi-row {
-            display: grid; grid-auto-flow: column; grid-auto-columns: calc(33.333% - 11px); gap: 16px;
-            overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding-bottom: 10px;
+        /* KPI slider — one card at a time, auto-fading (same as the buyer profile's
+           hero-stats slider). Cards stack absolutely; only .is-active is visible. */
+        .kpi-row { position: relative; min-height: 118px; }
+        .kpi {
+            position: absolute; inset: 0;
+            background: #fff; border: 1px solid #000; padding: 22px 24px; overflow: hidden;
+            opacity: 0; transform: translateY(14px);
+            transition: opacity 0.6s ease, transform 0.6s ease; pointer-events: none;
         }
-        .kpi-row::-webkit-scrollbar { height: 6px; }
-        .kpi-row::-webkit-scrollbar-thumb { background: #ccc; border-radius: 999px; }
-        .kpi { background: #fff; border: 1px solid #000; padding: 22px 24px; position: relative; overflow: hidden; scroll-snap-align: start; }
+        .kpi.is-active { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .kpi b { display: block; font-size: 40px; font-weight: 600; line-height: 1; }
         .kpi span { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #9a9a9a; margin-top: 10px; display: block; }
         .kpi .kpi-mark { position: absolute; left: 16px; top: 16px; font-size: 20px; opacity: 0.25; }
@@ -384,7 +387,6 @@
 
         @media (max-width: 1000px) {
             .charts, .two-col, .mytime { grid-template-columns: 1fr; }
-            .kpi-row { grid-auto-columns: calc(50% - 8px); }
         }
         @media (max-width: 620px) {
             .wrap { padding: 80px 18px 80px; }
@@ -680,9 +682,25 @@
             { mark: '💬', num: offers, lbl: 'הצעות ממתינות', hot: offers > 0 },
             { mark: '💰', num: nis(revenue), lbl: 'הכנסות · ' + sold.length + ' נמכרו' },
         ];
-        document.getElementById('kpiRow').innerHTML = K.map(k =>
-            `<div class="kpi ${k.hot ? 'hot' : ''}"><span class="kpi-mark">${k.mark}</span><b>${k.num}</b><span>${k.lbl}</span></div>`
+        document.getElementById('kpiRow').innerHTML = K.map((k, idx) =>
+            `<div class="kpi ${k.hot ? 'hot' : ''} ${idx === 0 ? 'is-active' : ''}"><span class="kpi-mark">${k.mark}</span><b>${k.num}</b><span>${k.lbl}</span></div>`
         ).join('');
+        startKpiSlider();
+    }
+
+    // KPI slider — rotate the visible card every 8 seconds (fade), one at a time
+    // (identical to the buyer profile's hero-stats slider).
+    let kpiTimer = null;
+    function startKpiSlider() {
+        const slides = document.querySelectorAll('#kpiRow .kpi');
+        if (slides.length < 2) return;
+        clearInterval(kpiTimer);
+        let i = 0;
+        kpiTimer = setInterval(() => {
+            slides[i].classList.remove('is-active');
+            i = (i + 1) % slides.length;
+            slides[i].classList.add('is-active');
+        }, 8000);
     }
 
     // ============================ Inventory ============================
