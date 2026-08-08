@@ -72,11 +72,19 @@
         .kpi-row { position: relative; min-height: 118px; }
         .kpi {
             position: absolute; inset: 0;
-            background: #fff; border: 1px solid #000; padding: 22px 24px; overflow: hidden;
+            background: transparent; border: none; padding: 22px 4px; overflow: hidden;
             opacity: 0; transform: translateY(14px);
             transition: opacity 0.6s ease, transform 0.6s ease; pointer-events: none;
         }
         .kpi.is-active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        /* Clickable nav buttons (dots) under the KPI slider. */
+        .kpi-dots { display: flex; gap: 10px; margin-top: 10px; }
+        .kpi-dot {
+            width: 10px; height: 10px; border-radius: 50%; padding: 0;
+            border: 1.4px solid #000; background: #fff; cursor: pointer; transition: 0.2s;
+        }
+        .kpi-dot:hover { background: #bbb; }
+        .kpi-dot.is-active { background: #000; }
         .kpi b { display: block; font-size: 40px; font-weight: 600; line-height: 1; }
         .kpi span { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #9a9a9a; margin-top: 10px; display: block; }
         .kpi .kpi-mark { position: absolute; left: 16px; top: 16px; font-size: 20px; opacity: 0.25; }
@@ -416,6 +424,7 @@
 
         <!-- ===== Quick KPIs ===== -->
         <div class="kpi-row" id="kpiRow"></div>
+        <div class="kpi-dots" id="kpiDots"></div>
 
         <!-- ===== Private analytics ===== -->
         <div class="section">
@@ -685,22 +694,28 @@
         document.getElementById('kpiRow').innerHTML = K.map((k, idx) =>
             `<div class="kpi ${k.hot ? 'hot' : ''} ${idx === 0 ? 'is-active' : ''}"><span class="kpi-mark">${k.mark}</span><b>${k.num}</b><span>${k.lbl}</span></div>`
         ).join('');
+        document.getElementById('kpiDots').innerHTML = K.map((k, idx) =>
+            `<button class="kpi-dot ${idx === 0 ? 'is-active' : ''}" data-i="${idx}" aria-label="${k.lbl}"></button>`
+        ).join('');
         startKpiSlider();
     }
 
-    // KPI slider — rotate the visible card every 8 seconds (fade), one at a time
-    // (identical to the buyer profile's hero-stats slider).
-    let kpiTimer = null;
+    // KPI slider — fade one card at a time, auto-advancing every 8 seconds, with
+    // clickable dot buttons that jump to a card and restart the timer.
+    let kpiTimer = null, kpiIndex = 0;
     function startKpiSlider() {
         const slides = document.querySelectorAll('#kpiRow .kpi');
+        const dots = document.querySelectorAll('#kpiDots .kpi-dot');
         if (slides.length < 2) return;
-        clearInterval(kpiTimer);
-        let i = 0;
-        kpiTimer = setInterval(() => {
-            slides[i].classList.remove('is-active');
-            i = (i + 1) % slides.length;
-            slides[i].classList.add('is-active');
-        }, 8000);
+        const show = n => {
+            kpiIndex = (n + slides.length) % slides.length;
+            slides.forEach((s, k) => s.classList.toggle('is-active', k === kpiIndex));
+            dots.forEach((d, k) => d.classList.toggle('is-active', k === kpiIndex));
+        };
+        const restart = () => { clearInterval(kpiTimer); kpiTimer = setInterval(() => show(kpiIndex + 1), 8000); };
+        dots.forEach(d => d.addEventListener('click', () => { show(+d.dataset.i); restart(); }));
+        show(0);
+        restart();
     }
 
     // ============================ Inventory ============================
