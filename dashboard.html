@@ -178,9 +178,19 @@
         .kan-card .kc-meta { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #666; }
         .kan-card .kc-price { font-weight: 600; color: #111; }
 
-        /* ---- Charts grid ---- */
+        /* ---- Charts ---- */
         .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .chart-card { background: #fff; border: 1px solid #000; padding: 24px; }
+        /* Single unified chart with square tab navigation. */
+        .single-chart { padding: 24px 28px 28px; }
+        .chart-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 26px; }
+        .chart-tabs button {
+            padding: 12px 20px; border: 1.4px solid #000; border-radius: 0; background: #fff;
+            font-family: inherit; font-size: 13px; letter-spacing: 0.3px; cursor: pointer; color: #111; transition: 0.2s;
+        }
+        .chart-tabs button:hover { background: #f2f2ef; }
+        .chart-tabs button.on { background: #000; color: #fff; }
+        .chart-panel[hidden] { display: none; }
         .chart-card h3 { font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
         .chart-card .ch-sub { font-size: 12px; color: #9a9a9a; margin: 4px 0 18px; }
         .chart-card svg { width: 100%; height: auto; display: block; overflow: visible; }
@@ -410,8 +420,15 @@
                 <div class="sec-title">אנליטיקות פרטיות</div>
                 <div class="sec-note">Private Analytics &amp; Insights · גלוי למוכר בלבד</div>
             </div>
-            <div class="charts">
-                <div class="chart-card">
+            <div class="chart-card single-chart">
+                <div class="chart-tabs" id="chartTabs">
+                    <button data-tab="trend" class="on">מגמת מכירות</button>
+                    <button data-tab="aging">גיל מלאי</button>
+                    <button data-tab="heat">פעילות קונים</button>
+                    <button data-tab="mix">התפלגות מלאי</button>
+                </div>
+
+                <div class="chart-panel" data-panel="trend">
                     <div class="trend-top">
                         <div>
                             <h3>מגמת מכירות</h3>
@@ -429,17 +446,20 @@
                         <span><i style="background:#1f8f4e"></i> נמכרו</span>
                     </div>
                 </div>
-                <div class="chart-card">
+
+                <div class="chart-panel" data-panel="aging" hidden>
                     <h3>גיל מלאי</h3>
                     <div class="ch-sub">Inventory Aging — כמה זמן פריטים יושבים על המדף</div>
                     <div id="agingChart"></div>
                 </div>
-                <div class="chart-card">
+
+                <div class="chart-panel" data-panel="heat" hidden>
                     <h3>פעילות קונים לפי יום</h3>
                     <div class="ch-sub">Activity — צפיות, שמירות והצעות לפי יום בשבוע</div>
                     <div id="heatChart"></div>
                 </div>
-                <div class="chart-card">
+
+                <div class="chart-panel" data-panel="mix" hidden>
                     <h3>התפלגות מלאי ומכירות</h3>
                     <div class="ch-sub">Inventory Mix — במלאי מול נמכרו, לפי קטגוריה</div>
                     <div id="mixChart"></div>
@@ -902,6 +922,12 @@
         trendRange = b.dataset.range;
         document.querySelectorAll('#trendToggle button').forEach(x => x.classList.toggle('on', x === b));
         renderTrend();
+    }));
+
+    // Square tab navigation: one chart visible at a time.
+    document.querySelectorAll('#chartTabs button').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('#chartTabs button').forEach(x => x.classList.toggle('on', x === b));
+        document.querySelectorAll('.chart-panel').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
     }));
 
     // Buyer activity as a BAR chart by weekday — views + saves + offers on each
