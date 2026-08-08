@@ -150,9 +150,11 @@
 
         /* ---- My Sales section, laid out directly under the profile grid ---- */
         .shop-sales { margin-top: 48px; border-top: 1px solid #000; padding-top: 40px; }
+        /* Height is set from JS to match the iframe's own content, so the whole
+           page scrolls as one — no nested scrollbar. */
         #salesFrame {
-            width: 100%; height: 1800px;
-            border: none; background: transparent; display: block;
+            width: 100%; height: 0;
+            border: none; background: transparent; display: block; overflow: hidden;
         }
 
         /* Uploadable avatar with a small edit badge. */
@@ -625,6 +627,47 @@
             const back = document.querySelector('.back');
             if (back) back.setAttribute('href', 'seller-area.html');
         }
+
+        // Auto-fit the embedded sales dashboard to its own content so the whole
+        // My Shop page scrolls as one — no inner scrollbar under the iframe.
+        (function autoFitSalesFrame() {
+            const frame = document.getElementById('salesFrame');
+            if (!frame) return;
+            const fit = () => {
+                try {
+                    const doc = frame.contentDocument;
+                    if (!doc || !doc.body) return;
+                    // Use the tallest measurement so charts that lazily grow don't clip.
+                    const h = Math.max(
+                        doc.body.scrollHeight,
+                        doc.body.offsetHeight,
+                        doc.documentElement.scrollHeight,
+                        doc.documentElement.offsetHeight
+                    );
+                    if (h && Math.abs(parseInt(frame.style.height || '0', 10) - h) > 2) {
+                        frame.style.height = h + 'px';
+                    }
+                } catch (e) { /* cross-origin — leave the CSS height */ }
+            };
+            frame.addEventListener('load', () => {
+                fit();
+                try {
+                    const doc = frame.contentDocument;
+                    // ResizeObserver catches charts finishing their layout, tabs opening,
+                    // and any dynamic growth without a fixed poll.
+                    if (window.ResizeObserver && doc && doc.body) {
+                        new ResizeObserver(fit).observe(doc.body);
+                    }
+                    // Also refit on inner window load (fonts, images) — some browsers
+                    // fire load before layout has settled.
+                    frame.contentWindow.addEventListener('load', fit);
+                    frame.contentWindow.addEventListener('resize', fit);
+                } catch (e) { /* ignore */ }
+                // A few extra ticks in case charts finish rendering after load.
+                [200, 600, 1400].forEach(t => setTimeout(fit, t));
+            });
+            window.addEventListener('resize', fit);
+        })();
 
 
         // ---- Read whatever the site already stores ----
