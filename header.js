@@ -744,16 +744,22 @@
         #siteHeader .hdr-mode-pair .toggle-category,
         #siteHeader.scrolled .hdr-mode-pair .toggle-category,
         #siteHeader.force-dark .hdr-mode-pair .toggle-category,
-        #siteHeader.force-light .hdr-mode-pair .toggle-category,
-        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category {
+        #siteHeader.force-light .hdr-mode-pair .toggle-category {
             border-color: #111 !important;
         }
         #siteHeader .hdr-mode-pair .toggle-category::before,
         #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
         #siteHeader.force-dark .hdr-mode-pair .toggle-category::before,
-        #siteHeader.force-light .hdr-mode-pair .toggle-category::before,
-        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category::before {
+        #siteHeader.force-light .hdr-mode-pair .toggle-category::before {
             background: #111 !important;
+        }
+        /* Over the transparent hero (pre-scroll), the switch reads white like the rest
+           of the icons on the dark image. */
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category {
+            border-color: #fff !important;
+        }
+        #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-right .hdr-mode-pair .toggle-category::before {
+            background: #fff !important;
         }
         #siteHeader .hdr-mode-pair .upload-plus,
         #siteHeader.scrolled .hdr-mode-pair .upload-plus,

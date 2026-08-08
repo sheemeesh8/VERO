@@ -4481,6 +4481,58 @@
             direction: ltr;
             background: #fff;
         }
+        /* ---- Draft-confirm popup: shown when Back is pressed on the first slide ---- */
+        .upload-confirm {
+            position: fixed; inset: 0; z-index: 1200;
+            display: grid; place-items: center;
+            direction: rtl; font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+        .upload-confirm[hidden] { display: none; }
+        .upload-confirm-backdrop {
+            position: absolute; inset: 0;
+            background: rgba(10,10,10,0.48);
+            animation: draftFade 0.2s ease both;
+        }
+        .upload-confirm-card {
+            position: relative; z-index: 1;
+            background: #fff; border-radius: 18px;
+            width: min(420px, calc(100vw - 32px));
+            padding: 28px 26px 22px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.28);
+            text-align: right;
+            animation: draftPop 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        .upload-confirm-card h3 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 24px; font-weight: 600; color: #111;
+            margin: 0 0 8px;
+        }
+        .upload-confirm-card p {
+            font-size: 14px; color: #6b6660; line-height: 1.55;
+            margin: 0 0 22px;
+        }
+        .upload-confirm-actions { display: flex; gap: 10px; }
+        .upload-confirm-btn {
+            flex: 1; padding: 12px 14px;
+            border-radius: 10px; cursor: pointer;
+            font: inherit; font-size: 14px; font-weight: 700;
+            transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .upload-confirm-btn.yes  { background: #111; color: #fff; border: 1px solid #111; }
+        .upload-confirm-btn.yes:hover  { transform: translateY(-1px); }
+        .upload-confirm-btn.no   { background: #fff; color: #111; border: 1px solid rgba(0,0,0,0.2); }
+        .upload-confirm-btn.no:hover   { background: #f4f2ee; }
+        @keyframes draftFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes draftPop  { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+        /* The category picker slides down out of view and the upload panel comes
+           up from below — matched pair, played together on entry AND exit. */
+        .upload-story.slide-up-in { animation: uploadSlideUpIn 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+        .upload-story.slide-down-out { animation: uploadSlideDownOut 0.45s cubic-bezier(0.65,0.05,0.36,1) both; }
+        .category-selector-full.slide-down-out { animation: uploadSlideDownOut 0.45s cubic-bezier(0.65,0.05,0.36,1) both; }
+        .category-selector-full.slide-up-in { animation: uploadSlideUpIn 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes uploadSlideUpIn   { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes uploadSlideDownOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
 
         /* ---- Dimensions, three fields on one line (art) ---- */
         .dims-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -5210,9 +5262,31 @@
         }
         .gp-sub { font-size: 15px; color: #7d786f; margin: 0; }
         .gp-grid {
-            display: grid; gap: clamp(16px, 1.8vw, 24px);   /* equal gaps between tiles */
-            grid-template-columns: repeat(5, 1fr);          /* square tiles — five per row */
+            display: flex; flex-direction: column; gap: clamp(28px, 3vw, 44px);
             max-width: 1160px; margin: 0 auto; width: 100%;
+        }
+        /* Each grouped rectangle: a labeled block that holds a strip of tiles.
+           Matches the personal-area "rectangles" language — a light card with a
+           clear heading, sitting on the same white page. */
+        .gp-group {
+            background: #fbfaf7;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 22px;
+            padding: clamp(22px, 2.6vw, 34px) clamp(20px, 2.4vw, 32px);
+            animation: gpUp 0.55s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        .gp-group.art { background: #fbf5f4; border-color: rgba(192,57,43,0.22); }
+        .gp-group-head { margin: 0 0 clamp(16px, 2vw, 22px); text-align: right; direction: rtl; }
+        .gp-group-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: clamp(22px, 2.4vw, 30px); font-weight: 600; color: #111;
+            margin: 0; line-height: 1.1;
+        }
+        .gp-group.art .gp-group-title { color: #c0392b; }
+        .gp-group-sub { font-size: 13px; color: #8a857c; margin: 6px 0 0; }
+        .gp-group-grid {
+            display: grid; gap: clamp(16px, 1.8vw, 24px);
+            grid-template-columns: repeat(5, 1fr);
         }
         /* Wide outline cards: frame + icon + title, no fill. */
         .gp-tile {
@@ -5313,7 +5387,7 @@
         .gp-step-label { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #7d786f; min-width: 90px; text-align: center; }
 
         @media (max-width: 760px) {
-            .gp-grid { grid-template-columns: repeat(2, 1fr); }
+            .gp-group-grid { grid-template-columns: repeat(2, 1fr); }
             .gp-tile { padding: 16px; }
             .gp-tile .ic { width: 52px; height: 52px; font-size: 32px; }
             .gp-tile .nm { font-size: 18px; }
@@ -5688,6 +5762,20 @@
                     <button class="gp-arrow" onclick="guideStep(-1)" aria-label="הקודם">‹</button>
                     <span class="gp-step-label" id="gpStepLabel"></span>
                     <button class="gp-arrow" onclick="guideStep(1)" aria-label="הבא">›</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation shown when the seller clicks Back from the first upload slide:
+             either park the in-progress listing as a draft, or drop it for good. -->
+        <div id="uploadDraftConfirm" class="upload-confirm" hidden>
+            <div class="upload-confirm-backdrop" onclick="dismissDraftConfirm()"></div>
+            <div class="upload-confirm-card" role="dialog" aria-modal="true" aria-labelledby="uploadDraftConfirmTitle">
+                <h3 id="uploadDraftConfirmTitle">לשמור כטיוטה?</h3>
+                <p>מה שהתחלת יישמר בטיוטות כדי לחזור אליו אחר-כך. אם לא — הפריט יימחק לצמיתות.</p>
+                <div class="upload-confirm-actions">
+                    <button type="button" class="upload-confirm-btn no" onclick="confirmDraftDiscard()">לא, מחיקה</button>
+                    <button type="button" class="upload-confirm-btn yes" onclick="confirmDraftSave()">כן, שמירה</button>
                 </div>
             </div>
         </div>
@@ -7986,6 +8074,15 @@
             ['photography', 'צילום', '📷', 'art'],
             ['ceramics', 'קרמיקה', '🏺', 'art'],
         ];
+        // The tiles are grouped into labeled rectangles: an item's category
+        // decides which rectangle it lives in. Every clothing key belongs to
+        // exactly one group; art keeps its own rectangle at the bottom.
+        const GUIDE_GROUPS = [
+            { title: 'חלק עליון',  sub: 'חולצות, סוודרים, מעילים ושמלות',   keys: ['tops', 'knitwear', 'outerwear', 'dresses'] },
+            { title: 'חלק תחתון',  sub: 'מכנסיים וג׳ינסים',                    keys: ['bottoms'] },
+            { title: 'אקססוריז',   sub: 'נעליים, תיקים ופריטי אביזרים',       keys: ['shoes', 'bags', 'accessories'] },
+            { title: 'אמנות',      sub: 'ציורים, הדפסים ופריטי אמנות',        keys: ['paintings', 'prints', 'sculpture', 'photography', 'ceramics'], variant: 'art' },
+        ];
         // Guide data for the categories photo-guide.js doesn't define yet.
         Object.assign(window.VERO_PHOTO_GUIDE || (window.VERO_PHOTO_GUIDE = {}), {
             knitwear:    { title: 'סוודרים ועליוניות', slots: ['חזית מלאה', 'גב הסוודר', 'תווית מותג ומידה', 'תקריב סריגה / בד'] },
@@ -8006,14 +8103,27 @@
         function buildGuideGrid() {
             const grid = document.getElementById('gpGrid');
             if (grid.dataset.built) return;
-            grid.innerHTML = GUIDE_CATS.map(([k, l, ic, type], i) => {
-                const art = type === 'art' ? ' art' : '';
-                // Frame + icon + title, no fill.
-                return `<div class="gp-tile${art}" style="animation-delay:${i * 0.06}s"
-                             title="${l}" aria-label="${l}" onclick="openGuideCategory('${k}')">
-                            <span class="ic">${ic}</span>
-                            <span class="nm">${l}</span>
-                        </div>`;
+            // Look-up so a group only lists the tiles that actually exist.
+            const byKey = Object.fromEntries(GUIDE_CATS.map(c => [c[0], c]));
+            let tileIdx = 0;
+            grid.innerHTML = GUIDE_GROUPS.map(g => {
+                const tiles = g.keys.map(k => byKey[k]).filter(Boolean).map(([k, l, ic, type]) => {
+                    const art = type === 'art' ? ' art' : '';
+                    const delay = (tileIdx++) * 0.06;
+                    return `<div class="gp-tile${art}" style="animation-delay:${delay}s"
+                                 title="${l}" aria-label="${l}" onclick="openGuideCategory('${k}')">
+                                <span class="ic">${ic}</span>
+                                <span class="nm">${l}</span>
+                            </div>`;
+                }).join('');
+                const variant = g.variant ? ' ' + g.variant : '';
+                return `<section class="gp-group${variant}">
+                            <header class="gp-group-head">
+                                <h2 class="gp-group-title">${g.title}</h2>
+                                ${g.sub ? `<p class="gp-group-sub">${g.sub}</p>` : ''}
+                            </header>
+                            <div class="gp-group-grid">${tiles}</div>
+                        </section>`;
             }).join('');
             grid.dataset.built = '1';
         }
@@ -8165,13 +8275,46 @@
 
         function selectCategoryInit(category) {
             uploadFormData.category = category;
-            document.getElementById('categorySelectorFull').classList.remove('active');
-            document.getElementById('uploadContainer').style.display = 'flex';
+            const picker = document.getElementById('categorySelectorFull');
+            const upload = document.getElementById('uploadContainer');
+            // Picker slides down, upload slides up — one paired motion.
+            upload.style.display = 'flex';
+            upload.classList.remove('slide-down-out');
+            upload.classList.add('slide-up-in');
+            picker.classList.remove('slide-up-in');
+            picker.classList.add('slide-down-out');
+            const onEnd = (e) => {
+                if (e.target !== picker) return;
+                picker.classList.remove('active', 'slide-down-out');
+                upload.classList.remove('slide-up-in');
+                picker.removeEventListener('animationend', onEnd);
+            };
+            picker.addEventListener('animationend', onEnd);
             applyCategoryFields(category);
             updateItemTypeOptions();
             buildUploadPalette();
             resetUploadMedia();
             updateSlideDisplay();
+        }
+
+        // Reverse of the paired motion above — upload drops out to the bottom while
+        // the picker rides back up from below. Shared by "discard" and any future
+        // callers that need to send the user back to the picker with the same feel.
+        function slideBackToPicker() {
+            const picker = document.getElementById('categorySelectorFull');
+            const upload = document.getElementById('uploadContainer');
+            picker.classList.remove('slide-down-out');
+            picker.classList.add('active', 'slide-up-in');
+            upload.classList.remove('slide-up-in');
+            upload.classList.add('slide-down-out');
+            const onEnd = (e) => {
+                if (e.target !== upload) return;
+                upload.style.display = 'none';
+                upload.classList.remove('slide-down-out');
+                picker.classList.remove('slide-up-in');
+                upload.removeEventListener('animationend', onEnd);
+            };
+            upload.addEventListener('animationend', onEnd);
         }
 
         function selectCategory(category) {
@@ -8778,10 +8921,31 @@
                 currentSlide--;
                 updateSlideDisplay();
             } else {
-                // On the first slide, step back to the category selection screen.
-                document.getElementById('uploadContainer').style.display = 'none';
-                document.getElementById('categorySelectorFull').classList.add('active');
+                // On the first slide, ask whether the seller wants to keep the
+                // in-progress listing as a draft before leaving.
+                openDraftConfirm();
             }
+        }
+
+        function openDraftConfirm() {
+            const el = document.getElementById('uploadDraftConfirm');
+            if (el) el.hidden = false;
+        }
+        function dismissDraftConfirm() {
+            const el = document.getElementById('uploadDraftConfirm');
+            if (el) el.hidden = true;
+        }
+        function confirmDraftSave() {
+            dismissDraftConfirm();
+            saveProductDraft();
+        }
+        function confirmDraftDiscard() {
+            dismissDraftConfirm();
+            // "Delete forever" — drop the in-progress listing and go back to the picker.
+            uploadFormData = blankUploadForm();
+            resetUploadMedia();
+            resetUploadFields();
+            slideBackToPicker();
         }
 
         function updateSlideDisplay() {
