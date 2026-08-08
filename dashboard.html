@@ -405,6 +405,27 @@
             .inv-table th:nth-child(4), .inv-table td:nth-child(4),
             .inv-table th:nth-child(6), .inv-table td:nth-child(6) { display: none; }
         }
+        /* Embedded mode (?embed=1): drop the side image, the back button and the
+           page header, and lay every KPI out at once instead of the slider — this is
+           what MY SHOP renders below the profile, where the page chrome is already
+           supplied by the host. */
+        body.is-embed .side-image,
+        body.is-embed .back,
+        body.is-embed .dash-head,
+        body.is-embed .kpi-dots { display: none !important; }
+        body.is-embed .wrap { padding: 0 0 40px; animation: none; }
+        @media (min-width: 1001px) { body.is-embed .wrap { padding-left: 0; } }
+        body.is-embed .kpi-row {
+            position: static; min-height: 0;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 22px;
+        }
+        body.is-embed .kpi {
+            position: static; inset: auto;
+            opacity: 1; transform: none; pointer-events: auto;
+            border: 1px solid #000; padding: 22px 20px; display: block;
+        }
+        body.is-embed .kpi .kpi-desc { max-width: none; }
     </style>
 </head>
 <body>
@@ -413,8 +434,19 @@
     <a class="back" href="index.html">&#8592; חזרה</a>
     <script>
         // Reached from the seller hub → "back" returns there.
-        if (new URLSearchParams(location.search).get('from') === 'seller') {
+        const _dashParams = new URLSearchParams(location.search);
+        if (_dashParams.get('from') === 'seller') {
             document.querySelector('.back').setAttribute('href', 'seller-area.html');
+        }
+        // Embed mode drops the page chrome so the dashboard drops cleanly into a
+        // host page (currently the MY SHOP profile). Class kicks in before layout
+        // so the slider styles never paint.
+        if (_dashParams.get('embed') === '1') {
+            document.documentElement.classList.add('is-embed');
+            document.addEventListener('DOMContentLoaded', () =>
+                document.body.classList.add('is-embed'));
+            // Fallback in case DOMContentLoaded already fired.
+            if (document.body) document.body.classList.add('is-embed');
         }
     </script>
 
