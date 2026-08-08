@@ -357,9 +357,9 @@
         .note-empty { font-size: 13px; color: #9a9a95; padding: 6px 0; }
 
         /* ---- Discount builder (wide) ---- */
-        .disc-builder { display: grid; grid-template-columns: 1.3fr 1fr; border: 1px solid #000; background: #fff; }
+        .disc-builder { display: grid; grid-template-columns: 1fr; border: 1px solid #000; background: #fff; }
         .disc-col { padding: 26px 28px; }
-        .disc-col + .disc-col { border-right: 1px solid #000; }
+        .disc-col + .disc-col { border-top: 1px solid #000; }
         .disc-col h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
         .disc-col > .sec-note { margin-bottom: 16px; }
         .disc-tier { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
@@ -528,30 +528,6 @@
             </div>
         </div>
 
-        <!-- ===== MY TIME ===== -->
-        <div class="section">
-            <div class="sec-head">
-                <div class="sec-title">MY TIME</div>
-                <div class="sec-note">תור משימות אישי ותזכורות</div>
-            </div>
-            <div class="mytime">
-                <div class="card" style="padding:24px;">
-                    <h3 style="font-size:15px;font-weight:600;margin-bottom:6px;">תור משימות</h3>
-                    <div class="sec-note" style="margin-bottom:10px;">מתועדף לפי דחיפות</div>
-                    <div id="taskQueue"></div>
-                </div>
-                <div class="card" style="padding:24px;">
-                    <h3 style="font-size:15px;font-weight:600;margin-bottom:6px;">תזכורות</h3>
-                    <div class="sec-note" style="margin-bottom:14px;">פתק קצר עם שעה לתזכורת</div>
-                    <div class="note-add">
-                        <input type="text" id="noteText" placeholder="מה צריך לזכור?">
-                        <input type="time" id="noteTime">
-                        <button id="noteAdd" type="button">הוספה</button>
-                    </div>
-                    <div id="noteList"></div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- ===== Item management modal ===== -->
@@ -1129,63 +1105,12 @@
         bindNum('storeWide', 'storeWide'); bindNum('globalFloor', 'floor'); bindNum('autoOfferPct', 'autoPct'); bindChk('autoOfferOn', 'autoOn');
     })();
 
-    // ============================ MY TIME ============================
-    function renderTasks() {
-        const tasks = [];
-        INVENTORY.filter(i => i.status === 'draft').forEach(it =>
-            tasks.push({ ic: '📸', title: 'צילום/העלאה — ' + it.name, sub: 'טיוטה שממתינה לתמונות ופרסום', prio: 'high' }));
-        const pending = readOffers().filter(o => o.status === 'pending');
-        pending.forEach(o => tasks.push({ ic: '💬', title: 'להשיב להצעה — ' + o.item, sub: 'הצעת מחיר מ־' + o.buyer, prio: (o.expires - Date.now()) < 2 * 3600000 ? 'high' : 'mid' }));
-        // Chat questions (from the shared chat store, if any).
-        const chats = readJSON('vero_chats', {});
-        Object.keys(chats).slice(0, 2).forEach(seller =>
-            tasks.push({ ic: '💬', title: 'תקשורת — ' + seller, sub: 'קונה שאל שאלה בצ׳אט', prio: 'mid' }));
-        // Stuck stock nudge.
-        const stuck = INVENTORY.filter(i => i.status === 'active' && ageDays(i) > 30);
-        if (stuck.length) tasks.push({ ic: '🏷️', title: 'לרענן ' + stuck.length + ' פריטים תקועים', sub: 'מעל 30 יום על המדף — כדאי הנחה או תמונה חדשה', prio: 'low' });
-        if (!tasks.length) tasks.push({ ic: '✅', title: 'הכול מעודכן', sub: 'אין משימות פתוחות כרגע', prio: 'low' });
-
-        const order = { high: 0, mid: 1, low: 2 };
-        tasks.sort((a, b) => order[a.prio] - order[b.prio]);
-        const prioHe = { high: 'דחוף', mid: 'בינוני', low: 'רגיל' };
-        document.getElementById('taskQueue').innerHTML = tasks.map(t =>
-            `<div class="task"><div class="t-ic">${t.ic}</div>
-                <div class="t-body"><div class="t-title">${t.title}</div><div class="t-sub">${t.sub}</div></div>
-                <span class="t-prio prio-${t.prio}">${prioHe[t.prio]}</span></div>`).join('');
-    }
-
-    // ---- Reminders (NOTES with a settable time), persisted to vero_reminders ----
-    function renderReminders() {
-        const list = readJSON('vero_reminders', []);
-        const box = document.getElementById('noteList');
-        box.innerHTML = (Array.isArray(list) && list.length) ? list.map(n => `
-            <div class="note" data-id="${n.id}">
-                <span class="n-dot"></span>
-                <div class="n-body"><div class="n-text">${n.text}</div>${n.time ? `<div class="n-time">⏰ ${n.time}</div>` : ''}</div>
-                <button class="n-del" type="button" title="מחק">&times;</button>
-            </div>`).join('') : '<div class="note-empty">אין תזכורות עדיין. הוסף פתק עם שעה.</div>';
-        box.querySelectorAll('.note .n-del').forEach(b => b.addEventListener('click', () => {
-            const id = b.closest('.note').dataset.id;
-            const arr = readJSON('vero_reminders', []).filter(x => String(x.id) !== String(id));
-            save('vero_reminders', arr); renderReminders();
-        }));
-    }
-    document.getElementById('noteAdd').addEventListener('click', () => {
-        const t = document.getElementById('noteText'), tm = document.getElementById('noteTime');
-        const text = t.value.trim(); if (!text) return;
-        const arr = readJSON('vero_reminders', []);
-        arr.push({ id: Date.now(), text, time: tm.value || '' });
-        save('vero_reminders', arr); t.value = ''; tm.value = ''; renderReminders();
-    });
-    document.getElementById('noteText').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('noteAdd').click(); });
-
     // ============================ Boot ============================
     function renderAll() {
         renderKPIs();
         renderInventory();
         renderTrend(); renderAging(); renderHeat(); renderMix();
         renderOfferHub();
-        renderTasks(); renderReminders();
     }
     renderAll();
 
