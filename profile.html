@@ -607,7 +607,7 @@
         <!-- My Sales sits directly under the profile, seller-only. The dashboard
              renders in embed mode: no chrome, KPIs laid out instead of a slider. -->
         <section class="shop-sales seller-only">
-            <iframe id="salesFrame" title="Sales dashboard" src="dashboard.html?embed=1&from=seller" loading="lazy"></iframe>
+            <iframe id="salesFrame" title="Sales dashboard" src="dashboard.html?embed=1&from=seller"></iframe>
         </section>
     </div>
 
@@ -633,11 +633,11 @@
         (function autoFitSalesFrame() {
             const frame = document.getElementById('salesFrame');
             if (!frame) return;
+            let observer = null;
             const fit = () => {
                 try {
                     const doc = frame.contentDocument;
                     if (!doc || !doc.body) return;
-                    // Use the tallest measurement so charts that lazily grow don't clip.
                     const h = Math.max(
                         doc.body.scrollHeight,
                         doc.body.offsetHeight,
@@ -649,23 +649,38 @@
                     }
                 } catch (e) { /* cross-origin — leave the CSS height */ }
             };
-            frame.addEventListener('load', () => {
+            const wire = () => {
                 fit();
                 try {
                     const doc = frame.contentDocument;
-                    // ResizeObserver catches charts finishing their layout, tabs opening,
-                    // and any dynamic growth without a fixed poll.
+                    if (observer) observer.disconnect();
                     if (window.ResizeObserver && doc && doc.body) {
-                        new ResizeObserver(fit).observe(doc.body);
+                        observer = new ResizeObserver(fit);
+                        observer.observe(doc.body);
                     }
-                    // Also refit on inner window load (fonts, images) — some browsers
-                    // fire load before layout has settled.
                     frame.contentWindow.addEventListener('load', fit);
                     frame.contentWindow.addEventListener('resize', fit);
                 } catch (e) { /* ignore */ }
-                // A few extra ticks in case charts finish rendering after load.
-                [200, 600, 1400].forEach(t => setTimeout(fit, t));
-            });
+                [200, 600, 1400, 3000].forEach(t => setTimeout(fit, t));
+            };
+            // The iframe may already have loaded by the time this script runs
+            // (inline <iframe> with a src on it), so kick off immediately if the
+            // inner document is ready, and still hook 'load' for any reload.
+            const kickIfReady = () => {
+                try {
+                    const doc = frame.contentDocument;
+                    if (doc && doc.readyState === 'complete') { wire(); return true; }
+                } catch (e) { /* ignore */ }
+                return false;
+            };
+            frame.addEventListener('load', wire);
+            if (!kickIfReady()) {
+                // Poll briefly until the inner document reports complete.
+                const started = Date.now();
+                const iv = setInterval(() => {
+                    if (kickIfReady() || Date.now() - started > 5000) clearInterval(iv);
+                }, 120);
+            }
             window.addEventListener('resize', fit);
         })();
 
