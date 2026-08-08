@@ -364,8 +364,55 @@
                     <textarea id="pf-bio" rows="3" maxlength="200" placeholder="A short line about you"></textarea>
                     <div class="char-count seller-only"><span id="bioCount">0</span>/200</div>
                 </div>
+                <div class="field">
+                    <div class="card-label">Socials</div>
+                    <input id="pf-instagram" type="url" placeholder="Instagram URL">
+                    <input id="pf-tiktok" type="url" placeholder="TikTok URL" style="margin-top:8px;">
+                    <input id="pf-website" type="url" placeholder="Website URL" style="margin-top:8px;">
+                    <div class="card-hint" style="margin:8px 0 0;">Only the ones you fill in are shown on your profile.</div>
+                </div>
                 <div class="save-note" id="saveNote">Changes save automatically.</div>
             </div>
+
+            <!-- My Dimensions (buyer fit — hidden in shop mode) -->
+            <div class="card buyer-only" style="margin-top:24px;">
+                    <div class="section-head">
+                        <div class="card-label" style="margin:0;">My dimensions</div>
+                        <div class="section-note">Perfect Fit AI</div>
+                    </div>
+                    <div class="dim-grid">
+                        <div class="dim-field">
+                            <div class="card-label">Height (cm)</div>
+                            <input id="dim-height" type="number" inputmode="numeric" placeholder="170">
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Weight (kg)</div>
+                            <input id="dim-weight" type="number" inputmode="numeric" placeholder="65">
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Chest (cm)</div>
+                            <input id="dim-chest" type="number" inputmode="numeric" placeholder="92">
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Waist (cm)</div>
+                            <input id="dim-waist" type="number" inputmode="numeric" placeholder="78">
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Clothing size</div>
+                            <select id="dim-clothing">
+                                <option value="">—</option>
+                                <option>XS</option><option>S</option><option>M</option>
+                                <option>L</option><option>XL</option><option>XXL</option>
+                            </select>
+                        </div>
+                        <div class="dim-field">
+                            <div class="card-label">Shoe size (EU)</div>
+                            <input id="dim-shoe" type="number" inputmode="numeric" placeholder="42">
+                        </div>
+                    </div>
+                    <div class="dim-note" id="dimNote">Your measurements save automatically.</div>
+                    <span class="dim-fit" id="dimFit">Perfect Fit · not set</span>
+                </div>
 
             <!-- Right column: preferences + live stats from the site -->
             <div class="col-right">
@@ -400,8 +447,8 @@
                     </div>
                 </div>
 
-                <!-- Product sizes (seller) — set the sizes carried for each item -->
-                <div class="card seller-only" id="sizeCard" style="margin-top:24px;">
+                <!-- Product sizes — moved to the buyer's My Profile (hidden in shop mode) -->
+                <div class="card buyer-only" id="sizeCard" style="margin-top:24px;">
                     <div class="section-head">
                         <div class="card-label" style="margin:0;">Product sizes</div>
                         <div class="section-note">What you carry</div>
@@ -676,6 +723,36 @@
                 saveTimer = setTimeout(() => { note.textContent = 'Changes save automatically.'; }, 1400);
             });
         });
+
+        // ===== My Dimensions — persisted to vero_dimensions, drives Perfect Fit AI =====
+        (function dimensions() {
+            const dims = readJSON('vero_dimensions', {});
+            const map = { height: 'dim-height', weight: 'dim-weight', chest: 'dim-chest',
+                          waist: 'dim-waist', clothing: 'dim-clothing', shoe: 'dim-shoe' };
+            const fitEl = document.getElementById('dimFit');
+            if (!fitEl) return;
+            const refreshFit = () => {
+                const ready = dims.clothing && dims.shoe;
+                fitEl.textContent = ready ? `Perfect Fit · ${dims.clothing} · EU ${dims.shoe}` : 'Perfect Fit · not set';
+                fitEl.style.background = ready ? '#000' : 'transparent';
+                fitEl.style.color = ready ? '#fff' : '#1c1c1c';
+            };
+            Object.entries(map).forEach(([key, id]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (dims[key] != null) el.value = dims[key];
+                el.addEventListener('input', () => {
+                    dims[key] = el.value;
+                    localStorage.setItem('vero_dimensions', JSON.stringify(dims));
+                    const note = document.getElementById('dimNote');
+                    note.textContent = 'Saved ✓';
+                    clearTimeout(el._t);
+                    el._t = setTimeout(() => { note.textContent = 'Your measurements save automatically.'; }, 1400);
+                    refreshFit();
+                });
+            });
+            refreshFit();
+        })();
 
         // ===== Product sizes — kept simple: a few basic garment types (shirts,
         //       pants, shoes). Saved on vero_store_config.basicSizes. =====

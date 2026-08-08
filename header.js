@@ -525,6 +525,11 @@
            until you scroll past it — only the white content shows, no white bar. */
         #siteHeader.sticky-look:not(.scrolled) { background: transparent; border-bottom: none; box-shadow: none; }
         #siteHeader.sticky-look.scrolled { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); }
+        /* Home header floating over the hero — the category switch reads white (track
+           border + knob) so it stands out on the dark image, matching the white logo. */
+        #siteHeader.sticky-look:not(.scrolled) .toggle-category { border-color: rgba(255,255,255,0.6); }
+        #siteHeader.sticky-look:not(.scrolled) .toggle-category::before { background: #fff; }
+        #siteHeader.sticky-look:not(.scrolled) .toggle-category:hover { border-color: #fff; }
         /* The header sits 18px down from the top edge; this fills that strip with
            whatever the header is wearing, so the page never shows through above it. */
         #siteHeader::before {
