@@ -884,6 +884,27 @@
         body:not([data-mode="art"]) #veroSearchPage.mode-seller .vsp-seller-styles { display: flex; }
         /* Art mode (either field) → art-category chips. */
         body[data-mode="art"] #veroSearchPage .vsp-art-cats { display: flex; }
+
+        /* Three quick seller suggestions, sitting under the seller (right) field. */
+        .vsp-seller-suggest {
+            width: 100%; margin-top: 18px;
+            display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 620px) { .vsp-seller-suggest { justify-content: center; } }
+        .vsp-suggest-label {
+            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a9a;
+        }
+        .vsp-suggest-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+        .vsp-suggest-chip {
+            border: 1px solid #111; background: #fff; color: #111;
+            border-radius: 999px; padding: 8px 18px; cursor: pointer;
+            font-family: inherit; font-size: 13px; font-weight: 500; letter-spacing: 0.2px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .vsp-suggest-chip:hover { background: #111; color: #fff; }
+        /* Once a search runs, the suggestions give way to the results. */
+        #veroSearchPage.searching .vsp-seller-suggest { display: none; }
         .vsp-col { display: flex; flex-direction: column; gap: 52px; min-width: 0; }
         @media (max-width: 760px) { .vsp-cols { grid-template-columns: 1fr; } }
         .vsp-step {
@@ -1178,6 +1199,12 @@
                         </button>
                     </div>
                 </div>
+                <!-- Three quick seller suggestions under the seller field. Filled by
+                     vspFillSellerSuggestions() so they match the active site mode. -->
+                <div class="vsp-seller-suggest" id="vspSellerSuggest">
+                    <span class="vsp-suggest-label">Try a seller</span>
+                    <div class="vsp-suggest-chips" id="vspSuggestChips"></div>
+                </div>
                 <div class="vsp-cols">
                     <!-- Left half of the page: the sequential choices. -->
                     <div class="vsp-col">
@@ -1369,6 +1396,26 @@
         return [...names];
     }
 
+    // Three quick seller suggestions under the seller field — the first storefronts
+    // for the active mode (art sellers in art mode, the site's sellers otherwise).
+    function vspFillSellerSuggestions() {
+        const host = document.getElementById('vspSuggestChips');
+        if (!host) return;
+        const isArt = document.body.dataset.mode === 'art';
+        const pool = isArt ? VSP_ART_SELLERS : vspGatherSellers();
+        const picks = pool.slice(0, 3);
+        host.innerHTML = picks.map(s =>
+            `<button class="vsp-suggest-chip" type="button" onclick="vspPickSellerSuggest('${s.replace(/'/g, "\\'")}')">${s}</button>`
+        ).join('');
+    }
+    // Clicking a suggestion drops it into the seller field and runs the search.
+    window.vspPickSellerSuggest = function (name) {
+        const inp = document.getElementById('vspSellerInput');
+        if (inp) inp.value = name;
+        vspFocusField('seller');
+        vspSearchSellers();
+    };
+
     // Enter in the seller field → matching sellers rise in below the bar.
     window.vspSearchSellers = function () {
         const host = document.getElementById('vspResults');
@@ -1480,12 +1527,16 @@
         mountSearchPage();
         const page = document.getElementById('veroSearchPage');
         // Fresh each open.
+        // Open with BOTH search fields side by side (no field pre-focused, so
+        // neither collapses the other) in whichever site mode is active.
+        const bar = page.querySelector('.vsp-searchbar');
+        if (bar) bar.classList.remove('mode-product', 'mode-seller');
+        page.classList.remove('mode-product', 'mode-seller');
+        vspFillSellerSuggestions();
         requestAnimationFrame(() => {
             page.classList.add('open');
             page.setAttribute('aria-hidden', 'false');
             vspUpdateResults();
-            const input = document.getElementById('vspInput');
-            if (input) setTimeout(() => input.focus(), 250);
         });
         document.body.style.overflow = 'hidden';
     };
