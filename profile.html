@@ -206,27 +206,18 @@
         .store-cover-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 18px; }
         .store-cover-actions .change-photo { width: auto; }
 
-        /* Store card = two rectangles side by side: a wide background image (3/4)
-           and a narrow store photo (1/4). No circle, no image overlay — each is a
-           plain framed rectangle with its own change button beneath it. */
+        /* Store card = two empty rectangles (3/4 + 1/4) beside a tall portrait one.
+           Plain framed placeholders — no content, no buttons. */
         .store-card { display: block; padding: 0; overflow: hidden; }
         .store-card-title { padding: 18px 18px 0; margin: 0; }
-        .store-rects { display: flex; align-items: stretch; gap: 12px; padding: 12px 18px 18px; }
-        .store-rect { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-        .store-rect--bg { flex: 3; }     /* three-quarters of the remaining width */
-        .store-rect--photo { flex: 1; }  /* one-quarter */
-        .store-rect-fill {
-            flex: 1; min-height: 190px; border: 1px solid #000; overflow: hidden;
-            background: #eeedeb center / cover no-repeat; filter: grayscale(1);
-            display: grid; place-items: center;
-            font-size: 44px; font-weight: 300; color: #b7b4ad; text-transform: uppercase;
-        }
-        .store-rect-fill.has-img { filter: none; color: transparent; }
-        .store-rect-empty { font-size: 11px; letter-spacing: 0.5px; color: #9a9a95; text-transform: none; }
-        .store-rect-fill.has-img .store-rect-empty { display: none; }
-        .store-rect .change-photo { width: 100%; text-align: center; }
+        .store-rects { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px 18px; }
+        .store-rect { border: 1px solid #000; background: #fafafa; min-width: 0; }
+        .store-rect--bg { flex: 3; height: 150px; }      /* three-quarters wide */
+        .store-rect--photo { flex: 1; height: 150px; }   /* one-quarter wide */
+        .store-rect--tall { flex: 1; height: 322px; }    /* long / portrait beside them */
         @media (max-width: 560px) {
-            .store-rects { flex-direction: column; }
+            .store-rects { flex-wrap: wrap; }
+            .store-rect--tall { flex-basis: 100%; height: 220px; }
         }
 
         /* Per-product size entry (seller). */
@@ -503,21 +494,11 @@
                 <div class="card store-card">
                     <div class="store-card-title card-label">Store appearance</div>
                     <div class="store-rects">
-                        <!-- 3/4 — the full-width background image shown on the storefront -->
-                        <div class="store-rect store-rect--bg">
-                            <div class="store-rect-fill" id="storeBgPreview">
-                                <span class="store-rect-empty">No background</span>
-                            </div>
-                            <button type="button" class="change-photo" id="changeBg">Change background</button>
-                        </div>
-                        <!-- 1/4 — the store photo -->
-                        <div class="store-rect store-rect--photo">
-                            <div class="store-rect-fill store-rect-fill--photo" id="avatar">V</div>
-                            <button type="button" class="change-photo" id="changePhoto">Change photo</button>
-                        </div>
+                        <!-- Two empty rectangles (3/4 + 1/4) beside a tall one. -->
+                        <div class="store-rect store-rect--bg"></div>
+                        <div class="store-rect store-rect--photo"></div>
+                        <div class="store-rect store-rect--tall"></div>
                     </div>
-                    <input id="pf-photo" type="file" accept="image/*" hidden>
-                    <input id="storeBgInput" type="file" accept="image/*" hidden>
                 </div>
 
                 <div class="stats">
@@ -822,6 +803,7 @@
         const avatarEl = document.getElementById('avatar');
         const sideImageEl = document.querySelector('.side-image');
         function refreshAvatar() {
+            if (!avatarEl) return;   // store card now uses empty rectangles, no avatar
             if (profile.avatarImg) {
                 avatarEl.style.backgroundImage = `url('${profile.avatarImg}')`;
                 avatarEl.textContent = '';
