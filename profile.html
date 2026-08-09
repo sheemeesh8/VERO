@@ -153,7 +153,7 @@
         /* Height is set from JS to match the iframe's own content, so the whole
            page scrolls as one — no nested scrollbar. */
         #salesFrame {
-            width: 100%; height: 0;
+            width: 100%; height: 900px;
             border: none; background: transparent; display: block; overflow: hidden;
         }
 
@@ -605,9 +605,11 @@
         </div>
 
         <!-- My Sales sits directly under the profile, seller-only. The dashboard
-             renders in embed mode: no chrome, KPIs laid out instead of a slider. -->
+             loads in an iframe (full isolation from this page's own scripts) and
+             is auto-sized to its content so the whole page scrolls as one — no
+             nested scrollbar. -->
         <section class="shop-sales seller-only">
-            <iframe id="salesFrame" title="Sales dashboard" src="dashboard.html?embed=1&from=seller"></iframe>
+            <iframe id="salesFrame" title="Sales dashboard" src="dashboard.html?embed=1&from=seller" scrolling="no"></iframe>
         </section>
     </div>
 
@@ -639,15 +641,13 @@
                     const doc = frame.contentDocument;
                     if (!doc || !doc.body) return;
                     const h = Math.max(
-                        doc.body.scrollHeight,
-                        doc.body.offsetHeight,
-                        doc.documentElement.scrollHeight,
-                        doc.documentElement.offsetHeight
+                        doc.body.scrollHeight, doc.body.offsetHeight,
+                        doc.documentElement.scrollHeight, doc.documentElement.offsetHeight
                     );
                     if (h && Math.abs(parseInt(frame.style.height || '0', 10) - h) > 2) {
                         frame.style.height = h + 'px';
                     }
-                } catch (e) { /* cross-origin — leave the CSS height */ }
+                } catch (e) { /* cross-origin — keep the CSS height */ }
             };
             const wire = () => {
                 fit();
@@ -658,14 +658,11 @@
                         observer = new ResizeObserver(fit);
                         observer.observe(doc.body);
                     }
-                    frame.contentWindow.addEventListener('load', fit);
                     frame.contentWindow.addEventListener('resize', fit);
                 } catch (e) { /* ignore */ }
-                [200, 600, 1400, 3000].forEach(t => setTimeout(fit, t));
+                // Charts finish rendering slightly after load — refit a few times.
+                [150, 500, 1200, 2500].forEach(t => setTimeout(fit, t));
             };
-            // The iframe may already have loaded by the time this script runs
-            // (inline <iframe> with a src on it), so kick off immediately if the
-            // inner document is ready, and still hook 'load' for any reload.
             const kickIfReady = () => {
                 try {
                     const doc = frame.contentDocument;
@@ -675,10 +672,9 @@
             };
             frame.addEventListener('load', wire);
             if (!kickIfReady()) {
-                // Poll briefly until the inner document reports complete.
                 const started = Date.now();
                 const iv = setInterval(() => {
-                    if (kickIfReady() || Date.now() - started > 5000) clearInterval(iv);
+                    if (kickIfReady() || Date.now() - started > 8000) clearInterval(iv);
                 }, 120);
             }
             window.addEventListener('resize', fit);
