@@ -860,7 +860,7 @@
         /* The filter split into two halves of the page. Fades out once the buyer
            starts typing a search. */
         .vsp-cols {
-            width: 100%; margin-top: 58px;
+            width: 100%; margin-top: 30px;
             display: grid; grid-template-columns: 1fr 1fr; gap: 44px 96px;
             align-items: start;
             transition: opacity 0.4s ease, transform 0.4s ease;
@@ -875,8 +875,10 @@
            art seller. Visibility is driven by the site mode on <body data-mode> and
            the focused field's mode-* class on the page. */
         .vsp-alt-filter {
-            width: 100%; margin-top: 58px; display: none; flex-direction: column; gap: 20px;
+            width: 100%; margin-top: 22px; display: none; flex-direction: column; gap: 20px;
         }
+        /* Categories fade in when a search mode is chosen. */
+        #veroSearchPage.chosen .vsp-alt-filter { animation: vspFadeUp 0.5s ease both; }
         /* Hide the fashion product wizard in art mode, or whenever the seller field is active. */
         body[data-mode="art"] #veroSearchPage .vsp-cols,
         #veroSearchPage.mode-seller .vsp-cols { display: none; }
@@ -885,26 +887,75 @@
         /* Art mode (either field) → art-category chips. */
         body[data-mode="art"] #veroSearchPage .vsp-art-cats { display: flex; }
 
-        /* Three quick seller suggestions, sitting under the seller (right) field. */
+        /* Three quick seller suggestions — shown only in seller mode, below the
+           categories, centred under the seller field. */
         .vsp-seller-suggest {
-            width: 100%; margin-top: 18px;
-            display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+            width: 100%; margin-top: 22px;
+            display: none; align-items: flex-start; justify-content: center; gap: 26px;
             flex-wrap: wrap;
         }
-        @media (max-width: 620px) { .vsp-seller-suggest { justify-content: center; } }
+        #veroSearchPage.mode-seller .vsp-seller-suggest { display: flex; animation: vspFadeUp 0.5s ease 0.05s both; }
         .vsp-suggest-label {
             font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a9a;
         }
-        .vsp-suggest-chips { display: flex; flex-wrap: wrap; gap: 10px; }
-        .vsp-suggest-chip {
-            border: 1px solid #111; background: #fff; color: #111;
-            border-radius: 999px; padding: 8px 18px; cursor: pointer;
-            font-family: inherit; font-size: 13px; font-weight: 500; letter-spacing: 0.2px;
+        .vsp-suggest-chips { display: flex; flex-wrap: wrap; gap: 22px; }
+        /* Each suggestion reads as a mini profile: avatar, name, rating — stacked. */
+        .vsp-suggest-card {
+            display: flex; flex-direction: column; align-items: center; gap: 7px;
+            border: none; background: none; cursor: pointer; font-family: inherit; color: #111;
+            padding: 2px;
+        }
+        .vsp-suggest-ava {
+            width: 54px; height: 54px; border-radius: 50%; border: 1px solid #111;
+            display: grid; place-items: center; font-size: 20px; text-transform: uppercase;
+            font-weight: 300; background: #f4f4f2; transition: background 0.2s, color 0.2s;
+        }
+        .vsp-suggest-card:hover .vsp-suggest-ava { background: #111; color: #fff; }
+        .vsp-suggest-name { font-size: 13px; font-weight: 600; white-space: nowrap; }
+        .vsp-suggest-rating { font-size: 12px; opacity: 0.7; letter-spacing: 0.3px; }
+
+        /* ===== Landing chooser — two rectangles like the personal area ===== */
+        .vsp-chooser {
+            width: 100%; margin-top: 40px; display: flex; height: 58vh; min-height: 320px;
+        }
+        .vsp-choice {
+            flex: 1; min-width: 0; position: relative; overflow: hidden; cursor: pointer;
+            border: 1px solid #111; background: #fff; color: #111; font-family: inherit;
+            text-align: left; transition: background 0.4s ease, color 0.4s ease;
+            animation: vspFadeUp 0.5s ease both;
+        }
+        .vsp-choice + .vsp-choice { margin-left: -1px; }
+        .vsp-choice:hover { background: #111; color: #fff; }
+        .vsp-choice-title {
+            position: absolute; top: 34px; left: 30px; right: 30px;
+            font-size: clamp(28px, 3vw, 52px); font-weight: 300; letter-spacing: 0.5px;
+        }
+        .vsp-choice-sub {
+            position: absolute; top: 92px; left: 30px; right: 30px;
+            font-size: 13px; font-weight: 500; letter-spacing: 0.3px; color: #6b6b66;
+            transition: color 0.3s;
+        }
+        .vsp-choice:hover .vsp-choice-sub { color: rgba(255,255,255,0.75); }
+        .vsp-choice-word {
+            position: absolute; left: -3px; bottom: -16px;
+            font-size: clamp(46px, 7vw, 120px); font-weight: 300; letter-spacing: 2px;
+            text-transform: uppercase; line-height: 0.9; white-space: nowrap;
+            color: #efefec; pointer-events: none; transition: color 0.3s;
+        }
+        .vsp-choice:hover .vsp-choice-word { color: rgba(255,255,255,0.12); }
+
+        /* Active search panel — revealed once a rectangle is chosen. */
+        .vsp-panel { width: 100%; display: none; }
+        #veroSearchPage.chosen .vsp-chooser { display: none; }
+        #veroSearchPage.chosen .vsp-panel { display: block; animation: vspFadeUp 0.45s ease both; }
+        .vsp-panel-back {
+            display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px;
+            padding: 9px 18px; border: 1.4px solid #111; border-radius: 999px; background: #fff;
+            font-family: inherit; font-size: 12px; letter-spacing: 1.5px; color: #111; cursor: pointer;
             transition: background 0.2s, color 0.2s;
         }
-        .vsp-suggest-chip:hover { background: #111; color: #fff; }
-        /* Once a search runs, the suggestions give way to the results. */
-        #veroSearchPage.searching .vsp-seller-suggest { display: none; }
+        .vsp-panel-back:hover { background: #111; color: #fff; }
+
         .vsp-col { display: flex; flex-direction: column; gap: 52px; min-width: 0; }
         @media (max-width: 760px) { .vsp-cols { grid-template-columns: 1fr; } }
         .vsp-step {
@@ -1166,6 +1217,13 @@
         return out;
     }
 
+    // Deterministic 4.0–5.0 rating per seller, stable across searches and reused by
+    // both the seller result cards and the quick suggestions.
+    function vspSellerRating(s) {
+        let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+        return (4 + (h % 10) / 10).toFixed(1);
+    }
+
     function chip(group, value, active) {
         return `<button class="vsp-chip${active ? ' active' : ''}" onclick="vspPick('${group}', this)" data-value="${value}">${value}</button>`;
     }
@@ -1175,7 +1233,24 @@
             <button class="vsp-close" aria-label="Close search" onclick="veroCloseSearchPage()">&times;</button>
             <div class="vsp-inner">
                 <div class="vsp-logo"><img src="vero-logo.png?v=2" alt="VERO" class="vsp-logo-img" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'vsp-logo-txt',textContent:'VERO'}))"></div>
-                <!-- Two half-width fields: products on the left, sellers on the right.
+                <!-- Landing chooser: two rectangles like the personal area. Clicking one
+                     opens that search (bar + filters) in the panel below. -->
+                <div class="vsp-chooser" id="vspChooser">
+                    <button class="vsp-choice" type="button" onclick="vspChoose('product')">
+                        <span class="vsp-choice-title">Products</span>
+                        <span class="vsp-choice-sub">Search the marketplace by style, size and price.</span>
+                        <span class="vsp-choice-word">SHOP</span>
+                    </button>
+                    <button class="vsp-choice" type="button" onclick="vspChoose('seller')">
+                        <span class="vsp-choice-title">Sellers</span>
+                        <span class="vsp-choice-sub">Find a storefront by name or category.</span>
+                        <span class="vsp-choice-word">STORES</span>
+                    </button>
+                </div>
+                <!-- The active search panel — hidden until a rectangle is chosen. -->
+                <div class="vsp-panel">
+                <button class="vsp-panel-back" type="button" onclick="vspBackToChooser()">&#8592; All search</button>
+                <!-- Two half-width fields; the chosen mode shows just its own field.
                      Enter in either slides the matching results up from the bottom. -->
                 <div class="vsp-searchbar">
                     <div class="vsp-searchfield" id="vspFieldProduct">
@@ -1191,19 +1266,13 @@
                     <div class="vsp-searchfield" id="vspFieldSeller">
                         <input id="vspSellerInput" type="text" placeholder="Search sellers" autocomplete="off"
                                onfocus="vspFocusField('seller')" onblur="vspBlurField('seller')"
-                               oninput="window.vspMarkSearching()" onkeydown="if(event.key==='Enter')vspSearchSellers()">
+                               oninput="vspSellerLive()" onkeydown="if(event.key==='Enter')vspSearchSellers()">
                         <button aria-label="Search sellers" onclick="vspSearchSellers()">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
                         </button>
                     </div>
-                </div>
-                <!-- Three quick seller suggestions under the seller field. Filled by
-                     vspFillSellerSuggestions() so they match the active site mode. -->
-                <div class="vsp-seller-suggest" id="vspSellerSuggest">
-                    <span class="vsp-suggest-label">Try a seller</span>
-                    <div class="vsp-suggest-chips" id="vspSuggestChips"></div>
                 </div>
                 <div class="vsp-cols">
                     <!-- Left half of the page: the sequential choices. -->
@@ -1261,11 +1330,18 @@
                     <div class="vsp-step-label">Art category</div>
                     <div class="vsp-chips">${VSP_ART_CATEGORIES.map(c => chip('artCat', c)).join('')}</div>
                 </div>
+                <!-- Seller mode: three quick seller suggestions, below the categories.
+                     Filled by vspFillSellerSuggestions() to match the active site mode. -->
+                <div class="vsp-seller-suggest" id="vspSellerSuggest">
+                    <span class="vsp-suggest-label">Try a seller</span>
+                    <div class="vsp-suggest-chips" id="vspSuggestChips"></div>
+                </div>
                 <!-- Results, below the filter, updated live as choices are made. -->
                 <div class="vsp-results-wrap">
                     <div class="vsp-results-head" id="vspResultsHead">Matching pieces</div>
                     <div class="vsp-results" id="vspResults"></div>
                     <button class="vsp-apply" onclick="vspApply()">Show all results</button>
+                </div>
                 </div>
             </div>
         </div>`;
@@ -1336,6 +1412,9 @@
         setTimeout(() => {
             const bar = document.querySelector('#veroSearchPage .vsp-searchbar');
             if (!bar) return;
+            // While a search rectangle is chosen, the mode is fixed — never collapse it.
+            const pg = document.getElementById('veroSearchPage');
+            if (pg && pg.classList.contains('chosen')) return;
             const p = document.getElementById('vspInput');
             const s = document.getElementById('vspSellerInput');
             const active = document.activeElement;
@@ -1404,8 +1483,13 @@
         const isArt = document.body.dataset.mode === 'art';
         const pool = isArt ? VSP_ART_SELLERS : vspGatherSellers();
         const picks = pool.slice(0, 3);
+        // Each suggestion is a little profile: avatar circle, name, then rating, stacked.
         host.innerHTML = picks.map(s =>
-            `<button class="vsp-suggest-chip" type="button" onclick="vspPickSellerSuggest('${s.replace(/'/g, "\\'")}')">${s}</button>`
+            `<button class="vsp-suggest-card" type="button" onclick="vspPickSellerSuggest('${s.replace(/'/g, "\\'")}')">
+                <span class="vsp-suggest-ava">${s[0] || '?'}</span>
+                <span class="vsp-suggest-name">${s}</span>
+                <span class="vsp-suggest-rating">★ ${vspSellerRating(s)}</span>
+            </button>`
         ).join('');
     }
     // Clicking a suggestion drops it into the seller field and runs the search.
@@ -1435,8 +1519,7 @@
         head.textContent = filterLabel
             ? `${isArt ? 'Art sellers' : 'Sellers'} · ${filterLabel}`
             : (q ? `Sellers matching “${q}”` : (isArt ? 'All art sellers' : 'All sellers'));
-        // Deterministic 4.0–5.0 rating per seller, so it's stable across searches.
-        const rate = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return (4 + (h % 10) / 10).toFixed(1); };
+        const rate = vspSellerRating;
         host.innerHTML = sellers.length
             ? '<div class="vsp-sellers">' + sellers.map(s =>
                 `<a class="vsp-seller-card" href="store-profile.html">
@@ -1527,16 +1610,11 @@
         mountSearchPage();
         const page = document.getElementById('veroSearchPage');
         // Fresh each open.
-        // Open with BOTH search fields side by side (no field pre-focused, so
-        // neither collapses the other) in whichever site mode is active.
-        const bar = page.querySelector('.vsp-searchbar');
-        if (bar) bar.classList.remove('mode-product', 'mode-seller');
-        page.classList.remove('mode-product', 'mode-seller');
-        vspFillSellerSuggestions();
+        // Always open on the two-rectangle chooser — no mode picked yet.
+        vspBackToChooser();
         requestAnimationFrame(() => {
             page.classList.add('open');
             page.setAttribute('aria-hidden', 'false');
-            vspUpdateResults();
         });
         document.body.style.overflow = 'hidden';
     };
@@ -1544,6 +1622,38 @@
         const page = document.getElementById('veroSearchPage');
         if (page) { page.classList.remove('open'); page.setAttribute('aria-hidden', 'true'); }
         document.body.style.overflow = '';
+    };
+
+    // Pick a search rectangle → open that mode's search (bar + filters) in the panel.
+    window.vspChoose = function (which) {
+        const page = document.getElementById('veroSearchPage');
+        if (!page) return;
+        page.classList.add('chosen');
+        vspFocusField(which);                 // sets mode-product / mode-seller
+        if (which === 'seller') vspFillSellerSuggestions();
+        const id = which === 'seller' ? 'vspSellerInput' : 'vspInput';
+        const input = document.getElementById(id);
+        if (input) setTimeout(() => input.focus(), 80);
+        if (which === 'product') vspUpdateResults();
+    };
+    // Back arrow → return to the chooser and reset the search state.
+    window.vspBackToChooser = function () {
+        const page = document.getElementById('veroSearchPage');
+        if (!page) return;
+        page.classList.remove('chosen', 'mode-product', 'mode-seller', 'searching');
+        const bar = page.querySelector('.vsp-searchbar');
+        if (bar) bar.classList.remove('mode-product', 'mode-seller');
+        const p = document.getElementById('vspInput'), s = document.getElementById('vspSellerInput');
+        if (p) p.value = ''; if (s) s.value = '';
+        vspState.query = ''; vspState.sellerStyle = ''; vspState.artCat = '';
+        page.querySelectorAll('.vsp-alt-filter .vsp-chip.active').forEach(c => c.classList.remove('active'));
+        const wrap = document.getElementById('vspResults');
+        if (wrap) { wrap.innerHTML = ''; const rw = wrap.closest('.vsp-results-wrap'); if (rw) rw.classList.remove('revealed'); }
+    };
+    // Live seller results as you type — no three-result cap, follows the filter too.
+    window.vspSellerLive = function () {
+        window.vspMarkSearching();
+        vspSearchSellers();
     };
 
     // Apply the chosen search + filters. On the home page we drive the feed through
