@@ -406,11 +406,13 @@
         /* Followers / Following — drop the empty third cell and the heavy boxes;
            show two calm number+label blocks under a hairline. */
         body.is-seller .stats {
-            grid-template-columns: repeat(2, 1fr); gap: 0;
+            grid-template-columns: repeat(3, 1fr); gap: 0; align-items: start;
             margin-top: 36px; padding-top: 36px; border-top: 1px solid var(--hair);
         }
         body.is-seller .stats .stat { border: none; padding: 0; }
-        body.is-seller .stats .stat:first-child { display: none; }
+        /* First cell now holds the Socials icons, in line with the two stats. */
+        body.is-seller .stats .stat--socials .field { margin: 0; }
+        body.is-seller .stats .stat--socials .social-rows { max-width: 220px; }
         body.is-seller .stat-num { font-weight: 200; }
 
         /* Section titles get a touch more room to breathe from their body. */
@@ -436,6 +438,19 @@
         body.is-seller .contact-card .save-note { grid-column: 1 / -1; }
         @media (max-width: 780px) {
             body.is-seller .contact-card { grid-template-columns: 1fr; }
+        }
+
+        /* Personal details (left) beside Push & email notifications (right). The
+           seller column widens so both fit; on narrow screens they stack. */
+        body.is-seller .col-right { max-width: 1080px; }
+        body.is-seller .info-row {
+            display: grid; grid-template-columns: 1.3fr 1fr; gap: 56px;
+            align-items: start; margin-top: 40px; padding-top: 40px;
+            border-top: 1px solid var(--hair);
+        }
+        body.is-seller .info-row > .card { border: none; padding: 0; margin: 0; }
+        @media (max-width: 900px) {
+            body.is-seller .info-row { grid-template-columns: 1fr; gap: 40px; }
         }
 
         @media (max-width: 780px) {
@@ -496,7 +511,6 @@
                         <div class="social-row" data-row="tiktok"><input id="pf-tiktok" type="url" placeholder="TikTok URL"></div>
                         <div class="social-row" data-row="twitter"><input id="pf-twitter" type="url" placeholder="Twitter / X URL"></div>
                     </div>
-                    <div class="card-hint" style="margin:10px 0 0;">Tap an icon to add its link — only filled ones show on your profile.</div>
                 </div>
                 <div class="save-note" id="saveNote">Changes save automatically.</div>
             </div>
@@ -574,7 +588,7 @@
                 </div>
 
                 <!-- ===== Push & email notifications ===== -->
-                <div class="card seller-only" style="margin-top:24px;">
+                <div class="card seller-only" id="notifCard" style="margin-top:24px;">
                     <div class="card-title">Push &amp; email notifications</div>
                     <div class="card-hint">Choose what reaches you by push and email.</div>
                     <label class="toggle-row">
@@ -743,6 +757,29 @@
             const colRight = document.querySelector('.col-right');
             const stats    = colRight && colRight.querySelector('.stats');
             if (idCard && stats) stats.insertAdjacentElement('afterend', idCard);
+
+            // Socials sit in the same row as Followers / Following: drop the socials
+            // field into the (otherwise empty) first stat cell so the row reads
+            // Socials | Followers | Following.
+            const socialsField = idCard && idCard.querySelector('.socials-icons') &&
+                                  idCard.querySelector('.socials-icons').closest('.field');
+            const firstStat = stats && stats.querySelector('.stat');
+            if (socialsField && firstStat) {
+                firstStat.classList.add('stat--socials');
+                firstStat.appendChild(socialsField);
+            }
+
+            // Personal details on the left, notifications on the right: wrap the two
+            // cards in a two-column row so the notifications sit beside the details
+            // instead of stacking under them.
+            const notifCard = document.getElementById('notifCard');
+            if (idCard && notifCard) {
+                const row = document.createElement('div');
+                row.className = 'info-row';
+                idCard.insertAdjacentElement('beforebegin', row);
+                row.appendChild(idCard);
+                row.appendChild(notifCard);
+            }
         }
 
         // Auto-fit the embedded sales dashboard to its own content so the whole
