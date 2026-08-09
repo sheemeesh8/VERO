@@ -898,21 +898,21 @@
         .vsp-suggest-label {
             font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a9a;
         }
-        .vsp-suggest-chips { display: flex; flex-wrap: wrap; gap: 22px; }
+        .vsp-suggest-chips { display: flex; flex-wrap: wrap; gap: 40px; }
         /* Each suggestion reads as a mini profile: avatar, name, rating — stacked. */
         .vsp-suggest-card {
-            display: flex; flex-direction: column; align-items: center; gap: 7px;
+            display: flex; flex-direction: column; align-items: center; gap: 11px;
             border: none; background: none; cursor: pointer; font-family: inherit; color: #111;
-            padding: 2px;
+            padding: 4px;
         }
         .vsp-suggest-ava {
-            width: 54px; height: 54px; border-radius: 50%; border: 1px solid #111;
-            display: grid; place-items: center; font-size: 20px; text-transform: uppercase;
+            width: 84px; height: 84px; border-radius: 50%; border: 1px solid #111;
+            display: grid; place-items: center; font-size: 32px; text-transform: uppercase;
             font-weight: 300; background: #f4f4f2; transition: background 0.2s, color 0.2s;
         }
         .vsp-suggest-card:hover .vsp-suggest-ava { background: #111; color: #fff; }
-        .vsp-suggest-name { font-size: 13px; font-weight: 600; white-space: nowrap; }
-        .vsp-suggest-rating { font-size: 12px; opacity: 0.7; letter-spacing: 0.3px; }
+        .vsp-suggest-name { font-size: 16px; font-weight: 600; white-space: nowrap; }
+        .vsp-suggest-rating { font-size: 14px; opacity: 0.7; letter-spacing: 0.3px; }
 
         /* ===== Landing chooser — two rectangles like the personal area ===== */
         .vsp-chooser {
@@ -1009,7 +1009,7 @@
         }
         .vsp-results-wrap.revealed { opacity: 1; transform: none; pointer-events: auto; }
 
-        /* Seller result cards — two per row, profile image + name + rating. */
+        /* Seller result cards — two per row, content on the LEFT, image on the RIGHT. */
         .vsp-sellers { width: 100%; grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
         @media (max-width: 620px) { .vsp-sellers { grid-template-columns: 1fr; } }
         .vsp-seller-card {
@@ -1025,7 +1025,7 @@
             display: grid; place-items: center; font-size: 20px; text-transform: uppercase; background: #f4f4f2;
         }
         .vsp-seller-card:hover .vsp-seller-ava { background: rgba(255,255,255,0.14); }
-        .vsp-seller-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .vsp-seller-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; text-align: left; }
         .vsp-seller-name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .vsp-seller-rating { font-size: 13px; opacity: 0.72; letter-spacing: 0.5px; }
         .vsp-seller-tags { font-size: 12px; opacity: 0.6; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1173,7 +1173,7 @@
     // Depop's condition ladder.
     const VSP_CONDITIONS = ['Brand new', 'Like new', 'Used – excellent', 'Used – good', 'Used – fair'];
     // Depop's style / aesthetic tags.
-    const VSP_STYLES = ['Y2K', 'Vintage', 'Streetwear', 'Grunge', 'Minimalist', 'Boho', 'Preppy', 'Cottagecore', 'Sportswear', 'Gorpcore', 'Retro', 'Punk'];
+    const VSP_STYLES = ['Y2K', 'Vintage', 'Streetwear', 'Grunge', 'Minimalist', 'Boho', 'Preppy', 'Cottagecore', 'Sportswear', 'Gorpcore', 'Retro', 'Punk', 'Skater', 'Techwear', 'Coastal', 'Formalwear', 'Utility', 'Avant-garde', 'Athleisure', 'Workwear'];
     const VSP_MATERIALS = ['Cotton', 'Wool', 'Silk', 'Leather', 'Denim', 'Linen', 'Cashmere', 'Polyester'];
     const VSP_COLORS = ['Black', 'White', 'Beige', 'Grey', 'Blue', 'Green', 'Red', 'Brown', 'Pink'];
     const VSP_PRICE_MAX = 3000;
@@ -1192,7 +1192,7 @@
     function vspSellerStyles(name) {
         let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
         const out = [];
-        const n = 2 + (h % 2);                     // 2–3 styles per seller
+        const n = 3 + (h % 2);                     // 3–4 styles per seller (keeps the larger list covered)
         for (let i = 0; i < n; i++) {
             const s = VSP_STYLES[(h >>> (i * 3)) % VSP_STYLES.length];
             if (!out.includes(s)) out.push(s);
