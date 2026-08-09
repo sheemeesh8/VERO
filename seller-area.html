@@ -74,6 +74,10 @@
         /* Reserved empty slot — no photo, no hover, not clickable. */
         .panel--empty { cursor: default; }
         .panel--empty:hover { background-color: #fff; }
+        /* My Assistant placeholder — shows its title but is inert (no page yet). */
+        .panel--assistant { cursor: default; }
+        .panel--assistant:hover { background-color: #fff; }
+        .panel--assistant:hover .panel-head { color: #000; }
         /* Collapse the shared edge so adjacent frames read as one thin line. */
         .panel + .panel { margin-left: -1px; }
 
@@ -275,8 +279,20 @@
                     <div class="panel-peek" data-peek="chats"></div>
                 </div>
             </div>
-            <!-- Reserved slot — intentionally left empty for now. -->
-            <div class="panel panel--empty"></div>
+            <div class="panel" onclick="goPanel('offers-received.html?from=seller', this)">
+                <div class="panel-media" style="background-image:url('assets/chats-hero.jpg')"></div>
+                <div class="panel-inner">
+                    <h2 class="panel-head">Offers Received</h2>
+                    <p class="panel-desc">Buyers bidding on<br>the pieces you sell.</p>
+                    <div class="panel-peek" data-peek="offers"></div>
+                </div>
+            </div>
+            <!-- My Assistant — placeholder rectangle, no destination yet. -->
+            <div class="panel panel--assistant">
+                <div class="panel-inner">
+                    <h2 class="panel-head">My Assistant</h2>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -297,6 +313,7 @@
             const listings = Array.isArray(listingsRaw) ? listingsRaw : [];
             const drafts   = readJSON('vero_drafts', []);
             const chats    = readJSON('vero_chats', {});
+            const recvOffers = readJSON('vero_received_offers', []);
             const len = v => Array.isArray(v) ? v.length : (v && typeof v === 'object' ? Object.keys(v).length : 0);
 
             // Total value sitting on the shelf across every live listing.
@@ -308,6 +325,7 @@
                 sales:    [[money(shelfValue), 'shelf value'], [len(listings), 'live']],
                 drafts:   [[len(drafts), 'drafts']],
                 chats:    [[len(chats), 'chats']],
+                offers:   [[len(recvOffers), 'received']],
             };
 
             document.querySelectorAll('.panel-peek').forEach(box => {

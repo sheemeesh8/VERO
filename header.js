@@ -868,6 +868,22 @@
         #veroSearchPage.searching .vsp-cols {
             opacity: 0; transform: translateY(-10px); pointer-events: none;
         }
+
+        /* ===== Alternate filters (seller-style / art-category) =====
+           The fashion product wizard (.vsp-cols) is the default. It gives way to a
+           single chip row for the three other cases: fashion seller, art product,
+           art seller. Visibility is driven by the site mode on <body data-mode> and
+           the focused field's mode-* class on the page. */
+        .vsp-alt-filter {
+            width: 100%; margin-top: 58px; display: none; flex-direction: column; gap: 20px;
+        }
+        /* Hide the fashion product wizard in art mode, or whenever the seller field is active. */
+        body[data-mode="art"] #veroSearchPage .vsp-cols,
+        #veroSearchPage.mode-seller .vsp-cols { display: none; }
+        /* Fashion + seller field → style chips. */
+        body:not([data-mode="art"]) #veroSearchPage.mode-seller .vsp-seller-styles { display: flex; }
+        /* Art mode (either field) → art-category chips. */
+        body[data-mode="art"] #veroSearchPage .vsp-art-cats { display: flex; }
         .vsp-col { display: flex; flex-direction: column; gap: 52px; min-width: 0; }
         @media (max-width: 760px) { .vsp-cols { grid-template-columns: 1fr; } }
         .vsp-step {
@@ -940,6 +956,7 @@
         .vsp-seller-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
         .vsp-seller-name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .vsp-seller-rating { font-size: 13px; opacity: 0.72; letter-spacing: 0.5px; }
+        .vsp-seller-tags { font-size: 12px; opacity: 0.6; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .vsp-results-head {
             font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
             color: #111; font-weight: 800; margin-bottom: 24px;
@@ -1089,7 +1106,44 @@
     const VSP_COLORS = ['Black', 'White', 'Beige', 'Grey', 'Blue', 'Green', 'Red', 'Brown', 'Pink'];
     const VSP_PRICE_MAX = 3000;
 
-    let vspState = { query: '', gender: '', type: '', size: '', style: '', condition: '', material: '', color: '', maxPrice: VSP_PRICE_MAX };
+    // Art-mode categories — mirror the art catalogue in index.html so the search
+    // filters art pieces (and art sellers) by medium, the way fashion filters by style.
+    const VSP_ART_CATEGORIES = ['Acrylic', 'Oil', 'Watercolor', 'Mixed Media', 'Digital', 'Gouache', 'Pastel', 'Epoxy', 'Stone Sculpture', 'Metal Sculpture', 'Ceramics', 'Prints', 'Abstract', 'Art Deco'];
+    // Standing art storefronts, so seller search in art mode always has results.
+    const VSP_ART_SELLERS = ['Modern Art', 'Classical Art', 'Mixed Media', 'Digital Arts', 'Gouache Gallery', 'Pastel Works', 'Resin Studio', 'Stone & Chisel', 'Bronze Forge', 'Ceramic House', 'Print Lab', 'Gallery Nine', 'Art House', 'Frame & Co.'];
+
+    let vspState = { query: '', gender: '', type: '', size: '', style: '', condition: '', material: '', color: '', maxPrice: VSP_PRICE_MAX, sellerStyle: '', artCat: '' };
+
+    // Each seller carries a small, stable set of aesthetic styles (same VSP_STYLES
+    // tags the product search uses), derived deterministically from the name so the
+    // seller-search style filter is consistent across searches.
+    function vspSellerStyles(name) {
+        let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+        const out = [];
+        const n = 2 + (h % 2);                     // 2–3 styles per seller
+        for (let i = 0; i < n; i++) {
+            const s = VSP_STYLES[(h >>> (i * 3)) % VSP_STYLES.length];
+            if (!out.includes(s)) out.push(s);
+        }
+        return out;
+    }
+
+    // Same idea for art sellers: a stable set of art mediums per storefront, so the
+    // art-category filter narrows sellers just like the style filter does in fashion.
+    // The pool and the category list are the same length, so anchoring each seller's
+    // primary medium to its index guarantees every category has at least one seller.
+    function vspSellerArtCats(name) {
+        let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+        const out = [];
+        const idx = VSP_ART_SELLERS.indexOf(name);
+        if (idx >= 0) out.push(VSP_ART_CATEGORIES[idx % VSP_ART_CATEGORIES.length]);
+        const extra = 1 + (h % 2);                 // 1–2 further mediums for variety
+        for (let i = 0; i < extra; i++) {
+            const c = VSP_ART_CATEGORIES[(h >>> (i * 4)) % VSP_ART_CATEGORIES.length];
+            if (!out.includes(c)) out.push(c);
+        }
+        return out;
+    }
 
     function chip(group, value, active) {
         return `<button class="vsp-chip${active ? ' active' : ''}" onclick="vspPick('${group}', this)" data-value="${value}">${value}</button>`;
@@ -1170,6 +1224,16 @@
                         </div>
                     </div>
                 </div>
+                <!-- Fashion seller search → filter sellers by style. -->
+                <div class="vsp-alt-filter vsp-seller-styles">
+                    <div class="vsp-step-label">Style</div>
+                    <div class="vsp-chips">${VSP_STYLES.map(s => chip('sellerStyle', s)).join('')}</div>
+                </div>
+                <!-- Art mode (products or sellers) → filter by art category. -->
+                <div class="vsp-alt-filter vsp-art-cats">
+                    <div class="vsp-step-label">Art category</div>
+                    <div class="vsp-chips">${VSP_ART_CATEGORIES.map(c => chip('artCat', c)).join('')}</div>
+                </div>
                 <!-- Results, below the filter, updated live as choices are made. -->
                 <div class="vsp-results-wrap">
                     <div class="vsp-results-head" id="vspResultsHead">Matching pieces</div>
@@ -1232,6 +1296,13 @@
         if (!bar) return;
         bar.classList.remove('mode-product', 'mode-seller');
         bar.classList.add(which === 'seller' ? 'mode-seller' : 'mode-product');
+        // Mirror the field mode on the page so the alt-filter CSS (a sibling of the
+        // search bar) can react to which field is active.
+        const page = document.getElementById('veroSearchPage');
+        if (page) {
+            page.classList.remove('mode-product', 'mode-seller');
+            page.classList.add(which === 'seller' ? 'mode-seller' : 'mode-product');
+        }
     };
     // When a field is left empty and neither field is focused, restore both.
     window.vspBlurField = function () {
@@ -1243,7 +1314,12 @@
             const active = document.activeElement;
             if (active === p || active === s) return;             // focus moved to the other field
             if ((p && p.value.trim()) || (s && s.value.trim())) return;  // keep expanded while there's text
+            // Keep the field expanded while a chip filter is in play, so clicking a
+            // style / art-category chip (which blurs the input) doesn't hide the row.
+            if (vspState.sellerStyle || vspState.artCat) return;
             bar.classList.remove('mode-product', 'mode-seller');
+            const page = document.getElementById('veroSearchPage');
+            if (page) page.classList.remove('mode-product', 'mode-seller');
         }, 160);
     };
 
@@ -1299,10 +1375,19 @@
         const head = document.getElementById('vspResultsHead');
         if (!host) return;
         const q = (document.getElementById('vspSellerInput')?.value || '').trim().toLowerCase();
-        let sellers = vspGatherSellers();
+        // Art mode draws from the art storefronts and filters by art category;
+        // fashion mode uses the site's sellers and filters by style.
+        const isArt = document.body.dataset.mode === 'art';
+        const tagsOf = s => isArt ? vspSellerArtCats(s) : vspSellerStyles(s);
+        let sellers = isArt ? VSP_ART_SELLERS.slice() : vspGatherSellers();
         if (q) sellers = sellers.filter(s => s.toLowerCase().includes(q));
+        if (isArt && vspState.artCat)       sellers = sellers.filter(s => vspSellerArtCats(s).includes(vspState.artCat));
+        if (!isArt && vspState.sellerStyle) sellers = sellers.filter(s => vspSellerStyles(s).includes(vspState.sellerStyle));
         sellers.sort((a, b) => a.localeCompare(b));
-        head.textContent = q ? `Sellers matching “${q}”` : 'All sellers';
+        const filterLabel = isArt ? vspState.artCat : vspState.sellerStyle;
+        head.textContent = filterLabel
+            ? `${isArt ? 'Art sellers' : 'Sellers'} · ${filterLabel}`
+            : (q ? `Sellers matching “${q}”` : (isArt ? 'All art sellers' : 'All sellers'));
         // Deterministic 4.0–5.0 rating per seller, so it's stable across searches.
         const rate = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return (4 + (h % 10) / 10).toFixed(1); };
         host.innerHTML = sellers.length
@@ -1312,6 +1397,7 @@
                     <span class="vsp-seller-meta">
                         <span class="vsp-seller-name">${s}</span>
                         <span class="vsp-seller-rating">★ ${rate(s)}</span>
+                        <span class="vsp-seller-tags">${tagsOf(s).join(' · ')}</span>
                     </span>
                 </a>`).join('') + '</div>'
             : '<div class="vsp-results-empty">No sellers match your search.</div>';
@@ -1345,6 +1431,20 @@
     window.vspPick = function (group, btn) {
         const wrap = btn.parentElement;
         const value = btn.dataset.value;
+
+        // Single-select chip filters that live outside the product wizard:
+        //  • sellerStyle → narrows the seller list in fashion mode
+        //  • artCat      → narrows art pieces (product field) or art sellers (seller field)
+        if (group === 'sellerStyle' || group === 'artCat') {
+            const wasActive = btn.classList.contains('active');
+            wrap.querySelectorAll('.vsp-chip').forEach(c => c.classList.remove('active'));
+            if (!wasActive) btn.classList.add('active');
+            vspState[group] = wasActive ? '' : value;
+            const page = document.getElementById('veroSearchPage');
+            if (page && page.classList.contains('mode-seller')) vspSearchSellers();
+            else vspSearchProducts();
+            return;
+        }
 
         // Toggle off — deselect and collapse the stages this choice had opened.
         if (btn.classList.contains('active')) {

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO — Offers Received</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1c1c1c; background: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Entry: the image holds static on the left while the content slides in
+           from the left — nothing covers the image on load. */
+        .page-cover { display: none; }
+
+        .back {
+            position: fixed; top: 26px; right: 34px; z-index: 40;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
+            font-size: 12px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
+            background: #fff; transition: background 0.25s, color 0.25s;
+        }
+        .back:hover { background: #000; color: #fff; }
+
+        .wrap {
+            max-width: none; margin: 0;
+            padding: 120px 40px 80px;
+            /* The data slides in from the left, out from behind the static image. */
+            animation: slideInLeft 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-18vw); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        /* Image on the left, at one-rectangle width, matching the seller area. */
+        .side-image {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 20vw;
+            background: #2a2a28 url('assets/chats-hero.jpg') center / cover no-repeat;
+            filter: grayscale(1);
+            border-right: 1px solid #000;
+            z-index: 5;
+        }
+        @media (min-width: 1001px) { .wrap { padding-left: calc(20vw + 60px); } }
+        @media (max-width: 1000px) { .side-image { display: none; } }
+
+        .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+        .head-sub { margin-top: 16px; font-size: 15px; color: #6b6b66; letter-spacing: 0.5px; }
+
+        .offers-head { display: flex; align-items: baseline; gap: 14px; margin: 52px 0 26px; }
+        .card-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; }
+        .offers-head .card-label { font-size: 20px; letter-spacing: 3px; color: #1c1c1c; }
+        @media (max-width: 600px) { .offers-head .card-label { font-size: 16px; } }
+        .offers-note { font-size: 12px; letter-spacing: 0.5px; color: #9a9a95; }
+
+        /* ===== Depop-style offer cubes ===== */
+        .offers-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+        }
+        .offer-cube { border: 1px solid #000; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+        .oc-top { display: flex; gap: 16px; align-items: center; }
+        .oc-img {
+            width: 66px; height: 66px; flex: 0 0 auto; border: 1px solid #000;
+            display: flex; align-items: center; justify-content: center; font-size: 34px;
+            background: #f4f4f2; overflow: hidden;
+        }
+        .oc-img img { width: 100%; height: 100%; object-fit: cover; }
+        .oc-info { min-width: 0; flex: 1; }
+        .oc-name { font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .oc-prices { display: flex; gap: 16px; margin-top: 10px; }
+        .oc-ask { font-size: 13px; color: #6b6b66; }
+        .oc-your { font-size: 13px; font-weight: 600; color: #1c1c1c; }
+        .oc-your b { font-weight: 600; }
+
+        .oc-others { border-top: 1px solid #eee; padding-top: 12px; }
+        .oc-others-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
+        .oc-other { display: flex; justify-content: space-between; font-size: 13px; color: #6b6b66; padding: 3px 0; }
+        .oc-other .amt { font-weight: 500; color: #1c1c1c; }
+        .oc-other.top .amt { color: #1f8f4e; }
+
+        .offers-empty { font-size: 14px; color: #9a9a95; padding: 8px 0; }
+
+        /* Received-offer actions: accept / decline + resolved state. */
+        .oc-actions { display: flex; gap: 10px; }
+        .oc-accept, .oc-decline {
+            border: 1px solid #000; cursor: pointer; font-family: inherit;
+            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 10px 20px; border-radius: 999px; transition: background 0.2s, color 0.2s, opacity 0.2s;
+        }
+        .oc-accept { background: #000; color: #fff; }
+        .oc-accept:hover { opacity: 0.82; }
+        .oc-decline { background: #fff; color: #1c1c1c; }
+        .oc-decline:hover { background: #f0f0f0; }
+        .oc-resolved {
+            align-self: flex-start; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 10px 18px; border-radius: 999px;
+        }
+        .oc-resolved.accepted { background: #e8f5ec; color: #1f8f4e; border: 1px solid #bfe4cd; }
+        .oc-resolved.declined { background: #f4eaea; color: #b23b3b; border: 1px solid #e6cccc; }
+        .oc-buyer { font-size: 13px; color: #6b6b66; }
+        .oc-buyer b { font-weight: 600; color: #1c1c1c; }
+    </style>
+</head>
+<body>
+    <div class="page-cover"></div>
+    <div class="side-image"></div>
+    <a class="back" href="seller-area.html">&#8592; חזרה</a>
+
+    <div class="wrap">
+        <h1 class="head-title">Offers Received</h1>
+        <p class="head-sub">Buyers bidding on the pieces you have for sale.</p>
+
+        <div class="offers-head">
+            <div class="card-label" style="margin:0;">Offers you received</div>
+            <div class="offers-note" id="recvNote">Buyers who've made an offer on your pieces</div>
+        </div>
+        <div class="offers-grid" id="recvGrid"></div>
+    </div>
+
+    <script>
+        const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
+        const nis = n => '₪' + Math.round(n).toLocaleString('en-US');
+        const H = 3600 * 1000, D = 24 * H;
+
+        const timeAgo = ms => {
+            if (!ms) return '';
+            const d = Math.floor((Date.now() - ms) / 1000);
+            if (d < 60) return 'now';
+            if (d < 3600) return Math.floor(d / 60) + 'm';
+            if (d < 86400) return Math.floor(d / 3600) + 'h';
+            return Math.floor(d / 86400) + 'd';
+        };
+
+        // ===== Offers you received — buyers bidding on your pieces =====
+        // Persisted to vero_received_offers so accept/decline decisions stick.
+        let recvOffers = readJSON('vero_received_offers', null);
+        if (!Array.isArray(recvOffers) || !recvOffers.length) {
+            recvOffers = [
+                { name: 'Wool coat',     icon: '🧥', buyer: 'Maya L.',   askPrice: 269,  offer: 230,  at: Date.now() - 4 * H,  status: 'pending' },
+                { name: 'Raw denim',     icon: '👖', buyer: 'Omer T.',   askPrice: 129,  offer: 100,  at: Date.now() - 9 * H,  status: 'pending' },
+                { name: 'Silk scarf',    icon: '🧣', buyer: 'Noa B.',    askPrice: 210,  offer: 175,  at: Date.now() - 1 * D,  status: 'pending' },
+                { name: 'Leather tote',  icon: '👜', buyer: 'Daniel K.', askPrice: 540,  offer: 480,  at: Date.now() - 2 * D,  status: 'pending' },
+                { name: 'Knit sweater',  icon: '🧶', buyer: 'Shira P.',  askPrice: 180,  offer: 150,  at: Date.now() - 3 * D,  status: 'pending' },
+            ];
+        }
+        const recvGrid = document.getElementById('recvGrid');
+        const saveRecv = () => localStorage.setItem('vero_received_offers', JSON.stringify(recvOffers));
+
+        function renderRecv() {
+            const pending = recvOffers.filter(o => o.status === 'pending').length;
+            document.getElementById('recvNote').textContent =
+                `${recvOffers.length} offer${recvOffers.length === 1 ? '' : 's'} · ${pending} awaiting you`;
+            if (!recvOffers.length) {
+                recvGrid.innerHTML = '<div class="offers-empty">No offers on your pieces yet.</div>';
+                return;
+            }
+            recvGrid.innerHTML = recvOffers.map((o, i) => {
+                const pct = o.askPrice ? Math.round((o.offer / o.askPrice) * 100) : 0;
+                const action = o.status === 'pending'
+                    ? `<div class="oc-actions">
+                           <button class="oc-accept" data-ract="accept" data-i="${i}">Accept</button>
+                           <button class="oc-decline" data-ract="decline" data-i="${i}">Decline</button>
+                       </div>`
+                    : `<div class="oc-resolved ${o.status}">${o.status === 'accepted' ? 'Accepted ✓' : 'Declined'}</div>`;
+                return `
+                    <div class="offer-cube" data-i="${i}">
+                        <div class="oc-top">
+                            <div class="oc-img">${o.icon || '🛍️'}</div>
+                            <div class="oc-info">
+                                <div class="oc-name">${o.name || 'Item'}</div>
+                                <div class="oc-buyer">From <b>${o.buyer}</b> · ${timeAgo(o.at)}</div>
+                                <div class="oc-prices">
+                                    <span class="oc-ask">Asking ${nis(o.askPrice)}</span>
+                                    <span class="oc-your">Their offer <b>${nis(o.offer)}</b></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="oc-others">
+                            <div class="oc-others-label">Offer strength</div>
+                            <div class="oc-other${pct >= 85 ? ' top' : ''}"><span>${pct}% of your asking price</span><span class="amt">${nis(o.offer)}</span></div>
+                        </div>
+                        ${action}
+                    </div>`;
+            }).join('');
+        }
+        renderRecv();
+
+        recvGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-ract]');
+            if (!btn) return;
+            const i = Number(btn.dataset.i);
+            recvOffers[i].status = btn.dataset.ract === 'accept' ? 'accepted' : 'declined';
+            saveRecv();
+            renderRecv();
+        });
+
+        // Exit mirrors the entry: the image holds static while the data slides
+        // back out to the left, then the seller area loads.
+        const back = document.querySelector('.back');
+        if (back) back.addEventListener('click', (e) => {
+            e.preventDefault();
+            const wrap = document.querySelector('.wrap');
+            wrap.style.animation = 'none';
+            void wrap.offsetWidth;
+            wrap.style.transition = 'opacity 0.55s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+            wrap.style.opacity = '0';
+            wrap.style.transform = 'translateX(-18vw)';
+            setTimeout(() => { window.location.href = back.getAttribute('href'); }, 560);
+        });
+    </script>
+    <script src="vero-editor.js"></script>
+</body>
+</html>
