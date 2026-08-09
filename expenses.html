@@ -195,6 +195,16 @@
             .grid { grid-template-columns: 1fr; }
             .stats { grid-template-columns: 1fr; }
         }
+
+        /* Embedded mode (?embed=1): drop the side image, back button and page
+           heading, and remove the slide-in and side padding so the summary sits
+           flush inside the My Profile page that hosts it. */
+        body.is-embed .side-image,
+        body.is-embed .back,
+        body.is-embed .head-title,
+        body.is-embed .head-sub { display: none !important; }
+        body.is-embed .wrap { padding: 0 0 40px; animation: none; }
+        @media (min-width: 1001px) { body.is-embed .wrap { padding-left: 0; } }
     </style>
 </head>
 <body>
@@ -298,6 +308,15 @@
     </div>
 
     <script>
+        // Embedded inside My Profile (?embed=1): strip the page chrome so only the
+        // expenses summary shows.
+        if (new URLSearchParams(location.search).get('embed') === '1') {
+            document.documentElement.classList.add('is-embed');
+            const markBody = () => document.body && document.body.classList.add('is-embed');
+            if (document.body) markBody();
+            else document.addEventListener('DOMContentLoaded', markBody);
+        }
+
         const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
         let cart     = readJSON('vero_cart', []);
         const offers = readJSON('vero_offers', []);

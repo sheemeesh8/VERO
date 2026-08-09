@@ -59,17 +59,14 @@
         .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
         .head-sub { margin-top: 16px; font-size: 15px; color: #6b6b66; letter-spacing: 0.5px; }
 
+        /* One calm column for both My Profile (buyer) and My Shop (seller): the
+           cards read top-to-bottom, so nothing overlaps while scrolling. */
         .grid {
             display: grid;
-            grid-template-columns: 340px 1fr;
-            gap: 24px;
+            grid-template-columns: 1fr;
+            gap: 0;
             margin-top: 52px;
             align-items: start;
-        }
-        /* The identity column is short; pin it so it fills the left area while the
-           taller right column scrolls past, instead of leaving the left blank. */
-        @media (min-width: 1001px) {
-            .grid > .card:first-child { position: sticky; top: 24px; }
         }
 
         /* Thin black framed cards — same language as the rectangles. */
@@ -466,6 +463,46 @@
         @media (max-width: 780px) {
             body.is-seller .grid { gap: 32px; margin-top: 44px; }
         }
+
+        /* =================================================================
+           BUYER "MY PROFILE" — same calm one-column reading as My Shop.
+           Scoped to :not(.is-seller) so the seller view is untouched. The
+           heavy black boxes become airy sections split by a single hairline,
+           so nothing crowds or overlaps while scrolling.
+           ================================================================= */
+        body:not(.is-seller) { --hair: #ececec; }
+        body:not(.is-seller) .col-right { max-width: 720px; }
+        /* Every card becomes an open section: one hairline above, generous top
+           space — no stacked black frames. The store-appearance card keeps its
+           framed cover. */
+        body:not(.is-seller) .grid > .card,
+        body:not(.is-seller) .col-right > .card:not(.store-card) {
+            border: none; padding: 40px 0 0; margin-top: 40px;
+            border-top: 1px solid var(--hair);
+        }
+        /* The very first card (identity) sits flush at the top, no divider. */
+        body:not(.is-seller) .grid > .card:first-child {
+            border-top: none; padding-top: 0; margin-top: 0;
+        }
+        /* Keep every section the same reading width. */
+        body:not(.is-seller) .grid > .card { max-width: 720px; }
+        body:not(.is-seller) .store-card { margin-top: 40px; }
+        /* Followers / Following — drop the empty cell and heavy boxes; two calm
+           number+label blocks under a hairline. */
+        body:not(.is-seller) .stats {
+            grid-template-columns: repeat(2, 1fr); gap: 0;
+            margin-top: 36px; padding-top: 36px; border-top: 1px solid var(--hair);
+        }
+        body:not(.is-seller) .stats .stat { border: none; padding: 0; }
+        body:not(.is-seller) .stats .stat:first-child { display: none; }
+
+        /* My Expenses embeds under the profile (buyer), mirroring My Sales under
+           the shop: an auto-sized iframe so the page scrolls as one. */
+        .my-expenses { margin-top: 48px; border-top: 1px solid var(--hair, #ececec); padding-top: 40px; }
+        #expensesFrame {
+            width: 100%; height: 900px;
+            border: none; background: transparent; display: block; overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -707,6 +744,13 @@
         <section class="shop-sales seller-only">
             <iframe id="salesFrame" title="Sales dashboard" src="dashboard.html?embed=1&from=seller" scrolling="no"></iframe>
         </section>
+
+        <!-- My Expenses sits directly under the profile, buyer-only — the same
+             embedded, auto-sized pattern as My Sales above, so the whole page
+             scrolls as one with no nested scrollbar. -->
+        <section class="my-expenses buyer-only">
+            <iframe id="expensesFrame" title="Expenses summary" src="expenses.html?embed=1" scrolling="no"></iframe>
+        </section>
     </div>
 
     <script>
@@ -757,10 +801,10 @@
             }
         }
 
-        // Auto-fit the embedded sales dashboard to its own content so the whole
-        // My Shop page scrolls as one — no inner scrollbar under the iframe.
-        (function autoFitSalesFrame() {
-            const frame = document.getElementById('salesFrame');
+        // Auto-fit an embedded page (My Sales for sellers, My Expenses for buyers)
+        // to its own content so the whole page scrolls as one — no inner scrollbar.
+        function autoFitFrame(frameId) {
+            const frame = document.getElementById(frameId);
             if (!frame) return;
             let observer = null;
             const fit = () => {
@@ -805,7 +849,9 @@
                 }, 120);
             }
             window.addEventListener('resize', fit);
-        })();
+        }
+        autoFitFrame('salesFrame');      // My Sales — seller
+        autoFitFrame('expensesFrame');   // My Expenses — buyer
 
 
         // ---- Read whatever the site already stores ----
