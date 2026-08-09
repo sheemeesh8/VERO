@@ -408,8 +408,8 @@
         }
         body.is-seller .stats .stat { border: none; padding: 0; }
         /* First cell now holds the Socials icons, in line with the two stats. */
-        body.is-seller .stats .stat--socials .field { margin: 0; }
-        body.is-seller .stats .stat--socials .social-rows { max-width: 220px; }
+        .stats .stat--socials .field { margin: 0; }
+        .stats .stat--socials .social-rows { max-width: 220px; }
         body.is-seller .stat-num { font-weight: 200; }
 
         /* Section titles get a touch more room to breathe from their body. */
@@ -450,12 +450,13 @@
         }
         body.is-seller .info-row > .card { border: none; padding: 0; margin: 0; }
 
-        /* "Open storefront" pulled up beside the subtitle under the My Shop heading. */
-        body.is-seller .head-row {
+        /* "Open storefront" (seller) / "Open my profile" (buyer) pulled up beside
+           the subtitle under the heading. */
+        .head-row {
             display: flex; justify-content: space-between; align-items: baseline;
-            gap: 24px; flex-wrap: wrap;
+            gap: 24px; flex-wrap: wrap; margin-top: 16px;
         }
-        body.is-seller .head-row .head-sub { margin-top: 0; }
+        .head-row .head-sub { margin-top: 0; }
         @media (max-width: 900px) {
             body.is-seller .info-row { grid-template-columns: 1fr; gap: 40px; }
         }
@@ -486,15 +487,27 @@
         }
         /* Keep every section the same reading width. */
         body:not(.is-seller) .grid > .card { max-width: 720px; }
+
+        /* Personal details beside My dimensions — a two-column row at the top of
+           My Profile (built in JS), stacking on narrow screens. */
+        body:not(.is-seller) .pair-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 56px;
+            align-items: start;
+        }
+        body:not(.is-seller) .pair-row > .card {
+            border: none; padding: 0; margin: 0; max-width: none;
+        }
+        @media (max-width: 900px) {
+            body:not(.is-seller) .pair-row { grid-template-columns: 1fr; gap: 40px; }
+        }
         body:not(.is-seller) .store-card { margin-top: 40px; }
         /* Followers / Following — drop the empty cell and heavy boxes; two calm
            number+label blocks under a hairline. */
         body:not(.is-seller) .stats {
-            grid-template-columns: repeat(2, 1fr); gap: 0;
+            grid-template-columns: repeat(3, 1fr); gap: 0; align-items: start;
             margin-top: 36px; padding-top: 36px; border-top: 1px solid var(--hair);
         }
         body:not(.is-seller) .stats .stat { border: none; padding: 0; }
-        body:not(.is-seller) .stats .stat:first-child { display: none; }
 
         /* My Expenses embeds under the profile (buyer), mirroring My Sales under
            the shop: an auto-sized iframe so the page scrolls as one. */
@@ -515,6 +528,7 @@
         <div class="head-row">
             <p class="head-sub">Your details, preferences and account at a glance.</p>
             <a class="stf-open seller-only" href="store-profile.html" target="_blank" rel="noopener">Open storefront ↗</a>
+            <a class="stf-open buyer-only" href="buyer-profile.html" target="_blank" rel="noopener">Open my profile ↗</a>
         </div>
 
         <div class="grid">
@@ -651,69 +665,6 @@
                     </label>
                 </div>
 
-                <!-- ===== My profile page editor — buyers set up the page other
-                     users see (buyer-profile.html), saved to vero_buyer_config. ===== -->
-                <div class="card buyer-only" id="bpfEditor" style="margin-top:24px;">
-                    <div class="section-head">
-                        <div class="card-title" style="margin:0;">My profile page</div>
-                        <a class="stf-open" href="buyer-profile.html" target="_blank" rel="noopener">Open my profile ↗</a>
-                    </div>
-                    <div class="card-hint">Set up the profile other users see — your picture, bio, socials and the items you're selling. Changes save automatically.</div>
-
-                    <div class="stf-tabs" id="bpfTabs">
-                        <button class="stf-tab is-active" data-tab="details">Details</button>
-                        <button class="stf-tab" data-tab="items">Items</button>
-                        <button class="stf-tab" data-tab="banner">Banner</button>
-                    </div>
-
-                    <!-- Details: avatar, name, bio, cover, socials -->
-                    <div class="stf-panel is-active" data-panel="details">
-                        <div class="stf-item">
-                            <div class="stf-thumb" id="bpfAvatar">Add<br>photo</div>
-                            <div class="stf-fields">
-                                <input id="bpfName" placeholder="Your name">
-                                <input id="bpfTag" placeholder="Short bio">
-                            </div>
-                        </div>
-                        <div class="stf-hint" style="margin-top:16px;">Cover image — shown full-width behind your name.</div>
-                        <div class="stf-item">
-                            <div class="stf-thumb" id="bpfHero">Add<br>image</div>
-                            <div class="stf-fields">
-                                <div class="card-hint" style="margin:0;">Optional. A neutral tile is used if left empty.</div>
-                            </div>
-                        </div>
-                        <div class="stf-hint" style="margin-top:16px;">Socials — only the ones you fill in are shown.</div>
-                        <div class="stf-fields">
-                            <input id="bpfInstagram" placeholder="Instagram URL">
-                            <input id="bpfTiktok" placeholder="TikTok URL">
-                            <input id="bpfWebsite" placeholder="Website URL">
-                        </div>
-                    </div>
-
-                    <!-- Items the buyer is selling -->
-                    <div class="stf-panel" data-panel="items">
-                        <div class="stf-hint">The pieces you're selling. Tap the icon to change it.</div>
-                        <div id="bpfItems"></div>
-                        <button class="stf-add" id="bpfAddItem">+ Add item</button>
-                    </div>
-
-                    <!-- Optional promo banner -->
-                    <div class="stf-panel" data-panel="banner">
-                        <div class="stf-hint">An optional promo banner shown after every five items on your profile.</div>
-                        <label class="toggle-row">
-                            <div><div class="t-label">Show a banner</div><div class="t-desc">Turn on to display it in your feed.</div></div>
-                            <span class="switch"><input type="checkbox" id="bpfBannerOn"><span class="slider"></span></span>
-                        </label>
-                        <div class="stf-item" id="bpfBannerFields" style="margin-top:14px;">
-                            <div class="stf-thumb" id="bpfBannerImg">Add<br>image</div>
-                            <div class="stf-fields">
-                                <input id="bpfBannerKicker" placeholder="Kicker — e.g. Moving sale">
-                                <input id="bpfBannerTitle" placeholder="Title — e.g. Everything must go">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- ===== Change password — buyer's My Profile only ===== -->
                 <div class="card buyer-only" style="margin-top:24px;">
                     <div class="card-title">Change password</div>
@@ -798,6 +749,34 @@
                 idCard.insertAdjacentElement('beforebegin', row);
                 row.appendChild(idCard);
                 row.appendChild(notifCard);
+            }
+        } else {
+            // ---- Buyer "My Profile": mirror the calm My Shop layout ----
+            // Reads top-to-bottom: store visuals (rectangle) → followers + socials →
+            // personal details beside dimensions → the rest.
+            const idCard   = document.querySelector('.grid > .card');            // personal details
+            const dims     = document.querySelector('.grid > .card.buyer-only'); // My dimensions
+            const colRight = document.querySelector('.col-right');
+            const stats    = colRight && colRight.querySelector('.stats');
+
+            // Socials share the Followers / Following row: drop the socials field
+            // into the (otherwise empty) first stat cell → Socials | Followers | Following.
+            const socialsField = idCard && idCard.querySelector('.socials-icons') &&
+                                  idCard.querySelector('.socials-icons').closest('.field');
+            const firstStat = stats && stats.querySelector('.stat');
+            if (socialsField && firstStat) {
+                firstStat.classList.add('stat--socials');
+                firstStat.appendChild(socialsField);
+            }
+
+            // Personal details beside My dimensions, placed right under the stats so
+            // the rectangle + followers keep the top of the page.
+            if (idCard && dims && stats) {
+                const pair = document.createElement('div');
+                pair.className = 'pair-row';
+                stats.insertAdjacentElement('afterend', pair);
+                pair.appendChild(idCard);
+                pair.appendChild(dims);
             }
         }
 
