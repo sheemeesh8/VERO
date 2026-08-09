@@ -52,19 +52,30 @@
     }
 
     function stateOf(key) {
-        if (!map[key]) map[key] = { dx: 0, dy: 0, scale: 1 };
-        return map[key];
+        if (!map[key]) map[key] = { dx: 0, dy: 0, sx: 1, sy: 1 };
+        const s = map[key];
+        // Migrate old uniform-scale entries to independent sx / sy.
+        if (s.scale !== undefined) {
+            if (s.sx === undefined) s.sx = s.scale;
+            if (s.sy === undefined) s.sy = s.scale;
+            delete s.scale;
+        }
+        if (s.sx === undefined) s.sx = 1;
+        if (s.sy === undefined) s.sy = 1;
+        return s;
     }
     function save() { try { localStorage.setItem(KEY, JSON.stringify(map)); } catch (e) {} }
 
     function applyKey(key) {
         const el = document.querySelector(key);
         if (!el) return;
-        const s = map[key];
+        const s = stateOf(key);
         const tf = [];
         if (s.dx || s.dy) tf.push(`translate(${s.dx}px, ${s.dy}px)`);
-        if (s.scale !== 1) tf.push(`scale(${s.scale})`);
+        if (s.sx !== 1 || s.sy !== 1) tf.push(`scale(${s.sx}, ${s.sy})`);
         el.style.transform = tf.join(' ');
+        // Grow from the top-left so a stretch handle moves the edge you grab.
+        el.style.transformOrigin = tf.length ? 'top left' : '';
     }
     function applyAll() { Object.keys(map).forEach(applyKey); }
 
@@ -110,15 +121,28 @@
         const s = stateOf(el.__veroKey);
         ui.name.textContent = el.__veroKey;
         ui.scale.disabled = false;
-        ui.scale.value = s.scale;
+        ui.scale.value = s.sx;
         updateReadout();
+        positionFrame();
     }
     function updateReadout() {
         if (!sel) { ui.readout.textContent = 'בחר פריט — לחיצה בוחרת, גרירה מזיזה'; return; }
         const s = stateOf(sel.__veroKey);
         ui.readout.innerHTML =
-            `translate(<b>${s.dx}px</b>, <b>${s.dy}px</b>) · scale(<b>${s.scale.toFixed(2)}</b>)`;
-        ui.scaleOut.textContent = '×' + s.scale.toFixed(2);
+            `translate(<b>${s.dx}px</b>, <b>${s.dy}px</b>) · scale(<b>${s.sx.toFixed(2)}</b>, <b>${s.sy.toFixed(2)}</b>)`;
+        ui.scaleOut.textContent = '×' + s.sx.toFixed(2);
+    }
+
+    // ---- Stretch frame: handles that follow the selected element --------------
+    let resize = null;
+    function positionFrame() {
+        if (!ui.frame) return;
+        if (!sel || !editing) { ui.frame.classList.remove('on'); return; }
+        const r = sel.getBoundingClientRect();
+        const f = ui.frame;
+        f.style.left = r.left + 'px'; f.style.top = r.top + 'px';
+        f.style.width = r.width + 'px'; f.style.height = r.height + 'px';
+        f.classList.add('on');
     }
 
     // ---- The editor's own UI (never selectable) ------------------------------
@@ -131,6 +155,16 @@
             body.vero-editing .vero-ed-hovering {
                 outline: 1.5px dashed rgba(0,66,37,0.6) !important; outline-offset: 2px;
             }
+            #vero-ed-frame { position: fixed; z-index: 99999; pointer-events: none; display: none; }
+            #vero-ed-frame.on { display: block; }
+            #vero-ed-frame .h {
+                position: absolute; width: 14px; height: 14px; box-sizing: border-box;
+                background: #fff; border: 2px solid #004225; border-radius: 3px;
+                pointer-events: auto;
+            }
+            #vero-ed-frame .h.e  { right: -7px; top: 50%; margin-top: -7px; cursor: ew-resize; }
+            #vero-ed-frame .h.s  { bottom: -7px; left: 50%; margin-left: -7px; cursor: ns-resize; }
+            #vero-ed-frame .h.se { right: -7px; bottom: -7px; cursor: nwse-resize; border-radius: 50%; }
             #vero-ed-toggle {
                 position: fixed; left: 18px; bottom: 18px; z-index: 100000;
                 width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
@@ -195,34 +229,60 @@
                 <button class="b" id="vero-ed-resetall">אפס הכל</button>
                 <button class="b dark" id="vero-ed-copy">העתק CSS</button>
             </div>
-            <div class="vero-ed-hint">גרירה מזיזה · חיצים 1px (Shift 10px) · הסליידר או [ ] מגדילים</div>
+            <div class="vero-ed-hint">גרירה מזיזה · הידיות הירוקות מותחות (רוחב/גובה) · חיצים 1px (Shift 10px) · הסליידר או [ ] מגדילים אחיד</div>
         `;
         document.body.appendChild(panel);
 
+        // Stretch frame with resize handles (right = width, bottom = height,
+        // corner = both). Lives on top of the selected element.
+        const frame = document.createElement('div');
+        frame.id = 'vero-ed-frame';
+        frame.innerHTML = '<i class="h e"></i><i class="h s"></i><i class="h se"></i>';
+        document.body.appendChild(frame);
+
         ui = {
-            toggle, panel,
+            toggle, panel, frame,
             name: panel.querySelector('#vero-ed-name'),
             readout: panel.querySelector('#vero-ed-read'),
             scale: panel.querySelector('#vero-ed-scale'),
             scaleOut: panel.querySelector('#vero-ed-scaleout')
         };
 
+        // Begin a stretch when a handle is grabbed.
+        frame.querySelectorAll('.h').forEach(h => {
+            h.addEventListener('pointerdown', e => {
+                if (!sel) return;
+                e.preventDefault(); e.stopPropagation();
+                const s = stateOf(sel.__veroKey);
+                const r = sel.getBoundingClientRect();
+                resize = {
+                    dir: h.classList.contains('se') ? 'se' : (h.classList.contains('e') ? 'e' : 's'),
+                    x: e.clientX, y: e.clientY, w: r.width, h: r.height,
+                    baseW: r.width / s.sx, baseH: r.height / s.sy
+                };
+            });
+        });
+
         ui.scale.addEventListener('input', e => {
             if (!sel) return;
-            stateOf(sel.__veroKey).scale = +e.target.value;
-            applyKey(sel.__veroKey); updateReadout(); save();
+            const s = stateOf(sel.__veroKey);
+            s.sx = s.sy = +e.target.value;          // slider = uniform
+            applyKey(sel.__veroKey); updateReadout(); positionFrame(); save();
         });
         panel.querySelector('#vero-ed-reset').onclick = () => {
             if (!sel) return;
             delete map[sel.__veroKey];
-            sel.style.transform = '';
-            ui.scale.value = 1; updateReadout(); save();
+            sel.style.transform = ''; sel.style.transformOrigin = '';
+            ui.scale.value = 1; updateReadout(); positionFrame(); save();
         };
         panel.querySelector('#vero-ed-resetall').onclick = () => {
-            Object.keys(map).forEach(k => { const el = document.querySelector(k); if (el) el.style.transform = ''; });
+            Object.keys(map).forEach(k => {
+                const el = document.querySelector(k);
+                if (el) { el.style.transform = ''; el.style.transformOrigin = ''; }
+            });
             map = {}; save();
             if (sel) ui.scale.value = 1;
-            updateReadout();
+            updateReadout(); positionFrame();
         };
         panel.querySelector('#vero-ed-copy').onclick = async () => {
             const out = cssOut();
@@ -235,12 +295,14 @@
 
     function cssOut() {
         const rules = [];
-        for (const [selector, s] of Object.entries(map)) {
-            if (!s.dx && !s.dy && s.scale === 1) continue;
+        for (const [selector, raw] of Object.entries(map)) {
+            const s = stateOf(selector);
+            if (!selector) continue;                       // skip stray empty keys
+            if (!s.dx && !s.dy && s.sx === 1 && s.sy === 1) continue;
             const tf = [];
             if (s.dx || s.dy) tf.push(`translate(${s.dx}px, ${s.dy}px)`);
-            if (s.scale !== 1) tf.push(`scale(${s.scale})`);
-            rules.push(`${selector} {\n    transform: ${tf.join(' ')};\n}`);
+            if (s.sx !== 1 || s.sy !== 1) tf.push(`scale(${s.sx}, ${s.sy})`);
+            rules.push(`${selector} {\n    transform: ${tf.join(' ')};\n    transform-origin: top left;\n}`);
         }
         return rules.length
             ? '/* VERO manual placement — from the site editor */\n' + rules.join('\n\n')
@@ -255,12 +317,14 @@
         ui.panel.classList.toggle('open', on);
         if (!on && sel) { sel.classList.remove('vero-ed-selected'); sel = null; }
         if (!on) reclipAll();   // restore ancestor clipping when leaving edit mode
+        positionFrame();
     }
 
     // ---- Wiring: hover highlight, select + drag, keys ------------------------
     function eligible(el) {
         if (!el || el.nodeType !== 1) return null;
-        if (el.closest('#vero-ed-panel') || el.closest('#vero-ed-toggle')) return null;
+        if (el.closest('#vero-ed-panel') || el.closest('#vero-ed-toggle') ||
+            el.closest('#vero-ed-frame')) return null;
         return el;
     }
 
@@ -284,13 +348,34 @@
     }, true);
 
     window.addEventListener('pointermove', e => {
+        // Stretch takes priority over move while a handle is held.
+        if (resize && sel) {
+            const s = stateOf(sel.__veroKey);
+            if (resize.dir === 'e' || resize.dir === 'se') {
+                const nw = Math.max(20, resize.w + (e.clientX - resize.x));
+                s.sx = +(nw / resize.baseW).toFixed(3);
+            }
+            if (resize.dir === 's' || resize.dir === 'se') {
+                const nh = Math.max(20, resize.h + (e.clientY - resize.y));
+                s.sy = +(nh / resize.baseH).toFixed(3);
+            }
+            ui.scale.value = s.sx;
+            applyKey(sel.__veroKey); updateReadout(); positionFrame();
+            return;
+        }
         if (!drag) return;
         const s = stateOf(drag.el.__veroKey);
         s.dx = Math.round(drag.dx + (e.clientX - drag.x));
         s.dy = Math.round(drag.dy + (e.clientY - drag.y));
-        applyKey(drag.el.__veroKey); updateReadout();
+        applyKey(drag.el.__veroKey); updateReadout(); positionFrame();
     });
-    window.addEventListener('pointerup', () => { if (drag) { drag = null; save(); } });
+    window.addEventListener('pointerup', () => {
+        if (resize) { resize = null; save(); }
+        if (drag) { drag = null; save(); }
+    });
+    // Keep the stretch frame glued to the element as the page scrolls / resizes.
+    window.addEventListener('scroll', () => positionFrame(), true);
+    window.addEventListener('resize', () => positionFrame());
 
     // Swallow the click that follows a select/drag so nothing navigates.
     document.addEventListener('click', e => {
@@ -311,14 +396,14 @@
             case 'ArrowRight': s.dx += step; break;
             case 'ArrowUp':    s.dy -= step; break;
             case 'ArrowDown':  s.dy += step; break;
-            case '[': s.scale = Math.max(0.3, +(s.scale - 0.05).toFixed(2)); break;
-            case ']': s.scale = Math.min(3, +(s.scale + 0.05).toFixed(2)); break;
+            case '[': s.sx = s.sy = Math.max(0.3, +(s.sx - 0.05).toFixed(2)); break;
+            case ']': s.sx = s.sy = Math.min(3, +(s.sx + 0.05).toFixed(2)); break;
             default: hit = false;
         }
         if (!hit) return;
         e.preventDefault();
-        ui.scale.value = s.scale;
-        applyKey(sel.__veroKey); updateReadout(); save();
+        ui.scale.value = s.sx;
+        applyKey(sel.__veroKey); updateReadout(); positionFrame(); save();
     });
 
     // ---- Boot ----------------------------------------------------------------
