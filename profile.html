@@ -205,14 +205,34 @@
         }
         .store-cover-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 18px; }
         .store-cover-actions .change-photo { width: auto; }
-        /* Store photo lifted out of the cover image — sits inline on white beside
-           the buttons instead of floating over the background. */
-        .store-cover-actions .store-avatar {
-            position: static; left: auto; bottom: auto; margin: 0 4px 0 0;
-            width: 52px; height: 52px; flex: none;
+
+        /* Store card = photo column on the left, background image on the right.
+           Built in JS (layoutStorePhoto) — the avatar no longer sits over the
+           cover; it's a large circle in its own column with "Change photo" below. */
+        .store-card { display: flex; align-items: stretch; padding: 0; overflow: hidden; }
+        .store-photo-col {
+            flex: none; width: 168px; padding: 22px 18px;
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+            border-right: 1px solid #000;
         }
-        .store-cover-actions .store-avatar .avatar {
-            width: 100%; height: 100%; border: 1.5px solid #000; box-shadow: none;
+        .store-photo-col .store-avatar {
+            position: static; left: auto; bottom: auto; margin: 0;
+            width: 104px; height: 104px; flex: none;   /* 2× the old size */
+        }
+        .store-photo-col .store-avatar .avatar {
+            width: 100%; height: 100%; border: 1.5px solid #000;
+            box-shadow: none; font-size: 44px;
+        }
+        .store-photo-col .change-photo { width: 100%; text-align: center; }
+        .store-cover-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .store-cover-col .store-cover { width: 100%; }
+        @media (max-width: 560px) {
+            .store-card { flex-direction: column; }
+            .store-photo-col {
+                width: auto; flex-direction: row; justify-content: flex-start;
+                border-right: none; border-bottom: 1px solid #000;
+            }
+            .store-photo-col .change-photo { width: auto; }
         }
 
         /* Per-product size entry (seller). */
@@ -699,13 +719,40 @@
             if (idCard && stats) stats.insertAdjacentElement('afterend', idCard);
         }
 
-        // Lift the store photo out of the cover image — place it inline beside the
-        // Change-photo buttons on white, so it no longer floats over the background.
-        (function liftStoreAvatar() {
-            const cover = document.getElementById('storeBgPreview');
-            const avatar = cover && cover.querySelector('.store-avatar');
-            const actions = document.querySelector('.store-cover-actions');
-            if (avatar && actions) actions.insertBefore(avatar, actions.firstChild);
+        // Rebuild the store card: a photo column on the LEFT (large avatar with the
+        // "Change photo" button beneath it) and the background image on the RIGHT
+        // (with "Change background" below it). The avatar no longer floats over the
+        // cover image.
+        (function layoutStorePhoto() {
+            const card = document.querySelector('.store-card');
+            if (!card) return;
+            const cover = card.querySelector('.store-cover');
+            const actions = card.querySelector('.store-cover-actions');
+            const avatar = card.querySelector('.store-avatar');
+            const changePhoto = document.getElementById('changePhoto');
+            const changeBg = document.getElementById('changeBg');
+            if (!cover || !avatar) return;
+
+            // Left: big avatar + change-photo button under it.
+            const left = document.createElement('div');
+            left.className = 'store-photo-col';
+            left.appendChild(avatar);
+            if (changePhoto) left.appendChild(changePhoto);
+
+            // Right: the background cover, with change-background under it.
+            const right = document.createElement('div');
+            right.className = 'store-cover-col';
+            right.appendChild(cover);
+            if (changeBg) {
+                const bgActions = document.createElement('div');
+                bgActions.className = 'store-cover-actions';
+                bgActions.appendChild(changeBg);
+                right.appendChild(bgActions);
+            }
+            if (actions && actions.parentNode) actions.remove();
+
+            card.appendChild(left);
+            card.appendChild(right);
         })();
 
         // Auto-fit the embedded sales dashboard to its own content so the whole
