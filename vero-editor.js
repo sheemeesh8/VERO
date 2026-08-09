@@ -68,11 +68,44 @@
     }
     function applyAll() { Object.keys(map).forEach(applyKey); }
 
+    // ---- Un-clip ancestors while editing -------------------------------------
+    // Moves are CSS transforms, which are clipped by any ancestor with
+    // overflow:hidden/auto/scroll (e.g. cards, the page wrap, body's overflow-x).
+    // That's why a piece "gets stuck" when dragged toward the edges. While edit
+    // mode is on we lift that clipping on the selected piece's ancestor chain,
+    // then restore the exact inline values when editing ends.
+    let unclipped = [];
+    function unclipAncestors(el) {
+        let node = el && el.parentElement;
+        while (node && node !== document.documentElement) {
+            if (!node.__veroUnclipped) {
+                const cs = getComputedStyle(node);
+                if (cs.overflow !== 'visible' || cs.overflowX !== 'visible' || cs.overflowY !== 'visible') {
+                    node.__veroUnclipped = { o: node.style.overflow, ox: node.style.overflowX, oy: node.style.overflowY };
+                    node.style.overflow = 'visible';
+                    node.style.overflowX = 'visible';
+                    node.style.overflowY = 'visible';
+                    unclipped.push(node);
+                }
+            }
+            node = node.parentElement;
+        }
+    }
+    function reclipAll() {
+        unclipped.forEach(node => {
+            const o = node.__veroUnclipped;
+            if (o) { node.style.overflow = o.o; node.style.overflowX = o.ox; node.style.overflowY = o.oy; }
+            delete node.__veroUnclipped;
+        });
+        unclipped = [];
+    }
+
     // ---- Selection -----------------------------------------------------------
     function select(el) {
         if (sel) sel.classList.remove('vero-ed-selected');
         sel = el;
         el.classList.add('vero-ed-selected');
+        unclipAncestors(el);
         el.__veroKey = el.__veroKey || cssPath(el);
         const s = stateOf(el.__veroKey);
         ui.name.textContent = el.__veroKey;
@@ -221,6 +254,7 @@
         ui.toggle.classList.toggle('on', on);
         ui.panel.classList.toggle('open', on);
         if (!on && sel) { sel.classList.remove('vero-ed-selected'); sel = null; }
+        if (!on) reclipAll();   // restore ancestor clipping when leaving edit mode
     }
 
     // ---- Wiring: hover highlight, select + drag, keys ------------------------
