@@ -301,10 +301,6 @@
                     <div class="field-val" id="sellerCount">0</div>
                 </div>
                 <div class="field">
-                    <div class="card-label">Pending offers</div>
-                    <div class="field-val" id="offerCount">0</div>
-                </div>
-                <div class="field">
                     <div class="card-label">Last active</div>
                     <div class="field-val" id="lastActive">—</div>
                 </div>
@@ -319,24 +315,6 @@
             </div>
         </div>
 
-        <!-- Two columns below the chat list: offers you made | offers you received. -->
-        <div class="offers-split">
-            <div class="offers-sec">
-                <div class="offers-head">
-                    <div class="card-label" style="margin:0;">Offers you made</div>
-                    <div class="offers-note" id="offersNote">Pieces you've made an offer on</div>
-                </div>
-                <div class="offers-grid" id="offersGrid"></div>
-            </div>
-
-            <div class="offers-sec">
-                <div class="offers-head">
-                    <div class="card-label" style="margin:0;">Offers you received</div>
-                    <div class="offers-note" id="recvNote">Buyers who’ve made an offer on your pieces</div>
-                </div>
-                <div class="offers-grid" id="recvGrid"></div>
-            </div>
-        </div>
     </div>
 
     <!-- Slide-in chat panel — one conversation with a seller. -->
@@ -426,7 +404,6 @@
         document.getElementById('activeSub').textContent  = `with ${sellers} seller${sellers === 1 ? '' : 's'}`;
         document.getElementById('threadCount').textContent = list.length;
         document.getElementById('sellerCount').textContent = sellers;
-        document.getElementById('offerCount').textContent  = offs.length;
         document.getElementById('lastActive').textContent  = lastAt ? (timeAgo(lastAt) + ' ago') : '—';
 
         const el = document.getElementById('chatList');
@@ -495,160 +472,6 @@
         });
         // Search sellers — restricted to those already in the chat inbox.
         document.getElementById('chatSearch').addEventListener('input', (e) => renderList(e.target.value));
-
-        // ===== My offers (Depop-style) =====
-        // Icon for a product, matched from the cart by name where possible.
-        const iconByName = {};
-        items.forEach(it => { if (it.name && it.icon) iconByName[it.name] = it.icon; });
-        const strHash = s => { let h = 0; for (let i = 0; i < String(s).length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
-
-        // Working copy of the buyer's offers. Seed a few if none exist yet so the
-        // section always demonstrates the flow (kept in memory unless edited).
-        let myOffers = offs.map(o => ({ ...o }));
-        if (!myOffers.length) {
-            myOffers = [
-                { name: 'Neon Print',   seller: 'Pixel Works',    askPrice: 300,  offer: 240,  at: Date.now() - 3 * H },
-                { name: 'Denim Jacket', seller: 'Vintage Vault',  askPrice: 450,  offer: 390,  at: Date.now() - 8 * H },
-                { name: 'Marble Bust',  seller: 'Studio Vero',    askPrice: 1800, offer: 1500, at: Date.now() - 26 * H },
-            ];
-        }
-
-        // Deterministic "other people's offers" for a piece, so the list is stable.
-        function otherOffers(o) {
-            const NAMES = ['Maya', 'Daniel', 'Noa', 'Omer', 'Tal', 'Yael', 'Ari', 'Shira'];
-            const seed = strHash(o.name + o.seller);
-            const n = 2 + (seed % 3);                 // 2–4 other offers
-            const out = [];
-            for (let i = 0; i < n; i++) {
-                const pct = 0.62 + ((seed >> (i * 4)) % 30) / 100;   // 62–91% of ask
-                out.push({ who: NAMES[(seed + i * 7) % NAMES.length], amount: Math.round(o.askPrice * pct / 5) * 5 });
-            }
-            return out.sort((a, b) => b.amount - a.amount);
-        }
-
-        const offersGrid = document.getElementById('offersGrid');
-        function renderOffers() {
-            document.getElementById('offersNote').textContent =
-                `${myOffers.length} piece${myOffers.length === 1 ? '' : 's'} you've made an offer on`;
-            if (!myOffers.length) {
-                offersGrid.innerHTML = '<div class="offers-empty">No offers yet — make one from any product page.</div>';
-                return;
-            }
-            offersGrid.innerHTML = myOffers.map((o, i) => {
-                const ic = iconByName[o.name] || '🛍️';
-                const others = otherOffers(o);
-                const topAmt = Math.max(o.offer, ...others.map(x => x.amount));
-                const othersHTML = others.map(x =>
-                    `<div class="oc-other${x.amount === topAmt ? ' top' : ''}"><span>${x.who}</span><span class="amt">${nis(x.amount)}</span></div>`).join('');
-                return `
-                    <div class="offer-cube" data-i="${i}">
-                        <div class="oc-top">
-                            <div class="oc-img">${ic}</div>
-                            <div class="oc-info">
-                                <div class="oc-name">${o.name || 'Item'}</div>
-                                <div class="oc-seller">${o.seller || 'VERO'}</div>
-                                <div class="oc-prices">
-                                    <span class="oc-ask">Asking ${nis(o.askPrice)}</span>
-                                    <span class="oc-your">Your offer <b>${nis(o.offer)}</b></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="oc-others">
-                            <div class="oc-others-label">Other offers on this piece</div>
-                            ${othersHTML}
-                        </div>
-                        <button class="oc-edit" data-act="edit" data-i="${i}">Edit offer</button>
-                        <div class="oc-editbox" data-i="${i}">
-                            <input class="oc-input" type="number" min="1" placeholder="New offer (₪)" value="${o.offer}">
-                            <button class="oc-submit" data-act="submit" data-i="${i}">Send new offer</button>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-        renderOffers();
-
-        offersGrid.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-act]');
-            if (!btn) return;
-            const i = Number(btn.dataset.i);
-            if (btn.dataset.act === 'edit') {
-                const box = offersGrid.querySelector(`.oc-editbox[data-i="${i}"]`);
-                box.classList.toggle('open');
-                if (box.classList.contains('open')) box.querySelector('.oc-input').focus();
-            } else if (btn.dataset.act === 'submit') {
-                const box = offersGrid.querySelector(`.oc-editbox[data-i="${i}"]`);
-                const val = parseFloat(box.querySelector('.oc-input').value);
-                if (!val || val <= 0) { box.querySelector('.oc-input').focus(); return; }
-                myOffers[i].offer = val;
-                myOffers[i].at = Date.now();
-                // Persist the whole set back to the shared store so the seller sees it.
-                localStorage.setItem('vero_offers', JSON.stringify(myOffers));
-                renderOffers();
-            }
-        });
-
-        // ===== Offers you received — buyers bidding on your pieces =====
-        // Persisted to vero_received_offers so accept/decline decisions stick.
-        let recvOffers = readJSON('vero_received_offers', null);
-        if (!Array.isArray(recvOffers) || !recvOffers.length) {
-            recvOffers = [
-                { name: 'Wool coat',     icon: '🧥', buyer: 'Maya L.',   askPrice: 269,  offer: 230,  at: Date.now() - 4 * H,  status: 'pending' },
-                { name: 'Raw denim',     icon: '👖', buyer: 'Omer T.',   askPrice: 129,  offer: 100,  at: Date.now() - 9 * H,  status: 'pending' },
-                { name: 'Silk scarf',    icon: '🧣', buyer: 'Noa B.',    askPrice: 210,  offer: 175,  at: Date.now() - 1 * D,  status: 'pending' },
-                { name: 'Leather tote',  icon: '👜', buyer: 'Daniel K.', askPrice: 540,  offer: 480,  at: Date.now() - 2 * D,  status: 'pending' },
-                { name: 'Knit sweater',  icon: '🧶', buyer: 'Shira P.',  askPrice: 180,  offer: 150,  at: Date.now() - 3 * D,  status: 'pending' },
-            ];
-        }
-        const recvGrid = document.getElementById('recvGrid');
-        const saveRecv = () => localStorage.setItem('vero_received_offers', JSON.stringify(recvOffers));
-
-        function renderRecv() {
-            const pending = recvOffers.filter(o => o.status === 'pending').length;
-            document.getElementById('recvNote').textContent =
-                `${recvOffers.length} offer${recvOffers.length === 1 ? '' : 's'} · ${pending} awaiting you`;
-            if (!recvOffers.length) {
-                recvGrid.innerHTML = '<div class="offers-empty">No offers on your pieces yet.</div>';
-                return;
-            }
-            recvGrid.innerHTML = recvOffers.map((o, i) => {
-                const pct = o.askPrice ? Math.round((o.offer / o.askPrice) * 100) : 0;
-                const action = o.status === 'pending'
-                    ? `<div class="oc-actions">
-                           <button class="oc-accept" data-ract="accept" data-i="${i}">Accept</button>
-                           <button class="oc-decline" data-ract="decline" data-i="${i}">Decline</button>
-                       </div>`
-                    : `<div class="oc-resolved ${o.status}">${o.status === 'accepted' ? 'Accepted ✓' : 'Declined'}</div>`;
-                return `
-                    <div class="offer-cube" data-i="${i}">
-                        <div class="oc-top">
-                            <div class="oc-img">${o.icon || '🛍️'}</div>
-                            <div class="oc-info">
-                                <div class="oc-name">${o.name || 'Item'}</div>
-                                <div class="oc-buyer">From <b>${o.buyer}</b> · ${timeAgo(o.at)}</div>
-                                <div class="oc-prices">
-                                    <span class="oc-ask">Asking ${nis(o.askPrice)}</span>
-                                    <span class="oc-your">Their offer <b>${nis(o.offer)}</b></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="oc-others">
-                            <div class="oc-others-label">Offer strength</div>
-                            <div class="oc-other${pct >= 85 ? ' top' : ''}"><span>${pct}% of your asking price</span><span class="amt">${nis(o.offer)}</span></div>
-                        </div>
-                        ${action}
-                    </div>`;
-            }).join('');
-        }
-        renderRecv();
-
-        recvGrid.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-ract]');
-            if (!btn) return;
-            const i = Number(btn.dataset.i);
-            recvOffers[i].status = btn.dataset.ract === 'accept' ? 'accepted' : 'declined';
-            saveRecv();
-            renderRecv();
-        });
 
         // ===== Chat with a seller — persisted to vero_chats, works like the deal room =====
         const CHATS = readJSON('vero_chats', {});   // { sellerName: [ {sender, content, at} ] }

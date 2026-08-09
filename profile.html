@@ -210,7 +210,14 @@
         .store-rects { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0 0; }
         .store-rect { border: 1px solid #000; background: #fafafa; min-width: 0; }
         /* Left rectangle wide; right one long and narrow (tall & thin, not thick). */
-        .store-rect--bg { flex: 1; height: 150px; }
+        /* Solid black storefront banner with white text — no image. */
+        .store-rect--bg {
+            flex: 1; height: 240px; background: #000; border-color: #000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 8px; text-align: center; padding: 24px;
+        }
+        .store-rect--bg .srb-name { color: #fff; font-size: 28px; font-weight: 300; letter-spacing: 1px; }
+        .store-rect--bg .srb-sub { color: rgba(255,255,255,0.65); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
         .store-rect--photo { flex: 0 0 90px; height: 300px; }
 
         /* ---- Socials: icon buttons that open an animated URL row on tap ---- */
@@ -386,8 +393,8 @@
            The contact card is moved (in JS) into this flow, right under the stats. */
         body.is-seller .grid { grid-template-columns: 1fr; gap: 0; margin-top: 56px; }
         body.is-seller .head-sub { margin-top: 18px; }
-        /* Keep the reading measure comfortable on wide screens. */
-        body.is-seller .col-right { max-width: 720px; }
+        /* Fill the full white area edge-to-edge on wide screens. */
+        body.is-seller .col-right { max-width: none; }
 
         /* Every block in the flow (contact details, notifications, storefront editor)
            becomes an open section: one hairline above, generous top space — no more
@@ -442,7 +449,7 @@
 
         /* Personal details (left) beside Push & email notifications (right). The
            seller column widens so both fit; on narrow screens they stack. */
-        body.is-seller .col-right { max-width: 1080px; }
+        body.is-seller .col-right { max-width: none; }
         body.is-seller .info-row {
             display: grid; grid-template-columns: 1.3fr 1fr; gap: 56px;
             align-items: start; margin-top: 40px; padding-top: 40px;
@@ -472,7 +479,7 @@
            so nothing crowds or overlaps while scrolling.
            ================================================================= */
         body:not(.is-seller) { --hair: #ececec; }
-        body:not(.is-seller) .col-right { max-width: 720px; }
+        body:not(.is-seller) .col-right { max-width: none; }
         /* Every card becomes an open section: one hairline above, generous top
            space — no stacked black frames. The store-appearance card keeps its
            framed cover. */
@@ -485,8 +492,8 @@
         body:not(.is-seller) .grid > .card:first-child {
             border-top: none; padding-top: 0; margin-top: 0;
         }
-        /* Keep every section the same reading width. */
-        body:not(.is-seller) .grid > .card { max-width: 720px; }
+        /* Sections fill the full white area edge-to-edge. */
+        body:not(.is-seller) .grid > .card { max-width: none; }
 
         /* Personal details beside My dimensions — a two-column row at the top of
            My Profile (built in JS), stacking on narrow screens. */
@@ -500,7 +507,20 @@
         @media (max-width: 900px) {
             body:not(.is-seller) .pair-row { grid-template-columns: 1fr; gap: 40px; }
         }
-        body:not(.is-seller) .store-card { margin-top: 40px; }
+        /* Personal details laid out two fields per row, wrapping into as many rows
+           as the number of fields needs. About + the save note span both columns. */
+        body:not(.is-seller) .contact-card.details-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            column-gap: 44px; row-gap: 24px; align-items: start;
+        }
+        body:not(.is-seller) .contact-card.details-grid .field { margin-bottom: 0; }
+        body:not(.is-seller) .contact-card.details-grid .field:has(#pf-bio),
+        body:not(.is-seller) .contact-card.details-grid .save-note { grid-column: 1 / -1; }
+        @media (max-width: 780px) {
+            body:not(.is-seller) .contact-card.details-grid { grid-template-columns: 1fr; }
+        }
+        /* The rectangle is the very first block in buyer view — flush at the top. */
+        body:not(.is-seller) .store-card { margin-top: 0; }
         /* Followers / Following — drop the empty cell and heavy boxes; two calm
            number+label blocks under a hairline. */
         body:not(.is-seller) .stats {
@@ -584,8 +604,10 @@
                 <div class="card store-card">
                     <div class="store-card-title card-label">Store appearance</div>
                     <div class="store-rects">
-                        <!-- A single wide rectangle spanning the full width. -->
-                        <div class="store-rect store-rect--bg"></div>
+                        <!-- Solid black storefront banner (no image), white caption. -->
+                        <div class="store-rect store-rect--bg">
+                            <div class="srb-name" id="storeRectName">My Store</div>
+                        </div>
                     </div>
                 </div>
 
@@ -712,10 +734,9 @@
             }
         } else {
             // ---- Buyer "My Profile": mirror the calm My Shop layout ----
-            // Reads top-to-bottom: store visuals (rectangle) → followers + socials →
-            // personal details beside dimensions → the rest.
+            // Reads top-to-bottom: store visuals (black rectangle) → followers +
+            // socials → personal details, laid out two fields per row.
             const idCard   = document.querySelector('.grid > .card');            // personal details
-            const dims     = document.querySelector('.grid > .card.buyer-only'); // My dimensions
             const colRight = document.querySelector('.col-right');
             const stats    = colRight && colRight.querySelector('.stats');
 
@@ -729,14 +750,11 @@
                 firstStat.appendChild(socialsField);
             }
 
-            // Personal details beside My dimensions, placed right under the stats so
-            // the rectangle + followers keep the top of the page.
-            if (idCard && dims && stats) {
-                const pair = document.createElement('div');
-                pair.className = 'pair-row';
-                stats.insertAdjacentElement('afterend', pair);
-                pair.appendChild(idCard);
-                pair.appendChild(dims);
+            // Move the personal-details card below the rectangle + stats so those keep
+            // the top of the page, and lay its remaining fields two per row.
+            if (idCard && stats) {
+                stats.insertAdjacentElement('afterend', idCard);
+                idCard.classList.add('details-grid');
             }
         }
 
@@ -870,6 +888,13 @@
         }
         refreshAvatar();
 
+        // The black storefront banner shows the display name in white.
+        function refreshStoreRectName() {
+            const el = document.getElementById('storeRectName');
+            if (el) el.textContent = (profile.name || '').trim() || 'My Store';
+        }
+        refreshStoreRectName();
+
         // The visible "Change photo" button just opens the hidden file picker.
         const changeBtn = document.getElementById('changePhoto');
         if (changeBtn) changeBtn.addEventListener('click', () => document.getElementById('pf-photo').click());
@@ -899,7 +924,7 @@
             document.getElementById(id).addEventListener('input', (e) => {
                 profile[key] = e.target.value;
                 localStorage.setItem('vero_profile', JSON.stringify(profile));
-                if (key === 'name') refreshAvatar();
+                if (key === 'name') { refreshAvatar(); refreshStoreRectName(); }
                 const note = document.getElementById('saveNote');
                 note.textContent = 'Saved ✓';
                 clearTimeout(saveTimer);

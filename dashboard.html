@@ -92,6 +92,9 @@
         .kpi .kpi-mark { position: absolute; left: 16px; top: 16px; font-size: 26px; opacity: 0.25; }
         .kpi .kpi-desc { text-transform: none; letter-spacing: 0.2px; font-size: 14px; color: #6b6b66; margin-top: 0; max-width: 320px; line-height: 1.5; align-self: center; }
         .kpi.hot b { color: var(--st-offer); }
+        /* KPI cards that link to their own page. */
+        a.kpi-link { color: inherit; text-decoration: none; cursor: pointer; }
+        a.kpi-link:hover b { text-decoration: underline; }
 
         /* ---- Status tags ---- */
         .tag {
@@ -719,15 +722,22 @@
         const offers = readOffers().filter(o => o.status === 'pending').length;
         const sold   = INVENTORY.filter(i => i.status === 'sold');
         const revenue = sold.reduce((s, i) => s + priceOf(i.price), 0);
+        // Each KPI links to its own management page. Seller context is preserved,
+        // and target=_top so the click escapes the embedded iframe (MY SHOP).
+        const fromQ = _dashParams.get('from') === 'seller' ? '?from=seller' : '';
         const K = [
-            { mark: '🟢', num: active, lbl: 'מוצרים פעילים', desc: 'פריטים שמוצגים כרגע למכירה בחנות' },
-            { mark: '📝', num: drafts, lbl: 'בטיוטה', desc: 'פריטים שטרם פורסמו — ממתינים להשלמה' },
-            { mark: '💬', num: offers, lbl: 'הצעות ממתינות', hot: offers > 0, desc: 'הצעות מחיר מקונים שמחכות לתשובתך' },
+            { mark: '🟢', num: active, lbl: 'מוצרים פעילים', desc: 'פריטים שמוצגים כרגע למכירה בחנות', href: 'products.html' + fromQ },
+            { mark: '📝', num: drafts, lbl: 'בטיוטה', desc: 'פריטים שטרם פורסמו — ממתינים להשלמה', href: 'drafts.html' + fromQ },
+            { mark: '💬', num: offers, lbl: 'הצעות ממתינות', hot: offers > 0, desc: 'הצעות מחיר מקונים שמחכות לתשובתך', href: 'offers-received.html' + fromQ },
             { mark: '💰', num: nis(revenue), lbl: 'הכנסות · ' + sold.length + ' נמכרו', desc: 'סך התקבולים מכל הפריטים שנמכרו' },
         ];
-        document.getElementById('kpiRow').innerHTML = K.map((k, idx) =>
-            `<div class="kpi ${k.hot ? 'hot' : ''} ${idx === 0 ? 'is-active' : ''}"><span class="kpi-mark">${k.mark}</span><div class="kpi-main"><b>${k.num}</b><span>${k.lbl}</span></div><span class="kpi-desc">${k.desc}</span></div>`
-        ).join('');
+        document.getElementById('kpiRow').innerHTML = K.map((k, idx) => {
+            const cls = `kpi ${k.hot ? 'hot' : ''} ${idx === 0 ? 'is-active' : ''} ${k.href ? 'kpi-link' : ''}`;
+            const inner = `<span class="kpi-mark">${k.mark}</span><div class="kpi-main"><b>${k.num}</b><span>${k.lbl}</span></div><span class="kpi-desc">${k.desc}</span>`;
+            return k.href
+                ? `<a class="${cls}" href="${k.href}" target="_top">${inner}</a>`
+                : `<div class="${cls}">${inner}</div>`;
+        }).join('');
         document.getElementById('kpiDots').innerHTML = K.map((k, idx) =>
             `<button class="kpi-dot ${idx === 0 ? 'is-active' : ''}" data-i="${idx}" aria-label="${k.lbl}"></button>`
         ).join('');
