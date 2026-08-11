@@ -1801,7 +1801,7 @@
         // fall back to the category the piece is filed under.
         const desc = p.desc || [p.category, p.style].filter(Boolean).join(' — ') || '';
         const url = (typeof window.productPageUrl === 'function')
-            ? window.productPageUrl(p) : 'product.html';
+            ? window.productPageUrl(p) : 'product-showcase.html';
         host.innerHTML = `
             <a href="${url}" class="hdr-preview-img">${p.icon || '🛍️'}</a>
             <div class="hdr-preview-info">
