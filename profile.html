@@ -200,8 +200,29 @@
             width: 100%; height: 100%; margin: 0; background-color: #fff;
             box-shadow: 0 2px 12px rgba(0,0,0,0.22);
         }
-        .store-cover-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 18px; }
+        .store-cover-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 0; }
         .store-cover-actions .change-photo { width: auto; }
+        .store-cover-actions .stf-open {
+            margin-left: auto; font-size: 12px; letter-spacing: 1px; color: #1c1c1c;
+            text-decoration: none; border-bottom: 1.4px solid #1c1c1c; padding-bottom: 2px;
+        }
+        .store-cover-actions .stf-open:hover { color: #6b6b66; border-color: #6b6b66; }
+
+        /* Bigger cover so the name + avatar have room. */
+        .store-cover { aspect-ratio: auto; min-height: 260px; }
+        /* Shop name, centred over the cover. */
+        .store-cover-name {
+            position: relative; z-index: 2; text-align: center; padding: 0 18px;
+            font-size: clamp(30px, 3.4vw, 46px); font-weight: 300; letter-spacing: 1px;
+            color: #1c1c1c; line-height: 1.1;
+        }
+        .store-cover.has-img .store-cover-name { color: #fff; text-shadow: 0 2px 18px rgba(0,0,0,0.45); }
+        /* Avatar shows the first letter until a photo is set. */
+        .store-avatar .avatar {
+            display: grid; place-items: center; border-radius: 50%;
+            font-size: 26px; font-weight: 300; color: #1c1c1c; background-size: cover; background-position: center;
+        }
+        .store-avatar .avatar.has-img { color: transparent; }
 
         /* Store card = two empty rectangles (3/4 + 1/4) beside a tall portrait one.
            No outer frame — the rectangles sit directly on the page. */
@@ -602,12 +623,20 @@
             <!-- Right column: preferences + live stats from the site -->
             <div class="col-right">
                 <div class="card store-card">
-                    <div class="store-card-title card-label">Store appearance</div>
-                    <div class="store-rects">
-                        <!-- Solid black storefront banner (no image), white caption. -->
-                        <div class="store-rect store-rect--bg">
-                            <div class="srb-name" id="storeRectName">My Store</div>
+                    <!-- Cover: background image + shop name overlaid + profile avatar. -->
+                    <div class="store-cover" id="storeBgPreview">
+                        <div class="store-cover-head">
+                            <div class="card-label">Store appearance</div>
+                            <div class="store-cover-hint">הכותרת, תמונת הרקע ותמונת הפרופיל של החנות שלך.</div>
                         </div>
+                        <div class="store-cover-name" id="storeRectName">My Store</div>
+                        <figure class="store-avatar"><div class="avatar" id="storeAvatar">V</div></figure>
+                    </div>
+                    <div class="store-cover-actions">
+                        <button type="button" class="change-photo" id="changeBg">שנה תמונת רקע</button>
+                        <button type="button" class="change-photo" id="changeStorePhoto">שנה תמונת פרופיל</button>
+                        <a class="stf-open" href="store-profile.html" target="_blank" rel="noopener">Open storefront ↗</a>
+                        <input id="storeBgInput" type="file" accept="image/*" hidden>
                     </div>
                 </div>
 
@@ -885,10 +914,28 @@
                 avatarEl.textContent = n ? n[0] : 'V';
                 if (sideImageEl) { sideImageEl.style.backgroundImage = ''; sideImageEl.style.filter = ''; }
             }
+            if (typeof refreshStoreAvatar === 'function') refreshStoreAvatar();
         }
         refreshAvatar();
 
-        // The black storefront banner shows the display name in white.
+        // Mirror the profile photo onto the Store-appearance avatar.
+        function refreshStoreAvatar() {
+            const el = document.getElementById('storeAvatar');
+            if (!el) return;
+            if (profile.avatarImg) {
+                el.style.backgroundImage = `url('${profile.avatarImg}')`;
+                el.classList.add('has-img');
+                el.textContent = '';
+            } else {
+                el.style.backgroundImage = '';
+                el.classList.remove('has-img');
+                const n = (profile.name || '').trim();
+                el.textContent = n ? n[0] : 'V';
+            }
+        }
+        refreshStoreAvatar();
+
+        // The store name overlaid on the cover.
         function refreshStoreRectName() {
             const el = document.getElementById('storeRectName');
             if (el) el.textContent = (profile.name || '').trim() || 'My Store';
@@ -898,6 +945,9 @@
         // The visible "Change photo" button just opens the hidden file picker.
         const changeBtn = document.getElementById('changePhoto');
         if (changeBtn) changeBtn.addEventListener('click', () => document.getElementById('pf-photo').click());
+        // The Store-appearance "change profile photo" uses the same picker.
+        const changeStorePhoto = document.getElementById('changeStorePhoto');
+        if (changeStorePhoto) changeStorePhoto.addEventListener('click', () => document.getElementById('pf-photo').click());
 
         // ---- Profile picture upload (stored as a data URL on the profile) ----
         const photoInput = document.getElementById('pf-photo');
@@ -909,6 +959,7 @@
                 profile.avatarImg = reader.result;
                 localStorage.setItem('vero_profile', JSON.stringify(profile));
                 refreshAvatar();
+                refreshStoreAvatar();
             };
             reader.readAsDataURL(file);
         });
@@ -924,7 +975,7 @@
             document.getElementById(id).addEventListener('input', (e) => {
                 profile[key] = e.target.value;
                 localStorage.setItem('vero_profile', JSON.stringify(profile));
-                if (key === 'name') { refreshAvatar(); refreshStoreRectName(); }
+                if (key === 'name') { refreshAvatar(); refreshStoreRectName(); refreshStoreAvatar(); }
                 const note = document.getElementById('saveNote');
                 note.textContent = 'Saved ✓';
                 clearTimeout(saveTimer);
