@@ -85,6 +85,13 @@
         }
         .hero-inner { position: relative; z-index: 2; padding: 0 40px 34px; color: #fff; width: 100%; }
         .hero-name { font-size: clamp(38px, 6vw, 78px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+        /* Shared five-star rating (outline stars, proportional fill). */
+        .vero-stars { position: relative; display: inline-flex; align-items: center; line-height: 1; font-size: 18px; direction: ltr; }
+        .vero-stars-base, .vero-stars-fill { letter-spacing: 3px; }
+        .vero-stars-base { color: #d9d9d4; }
+        .vero-stars-fill { color: #111; position: absolute; top: 0; left: 0; width: 0; overflow: hidden; white-space: nowrap; pointer-events: none; }
+        .vero-stars-num { margin-left: 10px; font-size: 13px; color: #6b6b66; letter-spacing: 0.3px; }
+        .hero-rating { margin-top: 14px; }
         .hero-tag  { margin-top: 14px; font-size: 15px; font-weight: 300; letter-spacing: 0.5px; max-width: 620px; opacity: 0.92; }
         .hero-badges { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
         .verified {
@@ -441,6 +448,7 @@
                          description instead of being stranded at the top. -->
                     <div class="hero-lead">
                         <h1 class="hero-name" id="storeName">Studio Noir</h1>
+                        <div class="vero-stars hero-rating" id="storeRating"></div>
                         <p class="hero-tag" id="storeTag">Curated wardrobe & one-off pieces. Tel Aviv.</p>
                     </div>
                     <div class="hero-right">
@@ -643,8 +651,25 @@
         let activeAud = 'all';
         let searchTerm = '';
 
+        // Five-star rating markup (outline stars filled proportionally).
+        function veroStarsHTML(rating) {
+            const r = Math.max(0, Math.min(5, Number(rating) || 0));
+            return `<span class="vero-stars-base">★★★★★</span>`
+                + `<span class="vero-stars-fill" style="width:${(r/5)*100}%">★★★★★</span>`
+                + `<span class="vero-stars-num">${r.toFixed(1)}</span>`;
+        }
+        // A store rating derived from its products (falls back to a stable 4.x).
+        function storeRatingValue() {
+            const rs = (PRODUCTS || []).map(p => Number(p.rating)).filter(n => !isNaN(n));
+            if (rs.length) return rs.reduce((a, b) => a + b, 0) / rs.length;
+            let h = 0; const s = STORE.name || 'Store';
+            for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            return 4 + (h % 10) / 10;
+        }
+
         // Hero + ad + header text.
         document.getElementById('storeName').textContent = STORE.name;
+        document.getElementById('storeRating').innerHTML = veroStarsHTML(storeRatingValue());
         document.getElementById('storeTag').textContent = STORE.tag;
         document.getElementById('followers').textContent = STORE.followers.toLocaleString('en-US');
         document.getElementById('hero').style.backgroundImage = `url('${STORE.hero}')`;

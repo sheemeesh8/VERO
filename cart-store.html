@@ -60,6 +60,40 @@
         .head-total { margin-left: auto; font-size: 14px; letter-spacing: 0.5px; color: #1c1c1c; }
         .head-total b { font-size: 30px; font-weight: 300; margin-left: 8px; }
 
+        /* ===== Filter / selection toolbar ===== */
+        .cart-toolbar {
+            display: flex; align-items: flex-end; gap: 44px; flex-wrap: wrap;
+            margin-top: 32px; padding-bottom: 22px; border-bottom: 1px solid #000;
+        }
+        .ct-group { display: inline-flex; align-items: center; gap: 8px; }
+        /* Labelled control: caption sits above its select. */
+        .ct-field { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+        .ct-btn {
+            border: 1.4px solid #000; background: #fff; color: #1c1c1c; cursor: pointer;
+            font-family: inherit; font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 10px 18px; border-radius: 999px; transition: background 0.2s, color 0.2s;
+        }
+        .ct-btn:hover { background: #000; color: #fff; }
+        .ct-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; }
+        .ct-select {
+            font-family: inherit; font-size: 13px; color: #1c1c1c; background: #fff;
+            border: 1.4px solid #000; border-radius: 999px; padding: 9px 16px; cursor: pointer;
+        }
+        .ct-select:focus { outline: none; }
+        .ct-count { margin-left: auto; font-size: 12px; letter-spacing: 0.5px; color: #6b6b66; }
+
+        /* Selection checkbox overlaid on each cart card. */
+        .cart-item { position: relative; }
+        .cart-select {
+            position: absolute; top: 12px; left: 12px; z-index: 4;
+            width: 24px; height: 24px; border-radius: 50%; border: 1.6px solid #000;
+            background: #fff; cursor: pointer; display: grid; place-items: center;
+            padding: 0; transition: background 0.2s, color 0.2s;
+        }
+        .cart-select svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 3; fill: none; opacity: 0; }
+        .cart-item.is-selected .cart-select { background: #000; }
+        .cart-item.is-selected .cart-select svg { opacity: 1; }
+
         /* Category sections within a cart. */
         .cat-section { margin-top: 44px; }
         .cat-label {
@@ -117,6 +151,7 @@
         </div>
         <p class="head-sub" id="headSub">The items you've gathered, ready to check out.</p>
 
+        <div id="toolbarHost"></div>
         <div id="cartBody"></div>
         <div id="checkoutHost"></div>
     </div>
@@ -180,6 +215,11 @@
         }
 
         let MODE = 'clothing';
+        // Filter / sort / selection state for the cart toolbar.
+        let filterCat = 'all';      // category filter (alphabetical list)
+        let filterSeller = 'all';   // seller filter
+        let sortBy = 'featured';    // featured | price-asc | price-desc
+        let selected = new Set();   // cart indices ticked for checkout
 
         const priceNum = p => parseFloat(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
         const priceStr = p => {
@@ -200,8 +240,13 @@
         function cartCardHTML(item, idx) {
             const rating = item.rating || 4.5;
             const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+            const sel = selected.has(idx) ? ' is-selected' : '';
             return `
-                <a href="${productPageUrl(item)}" class="product-card cart-item" data-idx="${idx}">
+                <a href="${productPageUrl(item)}" class="product-card cart-item${sel}" data-idx="${idx}">
+                    <button class="cart-select" title="Select for checkout"
+                            onclick="event.preventDefault(); event.stopPropagation(); toggleSelect(${idx})">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
                     <div class="product-image">${item.icon || '🛍️'}
                         <button class="product-icon remove" title="Remove from cart"
                                 onclick="event.preventDefault(); event.stopPropagation(); removeItem(${idx})">
@@ -224,49 +269,127 @@
                 </a>`;
         }
 
+        // Rows for the active toggle (clothing / art), before the toolbar filters.
+        function modeRows() {
+            return cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
+        }
+        // Rows after applying the category / seller / price-sort toolbar controls.
+        function visibleRows() {
+            let rows = modeRows();
+            if (filterCat !== 'all')    rows = rows.filter(({ it }) => (it.category || 'Other') === filterCat);
+            if (filterSeller !== 'all') rows = rows.filter(({ it }) => (it.seller || 'Vero Store') === filterSeller);
+            if (sortBy === 'price-asc')  rows = rows.slice().sort((a, b) => priceNum(a.it.price) - priceNum(b.it.price));
+            if (sortBy === 'price-desc') rows = rows.slice().sort((a, b) => priceNum(b.it.price) - priceNum(a.it.price));
+            return rows;
+        }
+
+        // Toolbar: select all / deselect all + category (A–Z), seller (A–Z) and price filters.
+        function renderToolbar() {
+            const host = document.getElementById('toolbarHost');
+            const all = modeRows();
+            if (!all.length) { host.innerHTML = ''; return; }
+            const cats    = [...new Set(all.map(({ it }) => it.category || 'Other'))].sort((a, b) => a.localeCompare(b));
+            const sellers = [...new Set(all.map(({ it }) => it.seller || 'Vero Store'))].sort((a, b) => a.localeCompare(b));
+            const opt = (v, cur, lbl) => `<option value="${v}"${v === cur ? ' selected' : ''}>${lbl || v}</option>`;
+            const selCount = visibleRows().filter(r => selected.has(r.idx)).length;
+            host.innerHTML = `
+                <div class="cart-toolbar">
+                    <div class="ct-group">
+                        <button class="ct-btn" onclick="selectAll()">Select all</button>
+                        <button class="ct-btn" onclick="deselectAll()">Deselect all</button>
+                    </div>
+                    <div class="ct-field">
+                        <span class="ct-label">Category</span>
+                        <select class="ct-select" onchange="setFilterCat(this.value)">
+                            ${opt('all', filterCat, 'All categories')}${cats.map(c => opt(c, filterCat)).join('')}
+                        </select>
+                    </div>
+                    <div class="ct-field">
+                        <span class="ct-label">Seller</span>
+                        <select class="ct-select" onchange="setFilterSeller(this.value)">
+                            ${opt('all', filterSeller, 'All sellers')}${sellers.map(s => opt(s, filterSeller)).join('')}
+                        </select>
+                    </div>
+                    <div class="ct-field">
+                        <span class="ct-label">Price</span>
+                        <select class="ct-select" onchange="setSortBy(this.value)">
+                            ${opt('featured', sortBy, 'Featured')}${opt('price-asc', sortBy, 'Price: low to high')}${opt('price-desc', sortBy, 'Price: high to low')}
+                        </select>
+                    </div>
+                    <span class="ct-count">${selCount} selected</span>
+                </div>`;
+        }
+
         function render() {
             const body = document.getElementById('cartBody');
             const host = document.getElementById('checkoutHost');
             const sub = document.getElementById('headSub');
 
-            // This cart = the items whose type matches the active toggle.
-            const mine = cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
+            renderToolbar();
 
-            if (!mine.length) {
+            // This cart = the items whose type matches the active toggle, after filters.
+            const mine = visibleRows();
+
+            if (!modeRows().length) {
                 body.innerHTML = `<div class="cart-empty">Your ${MODE} cart is empty — pieces you add from the feed appear here.</div>`;
                 host.innerHTML = '';
                 document.getElementById('headTotal').innerHTML = '';
                 sub.textContent = "The items you've gathered, ready to check out.";
                 return;
             }
+            if (!mine.length) {
+                body.innerHTML = `<div class="cart-empty">No items match these filters.</div>`;
+                host.innerHTML = '';
+                document.getElementById('headTotal').innerHTML = '';
+                return;
+            }
 
-            // Group the cart into product categories (Shirts, Shoes, Pants, Watches…).
+            // Group the cart into product categories (Shirts, Shoes, Pants, Watches…),
+            // with the category headers themselves in alphabetical order.
             const groups = new Map();
             mine.forEach(row => {
                 const c = row.it.category || 'Other';
                 if (!groups.has(c)) groups.set(c, []);
                 groups.get(c).push(row);
             });
+            const orderedCats = [...groups.keys()].sort((a, b) => a.localeCompare(b));
 
-            body.innerHTML = [...groups.entries()].map(([cat, rows]) => `
+            body.innerHTML = orderedCats.map(cat => {
+                const rows = groups.get(cat);
+                return `
                 <div class="cat-section">
                     <div class="cat-label"><b>${cat}</b><span>${rows.length} item${rows.length === 1 ? '' : 's'}</span></div>
                     <div class="cart-grid">${rows.map(r => cartCardHTML(r.it, r.idx)).join('')}</div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
 
-            const count = mine.reduce((s, { it }) => s + (it.qty || 1), 0);
-            const total = mine.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
-            sub.textContent = `${count} item${count === 1 ? '' : 's'} in your ${MODE} cart · ready to check out.`;
+            // Totals reflect the ticked selection when there is one, otherwise everything shown.
+            const chosen = mine.filter(r => selected.has(r.idx));
+            const forTotal = chosen.length ? chosen : mine;
+            const count = forTotal.reduce((s, { it }) => s + (it.qty || 1), 0);
+            const total = forTotal.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
+            sub.textContent = chosen.length
+                ? `${count} selected item${count === 1 ? '' : 's'} · ready to check out.`
+                : `${count} item${count === 1 ? '' : 's'} in your ${MODE} cart · ready to check out.`;
             document.getElementById('headTotal').innerHTML = `Total <b>₪${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>`;
             host.innerHTML = `
                 <div class="checkout">
-                    <button class="checkout-btn" onclick="veroCheckout()">Checkout &#8594;</button>
+                    <button class="checkout-btn" onclick="veroCheckout()">Checkout${chosen.length ? ' selected' : ''} &#8594;</button>
                 </div>`;
         }
+
+        // ---- Toolbar handlers ----
+        window.toggleSelect  = function (idx) { selected.has(idx) ? selected.delete(idx) : selected.add(idx); render(); };
+        window.selectAll     = function () { visibleRows().forEach(r => selected.add(r.idx)); render(); };
+        window.deselectAll   = function () { visibleRows().forEach(r => selected.delete(r.idx)); render(); };
+        window.setFilterCat    = function (v) { filterCat = v; render(); };
+        window.setFilterSeller = function (v) { filterSeller = v; render(); };
+        window.setSortBy       = function (v) { sortBy = v; render(); };
 
         // Remove keeps the site's own cart storage in sync (demo items aren't saved).
         window.removeItem = function (idx) {
             cart.splice(idx, 1);
+            selected.clear();   // indices shift after a splice — start selection fresh
             if (!DEMO) localStorage.setItem('vero_cart', JSON.stringify(cart));
             render();
         };
@@ -274,7 +397,9 @@
         // Checkout — turns the active cart into conversations with each seller,
         // written to the same vero_chats store the Chats page reads, then opens it.
         window.veroCheckout = function () {
-            const mine = cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
+            const visible = visibleRows();
+            const chosen = visible.filter(r => selected.has(r.idx));
+            const mine = chosen.length ? chosen : visible;
             if (!mine.length) return;
 
             const store = readJSON('vero_chats', {});
@@ -303,6 +428,8 @@
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 MODE = btn.dataset.mode;
+                // Fresh filters + selection per cart.
+                filterCat = 'all'; filterSeller = 'all'; sortBy = 'featured'; selected.clear();
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
                 render();
             });

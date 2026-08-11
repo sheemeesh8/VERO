@@ -813,8 +813,8 @@
         }
         .vsp-close:hover { opacity: 0.55; }
         .vsp-inner {
-            max-width: 1320px; margin: 0 auto;
-            padding: 64px 40px 110px;
+            max-width: 1680px; width: 100%; margin: 0 auto;
+            padding: 56px clamp(30px, 6vw, 96px) 110px;
             display: flex; flex-direction: column; align-items: center;
         }
         .vsp-logo img { height: 46px; width: auto; display: block; filter: brightness(0); }
@@ -824,14 +824,14 @@
         }
         /* Two half-width search pills, side by side: products | sellers. */
         .vsp-searchbar {
-            margin-top: 40px; width: 100%;
-            display: flex; align-items: stretch; gap: 16px;
+            margin-top: 48px; width: 100%;
+            display: flex; align-items: stretch; gap: 22px;
         }
         .vsp-searchfield {
             flex: 1 1 50%; min-width: 0;
-            display: flex; align-items: center; gap: 12px;
+            display: flex; align-items: center; gap: 14px;
             border: 1.5px solid #111; border-radius: 999px;
-            height: 60px; padding: 0 24px; box-sizing: border-box;
+            height: 74px; padding: 0 32px; box-sizing: border-box;
         }
         @media (max-width: 620px) { .vsp-searchbar { flex-direction: column; } }
         .vsp-searchfield {
@@ -847,7 +847,7 @@
         .vsp-searchbar.mode-seller #vspFieldSeller { flex: 1 1 100%; }
         .vsp-searchfield input {
             flex: 1; min-width: 0; border: none; outline: none; background: none;
-            font-family: inherit; font-size: 16px; font-weight: 500; color: #111;
+            font-family: inherit; font-size: 18px; font-weight: 500; color: #111;
         }
         .vsp-searchfield input::placeholder { color: #9a9a9a; letter-spacing: 0.4px; }
         .vsp-searchfield button {
@@ -861,13 +861,14 @@
            starts typing a search. */
         .vsp-cols {
             width: 100%; margin-top: 30px;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 44px 96px;
+            display: none; grid-template-columns: 1fr 1fr; gap: 44px 96px;
             align-items: start;
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
-        #veroSearchPage.searching .vsp-cols {
-            opacity: 0; transform: translateY(-10px); pointer-events: none;
-        }
+        /* Once results are showing, the filter + recommendations give way to them. */
+        #veroSearchPage.searching .vsp-cols,
+        #veroSearchPage.searching .vsp-alt-filter,
+        #veroSearchPage.searching .vsp-seller-suggest { display: none !important; }
 
         /* ===== Alternate filters (seller-style / art-category) =====
            The fashion product wizard (.vsp-cols) is the default. It gives way to a
@@ -877,42 +878,55 @@
         .vsp-alt-filter {
             width: 100%; margin-top: 22px; display: none; flex-direction: column; gap: 20px;
         }
-        /* Categories fade in when a search mode is chosen. */
-        #veroSearchPage.chosen .vsp-alt-filter { animation: vspFadeUp 0.5s ease both; }
-        /* Hide the fashion product wizard in art mode, or whenever the seller field is active. */
-        body[data-mode="art"] #veroSearchPage .vsp-cols,
-        #veroSearchPage.mode-seller .vsp-cols { display: none; }
+        /* Filters stay closed until a search row is chosen (focused). Focusing the
+           product field opens the product wizard; focusing the seller field opens the
+           seller filters + recommended sellers. Blurring an empty field closes them. */
+        #veroSearchPage.mode-product .vsp-alt-filter,
+        #veroSearchPage.mode-seller .vsp-alt-filter { animation: vspFadeUp 0.5s ease both; }
+        /* Fashion + product field → the full product wizard. */
+        body:not([data-mode="art"]) #veroSearchPage.mode-product .vsp-cols { display: grid; }
         /* Fashion + seller field → style chips. */
         body:not([data-mode="art"]) #veroSearchPage.mode-seller .vsp-seller-styles { display: flex; }
-        /* Art mode (either field) → art-category chips. */
-        body[data-mode="art"] #veroSearchPage .vsp-art-cats { display: flex; }
+        /* Art mode (either field, once chosen) → art-category chips. */
+        body[data-mode="art"] #veroSearchPage.mode-product .vsp-art-cats,
+        body[data-mode="art"] #veroSearchPage.mode-seller .vsp-art-cats { display: flex; }
 
-        /* Three quick seller suggestions — shown only in seller mode, below the
-           categories, centred under the seller field. */
+        /* Three recommended sellers, stacked one above the other under the seller
+           field: name + rating on the left, circular avatar on the right. */
         .vsp-seller-suggest {
-            width: 100%; margin-top: 22px;
-            display: none; align-items: flex-start; justify-content: center; gap: 26px;
-            flex-wrap: wrap;
+            width: 100%; margin: 30px 0 0;
+            display: none; flex-direction: column; align-items: stretch; gap: 16px;
         }
+        /* Shown only once the seller row is chosen. */
         #veroSearchPage.mode-seller .vsp-seller-suggest { display: flex; animation: vspFadeUp 0.5s ease 0.05s both; }
         .vsp-suggest-label {
             font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a9a;
         }
-        .vsp-suggest-chips { display: flex; flex-wrap: wrap; gap: 40px; }
-        /* Each suggestion reads as a mini profile: avatar, name, rating — stacked. */
+        .vsp-suggest-chips { display: flex; flex-direction: row; gap: 16px; }
+        @media (max-width: 720px) { .vsp-suggest-chips { flex-direction: column; } }
+        /* Each recommendation: text (name + stars) left, avatar right. */
         .vsp-suggest-card {
-            display: flex; flex-direction: column; align-items: center; gap: 11px;
-            border: none; background: none; cursor: pointer; font-family: inherit; color: #111;
-            padding: 4px;
+            display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+            gap: 18px; flex: 1 1 0; min-width: 0; text-align: left;
+            border: none; border-radius: 16px; background: none; color: #111;
+            cursor: pointer; font-family: inherit; padding: 10px 8px;
+            transition: background 0.2s, color 0.2s;
+            animation: vspFadeUp 0.5s ease 0.05s both;
         }
+        .vsp-suggest-card:hover .vsp-suggest-name { text-decoration: underline; }
+        .vsp-suggest-card:hover .vsp-suggest-ava { transform: scale(1.06); }
+        /* RTL page: the lower order sits at the main-start (the right), so the avatar
+           (order 1) is on the right and the name + rating (order 2) on the left. */
+        .vsp-suggest-info { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; order: 2; }
         .vsp-suggest-ava {
-            width: 84px; height: 84px; border-radius: 50%; border: 1px solid #111;
-            display: grid; place-items: center; font-size: 32px; text-transform: uppercase;
-            font-weight: 300; background: #f4f4f2; transition: background 0.2s, color 0.2s;
+            width: 76px; height: 76px; flex: 0 0 auto; order: 1;
+            border-radius: 50%; border: 1px solid currentColor;
+            display: grid; place-items: center; font-size: 30px; text-transform: uppercase;
+            font-weight: 300; background: #f4f4f2; transition: transform 0.2s;
         }
-        .vsp-suggest-card:hover .vsp-suggest-ava { background: #111; color: #fff; }
-        .vsp-suggest-name { font-size: 16px; font-weight: 600; white-space: nowrap; }
-        .vsp-suggest-rating { font-size: 14px; opacity: 0.7; letter-spacing: 0.3px; }
+        .vsp-suggest-name { font-size: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vsp-suggest-card:hover .vero-stars-base { color: rgba(255,255,255,0.35); }
+        .vsp-suggest-card:hover .vero-stars-fill { color: #fff; }
 
         /* ===== Landing chooser — two rectangles like the personal area ===== */
         .vsp-chooser {
@@ -944,17 +958,19 @@
         }
         .vsp-choice:hover .vsp-choice-word { color: rgba(255,255,255,0.12); }
 
-        /* Active search panel — revealed once a rectangle is chosen. */
-        .vsp-panel { width: 100%; display: none; }
-        #veroSearchPage.chosen .vsp-chooser { display: none; }
-        #veroSearchPage.chosen .vsp-panel { display: block; animation: vspFadeUp 0.45s ease both; }
-        .vsp-panel-back {
-            display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px;
-            padding: 9px 18px; border: 1.4px solid #111; border-radius: 999px; background: #fff;
-            font-family: inherit; font-size: 12px; letter-spacing: 1.5px; color: #111; cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-        }
-        .vsp-panel-back:hover { background: #111; color: #fff; }
+        /* The landing chooser is retired — both search rows show side by side from the
+           start, so the chooser and its "back" control are always hidden. */
+        .vsp-chooser { display: none !important; }
+        .vsp-panel { width: 100%; display: flex; flex-direction: column; align-items: center; }
+        #veroSearchPage.chosen .vsp-panel { animation: vspFadeUp 0.45s ease both; }
+        .vsp-panel-back { display: none !important; }
+        /* Under the two search rows: the filter comes first, then (seller mode) the
+           recommended sellers, then the results take the filter's place on search. */
+        .vsp-searchbar { order: 0; }
+        .vsp-cols { order: 1; }
+        .vsp-alt-filter { order: 1; }
+        .vsp-seller-suggest { order: 2; }
+        .vsp-results-wrap { order: 3; }
 
         .vsp-col { display: flex; flex-direction: column; gap: 52px; min-width: 0; }
         @media (max-width: 760px) { .vsp-cols { grid-template-columns: 1fr; } }
@@ -1003,32 +1019,51 @@
 
         /* Results, below the search — hidden until Enter, then fade/rise in. */
         .vsp-results-wrap {
-            width: 100%; margin-top: 40px; display: flex; flex-direction: column; align-items: center;
+            width: 100%; margin-top: 40px; display: none; flex-direction: column; align-items: center;
             opacity: 0; transform: translateY(34px); pointer-events: none;
             transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .vsp-results-wrap.revealed { opacity: 1; transform: none; pointer-events: auto; }
+        .vsp-results-wrap.revealed { display: flex; opacity: 1; transform: none; pointer-events: auto; }
 
         /* Seller result cards — two per row, content on the LEFT, image on the RIGHT. */
         .vsp-sellers { width: 100%; grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
         @media (max-width: 620px) { .vsp-sellers { grid-template-columns: 1fr; } }
         .vsp-seller-card {
-            display: flex; align-items: center; gap: 16px; padding: 16px 20px;
-            border: 1.5px solid #111; border-radius: 14px; text-decoration: none; color: #111;
+            display: flex; align-items: center; gap: 16px; padding: 14px 12px;
+            border: none; border-radius: 14px; text-decoration: none; color: #111;
             transition: background 0.2s, color 0.2s;
             animation: vspFadeUp 0.5s ease both;
         }
         @keyframes vspFadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-        .vsp-seller-card:hover { background: #111; color: #fff; }
+        .vsp-seller-card:hover .vsp-seller-name { text-decoration: underline; }
+        .vsp-seller-card:hover .vsp-seller-ava { transform: scale(1.04); }
         .vsp-seller-ava {
-            width: 52px; height: 52px; flex: 0 0 auto; border-radius: 50%; border: 1px solid currentColor;
-            display: grid; place-items: center; font-size: 20px; text-transform: uppercase; background: #f4f4f2;
+            width: 66px; height: 66px; flex: 0 0 auto; border-radius: 50%; border: 1px solid currentColor;
+            display: grid; place-items: center; font-size: 26px; text-transform: uppercase; background: #f4f4f2;
+            transition: transform 0.2s;
         }
-        .vsp-seller-card:hover .vsp-seller-ava { background: rgba(255,255,255,0.14); }
-        .vsp-seller-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; text-align: left; }
-        .vsp-seller-name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vsp-seller-meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; text-align: left; }
+        .vsp-seller-name { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .vsp-seller-rating { font-size: 13px; opacity: 0.72; letter-spacing: 0.5px; }
-        .vsp-seller-tags { font-size: 12px; opacity: 0.6; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vsp-seller-tags { font-size: 13px; opacity: 0.6; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* Bigger stars in the search overlay for legibility. */
+        .vsp-seller-card .vero-stars, .vsp-suggest-card .vero-stars { font-size: 18px; }
+
+        /* ===== Shared five-star rating (outline stars, proportional fill) ===== */
+        /* direction:ltr keeps the base/fill overlay aligned even on RTL pages. */
+        .vero-stars { position: relative; display: inline-flex; align-items: center; line-height: 1; font-size: 15px; direction: ltr; }
+        .vero-stars-base, .vero-stars-fill { letter-spacing: 2px; }
+        .vero-stars-base { color: #d9d9d4; }
+        .vero-stars-fill {
+            color: #111; position: absolute; top: 0; left: 0;
+            width: 0; overflow: hidden; white-space: nowrap; pointer-events: none;
+        }
+        .vero-stars-num { margin-left: 9px; font-size: 12px; color: #6b6b66; letter-spacing: 0.3px; }
+        /* On dark hover cards the outline stays visible, the fill turns white. */
+        .vsp-seller-card:hover .vero-stars-base { color: rgba(255,255,255,0.35); }
+        .vsp-seller-card:hover .vero-stars-fill { color: #fff; }
+        .vsp-seller-card:hover .vero-stars-num,
+        .vsp-suggest-card:hover .vero-stars-num { color: rgba(255,255,255,0.75); }
         .vsp-results-head {
             font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
             color: #111; font-weight: 800; margin-bottom: 24px;
@@ -1224,6 +1259,26 @@
         return (4 + (h % 10) / 10).toFixed(1);
     }
 
+    // Deterministic profile-picture avatar for a seller (no photo on file): a stable
+    // two-tone gradient keyed off the name, so every seller shows a distinct "photo".
+    function vspAvatarStyle(name) {
+        let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+        const hue = h % 360, hue2 = (hue + 42) % 360;
+        return `background:linear-gradient(135deg,hsl(${hue} 58% 56%),hsl(${hue2} 62% 40%));color:#fff;border-color:transparent;`;
+    }
+
+    // Five-star rating drawn as outline stars filled proportionally to the score.
+    // Exposed on window so any page that loads header.js can reuse the same visual.
+    window.veroStarsHTML = function (rating) {
+        const r = Math.max(0, Math.min(5, Number(rating) || 0));
+        const pct = (r / 5) * 100;
+        return `<span class="vero-stars" role="img" aria-label="${r.toFixed(1)} out of 5">`
+            + `<span class="vero-stars-base">★★★★★</span>`
+            + `<span class="vero-stars-fill" style="width:${pct}%">★★★★★</span>`
+            + `<span class="vero-stars-num">${r.toFixed(1)}</span>`
+            + `</span>`;
+    };
+
     function chip(group, value, active) {
         return `<button class="vsp-chip${active ? ' active' : ''}" onclick="vspPick('${group}', this)" data-value="${value}">${value}</button>`;
     }
@@ -1333,7 +1388,7 @@
                 <!-- Seller mode: three quick seller suggestions, below the categories.
                      Filled by vspFillSellerSuggestions() to match the active site mode. -->
                 <div class="vsp-seller-suggest" id="vspSellerSuggest">
-                    <span class="vsp-suggest-label">Try a seller</span>
+                    <span class="vsp-suggest-label">Recommended sellers</span>
                     <div class="vsp-suggest-chips" id="vspSuggestChips"></div>
                 </div>
                 <!-- Results, below the filter, updated live as choices are made. -->
@@ -1406,6 +1461,7 @@
             page.classList.remove('mode-product', 'mode-seller');
             page.classList.add(which === 'seller' ? 'mode-seller' : 'mode-product');
         }
+        if (which === 'seller') vspFillSellerSuggestions();
     };
     // When a field is left empty and neither field is focused, restore both.
     window.vspBlurField = function () {
@@ -1483,12 +1539,14 @@
         const isArt = document.body.dataset.mode === 'art';
         const pool = isArt ? VSP_ART_SELLERS : vspGatherSellers();
         const picks = pool.slice(0, 3);
-        // Each suggestion is a little profile: avatar circle, name, then rating, stacked.
+        // Each recommendation: name + star rating on the left, avatar circle on the right.
         host.innerHTML = picks.map(s =>
             `<button class="vsp-suggest-card" type="button" onclick="vspPickSellerSuggest('${s.replace(/'/g, "\\'")}')">
-                <span class="vsp-suggest-ava">${s[0] || '?'}</span>
-                <span class="vsp-suggest-name">${s}</span>
-                <span class="vsp-suggest-rating">★ ${vspSellerRating(s)}</span>
+                <span class="vsp-suggest-info">
+                    <span class="vsp-suggest-name">${s}</span>
+                    ${window.veroStarsHTML(vspSellerRating(s))}
+                </span>
+                <span class="vsp-suggest-ava" style="${vspAvatarStyle(s)}">${s[0] || '?'}</span>
             </button>`
         ).join('');
     }
@@ -1523,10 +1581,10 @@
         host.innerHTML = sellers.length
             ? '<div class="vsp-sellers">' + sellers.map(s =>
                 `<a class="vsp-seller-card" href="store-profile.html">
-                    <span class="vsp-seller-ava">${(s[0] || '?')}</span>
+                    <span class="vsp-seller-ava" style="${vspAvatarStyle(s)}">${(s[0] || '?')}</span>
                     <span class="vsp-seller-meta">
                         <span class="vsp-seller-name">${s}</span>
-                        <span class="vsp-seller-rating">★ ${rate(s)}</span>
+                        <span class="vsp-seller-rating">${window.veroStarsHTML(rate(s))}</span>
                         <span class="vsp-seller-tags">${tagsOf(s).join(' · ')}</span>
                     </span>
                 </a>`).join('') + '</div>'
@@ -1609,9 +1667,10 @@
     window.veroOpenSearchPage = function () {
         mountSearchPage();
         const page = document.getElementById('veroSearchPage');
-        // Fresh each open.
-        // Always open on the two-rectangle chooser — no mode picked yet.
+        // Fresh each open: both search rows side by side, no mode picked yet, with the
+        // recommended sellers listed under the seller row.
         vspBackToChooser();
+        vspFillSellerSuggestions();
         requestAnimationFrame(() => {
             page.classList.add('open');
             page.setAttribute('aria-hidden', 'false');
