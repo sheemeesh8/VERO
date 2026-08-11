@@ -56,6 +56,21 @@
             font-size: 46px; color: #b8b8b3;
         }
         .cover.has-img { color: transparent; }
+        /* Cut-out preview: the item floats on the product-page background (#F2F0EF). */
+        .cover.cutout {
+            background-color: #F2F0EF !important;
+            background-size: contain !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }
+        /* Auto-remove-background toggle + status line. */
+        .bg-toggle {
+            display: flex; align-items: center; gap: 9px; margin-bottom: 10px;
+            font-size: 12px; letter-spacing: 0.5px; color: #1c1c1c; cursor: pointer; user-select: none;
+        }
+        .bg-toggle input { width: 15px; height: 15px; accent-color: #000; cursor: pointer; }
+        .bg-status { min-height: 16px; margin-bottom: 12px; font-size: 11px; letter-spacing: 0.5px; color: #9a9a95; }
+        .bg-status.working { color: #1c1c1c; }
         .change-photo {
             width: 100%; border: 1.4px solid #000; background: #fff; cursor: pointer;
             font-family: inherit; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
@@ -171,6 +186,8 @@
                     <div class="card">
                         <div class="card-label">Cover photo</div>
                         <div class="cover ${src ? 'has-img' : ''}" id="cover" style="${src ? `background-image:url('${src}')` : ''}">${src ? '' : (p.icon || '🛍️')}</div>
+                        <label class="bg-toggle"><input type="checkbox" id="removeBg" checked> הסר רקע אוטומטית לתמונה הראשית</label>
+                        <div class="bg-status" id="bgStatus"></div>
                         <button type="button" class="change-photo" id="changePhoto">Change photo</button>
                         <input id="photoInput" type="file" accept="image/*" hidden>
                     </div>
@@ -250,22 +267,146 @@
 
         function esc(v) { return (v == null ? '' : String(v)).replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 
+        // ---- Automatic background removal (fully client-side, no external service) ----
+        // Treats the corners/edges as the backdrop and flood-fills every connected
+        // pixel within a colour tolerance to transparent, so the item floats on the
+        // product-page background (#F2F0EF). Works best on studio / plain backdrops.
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const im = new Image();
+                im.onload = () => resolve(im);
+                im.onerror = reject;
+                im.src = src;
+            });
+        }
+        async function removeBackground(dataUrl, tolerance = 42) {
+            const img = await loadImage(dataUrl);
+            // Cap the working size so big phone photos stay fast.
+            const MAX = 1400;
+            const scale = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+            const w = Math.max(1, Math.round(img.naturalWidth * scale));
+            const h = Math.max(1, Math.round(img.naturalHeight * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const image = ctx.getImageData(0, 0, w, h);
+            const px = image.data;
+
+            // Average backdrop colour from the four corners.
+            const corners = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]];
+            let br = 0, bg = 0, bb = 0;
+            corners.forEach(([x, y]) => { const i = (y * w + x) * 4; br += px[i]; bg += px[i + 1]; bb += px[i + 2]; });
+            br /= 4; bg /= 4; bb /= 4;
+            const tol2 = tolerance * tolerance * 3;
+
+            const visited = new Uint8Array(w * h);
+            const stack = [];
+            const consider = (x, y) => {
+                if (x < 0 || y < 0 || x >= w || y >= h) return;
+                const idx = y * w + x;
+                if (visited[idx]) return;
+                const i = idx * 4;
+                const dr = px[i] - br, dg = px[i + 1] - bg, db = px[i + 2] - bb;
+                if (dr * dr + dg * dg + db * db <= tol2) {
+                    visited[idx] = 1; px[i + 3] = 0; stack.push(idx);
+                } else {
+                    visited[idx] = 2;
+                }
+            };
+            for (let x = 0; x < w; x++) { consider(x, 0); consider(x, h - 1); }
+            for (let y = 0; y < h; y++) { consider(0, y); consider(w - 1, y); }
+            while (stack.length) {
+                const idx = stack.pop(), x = idx % w, y = (idx / w) | 0;
+                consider(x + 1, y); consider(x - 1, y); consider(x, y + 1); consider(x, y - 1);
+            }
+
+            // Soften the boundary: kept pixels touching transparency go semi-opaque.
+            const alphaAt = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? 0 : px[(y * w + x) * 4 + 3];
+            const original = new Uint8ClampedArray(px);
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const i = (y * w + x) * 4;
+                    if (original[i + 3] === 0) continue;
+                    let clear = 0;
+                    if (alphaAt(x + 1, y) === 0) clear++;
+                    if (alphaAt(x - 1, y) === 0) clear++;
+                    if (alphaAt(x, y + 1) === 0) clear++;
+                    if (alphaAt(x, y - 1) === 0) clear++;
+                    if (clear >= 1) px[i + 3] = Math.min(px[i + 3], clear >= 3 ? 90 : 170);
+                }
+            }
+            ctx.putImageData(image, 0, 0);
+            return canvas.toDataURL('image/png');
+        }
+
         function wire(p) {
             let status = p.status || 'active';
 
-            // Cover upload.
+            // Cover upload — with automatic background removal for the main image.
             const cover = document.getElementById('cover');
             const photoInput = document.getElementById('photoInput');
+            const bgToggle = document.getElementById('removeBg');
+            const bgStatus = document.getElementById('bgStatus');
+
+            function showCover(url, cutout) {
+                cover.style.backgroundImage = `url('${url}')`;
+                cover.classList.add('has-img');
+                cover.classList.toggle('cutout', !!cutout);
+                cover.textContent = '';
+            }
+
             document.getElementById('changePhoto').addEventListener('click', () => photoInput.click());
             photoInput.addEventListener('change', (e) => {
                 const file = e.target.files && e.target.files[0]; if (!file) return;
                 const reader = new FileReader();
-                reader.onload = () => {
-                    p._newImage = reader.result;
-                    cover.style.backgroundImage = `url('${reader.result}')`;
-                    cover.classList.add('has-img'); cover.textContent = '';
+                reader.onload = async () => {
+                    const original = reader.result;
+                    p._newImageOriginal = original;
+                    if (!bgToggle.checked) {
+                        p._newImage = original;
+                        showCover(original, false);
+                        bgStatus.textContent = '';
+                        return;
+                    }
+                    // Preview the original immediately, then swap in the cut-out.
+                    showCover(original, false);
+                    bgStatus.classList.add('working');
+                    bgStatus.textContent = 'מסיר רקע…';
+                    try {
+                        const cut = await removeBackground(original);
+                        p._newImage = cut;
+                        showCover(cut, true);
+                        bgStatus.classList.remove('working');
+                        bgStatus.textContent = 'הרקע הוסר — המוצר צף על רקע הדף ✓';
+                    } catch (err) {
+                        console.error(err);
+                        p._newImage = original;
+                        bgStatus.classList.remove('working');
+                        bgStatus.textContent = 'לא ניתן היה להסיר רקע — נשמרה התמונה המקורית';
+                    }
                 };
                 reader.readAsDataURL(file);
+            });
+
+            // Re-run (or undo) removal when the toggle changes and a photo is loaded.
+            bgToggle.addEventListener('change', async () => {
+                if (!p._newImageOriginal) return;
+                if (!bgToggle.checked) {
+                    p._newImage = p._newImageOriginal;
+                    showCover(p._newImageOriginal, false);
+                    bgStatus.textContent = '';
+                    return;
+                }
+                bgStatus.classList.add('working');
+                bgStatus.textContent = 'מסיר רקע…';
+                try {
+                    const cut = await removeBackground(p._newImageOriginal);
+                    p._newImage = cut;
+                    showCover(cut, true);
+                    bgStatus.classList.remove('working');
+                    bgStatus.textContent = 'הרקע הוסר — המוצר צף על רקע הדף ✓';
+                } catch (err) { console.error(err); }
             });
 
             // Live final-price readout.
@@ -308,7 +449,12 @@
                 p.color = val('f-color');
                 p.material = val('f-material');
                 p.description = val('f-description');
-                if (p._newImage) { p.image = p._newImage; delete p._newImage; }
+                if (p._newImage) {
+                    p.image = p._newImage;
+                    p.processed_cover = p._newImage;
+                    if (p._newImageOriginal) p.original_cover = p._newImageOriginal;
+                    delete p._newImage; delete p._newImageOriginal;
+                }
 
                 // Status transitions keep the same timestamps the listings page reads.
                 const prev = p.status || 'active';

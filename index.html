@@ -4573,7 +4573,7 @@
         .us-form { background: #fff; }
         .us-form .upload-header h1 { color: #111; }
         .us-form .upload-header p,
-        .us-form .upload-form-group label { color: rgba(0,0,0,0.55); }
+        .us-form .upload-form-group label { color: #1c1c1c; font-weight: 700; }
         .us-form .upload-form-group input,
         .us-form .upload-form-group textarea,
         .us-form .upload-form-group select {
@@ -4805,6 +4805,17 @@
             color: #111;
             font-variant-numeric: tabular-nums;
         }
+        /* Footwear size text box + garment size dropdown. */
+        .shoe-size .shoe-input {
+            flex: 1; padding: 12px 2px; border: none; border-bottom: 1px solid #e2ded7;
+            font-family: inherit; font-size: 18px; color: #111; background: transparent;
+        }
+        .shoe-size .shoe-input:focus { outline: none; border-bottom-color: #004225; }
+        .size-grid .size-select {
+            width: 100%; padding: 12px 2px; border: none; border-bottom: 1px solid #e2ded7;
+            font-family: inherit; font-size: 18px; color: #111; background: transparent; cursor: pointer;
+        }
+        .size-grid .size-select:focus { outline: none; border-bottom-color: #004225; }
 
         /* ---- Final step: the art hero, in glass, with the finished card on top ---- */
         .upload-slide.final .us-final {
@@ -4901,9 +4912,9 @@
         }
 
         .upload-form-group label {
-            font-weight: 600;
-            font-size: 12px;
-            color: #999;
+            font-weight: 700;
+            font-size: 13.5px;
+            color: #1c1c1c;
             text-transform: uppercase;
             letter-spacing: 1.6px;
         }
@@ -5849,16 +5860,17 @@
 
                                 <div class="upload-form-group size-panel" id="sizeGroup" style="display:none">
                                     <label id="sizeLabel">Size</label>
+                                    <!-- Garment: a size dropdown (S / M / L …). -->
                                     <div class="size-grid" id="sizeGrid"></div>
+                                    <!-- Footwear: a free text box for the size. -->
                                     <div class="shoe-size" id="shoeSize" style="display:none">
-                                        <input type="range" id="shoeSlider" min="0" max="65" step="1" value="42"
+                                        <input type="text" id="shoeInput" class="shoe-input"
+                                               placeholder='מידת נעל — לדוגמה 42 / US 9'
                                                oninput="setShoeSize(this.value)">
-                                        <output class="shoe-out" id="shoeOut">42</output>
                                     </div>
                                 </div>
                             </div>
-                            <!-- FEATURE 2 — dynamic photo guide, follows the item type. -->
-                            <vero-photo-guide id="uploadPhotoGuide" category="tops" style="margin-top:26px;display:block"></vero-photo-guide>
+                            <!-- The shooting guide now lives only on the standalone GUIDE. -->
                             <div class="upload-buttons">
                                 <button class="upload-btn back" onclick="goToPreviousSlide()">Back</button>
                                 <button class="upload-btn next" onclick="goToNextSlide()">Next</button>
@@ -8252,8 +8264,8 @@
             if (heading) heading.textContent = uploadFormData.category === 'art' ? 'Artist Name' : 'Brand Name';
             const typeDisplay = document.getElementById('itemTypeDisplay');
             if (typeDisplay) typeDisplay.textContent = 'Item Type';
-            const shoe = document.getElementById('shoeSlider');
-            if (shoe) { shoe.value = 42; document.getElementById('shoeOut').textContent = '42'; }
+            const shoeInput = document.getElementById('shoeInput');
+            if (shoeInput) shoeInput.value = '';
         }
 
         // Gender and size only make sense for clothing; art skips both.
@@ -8442,6 +8454,9 @@
             const disp = document.getElementById('itemTypeDisplay');
             if (disp) disp.textContent = r.type;
             if (typeof syncItemTypeHeading === 'function') syncItemTypeHeading();
+            // Open the matching size control (garment dropdown / shoe text box) now
+            // that a type was detected, so the seller just picks the size.
+            updateItemTypeDisplay();
 
             if (r.color && typeof selectUploadColor === 'function') selectUploadColor(r.color);
             if (r.material && typeof selectUploadMaterial === 'function') selectUploadMaterial(r.material);
@@ -8681,30 +8696,34 @@
             }
             panel.style.display = 'flex';
             if (isShoeType(type)) {
-                label.textContent = 'Shoe size';
+                // Footwear — a free text box for the size.
+                label.textContent = 'מידת נעל';
                 grid.style.display = 'none';
                 shoe.style.display = 'flex';
-                if (!uploadFormData.size) setShoeSize(document.getElementById('shoeSlider').value);
+                const inp = document.getElementById('shoeInput');
+                if (inp) inp.value = uploadFormData.size || '';
             } else {
-                label.textContent = 'Size';
+                // Garment — a size dropdown (S / M / L …).
+                label.textContent = 'מידה';
                 shoe.style.display = 'none';
                 grid.style.display = 'flex';
-                grid.innerHTML = GARMENT_SIZES.map(sz =>
-                    `<button type="button" class="size${uploadFormData.size === sz ? ' selected' : ''}"
-                             data-size="${sz}" onclick="selectUploadSize('${sz}')">${sz}</button>`).join('');
+                grid.innerHTML = `
+                    <select class="size-select" id="sizeSelect" onchange="selectUploadSize(this.value)">
+                        <option value="">בחר מידה</option>
+                        ${GARMENT_SIZES.map(sz =>
+                            `<option value="${sz}"${uploadFormData.size === sz ? ' selected' : ''}>${sz}</option>`).join('')}
+                    </select>`;
             }
         }
 
         function selectUploadSize(sz) {
-            uploadFormData.size = sz;
-            document.querySelectorAll('#sizeGrid .size').forEach(b =>
-                b.classList.toggle('selected', b.dataset.size === sz));
+            uploadFormData.size = sz || null;
+            const sel = document.getElementById('sizeSelect');
+            if (sel && sel.value !== (sz || '')) sel.value = sz || '';
         }
 
         function setShoeSize(v) {
-            uploadFormData.size = String(v);
-            const out = document.getElementById('shoeOut');
-            if (out) out.textContent = v;
+            uploadFormData.size = v ? String(v) : null;
         }
 
         // Steps: 0 the piece · 1 the look · 2 price & condition · 3 the finished listing.
@@ -8905,9 +8924,44 @@
             }
         }
 
+        // What each step must have before the seller can move on.
+        function validateUploadStep(step) {
+            const d = uploadFormData;
+            const need = [];
+            if (step === 0) {
+                if (!(d.photos && d.photos[0])) need.push('תמונה ראשית');
+                const brand = (document.getElementById('brandNameInput').value || '').trim();
+                if (!brand) need.push('מותג');
+                if (!pickValue('itemTypeSelect')) need.push('סוג פריט');
+                if (d.category === 'art') {
+                    const h = +document.getElementById('dimH').value, w = +document.getElementById('dimW').value;
+                    if (!h || !w) need.push('מידות (גובה/רוחב)');
+                } else {
+                    if (!d.size) need.push('מידה');
+                }
+            }
+            if (step === 1) {
+                if (!d.color) need.push('צבע');
+                if (!d.material) need.push('חומר');
+            }
+            if (step === 2) {
+                const price = Number(document.getElementById('priceInput').value);
+                if (!price || price <= 0) need.push('מחיר');
+                if (!d.condition) need.push('מצב הפריט');
+                if (!(document.getElementById('descriptionInput').value || '').trim()) need.push('תיאור');
+            }
+            return need;
+        }
+
         function goToNextSlide() {
             if (currentSlide < UPLOAD_LAST_SLIDE) {
                 collectUploadStep(currentSlide);
+                // Block progress until this step is complete.
+                const missing = validateUploadStep(currentSlide);
+                if (missing.length) {
+                    showToast('חסר למילוי: ' + missing.join(' · '));
+                    return;
+                }
                 slideDirection = 'right';
                 currentSlide++;
                 if (currentSlide === UPLOAD_LAST_SLIDE) renderUploadPreview();
