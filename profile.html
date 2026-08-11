@@ -41,20 +41,63 @@
             to   { opacity: 1; transform: none; }
         }
 
-        /* Same image as the My Profile rectangle, at the rectangle's own dimensions:
-           full height, one-rectangle wide (20vw), on the right. */
-        .side-image {
-            position: fixed; top: 0; left: 0; bottom: 0;
-            width: 20vw;
-            background: #2a2a28 url('assets/profile-hero.jpg') center / cover no-repeat;
-            filter: grayscale(1);
-            border-right: 1px solid #000;
-            /* Sits above the content so the data slides out from behind it. */
-            z-index: 5;
-        }
-        @media (min-width: 1001px) { .wrap { padding-left: calc(20vw + 60px); } }
-        @media (max-width: 1000px) { .side-image { display: none; } .page-cover { left: 0; } }
+        /* Side image removed — the page now leads with a full-width storefront hero. */
+        .side-image { display: none; }
+        @media (max-width: 1000px) { .page-cover { left: 0; } }
         @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+        /* ===================================================================
+           PROFILE HERO — the storefront-style banner at the top of the page:
+           background image, name, rating, tagline, verified + followers.
+           Full-bleed (escapes the .wrap padding) like store-profile's hero.
+           =================================================================== */
+        .profile-hero {
+            position: relative;
+            margin: -120px -40px 8px;      /* cancel the wrap's top+side padding */
+            min-height: 46vh;
+            background: #23231f center / cover no-repeat;
+            display: flex; align-items: flex-end;
+            border-bottom: 1px solid #000;
+        }
+        .profile-hero::after {
+            content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.72) 100%);
+        }
+        .ph-inner {
+            position: relative; z-index: 2; width: 100%;
+            display: flex; align-items: flex-end; gap: 20px;
+            padding: 0 40px 34px; color: #fff;
+        }
+        .ph-avatar { flex: none; width: 84px; height: 84px; margin: 0; transform: translateY(10px); }
+        .ph-avatar .avatar {
+            width: 100%; height: 100%; margin: 0; display: grid; place-items: center; border-radius: 50%;
+            font-size: 30px; font-weight: 300; color: #1c1c1c; background-color: #fff;
+            background-size: cover; background-position: center; box-shadow: 0 3px 16px rgba(0,0,0,0.35);
+        }
+        .ph-avatar .avatar.has-img { color: transparent; }
+        .ph-lead { flex: 1; min-width: 0; }
+        .ph-name { font-size: clamp(38px, 6vw, 78px); font-weight: 200; letter-spacing: 1px; line-height: 1; color: #fff; }
+        .ph-rating { margin-top: 14px; font-size: 18px; letter-spacing: 3px; color: #f4c04d; }
+        .ph-rating .s-num { color: rgba(255,255,255,0.8); font-size: 13px; letter-spacing: 0; margin-inline-start: 10px; }
+        .ph-tag { margin-top: 12px; font-size: 15px; font-weight: 300; letter-spacing: 0.5px; color: rgba(255,255,255,0.92); max-width: 620px; }
+        .ph-badges { display: flex; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+        .ph-badges .verified {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+            border: 1px solid rgba(255,255,255,0.7); border-radius: 999px;
+            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+        }
+        .ph-badges .stf-open { color: #fff; border-bottom: 1.4px solid rgba(255,255,255,0.7); text-decoration: none; font-size: 12px; letter-spacing: 1px; padding-bottom: 2px; }
+        .ph-badges .stf-open:hover { border-color: #fff; }
+        .ph-right { flex: none; text-align: right; }
+        .ph-right .shr-num { display: block; font-size: clamp(30px, 4vw, 56px); font-weight: 200; line-height: 1; color: #fff; }
+        .ph-right .shr-lbl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+        /* Edit controls under the hero. */
+        .ph-edit { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 8px; }
+        .ph-edit .change-photo { width: auto; }
+        @media (max-width: 760px) {
+            .profile-hero { margin: -120px -22px 8px; }
+            .ph-inner { flex-wrap: wrap; padding: 0 22px 24px; }
+        }
 
         .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
         .head-sub { margin-top: 16px; font-size: 15px; color: #6b6b66; letter-spacing: 0.5px; }
@@ -208,19 +251,43 @@
         }
         .store-cover-actions .stf-open:hover { color: #6b6b66; border-color: #6b6b66; }
 
-        /* Bigger cover so the name + avatar have room. */
-        .store-cover { aspect-ratio: auto; min-height: 260px; }
-        /* Shop name, centred over the cover. */
-        .store-cover-name {
-            position: relative; z-index: 2; text-align: center; padding: 0 18px;
-            font-size: clamp(30px, 3.4vw, 46px); font-weight: 300; letter-spacing: 1px;
-            color: #1c1c1c; line-height: 1.1;
+        /* ===== Hero-style store header — mirrors the storefront hero ===== */
+        .store-cover {
+            aspect-ratio: auto; min-height: 320px;
+            background-color: #23231f;   /* dark default so white text reads with no image */
+            display: block; padding: 0;
         }
-        .store-cover.has-img .store-cover-name { color: #fff; text-shadow: 0 2px 18px rgba(0,0,0,0.45); }
-        /* Avatar shows the first letter until a photo is set. */
+        /* Bottom scrim so the name + stats stay readable over any image. */
+        .store-cover::after {
+            content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.72) 100%);
+        }
+        .store-cover-head { z-index: 3; }
+        .store-cover-head .card-label { color: #fff; }
+
+        .store-hero-inner {
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+            display: flex; align-items: flex-end; gap: 16px; padding: 20px;
+        }
+        .store-hero-lead { flex: 1; min-width: 0; color: #fff; }
+        .store-cover-name {
+            position: static; text-align: left; padding: 0; color: #fff;
+            font-size: clamp(26px, 3.4vw, 42px); font-weight: 200; letter-spacing: 1px; line-height: 1;
+            text-shadow: 0 2px 18px rgba(0,0,0,0.5);
+        }
+        .store-hero-rating { margin-top: 12px; font-size: 15px; letter-spacing: 2px; color: #f4c04d; }
+        .store-hero-rating .s-num { color: rgba(255,255,255,0.75); font-size: 12px; letter-spacing: 0; margin-inline-start: 8px; }
+        .store-hero-tag { margin-top: 8px; font-size: 13px; font-weight: 300; letter-spacing: 0.4px; color: rgba(255,255,255,0.9); }
+        .store-hero-right { flex: none; text-align: right; color: #fff; }
+        .store-hero-right .shr-num { display: block; font-size: clamp(24px, 3vw, 40px); font-weight: 200; line-height: 1; }
+        .store-hero-right .shr-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+
+        /* Profile photo — bottom-left, nudged down a little. */
+        .store-avatar { position: static; width: 72px; height: 72px; flex: none; align-self: flex-end; transform: translateY(8px); }
         .store-avatar .avatar {
-            display: grid; place-items: center; border-radius: 50%;
-            font-size: 26px; font-weight: 300; color: #1c1c1c; background-size: cover; background-position: center;
+            width: 100%; height: 100%; margin: 0; display: grid; place-items: center; border-radius: 50%;
+            font-size: 26px; font-weight: 300; color: #1c1c1c; background-color: #fff;
+            background-size: cover; background-position: center; box-shadow: 0 2px 12px rgba(0,0,0,0.3);
         }
         .store-avatar .avatar.has-img { color: transparent; }
 
@@ -561,15 +628,33 @@
 </head>
 <body>
     <div class="page-cover"></div>
-    <div class="side-image"></div>
     <a class="back" href="buyer-area.html">&#8592; חזרה</a>
 
     <div class="wrap">
-        <h1 class="head-title">My Profile</h1>
-        <div class="head-row">
-            <p class="head-sub">Your details, preferences and account at a glance.</p>
-            <a class="stf-open seller-only" href="store-profile.html" target="_blank" rel="noopener">Open storefront ↗</a>
-            <a class="stf-open buyer-only" href="buyer-profile.html" target="_blank" rel="noopener">Open my profile ↗</a>
+        <!-- Storefront-style hero: background image, name, rating, tagline, followers. -->
+        <div class="profile-hero" id="storeBgPreview">
+            <div class="ph-inner">
+                <figure class="ph-avatar"><div class="avatar" id="storeAvatar">V</div></figure>
+                <div class="ph-lead">
+                    <h1 class="ph-name" id="storeRectName">My Store</h1>
+                    <div class="ph-rating"><span class="s-base">★★★★★</span><span class="s-num" id="storeCoverRating">4.5</span></div>
+                    <p class="ph-tag" id="storeCoverTag"></p>
+                    <div class="ph-badges">
+                        <span class="verified seller-only">✓ VERO Verified Store</span>
+                        <a class="stf-open seller-only" href="store-profile.html" target="_blank" rel="noopener">Open storefront ↗</a>
+                        <a class="stf-open buyer-only" href="buyer-profile.html" target="_blank" rel="noopener">Open my profile ↗</a>
+                    </div>
+                </div>
+                <div class="ph-right">
+                    <b class="shr-num" id="storeCoverFollowers">1,284</b>
+                    <span class="shr-lbl">Followers</span>
+                </div>
+            </div>
+        </div>
+        <div class="ph-edit">
+            <button type="button" class="change-photo" id="changeBg">שנה תמונת רקע</button>
+            <button type="button" class="change-photo" id="changeStorePhoto">שנה תמונת פרופיל</button>
+            <input id="storeBgInput" type="file" accept="image/*" hidden>
         </div>
 
         <div class="grid">
@@ -622,24 +707,6 @@
 
             <!-- Right column: preferences + live stats from the site -->
             <div class="col-right">
-                <div class="card store-card">
-                    <!-- Cover: background image + shop name overlaid + profile avatar. -->
-                    <div class="store-cover" id="storeBgPreview">
-                        <div class="store-cover-head">
-                            <div class="card-label">Store appearance</div>
-                            <div class="store-cover-hint">הכותרת, תמונת הרקע ותמונת הפרופיל של החנות שלך.</div>
-                        </div>
-                        <div class="store-cover-name" id="storeRectName">My Store</div>
-                        <figure class="store-avatar"><div class="avatar" id="storeAvatar">V</div></figure>
-                    </div>
-                    <div class="store-cover-actions">
-                        <button type="button" class="change-photo" id="changeBg">שנה תמונת רקע</button>
-                        <button type="button" class="change-photo" id="changeStorePhoto">שנה תמונת פרופיל</button>
-                        <a class="stf-open" href="store-profile.html" target="_blank" rel="noopener">Open storefront ↗</a>
-                        <input id="storeBgInput" type="file" accept="image/*" hidden>
-                    </div>
-                </div>
-
                 <div class="stats">
                     <div class="stat stat--plain"></div>
                     <div class="stat stat--plain">
@@ -942,6 +1009,15 @@
         }
         refreshStoreRectName();
 
+        // Fill the hero's tagline + followers from the shop config / profile.
+        (function fillHeroMeta() {
+            const cfg = readJSON('vero_store_config', {}) || {};
+            const tagEl = document.getElementById('storeCoverTag');
+            if (tagEl) tagEl.textContent = (profile.bio || cfg.tag || '').trim();
+            const folEl = document.getElementById('storeCoverFollowers');
+            if (folEl && profile.followers != null) folEl.textContent = Number(profile.followers).toLocaleString('en-US');
+        })();
+
         // The visible "Change photo" button just opens the hidden file picker.
         const changeBtn = document.getElementById('changePhoto');
         if (changeBtn) changeBtn.addEventListener('click', () => document.getElementById('pf-photo').click());
@@ -976,6 +1052,7 @@
                 profile[key] = e.target.value;
                 localStorage.setItem('vero_profile', JSON.stringify(profile));
                 if (key === 'name') { refreshAvatar(); refreshStoreRectName(); refreshStoreAvatar(); }
+                if (key === 'bio') { const t = document.getElementById('storeCoverTag'); if (t) t.textContent = e.target.value; }
                 const note = document.getElementById('saveNote');
                 note.textContent = 'Saved ✓';
                 clearTimeout(saveTimer);
