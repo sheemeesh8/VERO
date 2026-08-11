@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO — Saved</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&family=Oswald:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1c1c1c; background: #fff;
+        }
+
+        /* Entry: slides in from the right, matching the header cart. */
+        .page-cover { display: none; }
+
+        .back {
+            position: fixed; top: 26px; right: 34px; z-index: 40;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
+            font-size: 12px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
+            background: #fff; transition: background 0.25s, color 0.25s;
+        }
+        .back:hover { background: #000; color: #fff; }
+
+        .wrap {
+            max-width: none; margin: 0;
+            padding: 96px clamp(30px, 5vw, 72px) 90px;
+            animation: cartSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes cartSlideIn { from { opacity: 0; transform: translateX(80px); } to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .wrap { animation: none; } }
+
+        .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+        .head-sub { margin-top: 16px; font-size: 15px; color: #6b6b66; letter-spacing: 0.5px; }
+
+        .head-row { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+        .mode-toggle { display: inline-flex; border: 1.4px solid #000; border-radius: 999px; overflow: hidden; }
+        .mode-btn {
+            padding: 11px 26px; font-family: inherit; font-size: 12px; letter-spacing: 1.5px;
+            text-transform: uppercase; background: #fff; color: #1c1c1c; border: none; cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .mode-btn.active { background: #000; color: #fff; }
+
+        .head-total { margin-left: auto; font-size: 14px; letter-spacing: 0.5px; color: #1c1c1c; }
+        .head-total b { font-size: 30px; font-weight: 300; margin-left: 8px; }
+
+        /* ===== Filter / selection toolbar ===== */
+        .cart-toolbar {
+            display: flex; align-items: flex-end; gap: 44px; flex-wrap: wrap;
+            margin-top: 32px; padding-bottom: 22px; border-bottom: 1px solid #000;
+        }
+        .ct-group { display: inline-flex; align-items: center; gap: 8px; }
+        .ct-field { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+        .ct-btn {
+            border: 1.4px solid #000; background: #fff; color: #1c1c1c; cursor: pointer;
+            font-family: inherit; font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 10px 18px; border-radius: 999px; transition: background 0.2s, color 0.2s;
+        }
+        .ct-btn:hover { background: #000; color: #fff; }
+        .ct-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; }
+        .ct-select {
+            font-family: inherit; font-size: 13px; color: #1c1c1c; background: #fff;
+            border: 1.4px solid #000; border-radius: 999px; padding: 9px 16px; cursor: pointer;
+        }
+        .ct-select:focus { outline: none; }
+        .ct-count { margin-left: auto; font-size: 12px; letter-spacing: 0.5px; color: #6b6b66; }
+
+        /* Category sections. */
+        .cat-section { margin-top: 44px; }
+        .cat-label {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+            font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95;
+            border-bottom: 1px solid #000; padding-bottom: 12px; margin-bottom: 26px;
+        }
+        .cat-label b { color: #1c1c1c; font-weight: 500; letter-spacing: 2px; }
+
+        /* Five product cards per row — exactly like the feed / cart. */
+        .cart-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 30px; }
+        @media (max-width: 1400px) { .cart-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 1080px) { .cart-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 760px)  { .cart-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px)  { .cart-grid { grid-template-columns: 1fr; } }
+
+        .cart-empty {
+            margin-top: 52px; border: 1px solid #000; padding: 60px 40px;
+            font-size: 15px; color: #9a9a95; text-align: center;
+        }
+
+        /* Move-all-to-cart bar. */
+        .checkout {
+            display: flex; align-items: center; justify-content: space-between; gap: 24px;
+            padding: 30px 0 0; margin-top: 48px; border-top: 1px solid #000; flex-wrap: wrap;
+        }
+        .checkout-btn {
+            border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
+            font-family: inherit; font-size: 12px; letter-spacing: 2px; padding: 15px 40px;
+            text-transform: uppercase; transition: opacity 0.2s;
+        }
+        .checkout-btn:hover { opacity: 0.78; }
+    </style>
+    <!-- The product card, shared by every page (single source: product-card.css). -->
+    <link rel="stylesheet" href="product-card.css">
+</head>
+<body>
+    <a class="back" href="index.html">&#8592; חזרה</a>
+
+    <div class="wrap">
+        <div class="head-row">
+            <h1 class="head-title">Saved</h1>
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="clothing">Clothing</button>
+                <button class="mode-btn" data-mode="art">Art</button>
+            </div>
+            <div class="head-total" id="headTotal"></div>
+        </div>
+        <p class="head-sub" id="headSub">הפריטים ששמרת לאחר כך.</p>
+
+        <div id="toolbarHost"></div>
+        <div id="cartBody"></div>
+        <div id="checkoutHost"></div>
+    </div>
+
+    <script>
+        const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
+        let saved = readJSON('vero_wishlist', []);
+        if (!Array.isArray(saved)) saved = [];
+
+        const ART_CATS = new Set(['Acrylic','Oil','Watercolor','Mixed Media','Digital','Gouache',
+            'Pastel','Epoxy','Stone Sculpture','Metal Sculpture','Ceramic','Photography','Sculpture','Painting']);
+        const typeOf = it => it.type === 'art' || it.type === 'clothing'
+            ? it.type
+            : (ART_CATS.has(it.category) ? 'art' : 'clothing');
+
+        let MODE = 'clothing';
+        let filterCat = 'all', filterSeller = 'all', sortBy = 'featured';
+
+        const priceNum = p => parseFloat(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
+        const priceStr = p => {
+            const s = String(p == null ? '' : p).trim();
+            return s.startsWith('₪') ? s : '₪' + priceNum(p).toFixed(2);
+        };
+
+        function productPageUrl(item) {
+            const data = {
+                name: item.name, price: item.price, icon: item.icon,
+                category: item.category, seller: item.seller, rating: item.rating, type: item.type
+            };
+            return `product.html?product=${encodeURIComponent(JSON.stringify(data))}`;
+        }
+
+        // One feed product-card per saved item — the markup product-card.css expects.
+        function savedCardHTML(item, idx) {
+            const rating = item.rating || 4.5;
+            const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+            return `
+                <a href="${productPageUrl(item)}" class="product-card" data-idx="${idx}">
+                    <div class="product-image">${item.icon || '🛍️'}
+                        <button class="product-icon remove" title="הסר מהשמורים"
+                                onclick="event.preventDefault(); event.stopPropagation(); removeItem(${idx})">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price"><span class="vprice">${priceStr(item.price)}</span></div>
+                        </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${item.seller || 'Vero Store'}</div>
+                            <div class="product-name">${item.name || 'Item'}</div>
+                            <div class="product-rating">${stars}</div>
+                        </div>
+                    </div>
+                </a>`;
+        }
+
+        function modeRows() {
+            return saved.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
+        }
+        function visibleRows() {
+            let rows = modeRows();
+            if (filterCat !== 'all')    rows = rows.filter(({ it }) => (it.category || 'Other') === filterCat);
+            if (filterSeller !== 'all') rows = rows.filter(({ it }) => (it.seller || 'Vero Store') === filterSeller);
+            if (sortBy === 'price-asc')  rows = rows.slice().sort((a, b) => priceNum(a.it.price) - priceNum(b.it.price));
+            if (sortBy === 'price-desc') rows = rows.slice().sort((a, b) => priceNum(b.it.price) - priceNum(a.it.price));
+            return rows;
+        }
+
+        function renderToolbar() {
+            const host = document.getElementById('toolbarHost');
+            const all = modeRows();
+            if (!all.length) { host.innerHTML = ''; return; }
+            const cats    = [...new Set(all.map(({ it }) => it.category || 'Other'))].sort((a, b) => a.localeCompare(b));
+            const sellers = [...new Set(all.map(({ it }) => it.seller || 'Vero Store'))].sort((a, b) => a.localeCompare(b));
+            const opt = (v, cur, lbl) => `<option value="${v}"${v === cur ? ' selected' : ''}>${lbl || v}</option>`;
+            host.innerHTML = `
+                <div class="cart-toolbar">
+                    <div class="ct-field">
+                        <span class="ct-label">Category</span>
+                        <select class="ct-select" onchange="setFilterCat(this.value)">
+                            ${opt('all', filterCat, 'All categories')}${cats.map(c => opt(c, filterCat)).join('')}
+                        </select>
+                    </div>
+                    <div class="ct-field">
+                        <span class="ct-label">Seller</span>
+                        <select class="ct-select" onchange="setFilterSeller(this.value)">
+                            ${opt('all', filterSeller, 'All sellers')}${sellers.map(s => opt(s, filterSeller)).join('')}
+                        </select>
+                    </div>
+                    <div class="ct-field">
+                        <span class="ct-label">Price</span>
+                        <select class="ct-select" onchange="setSortBy(this.value)">
+                            ${opt('featured', sortBy, 'Featured')}${opt('price-asc', sortBy, 'Price: low to high')}${opt('price-desc', sortBy, 'Price: high to low')}
+                        </select>
+                    </div>
+                    <span class="ct-count">${all.length} saved</span>
+                </div>`;
+        }
+
+        function render() {
+            const body = document.getElementById('cartBody');
+            const host = document.getElementById('checkoutHost');
+            const sub = document.getElementById('headSub');
+
+            renderToolbar();
+            const mine = visibleRows();
+
+            if (!modeRows().length) {
+                body.innerHTML = `<div class="cart-empty">אין פריטים שמורים ב${MODE === 'art' ? 'אמנות' : 'אופנה'} — פריטים שתשמור יופיעו כאן.</div>`;
+                host.innerHTML = '';
+                document.getElementById('headTotal').innerHTML = '';
+                sub.textContent = 'הפריטים ששמרת לאחר כך.';
+                return;
+            }
+            if (!mine.length) {
+                body.innerHTML = `<div class="cart-empty">אין פריטים שמורים שתואמים את הסינון.</div>`;
+                host.innerHTML = '';
+                document.getElementById('headTotal').innerHTML = '';
+                return;
+            }
+
+            const groups = new Map();
+            mine.forEach(row => {
+                const c = row.it.category || 'Other';
+                if (!groups.has(c)) groups.set(c, []);
+                groups.get(c).push(row);
+            });
+            const orderedCats = [...groups.keys()].sort((a, b) => a.localeCompare(b));
+
+            body.innerHTML = orderedCats.map(cat => {
+                const rows = groups.get(cat);
+                return `
+                <div class="cat-section">
+                    <div class="cat-label"><b>${cat}</b><span>${rows.length} item${rows.length === 1 ? '' : 's'}</span></div>
+                    <div class="cart-grid">${rows.map(r => savedCardHTML(r.it, r.idx)).join('')}</div>
+                </div>`;
+            }).join('');
+
+            const count = mine.length;
+            const total = mine.reduce((s, { it }) => s + priceNum(it.price), 0);
+            sub.textContent = `${count} פריט${count === 1 ? '' : 'ים'} שמורים ב${MODE === 'art' ? 'אמנות' : 'אופנה'}.`;
+            document.getElementById('headTotal').innerHTML = `Total <b>₪${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>`;
+            host.innerHTML = `
+                <div class="checkout">
+                    <button class="checkout-btn" onclick="moveAllToCart()">הוסף הכל לעגלה &#8594;</button>
+                </div>`;
+        }
+
+        window.setFilterCat    = function (v) { filterCat = v; render(); };
+        window.setFilterSeller = function (v) { filterSeller = v; render(); };
+        window.setSortBy       = function (v) { sortBy = v; render(); };
+
+        window.removeItem = function (idx) {
+            saved.splice(idx, 1);
+            localStorage.setItem('vero_wishlist', JSON.stringify(saved));
+            render();
+        };
+
+        // Move the currently-shown saved items into the cart, then open it.
+        window.moveAllToCart = function () {
+            const mine = visibleRows();
+            if (!mine.length) return;
+            const cart = readJSON('vero_cart', []);
+            const now = Date.now(), HOLD = 48 * 60 * 60 * 1000;
+            mine.forEach(({ it }) => {
+                const id = `${it.name}|${it.price}`;
+                const existing = cart.find(i => i.id === id);
+                if (existing) { existing.qty = (existing.qty || 1) + 1; existing.addedAt = now; existing.expiresAt = now + HOLD; }
+                else cart.push({ id, name: it.name, price: it.price, icon: it.icon, category: it.category,
+                                 seller: it.seller, rating: it.rating, type: it.type,
+                                 qty: 1, addedAt: now, expiresAt: now + HOLD });
+            });
+            localStorage.setItem('vero_cart', JSON.stringify(cart));
+            window.location.href = 'cart-store.html';
+        };
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                MODE = btn.dataset.mode;
+                filterCat = 'all'; filterSeller = 'all'; sortBy = 'featured';
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+                render();
+            });
+        });
+
+        render();
+
+        const back = document.querySelector('.back');
+        if (back) back.addEventListener('click', (e) => {
+            e.preventDefault();
+            const cover = document.createElement('div');
+            cover.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:60;transform:translateY(100%);transition:transform .6s cubic-bezier(.76,0,.24,1)';
+            document.body.appendChild(cover);
+            requestAnimationFrame(() => requestAnimationFrame(() => { cover.style.transform = 'translateY(0)'; }));
+            setTimeout(() => { window.location.href = back.getAttribute('href'); }, 620);
+        });
+    </script>
+    <script src="vero-editor.js"></script>
+</body>
+</html>
