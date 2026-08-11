@@ -91,6 +91,14 @@
         .ph-right { flex: none; text-align: right; }
         .ph-right .shr-num { display: block; font-size: clamp(30px, 4vw, 56px); font-weight: 200; line-height: 1; color: #fff; }
         .ph-right .shr-lbl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+        /* Socials in the hero (right side), over the background image. */
+        .ph-socials { flex: none; display: flex; align-items: flex-end; gap: 12px; }
+        .ph-socials a {
+            width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center;
+            border: 1px solid rgba(255,255,255,0.6); color: #fff; transition: background 0.2s, color 0.2s;
+        }
+        .ph-socials a:hover { background: #fff; color: #000; }
+        .ph-socials svg { width: 20px; height: 20px; }
         /* Edit controls overlaid in the hero's top corner. */
         .ph-edit { position: absolute; top: 18px; left: 40px; z-index: 3; display: flex; gap: 10px; flex-wrap: wrap; }
         .ph-edit .change-photo {
@@ -98,6 +106,44 @@
             border: 1px solid rgba(255,255,255,0.7); backdrop-filter: blur(4px);
         }
         .ph-edit .change-photo:hover { background: #000; color: #fff; border-color: #000; }
+
+        /* Settings toggle — top-right of the hero. */
+        .settings-toggle {
+            position: absolute; top: 18px; right: 40px; z-index: 3;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 11px 22px; border: 1px solid rgba(255,255,255,0.7); border-radius: 999px;
+            background: rgba(255,255,255,0.9); color: #1c1c1c; cursor: pointer; backdrop-filter: blur(4px);
+            font-family: inherit; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase;
+            transition: background 0.2s, color 0.2s;
+        }
+        .settings-toggle:hover { background: #000; color: #fff; border-color: #000; }
+
+        /* Slide-over settings panel + backdrop. */
+        .settings-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 90;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+        }
+        .settings-backdrop.open { opacity: 1; visibility: visible; }
+        .settings-panel {
+            position: fixed; top: 0; right: 0; bottom: 0; width: min(600px, 94vw); z-index: 91;
+            background: #fff; box-shadow: -12px 0 48px rgba(0,0,0,0.22);
+            transform: translateX(100%); transition: transform 0.42s cubic-bezier(0.22,1,0.36,1);
+            overflow-y: auto; padding: 30px 36px 60px;
+        }
+        .settings-panel.open { transform: translateX(0); }
+        .settings-panel-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid #ececec;
+        }
+        .settings-panel-head h2 { font-size: 32px; font-weight: 200; letter-spacing: 1px; }
+        .settings-close {
+            width: 40px; height: 40px; border: 1px solid #e2ded7; background: #fff; border-radius: 50%;
+            font-size: 20px; line-height: 1; color: #1c1c1c; cursor: pointer; transition: background 0.2s, color 0.2s;
+        }
+        .settings-close:hover { background: #000; color: #fff; border-color: #000; }
+        /* Cards inside the panel read as plain stacked sections. */
+        .settings-panel .info-row { display: block; }
+        .settings-panel .info-row > .card { margin-bottom: 30px; }
         @media (max-width: 760px) {
             .profile-hero { margin: -120px -22px 8px; }
             .ph-inner { flex-wrap: wrap; padding: 0 22px 24px; }
@@ -649,10 +695,7 @@
                         <a class="stf-open buyer-only" href="buyer-profile.html" target="_blank" rel="noopener">Open my profile ↗</a>
                     </div>
                 </div>
-                <div class="ph-right">
-                    <b class="shr-num" id="storeCoverFollowers">1,284</b>
-                    <span class="shr-lbl">Followers</span>
-                </div>
+                <div class="ph-socials" id="heroSocials"></div>
             </div>
             <!-- Edit controls overlaid on the hero (top corner). -->
             <div class="ph-edit">
@@ -713,10 +756,13 @@
             <!-- Right column: preferences + live stats from the site -->
             <div class="col-right">
                 <div class="stats">
-                    <div class="stat stat--plain"></div>
                     <div class="stat stat--plain">
                         <div class="stat-num" id="stat-followers">0</div>
                         <div class="stat-name">Followers</div>
+                    </div>
+                    <div class="stat stat--plain">
+                        <div class="stat-num" id="stat-items">0</div>
+                        <div class="stat-name">Items live</div>
                     </div>
                     <div class="stat stat--plain">
                         <div class="stat-num" id="stat-following">0</div>
@@ -811,16 +857,7 @@
             const stats    = colRight && colRight.querySelector('.stats');
             if (idCard && stats) stats.insertAdjacentElement('afterend', idCard);
 
-            // Socials sit in the same row as Followers / Following: drop the socials
-            // field into the (otherwise empty) first stat cell so the row reads
-            // Socials | Followers | Following.
-            const socialsField = idCard && idCard.querySelector('.socials-icons') &&
-                                  idCard.querySelector('.socials-icons').closest('.field');
-            const firstStat = stats && stats.querySelector('.stat');
-            if (socialsField && firstStat) {
-                firstStat.classList.add('stat--socials');
-                firstStat.appendChild(socialsField);
-            }
+            // (Socials now live in the hero; the stats row reads Followers | Items | Following.)
 
             // Personal details on the left, notifications on the right: wrap the two
             // cards in a two-column row so the notifications sit beside the details
@@ -841,15 +878,7 @@
             const colRight = document.querySelector('.col-right');
             const stats    = colRight && colRight.querySelector('.stats');
 
-            // Socials share the Followers / Following row: drop the socials field
-            // into the (otherwise empty) first stat cell → Socials | Followers | Following.
-            const socialsField = idCard && idCard.querySelector('.socials-icons') &&
-                                  idCard.querySelector('.socials-icons').closest('.field');
-            const firstStat = stats && stats.querySelector('.stat');
-            if (socialsField && firstStat) {
-                firstStat.classList.add('stat--socials');
-                firstStat.appendChild(socialsField);
-            }
+            // (Socials now live in the hero; the stats row reads Followers | Items | Following.)
 
             // Move the personal-details card below the rectangle + stats so those keep
             // the top of the page, and lay its remaining fields two per row.
@@ -925,6 +954,31 @@
         // "followers" = people following the user (stored on the profile).
         document.getElementById('stat-following').textContent = Array.isArray(follows) ? follows.length : 0;
         document.getElementById('stat-followers').textContent = Number(profile.followers) || 0;
+
+        // Items live — synced with My Products (vero_listings), active listings only.
+        (function fillItems() {
+            const listings = readJSON('vero_listings', []);
+            const live = Array.isArray(listings) ? listings.filter(p => (p.status || 'active') === 'active').length : 0;
+            const el = document.getElementById('stat-items');
+            if (el) el.textContent = live;
+        })();
+
+        // Socials in the hero, over the background image.
+        (function heroSocials() {
+            const host = document.getElementById('heroSocials');
+            if (!host) return;
+            const ICONS = {
+                instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>',
+                tiktok: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.1 3c.3 2.2 1.7 3.9 3.9 4.2v2.6c-1.4 0-2.8-.5-3.9-1.2v5.7a5.3 5.3 0 1 1-5.3-5.3c.3 0 .6 0 .9.1v2.7a2.6 2.6 0 1 0 1.8 2.5V3h2.6z"/></svg>',
+                twitter: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 3h3l-6.6 7.6L21.8 21h-6l-4.3-5.6L6.5 21h-3l7.1-8.1L2.4 3h6.1l3.9 5.2L17.5 3zm-1.1 16.1h1.7L8 4.8H6.2l10.2 14.3z"/></svg>'
+            };
+            host.innerHTML = ['instagram', 'tiktok', 'twitter'].map(k => {
+                const u = profile[k];
+                return u
+                    ? `<a href="${u}" target="_blank" rel="noopener" aria-label="${k}">${ICONS[k]}</a>`
+                    : `<a aria-label="${k}" style="opacity:.5;cursor:default">${ICONS[k]}</a>`;
+            }).join('');
+        })();
 
         // Member-since: set once on first visit, then remembered (kept for stats).
         if (!profile.since) { profile.since = Date.now(); localStorage.setItem('vero_profile', JSON.stringify(profile)); }
