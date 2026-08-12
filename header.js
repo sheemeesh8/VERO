@@ -518,6 +518,8 @@
             color: currentColor; text-transform: uppercase; line-height: 1;
         }
         #siteHeader .hdr-avatar.has-img { border-color: rgba(0,0,0,0.15); }
+        /* Seller account: a filled dark chip so you can tell which account you're in. */
+        #siteHeader .hdr-avatar.is-seller { background-color: #1c1c1c; color: #fff; border-color: #1c1c1c; }
         #siteHeader .hdr-switch { width: 30px; height: 30px; }
         #siteHeader .hdr-switch svg { width: 18px; height: 18px; stroke: currentColor !important; fill: none; }
         /* Profile-switch splash: a short WELCOME screen shown between areas. */
@@ -1154,7 +1156,7 @@
                         <span class="hdr-avatar" id="hdrAvatar">V</span>
                     </button>
                     <!-- Switch profile: jump to the separate Seller Area (business) account. -->
-                    <button class="icon-btn hdr-switch" title="Switch to seller profile" onclick="veroProfileSplash({dest:'seller-area.html', caption:'עכשיו אתה באזור המוכרים'})">
+                    <button class="icon-btn hdr-switch" title="Switch account" onclick="veroSwitchAccount()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/>
                         </svg>
@@ -1974,20 +1976,45 @@
         setTimeout(() => { location.href = dest; }, 470);
     };
 
-    // ---- Profile-switch splash ----
-    // A short welcome screen shown between areas: "WELCOME", the store name, then a
-    // caption (e.g. "now you are in the sellers' area"), before navigating across.
-    window.veroProfileSplash = function (opts) {
-        opts = opts || {};
-        const dest = opts.dest || 'seller-area.html';
-        const caption = opts.caption || '';
+    // ---- Account state (Instagram / TikTok style) ----
+    // The site remembers which account you're acting as — 'buyer' (personal) or
+    // 'seller' (business). Switching stays on the SAME feed; only the account
+    // context changes, hidden behind a short WELCOME splash.
+    window.veroActiveAccount = function () {
+        return localStorage.getItem('vero_active_account') === 'seller' ? 'seller' : 'buyer';
+    };
+
+    function accountName(acct) {
         let store; try { store = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { store = {}; }
         let prof;  try { prof  = JSON.parse(localStorage.getItem('vero_profile')) || {}; }      catch (e) { prof = {}; }
-        const storeName = opts.name || store.name || prof.name || 'VERO';
-        // Respect reduced-motion — skip the animation and just navigate.
-        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            location.href = dest; return;
-        }
+        return acct === 'seller'
+            ? (store.name || prof.name || 'My Store')
+            : (prof.name || 'My Profile');
+    }
+
+    // Toggle between the personal and seller accounts without leaving the feed:
+    // set the new account, show the welcome splash, then reload the current view
+    // in place so the header + account context reflect the switch.
+    window.veroSwitchAccount = function () {
+        const next = veroActiveAccount() === 'seller' ? 'buyer' : 'seller';
+        localStorage.setItem('vero_active_account', next);
+        const caption = next === 'seller' ? 'עכשיו אתה באזור המוכרים' : 'עכשיו אתה באזור האישי';
+        veroProfileSplash({ name: accountName(next), caption: caption, reload: true });
+    };
+
+    // ---- Profile-switch splash ----
+    // A short welcome screen: "WELCOME", the account name, then a caption. By
+    // default it reloads the current page in place (stay on the feed); pass a
+    // `dest` to navigate somewhere instead.
+    window.veroProfileSplash = function (opts) {
+        opts = opts || {};
+        const go = () => {
+            if (opts.reload) location.reload();
+            else location.href = opts.dest || 'index.html';
+        };
+        const name = opts.name || accountName(veroActiveAccount());
+        // Respect reduced-motion — skip the animation and just switch.
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { go(); return; }
         if (document.getElementById('veroSwitchSplash')) return;   // already transitioning
         const ov = document.createElement('div');
         ov.id = 'veroSwitchSplash';
@@ -1998,11 +2025,11 @@
           +   '<div class="vss-name"></div>'
           +   '<div class="vss-caption"></div>'
           + '</div>';
-        ov.querySelector('.vss-name').textContent = storeName;
-        ov.querySelector('.vss-caption').textContent = caption;
+        ov.querySelector('.vss-name').textContent = name;
+        ov.querySelector('.vss-caption').textContent = opts.caption || '';
         document.body.appendChild(ov);
         requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('show')));
-        setTimeout(() => { location.href = dest; }, 1650);
+        setTimeout(go, 1450);
     };
 
     // ---- Fallback handlers ----
@@ -2107,16 +2134,26 @@
         const el = document.getElementById('hdrAvatar');
         if (!el) return;
         let prof; try { prof = JSON.parse(localStorage.getItem('vero_profile')) || {}; } catch (e) { prof = {}; }
-        if (prof.avatarImg) {
+        const seller = (typeof window.veroActiveAccount === 'function') && window.veroActiveAccount() === 'seller';
+        // Personal account shows the profile picture; seller account shows the
+        // store's initial so you can tell at a glance which account you're in.
+        if (!seller && prof.avatarImg) {
             el.style.backgroundImage = `url('${prof.avatarImg}')`;
             el.classList.add('has-img');
             el.textContent = '';
         } else {
             el.style.backgroundImage = '';
             el.classList.remove('has-img');
-            const n = (prof.name || '').trim();
+            let name = prof.name || '';
+            if (seller) {
+                let store; try { store = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { store = {}; }
+                name = store.name || prof.name || 'S';
+            }
+            const n = (name || '').trim();
             el.textContent = n ? n[0] : 'V';
         }
+        // A subtle ring marks the seller account so the switch is legible.
+        el.classList.toggle('is-seller', !!seller);
     }
 
     function count(key) {
