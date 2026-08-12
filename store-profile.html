@@ -649,6 +649,20 @@
             }
         })();
 
+        // Live numbers shared with My Shop (profile.html): the follower count comes
+        // from the seller's profile record and the item count from their live
+        // listings — so the storefront always shows the same figures the seller
+        // sees in their My Shop. Runs even when there is no store config yet.
+        (function syncLiveData() {
+            let prof; try { prof = JSON.parse(localStorage.getItem('vero_profile')) || {}; } catch (e) { prof = {}; }
+            if (prof.followers != null && !isNaN(Number(prof.followers))) STORE.followers = Number(prof.followers);
+
+            let listings; try { listings = JSON.parse(localStorage.getItem('vero_listings')) || []; } catch (e) { listings = []; }
+            if (Array.isArray(listings)) {
+                STORE.itemsLive = listings.filter(p => (p.status || 'active') === 'active').length;
+            }
+        })();
+
         // ===================== RENDER =====================
         const nis = n => '₪' + (Number(n)||0).toLocaleString('en-US');
         let activeCat = 'all';
@@ -677,7 +691,8 @@
         document.getElementById('storeTag').textContent = STORE.tag;
         document.getElementById('followers').textContent = STORE.followers.toLocaleString('en-US');
         document.getElementById('hero').style.backgroundImage = `url('${STORE.hero}')`;
-        document.getElementById('itemCount').textContent = PRODUCTS.length;
+        document.getElementById('itemCount').textContent =
+            (STORE.itemsLive != null ? STORE.itemsLive : PRODUCTS.length);
 
         // Build the two sliders. "All" first, then only what the seller offers.
         const AUD_LABEL = { women:'Women', men:'Men', kids:'Kids' };
