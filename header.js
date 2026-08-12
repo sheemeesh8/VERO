@@ -525,12 +525,12 @@
         /* Profile-switch splash: a short WELCOME screen shown between areas. */
         .vero-switch-splash {
             position: fixed; inset: 0; z-index: 99999; background: #111; color: #fff;
-            display: grid; place-items: center; opacity: 0; transition: opacity 0.45s ease;
+            display: grid; place-items: center; opacity: 0; transition: opacity 0.25s ease;
         }
         .vero-switch-splash.show { opacity: 1; }
         .vero-switch-splash .vss-inner {
-            text-align: center; transform: translateY(18px); opacity: 0;
-            transition: transform 0.6s cubic-bezier(0.22,1,0.36,1) 0.1s, opacity 0.6s ease 0.1s;
+            text-align: center; transform: translateY(12px); opacity: 0;
+            transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease;
         }
         .vero-switch-splash.show .vss-inner { transform: translateY(0); opacity: 1; }
         .vero-switch-splash .vss-welcome {
@@ -1199,7 +1199,7 @@
                 <a href="about.html">About Us</a>
                 <a onclick="veroCloseDrawer(); openMagazine()">The Closet Magazine</a>
                 <span class="vero-drawer-heading">Sellers Area</span>
-                <a onclick="veroCloseDrawer(); openSellerArea()">Enter Seller Area</a>
+                <a onclick="veroCloseDrawer(); veroGoAccount('seller','seller-area.html')">Enter Seller Area</a>
             </nav>
             <div class="vero-drawer-social">
                 <a href="#" aria-label="Instagram">${DRAWER_ICONS.instagram}</a>
@@ -1998,8 +1998,7 @@
     window.veroSwitchAccount = function () {
         const next = veroActiveAccount() === 'seller' ? 'buyer' : 'seller';
         localStorage.setItem('vero_active_account', next);
-        const caption = next === 'seller' ? 'עכשיו אתה באזור המוכרים' : 'עכשיו אתה באזור האישי';
-        veroProfileSplash({ name: accountName(next), caption: caption, reload: true });
+        veroProfileSplash({ name: accountName(next), reload: true });
     };
 
     // ---- Profile-switch splash ----
@@ -2023,13 +2022,11 @@
             '<div class="vss-inner">'
           +   '<div class="vss-welcome">WELCOME</div>'
           +   '<div class="vss-name"></div>'
-          +   '<div class="vss-caption"></div>'
           + '</div>';
         ov.querySelector('.vss-name').textContent = name;
-        ov.querySelector('.vss-caption').textContent = opts.caption || '';
         document.body.appendChild(ov);
         requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('show')));
-        setTimeout(go, 1450);
+        setTimeout(go, 850);
     };
 
     // ---- Fallback handlers ----
