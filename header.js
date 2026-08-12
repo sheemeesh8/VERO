@@ -524,7 +524,7 @@
         #siteHeader .hdr-switch svg { width: 18px; height: 18px; stroke: currentColor !important; fill: none; }
         /* Profile-switch splash: a short WELCOME screen shown between areas. */
         .vero-switch-splash {
-            position: fixed; inset: 0; z-index: 99999; background: #111; color: #fff;
+            position: fixed; inset: 0; z-index: 99999; background: #fff; color: #111;
             display: grid; place-items: center; opacity: 0; transition: opacity 0.25s ease;
         }
         .vero-switch-splash.show { opacity: 1; }
@@ -534,11 +534,11 @@
         }
         .vero-switch-splash.show .vss-inner { transform: translateY(0); opacity: 1; }
         .vero-switch-splash .vss-welcome {
-            font-size: 13px; letter-spacing: 6px; text-transform: uppercase;
-            color: rgba(255,255,255,0.6); margin-bottom: 18px;
+            font-size: 26px; letter-spacing: 12px; text-transform: uppercase;
+            color: rgba(0,0,0,0.5); margin-bottom: 28px;
         }
         .vero-switch-splash .vss-name {
-            font-size: clamp(38px, 7vw, 76px); font-weight: 200; letter-spacing: 1px; line-height: 1;
+            font-size: clamp(76px, 14vw, 152px); font-weight: 200; letter-spacing: 1px; line-height: 1;
         }
         .vero-switch-splash .vss-caption {
             margin-top: 20px; font-size: 15px; font-weight: 300; letter-spacing: 0.4px;
