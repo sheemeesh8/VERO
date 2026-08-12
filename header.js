@@ -508,6 +508,18 @@
         #siteHeader [data-icon="wishlist"] .icon-btn svg { width: 38px; height: 38px; }
         #siteHeader .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader .icon-btn:hover { transform: scale(1.1); opacity: 0.65; }
+        /* Account cluster: personal-area profile picture + a switch-profile button. */
+        #siteHeader .hdr-account { display: inline-flex; align-items: center; gap: 2px; }
+        #siteHeader .hdr-avatar-btn { width: 48px; height: 48px; }
+        #siteHeader .hdr-avatar {
+            width: 34px; height: 34px; border-radius: 50%; overflow: hidden;
+            border: 1.5px solid currentColor; background: #e6e4df center / cover no-repeat;
+            display: grid; place-items: center; font-size: 14px; font-weight: 500;
+            color: currentColor; text-transform: uppercase; line-height: 1;
+        }
+        #siteHeader .hdr-avatar.has-img { border-color: rgba(0,0,0,0.15); }
+        #siteHeader .hdr-switch { width: 30px; height: 30px; }
+        #siteHeader .hdr-switch svg { width: 18px; height: 18px; stroke: currentColor !important; fill: none; }
         #siteHeader .upload-plus {
             color: #111 !important; border: 2px solid #111 !important;
             border-radius: 50%; width: 38px; height: 38px;
@@ -1113,12 +1125,19 @@
                     </div>
                     <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
                 </span>
-                <button class="icon-btn" data-icon="account" title="My Account" onclick="openBuyerArea()">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" data-fill>
-                        <circle cx="12" cy="8" r="4.2"/>
-                        <path d="M12 13.5c-4.5 0-8.2 2.9-8.2 6.5h16.4c0-3.6-3.7-6.5-8.2-6.5z"/>
-                    </svg>
-                </button>
+                <span class="hdr-account" data-icon="account">
+                    <!-- Personal-area account: the profile picture from vero_profile,
+                         shown by default. Clicking it opens the personal area. -->
+                    <button class="icon-btn hdr-avatar-btn" title="My Account" onclick="openBuyerArea()">
+                        <span class="hdr-avatar" id="hdrAvatar">V</span>
+                    </button>
+                    <!-- Switch profile: jump to the separate Seller Area (business) account. -->
+                    <button class="icon-btn hdr-switch" title="Switch to seller profile" onclick="openSellerArea()">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/>
+                        </svg>
+                    </button>
+                </span>
                 <span class="icon-wrap" data-icon="cart">
                     <button class="icon-btn" title="Cart" onclick="openCart()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke-width: 1.5;">
@@ -2015,6 +2034,11 @@
         // Badge counts from stored cart / wishlist (skipped on index, which owns them live).
         if (typeof window.updateBadges !== 'function') updateBadgesFromStorage();
 
+        // Header account button shows the personal-area profile picture by default
+        // (falls back to the name's initial). The switch button beside it opens the
+        // separate Seller Area (business) account.
+        fillHeaderAvatar();
+
         // If we arrived via ?open=… (from another page), open that view once the
         // real SPA handlers exist (index.html only).
         window.addEventListener('load', () => {
@@ -2024,6 +2048,22 @@
             const fn = map[open];
             if (fn && typeof window[fn] === 'function') window[fn]();
         });
+    }
+
+    function fillHeaderAvatar() {
+        const el = document.getElementById('hdrAvatar');
+        if (!el) return;
+        let prof; try { prof = JSON.parse(localStorage.getItem('vero_profile')) || {}; } catch (e) { prof = {}; }
+        if (prof.avatarImg) {
+            el.style.backgroundImage = `url('${prof.avatarImg}')`;
+            el.classList.add('has-img');
+            el.textContent = '';
+        } else {
+            el.style.backgroundImage = '';
+            el.classList.remove('has-img');
+            const n = (prof.name || '').trim();
+            el.textContent = n ? n[0] : 'V';
+        }
     }
 
     function count(key) {
