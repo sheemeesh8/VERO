@@ -520,6 +520,28 @@
         #siteHeader .hdr-avatar.has-img { border-color: rgba(0,0,0,0.15); }
         #siteHeader .hdr-switch { width: 30px; height: 30px; }
         #siteHeader .hdr-switch svg { width: 18px; height: 18px; stroke: currentColor !important; fill: none; }
+        /* Profile-switch splash: a short WELCOME screen shown between areas. */
+        .vero-switch-splash {
+            position: fixed; inset: 0; z-index: 99999; background: #111; color: #fff;
+            display: grid; place-items: center; opacity: 0; transition: opacity 0.45s ease;
+        }
+        .vero-switch-splash.show { opacity: 1; }
+        .vero-switch-splash .vss-inner {
+            text-align: center; transform: translateY(18px); opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.22,1,0.36,1) 0.1s, opacity 0.6s ease 0.1s;
+        }
+        .vero-switch-splash.show .vss-inner { transform: translateY(0); opacity: 1; }
+        .vero-switch-splash .vss-welcome {
+            font-size: 13px; letter-spacing: 6px; text-transform: uppercase;
+            color: rgba(255,255,255,0.6); margin-bottom: 18px;
+        }
+        .vero-switch-splash .vss-name {
+            font-size: clamp(38px, 7vw, 76px); font-weight: 200; letter-spacing: 1px; line-height: 1;
+        }
+        .vero-switch-splash .vss-caption {
+            margin-top: 20px; font-size: 15px; font-weight: 300; letter-spacing: 0.4px;
+            color: rgba(255,255,255,0.85);
+        }
         #siteHeader .upload-plus {
             color: #111 !important; border: 2px solid #111 !important;
             border-radius: 50%; width: 38px; height: 38px;
@@ -1132,7 +1154,7 @@
                         <span class="hdr-avatar" id="hdrAvatar">V</span>
                     </button>
                     <!-- Switch profile: jump to the separate Seller Area (business) account. -->
-                    <button class="icon-btn hdr-switch" title="Switch to seller profile" onclick="openSellerArea()">
+                    <button class="icon-btn hdr-switch" title="Switch to seller profile" onclick="veroProfileSplash({dest:'seller-area.html', caption:'עכשיו אתה באזור המוכרים'})">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/>
                         </svg>
@@ -1950,6 +1972,37 @@
         document.body.appendChild(panel);
         requestAnimationFrame(() => requestAnimationFrame(() => { panel.style.transform = 'translateX(0)'; }));
         setTimeout(() => { location.href = dest; }, 470);
+    };
+
+    // ---- Profile-switch splash ----
+    // A short welcome screen shown between areas: "WELCOME", the store name, then a
+    // caption (e.g. "now you are in the sellers' area"), before navigating across.
+    window.veroProfileSplash = function (opts) {
+        opts = opts || {};
+        const dest = opts.dest || 'seller-area.html';
+        const caption = opts.caption || '';
+        let store; try { store = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { store = {}; }
+        let prof;  try { prof  = JSON.parse(localStorage.getItem('vero_profile')) || {}; }      catch (e) { prof = {}; }
+        const storeName = opts.name || store.name || prof.name || 'VERO';
+        // Respect reduced-motion — skip the animation and just navigate.
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            location.href = dest; return;
+        }
+        if (document.getElementById('veroSwitchSplash')) return;   // already transitioning
+        const ov = document.createElement('div');
+        ov.id = 'veroSwitchSplash';
+        ov.className = 'vero-switch-splash';
+        ov.innerHTML =
+            '<div class="vss-inner">'
+          +   '<div class="vss-welcome">WELCOME</div>'
+          +   '<div class="vss-name"></div>'
+          +   '<div class="vss-caption"></div>'
+          + '</div>';
+        ov.querySelector('.vss-name').textContent = storeName;
+        ov.querySelector('.vss-caption').textContent = caption;
+        document.body.appendChild(ov);
+        requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('show')));
+        setTimeout(() => { location.href = dest; }, 1650);
     };
 
     // ---- Fallback handlers ----
