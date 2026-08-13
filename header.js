@@ -828,10 +828,22 @@
         #siteHeader.acct-seller [data-icon="menu"],
         #siteHeader.acct-seller [data-icon="search"],
         #siteHeader.acct-seller [data-icon="cart"],
-        #siteHeader.acct-seller .hdr-searchwrap,
-        #siteHeader.acct-seller .hdr-mode-pair .toggle-category {
+        #siteHeader.acct-seller .hdr-searchwrap {
             display: none !important;
         }
+        /* The seller account name, shown beside the profile picture. */
+        #siteHeader .hdr-acct-name {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-size: 15px; font-weight: 600; letter-spacing: 0.3px;
+            color: #fff; white-space: nowrap; max-width: 180px;
+            overflow: hidden; text-overflow: ellipsis; display: none;
+        }
+        #siteHeader.acct-seller .hdr-acct-name { display: inline-block; }
+
+        /* Seller-only search icon, sitting just to the right of the category toggle.
+           Hidden in the personal account (which keeps its own left-side Search). */
+        #siteHeader .hdr-seller-search { display: none; }
+        #siteHeader.acct-seller .hdr-seller-search { display: flex; }
 
         /* ===== Icons pinned to the right, logo centred ===== */
         #siteHeader .header-right { justify-self: end; justify-content: flex-end; gap: 22px; }
@@ -1162,9 +1174,15 @@
                         <span class="seg active" id="segArt">Art</span>
                         <span class="seg" id="segFashion">Fashion</span>
                     </div>
+                    <button class="icon-btn hdr-seller-search" title="Search" onclick="veroOpenSearchPage()">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
                     <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
                 </span>
                 <span class="hdr-account" data-icon="account">
+                    <span class="hdr-acct-name" id="hdrAcctName"></span>
                     <!-- Personal-area account: the profile picture from vero_profile,
                          shown by default. Clicking it opens the personal area. -->
                     <button class="icon-btn hdr-avatar-btn" title="My Account" onclick="veroOpenArea()">
@@ -2024,8 +2042,9 @@
     function accountName(acct) {
         let store; try { store = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { store = {}; }
         let prof;  try { prof  = JSON.parse(localStorage.getItem('vero_profile')) || {}; }      catch (e) { prof = {}; }
+        let sell;  try { sell  = JSON.parse(localStorage.getItem('vero_seller_profile')) || {}; } catch (e) { sell = {}; }
         return acct === 'seller'
-            ? (store.name || prof.name || 'My Store')
+            ? (sell.name || store.name || 'My Store')
             : (prof.name || 'My Profile');
     }
 
@@ -2209,6 +2228,11 @@
         // logo, the +, the profile picture and the switch icon.
         const hdr = document.getElementById('siteHeader');
         if (hdr) hdr.classList.toggle('acct-seller', !!seller);
+        // Show the account (shop) name beside the picture.
+        const nameEl = document.getElementById('hdrAcctName');
+        if (nameEl && typeof accountName === 'function') {
+            nameEl.textContent = accountName(seller ? 'seller' : 'buyer');
+        }
     }
 
     function count(key) {
