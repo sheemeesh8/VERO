@@ -5748,7 +5748,8 @@
         }
         .vf-picks::-webkit-scrollbar { display: none; }
 
-        /* --- Featured picks: icon over a hairline, then seller + category --- */
+        /* --- Featured picks: product image on a blurred backdrop, then the
+               maker (brand) and the product type below. --- */
         .vf-pick {
             display: flex;
             flex-direction: column;
@@ -5759,20 +5760,41 @@
             font-family: 'Oswald', 'Segoe UI', sans-serif;
         }
         .vf-pick-media {
-            font-size: 64px;
-            line-height: 1;
-            height: 96px;
+            position: relative;
+            width: 100%;
+            height: 300px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f0efe9;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .vf-pick-rule {
-            width: 46px;
-            height: 1px;
-            background: #111;
-            margin: 14px 0 12px;
+        /* Blurred, oversized copy of the product image as a soft backdrop. */
+        .vf-pick-bg {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 340px;
+            line-height: 1;
+            filter: blur(38px);
+            opacity: 0.55;
+            transform: scale(1.25);
+            pointer-events: none;
         }
+        /* The crisp product image on top. */
+        .vf-pick-fg {
+            position: relative;
+            z-index: 1;
+            font-size: 110px;
+            line-height: 1;
+            transition: transform 0.3s ease;
+        }
+        .vf-pick:hover .vf-pick-fg { transform: translateY(-4px) scale(1.04); }
         .vf-pick-seller {
+            margin-top: 18px;
             font-size: 14px;
             font-weight: 600;
             letter-spacing: 1px;
@@ -5786,7 +5808,6 @@
             text-transform: uppercase;
             color: #8a7d5a;
         }
-        .vf-pick:hover .vf-pick-media { transform: translateY(-3px); transition: transform 0.25s; }
         .vf-cat {
             display: flex;
             flex-direction: column;
@@ -8060,8 +8081,10 @@
                     : featuredProducts) || [];
                 picksEl.innerHTML = promoted.slice(0, 5).map(p => `
                     <a class="vf-pick" href="${veroFeatureUrl(p)}">
-                        <div class="vf-pick-media">${p.icon || ''}</div>
-                        <div class="vf-pick-rule"></div>
+                        <div class="vf-pick-media">
+                            <span class="vf-pick-bg">${p.icon || ''}</span>
+                            <span class="vf-pick-fg">${p.icon || ''}</span>
+                        </div>
                         <div class="vf-pick-seller">${p.brand || p.seller || 'VERO'}</div>
                         <div class="vf-pick-cat">${p.category || ''}</div>
                     </a>`).join('');
