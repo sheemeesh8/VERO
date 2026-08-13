@@ -20,15 +20,19 @@
    ground of its own, so a grid of these reads as one surface with objects on
    it rather than a wall of photographs.
 
-     top right     cart and wishlist, hollow — the line only
-     bottom left   the company, and under it what the piece is
-     bottom right  the price, and under it the rating (or, on sale, the old
-                   price struck through in red)
+     top right     cart and wishlist, hollow green — the line only
+     row 1         the company on the left, the price on the right
+     rule          a hairline between the rows, full width
+     row 2         what the piece is, on the left (the rating is dropped; on
+                   sale, the old price sits struck-through in red on the right)
 
-   The bottom is a fixed two-row template, not a layout that sizes itself: one
-   line per cell, cut with an ellipsis rather than wrapped. A long company name
-   can never push its own second line down, so every card in a grid puts its
-   title on the same line as every other card's.
+   The bottom is a fixed three-row template (row / rule / row), not a layout
+   that sizes itself: one line per cell, cut with an ellipsis rather than
+   wrapped. A long company name can never push its own second line down, so
+   every card in a grid puts its title on the same line as every other card's.
+
+   This is the Figma card form; earlier the second row also carried a star
+   rating on the right, before the rule was added.
 
    The markup this expects is what the pages already emit:
      <a class="product-card">
@@ -48,8 +52,9 @@
        the columns can never drift apart. Doubled to carry the 2x type. */
     --row-1: 30px;
     --row-2: 24px;
-    /* How much of the card's foot belongs to the copy. */
-    --foot-h: 92px;
+    /* How much of the card's foot belongs to the copy. Raised for the hairline
+       rule that now sits between the two rows (the Figma card form). */
+    --foot-h: 112px;
 
     /* Design tokens set in Card Studio (card-studio.html). Edit here or export
        from the studio and every product card on the site follows. */
@@ -57,7 +62,7 @@
     --pc-aspect: 0.7;              /* width / height */
     --pc-img-pad: 5%;
     --pc-emoji: 196px;
-    --pc-icon-color: #111;
+    --pc-icon-color: #004225;   /* the top-right icons, in the brand green */
     --pc-seller-size: 25px;
     --pc-seller-color: #111;
     --pc-name-size: 16px;
@@ -160,11 +165,24 @@
     direction: ltr;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;   /* copy | figure */
+    grid-template-rows: var(--row-1) 1px var(--row-2);
     column-gap: 12px;
+    row-gap: 8px;
     align-items: center;
     padding: 0 14px 14px;
     background: none;
     border: none;
+}
+/* The hairline rule between the two rows — the Figma card form. It is a grid
+   item of its own on the middle row, spanning both columns. */
+.product-info::after {
+    content: '';
+    grid-row: 2;
+    grid-column: 1 / -1;
+    height: 1px;
+    align-self: center;
+    background: #1a1a1a;
+    opacity: 0.85;
 }
 /* The markup wraps the copy in two boxes (.pc-right holds company, type and
    rating; .pc-left holds the price). Those boxes are dissolved with
@@ -175,9 +193,10 @@
 .pc-left { display: contents; }
 
 .product-seller { grid-area: 1 / 1; }
-.product-name   { grid-area: 2 / 1; }
 .product-price  { grid-area: 1 / 2; }
-.product-rating { grid-area: 2 / 2; }
+/* The second line sits under the rule, on the left (Figma form). The star
+   rating is dropped — see the .product-rating rule further down. */
+.product-name   { grid-area: 3 / 1; }
 
 /* The cart's 48-hour hold notice is not part of the template — it rides on the
    field above the copy, so a cart card stays the same height as every other. */
@@ -236,7 +255,7 @@
     text-transform: uppercase;
     color: var(--pc-seller-color, #111);
     cursor: pointer;
-    transform: translate(5px, -14px);
+    transform: none;
 }
 
 /* Row 2, left: what the piece is — the seller's own words for it. */
@@ -249,7 +268,7 @@
     font-weight: 400;
     letter-spacing: 0.6px;
     color: var(--pc-name-color, #111);
-    transform: translate(6px, -7px);
+    transform: none;
 }
 
 /* Row 1, right: the price — the one loud thing on the card. */
@@ -264,23 +283,12 @@
     letter-spacing: 0.4px;
     color: var(--pc-price-color, #111);
     text-align: right;
-    transform: translate(-1px, -12px);
+    transform: none;
 }
 
-/* Row 2, right: the rating, in the quietest voice on the card. */
-.product-rating {
-    height: var(--row-2);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
-    font-size: var(--pc-rating-size, 16px);
-    font-weight: 400;
-    letter-spacing: 0.6px;
-    color: var(--pc-rating-color, #111);
-    opacity: var(--pc-rating-opacity, 0.75);
-    transform: translate(-2px, -7px);
-}
+/* The star rating is dropped from the new card form — the second line is a
+   single left-aligned descriptor under the rule, as in the Figma card. */
+.product-rating { display: none; }
 
 /* The second copy of the cart / wishlist controls that used to sit in the
    footer — the card carries them on the image now. */
@@ -296,6 +304,8 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    justify-content: space-between;
+    height: 100%;
 }
 /* The new price on top, the old one beneath it. */
 .product-card.is-sale .vprice-sale {
@@ -323,8 +333,10 @@
 }
 /* The old price takes the rating's line, so the rating steps aside. */
 .product-card.is-sale .product-rating { display: none; }
-/* The price block then spans both rows of its column. */
-.product-card.is-sale .product-price { grid-area: 1 / 2 / 3 / 3; }
+/* The price block then spans all three rows of its column: the new price on
+   the top row, the old one struck through on the bottom row, with the hairline
+   rule passing between them. */
+.product-card.is-sale .product-price { grid-area: 1 / 2 / 4 / 3; }
 
 /* How much came off. It is emitted inside the price block (product-overrides.js
    builds one string for card and product page alike), so it is positioned
@@ -371,7 +383,7 @@
 /* ---- Narrow screens ----
    The template holds; only the type shrinks with the card. */
 @media (max-width: 600px) {
-    .product-card { --row-1: 27px; --row-2: 22px; --foot-h: 63px; }
+    .product-card { --row-1: 27px; --row-2: 22px; --foot-h: 84px; }
     .product-seller { font-size: 20px; }
     .product-price  { font-size: 21px; }
     .product-name   { font-size: 16px; }
