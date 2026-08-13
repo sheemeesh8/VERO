@@ -5736,57 +5736,50 @@
         #feedContainer > .promo-slider { display: none !important; }
 
         /* --- 1. Category slider (men / women / kids + Shop All) --- */
+        /* Picks section — a slider of random-product rows, pushed toward the
+           bottom of its white area (big top padding, small bottom padding). */
         .vf-picks {
-            display: grid;
-            grid-auto-flow: column;
-            grid-auto-columns: minmax(300px, 1fr);
-            gap: 22px;
-            padding: 96px 65px 88px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            direction: ltr;   /* Shop-All sits leftmost even on the RTL page */
+            padding: 120px 65px 34px;
+            direction: ltr;
         }
-        .vf-picks::-webkit-scrollbar { display: none; }
 
-        /* --- Featured picks: icon over a hairline, then seller + category --- */
-        .vf-pick {
+        /* --- Featured-picks slider: each slide is a row of 5 product cards --- */
+        .vf-pshow { position: relative; width: 100%; }
+        .vf-pshow-viewport { width: 100%; overflow: hidden; }
+        .vf-pshow-track {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            text-decoration: none;
-            color: #111;
-            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
+            will-change: transform;
         }
-        .vf-pick-media {
-            font-size: 64px;
-            line-height: 1;
-            height: 96px;
+        .vf-pslide {
+            flex: 0 0 100%;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 22px;
+            align-items: start;
+        }
+        .vf-pshow-dots {
             display: flex;
-            align-items: center;
             justify-content: center;
+            gap: 8px;
+            margin-top: 22px;
         }
-        .vf-pick-rule {
-            width: 46px;
-            height: 1px;
-            background: #111;
-            margin: 14px 0 12px;
+        .vf-pshow-dots .vf-pshow-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            border: none;
+            background: #cfcac0;
+            cursor: pointer;
+            padding: 0;
+            transition: width 0.25s, background 0.25s;
         }
-        .vf-pick-seller {
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #111;
+        .vf-pshow-dots .vf-pshow-dot.active { background: #111; width: 24px; border-radius: 5px; }
+        @media (max-width: 1024px) {
+            .vf-pslide { grid-template-columns: repeat(3, 1fr); }
         }
-        .vf-pick-cat {
-            margin-top: 6px;
-            font-size: 11px;
-            letter-spacing: 1.6px;
-            text-transform: uppercase;
-            color: #8a7d5a;
+        @media (max-width: 640px) {
+            .vf-pslide { grid-template-columns: repeat(2, 1fr); }
         }
-        .vf-pick:hover .vf-pick-media { transform: translateY(-3px); transition: transform 0.25s; }
         .vf-cat {
             display: flex;
             flex-direction: column;
@@ -8051,20 +8044,40 @@
         function renderVeroFeatures() {
             const src = ((typeof feedSource === 'function' ? feedSource() : []) || []);
 
-            // 1. Five featured picks — the men/women/kids promoted slider. Each is
-            //    the piece's cut-out image (erased background) over its caption.
+            // 1. Featured picks slider — each slide is a row of five random
+            //    products from the current mode (a shirt, some trousers, a pair of
+            //    shoes, a watch…). Arrows page between fresh random rows.
             const picksEl = document.getElementById('vfPicks');
             if (picksEl) {
-                const promoted = (currentSegment
-                    ? segmentFeatured(currentCategory, currentSegment)
-                    : featuredProducts) || [];
-                picksEl.innerHTML = promoted.slice(0, 5).map(p => `
-                    <a class="vf-pick" href="${veroFeatureUrl(p)}">
-                        <div class="vf-pick-media">${p.icon || ''}</div>
-                        <div class="vf-pick-rule"></div>
-                        <div class="vf-pick-seller">${p.brand || p.seller || 'VERO'}</div>
-                        <div class="vf-pick-cat">${p.category || ''}</div>
-                    </a>`).join('');
+                const pool = src.slice();
+                const pick5 = () => {
+                    const copy = pool.slice();
+                    const out = [];
+                    for (let i = 0; i < 5 && copy.length; i++) {
+                        out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
+                    }
+                    return out;
+                };
+                const slideCount = pool.length ? 4 : 0;
+                let slidesHTML = '';
+                for (let s = 0; s < slideCount; s++) {
+                    slidesHTML += `<div class="vf-pslide">${pick5().map(productCardHTML).join('')}</div>`;
+                }
+                picksEl.innerHTML = slideCount ? `
+                    <div class="vf-pshow">
+                        <div class="vf-pshow-viewport">
+                            <div class="vf-pshow-track" id="vfPicksTrack">${slidesHTML}</div>
+                        </div>
+                        <button class="vf-band-arrow prev" type="button" onclick="veroPicksStep(-1)" aria-label="Previous">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                        </button>
+                        <button class="vf-band-arrow next" type="button" onclick="veroPicksStep(1)" aria-label="Next">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                        <div class="vf-pshow-dots" id="vfPicksDots"></div>
+                    </div>` : '';
+                veroPicksIndex = 0;
+                if (slideCount) veroPicksGo(0);
             }
 
             // 2. Editorial band — the category carousel. Its active (outermost)
@@ -8074,6 +8087,30 @@
             // 4. Editorial gallery — the shared product card, in a horizontal scroller.
             const gal = document.getElementById('vfGallery');
             if (gal) gal.innerHTML = src.slice(5, 11).map(productCardHTML).join('');
+        }
+
+        // ---- Featured-picks slider (rows of 5 random products) --------------
+        let veroPicksIndex = 0;
+
+        function veroPicksStep(dir) { veroPicksGo(veroPicksIndex + dir); }
+
+        function veroPicksGo(index) {
+            const track = document.getElementById('vfPicksTrack');
+            if (!track || !track.children.length) return;
+            const max = track.children.length - 1;
+            veroPicksIndex = Math.max(0, Math.min(index, max));
+            track.style.transform = `translateX(-${veroPicksIndex * 100}%)`;
+
+            const prev = track.closest('.vf-pshow').querySelector('.vf-band-arrow.prev');
+            const next = track.closest('.vf-pshow').querySelector('.vf-band-arrow.next');
+            if (prev) prev.disabled = veroPicksIndex <= 0;
+            if (next) next.disabled = veroPicksIndex >= max;
+
+            const dots = document.getElementById('vfPicksDots');
+            if (dots) {
+                dots.innerHTML = [...track.children].map((_, i) =>
+                    `<button class="vf-pshow-dot${i === veroPicksIndex ? ' active' : ''}" onclick="veroPicksGo(${i})" aria-label="Slide ${i + 1}"></button>`).join('');
+            }
         }
 
         // ---- Editorial band carousel ----------------------------------------
