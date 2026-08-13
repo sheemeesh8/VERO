@@ -1177,17 +1177,17 @@
             <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.png?v=2" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
             <div class="header-right">
                 <span class="hdr-mode-pair" data-icon="mode">
+                    <span class="icon-wrap hdr-seller-extra" data-icon="wishlist">
+                        <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20.3l-1.45-1.32C5.4 14.24 2 11.16 2 7.4 2 4.42 4.42 2 7.4 2c1.68 0 3.3.78 4.6 2.09C13.3 2.78 14.92 2 16.6 2 19.58 2 22 4.42 22 7.4c0 3.76-3.4 6.84-8.55 11.58L12 20.3z"/>
+                            </svg>
+                        </button>
+                    </span>
                     <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
                         <span class="seg active" id="segArt">Art</span>
                         <span class="seg" id="segFashion">Fashion</span>
                     </div>
-                    <span class="icon-wrap hdr-seller-extra" data-icon="wishlist">
-                        <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 21s-7.5-4.7-10-9.3C.3 8.4 1.7 5 5 5c2 0 3.2 1.2 4 2.3C9.8 6.2 11 5 13 5c3.3 0 4.7 3.4 3 6.7C18.5 16.3 12 21 12 21z"/>
-                            </svg>
-                        </button>
-                    </span>
                     <span class="icon-wrap hdr-seller-extra">
                         <button class="icon-btn" title="Cart" onclick="openCart()">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke-width: 1.5;">
