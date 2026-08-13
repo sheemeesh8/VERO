@@ -822,6 +822,17 @@
         #siteHeader.scrolled.over-dark .hdr-mode-pair .toggle-category::before { background: #fff !important; }
         #siteHeader.scrolled.over-dark .hdr-mode-pair .upload-plus { color: #fff !important; border-color: #fff !important; }
 
+        /* ===== Business (seller) account — stripped header =====
+           Keep only the logo, the + (upload), the profile picture and the switch
+           icon. Hide the menu, search, category toggle and cart. */
+        #siteHeader.acct-seller [data-icon="menu"],
+        #siteHeader.acct-seller [data-icon="search"],
+        #siteHeader.acct-seller [data-icon="cart"],
+        #siteHeader.acct-seller .hdr-searchwrap,
+        #siteHeader.acct-seller .hdr-mode-pair .toggle-category {
+            display: none !important;
+        }
+
         /* ===== Icons pinned to the right, logo centred ===== */
         #siteHeader .header-right { justify-self: end; justify-content: flex-end; gap: 22px; }
         @media (max-width: 768px) {
@@ -2194,6 +2205,10 @@
         }
         // A subtle ring marks the seller account so the switch is legible.
         el.classList.toggle('is-seller', !!seller);
+        // In the business (seller) account the header is stripped down to just the
+        // logo, the +, the profile picture and the switch icon.
+        const hdr = document.getElementById('siteHeader');
+        if (hdr) hdr.classList.toggle('acct-seller', !!seller);
     }
 
     function count(key) {
