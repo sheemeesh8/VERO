@@ -1152,7 +1152,7 @@
                 <span class="hdr-account" data-icon="account">
                     <!-- Personal-area account: the profile picture from vero_profile,
                          shown by default. Clicking it opens the personal area. -->
-                    <button class="icon-btn hdr-avatar-btn" title="My Account" onclick="openBuyerArea()">
+                    <button class="icon-btn hdr-avatar-btn" title="My Account" onclick="veroOpenArea()">
                         <span class="hdr-avatar" id="hdrAvatar">V</span>
                     </button>
                     <!-- Switch profile: jump to the separate Seller Area (business) account. -->
@@ -1991,6 +1991,12 @@
             ? (store.name || prof.name || 'My Store')
             : (prof.name || 'My Profile');
     }
+
+    // Open the "rectangles" hub that matches the active account — seller-area for
+    // the business account, buyer-area (personal) for the buyer account.
+    window.veroOpenArea = function () {
+        location.href = veroActiveAccount() === 'seller' ? 'seller-area.html' : 'buyer-area.html';
+    };
 
     // Toggle between the personal and seller accounts without leaving the feed:
     // set the new account, show the welcome splash, then reload the current view
