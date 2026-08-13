@@ -5767,7 +5767,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 200px;
+            font-size: 170px;
             line-height: 1;
             transition: transform 0.3s ease;
         }
@@ -5779,9 +5779,9 @@
             margin-top: -84px;          /* pull the caption up toward the product */
         }
         .vf-promo-company {
-            font-size: 29px;
+            font-size: 25px;
             font-weight: 600;
-            letter-spacing: 2px;
+            letter-spacing: 1.8px;
             text-transform: uppercase;
             color: #111;
         }
@@ -5789,11 +5789,11 @@
             width: 78%;
             height: 1px;
             background: #111;
-            margin: 16px 0;
+            margin: 15px 0;
         }
         .vf-promo-name {
-            font-size: 20px;
-            letter-spacing: 2px;
+            font-size: 17px;
+            letter-spacing: 1.8px;
             text-transform: uppercase;
             color: #6b6b6b;
         }
@@ -5852,10 +5852,50 @@
         }
 
         /* --- 2. Full-width hero band --- */
+        /* Labels row below the hero: the mode's segments + magazine, balanced
+           side by side, clear of the hero and the bar. */
+        .vf-navbox {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            margin: 34px 0 10px;
+            padding: 22px 65px;
+            border-top: 1px solid #e7e3d9;
+            border-bottom: 1px solid #e7e3d9;
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+        }
+        .vf-navbox-item {
+            flex: 1;
+            padding: 6px 0;
+            border: none;
+            background: none;
+            text-align: center;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: #111;
+            transition: color 0.2s;
+        }
+        .vf-navbox-item:hover,
+        .vf-navbox-item.is-active { color: #8a7d5a; }
+        .vf-navbox-item.vf-navbox-mag {
+            font-size: 16px;
+            letter-spacing: 1.6px;
+            color: #8a7d5a;
+        }
+        @media (max-width: 768px) {
+            .vf-navbox { flex-wrap: wrap; padding: 18px 20px; }
+            .vf-navbox-item { flex: 1 1 40%; }
+        }
+
         .vf-band {
             position: relative;
             width: 100%;
-            height: clamp(420px, 56vw, 760px);
+            height: clamp(504px, 67vw, 912px);
             background-color: #d8d8d0;
         }
         .vf-band-viewport {
@@ -6373,10 +6413,7 @@
                  type, evenly across the row (Figma "RALPH LAUREN / HANDBAG"). -->
             <div class="vf-picks" id="vfPicks"><!-- built by renderVeroFeatures() --></div>
 
-            <!-- 2. Full-width editorial band — a category carousel. It shows ~4
-                 category slides at once (the last one half-cut / peeking); the
-                 outermost fully-visible slide is the "active" category whose name
-                 and item-count drive the section bar below. -->
+            <!-- 2. Full-width editorial band — a category carousel. -->
             <div class="vf-band" id="vfBand">
                 <div class="vf-band-viewport">
                     <div class="vf-band-track" id="vfBandTrack"><!-- slides built by renderVeroBand() --></div>
@@ -6388,6 +6425,9 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
                 </button>
             </div>
+
+            <!-- Labels row under the hero: the mode's segments + magazine. -->
+            <div class="vf-navbox" id="vfNavbox"><!-- built by renderVeroFeatures() --></div>
 
             <!-- 3. Section bar: segment · count · shop-all. -->
             <div class="vf-bar">
@@ -8088,6 +8128,20 @@
             // 2. Editorial band — the category carousel. Its active (outermost)
             //    slide drives the section bar below (segment name + count).
             renderVeroBand();
+
+            // 2b. Labels row under the hero — the mode's segments + magazine.
+            const navEl = document.getElementById('vfNavbox');
+            if (navEl) {
+                const segs = filterSegments[currentCategory] || [];
+                const mag = magazineSlides[currentCategory];
+                let html = segs.map(s =>
+                    `<button class="vf-navbox-item${currentSegment === s.key ? ' is-active' : ''}" onclick="selectSegment('${s.key}')">${s.name}</button>`).join('');
+                if (mag) {
+                    const magName = `${mag.name} ${mag.accent}`.toUpperCase();
+                    html += `<button class="vf-navbox-item vf-navbox-mag">${magName}</button>`;
+                }
+                navEl.innerHTML = html;
+            }
 
             // 4. Editorial gallery — the shared product card, in a horizontal scroller.
             const gal = document.getElementById('vfGallery');
