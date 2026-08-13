@@ -5735,63 +5735,71 @@
         #feedContainer .ed-head { display: none !important; }
         #feedContainer > .promo-slider { display: none !important; }
 
-        /* --- 1. Five featured picks --- */
+        /* --- 1. Category slider (men / women / kids + Shop All) --- */
         .vf-picks {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 24px;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(300px, 1fr);
+            gap: 22px;
             padding: 46px 65px 40px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            direction: ltr;   /* Shop-All sits leftmost even on the RTL page */
         }
-        .vf-pick {
+        .vf-picks::-webkit-scrollbar { display: none; }
+        .vf-cat {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
             text-align: center;
-            text-decoration: none;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
             color: #111;
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
         }
-        /* The piece's image, background erased — it floats over the caption. */
-        .vf-pick-media {
+        .vf-cat-media {
+            width: 100%;
+            height: 360px;
+            background-color: #e7e4dd;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin-bottom: 18px;
+            transition: filter 0.25s ease, transform 0.25s ease;
+        }
+        .vf-cat:hover .vf-cat-media { filter: brightness(0.94); }
+        .vf-cat.is-active .vf-cat-media { outline: 2px solid #004225; outline-offset: -2px; }
+        /* Shop-All tile: a flat green panel instead of a photo. */
+        .vf-cat-media-all {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            height: 190px;
-            margin-bottom: 20px;
-            background: none;
-            font-size: 128px;
-            line-height: 1;
+            background-color: #004225;
+            color: #fff;
         }
-        .vf-pick-media img,
-        .vf-pick-media .pc-photo {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
+        .vf-cat-media-all span {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 30px;
+            line-height: 1.1;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
-        .vf-pick:hover .vf-pick-media { transform: translateY(-3px); transition: transform 0.25s ease; }
-        .vf-pick-rule {
-            width: 150px;
-            max-width: 80%;
-            height: 1px;
-            background: #1a1a1a;
-            margin-bottom: 14px;
-        }
-        .vf-pick-seller {
-            font-family: 'Oswald', 'Segoe UI', sans-serif;
-            font-size: 14px;
-            letter-spacing: 0.6px;
+        .vf-cat-name {
+            font-size: 15px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
             color: #111;
         }
-        .vf-pick-cat {
-            font-family: 'Oswald', 'Segoe UI', sans-serif;
-            font-size: 11px;
+        .vf-cat.is-active .vf-cat-name { color: #004225; font-weight: 600; }
+        .vf-cat-count {
+            font-size: 12px;
             letter-spacing: 1px;
             text-transform: uppercase;
             color: #7a7a7a;
-            margin-top: 10px;
+            margin-top: 8px;
         }
-        .vf-pick:hover .vf-pick-seller { text-decoration: underline; }
 
         /* --- 2. Full-width hero band --- */
         .vf-band {
@@ -5873,7 +5881,8 @@
         .vf-ed-gallery .product-card { width: 100%; }
 
         @media (max-width: 900px) {
-            .vf-picks { grid-template-columns: repeat(2, 1fr); }
+            .vf-picks { grid-auto-columns: minmax(220px, 1fr); }
+            .vf-cat-media { height: 260px; }
             .vf-editorial { grid-template-columns: 1fr; }
             .vf-ed-text { padding-top: 10px; }
             .vf-picks, .vf-bar, .vf-editorial { padding-left: 20px; padding-right: 20px; }
@@ -6217,8 +6226,21 @@
                  type, evenly across the row (Figma "RALPH LAUREN / HANDBAG"). -->
             <div class="vf-picks" id="vfPicks"><!-- built by renderVeroFeatures() --></div>
 
-            <!-- 2. Full-width editorial hero band. -->
-            <div class="vf-band" id="vfBand"></div>
+            <!-- 2. Full-width editorial band — a category carousel. It shows ~4
+                 category slides at once (the last one half-cut / peeking); the
+                 outermost fully-visible slide is the "active" category whose name
+                 and item-count drive the section bar below. -->
+            <div class="vf-band" id="vfBand">
+                <div class="vf-band-viewport">
+                    <div class="vf-band-track" id="vfBandTrack"><!-- slides built by renderVeroBand() --></div>
+                </div>
+                <button class="vf-band-arrow prev" type="button" onclick="veroBandStep(-1)" aria-label="Previous">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button class="vf-band-arrow next" type="button" onclick="veroBandStep(1)" aria-label="Next">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
 
             <!-- 3. Section bar: segment · count · shop-all. -->
             <div class="vf-bar">
@@ -7892,20 +7914,36 @@
         function renderVeroFeatures() {
             const src = ((typeof feedSource === 'function' ? feedSource() : []) || []);
 
-            // 1. Five promoted picks — the men/women/kids promoted slider. Each is
-            //    the piece's cut-out image (erased background) over its caption.
+            // 1. Category slider — men / women / kids (or the art segments). Each
+            //    tile is a large image over the category name and its item count;
+            //    clicking a tile filters the whole feed (selectSegment). The first
+            //    tile is a Shop-All reset. Same behaviour as the segment slider.
             const picksEl = document.getElementById('vfPicks');
             if (picksEl) {
-                const promoted = (currentSegment
-                    ? segmentFeatured(currentCategory, currentSegment)
-                    : featuredProducts) || [];
-                picksEl.innerHTML = promoted.slice(0, 5).map(p => `
-                    <a class="vf-pick" href="${veroFeatureUrl(p)}">
-                        <div class="vf-pick-media">${p.icon || ''}</div>
-                        <div class="vf-pick-rule"></div>
-                        <div class="vf-pick-seller">${p.brand || p.seller || 'VERO'}</div>
-                        <div class="vf-pick-cat">${p.category || ''}</div>
-                    </a>`).join('');
+                const segs = (filterSegments[currentCategory] || []);
+                const segCount = s =>
+                    (typeof buildSegmentProducts === 'function'
+                        ? buildSegmentProducts(currentCategory, s.key).length : 0);
+                const total = segs.reduce((n, s) => n + segCount(s), 0);
+
+                const shopAll = `
+                    <button class="vf-cat vf-cat-all${!currentSegment ? ' is-active' : ''}" onclick="veroShopAllCats(event)">
+                        <div class="vf-cat-media vf-cat-media-all"><span>Shop<br>All</span></div>
+                        <div class="vf-cat-name">Shop All</div>
+                        <div class="vf-cat-count">${total} items</div>
+                    </button>`;
+
+                const tiles = segs.map((s, i) => {
+                    const img = `https://loremflickr.com/600/760/${encodeURIComponent(s.img)}?lock=${i + 1}`;
+                    return `
+                        <button class="vf-cat${currentSegment === s.key ? ' is-active' : ''}" onclick="selectSegment('${s.key}')">
+                            <div class="vf-cat-media" style="background-image:url('${img}')"></div>
+                            <div class="vf-cat-name">${s.name}</div>
+                            <div class="vf-cat-count">${segCount(s)} items</div>
+                        </button>`;
+                }).join('');
+
+                picksEl.innerHTML = shopAll + tiles;
             }
 
             // 2. Hero band image, by category.
@@ -7932,6 +7970,18 @@
             if (e) e.preventDefault();
             const grid = document.getElementById('feedContainer');
             if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // "Shop all" tile in the category slider: clears the active segment so the
+        // feed shows everything again (mirrors selectSegment's feed rebuild).
+        function veroShopAllCats(e) {
+            if (e) e.preventDefault();
+            currentSegment = null;
+            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
+            if (typeof renderFeedFilters === 'function') renderFeedFilters();
+            renderFeed();
+            const fs = document.querySelector('.feed-section');
+            if (fs) fs.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // Load More Feed Blocks
