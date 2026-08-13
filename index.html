@@ -5736,78 +5736,26 @@
         #feedContainer > .promo-slider { display: none !important; }
 
         /* --- 1. Category slider (men / women / kids + Shop All) --- */
+        /* Five products from the site — a clean row of the shared product card. */
         .vf-picks {
             display: grid;
-            grid-auto-flow: column;
-            grid-auto-columns: minmax(300px, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 22px;
-            padding: 96px 65px 88px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            direction: ltr;   /* Shop-All sits leftmost even on the RTL page */
+            padding: 56px 65px 40px;
+            direction: ltr;
         }
-        .vf-picks::-webkit-scrollbar { display: none; }
-
-        /* --- Featured picks: product image on a blurred backdrop, then the
-               maker (brand) and the product type below. --- */
-        .vf-pick {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            text-decoration: none;
-            color: #111;
-            font-family: 'Oswald', 'Segoe UI', sans-serif;
+        @media (max-width: 1024px) {
+            .vf-picks { grid-template-columns: repeat(3, 1fr); }
         }
-        .vf-pick-media {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #f0efe9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        @media (max-width: 640px) {
+            .vf-picks { grid-template-columns: repeat(2, 1fr); }
         }
-        /* Blurred, oversized copy of the product image as a soft backdrop. */
-        .vf-pick-bg {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 340px;
-            line-height: 1;
-            filter: blur(38px);
-            opacity: 0.55;
-            transform: scale(1.25);
-            pointer-events: none;
-        }
-        /* The crisp product image on top. */
-        .vf-pick-fg {
-            position: relative;
-            z-index: 1;
-            font-size: 110px;
-            line-height: 1;
-            transition: transform 0.3s ease;
-        }
-        .vf-pick:hover .vf-pick-fg { transform: translateY(-4px) scale(1.04); }
-        .vf-pick-seller {
-            margin-top: 18px;
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #111;
-        }
-        .vf-pick-cat {
-            margin-top: 6px;
-            font-size: 11px;
-            letter-spacing: 1.6px;
-            text-transform: uppercase;
-            color: #8a7d5a;
-        }
+        /* Promoted products: erase the card background so only the product sits
+           on the page's white background — no box, no shadow, no image fill. */
+        .vf-picks .product-card,
+        .vf-picks .product-card:hover { background: none; box-shadow: none; }
+        .vf-picks .product-image,
+        .vf-picks .product-card:hover .product-image { background: transparent; }
         .vf-cat {
             display: flex;
             flex-direction: column;
@@ -8072,22 +8020,10 @@
         function renderVeroFeatures() {
             const src = ((typeof feedSource === 'function' ? feedSource() : []) || []);
 
-            // 1. Five featured picks — the men/women/kids promoted slider. Each is
-            //    the piece's cut-out image (erased background) over its caption.
+            // 1. Five products from the site — the shared product card.
             const picksEl = document.getElementById('vfPicks');
             if (picksEl) {
-                const promoted = (currentSegment
-                    ? segmentFeatured(currentCategory, currentSegment)
-                    : featuredProducts) || [];
-                picksEl.innerHTML = promoted.slice(0, 5).map(p => `
-                    <a class="vf-pick" href="${veroFeatureUrl(p)}">
-                        <div class="vf-pick-media">
-                            <span class="vf-pick-bg">${p.icon || ''}</span>
-                            <span class="vf-pick-fg">${p.icon || ''}</span>
-                        </div>
-                        <div class="vf-pick-seller">${p.brand || p.seller || 'VERO'}</div>
-                        <div class="vf-pick-cat">${p.category || ''}</div>
-                    </a>`).join('');
+                picksEl.innerHTML = src.slice(0, 5).map(productCardHTML).join('');
             }
 
             // 2. Editorial band — the category carousel. Its active (outermost)
