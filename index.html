@@ -5721,6 +5721,145 @@
     <script src="photo-guide.js"></script>
     <!-- The product card, shared by every page (single source: product-card.css). -->
     <link rel="stylesheet" href="product-card.css">
+    <!-- ==================== HOME FEED — FIGMA LAYOUT ====================
+         The home feed's sections (built into index.html's markup and filled by
+         renderVeroFeatures): five featured picks, a full-width hero band, a
+         section bar, and an editorial feature with a horizontal gallery — then
+         the infinite product grid. The interactive machinery the feed keeps
+         (segment slider, filter column, promoted sliders, "The Edit" headers)
+         is left in the DOM but hidden in this layout. -->
+    <style>
+        /* --- hide the pieces the Figma layout drops --- */
+        #filterGrid.hero-slider { display: none !important; }
+        .feed-section .feed-lead { display: none !important; }
+        #feedContainer .ed-head { display: none !important; }
+        #feedContainer > .promo-slider { display: none !important; }
+
+        /* --- 1. Five featured picks --- */
+        .vf-picks {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 24px;
+            padding: 46px 65px 40px;
+        }
+        .vf-pick {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            text-decoration: none;
+            color: #111;
+        }
+        .vf-pick-rule {
+            width: 150px;
+            max-width: 80%;
+            height: 1px;
+            background: #1a1a1a;
+            margin-bottom: 14px;
+        }
+        .vf-pick-seller {
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 14px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: #111;
+        }
+        .vf-pick-cat {
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #7a7a7a;
+            margin-top: 10px;
+        }
+        .vf-pick:hover .vf-pick-seller { text-decoration: underline; }
+
+        /* --- 2. Full-width hero band --- */
+        .vf-band {
+            width: 100%;
+            height: clamp(320px, 46vw, 640px);
+            background-color: #d8d8d0;
+            background-position: center 32%;
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
+        /* --- 3. Section bar --- */
+        .vf-bar {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            padding: 22px 65px;
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #111;
+        }
+        .vf-bar-start { justify-self: start; }
+        .vf-bar-mid   { justify-self: center; color: #4a4a4a; }
+        .vf-bar-end   { justify-self: end; color: #111; text-decoration: none; }
+        .vf-bar-end:hover { text-decoration: underline; }
+
+        /* --- 4. Editorial feature: text left, gallery right --- */
+        .vf-editorial {
+            display: grid;
+            grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+            gap: 40px;
+            align-items: start;
+            padding: 10px 65px 20px;
+        }
+        .vf-ed-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding-top: 90px;
+        }
+        .vf-ed-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: clamp(34px, 3.4vw, 52px);
+            font-weight: 500;
+            letter-spacing: 14px;
+            margin: 0 0 14px;
+            padding-left: 14px; /* balance the trailing letter-spacing */
+            color: #111;
+        }
+        .vf-ed-sub {
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: #111;
+        }
+        .vf-ed-body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-size: 14px;
+            line-height: 1.75;
+            color: #555;
+            margin: 34px 0 0;
+            max-width: 300px;
+        }
+        .vf-ed-gallery {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(230px, 1fr);
+            gap: 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 6px;
+        }
+        .vf-ed-gallery::-webkit-scrollbar { display: none; }
+        .vf-ed-gallery .product-card { width: 100%; }
+
+        @media (max-width: 900px) {
+            .vf-picks { grid-template-columns: repeat(2, 1fr); }
+            .vf-editorial { grid-template-columns: 1fr; }
+            .vf-ed-text { padding-top: 10px; }
+            .vf-picks, .vf-bar, .vf-editorial { padding-left: 20px; padding-right: 20px; }
+        }
+    </style>
     <!-- Seller edits + sale prices, shared by every page (single source). -->
     <script src="product-overrides.js"></script>
 </head>
@@ -6052,27 +6191,38 @@
         <!-- Segment hero slides, populated by JavaScript -->
     </div>
 
-    <!-- ==================== INFINITE FEED ==================== -->
+    <!-- ==================== INFINITE FEED (Figma layout) ==================== -->
     <div class="feed-section">
         <div class="container">
-            <!-- A row of five rectangles under the slider, in the same feed-block +
-                 products-grid context as the feed so each is the exact size of a
-                 product card. -->
-            <div class="feed-block">
-                <div class="products-grid slider-rects">
-                    <div class="slider-rect"></div>
-                    <div class="slider-rect"></div>
-                    <div class="slider-rect"></div>
-                    <div class="slider-rect"></div>
-                    <div class="slider-rect"></div>
-                </div>
+            <!-- 1. Five featured picks — a hairline over the seller and the piece
+                 type, evenly across the row (Figma "RALPH LAUREN / HANDBAG"). -->
+            <div class="vf-picks" id="vfPicks"><!-- built by renderVeroFeatures() --></div>
+
+            <!-- 2. Full-width editorial hero band. -->
+            <div class="vf-band" id="vfBand"></div>
+
+            <!-- 3. Section bar: segment · count · shop-all. -->
+            <div class="vf-bar">
+                <span class="vf-bar-seg vf-bar-start" id="vfSegment">WOMEN</span>
+                <span class="vf-bar-seg vf-bar-mid" id="vfCount">—</span>
+                <a class="vf-bar-seg vf-bar-end" href="#" onclick="veroShopAll(event)">SHOP ALL</a>
             </div>
-            <!-- The first promoted slider sits on the left; the filters run as a
-                 vertical column on its right. loadMoreFeedBlocks mounts the first
-                 slider into #feedLeadSlider (later sliders precede their grids in
-                 the feed as before). -->
-            <div class="feed-lead">
-                <!-- Minimalist filter bar, laid out above the first promoted slider. -->
+
+            <!-- 4. Editorial feature: title + copy on the left, a horizontal
+                 product gallery on the right. -->
+            <div class="vf-editorial">
+                <div class="vf-ed-text">
+                    <h2 class="vf-ed-title">JACKETS</h2>
+                    <div class="vf-ed-sub">DISCOVER THE BEST LONGER-SLEEVE ITEMS</div>
+                    <p class="vf-ed-body">The Final Touch Your Outfit Deserves. Layering season is here, and your style shouldn't take a backseat. Explore versatile pieces designed to take you effortlessly from day to night.</p>
+                </div>
+                <div class="vf-ed-gallery" id="vfGallery"><!-- built by renderVeroFeatures() --></div>
+            </div>
+
+            <!-- 5. Infinite product grid. The filter column and the promoted
+                 sliders are kept in the DOM (the feed JS drives them) but hidden
+                 in this layout — see the .vf hide rules in the stylesheet. -->
+            <div class="feed-lead" id="feedLead">
                 <div class="feed-filters" id="feedFilters"><!-- built by renderFeedFilters --></div>
                 <div class="feed-lead-slider" id="feedLeadSlider"></div>
             </div>
@@ -6544,10 +6694,16 @@
             const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
             const cb = document.getElementById('cartBadge');
             const wb = document.getElementById('wishlistBadge');
-            cb.textContent = cartCount;
-            cb.classList.toggle('show', cartCount > 0);
-            wb.textContent = wishlist.length;
-            wb.classList.toggle('show', wishlist.length > 0);
+            // The badges live in the shared header (header.js); guard in case it
+            // has not injected them yet, so init never aborts here.
+            if (cb) {
+                cb.textContent = cartCount;
+                cb.classList.toggle('show', cartCount > 0);
+            }
+            if (wb) {
+                wb.textContent = wishlist.length;
+                wb.classList.toggle('show', wishlist.length > 0);
+            }
         }
 
         function cartVisible() {
@@ -6910,6 +7066,10 @@
 
         function showOnboarding() {
             const modal = document.getElementById('onboardingModal');
+            // The onboarding modal is not present on this page. Without this guard
+            // initializeApp() threw here for a first-time visitor (no saved prefs),
+            // which aborted init before the feed rendered — leaving a blank home.
+            if (!modal) { renderFeed(); return; }
             modal.style.display = 'flex';
         }
 
@@ -7695,6 +7855,59 @@
             if (!feedContainer.children.length) {
                 feedContainer.innerHTML = '<div class="feed-empty">No pieces match these filters.</div>';
             }
+            renderVeroFeatures();
+        }
+
+        // ---- Home feed Figma sections: featured picks, hero band, section bar
+        // and the editorial gallery. All filled from the current feed source so
+        // they follow the active category / filters. ----
+        function veroFeatureUrl(prod) {
+            const productData = JSON.stringify({
+                name: prod.name, price: prod.price, icon: prod.icon,
+                category: prod.category, seller: prod.seller,
+                rating: prod.rating, type: prod.type || currentCategory
+            });
+            return `product-showcase.html?product=${encodeURIComponent(productData)}`;
+        }
+
+        function renderVeroFeatures() {
+            const src = ((typeof feedSource === 'function' ? feedSource() : []) || []);
+
+            // 1. Five captioned picks.
+            const picksEl = document.getElementById('vfPicks');
+            if (picksEl) {
+                picksEl.innerHTML = src.slice(0, 5).map(p => `
+                    <a class="vf-pick" href="${veroFeatureUrl(p)}">
+                        <div class="vf-pick-rule"></div>
+                        <div class="vf-pick-seller">${p.seller}</div>
+                        <div class="vf-pick-cat">${p.category}</div>
+                    </a>`).join('');
+            }
+
+            // 2. Hero band image, by category.
+            const band = document.getElementById('vfBand');
+            if (band) {
+                band.style.backgroundImage =
+                    `url('${currentCategory === 'art' ? 'gallery-hero.jpg' : 'women-hero.jpg'}')`;
+            }
+
+            // 3. Section bar: segment + count.
+            const seg = document.getElementById('vfSegment');
+            if (seg) seg.textContent =
+                (currentSegment || (currentCategory === 'art' ? 'Art' : 'Women')).toUpperCase();
+            const cnt = document.getElementById('vfCount');
+            if (cnt) cnt.textContent = `${src.length} items available`.toUpperCase();
+
+            // 4. Editorial gallery — the shared product card, in a horizontal scroller.
+            const gal = document.getElementById('vfGallery');
+            if (gal) gal.innerHTML = src.slice(5, 11).map(productCardHTML).join('');
+        }
+
+        // "Shop all" glides down to the full product grid.
+        function veroShopAll(e) {
+            if (e) e.preventDefault();
+            const grid = document.getElementById('feedContainer');
+            if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // Load More Feed Blocks
@@ -10879,8 +11092,10 @@
 
         // The first thing under the hero we should land on.
         function belowHero() {
-            return document.getElementById('filterGrid')
-                || document.querySelector('.hero-slider, .hero-promos, .feed-section');
+            // The Figma layout hides #filterGrid, so land on the feed section
+            // (the featured picks) as the first thing under the hero.
+            return document.querySelector('.feed-section')
+                || document.getElementById('filterGrid');
         }
 
         // A crisp, self-driven scroll with an easeOutCubic curve — it starts fast
