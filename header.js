@@ -1181,6 +1181,23 @@
                         <span class="seg active" id="segArt">Art</span>
                         <span class="seg" id="segFashion">Fashion</span>
                     </div>
+                    <span class="icon-wrap hdr-seller-extra" data-icon="wishlist">
+                        <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 21s-7.5-4.7-10-9.3C.3 8.4 1.7 5 5 5c2 0 3.2 1.2 4 2.3C9.8 6.2 11 5 13 5c3.3 0 4.7 3.4 3 6.7C18.5 16.3 12 21 12 21z"/>
+                            </svg>
+                        </button>
+                    </span>
+                    <span class="icon-wrap hdr-seller-extra">
+                        <button class="icon-btn" title="Cart" onclick="openCart()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="stroke-width: 1.5;">
+                                <path d="M6 6h15l-1.5 9h-12z" fill="none"/>
+                                <path d="M6 6L5 2H2" fill="none"/>
+                                <circle cx="9" cy="20" r="1.4" data-fill/>
+                                <circle cx="17" cy="20" r="1.4" data-fill/>
+                            </svg>
+                        </button>
+                    </span>
                     <button class="icon-btn hdr-seller-search" title="Search" onclick="veroOpenSearchPage()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -2233,18 +2250,14 @@
         el.classList.toggle('is-seller', !!seller);
         // In the business (seller) account the header is stripped down to just the
         // logo, the +, the profile picture and the switch icon.
+        // Both accounts share the same header layout (the personal area mirrors the
+        // seller's). The green ring (is-seller, above) is the only seller-specific
+        // mark. The account cluster (name + picture + switch) sits on the left.
         const hdr = document.getElementById('siteHeader');
-        if (hdr) hdr.classList.toggle('acct-seller', !!seller);
-        // In the seller account the profile cluster (name + picture + switch) moves
-        // to the left side of the header, beside the menu; in the personal account
-        // it stays on the right.
+        if (hdr) hdr.classList.add('acct-seller');
         const acct = hdr && hdr.querySelector('[data-icon="account"]');
         const left = hdr && hdr.querySelector('.header-left');
-        const right = hdr && hdr.querySelector('.header-right');
-        if (acct && left && right) {
-            if (seller) { if (acct.parentElement !== left) left.appendChild(acct); }
-            else if (acct.parentElement !== right) right.appendChild(acct);
-        }
+        if (acct && left && acct.parentElement !== left) left.appendChild(acct);
         // Show the account (shop) name beside the picture.
         const nameEl = document.getElementById('hdrAcctName');
         if (nameEl && typeof accountName === 'function') {
