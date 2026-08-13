@@ -1178,7 +1178,7 @@
             <div class="header-right">
                 <span class="hdr-mode-pair" data-icon="mode">
                     <span class="icon-wrap hdr-seller-extra" data-icon="wishlist">
-                        <button class="icon-btn" title="Wishlist" onclick="openWishlist()">
+                        <button class="icon-btn" title="Wishlist" onclick="veroSlideToCart('saved.html')">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 20.3l-1.45-1.32C5.4 14.24 2 11.16 2 7.4 2 4.42 4.42 2 7.4 2c1.68 0 3.3.78 4.6 2.09C13.3 2.78 14.92 2 16.6 2 19.58 2 22 4.42 22 7.4c0 3.76-3.4 6.84-8.55 11.58L12 20.3z"/>
                             </svg>
