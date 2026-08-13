@@ -5750,6 +5750,25 @@
             text-decoration: none;
             color: #111;
         }
+        /* The piece's image, background erased — it floats over the caption. */
+        .vf-pick-media {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 190px;
+            margin-bottom: 20px;
+            background: none;
+            font-size: 128px;
+            line-height: 1;
+        }
+        .vf-pick-media img,
+        .vf-pick-media .pc-photo {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .vf-pick:hover .vf-pick-media { transform: translateY(-3px); transition: transform 0.25s ease; }
         .vf-pick-rule {
             width: 150px;
             max-width: 80%;
@@ -7864,7 +7883,7 @@
         function veroFeatureUrl(prod) {
             const productData = JSON.stringify({
                 name: prod.name, price: prod.price, icon: prod.icon,
-                category: prod.category, seller: prod.seller,
+                category: prod.category, seller: prod.seller || prod.brand,
                 rating: prod.rating, type: prod.type || currentCategory
             });
             return `product-showcase.html?product=${encodeURIComponent(productData)}`;
@@ -7873,14 +7892,19 @@
         function renderVeroFeatures() {
             const src = ((typeof feedSource === 'function' ? feedSource() : []) || []);
 
-            // 1. Five captioned picks.
+            // 1. Five promoted picks — the men/women/kids promoted slider. Each is
+            //    the piece's cut-out image (erased background) over its caption.
             const picksEl = document.getElementById('vfPicks');
             if (picksEl) {
-                picksEl.innerHTML = src.slice(0, 5).map(p => `
+                const promoted = (currentSegment
+                    ? segmentFeatured(currentCategory, currentSegment)
+                    : featuredProducts) || [];
+                picksEl.innerHTML = promoted.slice(0, 5).map(p => `
                     <a class="vf-pick" href="${veroFeatureUrl(p)}">
+                        <div class="vf-pick-media">${p.icon || ''}</div>
                         <div class="vf-pick-rule"></div>
-                        <div class="vf-pick-seller">${p.seller}</div>
-                        <div class="vf-pick-cat">${p.category}</div>
+                        <div class="vf-pick-seller">${p.brand || p.seller || 'VERO'}</div>
+                        <div class="vf-pick-cat">${p.category || ''}</div>
                     </a>`).join('');
             }
 
