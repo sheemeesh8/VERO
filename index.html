@@ -5803,12 +5803,86 @@
 
         /* --- 2. Full-width hero band --- */
         .vf-band {
+            position: relative;
             width: 100%;
-            height: clamp(320px, 46vw, 640px);
+            height: clamp(420px, 56vw, 760px);
             background-color: #d8d8d0;
-            background-position: center 32%;
+        }
+        .vf-band-viewport {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        /* --peek-- controls how much of the 4th slide is revealed. Three full
+           slides + a half-cut fourth ≈ 3.5 slides wide. */
+        .vf-band-track {
+            --vf-per-view: 3.5;
+            --vf-gap: 2px;
+            display: flex;
+            gap: var(--vf-gap);
+            height: 100%;
+            transition: transform 0.7s cubic-bezier(0.16,1,0.3,1);
+            will-change: transform;
+        }
+        .vf-band-slide {
+            position: relative;
+            flex: 0 0 calc((100% - (var(--vf-per-view) - 1) * var(--vf-gap)) / var(--vf-per-view));
+            height: 100%;
+            background-color: #cfcfc7;
+            background-position: center 30%;
             background-size: cover;
             background-repeat: no-repeat;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .vf-band-slide::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 45%);
+        }
+        .vf-band-slide.is-active { outline: none; }
+        .vf-band-cap {
+            position: absolute;
+            left: 22px; bottom: 20px;
+            z-index: 2;
+            color: #fff;
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+        }
+        .vf-band-cap-name {
+            font-size: clamp(20px, 2.4vw, 34px);
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            line-height: 1.05;
+        }
+        .vf-band-cap-count {
+            margin-top: 4px;
+            font-size: 12px;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
+        .vf-band-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 46px; height: 46px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.92);
+            color: #111;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 4;
+            transition: background 0.25s, transform 0.25s;
+        }
+        .vf-band-arrow:hover { background: #111; color: #fff; }
+        .vf-band-arrow svg { width: 20px; height: 20px; }
+        .vf-band-arrow.prev { left: 18px; }
+        .vf-band-arrow.next { right: 18px; }
+        .vf-band-arrow[disabled] { opacity: 0; pointer-events: none; }
+        @media (max-width: 768px) {
+            .vf-band-track { --vf-per-view: 1.4; }
         }
 
         /* --- 3. Section bar --- */
@@ -7946,24 +8020,96 @@
                 picksEl.innerHTML = shopAll + tiles;
             }
 
-            // 2. Hero band image, by category.
-            const band = document.getElementById('vfBand');
-            if (band) {
-                band.style.backgroundImage =
-                    `url('${currentCategory === 'art' ? 'gallery-hero.jpg' : 'women-hero.jpg'}')`;
-            }
-
-            // 3. Section bar: segment + count.
-            const seg = document.getElementById('vfSegment');
-            if (seg) seg.textContent =
-                (currentSegment || (currentCategory === 'art' ? 'Art' : 'Women')).toUpperCase();
-            const cnt = document.getElementById('vfCount');
-            if (cnt) cnt.textContent = `${src.length} items available`.toUpperCase();
+            // 2. Editorial band — the category carousel. Its active (outermost)
+            //    slide drives the section bar below (segment name + count).
+            renderVeroBand();
 
             // 4. Editorial gallery — the shared product card, in a horizontal scroller.
             const gal = document.getElementById('vfGallery');
             if (gal) gal.innerHTML = src.slice(5, 11).map(productCardHTML).join('');
         }
+
+        // ---- Editorial band carousel ----------------------------------------
+        // A wide row of the current mode's categories (Men / Women / Kids, or the
+        // art segments). Each slide is a tall category image with its name + count
+        // laid out side by side. When there are more slides than fit, it scrolls
+        // and the fourth peeks in half-cut; the leftmost (outermost) fully-visible
+        // slide is the "active" one whose name + count drive the section bar below.
+        let veroBandIndex = 0;
+        let veroBandSlides = [];
+
+        function renderVeroBand() {
+            const track = document.getElementById('vfBandTrack');
+            if (!track) return;
+
+            veroBandSlides = (filterSegments[currentCategory] || []).map((s, i) => {
+                const count = (typeof buildSegmentProducts === 'function')
+                    ? buildSegmentProducts(currentCategory, s.key).length : 0;
+                return {
+                    key: s.key,
+                    name: s.name,
+                    count,
+                    img: `https://loremflickr.com/800/1000/${encodeURIComponent(s.img)}?lock=${i + 1}`
+                };
+            });
+
+            // Fill the width when everything fits (≤ 3 categories sit side by side);
+            // otherwise keep 3.5 per view so the 4th is half-cut and it can scroll.
+            const perView = veroBandSlides.length <= 3 ? veroBandSlides.length : 3.5;
+            track.style.setProperty('--vf-per-view', perView);
+
+            track.innerHTML = veroBandSlides.map((s, i) => `
+                <div class="vf-band-slide" style="background-image:url('${s.img}')"
+                     onclick="selectSegment('${s.key}')">
+                    <div class="vf-band-cap">
+                        <div class="vf-band-cap-name">${s.name}</div>
+                        <div class="vf-band-cap-count">${s.count} items available</div>
+                    </div>
+                </div>`).join('');
+
+            veroBandIndex = 0;
+            veroBandGo(0);
+        }
+
+        function veroBandStep(dir) {
+            veroBandGo(veroBandIndex + dir);
+        }
+
+        function veroBandGo(index) {
+            const track = document.getElementById('vfBandTrack');
+            const vp = track && track.parentElement;
+            if (!track || !vp || !track.children.length) return;
+
+            const slide = track.children[0];
+            const gap = parseFloat(getComputedStyle(track).gap) || 0;
+            const step = slide.offsetWidth + gap;
+            const maxScroll = Math.max(0, track.scrollWidth - vp.clientWidth);
+            const maxIndex = step ? Math.round(maxScroll / step) : 0;
+
+            veroBandIndex = Math.max(0, Math.min(index, maxIndex));
+            const offset = Math.min(veroBandIndex * step, maxScroll);
+            track.style.transform = `translateX(-${offset}px)`;
+
+            // Arrows: hide at the ends, and hide both when nothing scrolls.
+            const prev = document.querySelector('.vf-band-arrow.prev');
+            const next = document.querySelector('.vf-band-arrow.next');
+            if (prev) prev.disabled = veroBandIndex <= 0;
+            if (next) next.disabled = maxScroll <= 1 || veroBandIndex >= maxIndex;
+
+            // Outermost (leftmost) slide drives the section bar + active outline.
+            [...track.children].forEach((el, i) =>
+                el.classList.toggle('is-active', i === veroBandIndex));
+            const active = veroBandSlides[veroBandIndex];
+            const seg = document.getElementById('vfSegment');
+            const cnt = document.getElementById('vfCount');
+            if (active && seg) seg.textContent = active.name.toUpperCase();
+            if (active && cnt) cnt.textContent = `${active.count} items available`.toUpperCase();
+        }
+
+        // Re-fit the band on resize so per-view geometry stays correct.
+        window.addEventListener('resize', () => {
+            if (document.getElementById('vfBandTrack')) veroBandGo(veroBandIndex);
+        });
 
         // "Shop all" glides down to the full product grid.
         function veroShopAll(e) {
