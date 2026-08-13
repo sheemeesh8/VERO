@@ -553,9 +553,8 @@
            Buyer "My Profile" is untouched.
            ================================================================= */
         body.is-seller { --hair: #ececec; }
-        /* Seller "My Shop" has no profile picture — only the background image. */
-        body.is-seller .ph-avatar { display: none; }
-        body.is-seller #changeStorePhoto { display: none; }
+        /* Profile picture + its "change photo" control show in both modes, so the
+           hero is structurally identical for "My Shop" and "My Profile". */
         /* One calm column: store visuals → followers → contact details → settings.
            The contact card is moved (in JS) into this flow, right under the stats. */
         body.is-seller .grid { grid-template-columns: 1fr; gap: 0; margin-top: 12px; }
@@ -597,32 +596,10 @@
         /* My Sales: same calm hairline separation as the sections above it. */
         body.is-seller .shop-sales { border-top: 1px solid var(--hair); margin-top: 44px; padding-top: 44px; }
 
-        /* Contact details split across two sides — name/email/phone/location in a
-           two-column grid; the wider About, Socials and the save note span both. */
-        body.is-seller .contact-card {
-            display: grid; grid-template-columns: 1fr 1fr;
-            column-gap: 44px; row-gap: 24px; align-items: start;
-        }
-        body.is-seller .contact-card .field { margin-bottom: 0; }
-        body.is-seller .contact-card .field:nth-of-type(5),
-        body.is-seller .contact-card .field:nth-of-type(6),
-        body.is-seller .contact-card .save-note { grid-column: 1 / -1; }
-        /* About spans both columns; the taller Location cell (with its hint) pushes
-           its grid row down, so nudge About up to keep an even rhythm. */
-        body.is-seller .contact-card .field:nth-of-type(5) { margin-top: -20px; }
-        @media (max-width: 780px) {
-            body.is-seller .contact-card { grid-template-columns: 1fr; }
-        }
-
-        /* Personal details (left) beside Push & email notifications (right). The
-           seller column widens so both fit; on narrow screens they stack. */
+        /* Contact details use the shared .details-grid two-column layout (see the
+           unscoped rule below) in both modes, so "My Shop" and "My Profile" read
+           identically. */
         body.is-seller .col-right { max-width: none; }
-        body.is-seller .info-row {
-            display: grid; grid-template-columns: 1.3fr 1fr; gap: 56px;
-            align-items: start; margin-top: 40px; padding-top: 40px;
-            border-top: 1px solid var(--hair);
-        }
-        body.is-seller .info-row > .card { border: none; padding: 0; margin: 0; }
 
         /* "Open storefront" (seller) / "Open my profile" (buyer) pulled up beside
            the subtitle under the heading. */
@@ -675,16 +652,17 @@
             body:not(.is-seller) .pair-row { grid-template-columns: 1fr; gap: 40px; }
         }
         /* Personal details laid out two fields per row, wrapping into as many rows
-           as the number of fields needs. About + the save note span both columns. */
-        body:not(.is-seller) .contact-card.details-grid {
+           as the number of fields needs. About + the save note span both columns.
+           Unscoped so both "My Profile" and "My Shop" share the same grid. */
+        .contact-card.details-grid {
             display: grid; grid-template-columns: 1fr 1fr;
             column-gap: 44px; row-gap: 24px; align-items: start;
         }
-        body:not(.is-seller) .contact-card.details-grid .field { margin-bottom: 0; }
-        body:not(.is-seller) .contact-card.details-grid .field:has(#pf-bio),
-        body:not(.is-seller) .contact-card.details-grid .save-note { grid-column: 1 / -1; }
+        .contact-card.details-grid .field { margin-bottom: 0; }
+        .contact-card.details-grid .field:has(#pf-bio),
+        .contact-card.details-grid .save-note { grid-column: 1 / -1; }
         @media (max-width: 780px) {
-            body:not(.is-seller) .contact-card.details-grid { grid-template-columns: 1fr; }
+            .contact-card.details-grid { grid-template-columns: 1fr; }
         }
         /* The rectangle is the very first block in buyer view — flush at the top. */
         body:not(.is-seller) .store-card { margin-top: 0; }
@@ -1204,6 +1182,47 @@
                     <div id="sizeList"></div>
                 </div>
 
+                <!-- ===== Store settings — business-shop details (seller only) =====
+                     Real shop settings: specialty, store location, hours, shipping,
+                     returns and the business ID. Saved to vero_store_config, the same
+                     store data store-profile.html renders. -->
+                <div class="card seller-only" id="storeSettingsCard" style="margin-top:24px;">
+                    <div class="card-title">Store settings</div>
+                    <div class="card-hint">Your business-shop details, shown to buyers on your storefront.</div>
+                    <div class="details-grid" style="margin-top:18px;">
+                        <div class="field">
+                            <div class="card-label">Specialty</div>
+                            <select id="st-specialty">
+                                <option value="" disabled selected>Choose your field…</option>
+                                <option value="fashion">Fashion</option>
+                                <option value="art">Art</option>
+                                <option value="both">Fashion &amp; Art</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <div class="card-label">Store location</div>
+                            <input id="st-location" type="text" placeholder="City, Country">
+                        </div>
+                        <div class="field">
+                            <div class="card-label">Business hours</div>
+                            <input id="st-hours" type="text" placeholder="e.g. Sun–Thu, 09:00–18:00">
+                        </div>
+                        <div class="field">
+                            <div class="card-label">Shipping regions</div>
+                            <input id="st-shipping" type="text" placeholder="e.g. Israel, EU, Worldwide">
+                        </div>
+                        <div class="field" style="grid-column:1 / -1;">
+                            <div class="card-label">Return policy</div>
+                            <textarea id="st-returns" rows="1" placeholder="e.g. 14-day returns on unworn items"></textarea>
+                        </div>
+                        <div class="field">
+                            <div class="card-label">Business / VAT ID</div>
+                            <input id="st-vat" type="text" placeholder="Registered business number">
+                        </div>
+                        <div class="save-note" id="storeSaveNote" style="grid-column:1 / -1;">Store settings save automatically.</div>
+                    </div>
+                </div>
+
                 <!-- ===== Push & email notifications ===== -->
                 <div class="card seller-only" id="notifCard" style="margin-top:24px;">
                     <div class="card-title">Push &amp; email notifications</div>
@@ -1263,6 +1282,8 @@
         // shop, so swap the title and send "back" to the seller area, not the buyer one.
         const isSeller = new URLSearchParams(location.search).get('from') === 'seller';
         if (isSeller) {
+            // Seller "My Shop" only changes the labels + navigation targets — the
+            // page structure below is built identically for both modes.
             document.body.classList.add('is-seller');
             const title = document.querySelector('.head-title');
             if (title) title.textContent = 'My Shop';
@@ -1274,45 +1295,23 @@
             if (back) back.setAttribute('href', 'seller-area.html');
             const phMenu = document.getElementById('phMenu');
             if (phMenu) phMenu.setAttribute('href', 'seller-area.html');
+        }
 
-            // Move the contact/identity card out of the left column and into the
-            // main flow, right under the Followers/Following stats — so the shop
-            // reads top-to-bottom: store visuals → followers → contact → settings.
-            const idCard  = document.querySelector('.grid > .card');   // identity (first)
+        // ---- Shared layout for BOTH "My Profile" (buyer) and "My Shop" (seller) ----
+        // Identical skeleton: hero → stats → personal details (two fields per row) →
+        // the mode-specific sections that follow. Only the .buyer-only / .seller-only
+        // content differs; the arrangement is the same in both modes.
+        (function arrange() {
+            const idCard   = document.querySelector('.grid > .card');   // personal details (first)
             const colRight = document.querySelector('.col-right');
             const stats    = colRight && colRight.querySelector('.stats');
-            if (idCard && stats) stats.insertAdjacentElement('afterend', idCard);
-
-            // (Socials now live in the hero; the stats row reads Followers | Items | Following.)
-
-            // Personal details on the left, notifications on the right: wrap the two
-            // cards in a two-column row so the notifications sit beside the details
-            // instead of stacking under them.
-            const notifCard = document.getElementById('notifCard');
-            if (idCard && notifCard) {
-                const row = document.createElement('div');
-                row.className = 'info-row';
-                idCard.insertAdjacentElement('beforebegin', row);
-                row.appendChild(idCard);
-                row.appendChild(notifCard);
-            }
-        } else {
-            // ---- Buyer "My Profile": mirror the calm My Shop layout ----
-            // Reads top-to-bottom: store visuals (black rectangle) → followers +
-            // socials → personal details, laid out two fields per row.
-            const idCard   = document.querySelector('.grid > .card');            // personal details
-            const colRight = document.querySelector('.col-right');
-            const stats    = colRight && colRight.querySelector('.stats');
-
-            // (Socials now live in the hero; the stats row reads Followers | Items | Following.)
-
-            // Move the personal-details card below the rectangle + stats so those keep
-            // the top of the page, and lay its remaining fields two per row.
             if (idCard && stats) {
+                // Move the personal-details card below the stats so the rectangle +
+                // followers keep the top of the page, and lay its fields two per row.
                 stats.insertAdjacentElement('afterend', idCard);
                 idCard.classList.add('details-grid');
             }
-        }
+        })();
 
         // Auto-fit an embedded page (My Sales for sellers, My Expenses for buyers)
         // to its own content so the whole page scrolls as one — no inner scrollbar.
@@ -1671,6 +1670,35 @@
                 const cfg = readCfg(); const rec = ensure(cfg, key);
                 rec[sel.dataset.f] = +sel.value;
                 localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+            });
+        })();
+
+        // ===== Store settings (business shop) — persisted to vero_store_config =====
+        (function storeSettings() {
+            const card = document.getElementById('storeSettingsCard');
+            if (!card) return;
+            const readCfg = () => { try { return JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { return {}; } };
+            const map = { specialty: 'st-specialty', location: 'st-location', hours: 'st-hours',
+                          shipping: 'st-shipping', returns: 'st-returns', vat: 'st-vat' };
+            const cfg = readCfg();
+            const settings = (cfg.settings && typeof cfg.settings === 'object') ? cfg.settings : {};
+            const note = document.getElementById('storeSaveNote');
+            let t;
+            Object.entries(map).forEach(([key, id]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (settings[key] != null) el.value = settings[key];
+                el.addEventListener('input', () => {
+                    const c = readCfg();
+                    if (!c.settings || typeof c.settings !== 'object') c.settings = {};
+                    c.settings[key] = el.value;
+                    localStorage.setItem('vero_store_config', JSON.stringify(c));
+                    if (note) {
+                        note.textContent = 'Saved ✓';
+                        clearTimeout(t);
+                        t = setTimeout(() => { note.textContent = 'Store settings save automatically.'; }, 1400);
+                    }
+                });
             });
         })();
 

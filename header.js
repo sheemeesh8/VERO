@@ -23,7 +23,7 @@
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['menu', 'mode', 'account', 'cart'];
+    const ICON_ORDER = ['menu', 'mode', 'cart', 'account'];
     const ICON_ORDER_KEY = 'vero_header_icon_order';
 
     function currentIconOrder() {
@@ -100,11 +100,11 @@
             display: inline-flex; align-items: center; gap: 9px;
             color: #111; cursor: pointer; text-decoration: none;
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            font-size: 15px; font-weight: 500; letter-spacing: 0.3px;
+            font-size: 18px; font-weight: 500; letter-spacing: 0.3px;
             transition: opacity 0.2s ease;
         }
         #siteHeader .hdr-textbtn:hover { opacity: 0.6; }
-        #siteHeader .hdr-textbtn .vero-hamburger { width: 20px; height: 15px; gap: 4px; align-items: stretch; }
+        #siteHeader .hdr-textbtn .vero-hamburger { width: 24px; height: 18px; gap: 4px; align-items: stretch; }
 
         /* ===== Search + filter (sticky header only) =====
            Hidden by default; the sticky/sticky-look header reveals it. The panel is
@@ -450,7 +450,7 @@
         #siteHeader.sticky-look:not(.scrolled) .hdr-addproduct { background: #fff; color: #111; }
         #siteHeader .logo {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 34px; font-weight: 700; letter-spacing: 5px; color: #111;
+            font-size: 42px; font-weight: 700; letter-spacing: 5px; color: #111;
             font-style: normal; text-transform: uppercase; min-width: 80px;
             flex: 0 0 auto; text-align: center; transition: all 0.3s ease;
             cursor: pointer; padding-left: 5px;
@@ -463,7 +463,7 @@
            logo is always the opposite colour of its background — black on light,
            white on dark — with no per-context filter needed. */
         /* The logo art is a white-on-transparent PNG; paint it solid black everywhere. */
-        #siteHeader .logo .logo-img { height: 46px; width: auto; display: block; mix-blend-mode: normal !important; filter: brightness(0) !important; transition: filter 0.25s ease; }
+        #siteHeader .logo .logo-img { height: 58px; width: auto; display: block; mix-blend-mode: normal !important; filter: brightness(0) !important; transition: filter 0.25s ease; }
         /* While the header floats transparent over the hero image, the logo is white;
            once the header turns solid (scrolled), it reverts to black (rule above). */
         #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: brightness(0) invert(1) !important; }
@@ -476,7 +476,7 @@
         /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {
             position: relative; display: inline-block; box-sizing: border-box;
-            width: 52px; height: 28px; flex: 0 0 auto;
+            width: 64px; height: 34px; flex: 0 0 auto;
             background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
             /* Not "all": border-color is mode-driven and must switch immediately when
                the mode flips — transitioning it left the switch showing the old
@@ -484,13 +484,13 @@
             transition: background 0.3s ease; border: 1px solid rgba(0, 0, 0, 0.18);
         }
         #siteHeader .toggle-category::before {
-            content: ''; position: absolute; top: 3px; left: 3px;
-            width: 20px; height: 20px; border-radius: 50%; background: #111; z-index: 0;
+            content: ''; position: absolute; top: 4px; left: 4px;
+            width: 26px; height: 26px; border-radius: 50%; background: #111; z-index: 0;
             /* Only the slide animates. The knob's colour is mode-driven, same as the
                track's border, and must switch instantly rather than fade. */
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(24px); }
+        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(30px); }
         /* labels kept in the markup for state/a11y, but not shown */
         #siteHeader .toggle-category .seg {
             position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -498,30 +498,34 @@
         }
         #siteHeader .toggle-category:hover { border-color: rgba(0, 0, 0, 0.45); }
         #siteHeader .icon-btn {
-            background: none; border: none; cursor: pointer; font-size: 27px;
-            transition: transform 0.2s; color: #111; width: 56px; height: 56px;
+            background: none; border: none; cursor: pointer; font-size: 32px;
+            transition: transform 0.2s; color: #111; width: 66px; height: 66px;
             display: flex; align-items: center; justify-content: center; padding: 0;
         }
-        #siteHeader .icon-btn svg { width: 30px; height: 30px; stroke: #111 !important; fill: none; }
+        #siteHeader .icon-btn svg { width: 37px; height: 37px; stroke: #111 !important; fill: none; }
         /* Cart & wishlist read a touch larger than the rest of the icon row. */
         #siteHeader [data-icon="cart"] .icon-btn svg,
-        #siteHeader [data-icon="wishlist"] .icon-btn svg { width: 38px; height: 38px; }
+        #siteHeader [data-icon="wishlist"] .icon-btn svg { width: 46px; height: 46px; }
         #siteHeader .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader .icon-btn:hover { transform: scale(1.1); opacity: 0.65; }
         /* Account cluster: personal-area profile picture + a switch-profile button. */
         #siteHeader .hdr-account { display: inline-flex; align-items: center; gap: 2px; }
-        #siteHeader .hdr-avatar-btn { width: 48px; height: 48px; }
+        #siteHeader .hdr-avatar-btn { width: 58px; height: 58px; }
         #siteHeader .hdr-avatar {
-            width: 34px; height: 34px; border-radius: 50%; overflow: hidden;
+            width: 44px; height: 44px; border-radius: 50%; overflow: hidden;
             border: 1.5px solid currentColor; background: #e6e4df center / cover no-repeat;
-            display: grid; place-items: center; font-size: 14px; font-weight: 500;
+            display: grid; place-items: center; font-size: 18px; font-weight: 500;
             color: currentColor; text-transform: uppercase; line-height: 1;
         }
         #siteHeader .hdr-avatar.has-img { border-color: rgba(0,0,0,0.15); }
-        /* Seller account: a filled dark chip so you can tell which account you're in. */
-        #siteHeader .hdr-avatar.is-seller { background-color: #1c1c1c; color: #fff; border-color: #1c1c1c; }
-        #siteHeader .hdr-switch { width: 30px; height: 30px; }
-        #siteHeader .hdr-switch svg { width: 18px; height: 18px; stroke: currentColor !important; fill: none; }
+        /* Seller account: a green ring around the profile picture so you can tell
+           at a glance which account you're acting as. */
+        #siteHeader .hdr-avatar.is-seller {
+            border-color: #1DA65A !important; border-width: 2.5px;
+            box-shadow: 0 0 0 2px rgba(29,166,90,0.25);
+        }
+        #siteHeader .hdr-switch { width: 36px; height: 36px; }
+        #siteHeader .hdr-switch svg { width: 22px; height: 22px; stroke: currentColor !important; fill: none; }
         /* Profile-switch splash: a short WELCOME screen shown between areas. */
         .vero-switch-splash {
             position: fixed; inset: 0; z-index: 99999; background: #fff; color: #111;
@@ -546,7 +550,7 @@
         }
         #siteHeader .upload-plus {
             color: #111 !important; border: 2px solid #111 !important;
-            border-radius: 50%; width: 38px; height: 38px;
+            border-radius: 50%; width: 46px; height: 46px;
             animation: uploadPulse 1.2s ease-in-out infinite;
         }
         #siteHeader.scrolled .upload-plus { color: #111 !important; }
@@ -640,11 +644,11 @@
             /* Three-column couture layout: Menu/Search left, logo centred, icons right.
                All three groups live in the CSS grid on .header-container. */
             body:not([data-sticky="plain"]) #siteHeader .header-container {
-                min-height: 56px;
+                min-height: 68px;
                 z-index: 1;
             }
             body:not([data-sticky="plain"]) #siteHeader .logo {
-                justify-self: center; height: 56px;
+                justify-self: center; height: 68px;
                 display: flex; align-items: center; margin: 0; padding-left: 0; color: #111;
             }
             body:not([data-sticky="plain"]) #siteHeader .header-right {
@@ -1198,8 +1202,8 @@
                 <a onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
                 <a href="about.html">About Us</a>
                 <a onclick="veroCloseDrawer(); openMagazine()">The Closet Magazine</a>
-                <span class="vero-drawer-heading">Sellers Area</span>
-                <a onclick="veroCloseDrawer(); veroGoAccount('seller','seller-area.html')">Enter Seller Area</a>
+                <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
+                <a id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','buyer-area.html')">My Profile</a>
             </nav>
             <div class="vero-drawer-social">
                 <a href="#" aria-label="Instagram">${DRAWER_ICONS.instagram}</a>
@@ -1217,8 +1221,30 @@
         wrap.innerHTML = DRAWER_MARKUP;
         document.body.appendChild(wrap);
     }
+    // The drawer's account link mirrors the account you're acting as: in the
+    // seller account it offers your personal "My Profile" (buyer area); in the
+    // buyer account it offers "Enter Seller Area". Refreshed each time it opens.
+    function veroRefreshAreaLink() {
+        const link = document.getElementById('veroAreaLink');
+        const heading = document.getElementById('veroAreaHeading');
+        if (!link) return;
+        const seller = (typeof veroActiveAccount === 'function' ? veroActiveAccount() : 'buyer') === 'seller';
+        if (seller) {
+            // Seller account → the seller hub (My Shop, My Products, Buyer Chats…).
+            link.textContent = 'Seller Area';
+            if (heading) heading.textContent = 'Seller Area';
+            link.setAttribute('onclick', "veroCloseDrawer(); veroGoAccount('seller','seller-area.html')");
+        } else {
+            // Personal account → the personal hub (My Profile, My Chats, My Cart…).
+            link.textContent = 'My Profile';
+            if (heading) heading.textContent = 'Personal Area';
+            link.setAttribute('onclick', "veroCloseDrawer(); veroGoAccount('buyer','buyer-area.html')");
+        }
+    }
+
     window.veroToggleDrawer = function () {
         mountDrawer();
+        veroRefreshAreaLink();
         const d = document.getElementById('veroDrawer');
         const o = document.getElementById('veroDrawerOverlay');
         const open = d.classList.toggle('open');
@@ -1996,6 +2022,17 @@
     // the business account, buyer-area (personal) for the buyer account.
     window.veroOpenArea = function () {
         location.href = veroActiveAccount() === 'seller' ? 'seller-area.html' : 'buyer-area.html';
+    };
+
+    // Enter a given account context and navigate to its hub page. Used by the
+    // drawer's area link: 'seller' → the seller hub (seller-area.html), 'buyer' →
+    // the personal hub (buyer-area.html). Sets the active account first so the
+    // destination and the header read as that account, then shows the WELCOME
+    // splash on the way in.
+    window.veroGoAccount = function (account, dest) {
+        const acct = account === 'seller' ? 'seller' : 'buyer';
+        localStorage.setItem('vero_active_account', acct);
+        veroProfileSplash({ name: accountName(acct), dest: dest || (acct === 'seller' ? 'seller-area.html' : 'buyer-area.html') });
     };
 
     // Toggle between the personal and seller accounts without leaving the feed:
