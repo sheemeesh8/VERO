@@ -5721,6 +5721,108 @@
     <script src="photo-guide.js"></script>
     <!-- The product card, shared by every page (single source: product-card.css). -->
     <link rel="stylesheet" href="product-card.css">
+    <!-- ==================== HOME FEED CARD (Figma redesign) ====================
+         Scoped to the home feed only (.pc-feed, built by feedProductCardHTML).
+         Loaded AFTER product-card.css so it overrides the shared template just
+         for the feed: image on top, two green icons (save + wishlist), then the
+         seller and price on one row, a hairline rule, and the category beneath.
+         Every other grid on the site keeps the shared card. -->
+    <style>
+        #feedContainer .products-grid { gap: 16px; }
+
+        /* Release the shared card's absolute template — the feed card is a plain
+           top-to-bottom stack instead. */
+        .product-card.pc-feed {
+            --pc-icon-color: #004225;   /* recolour the top-right icons green */
+            aspect-ratio: auto;
+            display: flex;
+            flex-direction: column;
+            background: #efece4;
+            border-radius: 0;
+            overflow: hidden;
+        }
+
+        .pc-feed .product-image {
+            position: static;
+            inset: auto;
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            padding: 8%;
+            transform: none;
+            display: grid;
+            place-items: center;
+            background: none;
+            overflow: hidden;
+        }
+
+        /* Both icons visible; save (bookmark) left of the heart, top-right. */
+        .pc-feed .product-image .product-icon {
+            top: 16px;
+            width: 24px;
+            height: 24px;
+        }
+        .pc-feed .product-image .product-icon.save  { right: 46px; }
+        .pc-feed .product-image .product-icon.heart { right: 16px; display: grid; }
+        .pc-feed .product-image .product-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: #004225;
+        }
+        .pc-feed .product-image .product-icon.save svg { fill: none; }
+
+        /* Bottom: seller + price on one row, a rule, then the category. */
+        .pc-feed .product-info {
+            position: static;
+            inset: auto;
+            display: flex;
+            flex-direction: column;
+            grid-template-columns: none;
+            align-items: stretch;
+            gap: 9px;
+            padding: 16px 8px 12px;
+            background: none;
+        }
+        .pc-feed .pc-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .pc-feed .product-seller {
+            height: auto;
+            transform: none;
+            justify-content: flex-start;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #1a1a1a;
+        }
+        .pc-feed .product-price {
+            height: auto;
+            transform: none;
+            justify-content: flex-end;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            color: #111;
+        }
+        .pc-feed .pc-rule {
+            width: 100%;
+            height: 1px;
+            background: #1a1a1a;
+            opacity: 0.9;
+        }
+        .pc-feed .product-name {
+            height: auto;
+            transform: none;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #6f6f6f;
+        }
+    </style>
     <!-- Seller edits + sale prices, shared by every page (single source). -->
     <script src="product-overrides.js"></script>
 </head>
@@ -7683,6 +7785,47 @@
             `;
         }
 
+        // ---- Feed-only product card (Figma redesign) ----
+        // A separate builder used ONLY by the home feed grid, so the redesigned
+        // card stays scoped to the feed. Everything else on the page keeps the
+        // shared productCardHTML above. Marked with `pc-feed`, which the scoped
+        // style block (loaded after product-card.css) styles into the new form:
+        // image on top with two green icons, then seller + price on a row, a
+        // hairline rule, and the category beneath.
+        function feedProductCardHTML(prod) {
+            const pid = `${prod.name}|${prod.price}`;
+            const productData = JSON.stringify({
+                name: prod.name,
+                price: prod.price,
+                icon: prod.icon,
+                category: prod.category,
+                seller: prod.seller,
+                rating: prod.rating,
+                type: prod.type || currentCategory
+            });
+            const productUrl = `product-showcase.html?product=${encodeURIComponent(productData)}`;
+            return `
+                <a href="${productUrl}" style="text-decoration: none;" class="product-card pc-feed${veroCardClass(prod)}" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
+                    <div class="product-image">${prod.icon}
+                        <button class="product-icon save" data-action="cart" title="Add to Cart" onclick="event.preventDefault(); event.stopPropagation();">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
+                        </button>
+                        <button class="product-icon heart" data-action="wishlist" title="Add to Wishlist" onclick="event.preventDefault(); event.stopPropagation();">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        </button>
+                    </div>
+                    <div class="product-info">
+                        <div class="pc-row">
+                            <span class="product-seller" onclick="event.preventDefault(); event.stopPropagation(); showSellerProfile('${prod.seller}');">${prod.seller}</span>
+                            <span class="product-price">${veroPriceHTML(prod)}</span>
+                        </div>
+                        <div class="pc-rule"></div>
+                        <div class="product-name">${prod.category}</div>
+                    </div>
+                </a>
+            `;
+        }
+
         // Render Feed
         function renderFeed() {
             const feedContainer = document.getElementById('feedContainer');
@@ -7722,7 +7865,7 @@
                 const block = document.createElement('div');
                 block.className = 'feed-block';
 
-                const productsHtml = blockProducts.map(productCardHTML).join('');
+                const productsHtml = blockProducts.map(feedProductCardHTML).join('');
 
                 block.innerHTML = `
                     <div class="ed-head">
