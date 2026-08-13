@@ -5750,12 +5750,53 @@
         @media (max-width: 640px) {
             .vf-picks { grid-template-columns: repeat(2, 1fr); }
         }
-        /* Promoted products: erase the card background so only the product sits
-           on the page's white background — no box, no shadow, no image fill. */
-        .vf-picks .product-card,
-        .vf-picks .product-card:hover { background: none; box-shadow: none; }
-        .vf-picks .product-image,
-        .vf-picks .product-card:hover .product-image { background: transparent; }
+        /* Promoted product: no card background — the image sits on the page's
+           white background — with a distinct footer (company over product name). */
+        .vf-promo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            text-decoration: none;
+            color: #111;
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+        }
+        .vf-promo-media {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 96px;
+            line-height: 1;
+            transition: transform 0.3s ease;
+        }
+        .vf-promo:hover .vf-promo-media { transform: translateY(-4px) scale(1.04); }
+        .vf-promo-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .vf-promo-company {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: #111;
+        }
+        .vf-promo-rule {
+            width: 78%;
+            height: 1px;
+            background: #111;
+            margin: 12px 0;
+        }
+        .vf-promo-name {
+            font-size: 11px;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: #6b6b6b;
+        }
         .vf-cat {
             display: flex;
             flex-direction: column;
@@ -8020,10 +8061,28 @@
         function renderVeroFeatures() {
             const src = ((typeof feedSource === 'function' ? feedSource() : []) || []);
 
-            // 1. Five products from the site — the shared product card.
+            // 1. Five promoted products from the site — no card background, and a
+            //    distinct footer showing only the maker (company) over the product
+            //    name, split by a hairline.
             const picksEl = document.getElementById('vfPicks');
             if (picksEl) {
-                picksEl.innerHTML = src.slice(0, 5).map(productCardHTML).join('');
+                picksEl.innerHTML = src.slice(0, 5).map(prod => {
+                    const productData = JSON.stringify({
+                        name: prod.name, price: prod.price, icon: prod.icon,
+                        category: prod.category, seller: prod.seller,
+                        rating: prod.rating, type: prod.type || currentCategory
+                    });
+                    const url = `product-showcase.html?product=${encodeURIComponent(productData)}`;
+                    return `
+                        <a class="vf-promo" href="${url}">
+                            <div class="vf-promo-media">${prod.icon || ''}</div>
+                            <div class="vf-promo-info">
+                                <div class="vf-promo-company">${prod.seller || prod.brand || 'VERO'}</div>
+                                <div class="vf-promo-rule"></div>
+                                <div class="vf-promo-name">${prod.name || ''}</div>
+                            </div>
+                        </a>`;
+                }).join('');
             }
 
             // 2. Editorial band — the category carousel. Its active (outermost)
