@@ -825,12 +825,14 @@
         /* ===== Business (seller) account — stripped header =====
            Keep only the logo, the + (upload), the profile picture and the switch
            icon. Hide the menu, search, category toggle and cart. */
-        #siteHeader.acct-seller [data-icon="menu"],
         #siteHeader.acct-seller [data-icon="search"],
         #siteHeader.acct-seller [data-icon="cart"],
         #siteHeader.acct-seller .hdr-searchwrap {
             display: none !important;
         }
+        /* Seller account cluster moved to the left keeps a comfortable gap. */
+        #siteHeader.acct-seller .header-left { gap: 22px; }
+        #siteHeader.acct-seller .hdr-account { display: inline-flex; align-items: center; }
         /* The seller account name, shown beside the profile picture. */
         #siteHeader .hdr-acct-name {
             font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -839,6 +841,11 @@
             overflow: hidden; text-overflow: ellipsis; display: none;
         }
         #siteHeader.acct-seller .hdr-acct-name { display: inline-block; }
+        /* Sticky / solid-white header → the name reads black; on the black
+           over-dark sticky header it stays white. */
+        #siteHeader.acct-seller.scrolled .hdr-acct-name,
+        #siteHeader.acct-seller.force-light .hdr-acct-name { color: #111; }
+        #siteHeader.acct-seller.scrolled.over-dark .hdr-acct-name { color: #fff; }
 
         /* Seller-only search icon, sitting just to the right of the category toggle.
            Hidden in the personal account (which keeps its own left-side Search). */
@@ -2228,6 +2235,16 @@
         // logo, the +, the profile picture and the switch icon.
         const hdr = document.getElementById('siteHeader');
         if (hdr) hdr.classList.toggle('acct-seller', !!seller);
+        // In the seller account the profile cluster (name + picture + switch) moves
+        // to the left side of the header, beside the menu; in the personal account
+        // it stays on the right.
+        const acct = hdr && hdr.querySelector('[data-icon="account"]');
+        const left = hdr && hdr.querySelector('.header-left');
+        const right = hdr && hdr.querySelector('.header-right');
+        if (acct && left && right) {
+            if (seller) { if (acct.parentElement !== left) left.appendChild(acct); }
+            else if (acct.parentElement !== right) right.appendChild(acct);
+        }
         // Show the account (shop) name beside the picture.
         const nameEl = document.getElementById('hdrAcctName');
         if (nameEl && typeof accountName === 'function') {
