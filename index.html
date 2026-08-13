@@ -7988,36 +7988,20 @@
         function renderVeroFeatures() {
             const src = ((typeof feedSource === 'function' ? feedSource() : []) || []);
 
-            // 1. Category slider — men / women / kids (or the art segments). Each
-            //    tile is a large image over the category name and its item count;
-            //    clicking a tile filters the whole feed (selectSegment). The first
-            //    tile is a Shop-All reset. Same behaviour as the segment slider.
+            // 1. Five featured picks — the men/women/kids promoted slider. Each is
+            //    the piece's cut-out image (erased background) over its caption.
             const picksEl = document.getElementById('vfPicks');
             if (picksEl) {
-                const segs = (filterSegments[currentCategory] || []);
-                const segCount = s =>
-                    (typeof buildSegmentProducts === 'function'
-                        ? buildSegmentProducts(currentCategory, s.key).length : 0);
-                const total = segs.reduce((n, s) => n + segCount(s), 0);
-
-                const shopAll = `
-                    <button class="vf-cat vf-cat-all${!currentSegment ? ' is-active' : ''}" onclick="veroShopAllCats(event)">
-                        <div class="vf-cat-media vf-cat-media-all"><span>Shop<br>All</span></div>
-                        <div class="vf-cat-name">Shop All</div>
-                        <div class="vf-cat-count">${total} items</div>
-                    </button>`;
-
-                const tiles = segs.map((s, i) => {
-                    const img = `https://loremflickr.com/600/760/${encodeURIComponent(s.img)}?lock=${i + 1}`;
-                    return `
-                        <button class="vf-cat${currentSegment === s.key ? ' is-active' : ''}" onclick="selectSegment('${s.key}')">
-                            <div class="vf-cat-media" style="background-image:url('${img}')"></div>
-                            <div class="vf-cat-name">${s.name}</div>
-                            <div class="vf-cat-count">${segCount(s)} items</div>
-                        </button>`;
-                }).join('');
-
-                picksEl.innerHTML = shopAll + tiles;
+                const promoted = (currentSegment
+                    ? segmentFeatured(currentCategory, currentSegment)
+                    : featuredProducts) || [];
+                picksEl.innerHTML = promoted.slice(0, 5).map(p => `
+                    <a class="vf-pick" href="${veroFeatureUrl(p)}">
+                        <div class="vf-pick-media">${p.icon || ''}</div>
+                        <div class="vf-pick-rule"></div>
+                        <div class="vf-pick-seller">${p.brand || p.seller || 'VERO'}</div>
+                        <div class="vf-pick-cat">${p.category || ''}</div>
+                    </a>`).join('');
             }
 
             // 2. Editorial band — the category carousel. Its active (outermost)
