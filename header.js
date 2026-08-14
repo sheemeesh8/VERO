@@ -1174,12 +1174,12 @@
                     <span class="hdr-textbtn-label">Search</span>
                 </a>
             </div>
-            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.png?v=2" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
+            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.svg?v=3" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
             <div class="header-right">
                 <span class="hdr-mode-pair" data-icon="mode">
                     <span class="icon-wrap hdr-seller-extra" data-icon="wishlist">
                         <button class="icon-btn" title="Wishlist" onclick="veroSlideToCart('saved.html')">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 20.3l-1.45-1.32C5.4 14.24 2 11.16 2 7.4 2 4.42 4.42 2 7.4 2c1.68 0 3.3.78 4.6 2.09C13.3 2.78 14.92 2 16.6 2 19.58 2 22 4.42 22 7.4c0 3.76-3.4 6.84-8.55 11.58L12 20.3z"/>
                             </svg>
                         </button>
@@ -1245,7 +1245,7 @@
         <div class="vero-drawer-overlay" id="veroDrawerOverlay" onclick="veroCloseDrawer()"></div>
         <aside class="vero-drawer" id="veroDrawer" aria-hidden="true">
             <div class="vero-drawer-head">
-                <span class="vero-drawer-logo"><img src="vero-logo.png?v=2" alt="VERO" class="vero-drawer-logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></span>
+                <span class="vero-drawer-logo"><img src="vero-logo.svg?v=3" alt="VERO" class="vero-drawer-logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></span>
                 <button class="vero-drawer-close" aria-label="Close menu" onclick="veroCloseDrawer()">&times;</button>
             </div>
             <nav class="vero-drawer-nav">
@@ -1409,7 +1409,7 @@
         <div class="vsp-overlay" id="veroSearchPage" aria-hidden="true" role="dialog" aria-label="Search">
             <button class="vsp-close" aria-label="Close search" onclick="veroCloseSearchPage()">&times;</button>
             <div class="vsp-inner">
-                <div class="vsp-logo"><img src="vero-logo.png?v=2" alt="VERO" class="vsp-logo-img" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'vsp-logo-txt',textContent:'VERO'}))"></div>
+                <div class="vsp-logo"><img src="vero-logo.svg?v=3" alt="VERO" class="vsp-logo-img" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'vsp-logo-txt',textContent:'VERO'}))"></div>
                 <!-- Landing chooser: two rectangles like the personal area. Clicking one
                      opens that search (bar + filters) in the panel below. -->
                 <div class="vsp-chooser" id="vspChooser">
