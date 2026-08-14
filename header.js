@@ -1174,7 +1174,7 @@
                     <span class="hdr-textbtn-label">Search</span>
                 </a>
             </div>
-            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.svg?v=4" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
+            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.png?v=5" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
             <div class="header-right">
                 <span class="hdr-mode-pair" data-icon="mode">
                     <span class="icon-wrap hdr-seller-extra" data-icon="wishlist">
@@ -1245,7 +1245,7 @@
         <div class="vero-drawer-overlay" id="veroDrawerOverlay" onclick="veroCloseDrawer()"></div>
         <aside class="vero-drawer" id="veroDrawer" aria-hidden="true">
             <div class="vero-drawer-head">
-                <span class="vero-drawer-logo"><img src="vero-logo.svg?v=4" alt="VERO" class="vero-drawer-logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></span>
+                <span class="vero-drawer-logo"><img src="vero-logo.png?v=5" alt="VERO" class="vero-drawer-logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></span>
                 <button class="vero-drawer-close" aria-label="Close menu" onclick="veroCloseDrawer()">&times;</button>
             </div>
             <nav class="vero-drawer-nav">
@@ -1409,7 +1409,7 @@
         <div class="vsp-overlay" id="veroSearchPage" aria-hidden="true" role="dialog" aria-label="Search">
             <button class="vsp-close" aria-label="Close search" onclick="veroCloseSearchPage()">&times;</button>
             <div class="vsp-inner">
-                <div class="vsp-logo"><img src="vero-logo.svg?v=4" alt="VERO" class="vsp-logo-img" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'vsp-logo-txt',textContent:'VERO'}))"></div>
+                <div class="vsp-logo"><img src="vero-logo.png?v=5" alt="VERO" class="vsp-logo-img" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'vsp-logo-txt',textContent:'VERO'}))"></div>
                 <!-- Landing chooser: two rectangles like the personal area. Clicking one
                      opens that search (bar + filters) in the panel below. -->
                 <div class="vsp-chooser" id="vspChooser">
