@@ -100,7 +100,7 @@
             display: inline-flex; align-items: center; gap: 9px;
             color: #111; cursor: pointer; text-decoration: none;
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            font-size: 18px; font-weight: 500; letter-spacing: 0.3px;
+            font-size: 15.00px; font-weight: 500; letter-spacing: 0.3px;
             transition: opacity 0.2s ease;
         }
         #siteHeader .hdr-textbtn:hover { opacity: 0.6; }
@@ -157,7 +157,7 @@
             flex: 1; min-width: 0;
             border: none; background: none; outline: none;
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            font-size: 15px; font-weight: 500; color: #111;
+            font-size: 12.50px; font-weight: 500; color: #111;
             padding: 0 8px 0 0;
         }
         #siteHeader .hdr-search input::placeholder {
@@ -286,7 +286,7 @@
             display: flex; align-items: center; justify-content: center;
             background: #efece4; border-radius: 4px;
             aspect-ratio: 4 / 5; max-height: 420px; align-self: stretch;
-            font-size: 150px; color: rgba(0,0,0,0.85);
+            font-size: 125.00px; color: rgba(0,0,0,0.85);
             text-decoration: none;
             transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
         }
@@ -303,29 +303,29 @@
         #siteHeader .hdr-preview-seller {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
             display: block; white-space: nowrap;
-            font-size: 46px; font-weight: 400; letter-spacing: 0.5px;
+            font-size: 38.33px; font-weight: 400; letter-spacing: 0.5px;
             text-transform: uppercase; line-height: 1.15; color: #111;
         }
         #siteHeader .hdr-preview-seller > span { white-space: nowrap; }
-        #siteHeader .hdr-preview-seller.one-word { font-size: 46px; }
+        #siteHeader .hdr-preview-seller.one-word { font-size: 38.33px; }
         /* The piece's own name — smaller than the company name, and bold. */
         #siteHeader .hdr-preview-name {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 26px; font-weight: 700; text-transform: uppercase;
+            font-size: 21.67px; font-weight: 700; text-transform: uppercase;
             line-height: 1.25; letter-spacing: 0.5px; color: #111;
             overflow-wrap: anywhere; margin: 0;
         }
         #siteHeader .hdr-preview-desc {
-            font-size: 15px; line-height: 1.7; color: #6b665e; max-width: 460px; margin: 0;
+            font-size: 12.50px; line-height: 1.7; color: #6b665e; max-width: 460px; margin: 0;
         }
         #siteHeader .hdr-preview-price {
-            font-size: 30px; font-weight: 600; letter-spacing: 0.5px; color: #111; margin: 2px 0;
+            font-size: 25.00px; font-weight: 600; letter-spacing: 0.5px; color: #111; margin: 2px 0;
         }
         #siteHeader .hdr-preview-buy {
             display: inline-flex; align-items: center; gap: 12px;
             background: #22372B; border: 1px solid #22372B; cursor: pointer;
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            font-size: 13px; font-weight: 700; letter-spacing: 2px;
+            font-size: 10.83px; font-weight: 700; letter-spacing: 2px;
             text-transform: uppercase; color: #fff; padding: 14px 26px;
             transition: gap 0.3s, background 0.25s;
         }
@@ -333,38 +333,38 @@
         #siteHeader .hdr-preview-empty {
             grid-column: 1 / -1;
             display: flex; align-items: center; justify-content: center; text-align: center;
-            color: #b3b3b3; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; padding: 60px 40px;
+            color: #b3b3b3; font-size: 11.67px; letter-spacing: 1.5px; text-transform: uppercase; padding: 60px 40px;
         }
         #siteHeader .hdr-preview-kicker {
-            font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #9a9a9a; font-weight: 700;
+            font-size: 7.92px; letter-spacing: 1.6px; text-transform: uppercase; color: #9a9a9a; font-weight: 700;
         }
         #siteHeader .hdr-results {
             width: 100%; background: #22372B; color: #fff; border: none; cursor: pointer;
-            padding: 16px 24px; font-family: inherit; font-size: 12px; font-weight: 700;
+            padding: 16px 24px; font-family: inherit; font-size: 10.00px; font-weight: 700;
             letter-spacing: 1.6px; text-transform: uppercase;
             display: flex; align-items: center; justify-content: center; gap: 10px;
             transition: background 0.2s;
         }
         #siteHeader .hdr-results:hover { background: #2E4A3A; }
-        #siteHeader .hdr-results .arrow { font-size: 14px; }
+        #siteHeader .hdr-results .arrow { font-size: 11.67px; }
         @media (max-width: 820px) {
             #siteHeader .hdr-filters .hf-grid { grid-template-columns: repeat(2, 1fr); }
             #siteHeader .hdr-inner { gap: 26px; }
             #siteHeader .hdr-preview-card { grid-template-columns: 1fr; gap: 22px; }
-            #siteHeader .hdr-preview-img { aspect-ratio: 16 / 10; font-size: 90px; }
-            #siteHeader .hdr-preview-seller { font-size: 34px; }
-            #siteHeader .hdr-preview-seller.one-word { font-size: 48px; }
+            #siteHeader .hdr-preview-img { aspect-ratio: 16 / 10; font-size: 75.00px; }
+            #siteHeader .hdr-preview-seller { font-size: 28.33px; }
+            #siteHeader .hdr-preview-seller.one-word { font-size: 40.00px; }
         }
         #siteHeader .hdr-filters .hf-field { display: flex; flex-direction: column; gap: 6px; }
         #siteHeader .hdr-filters .hf-label {
-            font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase;
+            font-size: 7.92px; letter-spacing: 1.6px; text-transform: uppercase;
             color: #9a9a9a; font-weight: 700;
         }
         #siteHeader .hdr-filters select {
             appearance: none; -webkit-appearance: none;
             border: none; border-bottom: 1px solid #e2e2e2; background: none;
             padding: 4px 18px 6px 0;
-            font-family: inherit; font-size: 12.5px; font-weight: 600; color: #111;
+            font-family: inherit; font-size: 10.42px; font-weight: 600; color: #111;
             cursor: pointer;
             background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
             background-repeat: no-repeat; background-position: right center; background-size: 12px;
@@ -383,7 +383,7 @@
         #siteHeader .hdr-acts { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 24px; }
         #siteHeader .hdr-acts button {
             border: none; background: none; cursor: pointer; font-family: inherit;
-            font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
+            font-size: 9.17px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
         }
         #siteHeader .hdr-clear { color: #9a9a9a; padding: 6px 0; }
         #siteHeader .hdr-clear:hover { color: #111; }
@@ -395,7 +395,7 @@
         /* Header contents are ALWAYS dark — on every page, at every scroll position.
            (Pages that sit on a dark hero keep their own overrides.) */
         #siteHeader .header-left > a {
-            color: #111; text-decoration: none; font-size: 16px; font-weight: 600;
+            color: #111; text-decoration: none; font-size: 13.33px; font-weight: 600;
             letter-spacing: 1.3px; cursor: pointer; transition: color 0.25s ease;
             text-transform: uppercase; position: relative; display: flex;
             align-items: center; gap: 5px;
@@ -412,10 +412,10 @@
         #siteHeader .hdr-search .hdr-search-ico { width: 15px; height: 15px; color: #111; opacity: 0.55; flex: 0 0 auto; }
         #siteHeader .hdr-search input {
             border: none; background: transparent; outline: none; width: 110px;
-            font-family: inherit; font-size: 13px; letter-spacing: 0.5px; color: #111;
+            font-family: inherit; font-size: 10.83px; letter-spacing: 0.5px; color: #111;
         }
         #siteHeader .hdr-search input::placeholder {
-            color: rgba(0, 0, 0, 0.45); text-transform: uppercase; letter-spacing: 1.2px; font-size: 12px;
+            color: rgba(0, 0, 0, 0.45); text-transform: uppercase; letter-spacing: 1.2px; font-size: 10.00px;
         }
         #siteHeader .hdr-social { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
         #siteHeader .hdr-soc { color: #111; display: flex; opacity: 0.72; transition: opacity 0.2s ease; }
@@ -424,7 +424,7 @@
         #siteHeader .hdr-addproduct {
             height: 34px; padding: 0 18px; border-radius: 999px;
             background: #111; color: #fff; border: none; cursor: pointer;
-            font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 1.5px;
+            font-family: inherit; font-size: 10.00px; font-weight: 700; letter-spacing: 1.5px;
             text-transform: uppercase; white-space: nowrap; flex: 0 0 auto;
             transition: background 0.2s ease, transform 0.2s ease;
         }
@@ -450,7 +450,7 @@
         #siteHeader.sticky-look:not(.scrolled) .hdr-addproduct { background: #fff; color: #111; }
         #siteHeader .logo {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 42px; font-weight: 700; letter-spacing: 5px; color: #111;
+            font-size: 35.00px; font-weight: 700; letter-spacing: 5px; color: #111;
             font-style: normal; text-transform: uppercase; min-width: 80px;
             flex: 0 0 auto; text-align: center; transition: all 0.3s ease;
             cursor: pointer; padding-left: 5px;
@@ -476,7 +476,7 @@
         /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {
             position: relative; display: inline-block; box-sizing: border-box;
-            width: 64px; height: 34px; flex: 0 0 auto;
+            width: 53.33px; height: 28.33px; flex: 0 0 auto;
             background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
             /* Not "all": border-color is mode-driven and must switch immediately when
                the mode flips — transitioning it left the switch showing the old
@@ -484,13 +484,13 @@
             transition: background 0.3s ease; border: 1px solid rgba(0, 0, 0, 0.18);
         }
         #siteHeader .toggle-category::before {
-            content: ''; position: absolute; top: 4px; left: 4px;
-            width: 26px; height: 26px; border-radius: 50%; background: #111; z-index: 0;
+            content: ''; position: absolute; top: 3.33px; left: 3.33px;
+            width: 21.67px; height: 21.67px; border-radius: 50%; background: #111; z-index: 0;
             /* Only the slide animates. The knob's colour is mode-driven, same as the
                track's border, and must switch instantly rather than fade. */
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(30px); }
+        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(25px); }
         /* labels kept in the markup for state/a11y, but not shown */
         #siteHeader .toggle-category .seg {
             position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -498,23 +498,23 @@
         }
         #siteHeader .toggle-category:hover { border-color: rgba(0, 0, 0, 0.45); }
         #siteHeader .icon-btn {
-            background: none; border: none; cursor: pointer; font-size: 32px;
-            transition: transform 0.2s; color: #111; width: 66px; height: 66px;
+            background: none; border: none; cursor: pointer; font-size: 26.67px;
+            transition: transform 0.2s; color: #111; width: 55px; height: 55px;
             display: flex; align-items: center; justify-content: center; padding: 0;
         }
-        #siteHeader .icon-btn svg { width: 37px; height: 37px; stroke: #111 !important; fill: none; }
+        #siteHeader .icon-btn svg { width: 30.83px; height: 30.83px; stroke: #111 !important; fill: none; }
         /* Cart & wishlist read a touch larger than the rest of the icon row. */
         #siteHeader [data-icon="cart"] .icon-btn svg,
-        #siteHeader [data-icon="wishlist"] .icon-btn svg { width: 46px; height: 46px; }
+        #siteHeader [data-icon="wishlist"] .icon-btn svg { width: 38.33px; height: 38.33px; }
         #siteHeader .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader .icon-btn:hover { transform: scale(1.1); opacity: 0.65; }
         /* Account cluster: personal-area profile picture + a switch-profile button. */
         #siteHeader .hdr-account { display: inline-flex; align-items: center; gap: 2px; }
-        #siteHeader .hdr-avatar-btn { width: 58px; height: 58px; }
+        #siteHeader .hdr-avatar-btn { width: 48.33px; height: 48.33px; }
         #siteHeader .hdr-avatar {
-            width: 44px; height: 44px; border-radius: 50%; overflow: hidden;
+            width: 36.67px; height: 36.67px; border-radius: 50%; overflow: hidden;
             border: 1.5px solid currentColor; background: #e6e4df center / cover no-repeat;
-            display: grid; place-items: center; font-size: 18px; font-weight: 500;
+            display: grid; place-items: center; font-size: 15.00px; font-weight: 500;
             color: currentColor; text-transform: uppercase; line-height: 1;
         }
         #siteHeader .hdr-avatar.has-img { border-color: rgba(0,0,0,0.15); }
@@ -524,8 +524,8 @@
             border-color: #1DA65A !important; border-width: 2.5px;
             box-shadow: 0 0 0 2px rgba(29,166,90,0.25);
         }
-        #siteHeader .hdr-switch { width: 36px; height: 36px; }
-        #siteHeader .hdr-switch svg { width: 22px; height: 22px; stroke: currentColor !important; fill: none; }
+        #siteHeader .hdr-switch { width: 30px; height: 30px; }
+        #siteHeader .hdr-switch svg { width: 18.33px; height: 18.33px; stroke: currentColor !important; fill: none; }
         /* Profile-switch splash: a short WELCOME screen shown between areas. */
         .vero-switch-splash {
             position: fixed; inset: 0; z-index: 99999; background: #fff; color: #111;
@@ -538,19 +538,19 @@
         }
         .vero-switch-splash.show .vss-inner { transform: translateY(0); opacity: 1; }
         .vero-switch-splash .vss-welcome {
-            font-size: 26px; letter-spacing: 12px; text-transform: uppercase;
+            font-size: 21.67px; letter-spacing: 12px; text-transform: uppercase;
             color: rgba(0,0,0,0.5); margin-bottom: 28px;
         }
         .vero-switch-splash .vss-name {
             font-size: clamp(76px, 14vw, 152px); font-weight: 200; letter-spacing: 1px; line-height: 1;
         }
         .vero-switch-splash .vss-caption {
-            margin-top: 20px; font-size: 15px; font-weight: 300; letter-spacing: 0.4px;
+            margin-top: 20px; font-size: 12.50px; font-weight: 300; letter-spacing: 0.4px;
             color: rgba(255,255,255,0.85);
         }
         #siteHeader .upload-plus {
             color: #111 !important; border: 2px solid #111 !important;
-            border-radius: 50%; width: 46px; height: 46px;
+            border-radius: 50%; width: 38.33px; height: 38.33px;
             animation: uploadPulse 1.2s ease-in-out infinite;
         }
         #siteHeader.scrolled .upload-plus { color: #111 !important; }
@@ -696,7 +696,7 @@
         #siteHeader .icon-wrap { position: relative; display: inline-flex; }
         #siteHeader .badge {
             position: absolute; top: 4px; right: 8px;
-            background: #EB2323; color: #fff; font-size: 11px; font-weight: 700;
+            background: #EB2323; color: #fff; font-size: 9.17px; font-weight: 700;
             min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; display: none;
             align-items: center; justify-content: center; line-height: 1;
             border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.22);
@@ -738,7 +738,7 @@
             margin-bottom: 40px;
         }
         .vero-drawer-head .vero-drawer-logo {
-            font-family: 'Playfair Display', Georgia, serif; font-size: 26px;
+            font-family: 'Playfair Display', Georgia, serif; font-size: 21.67px;
             font-weight: 700; letter-spacing: 5px; text-transform: uppercase; color: #fff;
         }
         .vero-drawer-head .vero-drawer-logo .vero-drawer-logo-img {
@@ -748,19 +748,19 @@
             filter: none; mix-blend-mode: difference;
         }
         .vero-drawer-close {
-            background: none; border: none; cursor: pointer; font-size: 28px;
+            background: none; border: none; cursor: pointer; font-size: 23.33px;
             line-height: 1; color: #fff; padding: 0; width: 32px; height: 32px;
         }
         .vero-drawer-close:hover { opacity: 0.6; }
         .vero-drawer-nav { display: flex; flex-direction: column; gap: 4px; }
         .vero-drawer-nav a {
-            font-size: 19px; font-weight: 600; letter-spacing: 0.5px; color: #fff;
+            font-size: 15.83px; font-weight: 600; letter-spacing: 0.5px; color: #fff;
             text-decoration: none; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.14);
             transition: color 0.2s ease, padding-left 0.2s ease;
         }
         .vero-drawer-nav a:hover { color: rgba(255,255,255,0.6); padding-left: 6px; }
         .vero-drawer-nav .vero-drawer-heading {
-            font-size: 11px; font-weight: 700; letter-spacing: 2.4px; text-transform: uppercase;
+            font-size: 9.17px; font-weight: 700; letter-spacing: 2.4px; text-transform: uppercase;
             color: rgba(255,255,255,0.4); padding: 22px 0 4px; margin-top: 6px;
         }
         .vero-drawer-social {
@@ -772,7 +772,7 @@
         .vero-drawer-social svg { width: 21px; height: 21px; }
 
         @media (max-width: 768px) {
-            #siteHeader .logo { font-size: 20px; letter-spacing: 3px; justify-self: center; }
+            #siteHeader .logo { font-size: 16.67px; letter-spacing: 3px; justify-self: center; }
             #siteHeader .logo .logo-img { height: 32px; }
         }
 
@@ -836,7 +836,7 @@
         /* The seller account name, shown beside the profile picture. */
         #siteHeader .hdr-acct-name {
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            font-size: 15px; font-weight: 600; letter-spacing: 0.3px;
+            font-size: 12.50px; font-weight: 600; letter-spacing: 0.3px;
             color: #fff; white-space: nowrap; max-width: 180px;
             overflow: hidden; text-overflow: ellipsis; display: none;
         }
@@ -878,7 +878,7 @@
         .vsp-close {
             position: absolute; top: 22px; right: 28px;
             background: none; border: none; cursor: pointer;
-            font-size: 34px; line-height: 1; color: #111; padding: 0;
+            font-size: 28.33px; line-height: 1; color: #111; padding: 0;
             width: 40px; height: 40px; transition: opacity 0.2s;
         }
         .vsp-close:hover { opacity: 0.55; }
@@ -890,7 +890,7 @@
         .vsp-logo img { height: 46px; width: auto; display: block; filter: brightness(0); }
         .vsp-logo .vsp-logo-txt {
             font-family: 'Playfair Display', Georgia, serif;
-            font-size: 34px; font-weight: 700; letter-spacing: 6px; text-transform: uppercase; color: #111;
+            font-size: 28.33px; font-weight: 700; letter-spacing: 6px; text-transform: uppercase; color: #111;
         }
         /* Two half-width search pills, side by side: products | sellers. */
         .vsp-searchbar {
@@ -917,7 +917,7 @@
         .vsp-searchbar.mode-seller #vspFieldSeller { flex: 1 1 100%; }
         .vsp-searchfield input {
             flex: 1; min-width: 0; border: none; outline: none; background: none;
-            font-family: inherit; font-size: 18px; font-weight: 500; color: #111;
+            font-family: inherit; font-size: 15.00px; font-weight: 500; color: #111;
         }
         .vsp-searchfield input::placeholder { color: #9a9a9a; letter-spacing: 0.4px; }
         .vsp-searchfield button {
@@ -970,7 +970,7 @@
         /* Shown only once the seller row is chosen. */
         #veroSearchPage.mode-seller .vsp-seller-suggest { display: flex; animation: vspFadeUp 0.5s ease 0.05s both; }
         .vsp-suggest-label {
-            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a9a;
+            font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a9a;
         }
         .vsp-suggest-chips { display: flex; flex-direction: row; gap: 16px; }
         @media (max-width: 720px) { .vsp-suggest-chips { flex-direction: column; } }
@@ -991,10 +991,10 @@
         .vsp-suggest-ava {
             width: 76px; height: 76px; flex: 0 0 auto; order: 1;
             border-radius: 50%; border: 1px solid currentColor;
-            display: grid; place-items: center; font-size: 30px; text-transform: uppercase;
+            display: grid; place-items: center; font-size: 25.00px; text-transform: uppercase;
             font-weight: 300; background: #f4f4f2; transition: transform 0.2s;
         }
-        .vsp-suggest-name { font-size: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vsp-suggest-name { font-size: 16.67px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .vsp-suggest-card:hover .vero-stars-base { color: rgba(255,255,255,0.35); }
         .vsp-suggest-card:hover .vero-stars-fill { color: #fff; }
 
@@ -1016,7 +1016,7 @@
         }
         .vsp-choice-sub {
             position: absolute; top: 92px; left: 30px; right: 30px;
-            font-size: 13px; font-weight: 500; letter-spacing: 0.3px; color: #6b6b66;
+            font-size: 10.83px; font-weight: 500; letter-spacing: 0.3px; color: #6b6b66;
             transition: color 0.3s;
         }
         .vsp-choice:hover .vsp-choice-sub { color: rgba(255,255,255,0.75); }
@@ -1051,14 +1051,14 @@
         }
         .vsp-step.show { opacity: 1; transform: none; pointer-events: auto; }
         .vsp-step-label {
-            font-size: 14px; letter-spacing: 2.5px; text-transform: uppercase;
+            font-size: 11.67px; letter-spacing: 2.5px; text-transform: uppercase;
             color: #111; font-weight: 800; margin-bottom: 20px; text-align: center;
         }
         .vsp-chips { display: flex; flex-wrap: wrap; gap: 14px 16px; justify-content: center; }
         .vsp-chip {
             border: 1px solid #111; background: #fff; color: #111;
             border-radius: 10px; padding: 12px 22px; cursor: pointer;
-            font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: 0.2px;
+            font-family: inherit; font-size: 12.50px; font-weight: 500; letter-spacing: 0.2px;
             transition: background 0.2s, color 0.2s, transform 0.15s;
         }
         .vsp-chip:hover { transform: translateY(-1px); }
@@ -1066,7 +1066,7 @@
 
         /* Final stage: material / price / colour, still stacked. */
         .vsp-final { display: flex; flex-direction: column; gap: 34px; }
-        .vsp-price-out { font-weight: 800; color: #d40000; font-size: 15px; }
+        .vsp-price-out { font-weight: 800; color: #d40000; font-size: 12.50px; }
         /* Emphasised, accessible price slider — a thick red track and a large red
            thumb with a white ring, so the control reads clearly. */
         .vsp-range {
@@ -1109,33 +1109,33 @@
         .vsp-seller-card:hover .vsp-seller-ava { transform: scale(1.04); }
         .vsp-seller-ava {
             width: 66px; height: 66px; flex: 0 0 auto; border-radius: 50%; border: 1px solid currentColor;
-            display: grid; place-items: center; font-size: 26px; text-transform: uppercase; background: #f4f4f2;
+            display: grid; place-items: center; font-size: 21.67px; text-transform: uppercase; background: #f4f4f2;
             transition: transform 0.2s;
         }
         .vsp-seller-meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; text-align: left; }
-        .vsp-seller-name { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .vsp-seller-rating { font-size: 13px; opacity: 0.72; letter-spacing: 0.5px; }
-        .vsp-seller-tags { font-size: 13px; opacity: 0.6; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vsp-seller-name { font-size: 15.83px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vsp-seller-rating { font-size: 10.83px; opacity: 0.72; letter-spacing: 0.5px; }
+        .vsp-seller-tags { font-size: 10.83px; opacity: 0.6; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         /* Bigger stars in the search overlay for legibility. */
-        .vsp-seller-card .vero-stars, .vsp-suggest-card .vero-stars { font-size: 18px; }
+        .vsp-seller-card .vero-stars, .vsp-suggest-card .vero-stars { font-size: 15.00px; }
 
         /* ===== Shared five-star rating (outline stars, proportional fill) ===== */
         /* direction:ltr keeps the base/fill overlay aligned even on RTL pages. */
-        .vero-stars { position: relative; display: inline-flex; align-items: center; line-height: 1; font-size: 15px; direction: ltr; }
+        .vero-stars { position: relative; display: inline-flex; align-items: center; line-height: 1; font-size: 12.50px; direction: ltr; }
         .vero-stars-base, .vero-stars-fill { letter-spacing: 2px; }
         .vero-stars-base { color: #d9d9d4; }
         .vero-stars-fill {
             color: #111; position: absolute; top: 0; left: 0;
             width: 0; overflow: hidden; white-space: nowrap; pointer-events: none;
         }
-        .vero-stars-num { margin-left: 9px; font-size: 12px; color: #6b6b66; letter-spacing: 0.3px; }
+        .vero-stars-num { margin-left: 9px; font-size: 10.00px; color: #6b6b66; letter-spacing: 0.3px; }
         /* On dark hover cards the outline stays visible, the fill turns white. */
         .vsp-seller-card:hover .vero-stars-base { color: rgba(255,255,255,0.35); }
         .vsp-seller-card:hover .vero-stars-fill { color: #fff; }
         .vsp-seller-card:hover .vero-stars-num,
         .vsp-suggest-card:hover .vero-stars-num { color: rgba(255,255,255,0.75); }
         .vsp-results-head {
-            font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
+            font-size: 10.83px; letter-spacing: 2.5px; text-transform: uppercase;
             color: #111; font-weight: 800; margin-bottom: 24px;
         }
         .vsp-results {
@@ -1144,12 +1144,12 @@
             gap: 22px;
         }
         .vsp-results .product-card { width: 100%; margin: 0; }
-        .vsp-results-empty { color: #9a9a9a; font-size: 14px; letter-spacing: 1px; padding: 30px 0; text-align: center; }
+        .vsp-results-empty { color: #9a9a9a; font-size: 11.67px; letter-spacing: 1px; padding: 30px 0; text-align: center; }
         .vsp-apply {
             align-self: center; margin-top: 8px;
             background: #111; color: #fff; border: 1.5px solid #111;
             border-radius: 999px; padding: 15px 46px; cursor: pointer;
-            font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+            font-family: inherit; font-size: 10.83px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
             transition: background 0.2s, color 0.2s;
         }
         .vsp-apply:hover { background: #fff; color: #111; }
@@ -1203,7 +1203,7 @@
                             <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </button>
-                    <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 26px; font-weight: 800; line-height: 1;">+</button>
+                    <button class="icon-btn upload-plus" title="Upload Product" onclick="openUploadProduct()" style="font-size: 21.67px; font-weight: 800; line-height: 1;">+</button>
                 </span>
                 <span class="hdr-account" data-icon="account">
                     <span class="hdr-acct-name" id="hdrAcctName"></span>

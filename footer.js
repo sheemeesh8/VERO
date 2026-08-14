@@ -50,7 +50,7 @@
         }
         #siteFooter .foot-logo .mark {
             font-family: 'Playfair Display', Georgia, serif;
-            font-size: 26px; font-weight: 700; letter-spacing: 4px;
+            font-size: 21.67px; font-weight: 700; letter-spacing: 4px;
             text-transform: uppercase; color: #ffffff;
         }
         #siteFooter .foot-social {
@@ -75,7 +75,7 @@
         }
         #siteFooter .foot-col h3 {
             margin: 0 0 16px;
-            font-size: 13px;
+            font-size: 10.83px;
             font-weight: 700;
             letter-spacing: 0.5px;
             color: #ffffff;
@@ -84,7 +84,7 @@
         #siteFooter .foot-col ul { list-style: none; margin: 0; padding: 0; }
         #siteFooter .foot-col li { margin-bottom: 12px; }
         #siteFooter .foot-col a {
-            font-size: 14px;
+            font-size: 11.67px;
             color: rgba(255,255,255,0.72);
             text-decoration: none;
             transition: color 0.2s ease;
@@ -98,7 +98,7 @@
             flex-direction: column;
             align-items: center;
             gap: 12px;
-            font-size: 12px;
+            font-size: 10.00px;
             color: rgba(255,255,255,0.6);
         }
         #siteFooter .foot-legal {

@@ -23,13 +23,13 @@
     .mag-close {
         position: fixed; top: 22px; right: 24px; z-index: 6; width: 46px; height: 46px;
         border-radius: 50%; border: 1px solid #111; background: #fff; color: #111;
-        font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        font-size: 16.67px; cursor: pointer; display: flex; align-items: center; justify-content: center;
         transition: background .2s, color .2s;
     }
     .mag-close:hover { background: #111; color: #fff; }
 
     .mag-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
-    .mag-kicker { font-size: 11px; letter-spacing: 3.5px; text-transform: uppercase; color: #111; font-weight: 600; }
+    .mag-kicker { font-size: 9.17px; letter-spacing: 3.5px; text-transform: uppercase; color: #111; font-weight: 600; }
     .mag-muted { color: #7c7c7c; }
 
     .mag-page { max-width: none; margin: 0 auto; padding: clamp(56px,9vh,120px) clamp(28px,5vw,110px); box-sizing: border-box; }
@@ -49,7 +49,7 @@
     .mag-plate .plate-tag {
         position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 16px;
         background: linear-gradient(0deg, rgba(0,0,0,.55), transparent);
-        color: #fff; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+        color: #fff; font-size: 9.17px; letter-spacing: 2px; text-transform: uppercase;
     }
 
     /* --- Cover --- */
@@ -67,9 +67,9 @@
     .mag-contents h2 { font-size: clamp(40px,6vw,84px); margin: 0 0 30px; font-weight: 500; }
     .con-item { display: flex; gap: 18px; padding: 16px 0; border-top: 1px solid #e2e2e2; align-items: baseline; }
     .con-item:last-child { border-bottom: 1px solid #e2e2e2; }
-    .con-num { font-size: 13px; color: #111; min-width: 34px; font-weight: 700; }
-    .con-title { font-size: 19px; font-weight: 500; }
-    .con-page { margin-left: auto; font-size: 13px; color: #7c7c7c; }
+    .con-num { font-size: 10.83px; color: #111; min-width: 34px; font-weight: 700; }
+    .con-title { font-size: 15.83px; font-weight: 500; }
+    .con-page { margin-left: auto; font-size: 10.83px; color: #7c7c7c; }
 
     /* --- Statement --- */
     .mag-statement { text-align: center; }
@@ -81,31 +81,31 @@
     .mag-feature.flip .feat-grid > * { direction: ltr; }
     .feat-num { font-size: clamp(64px,9vw,132px); line-height: .8; font-weight: 500; color: #111; margin-bottom: 8px; }
     .feat-title { font-size: clamp(30px,4.4vw,58px); line-height: 1.02; margin: 10px 0 16px; font-weight: 500; }
-    .feat-body { font-size: 15px; line-height: 1.75; color: #333; max-width: 42ch; }
+    .feat-body { font-size: 12.50px; line-height: 1.75; color: #333; max-width: 42ch; }
     .feat-specs { list-style: none; padding: 0; margin: 24px 0 0; }
-    .feat-specs li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #e6e6e6; font-size: 13px; }
-    .feat-specs li span:first-child { letter-spacing: 2px; text-transform: uppercase; color: #8a8a8a; font-size: 11px; }
-    .feat-price { font-size: 22px; font-weight: 600; margin-top: 22px; }
+    .feat-specs li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #e6e6e6; font-size: 10.83px; }
+    .feat-specs li span:first-child { letter-spacing: 2px; text-transform: uppercase; color: #8a8a8a; font-size: 9.17px; }
+    .feat-price { font-size: 18.33px; font-weight: 600; margin-top: 22px; }
 
     /* --- Pull quote --- */
     .mag-pull { text-align: center; }
-    .mag-pull .mark { font-size: 90px; line-height: .5; }
+    .mag-pull .mark { font-size: 75.00px; line-height: .5; }
     .mag-pull .pq { font-size: clamp(24px,3.4vw,44px); line-height: 1.3; font-weight: 500; max-width: 24ch; margin: 10px auto 18px; }
-    .mag-pull .by { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #7c7c7c; }
+    .mag-pull .by { font-size: 10.00px; letter-spacing: 2px; text-transform: uppercase; color: #7c7c7c; }
 
     /* --- Collection grid --- */
     .mag-collection h2 { font-size: clamp(34px,5vw,72px); margin: 0 0 6px; font-weight: 500; }
     .col-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: clamp(14px,2vw,26px); margin-top: 34px; }
-    .col-card .cap { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 12px; }
+    .col-card .cap { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 10.00px; }
     .col-card .cap .nm { font-weight: 600; }
     .col-card .cap .dc { color: #8a8a8a; text-align: right; }
 
     /* --- Contributors --- */
     .mag-contrib h2 { font-size: clamp(30px,4.5vw,60px); margin: 0 0 30px; font-weight: 500; }
     .contrib-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: clamp(16px,2.5vw,34px); }
-    .contrib-card .sq2 { aspect-ratio: 1/1; background: #ededeb; display: flex; align-items: center; justify-content: center; font-size: 46px; filter: none; }
-    .contrib-card .nm { margin-top: 12px; font-weight: 600; font-size: 14px; }
-    .contrib-card .rl { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #8a8a8a; margin-top: 3px; }
+    .contrib-card .sq2 { aspect-ratio: 1/1; background: #ededeb; display: flex; align-items: center; justify-content: center; font-size: 38.33px; filter: none; }
+    .contrib-card .nm { margin-top: 12px; font-weight: 600; font-size: 11.67px; }
+    .contrib-card .rl { font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase; color: #8a8a8a; margin-top: 3px; }
 
     /* --- Full-bleed editorial photo page --- */
     .mag-photo { position: relative; width: 100%; height: 88vh; overflow: hidden; background: #ededeb; }
@@ -120,9 +120,9 @@
     .edit-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: clamp(16px,2vw,30px); margin-top: 34px; }
     .edit-card { margin: 0; }
     .edit-card figcaption { margin-top: 12px; }
-    .edit-card .ec-name { font-size: 17px; font-weight: 500; line-height: 1.2; }
+    .edit-card .ec-name { font-size: 14.17px; font-weight: 500; line-height: 1.2; }
     .edit-card .ec-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 6px; }
-    .edit-card .ec-price { font-size: 13px; font-weight: 600; }
+    .edit-card .ec-price { font-size: 10.83px; font-weight: 600; }
 
     /* Tappable seller name */
     .mag-brand {
@@ -142,9 +142,9 @@
         box-shadow: 0 30px 80px rgba(0,0,0,.3); animation: magPopIn .3s cubic-bezier(.22,1,.36,1) both;
     }
     @keyframes magPopIn { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
-    .mag-pop-card h3 { font-size: 34px; font-weight: 500; margin: 8px 0 0; }
-    .mag-pop-x { position: absolute; top: 14px; right: 16px; border: none; background: none; font-size: 18px; cursor: pointer; color: #111; }
-    .mag-pop-fact { font-size: 15.5px; line-height: 1.75; color: #333; margin: 0; }
+    .mag-pop-card h3 { font-size: 28.33px; font-weight: 500; margin: 8px 0 0; }
+    .mag-pop-x { position: absolute; top: 14px; right: 16px; border: none; background: none; font-size: 15.00px; cursor: pointer; color: #111; }
+    .mag-pop-fact { font-size: 12.92px; line-height: 1.75; color: #333; margin: 0; }
 
     /* --- Back cover --- */
     .mag-back { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-top: 1px solid #111; }
@@ -187,21 +187,21 @@
     .mag-l-plate { position: relative; background: #b8b8b8; overflow: hidden; max-height: 66vh; }
     .mag-l-plate .glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(60px,10vw,150px); color: rgba(0,0,0,.18); }
     .mag-l-plate img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-    .mag-l-body { font-size: 13px; line-height: 1.85; color: #333; margin: 0 0 14px; }
+    .mag-l-body { font-size: 10.83px; line-height: 1.85; color: #333; margin: 0 0 14px; }
     .mag-l-body + .mag-l-body { margin-top: 0; }
     .mag-l-cols { column-count: 2; column-gap: clamp(20px,3vw,44px); }
     .mag-l-cols .mag-l-body { break-inside: avoid; }
-    .mag-l-kicker { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #111; font-weight: 700; display: block; margin: 0 0 10px; }
+    .mag-l-kicker { font-size: 8.33px; letter-spacing: 3px; text-transform: uppercase; color: #111; font-weight: 700; display: block; margin: 0 0 10px; }
     .mag-l-title { font-size: clamp(22px,3vw,40px); font-weight: 500; line-height: 1.12; margin: 0 0 18px; }
     /* Feature elements reused in every layout: big ascending number + spec table. */
     .mag-l-num { font-size: clamp(46px,7vw,104px); font-weight: 500; line-height: .9; margin: 6px 0 8px; }
     .mag-l-specs { list-style: none; padding: 0; margin: 16px 0 0; }
-    .mag-l-specs li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid #e2e2e2; font-size: 12px; }
-    .mag-l-specs li span:first-child { text-transform: uppercase; letter-spacing: 2px; color: #9a9a9a; font-size: 10px; }
-    .mag-l-price { font-size: 18px; font-weight: 600; margin-top: 14px; }
+    .mag-l-specs li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid #e2e2e2; font-size: 10.00px; }
+    .mag-l-specs li span:first-child { text-transform: uppercase; letter-spacing: 2px; color: #9a9a9a; font-size: 8.33px; }
+    .mag-l-price { font-size: 15.00px; font-weight: 600; margin-top: 14px; }
     .pg-dark .mag-l-specs li { border-top-color: #333; }
     .pg-dark .mag-l-specs li span:first-child { color: #7a7a7a; }
-    .mag-l-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a9a; border-top: 1px solid #e2e2e2; margin-top: clamp(24px,4vh,50px); padding-top: 12px; }
+    .mag-l-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 8.33px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a9a; border-top: 1px solid #e2e2e2; margin-top: clamp(24px,4vh,50px); padding-top: 12px; }
     /* per-page placement helpers */
     .gc-1-7  { grid-column: 1 / 7; }
     .gc-7-13 { grid-column: 7 / 13; }
@@ -324,7 +324,7 @@
                 <h1 class="mag-serif">${esc(d.masthead)}<span class="sub">MAGAZINE</span></h1>
                 <div>
                     <div class="mag-rule" style="margin-bottom:16px"></div>
-                    <p class="mag-muted" style="max-width:34ch;font-size:14px;line-height:1.7;margin:0">${esc(d.edition)}. Composed entirely from pieces currently on VERO.</p>
+                    <p class="mag-muted" style="max-width:34ch;font-size:11.67px;line-height:1.7;margin:0">${esc(d.edition)}. Composed entirely from pieces currently on VERO.</p>
                 </div>
             </div>
             <div class="cov-right">
@@ -427,7 +427,7 @@
         <section class="mag-page mag-collection">
             <span class="mag-kicker">${d.isArt ? 'The Gallery' : 'The Closet'} · 2025</span>
             <h2 class="mag-serif">The Collection</h2>
-            <p class="mag-muted" style="max-width:44ch;font-size:14px;line-height:1.7">Every aisle on VERO, at a glance — the worlds these pieces come from.</p>
+            <p class="mag-muted" style="max-width:44ch;font-size:11.67px;line-height:1.7">Every aisle on VERO, at a glance — the worlds these pieces come from.</p>
             <div class="col-grid">
                 ${cards.map(c => `
                     <div class="col-card">
@@ -445,7 +445,7 @@
         <section class="mag-page mag-edit">
             <span class="mag-kicker">${d.isArt ? 'Every work on VERO' : 'Every piece on VERO'}</span>
             <h2 class="mag-serif">The Edit</h2>
-            <p class="mag-muted" style="max-width:46ch;font-size:14px;line-height:1.7">${items.length} pieces from the current catalogue — tap a seller to read about the house behind it.</p>
+            <p class="mag-muted" style="max-width:46ch;font-size:11.67px;line-height:1.7">${items.length} pieces from the current catalogue — tap a seller to read about the house behind it.</p>
             <div class="edit-grid">
                 ${items.map(it => `
                     <figure class="edit-card">
@@ -483,7 +483,7 @@
         <section class="mag-page mag-back">
             <span class="mag-kicker">${esc(d.masthead)} Magazine · Issue 01</span>
             <div class="bk mag-serif">VERO</div>
-            <p class="mag-muted" style="font-size:13px;margin-top:14px">Every piece in this issue is available now on VERO.</p>
+            <p class="mag-muted" style="font-size:10.83px;margin-top:14px">Every piece in this issue is available now on VERO.</p>
         </section>`;
     }
 

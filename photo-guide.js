@@ -136,13 +136,13 @@
         .pg-head .ic {
             width: 34px; height: 34px; flex: 0 0 auto;
             border-radius: 50%; background: #f2f1ee;
-            display: grid; place-items: center; font-size: 17px;
+            display: grid; place-items: center; font-size: 14.17px;
         }
         .pg-head .tt { flex: 1; min-width: 0; }
-        .pg-head .tt b { display: block; font-size: 15px; font-weight: 700; }
-        .pg-head .tt span { display: block; font-size: 12px; color: var(--pg-muted); }
+        .pg-head .tt b { display: block; font-size: 12.50px; font-weight: 700; }
+        .pg-head .tt span { display: block; font-size: 10.00px; color: var(--pg-muted); }
         .pg-head .count {
-            font-size: 12px; font-weight: 700; color: var(--pg-accent);
+            font-size: 10.00px; font-weight: 700; color: var(--pg-accent);
             background: rgba(0,0,0,0.06); border-radius: 999px; padding: 4px 10px;
             flex: 0 0 auto;
         }
@@ -161,7 +161,7 @@
         .pg-pad { padding: 4px 18px 20px; }
 
         .pg-hero {
-            font-size: 13px; line-height: 1.6; color: #45413a;
+            font-size: 10.83px; line-height: 1.6; color: #45413a;
             background: #faf9f7; border: 1px solid var(--pg-line);
             border-radius: 9px; padding: 12px 14px; margin-bottom: 16px;
         }
@@ -173,15 +173,15 @@
             flex: 1; border: 1px solid var(--pg-line); border-radius: 9px;
             padding: 12px 10px; text-align: center;
         }
-        .pg-core .c .g { font-size: 18px; }
-        .pg-core .c b { display: block; font-size: 12px; margin-top: 6px; }
-        .pg-core .c span { display: block; font-size: 11px; color: var(--pg-muted); line-height: 1.45; margin-top: 3px; }
+        .pg-core .c .g { font-size: 15.00px; }
+        .pg-core .c b { display: block; font-size: 10.00px; margin-top: 6px; }
+        .pg-core .c span { display: block; font-size: 9.17px; color: var(--pg-muted); line-height: 1.45; margin-top: 3px; }
 
         .pg-slots-h {
-            font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+            font-size: 9.17px; letter-spacing: 1px; text-transform: uppercase;
             color: var(--pg-muted); font-weight: 700; margin-bottom: 4px;
         }
-        .pg-slots-sub { font-size: 12px; color: var(--pg-muted); line-height: 1.5; margin-bottom: 12px; }
+        .pg-slots-sub { font-size: 10.00px; color: var(--pg-muted); line-height: 1.5; margin-bottom: 12px; }
         .pg-slots { display: flex; flex-direction: column; gap: 8px; }
         .pg-slot {
             display: flex; align-items: flex-start; gap: 12px;
@@ -196,10 +196,10 @@
         .pg-slot .dot svg { width: 13px; height: 13px; fill: none; stroke: #fff;
             stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
         .pg-slot .lbl { flex: 1; min-width: 0; }
-        .pg-slot .lbl b { display: block; font-size: 13.5px; font-weight: 700; line-height: 1.35; }
-        .pg-slot .lbl .hint { display: block; font-size: 12px; color: var(--pg-muted); line-height: 1.5; margin-top: 3px; }
+        .pg-slot .lbl b { display: block; font-size: 11.25px; font-weight: 700; line-height: 1.35; }
+        .pg-slot .lbl .hint { display: block; font-size: 10.00px; color: var(--pg-muted); line-height: 1.5; margin-top: 3px; }
         .pg-slot.done .lbl .hint { color: #6f8a7e; }
-        .pg-slot .num { font-size: 11px; color: var(--pg-muted); font-weight: 700; margin-top: 2px; }
+        .pg-slot .num { font-size: 9.17px; color: var(--pg-muted); font-weight: 700; margin-top: 2px; }
         .pg-slot.done {
             background: rgba(0,66,37,0.05); border-color: rgba(0,66,37,0.25);
         }

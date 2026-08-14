@@ -168,7 +168,7 @@
             #vero-ed-toggle {
                 position: fixed; left: 18px; bottom: 18px; z-index: 100000;
                 width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
-                background: #111; color: #fff; border: none; font-size: 20px;
+                background: #111; color: #fff; border: none; font-size: 16.67px;
                 display: flex; align-items: center; justify-content: center;
                 box-shadow: 0 8px 24px rgba(0,0,0,0.28); transition: background 0.2s, transform 0.2s;
                 font-family: 'Segoe UI', sans-serif;
@@ -180,30 +180,30 @@
                 width: 300px; background: #fff; color: #111; border: 1px solid #e6e4de;
                 border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,0.18);
                 padding: 16px; display: none; direction: rtl;
-                font-family: 'Segoe UI', sans-serif; font-size: 13px;
+                font-family: 'Segoe UI', sans-serif; font-size: 10.83px;
             }
             #vero-ed-panel.open { display: block; }
-            #vero-ed-panel h4 { margin: 0 0 10px; font-size: 12px; letter-spacing: 1px;
+            #vero-ed-panel h4 { margin: 0 0 10px; font-size: 10.00px; letter-spacing: 1px;
                 text-transform: uppercase; color: #004225; }
             #vero-ed-panel .vero-ed-sel {
                 direction: ltr; text-align: left; background: #f4f3f0; border-radius: 6px;
-                padding: 7px 9px; font-family: monospace; font-size: 11px; color: #333;
+                padding: 7px 9px; font-family: monospace; font-size: 9.17px; color: #333;
                 word-break: break-all; margin-bottom: 10px; max-height: 64px; overflow: auto;
             }
             #vero-ed-panel .vero-ed-read { direction: ltr; text-align: left; color: #555;
-                font-size: 12px; margin-bottom: 12px; }
+                font-size: 10.00px; margin-bottom: 12px; }
             #vero-ed-panel .vero-ed-read b { color: #111; }
             #vero-ed-panel label { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
             #vero-ed-panel input[type=range] { flex: 1; }
             #vero-ed-panel .vero-ed-btns { display: flex; flex-wrap: wrap; gap: 6px; }
             #vero-ed-panel button.b {
                 flex: 1 1 auto; padding: 8px 10px; border-radius: 6px; cursor: pointer;
-                border: 1px solid #d8d5cc; background: #fff; color: #111; font-size: 11px;
+                border: 1px solid #d8d5cc; background: #fff; color: #111; font-size: 9.17px;
                 letter-spacing: 0.5px; font-family: inherit;
             }
             #vero-ed-panel button.b:hover { background: #f0efeb; }
             #vero-ed-panel button.b.dark { background: #004225; border-color: #004225; color: #fff; }
-            #vero-ed-panel .vero-ed-hint { color: #9a9a9a; font-size: 11px; margin-top: 10px; line-height: 1.5; }
+            #vero-ed-panel .vero-ed-hint { color: #9a9a9a; font-size: 9.17px; margin-top: 10px; line-height: 1.5; }
         `;
         document.head.appendChild(style);
 
