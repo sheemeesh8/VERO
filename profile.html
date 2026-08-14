@@ -178,6 +178,19 @@
             transition: text-decoration-color 0.2s;
         }
         .hero-socials-btn:hover { text-decoration-color: #fff; }
+
+        /* Settings / Statistics slide tabs. */
+        .pf-tabs { display: flex; gap: 10px; justify-content: center; margin: 6px 0 30px; }
+        .pf-tab {
+            padding: 10px 28px; border: 1px solid #d9d5cc; background: #fff; border-radius: 999px;
+            cursor: pointer; font-family: inherit; font-size: 11px; letter-spacing: 1.5px;
+            text-transform: uppercase; color: #6b6b66; transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .pf-tab:hover { border-color: #111; color: #111; }
+        .pf-tab.is-active { background: #111; color: #fff; border-color: #111; }
+        .pf-slide { display: none; }
+        .pf-slide.is-active { display: block; animation: pfSlideIn 0.4s ease both; }
+        @keyframes pfSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         /* Edit controls sit below the name, in place of the tagline. */
         .ph-edit { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
         /* Borderless — just the text labels over the hero, no pill frame. */
@@ -1285,7 +1298,7 @@
         </section>
 
         <!-- ===== Change password — buyer's My Profile only, below the expenses summary ===== -->
-        <div class="card buyer-only" style="margin-top:24px;">
+        <div class="card buyer-only" id="passwordCard" style="margin-top:24px;">
             <div class="card-title">Change password</div>
             <div class="card-hint">Manage your account security.</div>
             <div class="field">
@@ -1356,6 +1369,57 @@
             // (Followers / Items / Following).
             const photos = document.getElementById('photosCard');
             if (photos && stats) stats.insertAdjacentElement('afterend', photos);
+        })();
+
+        // ---- Split the page into two slides: Settings and Statistics, toggled by
+        //      a pair of nav tabs under the hero. ----
+        (function splitSlides() {
+            const wrap = document.querySelector('.wrap');
+            const grid = document.querySelector('.grid');
+            if (!wrap || !grid) return;
+
+            const tabs = document.createElement('div');
+            tabs.className = 'pf-tabs';
+            tabs.innerHTML =
+                '<button type="button" class="pf-tab is-active" data-slide="settings">Settings</button>' +
+                '<button type="button" class="pf-tab" data-slide="stats">Statistics</button>';
+            grid.parentNode.insertBefore(tabs, grid);
+
+            const slideSettings = document.createElement('div');
+            slideSettings.id = 'slideSettings'; slideSettings.className = 'pf-slide is-active';
+            const slideStats = document.createElement('div');
+            slideStats.id = 'slideStats'; slideStats.className = 'pf-slide';
+            tabs.insertAdjacentElement('afterend', slideStats);
+            tabs.insertAdjacentElement('afterend', slideSettings);
+
+            const contact  = document.querySelector('.contact-card');
+            const photos   = document.getElementById('photosCard');
+            const sizeCard = document.getElementById('sizeCard');
+            const password = document.getElementById('passwordCard');
+            const stats    = document.querySelector('.stats');
+            const sales    = document.querySelector('.shop-sales');
+            const expenses = document.querySelector('.my-expenses');
+
+            // Settings slide: identity/store details, photos, product sizes, password.
+            [contact, photos, sizeCard, password].forEach(el => { if (el) slideSettings.appendChild(el); });
+            // Statistics slide: the followers/items/following stats + the dashboard.
+            [stats, sales, expenses].forEach(el => { if (el) slideStats.appendChild(el); });
+
+            // The now-empty original containers can be dropped so they don't add gaps.
+            const oldGrid = document.querySelector('.grid');
+            if (oldGrid) oldGrid.remove();
+
+            tabs.querySelectorAll('.pf-tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const sel = btn.dataset.slide;
+                    tabs.querySelectorAll('.pf-tab').forEach(b => b.classList.toggle('is-active', b === btn));
+                    slideSettings.classList.toggle('is-active', sel === 'settings');
+                    slideStats.classList.toggle('is-active', sel === 'stats');
+                    // Nudge embedded dashboards (My Sales / My Expenses) to re-fit
+                    // now that their slide is visible.
+                    window.dispatchEvent(new Event('resize'));
+                });
+            });
         })();
 
         // Auto-fit an embedded page (My Sales for sellers, My Expenses for buyers)
