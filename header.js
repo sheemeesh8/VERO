@@ -75,10 +75,10 @@
         #siteHeader {
             background: transparent;
             border-bottom: none;
-            padding: 8px 0;
+            padding: 4px 0;
             position: fixed;
             /* Sits a little below the very top edge rather than flush against it. */
-            top: 18px; left: 0; right: 0;
+            top: 10px; left: 0; right: 0;
             z-index: 100;
             width: 100%;
             box-shadow: none;
@@ -463,7 +463,7 @@
            logo is always the opposite colour of its background — black on light,
            white on dark — with no per-context filter needed. */
         /* The logo art is a white-on-transparent PNG; paint it solid black everywhere. */
-        #siteHeader .logo .logo-img { height: 58px; width: auto; display: block; mix-blend-mode: normal !important; filter: brightness(0) !important; transition: filter 0.25s ease; }
+        #siteHeader .logo .logo-img { height: 42px; width: auto; display: block; mix-blend-mode: normal !important; filter: brightness(0) !important; transition: filter 0.25s ease; }
         /* While the header floats transparent over the hero image, the logo is white;
            once the header turns solid (scrolled), it reverts to black (rule above). */
         #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: brightness(0) invert(1) !important; }
