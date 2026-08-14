@@ -9781,6 +9781,19 @@
         };
         const clothingSegmentSuffix = { men: 'for Men', women: 'for Women', kids: 'for Kids' };
 
+        // Per-segment garment assortments — Men / Women / Kids each carry a
+        // different set of types, so each category reflects its own real item
+        // count (the same list drives both the feed and the "items available" bar).
+        const clothingSegmentTypes = (() => {
+            const byName = Object.fromEntries(clothingSliderCategories.map(c => [c.name, c]));
+            const pick = names => names.map(n => byName[n]).filter(Boolean);
+            return {
+                men:   pick(['T-Shirts','Pants','Coats','Hats','Shoes','Sweaters','Suits','Bags','Boots','Socks','Belts','Sunglasses']),
+                women: pick(['T-Shirts','Pants','Coats','Shoes','Dresses','Skirts','Sweaters','Swimwear','Bags','High Heels','Boots','Scarves','Jewelry','Sunglasses','Pajamas']),
+                kids:  pick(['T-Shirts','Pants','Coats','Hats','Shoes','Sweaters','Swimwear','Socks','Gloves','Scarves','Pajamas'])
+            };
+        })();
+
         // Which segment is currently selected (null = default, unfiltered feed).
         let currentSegment = null;
 
@@ -9789,7 +9802,7 @@
             const sellers = catSellers[category];
             let types, suffix = '';
             if (category === 'clothing') {
-                types = clothingSliderCategories;
+                types = clothingSegmentTypes[segKey] || clothingSliderCategories;
                 suffix = clothingSegmentSuffix[segKey] || '';
             } else {
                 types = artSegmentTypes[segKey] || [];
