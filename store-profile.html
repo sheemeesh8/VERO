@@ -487,8 +487,8 @@
                             <span class="verified-check" title="VERO Verified Store" aria-label="VERO Verified Store">✓</span>
                             <button class="follow-btn" id="followBtn">Follow</button>
                         </div>
-                        <div class="vero-stars hero-rating" id="storeRating"></div>
                         <p class="hero-tag" id="storeTag">Curated wardrobe & one-off pieces. Tel Aviv.</p>
+                        <div class="vero-stars hero-rating" id="storeRating"></div>
                     </div>
                     <div class="hero-right">
                         <div class="hero-stats" id="heroStats">
@@ -689,8 +689,14 @@
         // listings — so the storefront always shows the same figures the seller
         // sees in their My Shop. Runs even when there is no store config yet.
         (function syncLiveData() {
+            let sellerProf; try { sellerProf = JSON.parse(localStorage.getItem('vero_seller_profile')) || {}; } catch (e) { sellerProf = {}; }
             let prof; try { prof = JSON.parse(localStorage.getItem('vero_profile')) || {}; } catch (e) { prof = {}; }
-            if (prof.followers != null && !isNaN(Number(prof.followers))) STORE.followers = Number(prof.followers);
+            const followers = (sellerProf.followers != null) ? sellerProf.followers : prof.followers;
+            if (followers != null && !isNaN(Number(followers))) STORE.followers = Number(followers);
+            // The "About" the seller types in My Shop settings becomes the store's
+            // tagline (the description shown directly under the name).
+            const bio = (sellerProf.bio || prof.bio || '').trim();
+            if (bio) STORE.tag = bio;
 
             let listings; try { listings = JSON.parse(localStorage.getItem('vero_listings')) || []; } catch (e) { listings = []; }
             if (Array.isArray(listings)) {
