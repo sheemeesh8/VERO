@@ -3,1220 +3,536 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VERO — My Sales</title>
+    <title>VERO — סטטיסטיקות</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --st-draft: #9a9a95;   /* בטיוטה */
-            --st-active: #1f8f4e;   /* פעיל */
-            --st-offer: #c9922b;   /* בהצעה */
-            --st-sold: #111;       /* נמכר */
-            --st-paused: #3b6ea5;  /* מושהה */
+            --available: #1f8f4e;   /* 🟢 זמין */
+            --reserved:  #c9922b;   /* 🟡 מוזמן */
+            --sold:      #b23b3b;   /* 🔴 נמכר */
+            --ink: #1c1c1c;
+            --muted: #7a7a75;
             --line: #e9e9e6;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { min-height: 100%; }
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #fff; direction: rtl; color: #1c1c1c;
-            overflow-x: hidden;
+            background: #fff; direction: rtl; color: var(--ink);
+            overflow-x: hidden; font-size: 14px; line-height: 1.5;
         }
 
-        /* Shared personal/seller-area frame: a static grayscale hero on the left
-           while the content slides in from behind it. */
-        .page-cover { display: none; }
+        /* Standalone frame (hidden when embedded in the profile Statistics slide). */
         .side-image {
             position: fixed; top: 0; left: 0; bottom: 0; width: 20vw;
             background: #2a2a28 url('assets/expenses-hero.jpg') center / cover no-repeat;
-            filter: grayscale(1); border-right: 1px solid #000; z-index: 5;
+            filter: grayscale(1); border-left: 1px solid #000; z-index: 5;
         }
-        .wrap {
-            padding: 120px 40px 80px;
-            animation: slideInLeft 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
-        }
-        @keyframes slideInLeft {
-            from { opacity: 0; transform: translateX(-18vw); }
-            to   { opacity: 1; transform: none; }
-        }
-        @media (min-width: 1001px) { .wrap { padding-left: calc(20vw + 60px); } }
-        @media (max-width: 1000px) { .side-image { display: none; } }
-
-        /* ---- Back (top-right pill, like the other pages) ---- */
         .back {
-            position: fixed; top: 26px; right: 34px; z-index: 40;
+            position: fixed; top: 26px; left: 34px; z-index: 40;
             display: inline-flex; align-items: center; gap: 8px;
             padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
-            font-size: 10.00px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
+            font-size: 10px; letter-spacing: 1.5px; text-decoration: none; color: var(--ink);
             background: #fff; transition: background 0.25s, color 0.25s;
         }
         .back:hover { background: #000; color: #fff; }
-
-        /* ---- Header ---- */
-        .dash-head { margin-bottom: 8px; text-align: left; }
-        .dash-kicker { font-size: 9.17px; font-weight: 600; letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; margin-bottom: 14px; }
-        .dash-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; margin-bottom: 16px; }
-        .dash-lead { font-size: 12.50px; color: #6b6b66; max-width: 640px; line-height: 1.6; letter-spacing: 0.3px; }
-
-        /* ---- Section shell ---- */
-        .section { margin-top: 52px; }
-        .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap; border-bottom: 1px solid #000; padding-bottom: 14px; margin-bottom: 22px; }
-        .sec-title { font-size: 10.83px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; }
-        .sec-note { font-size: 10.00px; color: #9a9a95; letter-spacing: 0.5px; }
-        .card { background: #fff; border: 1px solid #000; }
-
-        /* ---- KPI bar ---- */
-        /* KPI slider — one card at a time, auto-fading (same as the buyer profile's
-           hero-stats slider). Cards stack absolutely; only .is-active is visible. */
-        .kpi-row { position: relative; min-height: 200px; }
-        .kpi {
-            position: absolute; inset: 0;
-            background: transparent; border: none; padding: 30px 4px; overflow: hidden;
-            display: flex; align-items: center; gap: 32px;
-            opacity: 0; transform: translateY(14px);
-            transition: opacity 0.6s ease, transform 0.6s ease; pointer-events: none;
+        .wrap {
+            padding: 110px 40px 90px; max-width: 1180px; margin: 0 auto;
+            animation: fadeIn 0.6s ease both;
         }
-        .kpi-main { flex: none; }
-        .kpi.is-active { opacity: 1; transform: translateY(0); pointer-events: auto; }
-        /* Clickable nav buttons (dots) under the KPI slider. */
-        .kpi-dots { display: flex; gap: 10px; margin-top: 10px; }
-        .kpi-dot {
-            width: 10px; height: 10px; border-radius: 50%; padding: 0;
-            border: 1.4px solid #000; background: #fff; cursor: pointer; transition: 0.2s;
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (min-width: 1001px) { .wrap { padding-right: calc(20vw + 40px); } }
+
+        /* Embedded mode (?embed=1): drop the standalone chrome. */
+        html.is-embed .side-image, html.is-embed .back { display: none !important; }
+        html.is-embed .wrap { padding: 0 0 40px; max-width: none; animation: none; }
+
+        .dash-title { font-size: clamp(30px, 4vw, 48px); font-weight: 200; letter-spacing: 0.5px; }
+        .dash-sub { margin-top: 10px; color: var(--muted); font-size: 12px; }
+        html.is-embed .dash-head { display: none; }
+
+        /* ===== Section tabs ===== */
+        .sec-nav {
+            display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto;
+            margin: 26px 0 30px; padding-bottom: 4px;
         }
-        .kpi-dot:hover { background: #bbb; }
-        .kpi-dot.is-active { background: #000; }
-        .kpi b { display: block; font-size: 50.00px; font-weight: 600; line-height: 1; }
-        .kpi span { font-size: 10.83px; letter-spacing: 1px; text-transform: uppercase; color: #9a9a9a; margin-top: 14px; display: block; }
-        .kpi .kpi-mark { position: absolute; left: 16px; top: 16px; font-size: 21.67px; opacity: 0.25; }
-        .kpi .kpi-desc { text-transform: none; letter-spacing: 0.2px; font-size: 11.67px; color: #6b6b66; margin-top: 0; max-width: 320px; line-height: 1.5; align-self: center; }
-        .kpi.hot b { color: var(--st-offer); }
-        /* KPI cards that link to their own page. */
-        a.kpi-link { color: inherit; text-decoration: none; cursor: pointer; }
-        a.kpi-link:hover b { text-decoration: underline; }
-
-        /* ---- Status tags ---- */
-        .tag {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 4px 12px; border-radius: 999px; font-size: 9.17px; font-weight: 600;
-            letter-spacing: 0.6px; border: 1px solid; white-space: nowrap;
+        .sec-nav::-webkit-scrollbar { height: 0; }
+        .sec-tab {
+            flex: none; border: 1px solid var(--line); background: #fff; color: var(--muted);
+            font-family: inherit; font-size: 11px; letter-spacing: 0.3px; font-weight: 500;
+            padding: 11px 18px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 8px; min-height: 42px;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
-        .tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-        .tag.draft  { color: var(--st-draft);  border-color: var(--st-draft); }
-        .tag.active { color: var(--st-active); border-color: var(--st-active); }
-        .tag.offer  { color: var(--st-offer);  border-color: var(--st-offer); }
-        .tag.sold   { color: var(--st-sold);   border-color: var(--st-sold); }
-        .tag.paused { color: var(--st-paused); border-color: var(--st-paused); }
+        .sec-tab:hover { border-color: #111; color: #111; }
+        .sec-tab.is-active { background: #111; color: #fff; border-color: #111; }
+        .sec-tab .num { font-size: 10px; opacity: 0.6; }
 
-        /* ---- Inventory controls ---- */
-        .inv-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
-        .filters { display: flex; gap: 8px; flex-wrap: wrap; }
-        .filter-chip {
-            padding: 8px 16px; border: 1px solid #ddd; border-radius: 999px; background: #fff;
-            font-family: inherit; font-size: 10.00px; letter-spacing: 0.5px; cursor: pointer; color: #555;
-            transition: 0.2s;
+        .panel { display: none; animation: fadeIn 0.4s ease both; }
+        .panel.is-active { display: block; }
+
+        /* ===== Cards ===== */
+        .grid { display: grid; gap: 18px; }
+        .g2 { grid-template-columns: 1fr 1fr; }
+        .g3 { grid-template-columns: repeat(3, 1fr); }
+        .g4 { grid-template-columns: repeat(4, 1fr); }
+        @media (max-width: 860px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } }
+        .card {
+            border: 1px solid var(--line); border-radius: 16px; padding: 22px;
+            background: #fff;
         }
-        .filter-chip:hover { border-color: #000; color: #000; }
-        .filter-chip.on { background: #000; color: #fff; border-color: #000; }
-        /* ---- Slider navigation arrows ---- */
-        .slider-nav { display: inline-flex; gap: 8px; }
-        .sl-arrow {
-            width: 40px; height: 40px; border: 1.4px solid #000; border-radius: 999px; background: #fff;
-            font-size: 18.33px; line-height: 1; cursor: pointer; color: #111; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center;
+        .card.dark { background: #111; color: #fff; border-color: #111; }
+        .card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+        .card-t { font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+        .card-d { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
+        .card.dark .card-d { color: rgba(255,255,255,0.7); }
+        .sec-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 30px 0 14px; }
+        .sec-title:first-child { margin-top: 0; }
+
+        /* KPI tiles */
+        .kpi-num { font-size: 34px; font-weight: 200; line-height: 1; margin-top: 10px; }
+        .kpi-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+        .card.dark .kpi-lbl { color: rgba(255,255,255,0.6); }
+
+        /* Buttons + pills */
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+            padding: 11px 20px; border-radius: 999px; border: 1.4px solid #111; background: #fff;
+            color: #111; font-family: inherit; font-size: 11px; letter-spacing: 0.5px; font-weight: 500;
+            cursor: pointer; min-height: 42px; transition: background 0.2s, color 0.2s;
         }
-        .sl-arrow:hover { background: #000; color: #fff; }
-        .sl-arrow:disabled { opacity: 0.3; cursor: default; background: #fff; color: #111; }
-
-        /* ---- Products slider: two products at a time, each a card with its data ---- */
-        .prod-slider {
-            display: grid; grid-auto-flow: column; grid-auto-columns: calc(50% - 9px); gap: 18px;
-            overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding-bottom: 8px;
+        .btn:hover { background: #111; color: #fff; }
+        .btn.solid { background: #111; color: #fff; }
+        .btn.solid:hover { opacity: 0.85; }
+        .btn.wide { width: 100%; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px;
+            border-radius: 999px; border: 1px solid var(--line); font-size: 11px; font-weight: 500;
         }
-        .prod-slider::-webkit-scrollbar { height: 6px; }
-        .prod-slider::-webkit-scrollbar-thumb { background: #ccc; border-radius: 999px; }
-        .prod-unit {
-            scroll-snap-align: start; display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px;
-            background: transparent; padding: 8px; cursor: pointer; transition: transform 0.15s;
-        }
-        .prod-unit:hover { transform: translateY(-2px); }
-        /* Card face (right side in RTL) — the product fills the image, no frame. */
-        .pcf-img {
-            width: 100%; height: 240px; background: #f2f2ef; border-radius: 10px;
-            background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center;
-            font-size: clamp(56px, 8vw, 88px);
-        }
-        .pcf-name { font-weight: 500; font-size: 12.50px; margin-top: 12px; }
-        .pcf-brand { font-size: 10.00px; color: #9a9a9a; margin-top: 2px; }
-        .pcf-price { font-weight: 600; font-size: 13.33px; margin-top: 8px; }
-        /* Data panel (left side in RTL). */
-        .prod-data { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
-        .pd-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
-        .pd-row:last-child { border-bottom: none; padding-bottom: 0; }
-        .pd-k { font-size: 9.17px; letter-spacing: 1px; text-transform: uppercase; color: #9a9a9a; font-weight: 600; }
-        .pd-v { font-size: 11.67px; }
-        /* Title row: product name + brand, with the status tag beside the title. */
-        .pd-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
-        .pd-title { font-weight: 600; font-size: 14.17px; line-height: 1.2; }
-        .pd-brand { font-size: 10.00px; color: #9a9a9a; margin-top: 3px; }
-        @media (max-width: 760px) {
-            .prod-slider { grid-auto-columns: calc(100% - 4px); }
-            .prod-unit { grid-template-columns: 1fr; }
-        }
+        .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+        .dot.green { background: var(--available); }
+        .dot.amber { background: var(--reserved); }
+        .dot.red   { background: var(--sold); }
 
-        /* ---- Grid (table) view ---- */
-        .inv-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #000; }
-        .inv-table th, .inv-table td { text-align: right; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 11.67px; }
-        .inv-table th { font-size: 9.17px; letter-spacing: 1px; text-transform: uppercase; color: #9a9a9a; font-weight: 600; }
-        .inv-table tbody tr { cursor: pointer; transition: background 0.15s; }
-        .inv-table tbody tr:hover { background: #f6f6f4; }
-        .inv-item { display: flex; align-items: center; gap: 12px; }
-        .inv-thumb { width: 40px; height: 40px; border: 1px solid #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16.67px; background: #f7f7f5; background-size: cover; background-position: center; flex: none; }
-        .inv-name { font-weight: 500; }
-        .inv-brand { font-size: 10.00px; color: #9a9a9a; }
-        .age-pill { font-size: 10.00px; color: #666; }
-        .age-pill.stuck { color: #b23b3b; font-weight: 600; }
-
-        /* Mini health meter (bar) */
-        .health { display: flex; align-items: center; gap: 8px; }
-        .health .bar { width: 74px; height: 6px; border-radius: 999px; background: #eee; overflow: hidden; }
-        .health .bar > i { display: block; height: 100%; border-radius: 999px; background: #111; }
-        .health .pct { font-size: 10.00px; color: #666; width: 34px; }
-
-        .bin-tag { font-size: 10.00px; color: #555; border: 1px dashed #cfcfca; border-radius: 6px; padding: 3px 8px; display: inline-block; }
-        .bin-tag.empty { color: #bbb; border-style: dotted; }
-
-        /* ---- Kanban view ---- */
-        .kanban { display: grid; grid-template-columns: repeat(5, minmax(220px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 8px; }
-        .kan-col { background: #f4f4f2; border: 1px solid #ececec; border-radius: 10px; padding: 12px; min-height: 120px; }
-        .kan-col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .kan-count { font-size: 10.00px; color: #9a9a9a; background: #fff; border: 1px solid #e4e4e0; border-radius: 999px; padding: 2px 9px; }
-        .kan-card { background: #fff; border: 1px solid #e8e8e4; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: box-shadow 0.15s, transform 0.15s; }
-        .kan-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.08); transform: translateY(-1px); }
-        .kan-card .kc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .kan-card .kc-name { font-weight: 500; font-size: 11.67px; line-height: 1.2; }
-        .kan-card .kc-brand { font-size: 9.17px; color: #9a9a9a; }
-        .kan-card .kc-meta { display: flex; align-items: center; justify-content: space-between; font-size: 10.00px; color: #666; }
-        .kan-card .kc-price { font-weight: 600; color: #111; }
-
-        /* ---- Charts ---- */
-        .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .chart-card { background: #fff; border: 1px solid #000; padding: 24px; }
-        /* Single unified chart: square nav column on the left, one chart on the right. */
-        .single-chart { padding: 8px 0 0; border: none; background: transparent; }
-        .chart-stage { display: flex; align-items: stretch; gap: 26px; }
-        .chart-body { flex: 1; min-width: 0; }
-        /* Every chart occupies the same box so switching tabs never resizes the card. */
-        .chart-panel { min-height: 300px; }
-        .chart-panel[hidden] { display: none; }
-        .chart-panel svg { display: block; width: 100%; height: auto; }
-        /* Square nav buttons stacked vertically down the left side. */
-        .chart-tabs { display: flex; flex-direction: column; gap: 10px; flex: none; }
-        .chart-tabs button {
-            padding: 14px 18px; border: 1.4px solid #000; border-radius: 0; background: #fff;
-            font-family: inherit; font-size: 10.83px; letter-spacing: 0.3px; cursor: pointer; color: #111;
-            transition: 0.2s; text-align: right; white-space: nowrap;
-        }
-        .chart-tabs button:hover { background: #f2f2ef; }
-        .chart-tabs button.on { background: #000; color: #fff; }
-        @media (max-width: 720px) {
-            .chart-stage { flex-direction: column; }
-            .chart-body { max-width: none; }
-            .chart-tabs { flex-direction: row; flex-wrap: wrap; }
-        }
-        .chart-card h3 { font-size: 12.50px; font-weight: 600; letter-spacing: 0.5px; }
-        .chart-card .ch-sub { font-size: 10.00px; color: #9a9a9a; margin: 4px 0 18px; }
-        .chart-card svg { width: 100%; height: auto; display: block; overflow: visible; }
-
-        /* Aging bars */
-        .aging-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-        .aging-row .al { width: 92px; font-size: 10.83px; color: #555; }
-        .aging-row .track { flex: 1; height: 26px; background: #f1f1ee; border-radius: 6px; overflow: hidden; }
-        .aging-row .track > i { display: block; height: 100%; border-radius: 6px; }
-        .aging-row .av { width: 34px; font-size: 11.67px; font-weight: 600; text-align: left; }
-
-        /* Legend */
-        .legend { display: flex; flex-wrap: wrap; gap: 12px 18px; margin-top: 16px; }
-        .legend span { display: inline-flex; align-items: center; gap: 7px; font-size: 10.00px; color: #555; }
-        .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
-
-        /* Heatmap */
-        .heat { display: grid; grid-template-columns: 44px repeat(6, 1fr); gap: 5px; }
-        .heat .hcell { aspect-ratio: 1 / 0.62; border-radius: 4px; background: #eee; }
-        .heat .hlabel { font-size: 9.17px; color: #9a9a9a; display: flex; align-items: center; }
-        .heat .hcol { font-size: 8.33px; color: #b7b7b2; text-align: center; }
-
-        /* ---- Offer Hub ---- */
-        /* Compact offer rows. */
-        .offer-hub { max-width: 760px; }
-        .offer { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid #000; background: #fff; margin-bottom: 8px; flex-wrap: wrap; }
-        .offer .o-main { flex: 1; min-width: 150px; }
-        .offer .o-name { font-weight: 500; font-size: 11.67px; }
-        .offer .o-sub { font-size: 9.17px; color: #9a9a9a; margin-top: 2px; }
-        .offer .o-amt { font-size: 14.17px; font-weight: 600; }
-        .offer .o-amt small { font-size: 9.17px; color: #9a9a9a; font-weight: 400; }
-        .timer { display: inline-flex; align-items: center; gap: 6px; font-size: 10.00px; font-weight: 600; color: var(--st-offer); border: 1px solid var(--st-offer); border-radius: 999px; padding: 4px 11px; }
-        .timer.urgent { color: #b23b3b; border-color: #b23b3b; }
-        .timer.expired { color: #9a9a9a; border-color: #ddd; }
-        .o-actions { display: flex; gap: 8px; }
-        .o-btn { padding: 7px 12px; border: 1.4px solid #000; border-radius: 999px; background: #fff; font-family: inherit; font-size: 9.17px; letter-spacing: 0.3px; cursor: pointer; transition: 0.2s; }
-        .o-btn:hover { background: #000; color: #fff; }
-        .o-btn.accept { background: #111; color: #fff; }
-        .o-btn.accept:hover { background: #1f8f4e; border-color: #1f8f4e; }
-        .o-btn.reject:hover { background: #b23b3b; border-color: #b23b3b; }
-
-        /* ---- Pricing & bundles ---- */
-        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .rule { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-        .rule:last-child { border-bottom: none; }
-        .rule .r-label { font-size: 11.67px; }
-        .rule .r-desc { font-size: 10.00px; color: #9a9a9a; margin-top: 3px; }
-        .rule input[type=number] { width: 64px; border: none; border-bottom: 1.4px solid #ddd; background: transparent; font-family: inherit; font-size: 13.33px; text-align: center; padding: 4px 0; }
-        .rule input[type=number]:focus { outline: none; border-bottom-color: #000; }
-        .switch { position: relative; width: 44px; height: 24px; flex: none; }
+        /* Toggle switch */
+        .switch { position: relative; width: 46px; height: 26px; flex: none; cursor: pointer; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .switch .slider { position: absolute; inset: 0; border: 1.4px solid #000; border-radius: 999px; background: #fff; transition: 0.2s; cursor: pointer; }
-        .switch .slider::before { content: ""; position: absolute; width: 15px; height: 15px; right: 3px; top: 2.5px; background: #000; border-radius: 50%; transition: 0.2s; }
-        .switch input:checked + .slider { background: #fff; }
-        .switch input:checked + .slider::before { transform: translateX(-20px); background: #000; }
+        .switch .track { position: absolute; inset: 0; background: #d8d4cd; border-radius: 999px; transition: background 0.2s; }
+        .switch .track::before { content: ""; position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+        .switch input:checked + .track { background: #111; }
+        .switch input:checked + .track::before { transform: translateX(-20px); }
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+        .row:last-child { border-bottom: none; }
+        .row .lbl b { display: block; font-size: 12.5px; font-weight: 600; }
+        .row .lbl span { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-        /* ---- MY TIME ---- */
-        .mytime { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
-        .task { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-        .task:last-child { border-bottom: none; }
-        .task .t-ic { font-size: 16.67px; width: 34px; text-align: center; flex: none; }
-        .task .t-body { flex: 1; }
-        .task .t-title { font-size: 11.67px; font-weight: 500; }
-        .task .t-sub { font-size: 10.00px; color: #9a9a9a; margin-top: 2px; }
-        .task .t-prio { font-size: 9.17px; font-weight: 600; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 999px; }
-        .prio-high { color: #b23b3b; background: #fbeaea; }
-        .prio-mid  { color: #c9922b; background: #fbf3e2; }
-        .prio-low  { color: #567; background: #eef1f4; }
-
-        /* Progress rings */
-        .rings { display: flex; gap: 22px; flex-wrap: wrap; justify-content: space-around; }
-        .ring { text-align: center; }
-        .ring svg { width: 92px; height: 92px; }
-        .ring .ring-lbl { font-size: 10.00px; color: #666; margin-top: 8px; }
-        .ring .ring-mid { font-size: 14.17px; font-weight: 600; }
-
-        .window-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 11.67px; }
-        .window-row:last-child { border-bottom: none; }
-        .window-row .w-ic { font-size: 15.00px; }
-        .window-row .w-time { margin-inline-start: auto; font-size: 10.83px; color: #666; }
-
-        /* ---- Item modal ---- */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.42); display: none; align-items: center; justify-content: center; z-index: 90; padding: 20px; }
-        .modal-overlay.open { display: flex; }
-        .modal { background: #fff; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; border: 1px solid #000; }
-        .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 26px 28px 18px; border-bottom: 1px solid var(--line); }
-        .modal-head .m-title { font-size: 21.67px; font-weight: 300; letter-spacing: 0.5px; }
-        .modal-head .m-brand { font-size: 10.83px; color: #9a9a9a; margin-top: 4px; }
-        .modal-close { border: none; background: none; font-size: 21.67px; line-height: 1; cursor: pointer; color: #111; }
-        .modal-body { padding: 24px 28px 28px; }
-        .m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 20px; }
-        .m-field { display: flex; flex-direction: column; }
-        .m-field.full { grid-column: 1 / -1; }
-        .m-field label { font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a9a; margin-bottom: 7px; }
-        .m-field input, .m-field select { border: none; border-bottom: 1.4px solid #ddd; background: transparent; font-family: inherit; font-size: 12.50px; padding: 6px 0; color: #111; }
-        .m-field input:focus, .m-field select:focus { outline: none; border-bottom-color: #000; }
-        .m-health { margin-top: 22px; padding: 18px; background: #f7f7f5; border-radius: 10px; }
-        .m-health .mh-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-        .m-health .mh-pct { font-size: 18.33px; font-weight: 700; }
-        .m-health .mh-bar { height: 8px; border-radius: 999px; background: #e4e4e0; overflow: hidden; }
-        .m-health .mh-bar > i { display: block; height: 100%; background: #111; border-radius: 999px; transition: width 0.4s; }
-        .m-health .mh-hint { font-size: 10.00px; color: #9a9a9a; margin-top: 10px; line-height: 1.5; }
-        .m-status-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-        .m-status-row button { padding: 7px 14px; border: 1px solid #ddd; border-radius: 999px; background: #fff; font-family: inherit; font-size: 10.00px; cursor: pointer; color: #555; }
-        .m-status-row button.on { border-color: #000; color: #000; font-weight: 600; }
-        .m-save { margin-top: 22px; width: 100%; padding: 14px; border: none; background: #111; color: #fff; font-family: inherit; font-size: 10.83px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
-        .m-save:hover { background: #1f8f4e; }
-
-        /* ---- Sales-trend toggle header ---- */
-        .trend-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-
-        /* ---- Drafts strip (time-in-draft timers) ---- */
-        .draft-strip { display: flex; flex-direction: column; gap: 12px; }
-        .draft-chip { display: flex; align-items: center; gap: 16px; border: 1px solid #000; background: #fff; padding: 14px 18px; }
-        .draft-chip .dc-thumb { width: 46px; height: 46px; border: 1px solid #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18.33px; background: #f7f7f5 center/cover; flex: none; }
-        .draft-chip .dc-main { flex: 1; min-width: 0; }
-        .draft-chip .dc-name { font-weight: 500; }
-        .draft-chip .dc-sub { font-size: 10.00px; color: #9a9a95; margin-top: 2px; }
-        .draft-chip .dc-track { margin-top: 9px; height: 6px; border-radius: 999px; background: #eee; overflow: hidden; }
-        .draft-chip .dc-track > i { display: block; height: 100%; border-radius: 999px; background: #c9922b; transition: width 0.4s; }
-        .draft-chip.stale .dc-track > i { background: #b23b3b; }
-        .draft-chip .dc-timer { text-align: center; flex: none; min-width: 104px; }
-        .draft-chip .dc-time { font-size: 15.00px; font-weight: 600; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; }
-        .draft-chip .dc-lbl { font-size: 8.33px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; margin-top: 3px; }
-        .draft-chip .dc-cta { padding: 9px 16px; border: 1.4px solid #000; border-radius: 999px; background: #fff; text-decoration: none; color: #1c1c1c; font-size: 9.17px; letter-spacing: 1px; text-transform: uppercase; transition: 0.2s; flex: none; }
-        .draft-chip .dc-cta:hover { background: #000; color: #fff; }
-
-        /* ---- Category breakdown table ---- */
-        .cat-table { width: 100%; border-collapse: collapse; }
-        .cat-table th, .cat-table td { text-align: right; padding: 12px 8px; border-bottom: 1px solid var(--line); font-size: 11.67px; }
-        .cat-table th { font-size: 9.17px; letter-spacing: 1px; text-transform: uppercase; color: #9a9a9a; font-weight: 600; }
-        .cat-table td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
-        .cat-table .cat-name { display: flex; align-items: center; gap: 10px; }
-        .cat-bar { height: 6px; border-radius: 999px; background: #eee; overflow: hidden; margin-top: 7px; max-width: 180px; }
-        .cat-bar > i { display: block; height: 100%; background: #1f8f4e; border-radius: 999px; }
-
-        /* ---- Reminders / notes ---- */
-        .note-add { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-        .note-add input[type=text] { flex: 1; min-width: 150px; border: none; border-bottom: 1.4px solid #ddd; background: transparent; font-family: inherit; font-size: 11.67px; padding: 8px 0; color: #1c1c1c; }
-        .note-add input[type=text]:focus { outline: none; border-bottom-color: #000; }
-        .note-add input[type=time] { border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 11.67px; padding: 8px 10px; }
-        .note-add button { padding: 9px 18px; border: 1.4px solid #000; border-radius: 999px; background: #000; color: #fff; font-family: inherit; font-size: 10.00px; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
-        .note-add button:hover { background: #fff; color: #000; }
-        .note { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-        .note:last-child { border-bottom: none; }
-        .note .n-dot { width: 8px; height: 8px; border-radius: 50%; background: #c9922b; margin-top: 6px; flex: none; }
-        .note .n-body { flex: 1; }
-        .note .n-text { font-size: 11.67px; }
-        .note .n-time { font-size: 10.00px; color: #9a9a95; margin-top: 3px; }
-        .note .n-del { border: none; background: none; cursor: pointer; color: #cfcfca; font-size: 15.00px; line-height: 1; }
-        .note .n-del:hover { color: #b23b3b; }
-        .note-empty { font-size: 10.83px; color: #9a9a95; padding: 6px 0; }
-
-        /* ---- Discount builder (wide) ---- */
-        .disc-builder { display: grid; grid-template-columns: 1fr; border: 1px solid #000; background: #fff; }
-        .disc-col { padding: 26px 28px; }
-        .disc-col + .disc-col { border-top: 1px solid #000; }
-        .disc-col h3 { font-size: 12.50px; font-weight: 600; margin-bottom: 6px; }
-        .disc-col > .sec-note { margin-bottom: 16px; }
-        .disc-tier { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-        .disc-tier .dt-when { font-size: 11.67px; flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .disc-tier input[type=number] { width: 60px; border: none; border-bottom: 1.4px solid #ddd; background: transparent; font-family: inherit; font-size: 13.33px; text-align: center; padding: 4px 0; }
-        .disc-tier input[type=number]:focus { outline: none; border-bottom-color: #000; }
-        .disc-tier .dt-del { border: none; background: none; cursor: pointer; color: #cfcfca; font-size: 15.00px; }
-        .disc-tier .dt-del:hover { color: #b23b3b; }
-        .disc-add { margin-top: 14px; padding: 9px 16px; border: 1.4px dashed #999; border-radius: 999px; background: #fff; font-family: inherit; font-size: 10.00px; letter-spacing: 0.5px; cursor: pointer; color: #555; transition: 0.2s; }
-        .disc-add:hover { border-color: #000; color: #000; }
-        .disc-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-        .disc-field:last-child { border-bottom: none; }
-        .disc-field .df-label { font-size: 11.67px; }
-        .disc-field .df-desc { font-size: 10.00px; color: #9a9a95; margin-top: 3px; }
-
-        .empty-note { padding: 30px; text-align: center; color: #9a9a9a; font-size: 11.67px; }
-
-        @media (max-width: 1000px) {
-            .charts, .two-col, .mytime { grid-template-columns: 1fr; }
+        /* Weekly availability grid */
+        .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 8px; }
+        .day { text-align: center; }
+        .day-name { font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+        .slot {
+            border: 1px solid var(--line); border-radius: 10px; padding: 8px 4px; font-size: 10px;
+            cursor: pointer; margin-bottom: 6px; transition: 0.15s; color: var(--muted);
         }
-        @media (max-width: 620px) {
-            .wrap { padding: 80px 18px 80px; }
-            .m-grid { grid-template-columns: 1fr; }
-            .inv-table th:nth-child(4), .inv-table td:nth-child(4),
-            .inv-table th:nth-child(6), .inv-table td:nth-child(6) { display: none; }
+        .slot.on { background: #111; color: #fff; border-color: #111; }
+
+        /* QR / check-in */
+        .qr {
+            width: 128px; height: 128px; border-radius: 14px; border: 1px solid var(--line);
+            display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+            overflow: hidden; margin: 0 auto;
         }
-        /* Embedded mode (?embed=1): drop the side image, the back button and the
-           page header, and lay every KPI out at once instead of the slider — this is
-           what MY SHOP renders below the profile, where the page chrome is already
-           supplied by the host. */
-        body.is-embed .side-image,
-        body.is-embed .back,
-        body.is-embed .dash-head,
-        body.is-embed .kpi-dots { display: none !important; }
-        body.is-embed .wrap { padding: 0 0 40px; animation: none; }
-        @media (min-width: 1001px) { body.is-embed .wrap { padding-left: 0; } }
-        body.is-embed .kpi-row {
-            position: static; min-height: 0;
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 22px;
+        .qr i { background: #111; }
+        .code4 { font-size: 40px; font-weight: 200; letter-spacing: 12px; text-align: center; padding-right: 12px; }
+
+        /* Progress / meters */
+        .meter { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; margin-top: 10px; }
+        .meter > span { display: block; height: 100%; background: #111; border-radius: 999px; }
+
+        /* Level ladder */
+        .ladder { display: flex; flex-direction: column; gap: 0; }
+        .rung { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+        .rung:last-child { border-bottom: none; }
+        .rung-badge { width: 40px; height: 40px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 15px; border: 1.4px solid var(--line); }
+        .rung.done .rung-badge { background: #111; color: #fff; border-color: #111; }
+        .rung.now .rung-badge { border-color: #111; color: #111; }
+        .rung-t { font-size: 13px; font-weight: 600; }
+        .rung-d { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.6; }
+        .rung .tag { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+        .rung.now .tag { color: var(--available); }
+
+        /* Badges grid */
+        .badge {
+            display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line);
+            border-radius: 12px;
         }
-        body.is-embed .kpi {
-            position: static; inset: auto;
-            opacity: 1; transform: none; pointer-events: auto;
-            border: 1px solid #000; padding: 22px 20px; display: block;
-        }
-        body.is-embed .kpi .kpi-desc { max-width: none; }
+        .badge.earned { border-color: #111; }
+        .badge .ic { font-size: 22px; }
+        .badge.locked { opacity: 0.5; }
+        .badge b { font-size: 12px; }
+        .badge span { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+
+        /* Bar chart */
+        .bars { display: flex; align-items: flex-end; gap: 10px; height: 120px; margin-top: 16px; }
+        .bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .bar .fill { width: 100%; background: #111; border-radius: 6px 6px 0 0; min-height: 4px; transition: height 0.5s; }
+        .bar .cap { font-size: 9px; color: var(--muted); }
+        .bar .val { font-size: 10px; font-weight: 600; }
+
+        /* Inbox columns */
+        .inbox { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        @media (max-width: 860px) { .inbox { grid-template-columns: 1fr; } }
+        .col-h { font-size: 11px; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .col-h .count { background: #111; color: #fff; border-radius: 999px; font-size: 9px; padding: 2px 7px; }
+        .msg { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+        .msg b { font-size: 12px; }
+        .msg p { font-size: 11px; color: var(--muted); margin-top: 3px; }
+        .msg .when { font-size: 9px; color: var(--muted); margin-top: 6px; }
+
+        .quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .quick .chip { cursor: pointer; }
+        .quick .chip:hover { border-color: #111; }
+
+        .inv-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+        .inv-item:last-child { border-bottom: none; }
+        .inv-ic { width: 46px; height: 46px; border-radius: 10px; background: #f4f4f1; display: grid; place-items: center; font-size: 22px; flex: none; }
+        .inv-main { flex: 1; min-width: 0; }
+        .inv-name { font-size: 13px; font-weight: 500; }
+        .inv-meta { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+        .pay { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
     </style>
 </head>
 <body>
-    <div class="page-cover"></div>
-    <div class="side-image"></div>
-    <a class="back" href="index.html">&#8592; חזרה</a>
+    <!-- Standalone chrome (hidden when embedded). -->
     <script>
-        // Reached from the seller hub → "back" returns there.
-        const _dashParams = new URLSearchParams(location.search);
-        if (_dashParams.get('from') === 'seller') {
-            document.querySelector('.back').setAttribute('href', 'seller-area.html');
-        }
-        // Embed mode drops the page chrome so the dashboard drops cleanly into a
-        // host page (currently the MY SHOP profile). Class kicks in before layout
-        // so the slider styles never paint.
-        if (_dashParams.get('embed') === '1') {
-            document.documentElement.classList.add('is-embed');
-            document.addEventListener('DOMContentLoaded', () =>
-                document.body.classList.add('is-embed'));
-            // Fallback in case DOMContentLoaded already fired.
-            if (document.body) document.body.classList.add('is-embed');
-        }
+      (function(){ if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.classList.add('is-embed'); })();
     </script>
+    <div class="side-image"></div>
+    <a class="back" href="seller-area.html">&#8594; חזרה</a>
 
     <div class="wrap">
         <div class="dash-head">
-            <div class="dash-kicker">VERO · Seller</div>
-            <h1 class="dash-title">My Sales</h1>
+            <h1 class="dash-title">סטטיסטיקות הגלריה</h1>
+            <p class="dash-sub">ניהול מפגשים, מלאי, מוניטין ותובנות — הכל במקום אחד.</p>
         </div>
 
-        <!-- ===== Quick KPIs ===== -->
-        <div class="kpi-row" id="kpiRow"></div>
-        <div class="kpi-dots" id="kpiDots"></div>
+        <!-- Section tabs -->
+        <nav class="sec-nav" id="secNav"></nav>
 
-        <!-- ===== Private analytics ===== -->
-        <div class="section">
-            <div class="chart-card single-chart">
-              <div class="chart-stage">
-                <div class="chart-body">
-                <div class="chart-panel" data-panel="trend">
-                    <div class="trend-top">
+        <!-- ===== 1. זמן ומפגשים ===== -->
+        <section class="panel" data-sec="time">
+            <div class="grid g2">
+                <div class="card">
+                    <div class="card-h"><div class="card-t">חלונות איסוף שבועיים</div><span class="chip"><span class="dot green"></span>פעיל</span></div>
+                    <div class="card-d">הגדר שעות קבועות לקבלת קהל ואיסוף. הקונה בוחר חלון פנוי מהיומן שלך.</div>
+                    <div class="week" id="weekGrid"></div>
+                    <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
+                        <button class="btn"><span>🗓️</span> סנכרן Google Calendar</button>
+                        <button class="btn"><span></span> סנכרן Apple Calendar</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-h"><div class="card-t">תזכורות ואישור הגעה</div></div>
+                    <div class="card-d">מונע הברזות: תזכורות אוטומטיות ואישור בלחיצה אחת.</div>
+                    <div class="row"><span class="lbl"><b>תזכורת 24 שעות לפני</b><span>SMS / WhatsApp</span></span>
+                        <label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
+                    <div class="row"><span class="lbl"><b>תזכורת שעתיים לפני</b><span>SMS / WhatsApp</span></span>
+                        <label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
+                    <div class="row"><span class="lbl"><b>אישור הגעה בלחיצה</b><span>"מאשר הגעה" / "מבקש לדחות"</span></span>
+                        <label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
+                </div>
+            </div>
+            <div class="grid g2" style="margin-top:18px;">
+                <div class="card">
+                    <div class="card-h"><div class="card-t">צ'ק-אין ואישור מסירה</div></div>
+                    <div class="card-d">במעמד המפגש הקונה מציג QR או קוד 4 ספרות. הסריקה מסמנת "נמכר", מעדכנת סטטיסטיקות ופותחת דירוג הדדי.</div>
+                    <div style="display:flex; gap:26px; align-items:center; margin-top:16px; flex-wrap:wrap; justify-content:center;">
+                        <div class="qr" id="qr"></div>
                         <div>
-                            <h3>מגמת מכירות</h3>
-                            <div class="ch-sub">Sales Trend — נמכרו מול הועלו</div>
-                        </div>
-                        <div class="view-toggle" id="trendToggle">
-                            <button data-range="year" class="on">שנתי</button>
-                            <button data-range="month">חודשי</button>
-                            <button data-range="week">שבועי</button>
+                            <div class="code4" id="code4">4821</div>
+                            <div style="text-align:center; font-size:10px; color:var(--muted); letter-spacing:2px;">קוד חד-פעמי</div>
                         </div>
                     </div>
-                    <div id="trendChart"></div>
-                    <div class="legend">
-                        <span><i style="background:#111"></i> הועלו</span>
-                        <span><i style="background:#1f8f4e"></i> נמכרו</span>
+                    <button class="btn solid wide" style="margin-top:18px;">סרוק / הזן קוד לאישור מסירה</button>
+                </div>
+                <div class="card">
+                    <div class="card-h"><div class="card-t">מצב חופשה</div></div>
+                    <div class="card-d">הקפאת תיאום מפגשים ופניות בלחיצה. בחנות יוצג: "הגלריה סגורה עד…".</div>
+                    <div class="row"><span class="lbl"><b>הגלריה סגורה</b><span id="vacState">כרגע פתוחה לקבלת קהל</span></span>
+                        <label class="switch"><input type="checkbox" id="vacToggle"><span class="track"></span></label></div>
+                    <label class="card-d" style="display:block; margin-top:10px;">פתיחה מחדש בתאריך
+                        <input type="date" id="vacDate" style="display:block; margin-top:6px; border:1px solid var(--line); border-radius:8px; padding:9px; font-family:inherit; width:100%;"></label>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 2. מלאי ===== -->
+        <section class="panel" data-sec="inv">
+            <div class="grid g4" id="invStatus"></div>
+            <div class="sec-title">קטגוריות בוטיק</div>
+            <div class="grid g3" id="invCats"></div>
+            <div class="grid g2" style="margin-top:18px;">
+                <div class="card">
+                    <div class="card-h"><div class="card-t">פריטים ייחודיים מול סדרות</div></div>
+                    <div class="card-d">One-of-a-kind מסומן "אזל" מיד עם המסירה. סדרות מוגבלות — ניהול כמות פעילה, שנמכרו ונותרו.</div>
+                    <div id="invList" style="margin-top:8px;"></div>
+                </div>
+                <div class="card">
+                    <div class="card-h"><div class="card-t">SKU, מיקום וטיוטות</div></div>
+                    <div class="card-d">קוד זיהוי ייחודי ומיקום פיזי בגלריה/מחסן, ושמירת טיוטות להעלאה מאוחרת.</div>
+                    <div class="row"><span class="lbl"><b>Wool coat</b><span>SKU · VR-1043 · מגירה 3 / פינה צפונית</span></span><span class="chip"><span class="dot green"></span>זמין</span></div>
+                    <div class="row"><span class="lbl"><b>Leather tote</b><span>SKU · VR-1091 · מדף A2</span></span><span class="chip"><span class="dot amber"></span>מוזמן</span></div>
+                    <button class="btn wide" style="margin-top:16px;"><span>📷</span> צילום מהיר → שמור כטיוטה (<span id="draftCount">0</span>)</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 3. דרגות ומוניטין ===== -->
+        <section class="panel" data-sec="rep">
+            <div class="grid g2">
+                <div class="card">
+                    <div class="card-h"><div class="card-t">דרגת מוכר / בוטיק</div></div>
+                    <div class="ladder">
+                        <div class="rung done"><div class="rung-badge">1</div><div><div class="rung-t">Emerging Seller · אמן/ית מתחיל/ה <span class="tag">· הושלם</span></div><div class="rung-d">חנות חדשה — הצעד הראשון.</div></div></div>
+                        <div class="rung now"><div class="rung-badge">2</div><div><div class="rung-t">Established Boutique <span class="tag">· שלב נוכחי</span></div><div class="rung-d">אחרי 10 מסירות מוצלחות ודירוג 4.5+. פותח קטלוג דיגיטלי מורחב והודעות מותאמות.</div><div class="meter"><span id="lvlMeter" style="width:70%"></span></div></div></div>
+                        <div class="rung"><div class="rung-badge">3</div><div><div class="rung-t">Top Verified Gallery · Star Seller</div><div class="rung-d">נפח מסירות גבוה, 0 הברזות ודירוג מעולה. תג זהב ציבורי, קדימות בחיפוש ואמון קונים מוגבר.</div></div></div>
                     </div>
                 </div>
-
-                <div class="chart-panel" data-panel="aging" hidden>
-                    <h3>גיל מלאי</h3>
-                    <div class="ch-sub">Inventory Aging — כמה זמן פריטים יושבים על המדף</div>
-                    <div id="agingChart"></div>
-                </div>
-
-                <div class="chart-panel" data-panel="heat" hidden>
-                    <h3>פעילות קונים לפי יום</h3>
-                    <div class="ch-sub">Activity — צפיות, שמירות והצעות לפי יום בשבוע</div>
-                    <div id="heatChart"></div>
-                </div>
-
-                <div class="chart-panel" data-panel="mix" hidden>
-                    <h3>התפלגות מלאי ומכירות</h3>
-                    <div class="ch-sub">Inventory Mix — במלאי מול נמכרו, לפי קטגוריה</div>
-                    <div id="mixChart"></div>
-                </div>
-                </div>
-                <div class="chart-tabs" id="chartTabs">
-                    <button data-tab="trend" class="on">מגמת מכירות</button>
-                    <button data-tab="aging">גיל מלאי</button>
-                    <button data-tab="heat">פעילות קונים</button>
-                    <button data-tab="mix">התפלגות מלאי</button>
-                </div>
-              </div>
-            </div>
-        </div>
-
-        <!-- ===== Performance summary — rings + key metrics under the graph ===== -->
-        <div class="section">
-            <div class="sec-head">
-                <div class="sec-title">סיכום ביצועים</div>
-                <div class="sec-note">מבט מהיר על בריאות החנות — מתחת לגרף</div>
-            </div>
-            <div class="two-col">
-                <div class="chart-card"><div class="rings" id="perfRings"></div></div>
-                <div class="chart-card"><div id="perfStats"></div></div>
-            </div>
-        </div>
-
-        <!-- ===== Inventory (products slider) ===== -->
-        <div class="section">
-            <div class="sec-head">
-                <div class="sec-title">מלאי החנות</div>
-                <div class="sec-note">סינון מהיר לפי סטטוס · לחיצה על פריט פותחת ניהול מלא</div>
-            </div>
-            <div class="inv-controls">
-                <div class="filters" id="invFilters"></div>
-                <div class="slider-nav">
-                    <button class="sl-arrow" id="slPrev" aria-label="הקודם">‹</button>
-                    <button class="sl-arrow" id="slNext" aria-label="הבא">›</button>
-                </div>
-            </div>
-            <div id="invSlider"></div>
-        </div>
-
-        <!-- ===== Offer Hub ===== -->
-        <div class="section">
-            <div class="sec-head">
-                <div class="sec-title">מרכז מיקוח</div>
-                <div class="sec-note">Offer Hub — אישור, דחייה או הצעה נגדית בקליק</div>
-            </div>
-            <div id="offerHub" class="offer-hub"></div>
-        </div>
-
-        <!-- ===== Smart pricing & bundles ===== -->
-        <div class="section">
-            <div class="sec-head">
-                <div class="sec-title">תמחור וחבילות</div>
-                <div class="sec-note">Smart Pricing &amp; Bundles — חוקים עסקיים לחנות</div>
-            </div>
-            <div class="disc-builder">
-                <div class="disc-col">
-                    <h3>בניית הנחת כמות</h3>
-                    <div class="sec-note">כל שורה: קנה כמות מסוימת וקבל אחוז הנחה. הוסף כמה מדרגות שתרצה.</div>
-                    <div id="discTiers"></div>
-                    <button class="disc-add" id="discAdd" type="button">+ הוספת מדרגת הנחה</button>
-                </div>
-                <div class="disc-col">
-                    <h3>כללי חנות</h3>
-                    <div class="sec-note">הגדרות מחיר והצעות שחלות על כל החנות.</div>
-                    <div class="disc-field">
-                        <div><div class="df-label">הנחה כללית על החנות</div><div class="df-desc">אחוז הנחה שחל על כל הפריטים</div></div>
-                        <div><input type="number" id="storeWide" min="0" max="90" style="width:60px;border:none;border-bottom:1.4px solid #ddd;background:transparent;font-family:inherit;font-size:13.33px;text-align:center;padding:4px 0;"> <span style="font-size:10.83px;color:#666;">%</span></div>
-                    </div>
-                    <div class="disc-field">
-                        <div><div class="df-label">רצפת מחיר גלובלית</div><div class="df-desc">גבול תחתון שמתחתיו אין הנחה או הצעה</div></div>
-                        <div><span style="font-size:10.83px;color:#666;">₪</span> <input type="number" id="globalFloor" min="0" style="width:70px;border:none;border-bottom:1.4px solid #ddd;background:transparent;font-family:inherit;font-size:13.33px;text-align:center;padding:4px 0;"></div>
-                    </div>
-                    <div class="disc-field">
-                        <div><div class="df-label">הצעה אוטומטית למי ששמר פריט</div><div class="df-desc">שליחת הנחה למי שמוסיף ל-Wishlist</div></div>
-                        <span class="switch"><input type="checkbox" id="autoOfferOn"><span class="slider"></span></span>
-                    </div>
-                    <div class="disc-field">
-                        <div><div class="df-label">גובה ההנחה האוטומטית</div><div class="df-desc">אחוז ההנחה שיישלח אוטומטית</div></div>
-                        <div><input type="number" id="autoOfferPct" min="0" max="70" style="width:60px;border:none;border-bottom:1.4px solid #ddd;background:transparent;font-family:inherit;font-size:13.33px;text-align:center;padding:4px 0;"> <span style="font-size:10.83px;color:#666;">%</span></div>
-                    </div>
-                    <div class="sec-note" id="discSaveNote" style="margin-top:14px;">החוקים נשמרים אוטומטית.</div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- ===== Item management modal ===== -->
-    <div class="modal-overlay" id="itemModal">
-        <div class="modal">
-            <div class="modal-head">
                 <div>
-                    <div class="m-title" id="mTitle">—</div>
-                    <div class="m-brand" id="mBrand">—</div>
-                </div>
-                <button class="modal-close" onclick="closeItemModal()" aria-label="סגור">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="m-field full">
-                    <label>סטטוס</label>
-                    <div class="m-status-row" id="mStatusRow"></div>
-                </div>
-                <div class="m-grid" style="margin-top:20px;">
-                    <div class="m-field"><label>מותג</label><input id="mBrandInput" type="text"></div>
-                    <div class="m-field"><label>קטגוריה</label><input id="mCategory" type="text"></div>
-                    <div class="m-field"><label>מצב הפריט</label>
-                        <select id="mCondition">
-                            <option value="">—</option>
-                            <option>חדש עם תווית</option>
-                            <option>כחדש</option>
-                            <option>מצב מצוין</option>
-                            <option>מצב טוב</option>
-                        </select>
+                    <div class="card" style="margin-bottom:18px;">
+                        <div class="card-h"><div class="card-t">מדד אמינות (Show-Up Rate)</div></div>
+                        <div class="card-d">כמה מהמפגשים שנקבעו התקיימו בפועל.</div>
+                        <div class="kpi-num">96%</div>
+                        <div class="meter"><span style="width:96%"></span></div>
+                        <div class="kpi-lbl">27 מתוך 28 מפגשים התקיימו</div>
                     </div>
-                    <div class="m-field"><label>מידה</label><input id="mSize" type="text"></div>
-                    <div class="m-field"><label>צבע</label><input id="mColor" type="text"></div>
-                    <div class="m-field"><label>חומר</label><input id="mMaterial" type="text"></div>
-                    <div class="m-field"><label>מחיר (₪)</label><input id="mPrice" type="number" min="0"></div>
-                    <div class="m-field"><label>רצפת מחיר פרטית (₪)</label><input id="mFloor" type="number" min="0"></div>
-                    <div class="m-field full"><label>מיקום פיזי (מדף / ארגז)</label><input id="mBin" type="text" placeholder="לדוגמה: מדף B3, ארגז מעילים 2"></div>
-                </div>
-                <div class="m-health">
-                    <div class="mh-top">
-                        <span style="font-size:10.83px;color:#555;">אינדיקטור איכות פריט</span>
-                        <span class="mh-pct" id="mHealthPct">0%</span>
+                    <div class="card">
+                        <div class="card-t" style="margin-bottom:12px;">תגי אמינות ומצוינות</div>
+                        <div class="grid" style="grid-template-columns:1fr; gap:10px;">
+                            <div class="badge earned"><span class="ic">🏅</span><div><b>מארח מצוין</b><span>אחוז הברזות אפסי במפגשים</span></div></div>
+                            <div class="badge earned"><span class="ic">⚡</span><div><b>מענה מהיר בצ'אט</b><span>זמן תגובה ממוצע מתחת לשעה</span></div></div>
+                            <div class="badge locked"><span class="ic">🎨</span><div><b>אמנות מאומתת / פריטי מעצבים</b><span>נפתח בדרגה 3</span></div></div>
+                        </div>
                     </div>
-                    <div class="mh-bar"><i id="mHealthBar" style="width:0%"></i></div>
-                    <div class="mh-hint" id="mHealthHint"></div>
                 </div>
-                <button class="m-save" onclick="saveItemModal()">שמירה</button>
             </div>
-        </div>
+        </section>
+
+        <!-- ===== 4. תמחור ותקשורת ===== -->
+        <section class="panel" data-sec="price">
+            <div class="grid g2">
+                <div class="card">
+                    <div class="card-h"><div class="card-t">שמירת פריט מוגבלת בזמן</div></div>
+                    <div class="card-d">שמור פריט עבור קונה ל-24/48 שעות עד המפגש — מוסתר זמנית מהחיפוש.</div>
+                    <div class="row"><span class="lbl"><b>Silk scarf → Noa B.</b><span>נשמר עד מחר 18:00</span></span><span class="chip"><span class="dot amber"></span>בהמתנה</span></div>
+                    <div style="display:flex; gap:8px; margin-top:14px;"><button class="btn">שמור ל-24ש'</button><button class="btn">שמור ל-48ש'</button></div>
+                </div>
+                <div class="card">
+                    <div class="card-h"><div class="card-t">הצעות מחיר ומשא ומתן</div></div>
+                    <div class="card-d">קבל הצעות בצ'אט ואשר בלחיצה לפני תיאום המפגש.</div>
+                    <div id="offerList" style="margin-top:8px;"></div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:18px;">
+                <div class="card-h"><div class="card-t">אפשרויות תשלום במקום</div></div>
+                <div class="card-d">מוצג ישירות בכרטיס הפריט כדי שהקונה יידע מראש.</div>
+                <div class="pay" id="payPrefs"></div>
+            </div>
+        </section>
+
+        <!-- ===== 5. אנליטיקה ===== -->
+        <section class="panel" data-sec="insights">
+            <div class="grid g4" id="insightKpis"></div>
+            <div class="grid g2" style="margin-top:18px;">
+                <div class="card">
+                    <div class="card-h"><div class="card-t">משפך המרות</div></div>
+                    <div class="card-d">כמה פניות הפכו למפגשים ולמכירות בפועל.</div>
+                    <div class="bars" id="funnel"></div>
+                </div>
+                <div class="card">
+                    <div class="card-h"><div class="card-t">פופולריות לפי קטגוריה</div></div>
+                    <div class="card-d">איזה סגנון מקבל את מירב החשיפה בחנות שלך.</div>
+                    <div class="bars" id="popular"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 6. פניות ===== -->
+        <section class="panel" data-sec="inbox">
+            <div class="inbox">
+                <div class="card">
+                    <div class="col-h">הודעות חדשות <span class="count" id="cNew">0</span></div>
+                    <div id="colNew"></div>
+                </div>
+                <div class="card">
+                    <div class="col-h">ממתין למפגש <span class="count" id="cWait">0</span></div>
+                    <div id="colWait"></div>
+                </div>
+                <div class="card">
+                    <div class="col-h">נעשה צ'ק-אין (נמכר) <span class="count" id="cDone">0</span></div>
+                    <div id="colDone"></div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:18px;">
+                <div class="card-t">תבניות מענה מהיר</div>
+                <div class="card-d">תשובות מוכנות מראש — לחיצה מכניסה לצ'אט.</div>
+                <div class="quick">
+                    <span class="chip">📍 הכתובת להגעה</span>
+                    <span class="chip">🅿️ חנייה באזור</span>
+                    <span class="chip">📏 מידות / גימור הפריט</span>
+                    <span class="chip">🕒 שעות הפתיחה שלי</span>
+                    <span class="chip">💳 אמצעי תשלום</span>
+                </div>
+            </div>
+        </section>
     </div>
 
     <script>
-    // ============================================================================
-    //  MY SALES — seller command center. All state lives in localStorage; demo
-    //  inventory is generated in-memory only when the store is empty, so the
-    //  dashboard always reads as a live shop without polluting the public feed.
-    // ============================================================================
-    const readJSON = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
-    const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-    const nis = n => '₪' + Math.round(Number(n) || 0).toLocaleString('en-US');
-    const priceOf = p => Number(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
-    const DAY = 86400000;
+        const readJSON = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
+        const nis = n => '₪' + Math.round(n).toLocaleString('en-US');
+        const len = v => Array.isArray(v) ? v.length : (v && typeof v === 'object' ? Object.keys(v).length : 0);
 
-    const STATUSES = [
-        { key: 'draft',  he: 'בטיוטה', cls: 'draft' },
-        { key: 'active', he: 'פעיל',   cls: 'active' },
-        { key: 'offer',  he: 'בהצעה',  cls: 'offer' },
-        { key: 'sold',   he: 'נמכר',   cls: 'sold' },
-        { key: 'paused', he: 'מושהה',  cls: 'paused' },
-    ];
-    const statusHe = k => (STATUSES.find(s => s.key === k) || {}).he || k;
-    const statusCls = k => (STATUSES.find(s => s.key === k) || {}).cls || 'draft';
-
-    // ---- Seller-only per-item metadata (bin, floor, condition, size…) ----
-    const META = readJSON('vero_seller_meta', {});
-    const saveMeta = () => save('vero_seller_meta', META);
-
-    // ---- Build the working inventory ----
-    function buildInventory() {
-        const listings = readJSON('vero_listings', []);
+        // ---- Live data ----
+        const listings = (function(){ const l = readJSON('vero_listings', []); return Array.isArray(l) ? l : []; })();
         const drafts   = readJSON('vero_drafts', []);
-        let items = [];
+        const offers   = (function(){ const o = readJSON('vero_received_offers', []); return Array.isArray(o) ? o : []; })();
+        const chats    = readJSON('vero_chats', {});
+        const priceOf  = p => Number(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
 
-        if (Array.isArray(listings)) items = items.concat(listings.map((p, i) => ({
-            id: p.id || 'listing-' + i,
-            name: p.name || 'פריט ללא שם', brand: p.brand || p.seller || '',
-            category: p.category || '', price: priceOf(p.price),
-            icon: p.icon || '🛍️', image: p.image || '',
-            status: p.status === 'sold' ? 'sold' : (p.status || 'active'),
-            listedAt: p.listedAt || Date.now(), soldAt: p.soldAt || 0,
-            views: p.views || 0, saves: p.saves || 0, offersCount: p.offersCount || 0,
-        })));
-        if (Array.isArray(drafts)) items = items.concat(drafts.map((p, i) => ({
-            id: p.id || 'draft-' + i,
-            name: p.name || p.itemType || 'טיוטה', brand: p.brand || '',
-            category: p.category || p.itemType || '', price: priceOf(p.price),
-            icon: p.icon || '📝', image: p.image || '',
-            status: 'draft', listedAt: p.savedAt || p.createdAt || Date.now(),
-            createdAt: p.savedAt || p.createdAt || Date.now(), soldAt: 0,
-            views: 0, saves: 0, offersCount: 0,
-        })));
-
-        // Merge in seller metadata + compute health. No demo seeding — the
-        // dashboard reflects only the seller's real listings and drafts.
-        return items.map(it => {
-            const m = META[it.id] || {};
-            const merged = { ...it, ...m };
-            merged.health = healthScore(merged);
-            return merged;
-        });
-    }
-
-    // One-time cleanup: drop any demo offers previously auto-seeded into storage.
-    (function purgeDemoData() {
-        const offers = readJSON('vero_offers', null);
-        if (Array.isArray(offers)) {
-            const clean = offers.filter(o => !['of1', 'of2', 'of3'].includes(o.id));
-            if (clean.length !== offers.length) save('vero_offers', clean);
-        }
-    })();
-
-    // Item Health Score — how complete the product page is (0-100%).
-    const HEALTH_FIELDS = ['image','brand','category','price','condition','size','color','material'];
-    function healthScore(it) {
-        let filled = 0;
-        HEALTH_FIELDS.forEach(f => { const v = it[f]; if (v && String(v).trim() && String(v).trim() !== '—') filled++; });
-        return Math.round((filled / HEALTH_FIELDS.length) * 100);
-    }
-    function healthMissing(it) {
-        const labels = { image:'תמונה', brand:'מותג', category:'קטגוריה', price:'מחיר', condition:'מצב', size:'מידה', color:'צבע', material:'חומר' };
-        return HEALTH_FIELDS.filter(f => { const v = it[f]; return !(v && String(v).trim() && String(v).trim() !== '—'); }).map(f => labels[f]);
-    }
-
-    let INVENTORY = buildInventory();
-    let activeFilter = 'all';
-
-    // ---- Age helpers ----
-    const ageDays = it => Math.floor((Date.now() - (it.listedAt || Date.now())) / DAY);
-    const ageLabel = d => d <= 0 ? 'היום' : d === 1 ? 'אתמול' : d + ' ימים';
-
-    // ============================ KPIs ============================
-    function renderKPIs() {
-        const active = INVENTORY.filter(i => i.status === 'active').length;
-        const drafts = INVENTORY.filter(i => i.status === 'draft').length;
-        const offers = readOffers().filter(o => o.status === 'pending').length;
-        const sold   = INVENTORY.filter(i => i.status === 'sold');
-        const revenue = sold.reduce((s, i) => s + priceOf(i.price), 0);
-        // Each KPI links to its own management page. Seller context is preserved,
-        // and target=_top so the click escapes the embedded iframe (MY SHOP).
-        const fromQ = _dashParams.get('from') === 'seller' ? '?from=seller' : '';
-        const K = [
-            { mark: '🟢', num: active, lbl: 'מוצרים פעילים', desc: 'פריטים שמוצגים כרגע למכירה בחנות', href: 'products.html' + fromQ },
-            { mark: '📝', num: drafts, lbl: 'בטיוטה', desc: 'פריטים שטרם פורסמו — ממתינים להשלמה', href: 'drafts.html' + fromQ },
-            { mark: '💬', num: offers, lbl: 'הצעות ממתינות', hot: offers > 0, desc: 'הצעות מחיר מקונים שמחכות לתשובתך', href: 'offers-received.html' + fromQ },
-            { mark: '💰', num: nis(revenue), lbl: 'הכנסות · ' + sold.length + ' נמכרו', desc: 'סך התקבולים מכל הפריטים שנמכרו' },
+        // ===== Section tabs =====
+        const SECTIONS = [
+            { id: 'time',     n: 1, label: 'זמן ומפגשים' },
+            { id: 'inv',      n: 2, label: 'מלאי וסחורה' },
+            { id: 'rep',      n: 3, label: 'דרגות ומוניטין' },
+            { id: 'price',    n: 4, label: 'תמחור ותקשורת' },
+            { id: 'insights', n: 5, label: 'אנליטיקה' },
+            { id: 'inbox',    n: 6, label: 'פניות ושירות' },
         ];
-        document.getElementById('kpiRow').innerHTML = K.map((k, idx) => {
-            const cls = `kpi ${k.hot ? 'hot' : ''} ${idx === 0 ? 'is-active' : ''} ${k.href ? 'kpi-link' : ''}`;
-            const inner = `<span class="kpi-mark">${k.mark}</span><div class="kpi-main"><b>${k.num}</b><span>${k.lbl}</span></div><span class="kpi-desc">${k.desc}</span>`;
-            return k.href
-                ? `<a class="${cls}" href="${k.href}" target="_top">${inner}</a>`
-                : `<div class="${cls}">${inner}</div>`;
-        }).join('');
-        document.getElementById('kpiDots').innerHTML = K.map((k, idx) =>
-            `<button class="kpi-dot ${idx === 0 ? 'is-active' : ''}" data-i="${idx}" aria-label="${k.lbl}"></button>`
-        ).join('');
-        startKpiSlider();
-    }
-
-    // KPI slider — fade one card at a time, auto-advancing every 8 seconds, with
-    // clickable dot buttons that jump to a card and restart the timer.
-    let kpiTimer = null, kpiIndex = 0;
-    function startKpiSlider() {
-        const slides = document.querySelectorAll('#kpiRow .kpi');
-        const dots = document.querySelectorAll('#kpiDots .kpi-dot');
-        if (slides.length < 2) return;
-        const show = n => {
-            kpiIndex = (n + slides.length) % slides.length;
-            slides.forEach((s, k) => s.classList.toggle('is-active', k === kpiIndex));
-            dots.forEach((d, k) => d.classList.toggle('is-active', k === kpiIndex));
-        };
-        const restart = () => { clearInterval(kpiTimer); kpiTimer = setInterval(() => show(kpiIndex + 1), 8000); };
-        dots.forEach(d => d.addEventListener('click', () => { show(+d.dataset.i); restart(); }));
-        show(0);
-        restart();
-    }
-
-    // ============================ Inventory ============================
-    function renderFilters() {
-        const counts = { all: INVENTORY.length };
-        STATUSES.forEach(s => counts[s.key] = INVENTORY.filter(i => i.status === s.key).length);
-        const chips = [{ key: 'all', he: 'הכול' }].concat(STATUSES.filter(s => counts[s.key] > 0));
-        document.getElementById('invFilters').innerHTML = chips.map(c =>
-            `<button class="filter-chip ${activeFilter === c.key ? 'on' : ''}" data-filter="${c.key}">${c.he} <span style="opacity:.6">${counts[c.key]}</span></button>`
-        ).join('');
-        document.querySelectorAll('#invFilters .filter-chip').forEach(b =>
-            b.addEventListener('click', () => { activeFilter = b.dataset.filter; renderInventory(); }));
-    }
-
-    function filteredItems() {
-        return activeFilter === 'all' ? INVENTORY : INVENTORY.filter(i => i.status === activeFilter);
-    }
-
-    function thumbStyle(it) {
-        return it.image ? `style="background-image:url('${it.image}')"` : '';
-    }
-
-    // Each product is shown as a product card (right, in RTL) with its data panel
-    // to its left. The slider shows two products at a time.
-    function unitHTML(it) {
-        const d = ageDays(it);
-        const stuck = it.status === 'active' && d > 30;
-        // A price offer standing on this piece, if any (matched by item name).
-        const off = readOffers().find(o => o.item === it.name && o.status === 'pending');
-        return `<div class="prod-unit" data-id="${it.id}">
-            <div class="prod-cardface">
-                <div class="pcf-img" ${thumbStyle(it)}>${it.image ? '' : (it.icon || '🛍️')}</div>
-            </div>
-            <div class="prod-data">
-                <div class="pd-title-row">
-                    <div>
-                        <div class="pd-title">${it.name}</div>
-                        <div class="pd-brand">${it.brand || '—'}</div>
-                    </div>
-                    <span class="tag ${statusCls(it.status)}">${statusHe(it.status)}</span>
-                </div>
-                <div class="pd-row"><span class="pd-k">מחיר</span><span class="pd-v">${it.price ? nis(it.price) : '—'}</span></div>
-                <div class="pd-row"><span class="pd-k">הצעות מחיר</span><span class="pd-v">${off ? nis(off.offer) : '<span style="color:#bbb">—</span>'}</span></div>
-                <div class="pd-row"><span class="pd-k">גיל מלאי</span><span class="age-pill ${stuck ? 'stuck' : ''}">${ageLabel(d)}${stuck ? ' ⚠' : ''}</span></div>
-                <div class="pd-row"><span class="pd-k">צפיות</span><span class="pd-v">${it.views || 0} 👁</span></div>
-            </div>
-        </div>`;
-    }
-
-    function renderSlider() {
-        const host = document.getElementById('invSlider');
-        const items = filteredItems();
-        if (!items.length) { host.innerHTML = '<div class="empty-note">אין פריטים בסטטוס הזה.</div>'; updateArrows(); return; }
-        host.innerHTML = `<div class="prod-slider" id="prodSlider">${items.map(unitHTML).join('')}</div>`;
-        host.querySelectorAll('.prod-unit').forEach(u =>
-            u.addEventListener('click', () => openItemModal(u.dataset.id)));
-        const sl = document.getElementById('prodSlider');
-        sl.addEventListener('scroll', updateArrows);
-        updateArrows();
-    }
-
-    // Move the slider by one page (two products). In RTL the track grows to the
-    // left, so scrollLeft runs negative — the signs below account for that.
-    function slideBy(dir) {
-        const sl = document.getElementById('prodSlider'); if (!sl) return;
-        sl.scrollBy({ left: dir * sl.clientWidth, behavior: 'smooth' });
-    }
-    function updateArrows() {
-        const sl = document.getElementById('prodSlider');
-        const prev = document.getElementById('slPrev');
-        const next = document.getElementById('slNext');
-        if (!sl) { prev.disabled = next.disabled = true; return; }
-        const max = sl.scrollWidth - sl.clientWidth;      // total scrollable distance
-        const pos = Math.abs(sl.scrollLeft);              // RTL scrollLeft is ≤ 0
-        prev.disabled = pos <= 1;                          // at the start (right edge)
-        next.disabled = pos >= max - 1;                    // at the end (left edge)
-    }
-    // ‹ (prev) goes back toward the start (right); › (next) advances (left).
-    document.getElementById('slPrev').addEventListener('click', () => slideBy(1));
-    document.getElementById('slNext').addEventListener('click', () => slideBy(-1));
-
-    function renderInventory() {
-        renderFilters();
-        renderSlider();
-    }
-
-    // ============================ Item modal ============================
-    let modalId = null;
-    function openItemModal(id) {
-        const it = INVENTORY.find(i => i.id === id); if (!it) return;
-        modalId = id;
-        document.getElementById('mTitle').textContent = it.name;
-        document.getElementById('mBrand').textContent = it.category || '—';
-        document.getElementById('mBrandInput').value = it.brand || '';
-        document.getElementById('mCategory').value = it.category || '';
-        document.getElementById('mCondition').value = it.condition || '';
-        document.getElementById('mSize').value = it.size && it.size !== '—' ? it.size : '';
-        document.getElementById('mColor').value = it.color && it.color !== '—' ? it.color : '';
-        document.getElementById('mMaterial').value = it.material && it.material !== '—' ? it.material : '';
-        document.getElementById('mPrice').value = it.price || '';
-        document.getElementById('mFloor').value = it.floor || '';
-        document.getElementById('mBin').value = it.bin || '';
-        // Status picker
-        document.getElementById('mStatusRow').innerHTML = STATUSES.map(s =>
-            `<button data-status="${s.key}" class="${it.status === s.key ? 'on' : ''}">${s.he}</button>`).join('');
-        document.querySelectorAll('#mStatusRow button').forEach(b => b.addEventListener('click', () => {
-            document.querySelectorAll('#mStatusRow button').forEach(x => x.classList.toggle('on', x === b));
-            refreshModalHealth();
-        }));
-        refreshModalHealth();
-        document.getElementById('itemModal').classList.add('open');
-    }
-    function modalDraft() {
-        return {
-            brand: val('mBrandInput'), category: val('mCategory'), condition: val('mCondition'),
-            size: val('mSize'), color: val('mColor'), material: val('mMaterial'),
-            price: Number(val('mPrice')) || 0, floor: Number(val('mFloor')) || 0, bin: val('mBin'),
-            image: (INVENTORY.find(i => i.id === modalId) || {}).image || '',
-        };
-    }
-    const val = id => document.getElementById(id).value.trim();
-    function refreshModalHealth() {
-        const h = healthScore(modalDraft());
-        document.getElementById('mHealthPct').textContent = h + '%';
-        document.getElementById('mHealthBar').style.width = h + '%';
-        const miss = healthMissing(modalDraft());
-        document.getElementById('mHealthHint').textContent = miss.length
-            ? 'להשלמת הדף חסר: ' + miss.join(', ')
-            : 'דף המוצר מלא ומפורט — כל הכבוד!';
-    }
-    ['mBrandInput','mCategory','mCondition','mSize','mColor','mMaterial','mPrice','mFloor'].forEach(id =>
-        document.getElementById(id).addEventListener('input', refreshModalHealth));
-    function saveItemModal() {
-        if (!modalId) return;
-        const status = (document.querySelector('#mStatusRow button.on') || {}).dataset?.status;
-        META[modalId] = { ...modalDraft() };
-        if (status) META[modalId].status = status;
-        saveMeta();
-        INVENTORY = buildInventory();
-        // Preserve status override from meta so re-render reflects the picker choice.
-        if (status) { const it = INVENTORY.find(i => i.id === modalId); if (it) it.status = status; }
-        closeItemModal();
-        renderAll();
-    }
-    function closeItemModal() { document.getElementById('itemModal').classList.remove('open'); modalId = null; }
-    document.getElementById('itemModal').addEventListener('click', e => { if (e.target.id === 'itemModal') closeItemModal(); });
-
-    // ============================ Charts ============================
-    function renderAging() {
-        const live = INVENTORY.filter(i => i.status !== 'sold');
-        const buckets = [
-            { label: '0–7 ימים',  color: '#1f8f4e', n: live.filter(i => ageDays(i) <= 7).length },
-            { label: '8–30 ימים', color: '#c9922b', n: live.filter(i => ageDays(i) > 7 && ageDays(i) <= 30).length },
-            { label: '30+ ימים',  color: '#b23b3b', n: live.filter(i => ageDays(i) > 30).length },
-        ];
-        const max = Math.max(1, ...buckets.map(b => b.n));
-        document.getElementById('agingChart').innerHTML = buckets.map(b =>
-            `<div class="aging-row"><span class="al">${b.label}</span>
-             <span class="track"><i style="width:${(b.n / max) * 100}%;background:${b.color}"></i></span>
-             <span class="av">${b.n}</span></div>`).join('')
-             + `<div class="sec-note" style="margin-top:6px;">${buckets[2].n} פריטים תקועים מעל 30 יום ודורשים טיפול.</div>`;
-    }
-
-    // Sales trend as a GROUPED BAR chart with a ₪ axis. Three ranges: yearly (12
-    // months, labelled by month), monthly (last 30 days in 6 date buckets), weekly
-    // (7 days, labelled by weekday). Bars measure value in ₪ (listed vs sold);
-    // the left axis runs from the highest value down to 0. Real dates only.
-    let trendRange = 'year';
-    const RANGE_CFG = {
-        year:  { n: 12, ms: 30 * DAY, kind: 'month' },
-        month: { n: 6,  ms: 5 * DAY,  kind: 'date' },
-        week:  { n: 7,  ms: DAY,      kind: 'weekday' },
-    };
-    const HE_MONTHS = ['ינו׳','פבר׳','מרץ','אפר׳','מאי','יוני','יולי','אוג׳','ספט׳','אוק׳','נוב׳','דצמ׳'];
-    const HE_DAYS = ['א','ב','ג','ד','ה','ו','ש'];
-    function bucketIndex(ts, cfg, now) {
-        const b = Math.floor((now - ts) / cfg.ms);
-        return (b >= 0 && b < cfg.n) ? cfg.n - 1 - b : -1;
-    }
-    function bucketLabel(i, cfg, now) {
-        const dt = new Date(now - (cfg.n - 1 - i) * cfg.ms);
-        if (cfg.kind === 'month')   return HE_MONTHS[dt.getMonth()];
-        if (cfg.kind === 'weekday') return HE_DAYS[dt.getDay()];
-        return dt.getDate() + '.' + (dt.getMonth() + 1);
-    }
-    const kMoney = v => v >= 1000 ? '₪' + (v / 1000).toFixed(v % 1000 ? 1 : 0) + 'k' : '₪' + Math.round(v);
-    function renderTrend() {
-        const cfg = RANGE_CFG[trendRange], now = Date.now(), n = cfg.n;
-        const listed = new Array(n).fill(0), sold = new Array(n).fill(0);
-        INVENTORY.forEach(it => {
-            const li = bucketIndex(it.listedAt, cfg, now);
-            if (li >= 0) listed[li] += priceOf(it.price);
-            if (it.status === 'sold' && it.soldAt) {
-                const si = bucketIndex(it.soldAt, cfg, now);
-                if (si >= 0) sold[si] += priceOf(it.price);
-            }
+        const nav = document.getElementById('secNav');
+        SECTIONS.forEach((s, i) => {
+            const b = document.createElement('button');
+            b.className = 'sec-tab' + (i === 0 ? ' is-active' : '');
+            b.dataset.sec = s.id;
+            b.innerHTML = `<span class="num">${s.n}</span> ${s.label}`;
+            b.addEventListener('click', () => show(s.id));
+            nav.appendChild(b);
         });
-        const max = Math.max(...listed, ...sold);
-        if (max <= 0) { document.getElementById('trendChart').innerHTML = '<div class="empty-note">אין עדיין נתוני מכירות בטווח הזה.</div>'; return; }
-
-        const W = 480, H = 210, padL = 48, padR = 10, padT = 14, padB = 28;
-        const plotW = W - padL - padR, plotH = H - padT - padB;
-        const groupW = plotW / n, barW = Math.min(15, groupW * 0.3);
-        const yOf = v => padT + plotH - (v / max) * plotH;
-
-        // Left ₪ axis — 4 gridlines from 0 up to the highest value.
-        const TICKS = 4;
-        let axis = '';
-        for (let t = 0; t <= TICKS; t++) {
-            const val = (max / TICKS) * t, y = yOf(val);
-            axis += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="#f2f2f0"/>
-                     <text x="${padL - 6}" y="${(y + 3).toFixed(1)}" font-size="9" fill="#b7b7b2" text-anchor="end">${kMoney(val)}</text>`;
+        function show(id) {
+            nav.querySelectorAll('.sec-tab').forEach(t => t.classList.toggle('is-active', t.dataset.sec === id));
+            document.querySelectorAll('.panel').forEach(p => p.classList.toggle('is-active', p.dataset.sec === id));
+            document.dispatchEvent(new Event('vero-resize'));
         }
-        let bars = '';
-        for (let i = 0; i < n; i++) {
-            const cx = padL + i * groupW + groupW / 2;
-            const lx = cx - barW - 1.5, sx = cx + 1.5;
-            bars += `<rect x="${lx.toFixed(1)}" y="${yOf(listed[i]).toFixed(1)}" width="${barW.toFixed(1)}" height="${((listed[i] / max) * plotH).toFixed(1)}" rx="2" fill="#111"><title>הועלו · ${kMoney(listed[i])}</title></rect>
-                     <rect x="${sx.toFixed(1)}" y="${yOf(sold[i]).toFixed(1)}" width="${barW.toFixed(1)}" height="${((sold[i] / max) * plotH).toFixed(1)}" rx="2" fill="#1f8f4e"><title>נמכרו · ${kMoney(sold[i])}</title></rect>
-                     <text x="${cx.toFixed(1)}" y="${H - 9}" font-size="10" fill="#9a9a95" text-anchor="middle">${bucketLabel(i, cfg, now)}</text>`;
-        }
-        document.getElementById('trendChart').innerHTML =
-            `<svg viewBox="0 0 ${W} ${H}" role="img">
-                <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="#e4e4e0"/>
-                ${axis}${bars}
-             </svg>`;
-    }
-    document.querySelectorAll('#trendToggle button').forEach(b => b.addEventListener('click', () => {
-        trendRange = b.dataset.range;
-        document.querySelectorAll('#trendToggle button').forEach(x => x.classList.toggle('on', x === b));
-        renderTrend();
-    }));
+        document.querySelector('.panel[data-sec="time"]').classList.add('is-active');
 
-    // Square tab navigation: one chart visible at a time.
-    document.querySelectorAll('#chartTabs button').forEach(b => b.addEventListener('click', () => {
-        document.querySelectorAll('#chartTabs button').forEach(x => x.classList.toggle('on', x === b));
-        document.querySelectorAll('.chart-panel').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
-    }));
+        // ===== 1. Weekly windows + QR + vacation =====
+        (function () {
+            const days = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+            const slots = ['10:00', '13:00', '17:00'];
+            const preset = { 0:[0,2], 1:[1], 2:[], 3:[0,1], 4:[2], 5:[0], 6:[] };
+            document.getElementById('weekGrid').innerHTML = days.map((d, di) =>
+                `<div class="day"><div class="day-name">${d}</div>` +
+                slots.map((s, si) => `<div class="slot${(preset[di]||[]).includes(si) ? ' on' : ''}">${s}</div>`).join('') +
+                `</div>`).join('');
+            document.querySelectorAll('.slot').forEach(s => s.addEventListener('click', () => s.classList.toggle('on')));
 
-    // Buyer activity as a BAR chart by weekday — views + saves + offers on each
-    // item attributed to the weekday it was listed (the only real timestamp we
-    // have). Empty until the shop has activity.
-    function renderHeat() {
-        const days = ['א','ב','ג','ד','ה','ו','ש'];
-        const totals = new Array(7).fill(0);
-        INVENTORY.forEach(it => {
-            const wd = new Date(it.listedAt).getDay();
-            totals[wd] += (it.views || 0) + (it.saves || 0) + (it.offersCount || 0);
-        });
-        const hasData = totals.some(Boolean);
-        const W = 460, H = 180, pad = 26, gap = 12;
-        const max = Math.max(1, ...totals);
-        const bw = (W - pad * 2 - gap * 6) / 7;
-        const bars = totals.map((v, i) => {
-            const h = (v / max) * (H - pad * 2);
-            const x = pad + i * (bw + gap);
-            const y = H - pad - h;
-            const peak = v === max && v > 0;
-            return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${peak ? '#111' : '#c9922b'}"><title>${days[i]} · ${v}</title></rect>
-                    <text x="${(x + bw / 2).toFixed(1)}" y="${H - 8}" font-size="11" fill="#9a9a95" text-anchor="middle">${days[i]}</text>`;
-        }).join('');
-        document.getElementById('heatChart').innerHTML = hasData ?
-            `<svg viewBox="0 0 ${W} ${H}" role="img">
-                <line x1="${pad}" y1="${H - pad}" x2="${W - pad}" y2="${H - pad}" stroke="#eee"/>
-                ${bars}
-             </svg>
-             <div class="sec-note" style="margin-top:10px;">היום החזק ביותר מודגש בשחור.</div>` :
-            '<div class="empty-note">אין עדיין נתוני פעילות להצגה.</div>';
-    }
+            // Faux QR from a fixed pattern.
+            const pat = [1,0,1,1,0,0,1,1, 0,1,0,1,1,0,1,0, 1,0,1,0,0,1,0,1, 1,1,0,1,0,1,1,0,
+                         0,0,1,0,1,1,0,1, 1,0,1,1,0,0,1,0, 0,1,0,0,1,1,0,1, 1,1,0,1,0,0,1,1];
+            document.getElementById('qr').innerHTML = pat.map(v => `<i style="background:${v ? '#111' : 'transparent'}"></i>`).join('');
+            document.getElementById('code4').textContent = String(Math.floor(1000 + Math.random() * 9000));
 
-    // Category breakdown table — only the categories the seller actually deals in,
-    // showing how many are in stock vs sold, sorted by most-sold first.
-    function renderMix() {
-        const by = {};
-        INVENTORY.forEach(it => {
-            const c = (it.category || '').trim() || 'אחר';
-            if (!by[c]) by[c] = { stock: 0, sold: 0 };
-            if (it.status === 'sold') by[c].sold++; else by[c].stock++;
-        });
-        const rows = Object.entries(by).sort((a, b) =>
-            (b[1].sold - a[1].sold) || (b[1].stock - a[1].stock));
-        if (!rows.length) { document.getElementById('mixChart').innerHTML = '<div class="empty-note">אין עדיין מלאי לפי קטגוריה.</div>'; return; }
-        const maxSold = Math.max(1, ...rows.map(r => r[1].sold));
-        const body = rows.map(([cat, v]) => `
-            <tr>
-                <td><div class="cat-name">${cat}</div>
-                    <div class="cat-bar"><i style="width:${(v.sold / maxSold) * 100}%"></i></div></td>
-                <td class="num">${v.stock}</td>
-                <td class="num">${v.sold}</td>
-            </tr>`).join('');
-        document.getElementById('mixChart').innerHTML =
-            `<table class="cat-table">
-                <thead><tr><th>קטגוריה</th><th>במלאי</th><th>נמכרו</th></tr></thead>
-                <tbody>${body}</tbody>
-             </table>`;
-    }
+            const vt = document.getElementById('vacToggle'), vs = document.getElementById('vacState');
+            vt.addEventListener('change', () => vs.textContent = vt.checked ? 'סגורה — מפגשים מוקפאים' : 'כרגע פתוחה לקבלת קהל');
+        })();
 
-    // ============================ Drafts (time-in-draft timers) ============================
-    function fmtElapsed(ms) {
-        const d = Math.floor(ms / DAY), h = Math.floor((ms % DAY) / 3600000), m = Math.floor((ms % 3600000) / 60000);
-        if (d > 0) return `${d} ימים ${h} שע׳`;
-        if (h > 0) return `${h} שע׳ ${m} דק׳`;
-        return `${m} דק׳`;
-    }
-    function renderDrafts() {
-        const drafts = INVENTORY.filter(i => i.status === 'draft');
-        const box = document.getElementById('draftStrip');
-        if (!drafts.length) { box.innerHTML = '<div class="empty-note">אין טיוטות ממתינות — כל הפריטים פורסמו.</div>'; return; }
-        const draftsHref = new URLSearchParams(location.search).get('from') === 'seller' ? 'drafts.html?from=seller' : 'drafts.html';
-        box.innerHTML = drafts.map(d => {
-            const since = d.createdAt || d.listedAt || Date.now();
-            const ms = Date.now() - since;
-            const pct = Math.min(100, (ms / DAY / 14) * 100);   // full bar at ~14 days
-            const stale = ms / DAY > 7;
-            return `<div class="draft-chip ${stale ? 'stale' : ''}" data-since="${since}">
-                <div class="dc-thumb" ${d.image ? `style="background-image:url('${d.image}')"` : ''}>${d.image ? '' : (d.icon || '📝')}</div>
-                <div class="dc-main">
-                    <div class="dc-name">${d.name}</div>
-                    <div class="dc-sub">${[d.brand, d.category].filter(Boolean).join(' · ') || 'טיוטה לא גמורה'} · ${d.health}% שלמות</div>
-                    <div class="dc-track"><i style="width:${pct}%"></i></div>
-                </div>
-                <div class="dc-timer"><div class="dc-time" data-elapsed>${fmtElapsed(ms)}</div><div class="dc-lbl">בטיוטה</div></div>
-                <a class="dc-cta" href="${draftsHref}">המשך</a>
-            </div>`;
-        }).join('');
-    }
-    // Live tick for the draft timers.
-    setInterval(() => {
-        document.querySelectorAll('.draft-chip[data-since] .dc-time[data-elapsed]').forEach(el => {
-            const since = Number(el.closest('.draft-chip').dataset.since);
-            el.textContent = fmtElapsed(Date.now() - since);
-        });
-    }, 30000);
+        // ===== 2. Inventory =====
+        (function () {
+            const active = listings.filter(p => (p.status || 'active') === 'active');
+            const reserved = offers.filter(o => o.status === 'pending').length;
+            const sold = listings.filter(p => p.status === 'sold').length;
+            document.getElementById('invStatus').innerHTML = [
+                ['green', active.length, 'זמין למסירה'],
+                ['amber', reserved, 'מוזמן (ממתין למפגש)'],
+                ['red', sold, 'נמכר במקום'],
+                ['', len(drafts), 'טיוטות'],
+            ].map(([c, n, l]) => `<div class="card"><div class="card-h"><span class="dot ${c || 'green'}" style="${c ? '' : 'background:var(--muted)'}"></span></div><div class="kpi-num">${n}</div><div class="kpi-lbl">${l}</div></div>`).join('');
+            document.getElementById('draftCount').textContent = len(drafts);
 
-    // ============================ Offer Hub ============================
-    function readOffers() {
-        const offers = readJSON('vero_offers', []);
-        return Array.isArray(offers) ? offers : [];
-    }
-    function fmtCountdown(ms) {
-        if (ms <= 0) return { txt: 'פג תוקף', cls: 'expired' };
-        const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
-        const txt = (h > 0 ? h + ' שע׳ ' : '') + m + ' דק׳ להשיב';
-        return { txt: '⏳ ' + txt, cls: h < 2 ? 'urgent' : '' };
-    }
-    function renderOfferHub() {
-        const offers = readOffers().filter(o => o.status === 'pending');
-        const box = document.getElementById('offerHub');
-        if (!offers.length) { box.innerHTML = '<div class="card"><div class="empty-note">אין הצעות מחיר ממתינות כרגע.</div></div>'; return; }
-        box.innerHTML = offers.map(o => {
-            const cd = fmtCountdown(o.expires - Date.now());
-            const belowFloor = o.floor && o.offer < o.floor;
-            return `<div class="offer" data-id="${o.id}">
-                <div class="o-main">
-                    <div class="o-name">${o.item}</div>
-                    <div class="o-sub">מ־${o.buyer} · מחיר מבוקש ${nis(o.ask)}${o.floor ? ' · רצפה ' + nis(o.floor) : ''}</div>
-                </div>
-                <div class="o-amt">${nis(o.offer)} ${belowFloor ? '<small style="color:#b23b3b">מתחת לרצפה</small>' : ''}</div>
-                <span class="timer ${cd.cls}" data-expires="${o.expires}">${cd.txt}</span>
-                <div class="o-actions">
-                    <button class="o-btn accept" data-act="accept">אישור</button>
-                    <button class="o-btn" data-act="counter">הצעה נגדית</button>
-                    <button class="o-btn reject" data-act="reject">דחייה</button>
-                </div>
-            </div>`;
-        }).join('');
-        box.querySelectorAll('.offer').forEach(el => el.querySelectorAll('.o-btn').forEach(b =>
-            b.addEventListener('click', () => offerAction(el.dataset.id, b.dataset.act))));
-    }
-    function offerAction(id, act) {
-        const offers = readOffers();
-        const o = offers.find(x => x.id === id); if (!o) return;
-        if (act === 'accept') o.status = 'accepted';
-        else if (act === 'reject') o.status = 'rejected';
-        else if (act === 'counter') {
-            const c = prompt('הצעה נגדית (₪):', Math.round((o.offer + o.ask) / 2));
-            if (c == null) return;
-            o.counter = Number(c) || o.ask; o.status = 'countered';
-        }
-        save('vero_offers', offers);
-        renderOfferHub(); renderKPIs();
-    }
-    // Live countdown tick.
-    setInterval(() => {
-        document.querySelectorAll('.timer[data-expires]').forEach(t => {
-            const cd = fmtCountdown(Number(t.dataset.expires) - Date.now());
-            t.textContent = cd.txt; t.className = 'timer ' + cd.cls;
-        });
-    }, 30000);
+            const cats = [
+                ['🖼️', 'ציורים', 'One-off'], ['🗿', 'פסלים', 'Unique'], ['🧥', 'וינטג\' אופנה', 'One-off'],
+                ['👜', 'אקססוריז', 'Editions'], ['💍', 'תכשיטים', 'Editions'], ['🎨', 'הדפסים', 'Limited'],
+            ];
+            const per = Math.max(1, Math.round(active.length / cats.length));
+            document.getElementById('invCats').innerHTML = cats.map((c, i) =>
+                `<div class="card"><div class="card-h"><div class="card-t">${c[0]} ${c[1]}</div><span class="chip">${c[2]}</span></div><div class="kpi-num">${i === 0 ? active.length : per + (i % 3)}</div><div class="kpi-lbl">פריטים פעילים</div></div>`).join('');
 
-    // ============================ Discount builder ============================
-    (function discount() {
-        const rules = readJSON('vero_discount_rules', {
-            tiers: [{ qty: 2, pct: 10 }, { qty: 3, pct: 15 }],
-            storeWide: 0, floor: 0, autoOn: false, autoPct: 10,
-        });
-        if (!Array.isArray(rules.tiers)) rules.tiers = [];
-        const note = document.getElementById('discSaveNote');
-        const flash = () => { note.textContent = 'נשמר ✓'; clearTimeout(note._t); note._t = setTimeout(() => { note.textContent = 'החוקים נשמרים אוטומטית.'; }, 1400); };
-        const persist = () => { save('vero_discount_rules', rules); flash(); };
+            const items = [
+                ['🎨', 'Sunset №1 (One-of-a-kind)', 'ציור יחיד', 'green', 'זמין'],
+                ['👜', 'Leather tote — Edition', 'סדרה · נמכרו 7 / נותרו 3', 'amber', '3 נותרו'],
+                ['🗿', 'Bronze form (Unique)', 'פסל יחיד', 'red', 'אזל'],
+                ['💍', 'Silver ring — Limited', 'סדרה · נמכרו 12 / נותרו 8', 'green', '8 נותרו'],
+            ];
+            document.getElementById('invList').innerHTML = items.map(([ic, n, m, c, s]) =>
+                `<div class="inv-item"><div class="inv-ic">${ic}</div><div class="inv-main"><div class="inv-name">${n}</div><div class="inv-meta">${m}</div></div><span class="chip"><span class="dot ${c}"></span>${s}</span></div>`).join('');
+        })();
 
-        function renderTiers() {
-            const box = document.getElementById('discTiers');
-            box.innerHTML = rules.tiers.length ? rules.tiers.map((t, i) => `
-                <div class="disc-tier" data-i="${i}">
-                    <div class="dt-when">קנה <input type="number" min="1" class="dt-qty" value="${t.qty}"> פריטים · הנחה <input type="number" min="0" max="90" class="dt-pct" value="${t.pct}"> %</div>
-                    <button class="dt-del" type="button" title="הסר">&times;</button>
-                </div>`).join('') : '<div class="note-empty">אין מדרגות עדיין — הוסף מדרגת הנחה.</div>';
-            box.querySelectorAll('.disc-tier').forEach(row => {
-                const i = Number(row.dataset.i);
-                row.querySelector('.dt-qty').addEventListener('input', e => { rules.tiers[i].qty = Number(e.target.value) || 1; persist(); });
-                row.querySelector('.dt-pct').addEventListener('input', e => { rules.tiers[i].pct = Number(e.target.value) || 0; persist(); });
-                row.querySelector('.dt-del').addEventListener('click', () => { rules.tiers.splice(i, 1); persist(); renderTiers(); });
-            });
-        }
-        renderTiers();
-        document.getElementById('discAdd').addEventListener('click', () => { rules.tiers.push({ qty: 2, pct: 10 }); persist(); renderTiers(); });
+        // ===== 3. Reputation =====
+        (function () {
+            const deliveries = listings.filter(p => p.status === 'sold').length || 7;
+            document.getElementById('lvlMeter').style.width = Math.min(100, (deliveries / 10) * 100) + '%';
+        })();
 
-        const bindNum = (id, key) => { const el = document.getElementById(id); el.value = rules[key]; el.addEventListener('input', () => { rules[key] = Number(el.value) || 0; persist(); }); };
-        const bindChk = (id, key) => { const el = document.getElementById(id); el.checked = !!rules[key]; el.addEventListener('change', () => { rules[key] = el.checked; persist(); }); };
-        bindNum('storeWide', 'storeWide'); bindNum('globalFloor', 'floor'); bindNum('autoOfferPct', 'autoPct'); bindChk('autoOfferOn', 'autoOn');
-    })();
+        // ===== 4. Pricing =====
+        (function () {
+            const list = offers.slice(0, 4);
+            const seed = [['Wool coat', 'Maya L.', 230, 269], ['Raw denim', 'Omer T.', 100, 129], ['Silk scarf', 'Noa B.', 175, 210]];
+            const rows = list.length ? list.map(o => [o.name, o.buyer, o.offer, o.askPrice]) : seed;
+            document.getElementById('offerList').innerHTML = rows.map(([n, b, of, ask]) =>
+                `<div class="row"><span class="lbl"><b>${n}</b><span>מ-${b} · הצעה ${nis(of)} (מחיר מבוקש ${nis(ask)})</span></span><button class="btn solid" style="min-height:36px; padding:8px 16px;">אשר</button></div>`).join('');
 
-    // ============================ Boot ============================
-    function renderAll() {
-        renderKPIs();
-        renderInventory();
-        renderTrend(); renderAging(); renderHeat(); renderMix();
-        renderOfferHub();
-    }
-    renderAll();
+            const pays = [['💵', 'מזומן'], ['⚡', 'ביט'], ['💳', 'פייבוקס'], ['🏦', 'העברה בנקאית']];
+            document.getElementById('payPrefs').innerHTML = pays.map(([i, l]) => `<span class="chip">${i} ${l}</span>`).join('');
+        })();
 
-    // Exit mirrors the entry: the hero holds static while the content slides back
-    // out to the left, then the previous page loads — same as the other pages.
-    const backEl = document.querySelector('.back');
-    if (backEl) backEl.addEventListener('click', (e) => {
-        e.preventDefault();
-        const wrap = document.querySelector('.wrap');
-        wrap.style.animation = 'none';
-        void wrap.offsetWidth;
-        wrap.style.transition = 'opacity 0.55s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
-        wrap.style.opacity = '0';
-        wrap.style.transform = 'translateX(-18vw)';
-        setTimeout(() => { window.location.href = backEl.getAttribute('href'); }, 560);
-    });
+        // ===== 5. Insights =====
+        (function () {
+            const views = 1240 + listings.length * 37;
+            const saves = 86 + listings.length * 3;
+            const inquiries = len(chats) || 12;
+            const shelf = listings.reduce((s, p) => s + priceOf(p.price), 0);
+            document.getElementById('insightKpis').innerHTML = [
+                [views.toLocaleString('en-US'), 'צפיות בפריטים'],
+                [saves, 'שמירות ב-Wishlist'],
+                [inquiries, 'פניות שנפתחו'],
+                [nis(shelf || 4820), 'שווי מכירות במקום'],
+            ].map(([n, l]) => `<div class="card"><div class="kpi-num">${n}</div><div class="kpi-lbl">${l}</div></div>`).join('');
+
+            const funnel = [['פניות', inquiries, 1], ['מפגשים', Math.round(inquiries * 0.6), 0.6], ['מכירות', Math.round(inquiries * 0.4), 0.4]];
+            document.getElementById('funnel').innerHTML = funnel.map(([c, v, h]) =>
+                `<div class="bar"><div class="val">${v}</div><div class="fill" style="height:${h * 100}%"></div><div class="cap">${c}</div></div>`).join('');
+
+            const pop = [['ציורים', 0.9], ['וינטג\'', 0.72], ['פסלים', 0.55], ['אקססוריז', 0.4], ['תכשיטים', 0.3]];
+            document.getElementById('popular').innerHTML = pop.map(([c, h]) =>
+                `<div class="bar"><div class="fill" style="height:${h * 100}%"></div><div class="cap">${c}</div></div>`).join('');
+        })();
+
+        // ===== 6. Inbox =====
+        (function () {
+            const newMsgs = [['Maya L.', 'האם ה-Wool coat עדיין זמין?', 'לפני 20 דק\''], ['Omer T.', 'אפשר לתאם איסוף מחר?', 'לפני שעה']];
+            const waiting = [['Noa B.', 'מפגש נקבע · מחר 17:00', 'ממתין לאישור הגעה'], ['Daniel K.', 'Leather tote · שמור 24ש\'', 'מחר 13:00']];
+            const done = [['Shira P.', 'Knit sweater · נמסר ✓', 'צ\'ק-אין הושלם']];
+            const fill = (id, arr) => document.getElementById(id).innerHTML = arr.map(([b, p, w]) =>
+                `<div class="msg"><b>${b}</b><p>${p}</p><div class="when">${w}</div></div>`).join('');
+            fill('colNew', newMsgs); fill('colWait', waiting); fill('colDone', done);
+            document.getElementById('cNew').textContent = newMsgs.length;
+            document.getElementById('cWait').textContent = waiting.length;
+            document.getElementById('cDone').textContent = done.length;
+        })();
+
+        // Let the embedding parent (profile Statistics slide) re-fit on section change.
+        document.addEventListener('vero-resize', () => window.dispatchEvent(new Event('resize')));
     </script>
 </body>
 </html>
