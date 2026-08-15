@@ -10,6 +10,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { min-height: 100%; }
+        /* Always reserve the scrollbar gutter so switching slides (which changes the
+           page height) never shifts the centred layout sideways. */
+        html { scrollbar-gutter: stable; }
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             color: #1c1c1c; background: #fff;
@@ -1136,7 +1139,17 @@
             white-space: nowrap; transition: background 0.2s, color 0.2s;
         }
         .area-tab:hover { color: #fff; }
-        .area-tab.is-active { background: #fff; color: #111; }
+        /* The white pill is now a single sliding indicator (see .area-ind), so the
+           active tab itself stays transparent — only its text goes dark. */
+        .area-tab { z-index: 1; }
+        .area-tab.is-active { background: transparent; color: #111; }
+        /* Sliding active-tab indicator — glides between cards on every switch. */
+        .area-ind {
+            position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; z-index: 0;
+            background: #fff; border-radius: 999px; pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1),
+                        width 0.4s cubic-bezier(0.22,1,0.36,1);
+        }
         /* Notification dot — shown on an area whose data changed since last seen. */
         .area-tab .area-dot {
             position: absolute; top: 5px; right: 7px; width: 7px; height: 7px;
@@ -2351,7 +2364,26 @@
             b.addEventListener('click', () => activate(a.id));
             bar.appendChild(b);
         });
+        // Sliding white pill that glides under the active card.
+        const ind = document.createElement('span');
+        ind.className = 'area-ind';
+        bar.insertBefore(ind, bar.firstChild);
         document.body.appendChild(bar);
+
+        function moveIndicator(animate) {
+            const t = bar.querySelector('.area-tab.is-active');
+            if (!t) return;
+            if (!animate) ind.style.transition = 'none';
+            ind.style.width = t.offsetWidth + 'px';
+            ind.style.transform = 'translateX(' + t.offsetLeft + 'px)';
+            if (!animate) { void ind.offsetWidth; ind.style.transition = ''; }
+        }
+        // Position it under "My Profile" on load (no animation), and keep it aligned
+        // if the bar reflows.
+        moveIndicator(false);
+        window.addEventListener('resize', () => moveIndicator(false));
+        window.addEventListener('load', () => moveIndicator(false));
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveIndicator(false));
 
         // ---- Full-screen overlay holding one panel per iframe/placeholder area ----
         const overlay = document.createElement('div');
@@ -2401,6 +2433,7 @@
         function activate(id) {
             bar.querySelectorAll('.area-tab').forEach(t =>
                 t.classList.toggle('is-active', t.dataset.id === id));
+            moveIndicator(true);   // slide the white pill to the new card
             markSeen(id);   // visiting an area clears its dot
             setHeroTitle(id);   // show this section's title where the name sits
             if (wrap) wrap.classList.toggle('title-only', id !== 'profile');   // hero shows only the title off-profile
