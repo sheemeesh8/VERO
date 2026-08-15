@@ -766,7 +766,7 @@
     <style media="not all">
         /* VERO manual placement — from the site editor */
         div.wrap:nth-of-type(2) {
-            transform: translate(-44px, -53px);
+            transform: translate(0px, -56px);
             transform-origin: top left;
         }
 
@@ -792,6 +792,11 @@
 
         div.wrap:nth-of-type(3) > div.grid > div.col-right:nth-of-type(2) > div.card:nth-of-type(1) > div.card-hint:nth-of-type(2) {
             transform: translate(-14px, 351px);
+            transform-origin: top left;
+        }
+
+        #changeBg {
+            transform: translate(-1704px, -91px) scale(1.25, 1.25);
             transform-origin: top left;
         }
 
@@ -1110,6 +1115,35 @@
             transform-origin: top left;
         }
 
+        #storeBgPreview > div.ph-inner:nth-of-type(1) > div.ph-right:nth-of-type(2) {
+            transform: translate(-1579px, -269px);
+            transform-origin: top left;
+        }
+
+        #storeBgPreview > div.ph-inner:nth-of-type(1) > figure.ph-avatar {
+            transform: translate(-136px, 1px) scale(2.5, 2.5);
+            transform-origin: top left;
+        }
+
+        div.wrap:nth-of-type(2) > div.grid:nth-of-type(2) > div.col-right {
+            transform: translate(0px, 2px);
+            transform-origin: top left;
+        }
+
+        #storeBgPreview > div.ph-inner > div.ph-side:nth-of-type(2) > div.ph-badges:nth-of-type(2) > a.stf-open.seller-only:nth-of-type(1) {
+            transform: translate(-1638px, -87px);
+            transform-origin: top left;
+        }
+
+        #phMenu {
+            transform: translate(1729px, -26px) scale(2.3, 2.3);
+            transform-origin: top left;
+        }
+
+        #storeRectName {
+            transform: translate(-49px, 5px);
+            transform-origin: top left;
+        }
     </style>
 
     <!-- ===================================================================
@@ -1157,10 +1191,9 @@
         /* Thin divider between the areas and the Settings / Statistics buttons. */
         .area-sep { width: 1px; align-self: stretch; margin: 5px 4px; background: rgba(255,255,255,0.22); flex: none; }
 
-        /* The in-page Settings / Statistics pills are now in the bottom bar — hide
-           the originals (buyer mode only; the bar drives their slides in JS). The
-           seller view has no bottom bar, so it keeps its own pills. */
-        body:not(.is-seller) .pf-tabs { display: none; }
+        /* The in-page Settings / Statistics pills are now in the bottom bar (both
+           modes) — hide the originals; the bar drives their slides in JS. */
+        .pf-tabs { display: none; }
 
         /* The area panels now switch inline (below the hero + followers), exactly
            like the Settings / Statistics slides — no full-screen overlay. */
@@ -1183,10 +1216,8 @@
         .wrap.title-only .hero-tag,
         .wrap.title-only .hero-rating,
         .wrap.title-only .hero-right,
+        .wrap.title-only .ph-side,
         .wrap.title-only .ph-avatar { display: none !important; }
-        /* The hamburger is hidden but KEEPS its space, so the title never slides
-           sideways when switching between the profile and an area. */
-        .wrap.title-only .ph-menu { visibility: hidden; }
         .area-empty {
             width: 100%; min-height: 60vh; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 16px; text-align: center;
@@ -1203,11 +1234,6 @@
         <!-- Storefront-style hero: background image, name, rating, tagline, followers. -->
         <div class="profile-hero" id="storeBgPreview">
             <div class="ph-inner">
-                <!-- Three-line menu → the area hub (rectangles page: chats, products…). -->
-                <a class="ph-menu" id="phMenu" href="buyer-area.html" aria-label="פתח תפריט"
-                   onclick="location.href = ((new URLSearchParams(location.search).get('from')==='seller' || localStorage.getItem('vero_active_account')==='seller') ? 'seller-area.html' : 'buyer-area.html'); return false;">
-                    <span></span><span></span><span></span>
-                </a>
                 <!-- A true 1:1 preview of the public profile hero: name + verified +
                      follow, the About description, the rating, and the followers /
                      items stats with the socials button — exactly as the visitor sees. -->
@@ -1467,15 +1493,16 @@
 
             const tabs = document.createElement('div');
             tabs.className = 'pf-tabs';
+            // Statistics is the default view on entry.
             tabs.innerHTML =
-                '<button type="button" class="pf-tab is-active" data-slide="settings">Settings</button>' +
-                '<button type="button" class="pf-tab" data-slide="stats">Statistics</button>';
+                '<button type="button" class="pf-tab" data-slide="settings">Settings</button>' +
+                '<button type="button" class="pf-tab is-active" data-slide="stats">Statistics</button>';
             grid.parentNode.insertBefore(tabs, grid);
 
             const slideSettings = document.createElement('div');
-            slideSettings.id = 'slideSettings'; slideSettings.className = 'pf-slide is-active';
+            slideSettings.id = 'slideSettings'; slideSettings.className = 'pf-slide';
             const slideStats = document.createElement('div');
-            slideStats.id = 'slideStats'; slideStats.className = 'pf-slide';
+            slideStats.id = 'slideStats'; slideStats.className = 'pf-slide is-active';
             tabs.insertAdjacentElement('afterend', slideStats);
             tabs.insertAdjacentElement('afterend', slideSettings);
 
@@ -2305,20 +2332,29 @@
     <!-- ===== Personal-area tabs: fold the five menu rectangles into this page ===== -->
     <script>
     (function areaTabs() {
-        // Buyer mode only — the seller hub (seller-area.html) keeps its own layout.
+        // Works in both modes. In seller mode the tabs mirror the seller hub
+        // (seller-area.html): My Shop / My Products / Buyer Chats / Offers Received.
         const seller = new URLSearchParams(location.search).get('from') === 'seller'
                     || localStorage.getItem('vero_active_account') === 'seller';
-        if (seller) return;
+        const q = seller ? '?from=seller&embed=1' : '?embed=1';
 
-        // The five rectangles, in order. "My Profile" is this page itself (no iframe);
+        // The five rectangles, in order. The first is this page itself (no iframe);
         // "My Assistant" has no page yet, so it shows a reserved placeholder.
-        // Settings / Statistics are the two sub-views of My Profile, added after a
-        // divider — they just switch to the profile page and flip its slide.
-        const AREAS = [
+        // Settings / Statistics are the two sub-views, added after a divider — they
+        // just switch back to this page and flip its slide.
+        const AREAS = seller ? [
+            { id: 'profile',    label: 'My Shop'         },
+            { id: 'products',   label: 'My Products',    src: 'products.html' + q },
+            { id: 'chats',      label: 'Buyer Chats',    src: 'chats.html' + q },
+            { id: 'offers',     label: 'Offers Received', src: 'offers-received.html' + q },
+            { id: 'assistant',  label: 'My Assistant', empty: true },
+            { id: 'settings',   label: 'Settings',   slide: 'settings', sep: true },
+            { id: 'statistics', label: 'Statistics', slide: 'stats' },
+        ] : [
             { id: 'profile',    label: 'My Profile'   },
-            { id: 'products',   label: 'My Products',  src: 'products.html?embed=1' },
-            { id: 'chats',      label: 'My Chats',     src: 'chats.html?embed=1' },
-            { id: 'cart',       label: 'My Cart',      src: 'cart.html?embed=1' },
+            { id: 'products',   label: 'My Products',  src: 'products.html' + q },
+            { id: 'chats',      label: 'My Chats',     src: 'chats.html' + q },
+            { id: 'cart',       label: 'My Cart',      src: 'cart.html' + q },
             { id: 'assistant',  label: 'My Assistant', empty: true },
             { id: 'settings',   label: 'Settings',   slide: 'settings', sep: true },
             { id: 'statistics', label: 'Statistics', slide: 'stats' },
@@ -2341,7 +2377,13 @@
         // Data store behind each area — used to detect changes and raise a dot.
         function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
         function count(v) { return Array.isArray(v) ? v.length : (v && typeof v === 'object' ? Object.keys(v).length : 0); }
-        const SIG = {
+        const SIG = seller ? {
+            products:   () => count(readJSON('vero_listings')) + ':' + count(readJSON('vero_drafts')),
+            chats:      () => JSON.stringify(readJSON('vero_chats') || {}),
+            offers:     () => JSON.stringify(readJSON('vero_received_offers') || []),
+            settings:   () => JSON.stringify(readJSON('vero_seller_profile') || {}),
+            statistics: () => count(readJSON('vero_listings')) + ':' + (localStorage.getItem('vero_followers') || ''),
+        } : {
             products:   () => count(readJSON('vero_listings')) + ':' + count(readJSON('vero_drafts')),
             chats:      () => JSON.stringify(readJSON('vero_chats') || {}),
             cart:       () => JSON.stringify(readJSON('vero_cart') || []),
