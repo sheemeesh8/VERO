@@ -1151,13 +1151,17 @@
            seller view has no bottom bar, so it keeps its own pills. */
         body:not(.is-seller) .pf-tabs { display: none; }
 
-        .area-overlay { position: fixed; inset: 0; z-index: 55; background: #fff; display: none; }
-        .area-overlay.open { display: block; }
-        .area-panel { position: absolute; inset: 0; display: none; }
+        /* The area panels now switch inline (below the hero + followers), exactly
+           like the Settings / Statistics slides — no full-screen overlay. */
+        .area-overlay { display: none; margin-top: 12px; }
+        .area-overlay.open { display: block; animation: pfSlideIn 0.4s ease both; }
+        .area-panel { display: none; }
         .area-panel.is-active { display: block; }
-        .area-panel iframe { width: 100%; height: 100%; border: none; display: block; }
+        .area-panel iframe { width: 100%; height: calc(100vh - 60px); min-height: 520px; border: none; display: block; }
+        /* When an area is open, hide the profile's own Settings / Statistics slides. */
+        .wrap.area-mode .pf-slide { display: none !important; }
         .area-empty {
-            width: 100%; height: 100%; display: flex; flex-direction: column;
+            width: 100%; min-height: 60vh; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 16px; text-align: center;
         }
         .area-empty h2 { font-size: clamp(30px, 4vw, 52px); font-weight: 200; letter-spacing: 1px; color: #1c1c1c; }
@@ -2339,7 +2343,10 @@
             }
             overlay.appendChild(panel);
         });
-        document.body.appendChild(overlay);
+        // Placed inline at the end of .wrap — right below the hero + followers and
+        // the profile slides — so areas switch in place, just like Settings / Statistics.
+        const wrap = document.querySelector('.wrap');
+        (wrap || document.body).appendChild(overlay);
 
         // ---- Notification dots: compare each area's data to what was last seen ----
         function tabFor(id) { return bar.querySelector('.area-tab[data-id="' + id + '"]'); }
@@ -2368,24 +2375,25 @@
                 t.classList.toggle('is-active', t.dataset.id === id));
             markSeen(id);   // visiting an area clears its dot
 
-            // Settings / Statistics → back to the profile page, flip its inner slide.
+            // Settings / Statistics → show the profile's own slide (in place).
             const area = AREAS.find(a => a.id === id);
             if (area && area.slide) {
                 overlay.classList.remove('open');
-                document.body.style.overflow = '';
+                if (wrap) wrap.classList.remove('area-mode');
                 const pfTab = document.querySelector('.pf-tab[data-slide="' + area.slide + '"]');
                 if (pfTab) pfTab.click();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
 
             if (id === 'profile') {
                 overlay.classList.remove('open');
-                document.body.style.overflow = '';
+                if (wrap) wrap.classList.remove('area-mode');
                 return;
             }
+            // An area (Products / Chats / Cart / Assistant): hide the profile slides
+            // and switch the inline panel in their place, below the hero + followers.
             overlay.classList.add('open');
-            document.body.style.overflow = 'hidden';
+            if (wrap) wrap.classList.add('area-mode');
             overlay.querySelectorAll('.area-panel').forEach(p =>
                 p.classList.toggle('is-active', p.dataset.id === id));
             const fr = overlay.querySelector('.area-panel.is-active iframe');
