@@ -1120,24 +1120,33 @@
          =================================================================== -->
     <style>
         .area-tabs {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 60; display: flex; gap: 6px;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 60; display: flex; align-items: stretch; gap: 6px;
             max-width: 94vw; overflow-x: auto;
-            background: rgba(255,255,255,0.92); backdrop-filter: blur(6px);
+            background: rgba(255,255,255,0.94); backdrop-filter: blur(6px);
             border: 1px solid rgba(0,0,0,0.12); border-radius: 999px; padding: 5px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 6px 26px rgba(0,0,0,0.14);
         }
         .area-tabs::-webkit-scrollbar { display: none; }
         .area-tab {
-            border: none; background: transparent; font-family: inherit;
+            position: relative; border: none; background: transparent; font-family: inherit;
             font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
             color: #6b6b66; padding: 9px 16px; border-radius: 999px; cursor: pointer;
             white-space: nowrap; transition: background 0.2s, color 0.2s;
         }
         .area-tab:hover { color: #111; }
         .area-tab.is-active { background: #111; color: #fff; }
+        /* Notification dot — shown on an area whose data changed since last seen. */
+        .area-tab .area-dot {
+            position: absolute; top: 5px; right: 7px; width: 7px; height: 7px;
+            border-radius: 50%; background: #e5484d; display: none;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.95);
+        }
+        .area-tab.has-dot .area-dot { display: block; }
+        /* Thin divider between the areas and the Settings / Statistics buttons. */
+        .area-sep { width: 1px; align-self: stretch; margin: 5px 4px; background: rgba(0,0,0,0.14); flex: none; }
 
-        .area-overlay { position: fixed; inset: 0; top: 70px; z-index: 55; background: #fff; display: none; }
+        .area-overlay { position: fixed; inset: 0; z-index: 55; background: #fff; display: none; }
         .area-overlay.open { display: block; }
         .area-panel { position: absolute; inset: 0; display: none; }
         .area-panel.is-active { display: block; }
@@ -2268,32 +2277,49 @@
 
         // The five rectangles, in order. "My Profile" is this page itself (no iframe);
         // "My Assistant" has no page yet, so it shows a reserved placeholder.
+        // Settings / Statistics are the two sub-views of My Profile, added after a
+        // divider — they just switch to the profile page and flip its slide.
         const AREAS = [
-            { id: 'profile',   label: 'My Profile'   },
-            { id: 'products',  label: 'My Products',  src: 'products.html' },
-            { id: 'chats',     label: 'My Chats',     src: 'chats.html' },
-            { id: 'cart',      label: 'My Cart',      src: 'cart.html' },
-            { id: 'assistant', label: 'My Assistant', empty: true },
+            { id: 'profile',    label: 'My Profile'   },
+            { id: 'products',   label: 'My Products',  src: 'products.html' },
+            { id: 'chats',      label: 'My Chats',     src: 'chats.html' },
+            { id: 'cart',       label: 'My Cart',      src: 'cart.html' },
+            { id: 'assistant',  label: 'My Assistant', empty: true },
+            { id: 'settings',   label: 'Settings',   slide: 'settings', sep: true },
+            { id: 'statistics', label: 'Statistics', slide: 'stats' },
         ];
+
+        // Data store behind each area — used to detect changes and raise a dot.
+        function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+        function count(v) { return Array.isArray(v) ? v.length : (v && typeof v === 'object' ? Object.keys(v).length : 0); }
+        const SIG = {
+            products:   () => count(readJSON('vero_listings')) + ':' + count(readJSON('vero_drafts')),
+            chats:      () => JSON.stringify(readJSON('vero_chats') || {}),
+            cart:       () => JSON.stringify(readJSON('vero_cart') || []),
+            settings:   () => JSON.stringify(readJSON('vero_profile') || {}),
+            statistics: () => count(readJSON('vero_listings')) + ':' + (localStorage.getItem('vero_followers') || ''),
+        };
+        const SEEN_KEY = id => 'vero_area_seen_' + id;
 
         // ---- Tab bar ----
         const bar = document.createElement('nav');
         bar.className = 'area-tabs';
         AREAS.forEach(a => {
+            if (a.sep) { const s = document.createElement('span'); s.className = 'area-sep'; bar.appendChild(s); }
             const b = document.createElement('button');
             b.type = 'button';
             b.className = 'area-tab' + (a.id === 'profile' ? ' is-active' : '');
             b.dataset.id = a.id;
-            b.textContent = a.label;
+            b.innerHTML = a.label + '<span class="area-dot"></span>';
             b.addEventListener('click', () => activate(a.id));
             bar.appendChild(b);
         });
         document.body.appendChild(bar);
 
-        // ---- Full-screen overlay holding one panel per non-profile area ----
+        // ---- Full-screen overlay holding one panel per iframe/placeholder area ----
         const overlay = document.createElement('div');
         overlay.className = 'area-overlay';
-        AREAS.filter(a => a.id !== 'profile').forEach(a => {
+        AREAS.filter(a => a.src || a.empty).forEach(a => {
             const panel = document.createElement('div');
             panel.className = 'area-panel';
             panel.dataset.id = a.id;
@@ -2310,9 +2336,43 @@
         });
         document.body.appendChild(overlay);
 
+        // ---- Notification dots: compare each area's data to what was last seen ----
+        function tabFor(id) { return bar.querySelector('.area-tab[data-id="' + id + '"]'); }
+        function markSeen(id) {
+            if (!SIG[id]) return;
+            localStorage.setItem(SEEN_KEY(id), SIG[id]());
+            const t = tabFor(id); if (t) t.classList.remove('has-dot');
+        }
+        function refreshDots() {
+            Object.keys(SIG).forEach(id => {
+                const cur = SIG[id]();
+                const seen = localStorage.getItem(SEEN_KEY(id));
+                if (seen === null) { localStorage.setItem(SEEN_KEY(id), cur); return; } // first run: baseline, no dot
+                const t = tabFor(id);
+                if (t) t.classList.toggle('has-dot', cur !== seen);
+            });
+        }
+        refreshDots();
+        // Re-check when another tab/iframe writes to storage, and on focus.
+        window.addEventListener('storage', refreshDots);
+        window.addEventListener('focus', refreshDots);
+        setInterval(refreshDots, 2000);   // catch same-window iframe writes
+
         function activate(id) {
             bar.querySelectorAll('.area-tab').forEach(t =>
                 t.classList.toggle('is-active', t.dataset.id === id));
+            markSeen(id);   // visiting an area clears its dot
+
+            // Settings / Statistics → back to the profile page, flip its inner slide.
+            const area = AREAS.find(a => a.id === id);
+            if (area && area.slide) {
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+                const pfTab = document.querySelector('.pf-tab[data-slide="' + area.slide + '"]');
+                if (pfTab) pfTab.click();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
 
             if (id === 'profile') {
                 overlay.classList.remove('open');
