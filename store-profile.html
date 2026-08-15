@@ -698,6 +698,17 @@
             const bio = (sellerProf.bio || prof.bio || '').trim();
             if (bio) STORE.tag = bio;
 
+            // Name + socials edited on the My Shop settings page (vero_seller_profile)
+            // take precedence, so the storefront always mirrors the settings exactly.
+            if (sellerProf.name && sellerProf.name.trim()) STORE.name = sellerProf.name.trim();
+            if (sellerProf.socials) {
+                const s = Object.assign({}, STORE.socials);
+                ['instagram', 'tiktok', 'website'].forEach(k => {
+                    if (sellerProf.socials[k]) s[k] = sellerProf.socials[k];
+                });
+                STORE.socials = s;
+            }
+
             let listings; try { listings = JSON.parse(localStorage.getItem('vero_listings')) || []; } catch (e) { listings = []; }
             if (Array.isArray(listings)) {
                 STORE.itemsLive = listings.filter(p => (p.status || 'active') === 'active').length;
