@@ -2290,13 +2290,23 @@
         // divider — they just switch to the profile page and flip its slide.
         const AREAS = [
             { id: 'profile',    label: 'My Profile'   },
-            { id: 'products',   label: 'My Products',  src: 'products.html' },
-            { id: 'chats',      label: 'My Chats',     src: 'chats.html' },
-            { id: 'cart',       label: 'My Cart',      src: 'cart.html' },
+            { id: 'products',   label: 'My Products',  src: 'products.html?embed=1' },
+            { id: 'chats',      label: 'My Chats',     src: 'chats.html?embed=1' },
+            { id: 'cart',       label: 'My Cart',      src: 'cart.html?embed=1' },
             { id: 'assistant',  label: 'My Assistant', empty: true },
             { id: 'settings',   label: 'Settings',   slide: 'settings', sep: true },
             { id: 'statistics', label: 'Statistics', slide: 'stats' },
         ];
+
+        // The hero name element — its text is swapped to the active section's title,
+        // so every slide's heading reads from the same spot the profile name sits in.
+        const heroName = document.querySelector('.hero-name');
+        const realName = heroName ? heroName.textContent : '';
+        function setHeroTitle(id) {
+            if (!heroName) return;
+            const a = AREAS.find(x => x.id === id);
+            heroName.textContent = (id === 'profile' || !a) ? realName : a.label;
+        }
 
         // Data store behind each area — used to detect changes and raise a dot.
         function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
@@ -2374,6 +2384,7 @@
             bar.querySelectorAll('.area-tab').forEach(t =>
                 t.classList.toggle('is-active', t.dataset.id === id));
             markSeen(id);   // visiting an area clears its dot
+            setHeroTitle(id);   // show this section's title where the name sits
 
             // Settings / Statistics → show the profile's own slide (in place).
             const area = AREAS.find(a => a.id === id);
