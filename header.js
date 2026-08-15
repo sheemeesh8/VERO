@@ -1256,7 +1256,7 @@
                 <a href="about.html">About Us</a>
                 <a onclick="veroCloseDrawer(); openMagazine()">The Closet Magazine</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
-                <a id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','buyer-area.html')">My Profile</a>
+                <a id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
             </nav>
             <div class="vero-drawer-social">
                 <a href="#" aria-label="Instagram">${DRAWER_ICONS.instagram}</a>
@@ -1291,7 +1291,7 @@
             // Personal account → the personal hub (My Profile, My Chats, My Cart…).
             link.textContent = 'My Profile';
             if (heading) heading.textContent = 'Personal Area';
-            link.setAttribute('onclick', "veroCloseDrawer(); veroGoAccount('buyer','buyer-area.html')");
+            link.setAttribute('onclick', "veroCloseDrawer(); veroGoAccount('buyer','profile.html')");
         }
     }
 
@@ -2075,18 +2075,18 @@
     // Open the "rectangles" hub that matches the active account — seller-area for
     // the business account, buyer-area (personal) for the buyer account.
     window.veroOpenArea = function () {
-        location.href = veroActiveAccount() === 'seller' ? 'seller-area.html' : 'buyer-area.html';
+        location.href = veroActiveAccount() === 'seller' ? 'seller-area.html' : 'profile.html';
     };
 
     // Enter a given account context and navigate to its hub page. Used by the
     // drawer's area link: 'seller' → the seller hub (seller-area.html), 'buyer' →
-    // the personal hub (buyer-area.html). Sets the active account first so the
+    // the personal hub (profile.html). Sets the active account first so the
     // destination and the header read as that account, then shows the WELCOME
     // splash on the way in.
     window.veroGoAccount = function (account, dest) {
         const acct = account === 'seller' ? 'seller' : 'buyer';
         localStorage.setItem('vero_active_account', acct);
-        veroProfileSplash({ name: accountName(acct), dest: dest || (acct === 'seller' ? 'seller-area.html' : 'buyer-area.html') });
+        veroProfileSplash({ name: accountName(acct), dest: dest || (acct === 'seller' ? 'seller-area.html' : 'profile.html') });
     };
 
     // Toggle between the personal and seller accounts without leaving the feed:
@@ -2136,7 +2136,7 @@
     ensure('openWishlist', () => nav('index.html?open=wishlist'));
     ensure('openCart', () => window.veroSlideToCart());
     ensure('vchatOpenInbox', () => nav('index.html?open=chats'));
-    ensure('openBuyerArea', () => nav('buyer-area.html'));
+    ensure('openBuyerArea', () => nav('profile.html'));
     ensure('openSellerArea', () => nav('seller-area.html'));
     ensure('openUploadProduct', () => nav('index.html?open=upload'));
     ensure('openMenu', () => nav('index.html?open=magazine'));
