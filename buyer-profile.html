@@ -565,6 +565,28 @@
             }
         })();
 
+        // ===================== SYNC WITH MY PROFILE SETTINGS =====================
+        // The public front mirrors exactly what was set on the profile-settings page
+        // (profile.html buyer mode): identity + About + avatar live on vero_profile,
+        // the hero background on vero_store_config.hero. These take precedence over
+        // the older vero_buyer_config so the two views never drift apart.
+        (function applyProfileSettings() {
+            let prof = {}, store = {};
+            try { prof  = JSON.parse(localStorage.getItem('vero_profile'))      || {}; } catch (e) {}
+            try { store = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
+            if (prof.name && prof.name.trim()) BUYER.name = prof.name.trim();
+            if (prof.bio  && prof.bio.trim())  BUYER.tag  = prof.bio.trim();
+            if (prof.avatarImg) BUYER.avatar = prof.avatarImg;
+            if (store.hero)     BUYER.hero   = store.hero;
+            if (prof.socials) {
+                const s = Object.assign({}, BUYER.socials);
+                ['instagram', 'tiktok', 'website'].forEach(k => {
+                    if (prof.socials[k]) s[k] = prof.socials[k];
+                });
+                BUYER.socials = s;
+            }
+        })();
+
         // ===================== RENDER =====================
         const nis = n => '₪' + (Number(n)||0).toLocaleString('en-US');
         let searchTerm = '';
