@@ -11447,6 +11447,102 @@
             document.addEventListener('DOMContentLoaded', wire);
             window.addEventListener('load', wire);
         })();
+
+        // ===================== FEED CATEGORY NAV =====================
+        // A bottom navigation bar mirroring the personal-area tab bar: a dark pill
+        // strip with a sliding white indicator. Its buttons are the categories of
+        // the CURRENT mode (clothing in fashion mode, art in art mode) — clicking one
+        // filters the feed in place. Rebuilt whenever the mode toggles.
+        (function feedNav() {
+            const style = document.createElement('style');
+            style.textContent = `
+                .feed-nav {
+                    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                    z-index: 900; display: flex; align-items: stretch; gap: 6px;
+                    max-width: 92vw; overflow-x: auto;
+                    background: rgba(20,20,20,0.94); backdrop-filter: blur(6px);
+                    border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 5px;
+                    box-shadow: 0 6px 26px rgba(0,0,0,0.28); font-family: inherit;
+                }
+                .feed-nav::-webkit-scrollbar { display: none; }
+                .feed-nav-tab {
+                    position: relative; z-index: 1; border: none; background: transparent;
+                    font-family: inherit; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+                    color: #b5b5b0; padding: 9px 16px; border-radius: 999px; cursor: pointer;
+                    white-space: nowrap; transition: background 0.2s, color 0.2s;
+                }
+                .feed-nav-tab:hover { color: #fff; }
+                .feed-nav-tab.is-active { color: #111; }
+                .feed-nav-ind {
+                    position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; z-index: 0;
+                    background: #fff; border-radius: 999px; pointer-events: none;
+                    transition: transform 0.4s cubic-bezier(0.22,1,0.36,1),
+                                width 0.4s cubic-bezier(0.22,1,0.36,1);
+                }
+            `;
+            document.head.appendChild(style);
+
+            const bar = document.createElement('nav'); bar.className = 'feed-nav';
+            const ind = document.createElement('span'); ind.className = 'feed-nav-ind';
+            document.body.appendChild(bar);
+
+            const activeType = () => (typeof feedFilters !== 'undefined' && feedFilters.type) || '';
+            function cats() {
+                try { return uniqueSorted(feedBaseProducts().map(p => p.category).filter(Boolean)); }
+                catch (e) { return []; }
+            }
+            function moveInd(animate) {
+                const t = bar.querySelector('.feed-nav-tab.is-active'); if (!t) return;
+                if (!animate) ind.style.transition = 'none';
+                ind.style.width = t.offsetWidth + 'px';
+                ind.style.transform = 'translateX(' + t.offsetLeft + 'px)';
+                if (!animate) { void ind.offsetWidth; ind.style.transition = ''; }
+            }
+            function select(type) {
+                feedFilters.type = type;
+                if (typeof renderFeedFilters === 'function') renderFeedFilters();
+                if (typeof renderFeed === 'function') renderFeed();
+                syncActive(true);
+            }
+            function syncActive(animate) {
+                const tabs = [...bar.querySelectorAll('.feed-nav-tab')];
+                if (!tabs.length) return;
+                const type = activeType();
+                tabs.forEach(t => t.classList.toggle('is-active', t.dataset.type === type));
+                if (!bar.querySelector('.feed-nav-tab.is-active')) tabs[0].classList.add('is-active');
+                moveInd(animate !== false);
+            }
+            function build() {
+                bar.innerHTML = '';
+                bar.appendChild(ind);
+                const mk = (label, type) => {
+                    const b = document.createElement('button');
+                    b.type = 'button'; b.className = 'feed-nav-tab'; b.dataset.type = type;
+                    b.textContent = label;
+                    b.addEventListener('click', () => select(type));
+                    bar.appendChild(b);
+                };
+                mk('All', '');
+                cats().forEach(c => mk(c, c));
+                syncActive(false);
+            }
+
+            // Rebuild when the mode (clothing/art) changes; keep the highlight synced
+            // whenever the feed re-renders from any source (dropdown, search, etc.).
+            if (typeof window.setCategory === 'function') {
+                const _sc = window.setCategory;
+                window.setCategory = function () { _sc.apply(this, arguments); build(); };
+            }
+            if (typeof window.renderFeed === 'function') {
+                const _rf = window.renderFeed;
+                window.renderFeed = function () { _rf.apply(this, arguments); syncActive(true); };
+            }
+
+            window.addEventListener('resize', () => moveInd(false));
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(false));
+            window.addEventListener('load', () => setTimeout(build, 300));
+            build();
+        })();
     </script>
     <!-- Shared site footer (single source: footer.js) — shown on cart & wishlist views -->
     <script src="footer.js"></script>

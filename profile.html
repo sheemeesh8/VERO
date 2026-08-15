@@ -1234,6 +1234,54 @@
         }
         .area-empty h2 { font-size: clamp(30px, 4vw, 52px); font-weight: 200; letter-spacing: 1px; color: #1c1c1c; }
         .area-empty p { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; }
+
+        /* =================================================================
+           SETTINGS COMFORT + ACCESSIBILITY
+           Larger, clearer form controls; stronger label contrast; visible
+           keyboard focus; roomier sections; bigger touch targets; and a clear
+           "Saved" confirmation toast.
+           ================================================================= */
+        .field input, .field textarea,
+        .dim-field input, .dim-field select {
+            font-size: 15px; padding: 10px 2px;
+        }
+        .card-label { color: #6b6b66; }               /* darker than #9a9a95 for contrast */
+        .card-hint, .section-note, .save-note { color: #7a7a75; }
+        /* Visible keyboard focus for everything inside the page. */
+        .wrap a:focus-visible, .wrap button:focus-visible,
+        .wrap input:focus-visible, .wrap textarea:focus-visible, .wrap select:focus-visible {
+            outline: 2px solid #1c1c1c; outline-offset: 3px; border-radius: 4px;
+        }
+        .field input:focus, .field textarea:focus,
+        .dim-field input:focus, .dim-field select:focus {
+            outline: none; border-bottom-color: #000; box-shadow: 0 1px 0 0 #000;
+        }
+        /* Bigger touch targets. */
+        .change-photo, .acct-btn, .stf-tab, .btn-dark { min-height: 42px; }
+        .social-ico { width: 48px; height: 48px; }
+        .switch { transform: scale(1.12); transform-origin: right center; }
+        /* Roomier sections + details grid. */
+        body:not(.is-seller) .grid > .card,
+        body:not(.is-seller) .col-right > .card:not(.store-card),
+        body.is-seller .col-right > .card:not(.store-card) { padding-top: 48px; margin-top: 48px; }
+        .contact-card.details-grid { row-gap: 30px; column-gap: 52px; }
+
+        /* "Saved" confirmation toast (sits above the bottom tab bar). */
+        .pf-saved-toast {
+            position: fixed; left: 50%; bottom: 84px;
+            transform: translateX(-50%) translateY(10px);
+            background: #1c1c1c; color: #fff; padding: 11px 22px; border-radius: 999px;
+            font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+            display: flex; align-items: center; gap: 9px;
+            opacity: 0; pointer-events: none; z-index: 70;
+            box-shadow: 0 6px 22px rgba(0,0,0,0.28);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .pf-saved-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .pf-saved-toast .dot {
+            width: 16px; height: 16px; border-radius: 50%; background: #2ecc71;
+            display: grid; place-items: center; font-size: 9px; color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -2342,6 +2390,29 @@
         });
     </script>
 
+    <!-- ===== "Saved" confirmation: settings save as you type; flash it clearly ===== -->
+    <script>
+    (function savedToast() {
+        const toast = document.createElement('div');
+        toast.className = 'pf-saved-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        toast.innerHTML = '<span class="dot">✓</span><span>Saved</span>';
+        document.body.appendChild(toast);
+        let t;
+        function flash() {
+            toast.classList.add('show');
+            clearTimeout(t);
+            t = setTimeout(() => toast.classList.remove('show'), 1400);
+        }
+        const wrap = document.querySelector('.wrap');
+        if (wrap) {
+            wrap.addEventListener('input',  e => { if (e.target.closest('input, textarea, select')) flash(); });
+            wrap.addEventListener('change', e => { if (e.target.closest('input, textarea, select')) flash(); });
+        }
+    })();
+    </script>
+
     <!-- ===== Personal-area tabs: fold the five menu rectangles into this page ===== -->
     <script>
     (function areaTabs() {
@@ -2362,7 +2433,6 @@
             { id: 'offers',     label: 'Offers Received', src: 'offers-received.html' + q },
             { id: 'assistant',  label: 'My Assistant', empty: true },
             { id: 'settings',   label: 'Settings',   slide: 'settings', sep: true },
-            { id: 'statistics', label: 'Statistics', slide: 'stats' },
         ] : [
             { id: 'profile',    label: 'My Profile'   },
             { id: 'products',   label: 'My Products',  src: 'products.html' + q },
@@ -2370,7 +2440,6 @@
             { id: 'cart',       label: 'My Cart',      src: 'cart.html' + q },
             { id: 'assistant',  label: 'My Assistant', empty: true },
             { id: 'settings',   label: 'Settings',   slide: 'settings', sep: true },
-            { id: 'statistics', label: 'Statistics', slide: 'stats' },
         ];
 
         // The hero name element — its text is swapped to the active section's title,
