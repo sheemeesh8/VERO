@@ -53,22 +53,33 @@
         .dash-sub { margin-top: 10px; color: var(--muted); font-size: 12px; }
         html.is-embed .dash-head { display: none; }
 
-        /* ===== Section tabs ===== */
+        /* ===== Section tabs — the shared dark pill bar with a sliding indicator
+           (same language as the personal-area and feed navigation). Centred at the
+           top of the dashboard; scrolls horizontally when it runs out of room. ===== */
         .sec-nav {
-            display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto;
-            margin: 26px 0 30px; padding-bottom: 4px;
+            position: relative; display: flex; align-items: stretch; gap: 6px;
+            width: fit-content; max-width: 100%; overflow-x: auto;
+            margin: 22px auto 30px; padding: 5px;
+            background: rgba(20,20,20,0.96); border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 999px; box-shadow: 0 6px 26px rgba(0,0,0,0.16);
         }
-        .sec-nav::-webkit-scrollbar { height: 0; }
+        .sec-nav::-webkit-scrollbar { display: none; }
         .sec-tab {
-            flex: none; border: 1px solid var(--line); background: #fff; color: var(--muted);
-            font-family: inherit; font-size: 11px; letter-spacing: 0.3px; font-weight: 500;
-            padding: 11px 18px; border-radius: 999px; cursor: pointer; white-space: nowrap;
-            display: inline-flex; align-items: center; gap: 8px; min-height: 42px;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            position: relative; z-index: 1; flex: none; border: none; background: transparent;
+            color: #b5b5b0; font-family: inherit; font-size: 11px; letter-spacing: 0.3px; font-weight: 500;
+            padding: 10px 16px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 8px; min-height: 40px;
+            transition: color 0.2s;
         }
-        .sec-tab:hover { border-color: #111; color: #111; }
-        .sec-tab.is-active { background: #111; color: #fff; border-color: #111; }
-        .sec-tab .num { font-size: 10px; opacity: 0.6; }
+        .sec-tab:hover { color: #fff; }
+        .sec-tab.is-active { color: #111; }
+        .sec-tab .num { font-size: 10px; opacity: 0.55; }
+        .sec-ind {
+            position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; z-index: 0;
+            background: #fff; border-radius: 999px; pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1),
+                        width 0.4s cubic-bezier(0.22,1,0.36,1);
+        }
 
         .panel { display: none; animation: fadeIn 0.4s ease both; }
         .panel.is-active { display: block; }
@@ -411,6 +422,8 @@
             { id: 'inbox',    n: 6, label: 'פניות ושירות' },
         ];
         const nav = document.getElementById('secNav');
+        const ind = document.createElement('span'); ind.className = 'sec-ind';
+        nav.appendChild(ind);
         SECTIONS.forEach((s, i) => {
             const b = document.createElement('button');
             b.className = 'sec-tab' + (i === 0 ? ' is-active' : '');
@@ -419,12 +432,27 @@
             b.addEventListener('click', () => show(s.id));
             nav.appendChild(b);
         });
+        function moveInd(animate) {
+            const t = nav.querySelector('.sec-tab.is-active'); if (!t) return;
+            if (!animate) ind.style.transition = 'none';
+            ind.style.width = t.offsetWidth + 'px';
+            ind.style.transform = 'translateX(' + t.offsetLeft + 'px)';
+            if (!animate) { void ind.offsetWidth; ind.style.transition = ''; }
+        }
         function show(id) {
             nav.querySelectorAll('.sec-tab').forEach(t => t.classList.toggle('is-active', t.dataset.sec === id));
             document.querySelectorAll('.panel').forEach(p => p.classList.toggle('is-active', p.dataset.sec === id));
+            moveInd(true);
+            // Keep the chosen tab in view within the scrollable bar.
+            const active = nav.querySelector('.sec-tab.is-active');
+            if (active) active.scrollIntoView({ inline: 'center', block: 'nearest' });
             document.dispatchEvent(new Event('vero-resize'));
         }
         document.querySelector('.panel[data-sec="time"]').classList.add('is-active');
+        moveInd(false);
+        window.addEventListener('resize', () => moveInd(false));
+        window.addEventListener('load', () => moveInd(false));
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(false));
 
         // ===== 1. Weekly windows + QR + vacation =====
         (function () {
