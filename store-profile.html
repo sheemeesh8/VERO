@@ -92,10 +92,21 @@
         .hero-meta { display: flex; flex-direction: column; gap: 7px; padding-bottom: 8px; flex: none; }
         .hero-status { font-size: 9.17px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.85; }
         .hero-status.is-closed { opacity: 0.6; }
-        /* Follower count, right-aligned and letterspaced like the mock. */
-        .hero-followers { text-align: right; display: flex; flex-direction: column; gap: 6px; flex: none; }
+        /* Follower / following / products slider — right-aligned, one stat visible
+           at a time, fading between them. Fixed box so the layout never jumps. */
+        .hero-followers { position: relative; flex: none; width: 230px; height: 58px; }
+        .hero-followers .hero-stat {
+            position: absolute; right: 0; top: 0; text-align: right;
+            display: flex; flex-direction: column; gap: 6px;
+            opacity: 0; transform: translateY(10px);
+            transition: opacity 0.6s ease, transform 0.6s ease; pointer-events: none;
+        }
+        .hero-followers .hero-stat.is-active { opacity: 1; transform: none; }
         .hf-num { font-size: clamp(20px, 2.6vw, 32px); font-weight: 300; letter-spacing: 8px; line-height: 1; }
         .hf-lbl { font-size: 10.83px; letter-spacing: 6px; text-transform: uppercase; opacity: 0.9; }
+        @media (max-width: 700px) {
+            .hero-followers { width: 170px; height: 50px; }
+        }
         /* Shared five-star rating (outline stars, proportional fill). */
         .vero-stars { position: relative; display: inline-flex; align-items: center; line-height: 1; font-size: 15.00px; direction: ltr; }
         .vero-stars-base, .vero-stars-fill { letter-spacing: 3px; }
@@ -477,13 +488,23 @@
                             <button class="hero-socials-btn" id="socialsBtn" type="button" aria-haspopup="dialog">Socials</button>
                         </div>
                     </div>
-                    <div class="hero-followers">
-                        <span class="hf-num" id="followers">1,284</span>
-                        <span class="hf-lbl">Followers</span>
+                    <!-- Followers / Following / Products — one big letterspaced stat
+                         at a time, auto-rotating (see the #heroStats rotator). -->
+                    <div class="hero-followers" id="heroStats">
+                        <div class="hero-stat is-active">
+                            <span class="hf-num" id="followers">1,284</span>
+                            <span class="hf-lbl">Followers</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hf-num" id="following">0</span>
+                            <span class="hf-lbl">Following</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hf-num" id="itemCount">0</span>
+                            <span class="hf-lbl">Products</span>
+                        </div>
                     </div>
                 </div>
-                <!-- Item count kept for the sync script; not shown in this hero. -->
-                <span id="itemCount" hidden>0</span>
             </div>
         </div>
 
@@ -553,6 +574,7 @@
             name: 'Studio Noir',
             tag: 'Curated wardrobe & one-off pieces. Tel Aviv.',
             followers: 1284,
+            following: 312,
             hero: 'women-hero.jpg',        // background set in settings
             ad:   { image: 'men-hero.jpg', kicker: 'End of season', title: 'Up to 40% off selected pieces' },
             // Only the categories / audiences the seller actually offers get chips.
@@ -671,6 +693,8 @@
             let prof; try { prof = JSON.parse(localStorage.getItem('vero_profile')) || {}; } catch (e) { prof = {}; }
             const followers = (sellerProf.followers != null) ? sellerProf.followers : prof.followers;
             if (followers != null && !isNaN(Number(followers))) STORE.followers = Number(followers);
+            const following = (sellerProf.following != null) ? sellerProf.following : prof.following;
+            if (following != null && !isNaN(Number(following))) STORE.following = Number(following);
             // The "About" the seller types in My Shop settings becomes the store's
             // tagline (the description shown directly under the name).
             const bio = (sellerProf.bio || prof.bio || '').trim();
@@ -719,6 +743,7 @@
         // Hero + ad + header text.
         document.getElementById('storeName').textContent = STORE.name;
         document.getElementById('followers').textContent = STORE.followers.toLocaleString('en-US');
+        document.getElementById('following').textContent = (Number(STORE.following) || 0).toLocaleString('en-US');
         document.getElementById('hero').style.backgroundImage = `url('${STORE.hero}')`;
         document.getElementById('itemCount').textContent =
             (STORE.itemsLive != null ? STORE.itemsLive : PRODUCTS.length);
@@ -984,7 +1009,7 @@
                 slides[i].classList.remove('is-active');
                 i = (i + 1) % slides.length;
                 slides[i].classList.add('is-active');
-            }, 8000);
+            }, 4000);
         })();
 
         // Exit like the other pages.
