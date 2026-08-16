@@ -83,15 +83,28 @@
             content: ""; position: absolute; inset: 0;
             background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.55) 100%);
         }
-        .hero-inner { position: relative; z-index: 2; padding: 0 40px 34px; color: #fff; width: 100%; }
-        /* Profile picture over the hero image. Falls back to a neutral tile. */
+        .hero-inner { position: relative; z-index: 2; padding: 0 44px 40px; color: #fff; width: 100%; }
+        /* Round profile picture on the right of the hero, above the follower count. */
         .hero-avatar {
-            width: 104px; height: 104px; border-radius: 999px; margin-bottom: 18px;
-            border: 3px solid rgba(255,255,255,0.9);
-            background: #d9d9d4 center / cover no-repeat;
-            box-shadow: 0 6px 22px rgba(0,0,0,0.3);
+            position: absolute; z-index: 3; top: 50%; right: 44px; transform: translateY(-64%);
+            width: clamp(150px, 20vw, 232px); height: auto; aspect-ratio: 1; margin: 0;
+            border-radius: 50%; border: none;
+            background: #f2f2ee center / cover no-repeat;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.35);
         }
-        .hero-name { font-size: clamp(38px, 6vw, 78px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+        /* Bottom row: name + status/follow at left, follower count at right. */
+        .hero-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
+        .hero-lead { display: flex; align-items: flex-end; gap: 26px; min-width: 0; }
+        .hero-name { font-size: clamp(46px, 8vw, 104px); font-weight: 200; letter-spacing: 2px; line-height: 0.82; }
+        .hero-meta { display: flex; flex-direction: column; gap: 7px; padding-bottom: 8px; flex: none; }
+        .hero-status { font-size: 9.17px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.85; }
+        .hero-status.is-closed { opacity: 0.6; }
+        .hero-followers { text-align: right; display: flex; flex-direction: column; gap: 6px; flex: none; }
+        .hf-num { font-size: clamp(20px, 2.6vw, 32px); font-weight: 300; letter-spacing: 8px; line-height: 1; }
+        .hf-lbl { font-size: 10.83px; letter-spacing: 6px; text-transform: uppercase; opacity: 0.9; }
+        @media (max-width: 700px) {
+            .hero-avatar { width: 110px; right: 20px; top: 24%; }
+        }
         /* Shared five-star rating (outline stars, proportional fill). */
         .vero-stars { position: relative; display: inline-flex; align-items: center; line-height: 1; font-size: 15.00px; direction: ltr; }
         .vero-stars-base, .vero-stars-fill { letter-spacing: 3px; }
@@ -100,51 +113,24 @@
         .vero-stars-num { margin-left: 10px; font-size: 10.83px; color: #6b6b66; letter-spacing: 0.3px; }
         .hero-rating { margin-top: 14px; }
         .hero-tag  { margin-top: 14px; font-size: 12.50px; font-weight: 300; letter-spacing: 0.5px; max-width: 620px; opacity: 0.92; }
-        .hero-badges { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-        .verified {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 14px; border: 1px solid rgba(255,255,255,0.7); border-radius: 999px;
-            font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase;
-        }
-        /* Name + small green verified check + follow button, all on one line
-           (mirrors the seller profile). */
-        .hero-name-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        /* Small blue verified check, floated over the hero above the name. */
         .verified-check {
-            display: inline-grid; place-items: center; width: 22px; height: 22px; flex: none;
-            border-radius: 50%; background: #2ecc71; color: #fff; font-size: 10.83px; font-weight: 700;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+            position: absolute; z-index: 3; left: 44px; bottom: calc(40px + clamp(46px, 8vw, 104px) + 14px);
+            display: inline-grid; place-items: center; width: 20px; height: 20px; flex: none;
+            border-radius: 50%; background: #2f6bff; color: #fff; font-size: 10px; font-weight: 700;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.3);
         }
+        .verified-check.is-hidden { display: none; }
 
-        /* ===================== STATS =====================
-           Followers + item count, bottom-left of the hero, on a slider that
-           auto-rotates every 8 seconds. Only one stat shows at a time. */
-        .hero-tag-row {
-            display: flex; align-items: flex-end; justify-content: space-between;
-            gap: 24px; margin-top: 14px;
-        }
-        /* Name + tagline stacked, so the title sits just above the description. */
-        .hero-lead { display: flex; flex-direction: column; min-width: 0; }
-        .hero-tag-row .hero-tag { margin-top: 12px; }
-        /* Right column of the hero: the stats slider with the socials sitting
-           directly beneath it, both right-aligned. */
-        /* Stats + socials on one bottom-aligned row: socials to the LEFT of the
-           stats slider. As a single row (not a stacked column) the block sits
-           lower, closer to the hero's bottom edge. */
-        .hero-right {
-            flex: none; display: flex; flex-direction: row-reverse;
-            align-items: flex-end; gap: 22px;
-        }
-        .hero-stats {
-            position: relative; height: 74px; width: 240px; flex: none; overflow: hidden;
-        }
-        .hero-socials { display: flex; justify-content: flex-end; }
+        /* SOCIALS — a small underlined label under Follow, in the hero-meta stack. */
         .hero-socials-btn {
-            padding: 9px 20px; border-radius: 999px; cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.55); background: transparent; color: #fff;
-            font-family: inherit; font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            padding: 0; cursor: pointer; align-self: flex-start;
+            border: none; background: none; color: #fff;
+            font-family: inherit; font-size: 8.33px; letter-spacing: 1.5px; text-transform: uppercase;
+            text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,0.5);
+            transition: text-decoration-color 0.2s;
         }
-        .hero-socials-btn:hover { background: #fff; color: #000; border-color: #fff; }
+        .hero-socials-btn:hover { text-decoration-color: #fff; }
 
         /* SOCIALS popup — a small centred dialog listing each network. */
         .soc-overlay {
@@ -183,14 +169,14 @@
         .hero-stat.is-active { opacity: 1; transform: translateY(0); }
         .hs-num { font-size: 48.33px; font-weight: 200; line-height: 1; }
         .hs-lbl { font-size: 10.00px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.8; }
+        /* Follow — plain bold text beside the name (matches the mock), not a pill. */
         .follow-btn {
-            padding: 6px 20px;
-            border: 1px solid rgba(255,255,255,0.7); border-radius: 999px; background: #fff; color: #000;
-            font-family: inherit; font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase;
-            cursor: pointer; transition: background 0.2s, color 0.2s;
+            padding: 0; border: none; background: none; color: #fff; cursor: pointer;
+            font-family: inherit; font-size: 12.50px; font-weight: 600; letter-spacing: 1px;
+            text-align: left; transition: opacity 0.2s;
         }
-        .follow-btn:hover { background: transparent; color: #fff; }
-        .follow-btn.following { background: transparent; color: #fff; }
+        .follow-btn:hover { opacity: 0.75; }
+        .follow-btn.following { font-weight: 500; opacity: 0.85; }
 
         /* ===================== SLIDERS =====================
            A horizontally-scrolling row of outline chips. Two of them: the
@@ -428,16 +414,6 @@
             .hs-num { font-size: 26.67px; }
         }
 
-        /* Match the profile-settings hero exactly: avatar 114px, no size-scaling
-           (the manual scale() that made the avatar/stats larger than the settings
-           preview has been removed; positions are kept). */
-        .hero-avatar { width: 114px; height: 114px; }
-        #heroAvatar {
-            transform: translate(1711px, 171px);
-        }
-        #heroStats {
-            transform: translate(-220px, 47px);
-        }
     </style>
     <link rel="stylesheet" href="product-card.css">
 </head>
@@ -456,42 +432,27 @@
     </div>
 
     <div class="wrap">
-        <!-- HERO -->
+        <!-- HERO — mirrors the storefront, but a buyer's page carries a round
+             profile picture on the right of the hero. -->
         <div class="hero" id="hero">
+            <span class="verified-check" id="verifiedCheck" title="VERO Verified Member" aria-label="VERO Verified Member">✓</span>
+            <div class="hero-avatar" id="heroAvatar" aria-label="Profile picture"></div>
             <div class="hero-inner">
-                <!-- Profile picture — unlike a store, a buyer's page carries an
-                     avatar over the hero image. -->
-                <div class="hero-avatar" id="heroAvatar"></div>
-                <div class="hero-tag-row">
-                    <!-- Name row mirrors the seller profile: name + verified check +
-                         follow, then rating and bio directly beneath. -->
+                <div class="hero-row">
                     <div class="hero-lead">
-                        <div class="hero-name-row">
-                            <h1 class="hero-name" id="storeName">Your Name</h1>
-                            <span class="verified-check" title="VERO Verified Member" aria-label="VERO Verified Member">✓</span>
+                        <h1 class="hero-name" id="storeName">Your Name</h1>
+                        <div class="hero-meta">
+                            <span class="hero-status" id="storeStatus">Open</span>
                             <button class="follow-btn" id="followBtn">Follow</button>
+                            <button class="hero-socials-btn" id="socialsBtn" type="button" aria-haspopup="dialog">Socials</button>
                         </div>
-                        <p class="hero-tag" id="storeTag">A short line about you.</p>
-                        <div class="vero-stars hero-rating" id="buyerRating"></div>
                     </div>
-                    <div class="hero-right">
-                        <div class="hero-stats" id="heroStats">
-                            <div class="hero-stat is-active">
-                                <span class="hs-num" id="followers">0</span>
-                                <span class="hs-lbl">Followers</span>
-                            </div>
-                            <div class="hero-stat">
-                                <span class="hs-num" id="itemCount">0</span>
-                                <span class="hs-lbl">Items</span>
-                            </div>
-                        </div>
-                        <!-- SOCIALS — one button beside the followers / items slider;
-                             it opens a popup to choose a network. Built from BUYER.socials. -->
-                        <div class="hero-socials">
-                            <button class="hero-socials-btn" id="socialsBtn" type="button" aria-haspopup="dialog">My Socials</button>
-                        </div>
+                    <div class="hero-followers">
+                        <span class="hf-num" id="followers">0</span>
+                        <span class="hf-lbl">Followers</span>
                     </div>
                 </div>
+                <span id="itemCount" hidden>0</span>
             </div>
         </div>
 
@@ -609,17 +570,9 @@
 
         // Hero + header text + profile picture.
         document.getElementById('storeName').textContent = BUYER.name;
-        document.getElementById('buyerRating').innerHTML = veroStarsHTML(buyerRatingValue());
-        document.getElementById('storeTag').textContent = BUYER.tag;
         document.getElementById('followers').textContent = BUYER.followers.toLocaleString('en-US');
         document.getElementById('hero').style.backgroundImage = `url('${BUYER.hero}')`;
         document.getElementById('itemCount').textContent = PRODUCTS.length;
-        // With no items to show, drop the "Items" stat so the hero rotates nothing
-        // and shows only Followers.
-        if (!PRODUCTS.length) {
-            const itemStat = document.getElementById('itemCount').closest('.hero-stat');
-            if (itemStat) itemStat.remove();
-        }
         (function setAvatar(){
             const el = document.getElementById('heroAvatar');
             if (BUYER.avatar) el.style.backgroundImage = `url('${BUYER.avatar}')`;
