@@ -48,6 +48,9 @@
         /* Embedded mode (?embed=1): drop the standalone chrome. */
         html.is-embed .side-image, html.is-embed .back { display: none !important; }
         html.is-embed .wrap { padding: 0 0 40px; max-width: none; animation: none; }
+        /* When embedded, the parent draws the section nav above its page bar and
+           drives us by postMessage — so hide our own inline section nav. */
+        html.is-embed .sec-nav { display: none; }
 
         .dash-title { font-size: clamp(30px, 4vw, 48px); font-weight: 200; letter-spacing: 0.5px; }
         .dash-sub { margin-top: 10px; color: var(--muted); font-size: 12px; }
@@ -453,6 +456,22 @@
         window.addEventListener('resize', () => moveInd(false));
         window.addEventListener('load', () => moveInd(false));
         if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(false));
+
+        // When embedded, hand the parent our section list (it draws the nav above its
+        // page bar) and react to the section it selects.
+        (function embedNav() {
+            if (!document.documentElement.classList.contains('is-embed')) return;
+            const sendSections = () => {
+                try { parent.postMessage({ veroStatsSections: SECTIONS.map(s => ({ id: s.id, n: s.n, label: s.label })) }, '*'); } catch (e) {}
+            };
+            window.addEventListener('message', e => {
+                if (!e.data) return;
+                if (e.data.veroStatsRequest) sendSections();
+                if (e.data.veroStatsSection) show(e.data.veroStatsSection);
+            });
+            sendSections();
+            window.addEventListener('load', sendSections);
+        })();
 
         // ===== 1. Weekly windows + QR + vacation =====
         (function () {

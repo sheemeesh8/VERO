@@ -11479,17 +11479,60 @@
                     transition: transform 0.4s cubic-bezier(0.22,1,0.36,1),
                                 width 0.4s cubic-bezier(0.22,1,0.36,1);
                 }
+                /* Divider + "more" (⋯) button that opens the full category chooser. */
+                .feed-nav-sep { width: 1px; align-self: stretch; margin: 5px 3px; background: rgba(255,255,255,0.22); flex: none; }
+                .feed-nav-more {
+                    position: relative; z-index: 1; flex: none; border: none; background: transparent;
+                    color: #b5b5b0; font-size: 17px; line-height: 1; letter-spacing: 2px;
+                    padding: 0 15px; border-radius: 999px; cursor: pointer; transition: color 0.2s;
+                }
+                .feed-nav-more:hover, .feed-nav-more.open { color: #fff; }
+                .feed-nav-pop {
+                    position: fixed; z-index: 901; display: none;
+                    grid-template-columns: repeat(2, minmax(120px, 1fr)); gap: 6px;
+                    max-width: 92vw; max-height: 46vh; overflow-y: auto;
+                    background: #fff; border: 1px solid rgba(0,0,0,0.12); border-radius: 18px; padding: 12px;
+                    box-shadow: 0 14px 44px rgba(0,0,0,0.24);
+                }
+                .feed-nav-pop.open { display: grid; }
+                .feed-nav-pop .fnp-title {
+                    grid-column: 1 / -1; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+                    color: #9a9a95; padding: 2px 4px 6px;
+                }
+                .fnp-item {
+                    border: 1px solid #e9e9e6; background: #fff; color: #1c1c1c; font-family: inherit;
+                    font-size: 11px; padding: 10px 14px; border-radius: 999px; cursor: pointer;
+                    text-align: center; white-space: nowrap; transition: 0.15s;
+                }
+                .fnp-item:hover { border-color: #111; }
+                .fnp-item.on { background: #111; color: #fff; border-color: #111; }
             `;
             document.head.appendChild(style);
 
             const bar = document.createElement('nav'); bar.className = 'feed-nav';
             const ind = document.createElement('span'); ind.className = 'feed-nav-ind';
+            const pop = document.createElement('div'); pop.className = 'feed-nav-pop';
             document.body.appendChild(bar);
+            document.body.appendChild(pop);
 
             const activeType = () => (typeof feedFilters !== 'undefined' && feedFilters.type) || '';
             function cats() {
                 try { return uniqueSorted(feedBaseProducts().map(p => p.category).filter(Boolean)); }
                 catch (e) { return []; }
+            }
+            // The five categories the recommendation reads as your favourites: ranked
+            // by how often the category shows up in your saved (wishlist) items, then
+            // falling back to the mode's own order. Recomputed per mode.
+            function topCats() {
+                const all = cats();
+                let wl = [];
+                try { wl = JSON.parse(localStorage.getItem('vero_wishlist')) || []; } catch (e) {}
+                const freq = {};
+                (Array.isArray(wl) ? wl : []).forEach(it => {
+                    const c = it && it.category;
+                    if (c && all.includes(c)) freq[c] = (freq[c] || 0) + 1;
+                });
+                return all.slice().sort((a, b) => (freq[b] || 0) - (freq[a] || 0)).slice(0, 5);
             }
             function moveInd(animate) {
                 const t = bar.querySelector('.feed-nav-tab.is-active'); if (!t) return;
@@ -11506,11 +11549,17 @@
             }
             function syncActive(animate) {
                 const tabs = [...bar.querySelectorAll('.feed-nav-tab')];
-                if (!tabs.length) return;
                 const type = activeType();
-                tabs.forEach(t => t.classList.toggle('is-active', t.dataset.type === type));
-                if (!bar.querySelector('.feed-nav-tab.is-active')) tabs[0].classList.add('is-active');
-                moveInd(animate !== false);
+                let any = false;
+                tabs.forEach(t => {
+                    const on = type !== '' && t.dataset.type === type;
+                    t.classList.toggle('is-active', on);
+                    if (on) any = true;
+                });
+                // Only glide the pill when one of the five is the active filter; when
+                // the filter is "All" or a category chosen from the popup, hide it.
+                if (any) moveInd(animate !== false);
+                else ind.style.width = '0';
             }
             function build() {
                 bar.innerHTML = '';
@@ -11522,10 +11571,52 @@
                     b.addEventListener('click', () => select(type));
                     bar.appendChild(b);
                 };
-                mk('All', '');
-                cats().forEach(c => mk(c, c));
+                topCats().forEach(c => mk(c, c));                 // the five favourites only
+                const sep = document.createElement('span'); sep.className = 'feed-nav-sep';
+                bar.appendChild(sep);
+                const more = document.createElement('button');   // the ⋯ chooser
+                more.type = 'button'; more.className = 'feed-nav-more';
+                more.textContent = '⋯'; more.setAttribute('aria-label', 'כל הקטגוריות');
+                more.addEventListener('click', e => { e.stopPropagation(); togglePop(more); });
+                bar.appendChild(more);
                 syncActive(false);
             }
+
+            // ---- Full category chooser popup (opened by the ⋯ button) ----
+            function buildPop() {
+                pop.innerHTML = '';
+                const title = document.createElement('div'); title.className = 'fnp-title';
+                title.textContent = 'כל הקטגוריות'; pop.appendChild(title);
+                const mkP = (label, type) => {
+                    const b = document.createElement('button');
+                    b.className = 'fnp-item' + (activeType() === type ? ' on' : '');
+                    b.textContent = label;
+                    b.addEventListener('click', () => { select(type); closePop(); });
+                    pop.appendChild(b);
+                };
+                mkP('All', '');
+                cats().forEach(c => mkP(c, c));
+            }
+            function positionPop(anchor) {
+                const r = bar.getBoundingClientRect();
+                pop.style.left = '50%';
+                pop.style.transform = 'translateX(-50%)';
+                pop.style.bottom = (window.innerHeight - r.top + 10) + 'px';
+            }
+            let popOpen = false;
+            function togglePop(anchor) { popOpen ? closePop() : openPop(anchor); }
+            function openPop(anchor) {
+                buildPop(); pop.classList.add('open'); positionPop(anchor);
+                if (anchor) anchor.classList.add('open');
+                popOpen = true;
+                setTimeout(() => document.addEventListener('click', outside), 0);
+            }
+            function closePop() {
+                pop.classList.remove('open'); popOpen = false;
+                const m = bar.querySelector('.feed-nav-more'); if (m) m.classList.remove('open');
+                document.removeEventListener('click', outside);
+            }
+            function outside(e) { if (!pop.contains(e.target) && !e.target.closest('.feed-nav-more')) closePop(); }
 
             // Rebuild when the mode (clothing/art) changes; keep the highlight synced
             // whenever the feed re-renders from any source (dropdown, search, etc.).

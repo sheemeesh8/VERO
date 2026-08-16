@@ -1207,6 +1207,34 @@
 
         /* The area panels now switch inline (below the hero + followers), exactly
            like the Settings / Statistics slides — no full-screen overlay. */
+        /* Statistics section sub-nav — a second bar that sits just ABOVE the page
+           tab bar, in inverted colours (light fill, dark text) with a bolder frame.
+           It drives the embedded dashboard's six sections via postMessage, and only
+           shows while the Statistics slide is on screen (seller). */
+        .stats-subnav {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            z-index: 60; display: none; align-items: stretch; gap: 6px;
+            max-width: 94vw; overflow-x: auto;
+            background: #fff; border: 2px solid #111; border-radius: 999px; padding: 5px;
+            box-shadow: 0 6px 26px rgba(0,0,0,0.18);
+        }
+        .stats-subnav.show { display: flex; }
+        .stats-subnav::-webkit-scrollbar { display: none; }
+        .stats-subtab {
+            position: relative; z-index: 1; border: none; background: transparent;
+            font-family: inherit; font-size: 10px; letter-spacing: 0.8px; font-weight: 500;
+            color: #6b6b66; padding: 9px 15px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+            transition: color 0.2s;
+        }
+        .stats-subtab:hover { color: #111; }
+        .stats-subtab.is-active { color: #fff; }
+        .stats-subind {
+            position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; z-index: 0;
+            background: #111; border-radius: 999px; pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1),
+                        width 0.4s cubic-bezier(0.22,1,0.36,1);
+        }
+
         .area-overlay { display: none; margin-top: 12px; }
         .area-overlay.open { display: block; }
         .area-panel { display: none; }
@@ -2585,6 +2613,71 @@
             const fr = overlay.querySelector('.area-panel.is-active iframe');
             if (fr && !fr.src) fr.src = fr.dataset.src;
         }
+    })();
+    </script>
+
+    <!-- ===== Statistics section sub-nav: a light bar above the page bar that drives
+         the embedded dashboard's six sections (seller only) ===== -->
+    <script>
+    (function statsSubnav() {
+        if (!document.body.classList.contains('is-seller')) return;   // dashboard is seller-only
+        const frame = document.getElementById('salesFrame');
+        if (!frame) return;
+
+        const bar = document.createElement('nav'); bar.className = 'stats-subnav';
+        const ind = document.createElement('span'); ind.className = 'stats-subind';
+        bar.appendChild(ind);
+        document.body.appendChild(bar);
+        let built = false;
+
+        function moveInd(a) {
+            const t = bar.querySelector('.stats-subtab.is-active'); if (!t) return;
+            if (!a) ind.style.transition = 'none';
+            ind.style.width = t.offsetWidth + 'px';
+            ind.style.transform = 'translateX(' + t.offsetLeft + 'px)';
+            if (!a) { void ind.offsetWidth; ind.style.transition = ''; }
+        }
+        function build(sections) {
+            if (built || !Array.isArray(sections) || !sections.length) return;
+            built = true;
+            sections.forEach((s, i) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'stats-subtab' + (i === 0 ? ' is-active' : '');
+                b.dataset.sec = s.id; b.textContent = s.label;
+                b.addEventListener('click', () => select(s.id));
+                bar.appendChild(b);
+            });
+            updateVis();
+        }
+        function select(id) {
+            bar.querySelectorAll('.stats-subtab').forEach(t => t.classList.toggle('is-active', t.dataset.sec === id));
+            moveInd(true);
+            try { frame.contentWindow.postMessage({ veroStatsSection: id }, '*'); } catch (e) {}
+        }
+        function statsVisible() {
+            const stats = document.getElementById('slideStats');
+            const w = document.querySelector('.wrap');
+            return built && stats && stats.classList.contains('is-active') && !(w && w.classList.contains('area-mode'));
+        }
+        function updateVis() {
+            const vis = statsVisible();
+            bar.classList.toggle('show', vis);
+            if (vis) moveInd(false);
+        }
+
+        // Handshake with the embedded dashboard.
+        window.addEventListener('message', e => { if (e.data && e.data.veroStatsSections) build(e.data.veroStatsSections); });
+        frame.addEventListener('load', () => { try { frame.contentWindow.postMessage({ veroStatsRequest: 1 }, '*'); } catch (e) {} });
+        try { frame.contentWindow.postMessage({ veroStatsRequest: 1 }, '*'); } catch (e) {}
+
+        // Show/hide as the active slide (or area mode) changes.
+        const obs = new MutationObserver(updateVis);
+        const stats = document.getElementById('slideStats');
+        if (stats) obs.observe(stats, { attributes: true, attributeFilter: ['class'] });
+        const w = document.querySelector('.wrap');
+        if (w) obs.observe(w, { attributes: true, attributeFilter: ['class'] });
+        window.addEventListener('resize', () => { if (statsVisible()) moveInd(false); });
     })();
     </script>
     <script src="vero-editor.js"></script>
