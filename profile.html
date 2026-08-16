@@ -122,6 +122,62 @@
             transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
         .ph-side .stf-open:hover { background: #fff; color: #000; border-color: #fff; }
+
+        /* Hero action pills — the settings navigation buttons (Change background,
+           Show storefront/profilefront, Change opening hours / Change profile
+           picture), laid in a row beside/under the name like the mock. */
+        .ph-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+        .ph-action {
+            display: inline-flex; align-items: center; white-space: nowrap;
+            padding: 10px 22px; border: 1px solid rgba(255,255,255,0.7); border-radius: 999px;
+            background: rgba(255,255,255,0.06); color: #fff; cursor: pointer;
+            font-family: inherit; font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .ph-action:hover { background: #fff; color: #000; border-color: #fff; }
+        .ph-action.seller-only, .ph-action.buyer-only { display: none; }
+        body.is-seller .ph-action.seller-only { display: inline-flex; }
+        body:not(.is-seller) .ph-action.buyer-only { display: inline-flex; }
+
+        /* Opening-hours editor modal. */
+        .oh-overlay {
+            position: fixed; inset: 0; z-index: 95; display: none;
+            align-items: center; justify-content: center; padding: 20px;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(3px);
+        }
+        .oh-overlay.open { display: flex; }
+        .oh-modal {
+            width: min(460px, 100%); max-height: 90vh; overflow-y: auto;
+            background: #fff; border-radius: 16px; padding: 28px;
+            box-shadow: 0 24px 70px rgba(0,0,0,0.35);
+        }
+        .oh-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+        .oh-title { font-size: 18.33px; font-weight: 400; letter-spacing: 0.5px; }
+        .oh-x { width: 34px; height: 34px; border: 1px solid #e2ded7; background: #fff; border-radius: 50%;
+            font-size: 18px; line-height: 1; color: #1c1c1c; cursor: pointer; transition: 0.2s; }
+        .oh-x:hover { background: #000; color: #fff; border-color: #000; }
+        .oh-sub { font-size: 10.83px; color: #9a9a95; margin-bottom: 18px; }
+        .oh-day {
+            display: grid; grid-template-columns: 96px 1fr; align-items: center;
+            gap: 12px; padding: 11px 0; border-bottom: 1px solid #f0efec;
+        }
+        .oh-day:last-of-type { border-bottom: none; }
+        .oh-day-name { font-size: 11.67px; letter-spacing: 0.5px; }
+        .oh-times { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+        .oh-times input[type="time"] {
+            border: 1px solid rgba(0,0,0,0.18); border-radius: 8px; padding: 6px 8px;
+            font-family: inherit; font-size: 11.67px; background: #fff; color: #1c1c1c;
+        }
+        .oh-times .oh-dash { color: #9a9a95; }
+        .oh-closed { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: 0.5px; color: #6b6b66; text-transform: uppercase; cursor: pointer; }
+        .oh-day.is-closed .oh-times input[type="time"], .oh-day.is-closed .oh-dash { opacity: 0.3; pointer-events: none; }
+        .oh-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+        .oh-btn { padding: 11px 26px; border-radius: 999px; font-family: inherit; font-size: 10.83px;
+            letter-spacing: 0.5px; cursor: pointer; transition: 0.2s; border: 1.4px solid #000; }
+        .oh-btn.ghost { background: #fff; color: #1c1c1c; }
+        .oh-btn.ghost:hover { background: #f0f0f0; }
+        .oh-btn.solid { background: #000; color: #fff; }
+        .oh-btn.solid:hover { opacity: 0.85; }
         .ph-right { flex: none; text-align: right; }
         .ph-right .shr-num { display: block; font-size: clamp(30px, 4vw, 56px); font-weight: 200; line-height: 1; color: #fff; }
         .ph-right .shr-lbl { font-size: 9.17px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.7); }
@@ -1340,10 +1396,16 @@
                         <p class="hero-tag" id="storeCoverTag">A short line about you.</p>
                         <div class="hero-rating-row">
                             <div class="vero-stars hero-rating" id="phRating"></div>
-                            <button type="button" class="open-front-btn"
-                                onclick="window.open((new URLSearchParams(location.search).get('from')==='seller'||localStorage.getItem('vero_active_account')==='seller')?'store-profile.html':'buyer-profile.html','_blank','noopener')">
-                                Open profile front
-                            </button>
+                        </div>
+                        <!-- Settings navigation pills (images 2 & 4). The third pill
+                             differs by mode: opening hours for the shop, profile
+                             picture for the personal profile. -->
+                        <div class="ph-actions">
+                            <button type="button" class="ph-action" id="heroChangeBg">Change background</button>
+                            <button type="button" class="ph-action seller-only" id="heroShowStore">Show storefront</button>
+                            <button type="button" class="ph-action buyer-only" id="heroShowProfile">Show profilefront</button>
+                            <button type="button" class="ph-action seller-only" id="heroOpeningHours">Change opening hours</button>
+                            <button type="button" class="ph-action buyer-only" id="heroChangePic">Change profile picture</button>
                         </div>
                     </div>
                     <div class="hero-right">
@@ -1360,6 +1422,24 @@
                     </div>
                 </div>
                 <figure class="ph-avatar"><div class="avatar" id="storeAvatar">V</div></figure>
+            </div>
+        </div>
+
+        <!-- Opening-hours editor — sets the OPEN / CLOSED status shown on the
+             storefront. Saved to vero_store_config.hours as {0..6:{open,close}|null}
+             (0 = Sunday), which store-profile.html reads. -->
+        <div class="oh-overlay" id="ohOverlay">
+            <div class="oh-modal" role="dialog" aria-modal="true" aria-label="Opening hours">
+                <div class="oh-head">
+                    <div class="oh-title">Opening hours</div>
+                    <button type="button" class="oh-x" id="ohClose" aria-label="Close">&times;</button>
+                </div>
+                <div class="oh-sub">These set the OPEN / CLOSED badge on your storefront.</div>
+                <div id="ohDays"></div>
+                <div class="oh-actions">
+                    <button type="button" class="oh-btn ghost" id="ohCancel">Cancel</button>
+                    <button type="button" class="oh-btn solid" id="ohSave">Save hours</button>
+                </div>
             </div>
         </div>
 
@@ -1400,11 +1480,15 @@
                         <button type="button" class="social-ico" data-social="twitter" aria-label="Twitter / X" aria-expanded="false">
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 3h3l-6.6 7.6L21.8 21h-6l-4.3-5.6L6.5 21h-3l7.1-8.1L2.4 3h6.1l3.9 5.2L17.5 3zm-1.1 16.1h1.7L8 4.8H6.2l10.2 14.3z"/></svg>
                         </button>
+                        <button type="button" class="social-ico" data-social="facebook" aria-label="Facebook" aria-expanded="false">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.2c-1.2 0-1.6.75-1.6 1.5V12h2.7l-.43 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>
+                        </button>
                     </div>
                     <div class="social-rows">
                         <div class="social-row" data-row="instagram"><input id="pf-instagram" type="url" placeholder="Instagram URL"></div>
                         <div class="social-row" data-row="tiktok"><input id="pf-tiktok" type="url" placeholder="TikTok URL"></div>
                         <div class="social-row" data-row="twitter"><input id="pf-twitter" type="url" placeholder="Twitter / X URL"></div>
+                        <div class="social-row" data-row="facebook"><input id="pf-facebook" type="url" placeholder="Facebook URL"></div>
                     </div>
                 </div>
                 <!-- ===== Business shop settings — merged into this card (seller only) ===== -->
@@ -1870,6 +1954,76 @@
         // Seller-only dedicated "Change profile photo" button, beside the background one.
         const changeSellerPhoto = document.getElementById('changeSellerPhoto');
         if (changeSellerPhoto) changeSellerPhoto.addEventListener('click', () => document.getElementById('pf-photo').click());
+
+        // ---- Hero navigation pills (images 2 & 4) ----
+        // Reuse the existing hidden inputs / open-front actions; the opening-hours
+        // pill opens the editor below.
+        (function heroActions() {
+            const bg   = document.getElementById('heroChangeBg');
+            const stf  = document.getElementById('heroShowStore');
+            const pff  = document.getElementById('heroShowProfile');
+            const pic  = document.getElementById('heroChangePic');
+            const hrs  = document.getElementById('heroOpeningHours');
+            if (bg)  bg.addEventListener('click',  () => document.getElementById('storeBgInput').click());
+            if (stf) stf.addEventListener('click', () => window.open('store-profile.html', '_blank', 'noopener'));
+            if (pff) pff.addEventListener('click', () => window.open('buyer-profile.html', '_blank', 'noopener'));
+            if (pic) pic.addEventListener('click', () => document.getElementById('pf-photo').click());
+            if (hrs) hrs.addEventListener('click', () => openHoursEditor());
+        })();
+
+        // ---- Opening-hours editor → vero_store_config.hours { 0..6:{open,close}|null } ----
+        // 0 = Sunday. store-profile.html reads this to show the OPEN / CLOSED badge.
+        function openHoursEditor() {
+            const overlay = document.getElementById('ohOverlay');
+            const daysEl  = document.getElementById('ohDays');
+            const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const readCfg = () => { try { return JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { return {}; } };
+            const cfg = readCfg();
+            const hours = cfg.hours || {};
+
+            daysEl.innerHTML = DAYS.map((name, i) => {
+                const d = hours[i];
+                const closed = d === null || (hours.hasOwnProperty(i) && !d);
+                const open  = (d && d.open)  || '09:00';
+                const close = (d && d.close) || '18:00';
+                return `<div class="oh-day${closed ? ' is-closed' : ''}" data-day="${i}">
+                    <span class="oh-day-name">${name}</span>
+                    <div class="oh-times">
+                        <input type="time" class="oh-open" value="${open}">
+                        <span class="oh-dash">–</span>
+                        <input type="time" class="oh-close" value="${close}">
+                        <label class="oh-closed"><input type="checkbox" class="oh-closed-cb" ${closed ? 'checked' : ''}> Closed</label>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Toggle the row's disabled look when "Closed" changes.
+            daysEl.querySelectorAll('.oh-closed-cb').forEach(cb => {
+                cb.addEventListener('change', () => cb.closest('.oh-day').classList.toggle('is-closed', cb.checked));
+            });
+
+            const close = () => overlay.classList.remove('open');
+            overlay.classList.add('open');
+            document.getElementById('ohClose').onclick  = close;
+            document.getElementById('ohCancel').onclick = close;
+            overlay.onclick = e => { if (e.target === overlay) close(); };
+            document.getElementById('ohSave').onclick = () => {
+                const out = {};
+                daysEl.querySelectorAll('.oh-day').forEach(row => {
+                    const i = row.dataset.day;
+                    if (row.querySelector('.oh-closed-cb').checked) { out[i] = null; return; }
+                    out[i] = { open: row.querySelector('.oh-open').value || '09:00',
+                               close: row.querySelector('.oh-close').value || '18:00' };
+                });
+                const c = readCfg(); c.hours = out;
+                localStorage.setItem('vero_store_config', JSON.stringify(c));
+                // Mirror onto the seller profile record too, so either source stays in sync.
+                try { const sp = JSON.parse(localStorage.getItem('vero_seller_profile')) || {}; sp.hours = out; localStorage.setItem('vero_seller_profile', JSON.stringify(sp)); } catch (e) {}
+                const note = document.getElementById('saveNote');
+                if (note) { note.textContent = 'Hours saved ✓'; clearTimeout(saveTimer); saveTimer = setTimeout(() => { note.textContent = 'Changes save automatically.'; }, 1600); }
+                close();
+            };
+        }
 
         // ---- Profile picture upload (stored as a data URL on the profile) ----
         const photoInput = document.getElementById('pf-photo');
