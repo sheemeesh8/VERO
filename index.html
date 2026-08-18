@@ -510,11 +510,11 @@
         /* ==================== HERO ==================== */
         .hero {
             width: 100vw;
-            /* Hero image removed — collapsed to a slim plain-white spacer so the fixed
-               header has clear room above the feed (no image, just white). */
-            height: 96px;
-            max-height: 96px;
-            min-height: 96px;
+            /* Wide full-bleed landscape hero (~2:1), like the reference — the image
+               spans the full width and sits well short of a full-screen height. */
+            height: 64vw;
+            max-height: 100vh;
+            min-height: 620px;
             background-size: cover;
             background-position: center 30%;
             display: flex;
@@ -551,24 +551,33 @@
                proximity (not mandatory) so scrolling is never trapped or jumpy. */
             html { scroll-snap-type: y proximity; }
 
-            /* Hero image removed — plain white spacer, no pinned OMEGA-style reveal. */
+            /* The hero image pins to the top; everything after it (the second image and
+               the feed) scrolls up and covers it — the OMEGA-style reveal. */
             #heroImage.hero {
-                position: static;
+                position: sticky;
+                top: 0;
+                z-index: 0;
+                scroll-snap-align: start;
+                /* Full width without 100vw — 100vw would include the scrollbar and cause
+                   a horizontal scrollbar. Reset the desktop full-bleed breakout too. */
                 width: 100%;
                 left: auto;
                 right: auto;
                 margin-left: 0;
                 margin-right: 0;
-                height: 84px;
-                min-height: 84px;
-                max-height: 84px;
-                background: #fff !important;
-                background-image: none !important;
+                height: 100vh;
+                min-height: 100vh;
+                max-height: none;
+                background-image: url('./women-hero.jpg') !important; /* PLACEHOLDER hero image */
+                background-position: center center;
             }
 
-            /* Second full-screen image panel removed with the hero. */
+            /* The second image and the rest of the page sit above the sticky hero and
+               carry a solid background so they cover it as they scroll up over it. */
             .hero-mobile-2 {
-                display: none;
+                display: block;
+                /* Rises over the hero, then pins at the top itself once it covers it —
+                   the feed then scrolls up over this one in turn. */
                 position: sticky;
                 top: 0;
                 z-index: 1;
@@ -6569,9 +6578,10 @@
     <!-- ==================== MAIN VIEW ==================== -->
     <div id="mainView">
     <!-- ==================== HERO ==================== -->
-    <div class="hero" id="heroImage" style="background: #fff;">
-        <!-- Hero image removed — the top of the page is now plain white. The regular
-             site header (#siteHeader) sits over it in its solid (dark-on-white) look. -->
+    <div class="hero" id="heroImage" style="background-image: url('./hero-beach.jpg'); background-size: cover; background-position: center 30%;">
+        <!-- Hero intentionally empty: just the background image. The regular site
+             header (#siteHeader) now sits over it in its transparent state and turns
+             solid once you scroll past the hero. -->
     </div>
 
     <!-- Second full-screen panel — mobile only. A swipe slider of full images:
@@ -7266,9 +7276,7 @@
         // drops it again in hideAllViews().
         function applyHomeHeaderLook() {
             const hdr = document.querySelector('header#siteHeader');
-            // The hero is plain white now, so the header wears its solid (dark-on-white)
-            // look from the very top instead of the transparent-over-image look.
-            if (hdr) { hdr.classList.remove('sticky-look', 'wh-over-hero'); hdr.classList.add('scrolled'); }
+            if (hdr) hdr.classList.add('sticky-look');
             syncHeaderHole();
         }
 
@@ -8176,9 +8184,15 @@
             // Mirror the art state on <body> so the header can restyle over the black band.
             document.body.classList.toggle('art-active', category === 'art');
             applyHeroSquareCopy(category);
-            // Hero image removed — the top of the page stays plain white in both modes.
-            heroImage.style.backgroundImage = "none";
-            heroImage.style.background = "#fff";
+            if (category === 'clothing') {
+                heroImage.style.backgroundImage = "url('./clothing-hero.png')";
+                heroImage.style.backgroundPosition = "center 10%";
+                heroImage.style.backgroundSize = "cover";
+            } else {
+                heroImage.style.backgroundImage = "url('./art-hero.png')";
+                heroImage.style.backgroundPosition = "center 10%";
+                heroImage.style.backgroundSize = "cover";
+            }
 
             // Switching mode resets the primary filter — and the feed filters with
             // it, since sellers/types/colours differ per mode.
@@ -8550,9 +8564,7 @@
             }
             // Transparent over the hero; solid + dark once scrolled past it.
             const hdr = document.querySelector('header');
-            // Home hero is plain white — keep the header solid from the top there.
-            const homeVisible = document.getElementById('mainView').style.display !== 'none';
-            if (hdr) hdr.classList.toggle('scrolled', homeVisible || window.scrollY > 80);
+            if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 80);
             // the hole is inline, so it has to be re-applied / cleared on scroll
             syncHeaderHole();
         });
@@ -11905,10 +11917,10 @@
         const H = () => hero.offsetHeight;
         const header = document.querySelector('#siteHeader');
 
-        // Hero image removed — the header is always visible (never slid up) over the
-        // plain white top, so nothing hides it.
+        // Keep the header slid up until the feed fully fills the viewport (the hero
+        // is essentially gone), then let it slide in fast.
         function syncHeader(y) {
-            if (header) header.classList.remove('wh-over-hero');
+            if (header) header.classList.toggle('wh-over-hero', y < H() * 0.92);
         }
         syncHeader(window.scrollY || 0);
 
@@ -11929,8 +11941,35 @@
         // upward gesture only arms it, the second (after a brief pause) glides.
         // A continuous burst of wheel events counts as one gesture; a >260ms gap
         // starts a new one. The arm resets if you pause too long or scroll down.
-        // Hero image removed: no more wheel-driven snap between the hero and the feed —
-        // the page scrolls normally in one continuous motion.
+        let upArm = 0, upArmTime = 0;
+        window.addEventListener('wheel', function (e) {
+            const y = window.scrollY || window.pageYOffset;
+            const h = H();
+
+            // While a glide is running, swallow the wheel so momentum can't stutter it.
+            if (animating || performance.now() < lockUntil) {
+                if (y < h * 2.2) e.preventDefault();
+                return;
+            }
+            if (e.deltaY > 0 && y < h * 0.5) {
+                e.preventDefault();
+                upArm = 0;                 // any downward intent clears the unlock
+                glideDown();               // flick down on the hero → glide into the feed
+            } else if (e.deltaY < 0 && y > 40 && y < h * 2.2) {
+                e.preventDefault();
+                const now = performance.now();
+                // A new flick if there was a pause since the last upward wheel event,
+                // or if the arm went stale.
+                if (now - upArmTime > 260 || now - upArmTime > 1400) upArm++;
+                upArmTime = now;
+                if (upArm >= 2) {          // second flick → unlock and glide up
+                    upArm = 0;
+                    glideUp();
+                }
+            } else {
+                upArm = 0;                 // left the zone → reset
+            }
+        }, { passive: false });
     })();
     </script>
 </body>
