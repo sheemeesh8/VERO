@@ -12118,11 +12118,17 @@
         let lastY = window.scrollY || 0;
         const H = () => hero.offsetHeight;
         const header = document.querySelector('#siteHeader');
+        const pickBand = document.querySelector('.pick-band');
 
-        // Keep the header slid up until the feed fully fills the viewport (the hero
-        // is essentially gone), then let it slide in fast.
+        // Keep the header slid up through the hero, the second image AND the JACKETS
+        // card (the blurred-background stage); it slides in only once we scroll past
+        // that card into the feed.
         function syncHeader(y) {
-            if (header) header.classList.toggle('wh-over-hero', y < H() * 0.92);
+            if (!header) return;
+            const hide = pickBand
+                ? pickBand.getBoundingClientRect().bottom > 4
+                : y < H() * 0.92;
+            header.classList.toggle('wh-over-hero', hide);
         }
         syncHeader(window.scrollY || 0);
 
@@ -12182,6 +12188,7 @@
         function init() {
             const band = document.querySelector('.pick-band');
             const hm2 = document.getElementById('heroMobile2');
+            const hdr = document.getElementById('siteHeader');
             if (!band || !hm2) return;
             function update() {
                 const r = band.getBoundingClientRect();
@@ -12189,6 +12196,10 @@
                 // "Entered the white-card stage" = the band covers the middle of the screen.
                 const inStage = r.top <= vh * 0.4 && r.bottom >= vh * 0.6;
                 hm2.classList.toggle('bg-blur', inStage);
+                // The header stays slid up through the hero, the second image and the
+                // JACKETS card; it slides in only once we scroll past that card into
+                // the feed (the band's bottom has risen above the top of the screen).
+                if (hdr) hdr.classList.toggle('wh-over-hero', r.bottom > 4);
             }
             window.addEventListener('scroll', update, { passive: true });
             window.addEventListener('resize', update);
