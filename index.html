@@ -6074,6 +6074,9 @@
                 scroll-snap-stop: always;
             }
         }
+        /* When the white-card stage is entered, blur the second image showing behind. */
+        #heroMobile2 { transition: filter 0.45s ease; }
+        #heroMobile2.bg-blur { filter: blur(9px); }
         @media (max-width: 1024px) {
             .vf-picks { grid-template-columns: repeat(3, 1fr); }
         }
@@ -12169,6 +12172,30 @@
                 upArm = 0;                 // left the zone → reset
             }
         }, { passive: false });
+    })();
+    </script>
+
+    <!-- Blur the second image (shown behind the white card) once the card's scroll
+         stage is entered; clear the blur when leaving it. -->
+    <script>
+    (function () {
+        function init() {
+            const band = document.querySelector('.pick-band');
+            const hm2 = document.getElementById('heroMobile2');
+            if (!band || !hm2) return;
+            function update() {
+                const r = band.getBoundingClientRect();
+                const vh = window.innerHeight;
+                // "Entered the white-card stage" = the band covers the middle of the screen.
+                const inStage = r.top <= vh * 0.4 && r.bottom >= vh * 0.6;
+                hm2.classList.toggle('bg-blur', inStage);
+            }
+            window.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+            update();
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+        else init();
     })();
     </script>
 </body>
