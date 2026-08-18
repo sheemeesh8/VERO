@@ -547,15 +547,12 @@
            are built by JS (buildOmegaHero) on mobile only. Placeholder images for now —
            swap the two background-image URLs below for the real mobile shots. */
         @media (max-width: 768px) {
-            .omega-viewport {
+            /* The hero image pins to the top; everything after it (the second image and
+               the feed) scrolls up and covers it — the OMEGA-style reveal. */
+            #heroImage.hero {
                 position: sticky;
                 top: 0;
-                height: 100vh;
-                overflow: hidden;
-            }
-            .omega-stack { will-change: transform; }
-
-            #heroImage.hero {
+                z-index: 0;
                 /* Full width without 100vw — 100vw would include the scrollbar and cause
                    a horizontal scrollbar. Reset the desktop full-bleed breakout too. */
                 width: 100%;
@@ -570,13 +567,22 @@
                 background-position: center center;
             }
 
+            /* The second image and the rest of the page sit above the sticky hero and
+               carry a solid background so they cover it as they scroll up over it. */
             .hero-mobile-2 {
                 display: block;
                 position: relative;
+                z-index: 1;
                 width: 100%;
                 height: 100vh;
                 min-height: 100vh;
                 background: url('./men-hero.jpg') center center / cover no-repeat; /* PLACEHOLDER 2nd image */
+            }
+            .hero-slider,
+            .feed-section {
+                position: relative;
+                z-index: 1;
+                background: #fff;
             }
         }
 
@@ -6478,64 +6484,6 @@
          shares the vertical scroll-snap so the two "catch" like the OMEGA site. -->
     <div class="hero-mobile-2" id="heroMobile2"></div>
 
-    <!-- Mobile only: OMEGA-style pinned scroll slider for the first two full-screen
-         image sections. Wraps the hero + second image in a sticky viewport and drives a
-         vertical translate from the scroll position, so slide 2 rises over slide 1 while
-         the section stays pinned, then releases into the feed. -->
-    <script>
-    (function () {
-        var SLIDE_COUNT = 2;
-        function buildOmegaHero() {
-            if (!window.matchMedia('(max-width: 768px)').matches) return;
-            var hero = document.getElementById('heroImage');
-            var p2 = document.getElementById('heroMobile2');
-            if (!hero || !p2) return;
-            if (document.querySelector('.omega-track')) return; // already built
-
-            var track = document.createElement('div');
-            track.className = 'omega-track';
-            var viewport = document.createElement('div');
-            viewport.className = 'omega-viewport';
-            var stack = document.createElement('div');
-            stack.className = 'omega-stack';
-
-            // Slot the structure in where the hero currently sits, then move the two
-            // image panels into the stack as the slides.
-            hero.parentNode.insertBefore(track, hero);
-            track.appendChild(viewport);
-            viewport.appendChild(stack);
-            stack.appendChild(hero);
-            stack.appendChild(p2);
-
-            function sizeTrack() {
-                // Track is N viewport-heights tall: 1 to show + (N-1) to scroll through.
-                track.style.height = (SLIDE_COUNT * window.innerHeight) + 'px';
-            }
-
-            function onScroll() {
-                var vh = window.innerHeight;
-                var top = track.getBoundingClientRect().top;   // negative as we scroll in
-                var total = track.offsetHeight - vh;            // scrollable distance
-                var scrolled = Math.min(Math.max(-top, 0), total);
-                var progress = total > 0 ? scrolled / total : 0; // 0..1 across the track
-                // Shift the stack up by up to (N-1) viewport-heights.
-                var shift = progress * (SLIDE_COUNT - 1) * vh;
-                stack.style.transform = 'translate3d(0,' + (-shift) + 'px,0)';
-            }
-
-            sizeTrack();
-            onScroll();
-            window.addEventListener('scroll', onScroll, { passive: true });
-            window.addEventListener('resize', function () { sizeTrack(); onScroll(); });
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', buildOmegaHero);
-        } else {
-            buildOmegaHero();
-        }
-    })();
-    </script>
 
     <!-- ==================== HERO SEGMENT SLIDER ==================== -->
     <div class="hero-slider" id="filterGrid">
