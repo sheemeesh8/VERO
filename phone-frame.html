@@ -34,6 +34,8 @@
             border: 0;
             display: block;
         }
+        /* No scrollbar on the frame itself. */
+        body::-webkit-scrollbar, .phone::-webkit-scrollbar { width: 0; height: 0; display: none; }
         /* On a real phone (narrow screen) drop the frame entirely — the site just fills
            the screen, no black bars. */
         @media (max-width: 460px) {
@@ -45,7 +47,29 @@
     <div class="phone">
         <!-- The whole site lives in here. index.html detects it is framed and renders
              the real homepage instead of bouncing back to this frame. -->
-        <iframe src="index.html" title="VERO"></iframe>
+        <iframe src="index.html" title="VERO" id="siteFrame"></iframe>
     </div>
+    <script>
+        // Hide the content scrollbar inside the phone (scrolling still works). Same-origin
+        // (file://) lets us inject a style into the framed document; re-runs on every
+        // in-frame navigation because onload fires for each page load.
+        var frame = document.getElementById('siteFrame');
+        function hideFrameScrollbar() {
+            try {
+                var d = frame.contentDocument;
+                if (!d) return;
+                if (!d.getElementById('pf-hide-sb')) {
+                    var s = d.createElement('style');
+                    s.id = 'pf-hide-sb';
+                    s.textContent =
+                        'html{scrollbar-width:none!important;-ms-overflow-style:none!important;}' +
+                        '::-webkit-scrollbar{width:0!important;height:0!important;display:none!important;}';
+                    (d.head || d.documentElement).appendChild(s);
+                }
+            } catch (e) { /* cross-origin (e.g. served over http) — ignore */ }
+        }
+        frame.addEventListener('load', hideFrameScrollbar);
+        hideFrameScrollbar();
+    </script>
 </body>
 </html>
