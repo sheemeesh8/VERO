@@ -549,6 +549,19 @@
                near them, but scrolling never gets trapped between snap points. */
             html { scroll-snap-type: y proximity; }
 
+            /* Each panel image rises into place when it scrolls into view. The start
+               state is added by JS (.pf-rise) so the panels stay visible if JS is off. */
+            .pf-rise {
+                opacity: 0;
+                transform: translateY(48px);
+                transition: opacity 0.8s ease, transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+                will-change: opacity, transform;
+            }
+            .pf-rise.pf-in {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
             #heroImage.hero {
                 /* Full width without 100vw — 100vw would include the scrollbar and cause
                    a horizontal scrollbar. Reset the desktop full-bleed breakout too. */
@@ -6472,6 +6485,29 @@
     <!-- Second full-screen image panel — mobile only. Sits directly under the hero and
          shares the vertical scroll-snap so the two "catch" like the OMEGA site. -->
     <div class="hero-mobile-2" id="heroMobile2"></div>
+
+    <!-- Mobile only: make each full-screen panel rise into view as it is scrolled to. -->
+    <script>
+    (function () {
+        function initPanelRise() {
+            if (!window.matchMedia('(max-width: 768px)').matches) return;
+            var panels = [document.getElementById('heroImage'), document.getElementById('heroMobile2')].filter(Boolean);
+            if (!panels.length || !('IntersectionObserver' in window)) return;
+            panels.forEach(function (p) { p.classList.add('pf-rise'); });
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    e.target.classList.toggle('pf-in', e.isIntersecting);
+                });
+            }, { threshold: 0.35 });
+            panels.forEach(function (p) { io.observe(p); });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPanelRise);
+        } else {
+            initPanelRise();
+        }
+    })();
+    </script>
 
     <!-- ==================== HERO SEGMENT SLIDER ==================== -->
     <div class="hero-slider" id="filterGrid">
