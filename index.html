@@ -579,7 +579,73 @@
                 width: 100%;
                 height: 100vh;
                 min-height: 100vh;
-                background: url('./men-hero.jpg') center center / cover no-repeat; /* PLACEHOLDER 2nd image */
+                background: #000;
+                overflow: hidden;
+            }
+            /* Full-screen swipe slider inside the second panel: Men / Women / Kids. */
+            .hm2-slider {
+                display: flex;
+                width: 100%;
+                height: 100%;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+            .hm2-slide {
+                flex: 0 0 100%;
+                width: 100%;
+                height: 100%;
+                scroll-snap-align: start;
+                background-size: cover;
+                background-position: center center;
+                position: relative;
+                display: flex;
+                align-items: flex-end;
+                justify-content: center;
+                text-decoration: none;
+            }
+            .hm2-slide::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 45%);
+                pointer-events: none;
+            }
+            .hm2-label {
+                position: relative;
+                z-index: 1;
+                color: #fff;
+                font-family: var(--font-sans, 'Inter', sans-serif);
+                font-size: 26px;
+                font-weight: 600;
+                letter-spacing: 3px;
+                text-transform: uppercase;
+                padding-bottom: 90px;
+                text-shadow: 0 2px 14px rgba(0,0,0,0.5);
+            }
+            .hm2-dots {
+                position: absolute;
+                bottom: 42px;
+                left: 0;
+                right: 0;
+                display: flex;
+                justify-content: center;
+                gap: 9px;
+                z-index: 2;
+                pointer-events: none;
+            }
+            .hm2-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.45);
+                transition: background 0.25s, width 0.25s, border-radius 0.25s;
+            }
+            .hm2-dot.active {
+                background: #fff;
+                width: 22px;
+                border-radius: 4px;
             }
             .hero-slider,
             .feed-section {
@@ -6483,9 +6549,48 @@
              solid once you scroll past the hero. -->
     </div>
 
-    <!-- Second full-screen image panel — mobile only. Sits directly under the hero and
-         shares the vertical scroll-snap so the two "catch" like the OMEGA site. -->
-    <div class="hero-mobile-2" id="heroMobile2"></div>
+    <!-- Second full-screen panel — mobile only. A swipe slider of full images:
+         Men / Women / Kids. Pins over the hero, then the feed scrolls up over it.
+         PLACEHOLDER images (kids reuses clothing-hero) — swap the three URLs. -->
+    <div class="hero-mobile-2" id="heroMobile2">
+        <div class="hm2-slider" id="hm2Slider">
+            <a class="hm2-slide" style="background-image:url('./men-hero.jpg')">
+                <span class="hm2-label">Men</span>
+            </a>
+            <a class="hm2-slide" style="background-image:url('./women-hero.jpg')">
+                <span class="hm2-label">Women</span>
+            </a>
+            <a class="hm2-slide" style="background-image:url('./clothing-hero.png')">
+                <span class="hm2-label">Kids</span>
+            </a>
+        </div>
+        <div class="hm2-dots" id="hm2Dots">
+            <span class="hm2-dot active"></span>
+            <span class="hm2-dot"></span>
+            <span class="hm2-dot"></span>
+        </div>
+    </div>
+
+    <!-- Mobile only: light up the active dot as the Men/Women/Kids slider is swiped. -->
+    <script>
+    (function () {
+        function initHm2Dots() {
+            var slider = document.getElementById('hm2Slider');
+            var dots = document.getElementById('hm2Dots');
+            if (!slider || !dots) return;
+            var dotEls = dots.querySelectorAll('.hm2-dot');
+            slider.addEventListener('scroll', function () {
+                var i = Math.round(slider.scrollLeft / slider.clientWidth);
+                dotEls.forEach(function (d, n) { d.classList.toggle('active', n === i); });
+            }, { passive: true });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initHm2Dots);
+        } else {
+            initHm2Dots();
+        }
+    })();
+    </script>
 
 
     <!-- ==================== HERO SEGMENT SLIDER ==================== -->
