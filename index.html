@@ -547,12 +547,17 @@
            are built by JS (buildOmegaHero) on mobile only. Placeholder images for now —
            swap the two background-image URLs below for the real mobile shots. */
         @media (max-width: 768px) {
+            /* Sectioned scroll: each full-screen panel "catches" as you scroll to it. */
+            html { scroll-snap-type: y mandatory; }
+
             /* The hero image pins to the top; everything after it (the second image and
                the feed) scrolls up and covers it — the OMEGA-style reveal. */
             #heroImage.hero {
                 position: sticky;
                 top: 0;
                 z-index: 0;
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
                 /* Full width without 100vw — 100vw would include the scrollbar and cause
                    a horizontal scrollbar. Reset the desktop full-bleed breakout too. */
                 width: 100%;
@@ -576,6 +581,8 @@
                 position: sticky;
                 top: 0;
                 z-index: 1;
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
                 width: 100%;
                 height: 100vh;
                 min-height: 100vh;
@@ -591,6 +598,9 @@
                 overflow-y: hidden;
                 scroll-snap-type: x mandatory;
                 -webkit-overflow-scrolling: touch;
+                /* Force LTR so scrollLeft stays 0..N and the arrow / dot math is simple,
+                   even though the page itself is RTL. */
+                direction: ltr;
             }
             .hm2-slide {
                 flex: 0 0 100%;
@@ -647,6 +657,32 @@
                 width: 22px;
                 border-radius: 4px;
             }
+            /* Prev / next buttons for the Men / Women / Kids slider. */
+            .hm2-arrow {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 3;
+                width: 42px;
+                height: 42px;
+                border-radius: 50%;
+                border: none;
+                background: rgba(0,0,0,0.35);
+                color: #fff;
+                font-size: 20px;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                -webkit-backdrop-filter: blur(4px);
+                backdrop-filter: blur(4px);
+            }
+            .hm2-arrow:active { background: rgba(0,0,0,0.6); }
+            .hm2-arrow.prev { left: 14px; }
+            .hm2-arrow.next { right: 14px; }
+
+            .feed-section { scroll-snap-align: start; }
             .hero-slider,
             .feed-section {
                 position: relative;
@@ -6564,6 +6600,8 @@
                 <span class="hm2-label">Kids</span>
             </a>
         </div>
+        <button class="hm2-arrow prev" id="hm2Prev" type="button" aria-label="Previous">&#8249;</button>
+        <button class="hm2-arrow next" id="hm2Next" type="button" aria-label="Next">&#8250;</button>
         <div class="hm2-dots" id="hm2Dots">
             <span class="hm2-dot active"></span>
             <span class="hm2-dot"></span>
@@ -6571,23 +6609,34 @@
         </div>
     </div>
 
-    <!-- Mobile only: light up the active dot as the Men/Women/Kids slider is swiped. -->
+    <!-- Mobile only: dots + prev/next buttons for the Men/Women/Kids slider. -->
     <script>
     (function () {
-        function initHm2Dots() {
+        function initHm2() {
             var slider = document.getElementById('hm2Slider');
             var dots = document.getElementById('hm2Dots');
             if (!slider || !dots) return;
             var dotEls = dots.querySelectorAll('.hm2-dot');
+            var prev = document.getElementById('hm2Prev');
+            var next = document.getElementById('hm2Next');
+            var count = slider.querySelectorAll('.hm2-slide').length;
+
+            function current() { return Math.round(slider.scrollLeft / slider.clientWidth); }
+            function go(i) {
+                i = Math.max(0, Math.min(count - 1, i));
+                slider.scrollTo({ left: i * slider.clientWidth, behavior: 'smooth' });
+            }
             slider.addEventListener('scroll', function () {
-                var i = Math.round(slider.scrollLeft / slider.clientWidth);
+                var i = current();
                 dotEls.forEach(function (d, n) { d.classList.toggle('active', n === i); });
             }, { passive: true });
+            if (prev) prev.addEventListener('click', function () { go(current() - 1); });
+            if (next) next.addEventListener('click', function () { go(current() + 1); });
         }
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initHm2Dots);
+            document.addEventListener('DOMContentLoaded', initHm2);
         } else {
-            initHm2Dots();
+            initHm2();
         }
     })();
     </script>
