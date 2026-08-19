@@ -11879,12 +11879,19 @@
             const style = document.createElement('style');
             style.textContent = `
                 .feed-nav {
-                    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                    position: fixed; bottom: 20px; left: 50%;
+                    transform: translateX(-50%) translateY(26px);
+                    opacity: 0;
+                    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22,1,0.36,1);
                     z-index: 900; display: flex; align-items: stretch; gap: 6px;
                     max-width: 92vw; overflow-x: auto;
                     background: rgba(20,20,20,0.94); backdrop-filter: blur(6px);
                     border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 5px;
                     box-shadow: 0 6px 26px rgba(0,0,0,0.28); font-family: inherit;
+                }
+                .feed-nav.in { opacity: 1; transform: translateX(-50%) translateY(0); }
+                @media (prefers-reduced-motion: reduce) {
+                    .feed-nav { transition: none; opacity: 1; transform: translateX(-50%); }
                 }
                 .feed-nav::-webkit-scrollbar { display: none; }
                 .feed-nav-tab {
@@ -12055,6 +12062,13 @@
             if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(false));
             window.addEventListener('load', () => setTimeout(build, 300));
             build();
+
+            // Entrance: slide + fade the bar in on load, in step with the header /
+            // page fade (vero-animations.js reveals <body> on the same `load` event).
+            const revealBar = () => requestAnimationFrame(() => bar.classList.add('in'));
+            if (document.readyState === 'complete') revealBar();
+            else window.addEventListener('load', revealBar, { once: true });
+            setTimeout(revealBar, 1300); // safety net — never leave the bar hidden
         })();
     </script>
     <!-- Shared site footer (single source: footer.js) — shown on cart & wishlist views -->
