@@ -12283,11 +12283,14 @@
             if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(false));
             window.addEventListener('load', () => setTimeout(build, 300));
 
-            // Reveal on scroll: the bar stays hidden while the JACKETS card band is on
-            // screen, then slides up into view once you scroll past the bottom of that
-            // band. Slides back down when you scroll above it again. The CSS transition
-            // on .feed-nav (.in) gives the slide-up motion.
-            const gate = () => document.querySelector('.pick-band');
+            // Reveal on scroll: the bar stays hidden while the Men/Women/Kids slider
+            // (which now holds the JACKETS card) is on screen, then slides up into view
+            // once you scroll past the bottom of it. Slides back down when you scroll
+            // above it again. The CSS transition on .feed-nav (.in) gives the motion.
+            const gate = () => {
+                const el = document.getElementById('heroMobile2');
+                return el && el.offsetParent !== null ? el : null;
+            };
             function updateBar() {
                 const g = gate();
                 if (!g) { bar.classList.add('in'); return; }
@@ -12364,15 +12367,15 @@
         let lastY = window.scrollY || 0;
         const H = () => hero.offsetHeight;
         const header = document.querySelector('#siteHeader');
-        const pickBand = document.querySelector('.pick-band');
+        const revealAnchor = document.getElementById('heroMobile2');
 
-        // Keep the header slid up through the hero, the second image AND the JACKETS
-        // card (the blurred-background stage); it slides in only once we scroll past
-        // that card into the feed.
+        // Keep the header slid up through the hero and the Men/Women/Kids slider (which
+        // now holds the JACKETS card); it slides in only once we scroll past that slider
+        // into the feed. On desktop the slider is hidden, so fall back to the hero height.
         function syncHeader(y) {
             if (!header) return;
-            const hide = pickBand
-                ? pickBand.getBoundingClientRect().bottom > 4
+            const hide = (revealAnchor && revealAnchor.offsetParent !== null)
+                ? revealAnchor.getBoundingClientRect().bottom > 4
                 : y < H() * 0.92;
             header.classList.toggle('wh-over-hero', hide);
         }
@@ -12427,25 +12430,19 @@
     })();
     </script>
 
-    <!-- Blur the second image (shown behind the white card) once the card's scroll
-         stage is entered; clear the blur when leaving it. -->
+    <!-- Header reveal: keep the header slid up through the hero and the Men/Women/Kids
+         slider (which now holds the JACKETS card); slide it in only once we scroll past
+         that slider into the feed. -->
     <script>
     (function () {
         function init() {
-            const band = document.querySelector('.pick-band');
             const hm2 = document.getElementById('heroMobile2');
             const hdr = document.getElementById('siteHeader');
-            if (!band || !hm2) return;
+            if (!hm2 || !hdr) return;
             function update() {
-                const r = band.getBoundingClientRect();
-                const vh = window.innerHeight;
-                // "Entered the white-card stage" = the band covers the middle of the screen.
-                const inStage = r.top <= vh * 0.4 && r.bottom >= vh * 0.6;
-                hm2.classList.toggle('bg-blur', inStage);
-                // The header stays slid up through the hero, the second image and the
-                // JACKETS card; it slides in only once we scroll past that card into
-                // the feed (the band's bottom has risen above the top of the screen).
-                if (hdr) hdr.classList.toggle('wh-over-hero', r.bottom > 4);
+                // Header stays hidden while any part of the slider (bottom below the
+                // viewport top) is still on screen; it slides in once we scroll past it.
+                hdr.classList.toggle('wh-over-hero', hm2.getBoundingClientRect().bottom > 4);
             }
             window.addEventListener('scroll', update, { passive: true });
             window.addEventListener('resize', update);
