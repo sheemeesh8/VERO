@@ -6926,6 +6926,41 @@
         } else {
             initPickSlider();
         }
+
+        // Once you land on the JACKETS panel and push further down, drop quickly to
+        // the feed below (where the header turns solid and the style bar appears),
+        // so the tall category panel doesn't have to be scrolled through by hand.
+        function initPickAutoAdvance() {
+            var band = document.querySelector('.pick-band');
+            if (!band) return;
+            var lastY = window.scrollY;
+            var armed = true;    // ready to fire once we're on the panel
+            var cooling = false; // ignore scroll while an auto-drop is in flight
+            window.addEventListener('scroll', function () {
+                var y = window.scrollY;
+                var down = y > lastY;
+                lastY = y;
+                var r = band.getBoundingClientRect();
+                // Re-arm after scrolling back up above the panel.
+                if (r.top > 5) armed = true;
+                if (!armed || cooling) return;
+                // Fire when the panel has caught at the top and you keep scrolling down.
+                if (down && r.top <= 0 && r.bottom > window.innerHeight * 0.4) {
+                    armed = false; cooling = true;
+                    var target = band.nextElementSibling;
+                    var top = window.scrollY + (target
+                        ? target.getBoundingClientRect().top
+                        : r.bottom);
+                    window.scrollTo({ top: top, behavior: 'smooth' });
+                    setTimeout(function () { cooling = false; }, 800);
+                }
+            }, { passive: true });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPickAutoAdvance);
+        } else {
+            initPickAutoAdvance();
+        }
     })();
     </script>
 
