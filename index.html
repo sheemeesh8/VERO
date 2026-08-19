@@ -591,8 +591,11 @@
                    (can't be skipped in a single flick to the feed). */
                 scroll-snap-stop: always;
                 width: 100%;
-                height: 100vh;
-                min-height: 100vh;
+                /* The top 100vh is the model photo; below it a white panel — the
+                   categories card's space plus an extra 3/4-screen of white, so the
+                   slide runs 100vh (photo) + 125vh (white) = 225vh total. */
+                height: 225vh;
+                min-height: 225vh;
                 background: #000;
                 overflow: hidden;
             }
@@ -617,8 +620,12 @@
                 width: 100%;
                 height: 100%;
                 scroll-snap-align: start;
-                background-size: cover;
-                background-position: center center;
+                /* The model photo fills only the top 100vh; everything below it is a
+                   clean white panel (categories card + the extra white space). */
+                background-size: 100vw 100vh;
+                background-position: top center;
+                background-repeat: no-repeat;
+                background-color: #ffffff;
                 position: relative;
                 display: flex;
                 align-items: center;
@@ -628,24 +635,36 @@
             .hm2-slide::after {
                 content: '';
                 position: absolute;
-                inset: 0;
+                /* Scrim only over the photo (top 100vh), not the cream card panel. */
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 100vh;
                 background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.35) 100%);
                 pointer-events: none;
             }
             /* Editorial caption block: overline + big title + description + DISCOVER. */
             .hm2-cap {
-                position: relative;
+                /* Pinned to the top 100vh photo (independent of the slide's total
+                   height), lifted into the upper third, clear of the camera island. */
+                position: absolute;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 100%;
+                height: 100vh;
                 z-index: 1;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                justify-content: flex-start;
+                padding-top: 12vh;
                 text-align: center;
                 color: #fff;
-                padding: 0 28px;
+                padding-left: 28px;
+                padding-right: 28px;
                 max-width: 420px;
                 text-shadow: 0 2px 18px rgba(0,0,0,0.45);
-                /* Lift the caption up, but clear of the camera island at the very top. */
-                transform: translateY(-25.5vh);
             }
             .hm2-over {
                 font-family: 'Poppins', 'Inter', sans-serif;
@@ -738,11 +757,11 @@
             .hm2-jacket {
                 position: absolute;
                 left: 50%;
-                /* Anchored to the bottom with a gap equal to the side gap, so the white
-                   margin below the card matches the margins on its left and right.
-                   Height wraps the content (title strip + square image). */
-                top: auto;
-                bottom: calc((100vw - min(90vw, 426px)) / 2);
+                /* Sits just below the top 100vh photo, at the head of the white panel;
+                   the extra white space runs on below it. Fixed 46vh-tall card. */
+                top: calc(100vh + 6vh);
+                bottom: auto;
+                height: 46vh;
                 transform: translateX(-50%);
                 z-index: 1;
                 width: min(90vw, 426px);
@@ -779,12 +798,13 @@
             }
             .hm2-jacket .hj-media {
                 position: relative;
-                /* Square image inset with an even white frame — narrower than the card so
-                   it has matching white margins on the sides and bottom. */
+                /* Image inset with an even white frame; fills whatever height is left in
+                   the fixed-height card after the title strip (no fixed square ratio, so
+                   the card always fits inside the slide's lower half). */
                 width: calc(100% - 20px);
                 margin: 0 auto 10px;
-                flex: 0 0 auto;
-                aspect-ratio: 1 / 1;
+                flex: 1 1 auto;
+                min-height: 0;
                 overflow: hidden;
                 background: #fff;
             }
@@ -799,7 +819,9 @@
                segment lit white as an inner guiding line that slides as you swipe. */
             .hm2-dots {
                 position: absolute;
-                bottom: 74px;
+                /* Pinned near the bottom edge of the top 100vh photo (the panel is
+                   225vh tall, so 125vh from the bottom is the photo's lower edge). */
+                bottom: calc(125vh + 26px);
                 left: 50%;
                 transform: translateX(-50%);
                 width: 140px;
@@ -1473,17 +1495,6 @@
             background: #ffffff;
             overflow: hidden;
             padding-top: 8px;
-        }
-        /* The hero + its category band read as one block: the hero segment slider
-           on top (720px) plus the categories band filling the added lower half
-           (360px), so the whole hero is half again as tall (~1080px). */
-        .hero-combo { position: relative; }
-        .hero-combo .vf-band {
-            width: 100vw;
-            position: relative;
-            left: 50%;
-            margin-left: -50vw;
-            height: 360px;              /* half of the 720px hero above it */
         }
         /* Text sits on the white slider, so titles/labels read in dark. Covers the
            women / men / kids segments and the magazine slide (same slider). */
@@ -7130,33 +7141,28 @@
 
 
     <!-- ==================== HERO SEGMENT SLIDER ==================== -->
-    <!-- The Men / Women / Kids hero, now half again as tall: the extra lower
-         half is filled by the clothing-categories band pulled up from the feed. -->
-    <div class="hero-combo">
-        <div class="hero-slider" id="filterGrid">
-            <!-- Segment hero slides, populated by JavaScript -->
-        </div>
-
-        <!-- Full-width editorial band — the clothing-categories carousel, dragged
-             up into the lower half of the enlarged hero. -->
-        <div class="vf-band" id="vfBand">
-            <div class="vf-band-viewport">
-                <div class="vf-band-track" id="vfBandTrack"><!-- slides built by renderVeroBand() --></div>
-            </div>
-            <button class="vf-band-arrow prev" type="button" onclick="veroBandStep(-1)" aria-label="Previous">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
-            <button class="vf-band-arrow next" type="button" onclick="veroBandStep(1)" aria-label="Next">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
-        </div>
+    <div class="hero-slider" id="filterGrid">
+        <!-- Segment hero slides, populated by JavaScript -->
     </div>
 
     <!-- ==================== INFINITE FEED (Figma layout) ==================== -->
     <div class="feed-section">
         <div class="container">
-            <!-- Labels row directly under the hero: segments + magazine. -->
+            <!-- Labels row directly under the hero image: segments + magazine. -->
             <div class="vf-navbox" id="vfNavbox"><!-- built by renderVeroFeatures() --></div>
+
+            <!-- 2. Full-width editorial band — a category carousel. -->
+            <div class="vf-band" id="vfBand">
+                <div class="vf-band-viewport">
+                    <div class="vf-band-track" id="vfBandTrack"><!-- slides built by renderVeroBand() --></div>
+                </div>
+                <button class="vf-band-arrow prev" type="button" onclick="veroBandStep(-1)" aria-label="Previous">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button class="vf-band-arrow next" type="button" onclick="veroBandStep(1)" aria-label="Next">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
 
 
             <!-- 3. Section bar: segment · count · shop-all. -->
