@@ -587,6 +587,8 @@
                 position: relative;
                 z-index: 1;
                 scroll-snap-align: start;
+                /* One-gesture section paging: a swipe is caught and lands on this panel
+                   (can't be skipped in a single flick to the feed). */
                 scroll-snap-stop: always;
                 width: 100%;
                 height: 100vh;
@@ -615,7 +617,7 @@
                 width: 100%;
                 height: 100%;
                 scroll-snap-align: start;
-                background-size: 100% 100%;
+                background-size: cover;
                 background-position: center center;
                 position: relative;
                 display: flex;
@@ -736,11 +738,12 @@
             .hm2-jacket {
                 position: absolute;
                 left: 50%;
-                /* Half / half split: the caption owns the top half of the slide and this
-                   category card owns the bottom half. Centered within that bottom half
-                   (its middle sits at 75vh). Height wraps the content. */
-                top: 75%;
-                transform: translate(-50%, -50%);
+                /* Anchored to the bottom with a gap equal to the side gap, so the white
+                   margin below the card matches the margins on its left and right.
+                   Height wraps the content (title strip + square image). */
+                top: auto;
+                bottom: calc((100vw - min(90vw, 426px)) / 2);
+                transform: translateX(-50%);
                 z-index: 1;
                 width: min(90vw, 426px);
                 background: #fff;
@@ -791,30 +794,33 @@
                 object-fit: cover;
                 display: block;
             }
-            /* Slider dots sit inside the JACKETS card image, near its bottom edge
-               (card bottom is at 54px, so 74px places them ~20px inside the image). */
+            /* Progress line inside the JACKETS card image, near its bottom edge: a
+               continuous translucent track split into equal segments, with the active
+               segment lit white as an inner guiding line that slides as you swipe. */
             .hm2-dots {
                 position: absolute;
                 bottom: 74px;
-                left: 0;
-                right: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 140px;
+                height: 2.5px;
+                border-radius: 2px;
+                overflow: hidden;
                 display: flex;
-                justify-content: center;
-                gap: 9px;
+                gap: 0;
+                background: rgba(255,255,255,0.34);   /* the continuous track line */
                 z-index: 2;
                 pointer-events: none;
             }
             .hm2-dot {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                background: rgba(255,255,255,0.45);
-                transition: background 0.25s, width 0.25s, border-radius 0.25s;
+                flex: 1 1 0;
+                height: 100%;
+                background: transparent;               /* inactive thirds show the track */
+                border-radius: 0;
+                transition: background 0.25s ease;
             }
             .hm2-dot.active {
-                background: #fff;
-                width: 22px;
-                border-radius: 4px;
+                background: #fff;                       /* inner guiding line */
             }
             /* Prev / next buttons for the Men / Women / Kids slider. */
             .hm2-arrow {
@@ -1467,6 +1473,17 @@
             background: #ffffff;
             overflow: hidden;
             padding-top: 8px;
+        }
+        /* The hero + its category band read as one block: the hero segment slider
+           on top (720px) plus the categories band filling the added lower half
+           (360px), so the whole hero is half again as tall (~1080px). */
+        .hero-combo { position: relative; }
+        .hero-combo .vf-band {
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            margin-left: -50vw;
+            height: 360px;              /* half of the 720px hero above it */
         }
         /* Text sits on the white slider, so titles/labels read in dark. Covers the
            women / men / kids segments and the magazine slide (same slider). */
@@ -6956,7 +6973,7 @@
          PLACEHOLDER images (kids reuses clothing-hero) — swap the three URLs. -->
     <div class="hero-mobile-2" id="heroMobile2">
         <div class="hm2-slider" id="hm2Slider">
-            <a class="hm2-slide" style="background:#8a8a8a">
+            <a class="hm2-slide" style="background-image:url('https://loremflickr.com/800/1300/man,fashion,menswear?lock=41')">
                 <div class="hm2-cap">
                     <span class="hm2-over">Choose your side</span>
                     <span class="hm2-title">MEN</span>
@@ -6973,7 +6990,7 @@
                     <span class="hj-swipe">Swipe for more</span>
                 </div>
             </a>
-            <a class="hm2-slide" style="background:#8a8a8a">
+            <a class="hm2-slide" style="background-image:url('https://loremflickr.com/800/1300/woman,fashion,editorial?lock=42')">
                 <div class="hm2-cap">
                     <span class="hm2-over">Choose your side</span>
                     <span class="hm2-title">WOMEN</span>
@@ -6990,7 +7007,7 @@
                     <span class="hj-swipe">Swipe for more</span>
                 </div>
             </a>
-            <a class="hm2-slide" style="background:#8a8a8a">
+            <a class="hm2-slide" style="background-image:url('https://loremflickr.com/800/1300/kids,children,fashion?lock=43')">
                 <div class="hm2-cap">
                     <span class="hm2-over">Choose your side</span>
                     <span class="hm2-title">KIDS</span>
@@ -7113,28 +7130,33 @@
 
 
     <!-- ==================== HERO SEGMENT SLIDER ==================== -->
-    <div class="hero-slider" id="filterGrid">
-        <!-- Segment hero slides, populated by JavaScript -->
+    <!-- The Men / Women / Kids hero, now half again as tall: the extra lower
+         half is filled by the clothing-categories band pulled up from the feed. -->
+    <div class="hero-combo">
+        <div class="hero-slider" id="filterGrid">
+            <!-- Segment hero slides, populated by JavaScript -->
+        </div>
+
+        <!-- Full-width editorial band — the clothing-categories carousel, dragged
+             up into the lower half of the enlarged hero. -->
+        <div class="vf-band" id="vfBand">
+            <div class="vf-band-viewport">
+                <div class="vf-band-track" id="vfBandTrack"><!-- slides built by renderVeroBand() --></div>
+            </div>
+            <button class="vf-band-arrow prev" type="button" onclick="veroBandStep(-1)" aria-label="Previous">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="vf-band-arrow next" type="button" onclick="veroBandStep(1)" aria-label="Next">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+        </div>
     </div>
 
     <!-- ==================== INFINITE FEED (Figma layout) ==================== -->
     <div class="feed-section">
         <div class="container">
-            <!-- Labels row directly under the hero image: segments + magazine. -->
+            <!-- Labels row directly under the hero: segments + magazine. -->
             <div class="vf-navbox" id="vfNavbox"><!-- built by renderVeroFeatures() --></div>
-
-            <!-- 2. Full-width editorial band — a category carousel. -->
-            <div class="vf-band" id="vfBand">
-                <div class="vf-band-viewport">
-                    <div class="vf-band-track" id="vfBandTrack"><!-- slides built by renderVeroBand() --></div>
-                </div>
-                <button class="vf-band-arrow prev" type="button" onclick="veroBandStep(-1)" aria-label="Previous">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <button class="vf-band-arrow next" type="button" onclick="veroBandStep(1)" aria-label="Next">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-            </div>
 
 
             <!-- 3. Section bar: segment · count · shop-all. -->
@@ -12369,7 +12391,7 @@
     (function () {
         const btn  = document.getElementById('heroScrollDown');
         const hero = document.getElementById('heroImage');
-        if (!btn || !hero) return;
+        if (!hero) return;   // the SLIDE-DOWN cue button is optional
 
         // The first thing under the hero we should land on. On mobile that's the
         // Men/Women/Kids slider (which holds the JACKETS card) — landing on the feed
@@ -12394,13 +12416,24 @@
             animating = true;
             // easeInOutCubic — smooth acceleration and deceleration on both ends.
             function ease(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
+            function finish() {
+                window.scrollTo(0, endY);
+                animating = false;
+                lastY = window.scrollY || 0;
+                lockUntil = performance.now() + 220;
+            }
             function step(now) {
+                if (!animating) return;                 // finished by the safety timer
                 const t = Math.min(1, (now - t0) / dur);
                 window.scrollTo(0, startY + dist * ease(t));
                 if (t < 1) { requestAnimationFrame(step); }
-                else { animating = false; lastY = window.scrollY || 0; lockUntil = performance.now() + 220; }
+                else { finish(); }
             }
             requestAnimationFrame(step);
+            // Safety net: if rAF is throttled (e.g. a backgrounded tab) the animation
+            // could stall and leave `animating` stuck true, swallowing every later
+            // gesture — so force-finish shortly after the intended duration.
+            setTimeout(function () { if (animating) finish(); }, dur + 140);
         }
         function glideDown() {
             const t = belowHero();
@@ -12408,7 +12441,7 @@
         }
         function glideUp() { glideTo(0, 240); }
 
-        btn.addEventListener('click', glideDown);
+        if (btn) btn.addEventListener('click', glideDown);
 
         // Track direction so an upward nudge snaps back and a downward one snaps on.
         let lastY = window.scrollY || 0;
@@ -12432,48 +12465,108 @@
             const y = window.scrollY || window.pageYOffset;
 
             // Fade the cue out as soon as we leave the top.
-            btn.classList.toggle('is-hidden', y > 40);
+            if (btn) btn.classList.toggle('is-hidden', y > 40);
             syncHeader(y);
 
             lastY = y;
         }, { passive: true });
 
-        // Mouse-wheel / trackpad: take over the gesture in the hero↔feed zone and run
-        // our own glide, blocking the native scroll so a hard flick can't fight the
-        // animation or overshoot. Outside the zone the wheel scrolls normally.
-        // Going back UP to the hero takes two flicks, like an unlock: the first
-        // upward gesture only arms it, the second (after a brief pause) glides.
-        // A continuous burst of wheel events counts as one gesture; a >260ms gap
-        // starts a new one. The arm resets if you pause too long or scroll down.
-        let upArm = 0, upArmTime = 0;
+        // The stacked section stops below the top: hero (0), the Men/Women/Kids slider
+        // (mobile only), and the top of the feed. Each is a landing point for the glide.
+        function feedTop() {
+            const f = document.querySelector('.feed-section');
+            return f ? f.getBoundingClientRect().top + (window.scrollY || 0) : Infinity;
+        }
+        function sectionStops() {
+            const stops = [0];
+            const hm2 = document.getElementById('heroMobile2');
+            if (hm2 && hm2.offsetParent !== null) {
+                stops.push(hm2.getBoundingClientRect().top + (window.scrollY || 0));
+            }
+            stops.push(feedTop());
+            return stops;
+        }
+
+        // Mouse-wheel / trackpad: a sensitive one-gesture slider between the stacked
+        // sections below the hero. Any small flick glides exactly one section up or
+        // down — smooth and continuous, never caught between two panels. We only take
+        // over while at/above the top of the feed; inside the feed the wheel scrolls
+        // the product list normally.
         window.addEventListener('wheel', function (e) {
             const y = window.scrollY || window.pageYOffset;
-            const h = H();
+            const ft = feedTop();
 
             // While a glide is running, swallow the wheel so momentum can't stutter it.
             if (animating || performance.now() < lockUntil) {
-                if (y < h * 1.5) e.preventDefault();
+                if (y < ft - 8) e.preventDefault();
                 return;
             }
-            if (e.deltaY > 0 && y < h * 0.5) {
+            // Past the top of the feed: let the feed scroll on its own.
+            if (y > ft + 4) return;
+
+            const stops = sectionStops();
+            // Which section are we resting on right now (nearest stop)?
+            let idx = 0, best = Infinity;
+            stops.forEach(function (s, i) {
+                const d = Math.abs(s - y);
+                if (d < best) { best = d; idx = i; }
+            });
+
+            if (e.deltaY > 0 && idx < stops.length - 1) {
                 e.preventDefault();
-                upArm = 0;                 // any downward intent clears the unlock
-                glideDown();               // flick down on the hero → glide into the slider
-            } else if (e.deltaY < 0 && y > 40 && y < h * 1.5) {
+                glideTo(stops[idx + 1], 260);   // one section down
+            } else if (e.deltaY < 0 && idx > 0) {
                 e.preventDefault();
-                const now = performance.now();
-                // A new flick if there was a pause since the last upward wheel event,
-                // or if the arm went stale.
-                if (now - upArmTime > 260 || now - upArmTime > 1400) upArm++;
-                upArmTime = now;
-                if (upArm >= 2) {          // second flick → unlock and glide up
-                    upArm = 0;
-                    glideUp();
-                }
-            } else {
-                upArm = 0;                 // left the zone → reset
+                glideTo(stops[idx - 1], 260);   // one section up
             }
         }, { passive: false });
+
+        // Glide one section in a direction (+1 down, -1 up) from wherever we rest now.
+        function glideStep(dir) {
+            const y = window.scrollY || window.pageYOffset;
+            const stops = sectionStops();
+            let idx = 0, best = Infinity;
+            stops.forEach(function (s, i) {
+                const d = Math.abs(s - y);
+                if (d < best) { best = d; idx = i; }
+            });
+            const ni = idx + dir;
+            if (ni >= 0 && ni < stops.length) glideTo(stops[ni], 300);
+        }
+
+        // Touch: swap sections on a light vertical swipe below the hero. We only take
+        // over VERTICAL gestures while at/above the top of the feed — horizontal swipes
+        // (the Men/Women/Kids slider) and scrolling inside the feed are left untouched.
+        let tStartX = 0, tStartY = 0, tAxis = 0;   // tAxis: 0 undecided, 1 vertical, -1 horizontal
+        window.addEventListener('touchstart', function (e) {
+            if (e.touches.length !== 1) { tAxis = -1; return; }
+            tStartX = e.touches[0].clientX;
+            tStartY = e.touches[0].clientY;
+            tAxis = 0;
+        }, { passive: true });
+        window.addEventListener('touchmove', function (e) {
+            if (tAxis === -1) return;
+            const dx = e.touches[0].clientX - tStartX;
+            const dy = e.touches[0].clientY - tStartY;
+            if (tAxis === 0 && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+                tAxis = Math.abs(dy) > Math.abs(dx) ? 1 : -1;
+            }
+            if (tAxis === 1) {
+                const y = window.scrollY || window.pageYOffset;
+                // Only page while in the hero / slider zone (at or above the feed top).
+                if (y <= feedTop() + 4 && !animating) e.preventDefault();
+            }
+        }, { passive: false });
+        window.addEventListener('touchend', function (e) {
+            if (tAxis !== 1) { tAxis = 0; return; }
+            tAxis = 0;
+            const y = window.scrollY || window.pageYOffset;
+            if (y > feedTop() + 4 || animating) return;
+            const endY = (e.changedTouches[0] || {}).clientY;
+            const dy = tStartY - (endY == null ? tStartY : endY);   // >0 swipe up → go down
+            if (dy > 12) glideStep(1);
+            else if (dy < -12) glideStep(-1);
+        }, { passive: true });
     })();
     </script>
 
