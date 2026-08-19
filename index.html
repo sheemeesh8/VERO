@@ -553,7 +553,10 @@
                scroll-snapping on sticky elements makes scrolling catch and land
                imprecisely. The OMEGA cover reveal works on free scroll, so snapping is
                left off for smooth, accurate scrolling through all three stages. */
-            html { scroll-snap-type: y mandatory; }
+            /* CSS snap left OFF on purpose — it lands imprecisely on the sticky hero.
+               The JS glide (wheel/touch) pages precisely to each section stop, the last
+               being the white separator line (feed top). */
+            html { scroll-snap-type: none; }
 
             /* The hero image pins to the top; everything after it (the second image and
                the feed) scrolls up and covers it — the OMEGA-style reveal. */
@@ -12499,7 +12502,13 @@
             const stops = [0];
             const hm2 = document.getElementById('heroMobile2');
             if (hm2 && hm2.offsetParent !== null) {
-                stops.push(hm2.getBoundingClientRect().top + (window.scrollY || 0));
+                const top = hm2.getBoundingClientRect().top + (window.scrollY || 0);
+                stops.push(top);                                  // 1st: caption
+                // 2nd stop: the last screen of the (tall) Men/Women/Kids panel, which
+                // frames the categories card — so it takes a second scroll to reach the
+                // white separator line / feed below.
+                const cardStop = top + hm2.offsetHeight - window.innerHeight;
+                if (cardStop > top + 8) stops.push(cardStop);
             }
             stops.push(feedTop());
             return stops;
