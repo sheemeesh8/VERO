@@ -5989,7 +5989,9 @@
             text-align: center;
             gap: 16px;
             pointer-events: none;
-            padding: 0 0 18px;
+            /* Bottom gap equals the side gap around the white card:
+               (viewport − card width) / 2 — so the margins match all around. */
+            padding: 0 0 calc((100vw - min(94vw, 444px)) / 2);
         }
         /* Big square overlaid on the transparent band. */
         .pick-square {
@@ -12061,14 +12063,17 @@
             window.addEventListener('resize', () => moveInd(false));
             if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(false));
             window.addEventListener('load', () => setTimeout(build, 300));
-            build();
 
             // Entrance: slide + fade the bar in on load, in step with the header /
             // page fade (vero-animations.js reveals <body> on the same `load` event).
+            // Registered BEFORE the first build() below, since that early build can
+            // throw (feed data not ready yet) and would otherwise skip this setup.
             const revealBar = () => requestAnimationFrame(() => bar.classList.add('in'));
             if (document.readyState === 'complete') revealBar();
             else window.addEventListener('load', revealBar, { once: true });
             setTimeout(revealBar, 1300); // safety net — never leave the bar hidden
+
+            build();
         })();
     </script>
     <!-- Shared site footer (single source: footer.js) — shown on cart & wishlist views -->
