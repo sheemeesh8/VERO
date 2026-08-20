@@ -94,16 +94,6 @@
             background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.55) 100%);
         }
         .hero-inner { position: relative; z-index: 2; padding: 0 44px 40px; color: #fff; width: 100%; }
-        /* Round profile picture on the hero (same treatment as the buyer profile).
-           Reads the photo set in My Shop settings; positioned later. */
-        .hero-avatar {
-            position: absolute; z-index: 3; top: 50%; right: 44px; transform: translateY(-64%);
-            width: clamp(150px, 20vw, 232px); height: auto; aspect-ratio: 1; margin: 0;
-            border-radius: 50%; border: none;
-            background: #f2f2ee center / cover no-repeat;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.35);
-        }
-        .hero-avatar.is-hidden { display: none; }
         /* Bottom row: name + status/follow at left, follower count at right. */
         .hero-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
         .hero-lead { display: flex; align-items: flex-end; gap: 26px; min-width: 0; }
@@ -133,13 +123,6 @@
                 height: 100vh; height: 100dvh; min-height: 0;
                 flex-direction: column; justify-content: flex-end; align-items: center;
             }
-            /* Avatar sits in normal flow, directly above the name, centred. */
-            .hero-avatar {
-                position: static; transform: none; top: auto; right: auto;
-                width: 106px; height: auto; aspect-ratio: 1; margin: 0 0 20px;
-                box-shadow: 0 10px 34px rgba(0,0,0,0.4);
-            }
-            .hero-avatar.is-hidden { display: none; }
             .hero-inner { padding: 0 22px 40px; width: 100%; }
             .hero-row  { flex-direction: column; align-items: center; gap: 14px; }
             /* Dissolve the name+meta wrapper so the stats slider can sit between the
@@ -169,9 +152,6 @@
             #storeName { transform: translate(1px, -4px); transform-origin: top left; }
             #hero > .hero-inner > .hero-row {
                 transform: translate(-3px, -262px); transform-origin: top left;
-            }
-            #heroAvatar {
-                transform: translate(-37px, -351px) scale(1.65, 1.65); transform-origin: top left;
             }
             #verifiedCheck {
                 transform: translate(134px, -159px); transform-origin: top left;
@@ -555,7 +535,6 @@
              the follower count set large at bottom-right. -->
         <div class="hero" id="hero">
             <span class="verified-check" id="verifiedCheck" title="VERO Verified Store" aria-label="VERO Verified Store">✓</span>
-            <div class="hero-avatar is-hidden" id="heroAvatar" aria-label="Profile picture"></div>
             <div class="hero-inner">
                 <div class="hero-row">
                     <div class="hero-lead">
@@ -781,9 +760,6 @@
             // Name + socials edited on the My Shop settings page (vero_seller_profile)
             // take precedence, so the storefront always mirrors the settings exactly.
             if (sellerProf.name && sellerProf.name.trim()) STORE.name = sellerProf.name.trim();
-            // Profile picture (round avatar over the hero) — set in My Shop settings.
-            const avatar = sellerProf.avatar || prof.avatarImg;
-            if (avatar) STORE.avatar = avatar;
             if (sellerProf.hours) STORE.hours = sellerProf.hours;
             if (sellerProf.socials) {
                 const s = Object.assign({}, STORE.socials);
@@ -826,17 +802,6 @@
         document.getElementById('followers').textContent = STORE.followers.toLocaleString('en-US');
         document.getElementById('following').textContent = (Number(STORE.following) || 0).toLocaleString('en-US');
         document.getElementById('hero').style.backgroundImage = `url('${STORE.hero}')`;
-        // Round profile picture over the hero — shown only when the seller set one.
-        (function setAvatar(){
-            const el = document.getElementById('heroAvatar');
-            if (!el) return;
-            if (STORE.avatar) {
-                el.style.backgroundImage = `url('${STORE.avatar}')`;
-                el.classList.remove('is-hidden');
-            } else {
-                el.classList.add('is-hidden');
-            }
-        })();
         document.getElementById('itemCount').textContent =
             (STORE.itemsLive != null ? STORE.itemsLive : PRODUCTS.length);
 
