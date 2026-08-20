@@ -139,8 +139,9 @@
             }
             /* Follower count centred, directly under the name. */
             .hero-followers { order: 2; text-align: center; align-items: center; }
-            /* Status + Follow + Socials sit in one centred row below the stat. */
-            .hero-meta { order: 3; flex-direction: row; align-items: center; justify-content: center; gap: 20px; padding-bottom: 0; }
+            /* Status on top, then the Follow button below it, then Socials —
+               a centred vertical stack under the follower count. */
+            .hero-meta { order: 3; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding-bottom: 0; }
             .hero-socials-btn { align-self: center; }
             .hf-num { letter-spacing: 6px; }
             /* The floating verified badge is anchored to the desktop name position;
@@ -486,7 +487,7 @@
                     <div class="hero-lead">
                         <h1 class="hero-name" id="storeName">Your Name</h1>
                         <div class="hero-meta">
-                            <span class="hero-status" id="storeStatus">Open</span>
+                            <span class="hero-status is-closed" id="storeStatus">Offline</span>
                             <button class="follow-btn" id="followBtn">Follow</button>
                             <button class="hero-socials-btn" id="socialsBtn" type="button" aria-haspopup="dialog">Socials</button>
                         </div>
@@ -620,6 +621,20 @@
         (function setAvatar(){
             const el = document.getElementById('heroAvatar');
             if (BUYER.avatar) el.style.backgroundImage = `url('${BUYER.avatar}')`;
+        })();
+
+        // ONLINE / OFFLINE — the personal profile shows whether the member is
+        // currently connected to the app (instead of a shop's OPEN / CLOSED). The app
+        // pages write a `vero_last_seen` heartbeat; recent activity → Online.
+        (function renderPresence(){
+            const el = document.getElementById('storeStatus');
+            if (!el) return;
+            let lastSeen = 0;
+            try { lastSeen = Number(localStorage.getItem('vero_last_seen')) || 0; } catch (e) {}
+            const ONLINE_WINDOW = 5 * 60 * 1000;   // active within 5 minutes = online
+            const online = !!lastSeen && (Date.now() - lastSeen < ONLINE_WINDOW);
+            el.textContent = online ? 'Online' : 'Offline';
+            el.classList.toggle('is-closed', !online);   // reuse the dimmed style when offline
         })();
 
         // The card — same markup + shared product-card.css as the rest of the site.
