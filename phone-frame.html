@@ -94,11 +94,16 @@
         // hand off to this frame and still load itself. Only a bare local filename is
         // accepted, so the param can't point the frame at an arbitrary URL.
         (function () {
-            var page = (location.hash.match(/[#&]page=([^&]+)/) || [])[1];
-            page = page ? decodeURIComponent(page) : null;
-            if (page && !/\.html$/.test(page)) page += '.html';   // tolerate clean-URL servers
-            var safe = page && /^[a-zA-Z0-9_-]+\.html$/.test(page) && page !== 'phone-frame.html';
-            frame.src = safe ? page : 'index.html';
+            var raw = (location.hash.match(/[#&]page=([^&]+)/) || [])[1];
+            raw = raw ? decodeURIComponent(raw) : null;
+            // Split an optional query string (e.g. profile.html?from=seller) off the
+            // filename, so a mode can be carried into the framed page.
+            var file = raw, query = '';
+            if (raw) { var qi = raw.indexOf('?'); if (qi >= 0) { file = raw.slice(0, qi); query = raw.slice(qi); } }
+            if (file && !/\.html$/.test(file)) file += '.html';   // tolerate clean-URL servers
+            var safe = file && /^[a-zA-Z0-9_-]+\.html$/.test(file) && file !== 'phone-frame.html'
+                       && /^(\?[\w=&%.-]*)?$/.test(query);
+            frame.src = safe ? file + query : 'index.html';
         })();
         function hideFrameScrollbar() {
             try {

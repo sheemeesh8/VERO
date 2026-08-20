@@ -10,7 +10,7 @@
       if (window.self === window.top) {
         var pf = location.pathname.split('/').pop() || 'index';
         if (!/\.html$/.test(pf)) pf += '.html';   // some servers serve clean URLs (no .html)
-        location.replace('phone-frame.html#page=' + encodeURIComponent(pf));
+        location.replace('phone-frame.html#page=' + encodeURIComponent(pf + location.search));
       }
     </script>
     <title>VERO — My Profile</title>
@@ -1269,6 +1269,15 @@
             box-shadow: 0 6px 26px rgba(0,0,0,0.28);
         }
         .area-tabs::-webkit-scrollbar { display: none; }
+        /* Hidden while the full-screen hero image is on screen; slides up into view
+           the moment the hero is scrolled past (or another area tab is opened). */
+        .area-tabs {
+            transform: translateX(-50%) translateY(180%); opacity: 0; pointer-events: none;
+            transition: transform 0.5s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease;
+        }
+        .area-tabs.revealed {
+            transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto;
+        }
         .area-tab {
             position: relative; border: none; background: transparent; font-family: inherit;
             font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
@@ -1627,7 +1636,13 @@
         // ---- Seller-area context ----
         // Reached from the seller hub (?from=seller): the page reads as the seller's
         // shop, so swap the title and send "back" to the seller area, not the buyer one.
-        const isSeller = new URLSearchParams(location.search).get('from') === 'seller';
+        // Normally from ?from=seller. When the page is opened through phone-frame.html
+        // the mode may ride in the frame's #page=…?from=seller hash (some static servers
+        // strip the inner query), so read that same-origin hash as a fallback.
+        let isSeller = new URLSearchParams(location.search).get('from') === 'seller';
+        if (!isSeller) {
+            try { isSeller = /[?&]from=seller\b/.test(decodeURIComponent(window.top.location.hash || '')); } catch (e) {}
+        }
         // The personal profile and the seller (business) profile are split into two
         // separate stores so editing one never bleeds into the other. Personal →
         // vero_profile; seller "My Shop" → vero_seller_profile.
@@ -2619,8 +2634,9 @@
     (function areaTabs() {
         // Works in both modes. In seller mode the tabs mirror the seller hub
         // (seller-area.html): My Shop / My Products / Buyer Chats / Offers Received.
-        const seller = new URLSearchParams(location.search).get('from') === 'seller'
+        let seller = new URLSearchParams(location.search).get('from') === 'seller'
                     || localStorage.getItem('vero_active_account') === 'seller';
+        if (!seller) { try { seller = /[?&]from=seller\b/.test(decodeURIComponent(window.top.location.hash || '')); } catch (e) {} }
         const q = seller ? '?from=seller&embed=1' : '?embed=1';
 
         // The five rectangles, in order. The first is this page itself (no iframe);
@@ -2732,6 +2748,20 @@
         const wrap = document.querySelector('.wrap');
         (wrap || document.body).appendChild(overlay);
 
+        // ---- Reveal the tab bar only once the hero image has been passed ----
+        // While the full-screen hero fills the viewport the bar stays hidden; it
+        // slides up the moment you scroll past the image (or open another area).
+        const heroEl = document.querySelector('.profile-hero');
+        function updateBarReveal() {
+            const areaOpen = wrap && wrap.classList.contains('area-mode');
+            const y = window.scrollY || document.documentElement.scrollTop || 0;
+            const passed = areaOpen || !heroEl || y > (heroEl.offsetHeight - 90);
+            bar.classList.toggle('revealed', passed);
+        }
+        window.addEventListener('scroll', updateBarReveal, { passive: true });
+        window.addEventListener('resize', updateBarReveal);
+        updateBarReveal();
+
         // ---- Notification dots: compare each area's data to what was last seen ----
         function tabFor(id) { return bar.querySelector('.area-tab[data-id="' + id + '"]'); }
         function markSeen(id) {
@@ -2761,6 +2791,10 @@
             markSeen(id);   // visiting an area clears its dot
             setHeroTitle(id);   // show this section's title where the name sits
             if (wrap) wrap.classList.toggle('title-only', id !== 'profile');   // hero shows only the title off-profile
+            // Opening any area other than the profile forces the bar into view;
+            // on the profile it follows the scroll position past the hero.
+            if (id !== 'profile') bar.classList.add('revealed');
+            else if (typeof updateBarReveal === 'function') updateBarReveal();
 
             // Settings / Statistics → show the profile's own slide (in place).
             const area = AREAS.find(a => a.id === id);
