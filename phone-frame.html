@@ -79,7 +79,7 @@
         <div class="screen">
             <!-- The whole site lives in here. index.html detects it is framed and renders
                  the real homepage instead of bouncing back to this frame. -->
-            <iframe src="index.html" title="VERO" id="siteFrame"></iframe>
+            <iframe title="VERO" id="siteFrame"></iframe>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
         </div>
@@ -89,6 +89,17 @@
         // (file://) lets us inject a style into the framed document; re-runs on every
         // in-frame navigation because onload fires for each page load.
         var frame = document.getElementById('siteFrame');
+        // Which page to render inside the phone. Defaults to the homepage; a
+        // ?page=<file>.html param lets a directly-opened inner page (e.g. a profile)
+        // hand off to this frame and still load itself. Only a bare local filename is
+        // accepted, so the param can't point the frame at an arbitrary URL.
+        (function () {
+            var page = (location.hash.match(/[#&]page=([^&]+)/) || [])[1];
+            page = page ? decodeURIComponent(page) : null;
+            if (page && !/\.html$/.test(page)) page += '.html';   // tolerate clean-URL servers
+            var safe = page && /^[a-zA-Z0-9_-]+\.html$/.test(page) && page !== 'phone-frame.html';
+            frame.src = safe ? page : 'index.html';
+        })();
         function hideFrameScrollbar() {
             try {
                 var d = frame.contentDocument;
