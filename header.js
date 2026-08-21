@@ -860,8 +860,8 @@
 
         /* ===== Business (seller) account — stripped header =====
            Keep the logo, the + (upload), the profile picture, the switch icon and
-           the cart. Hide the menu and search. */
-        #siteHeader.acct-seller [data-icon="search"],
+           the cart. The magnifier (→ site search) stays available; only the inline
+           search field variant is hidden. */
         #siteHeader.acct-seller .hdr-searchwrap {
             display: none !important;
         }
@@ -2265,7 +2265,11 @@
         const onScroll = () => {
             const hdr = document.querySelector('header#siteHeader') || document.querySelector('header');
             if (!hdr) return;
-            const scrolled = window.scrollY > 80;
+            // A page may supply its own predicate (e.g. the feed keeps the header
+            // transparent through its Men/Women/Kids slider); default: 80px past top.
+            const scrolled = (typeof window.veroHeaderScrolled === 'function')
+                ? !!window.veroHeaderScrolled(hdr)
+                : window.scrollY > 80;
             hdr.classList.toggle('scrolled', scrolled);
             // The feed's slider + filter bands are now white, so the header stays
             // white with black content throughout — it never flips to the dark look.

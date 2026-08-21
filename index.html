@@ -9333,14 +9333,24 @@
             }
         }
 
+        // Header stays transparent through the hero + Men/Women/Kids slider (#vfBand);
+        // it flips to the solid sticky look only once that slider scrolls under the
+        // header. Read by header.js's scroll handler.
+        window.veroHeaderScrolled = function (hdr) {
+            const band = document.getElementById('vfBand');
+            if (!band || band.offsetParent === null) return window.scrollY > 80;
+            return band.getBoundingClientRect().bottom <= ((hdr && hdr.offsetHeight) || 0);
+        };
+
         // Infinite Scroll
         window.addEventListener('scroll', () => {
             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
                 loadMoreFeedBlocks();
             }
-            // Transparent over the hero; solid + dark once scrolled past it.
-            const hdr = document.querySelector('header');
-            if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 80);
+            // Transparent over the hero AND the Men/Women/Kids slider; the header
+            // only turns solid + sticky once that slider is scrolled past, i.e. on
+            // entering the feed itself. The actual .scrolled toggle is owned by
+            // header.js, which reads window.veroHeaderScrolled (defined below).
             // the hole is inline, so it has to be re-applied / cleared on scroll
             syncHeaderHole();
         });
