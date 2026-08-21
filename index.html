@@ -948,9 +948,14 @@
                 transform: translate(-19px, -2px) scale(1.25, 1.25);
                 transform-origin: top left;
             }
-            /* WOMEN is the longest title — shrink it so it can't bleed into KIDS. */
-            .hm2-slider .hm2-slide:nth-of-type(2) .hm2-cap .hm2-title {
+            /* WOMEN is the longest clothing title — shrink it so it can't bleed into KIDS. */
+            .hm2-slider:not(.hm2-slider--art) .hm2-slide:nth-of-type(2) .hm2-cap .hm2-title {
                 font-size: 64px;
+            }
+            /* Art titles (Paintings / Sculptures / Your Home) are long — smaller size. */
+            .hm2-slider--art .hm2-slide .hm2-cap .hm2-title {
+                font-size: 46px;
+                letter-spacing: 2px;
             }
             .hm2-slide .hm2-cap .hm2-desc {
                 transform: translate(12px, 3px) scale(0.95, 0.95);
@@ -8860,6 +8865,8 @@
             // Each mode plays its own hero video over the background image.
             heroImage.classList.toggle('clothing-video', category === 'clothing');
             heroImage.classList.toggle('art-video', category === 'art');
+            // The mobile full-screen slider swaps its three main categories by mode.
+            updateHm2Categories(category);
             // Mirror the art state on <body> so the header can restyle over the black band.
             document.body.classList.toggle('art-active', category === 'art');
             applyHeroSquareCopy(category);
@@ -11317,6 +11324,40 @@
             if (title) title.innerHTML = isArt
                 ? 'The Gallery<br><em>Magazine</em>'
                 : 'The Closet<br><em>Magazine</em>';
+        }
+
+        // The mobile full-screen slider (heroMobile2) shows three main categories.
+        // They switch with the mode: Men/Women/Kids (clothing) or the art segments
+        // (Paintings/Sculptures/Your Home). Clothing keeps its per-segment videos;
+        // art has no videos yet, so those slides show the segment photo instead.
+        const hm2Videos = {
+            men: 'assets/hero/men.mp4', women: 'assets/hero/women.mp4', kids: 'assets/hero/kids.mp4'
+        };
+        function updateHm2Categories(category) {
+            const slider = document.getElementById('hm2Slider');
+            if (!slider) return;
+            const segs = filterSegments[category] || [];
+            const isClothing = category === 'clothing';
+            slider.classList.toggle('hm2-slider--art', category === 'art');
+            slider.querySelectorAll('.hm2-slide').forEach((slide, i) => {
+                const seg = segs[i];
+                if (!seg) return;
+                const title = slide.querySelector('.hm2-title');
+                const desc  = slide.querySelector('.hm2-desc');
+                const video = slide.querySelector('.hm2-video');
+                if (title) title.textContent = seg.name.toUpperCase();
+                if (desc)  desc.textContent = seg.sub;
+                const vsrc = isClothing ? hm2Videos[seg.key] : null;
+                if (video && vsrc) {
+                    if (video.getAttribute('src') !== vsrc) { video.src = vsrc; video.load(); }
+                    video.style.display = '';
+                    slide.style.backgroundImage = '';
+                } else if (video) {
+                    video.style.display = 'none';
+                    slide.style.backgroundImage =
+                        `url('https://loremflickr.com/800/1200/${encodeURIComponent(seg.img)}?lock=${i + 11}')`;
+                }
+            });
         }
 
         function renderHeroInstance(inst) {
