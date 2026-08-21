@@ -9338,8 +9338,15 @@
         // header. Read by header.js's scroll handler.
         window.veroHeaderScrolled = function (hdr) {
             const band = document.getElementById('vfBand');
+            const hdrH = (hdr && hdr.offsetHeight) || 0;
             if (!band || band.offsetParent === null) return window.scrollY > 80;
-            return band.getBoundingClientRect().bottom <= ((hdr && hdr.offsetHeight) || 0);
+            // Document-space bottom of the slider, summed from offsetTop so it is
+            // immune to the band's internal position:sticky transforms (a plain
+            // getBoundingClientRect().bottom can misread inside a sticky context).
+            let top = 0, n = band;
+            while (n) { top += n.offsetTop; n = n.offsetParent; }
+            const bandBottomDoc = top + band.offsetHeight;
+            return (window.scrollY + hdrH) >= bandBottomDoc;
         };
 
         // Infinite Scroll
