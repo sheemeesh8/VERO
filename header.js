@@ -584,9 +584,12 @@
            Fill it with a black blend — solid black up under the notch, fading to
            transparent just above the header — so the camera line merges into it. */
         @media (max-width: 768px) {
+            /* Push the whole header well below the camera line. env() alone is small on
+               centred punch-hole cameras, so add a firm fixed offset on top of it. */
+            #siteHeader { top: calc(42px + env(safe-area-inset-top, 0px)); }
             #siteHeader::before {
-                height: calc(24px + env(safe-area-inset-top, 0px));
-                background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 62%, rgba(0,0,0,0) 100%);
+                height: calc(48px + env(safe-area-inset-top, 0px));
+                background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 68%, rgba(0,0,0,0) 100%);
             }
         }
         #siteHeader.scrolled .header-left > a,
