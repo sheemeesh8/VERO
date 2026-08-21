@@ -23,7 +23,7 @@
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['mode', 'account', 'cart'];
+    const ICON_ORDER = ['account', 'mode', 'cart'];
     const ICON_ORDER_KEY = 'vero_header_icon_order';
 
     function currentIconOrder() {
@@ -77,9 +77,8 @@
             border-bottom: none;
             padding: 4px 0;
             position: fixed;
-            /* Sits below the very top edge — and, on notched phones, below the camera
-               line (the device's safe-area inset is added to the offset). */
-            top: calc(10px + env(safe-area-inset-top, 0px)); left: 0; right: 0;
+            /* Sits a little below the very top edge rather than flush against it. */
+            top: 10px; left: 0; right: 0;
             z-index: 100;
             width: 100%;
             box-shadow: none;
@@ -95,7 +94,9 @@
             gap: 24px;
             direction: ltr;
         }
-        #siteHeader .header-left { display: flex; gap: 30px; align-items: center; justify-self: start; }
+        #siteHeader .header-left { display: flex; gap: 30px; align-items: center; justify-self: start; grid-column: 1; }
+        /* Logo (centre column) removed — keep the icon group pinned to the last column. */
+        #siteHeader .header-container > .header-right { grid-column: 3; }
         /* "Menu" / "Search" text buttons on the left, à la couture navigation. */
         #siteHeader .hdr-textbtn {
             display: inline-flex; align-items: center; gap: 9px;
@@ -525,6 +526,42 @@
         }
         #siteHeader .hdr-switch { width: 26px; height: 26px; }
         #siteHeader .hdr-switch svg { width: 24px; height: 24px; stroke: currentColor !important; fill: none; }
+        /* Long-press profile switcher (Instagram-style): a small card listing the
+           personal + business accounts; tap one to switch to it. */
+        .vero-acct-switcher {
+            position: fixed; z-index: 100001; width: 240px;
+            background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 16px;
+            box-shadow: 0 16px 46px rgba(0,0,0,0.22); padding: 8px;
+            opacity: 0; transform: translateY(-6px) scale(0.98); transform-origin: top right;
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+        .vero-acct-switcher.open { opacity: 1; transform: translateY(0) scale(1); }
+        .vero-acct-switcher .vas-title {
+            font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+            color: #9a9a95; padding: 8px 10px 6px;
+        }
+        .vero-acct-switcher .vas-row {
+            display: flex; align-items: center; gap: 12px; width: 100%;
+            border: none; background: none; cursor: pointer; padding: 10px; border-radius: 12px;
+            text-align: left; font-family: inherit;
+        }
+        .vero-acct-switcher .vas-row:hover { background: #f4f3f0; }
+        .vero-acct-switcher .vas-av {
+            width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto;
+            background: #e6e4df center / cover no-repeat; display: grid; place-items: center;
+            font-size: 16px; font-weight: 600; color: #333; text-transform: uppercase;
+            border: 1.5px solid rgba(0,0,0,0.12);
+        }
+        .vero-acct-switcher .vas-row.on .vas-av {
+            border-color: #1DA65A; box-shadow: 0 0 0 2px rgba(29,166,90,0.25);
+        }
+        .vero-acct-switcher .vas-meta { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; flex: 1; }
+        .vero-acct-switcher .vas-name {
+            font-size: 13px; font-weight: 600; color: #111;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;
+        }
+        .vero-acct-switcher .vas-sub { font-size: 10px; color: #8a8a85; letter-spacing: 0.3px; }
+        .vero-acct-switcher .vas-check { color: #1DA65A; font-weight: 700; margin-left: auto; }
         /* Profile-switch splash: a short WELCOME screen shown between areas. */
         .vero-switch-splash {
             position: fixed; inset: 0; z-index: 99999; background: #fff; color: #111;
@@ -577,20 +614,8 @@
             left: 0;
             right: 0;
             bottom: 100%;
-            height: calc(18px + env(safe-area-inset-top, 0px));
+            height: 18px;
             background: inherit;
-        }
-        /* On phones the strip above the header covers the camera / status-bar region.
-           Fill it with a black blend — solid black up under the notch, fading to
-           transparent just above the header — so the camera line merges into it. */
-        @media (max-width: 768px) {
-            /* Push the whole header well below the camera line. env() alone is small on
-               centred punch-hole cameras, so add a firm fixed offset on top of it. */
-            #siteHeader { top: calc(42px + env(safe-area-inset-top, 0px)); }
-            #siteHeader::before {
-                height: calc(48px + env(safe-area-inset-top, 0px));
-                background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 68%, rgba(0,0,0,0) 100%);
-            }
         }
         #siteHeader.scrolled .header-left > a,
         #siteHeader.scrolled .logo,
@@ -663,7 +688,7 @@
                 display: flex; align-items: center; margin: 0; padding-left: 0; color: #111;
             }
             body:not([data-sticky="plain"]) #siteHeader .header-right {
-                justify-self: end; justify-content: flex-end; gap: 22px;
+                justify-self: end; justify-content: flex-end; gap: 12px;
             }
             body:not([data-sticky="plain"]) #siteHeader .upload-plus {
                 animation: none !important; box-shadow: none !important;
@@ -841,7 +866,7 @@
             display: none !important;
         }
         /* Seller account cluster moved to the left keeps a comfortable gap. */
-        #siteHeader.acct-seller .header-left { gap: 22px; }
+        #siteHeader.acct-seller .header-left { gap: 12px; }
         #siteHeader.acct-seller .hdr-account { display: inline-flex; align-items: center; }
         /* The seller account name, shown beside the profile picture. */
         #siteHeader .hdr-acct-name {
@@ -863,7 +888,7 @@
         #siteHeader.acct-seller .hdr-seller-search { display: flex; }
 
         /* ===== Icons pinned to the right, logo centred ===== */
-        #siteHeader .header-right { justify-self: end; justify-content: flex-end; gap: 22px; }
+        #siteHeader .header-right { justify-self: end; justify-content: flex-end; gap: 12px; }
         @media (max-width: 768px) {
             #siteHeader .header-container { grid-template-columns: auto 1fr auto; padding: 0 16px; gap: 12px; }
             #siteHeader .header-left { gap: 16px; }
@@ -1184,7 +1209,6 @@
                     <span class="hdr-textbtn-label">Search</span>
                 </a>
             </div>
-            <div class="logo" onclick="showMain()" style="cursor:pointer"><img src="vero-logo.png?v=5" alt="VERO" class="logo-img" onerror="this.replaceWith(document.createTextNode('VERO'))"></div>
             <div class="header-right">
                 <span class="hdr-cart" data-icon="cart">
                     <a class="icon-btn icon-wrap" href="cart-store.html" title="Cart" aria-label="Cart">
@@ -1204,7 +1228,7 @@
                 <span class="hdr-account" data-icon="account">
                     <!-- Personal-area account: the profile picture from vero_profile,
                          shown by default. Clicking it opens the personal area. -->
-                    <button class="icon-btn hdr-avatar-btn" title="My Account" onclick="veroOpenArea()">
+                    <button class="icon-btn hdr-avatar-btn" title="My Account (hold to switch profile)">
                         <span class="hdr-avatar" id="hdrAvatar">V</span>
                     </button>
                     <!-- Switch profile: jump to the separate Seller Area (business) account. -->
@@ -2082,6 +2106,74 @@
         veroProfileSplash({ name: accountName(next), reload: true });
     };
 
+    // ---- Long-press account switcher (Instagram-style) ----
+    // Holding the header profile picture opens a small card listing the personal and
+    // business accounts; tapping one switches to it. A normal tap opens the account.
+    function closeAccountSwitcher() {
+        const p = document.getElementById('veroAcctSwitcher');
+        if (p) p.remove();
+        document.removeEventListener('click', acctSwitcherOutside, true);
+    }
+    function acctSwitcherOutside(e) {
+        const p = document.getElementById('veroAcctSwitcher');
+        if (p && !p.contains(e.target) && !e.target.closest('.hdr-avatar-btn')) closeAccountSwitcher();
+    }
+    window.veroOpenAccountSwitcher = function (anchor) {
+        closeAccountSwitcher();
+        const cur = window.veroActiveAccount();
+        let prof = {}, store = {}, sell = {};
+        try { prof  = JSON.parse(localStorage.getItem('vero_profile')) || {}; } catch (e) {}
+        try { store = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
+        try { sell  = JSON.parse(localStorage.getItem('vero_seller_profile')) || {}; } catch (e) {}
+        const rows = [
+            { key: 'buyer',  name: accountName('buyer'),  sub: 'Personal', img: prof.avatarImg || '' },
+            { key: 'seller', name: accountName('seller'), sub: 'Business', img: sell.avatarImg || store.avatarImg || '' }
+        ];
+        const pop = document.createElement('div');
+        pop.className = 'vero-acct-switcher';
+        pop.id = 'veroAcctSwitcher';
+        pop.innerHTML = '<div class="vas-title">Switch profile</div>' + rows.map(r => {
+            const initial = ((r.name || 'V').trim()[0] || 'V');
+            const av = r.img ? `style="background-image:url('${r.img}')"` : '';
+            return `<button class="vas-row${r.key === cur ? ' on' : ''}" data-acct="${r.key}">
+                        <span class="vas-av" ${av}>${r.img ? '' : initial}</span>
+                        <span class="vas-meta"><span class="vas-name">${r.name}</span><span class="vas-sub">${r.sub}</span></span>
+                        ${r.key === cur ? '<span class="vas-check">✓</span>' : ''}
+                    </button>`;
+        }).join('');
+        document.body.appendChild(pop);
+        const box = (anchor || document.querySelector('#siteHeader .hdr-avatar-btn')).getBoundingClientRect();
+        const W = 240;
+        pop.style.left = Math.min(Math.max(8, box.right - W), window.innerWidth - W - 8) + 'px';
+        pop.style.top = (box.bottom + 8) + 'px';
+        pop.querySelectorAll('.vas-row').forEach(row => {
+            row.addEventListener('click', () => {
+                const acct = row.dataset.acct;
+                closeAccountSwitcher();
+                if (acct !== cur) window.veroGoAccount(acct);
+            });
+        });
+        requestAnimationFrame(() => pop.classList.add('open'));
+        setTimeout(() => document.addEventListener('click', acctSwitcherOutside, true), 0);
+    };
+
+    function wireAccountLongPress() {
+        const btn = document.querySelector('#siteHeader .hdr-avatar-btn');
+        if (!btn) return;
+        let timer = null, longFired = false;
+        const start = () => { longFired = false; timer = setTimeout(() => { longFired = true; window.veroOpenAccountSwitcher(btn); }, 480); };
+        const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+        btn.addEventListener('pointerdown', start);
+        btn.addEventListener('pointerup', cancel);
+        btn.addEventListener('pointerleave', cancel);
+        btn.addEventListener('pointercancel', cancel);
+        btn.addEventListener('contextmenu', e => e.preventDefault());
+        btn.addEventListener('click', () => {
+            if (longFired) { longFired = false; return; }   // long-press already handled it
+            window.veroOpenArea();
+        });
+    }
+
     // ---- Profile-switch splash ----
     // A short welcome screen: "WELCOME", the account name, then a caption. By
     // default it reloads the current page in place (stay on the feed); pass a
@@ -2196,6 +2288,7 @@
         // (falls back to the name's initial). The switch button beside it opens the
         // separate Seller Area (business) account.
         fillHeaderAvatar();
+        wireAccountLongPress();
 
         // If we arrived via ?open=… (from another page), open that view once the
         // real SPA handlers exist (index.html only).
