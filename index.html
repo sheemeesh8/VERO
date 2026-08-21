@@ -564,6 +564,83 @@
         /* Monochrome filter for the art-mode hero video. */
         .hero-video-bg--mono { filter: grayscale(1); }
 
+        /* Hero caption overlay — sits over the video in both modes. */
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 28px;
+            text-align: center;
+            pointer-events: none;            /* let the hero scroll; buttons re-enable below */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.12) 45%, rgba(0,0,0,0.55) 100%);
+        }
+        .hero-overlay-inner {
+            max-width: 640px;
+            color: #fff;
+            text-shadow: 0 2px 24px rgba(0,0,0,0.5);
+        }
+        .hero-ov-eyebrow {
+            display: block;
+            font-family: 'Poppins', 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 300;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #cfe0d8;
+            margin-bottom: 22px;
+        }
+        .hero-ov-title {
+            font-family: 'Poppins', 'Inter', sans-serif;
+            font-size: clamp(40px, 6vw, 76px);
+            font-weight: 400;
+            line-height: 1.02;
+            letter-spacing: 1px;
+            margin: 0 0 20px;
+            color: #fff;
+        }
+        .hero-ov-text {
+            font-size: clamp(14px, 1.6vw, 18px);
+            line-height: 1.6;
+            font-weight: 300;
+            max-width: 520px;
+            margin: 0 auto 34px;
+            color: rgba(255,255,255,0.92);
+        }
+        .hero-ov-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .hero-ov-btn {
+            pointer-events: auto;            /* clickable even though the overlay isn't */
+            cursor: pointer;
+            font-family: 'Poppins', 'Inter', sans-serif;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 15px 30px;
+            border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.85);
+            transition: background 0.25s, color 0.25s, transform 0.2s;
+        }
+        .hero-ov-btn.primary {
+            background: #fff;
+            color: #111;
+            border-color: #fff;
+        }
+        .hero-ov-btn.primary:hover { transform: translateY(-2px); background: #f0efe9; }
+        .hero-ov-btn.ghost {
+            background: rgba(255,255,255,0.06);
+            color: #fff;
+            -webkit-backdrop-filter: blur(3px);
+            backdrop-filter: blur(3px);
+        }
+        .hero-ov-btn.ghost:hover { background: rgba(255,255,255,0.18); }
+
         /* Second full-screen hero image — mobile only (see the media query below). */
         .hero-mobile-2 { display: none; }
         /* Mid image panel between hero and M/W/K slider — mobile only. */
@@ -644,10 +721,10 @@
             .hero-mid-cap {
                 position: absolute;
                 left: 50%;
-                bottom: 88px;
-                transform: translateX(-50%);
+                top: 50%;
+                transform: translate(-50%, -50%);
                 width: 100%;
-                max-width: 420px;
+                max-width: 460px;
                 padding: 0 28px;
                 z-index: 1;
                 display: flex;
@@ -656,6 +733,15 @@
                 text-align: center;
                 color: #fff;
                 text-shadow: 0 2px 18px rgba(0,0,0,0.45);
+            }
+            .hero-mid-desc {
+                font-family: 'Poppins', 'Inter', sans-serif;
+                font-size: 13px;
+                font-weight: 300;
+                line-height: 1.7;
+                color: rgba(255,255,255,0.9);
+                max-width: 360px;
+                margin: 4px 0 26px;
             }
             .hero-mid-over {
                 font-family: 'Poppins', 'Inter', sans-serif;
@@ -684,16 +770,15 @@
             }
             .hero-mid-btn {
                 display: inline-block;
-                padding: 12px 26px;
-                border: 1px solid rgba(255,255,255,0.85);
-                border-radius: 40px;
+                padding: 4px 2px;
+                border: none;
+                border-bottom: 1px solid rgba(255,255,255,0.7);
+                border-radius: 0;
                 font-family: 'Poppins', 'Inter', sans-serif;
                 font-size: 10px;
                 letter-spacing: 3px;
                 text-transform: uppercase;
                 color: #fff;
-                backdrop-filter: blur(2px);
-                -webkit-backdrop-filter: blur(2px);
             }
 
             /* The second image and the rest of the page sit above the sticky hero and
@@ -777,7 +862,7 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
+                justify-content: center;     /* caption block centred on the screen */
                 padding: 0 28px;
                 text-align: center;
                 color: #fff;
@@ -7162,7 +7247,19 @@
         <!-- Art-mode hero video, monochrome. Shown only in art mode (toggled in setCategory). -->
         <video class="hero-video-bg hero-video-bg--mono" id="heroVideoArt" src="assets/hero/hero-art.mp4"
                autoplay muted loop playsinline preload="metadata"></video>
-        <!-- Hero intentionally empty otherwise: the site header sits over it. -->
+        <!-- Hero caption overlay (both modes): a line about the platform, a mode
+             switch, and a continue-down button. Labels update per mode in setCategory. -->
+        <div class="hero-overlay">
+            <div class="hero-overlay-inner">
+                <span class="hero-ov-eyebrow" id="heroOvEyebrow">The VERO Marketplace</span>
+                <h1 class="hero-ov-title">Buy &amp; sell,<br>beautifully.</h1>
+                <p class="hero-ov-text" id="heroOvText">A curated marketplace for pre-loved fashion and original art — traded between real people, with a story behind every piece.</p>
+                <div class="hero-ov-actions">
+                    <button class="hero-ov-btn primary" id="heroModeBtn" onclick="toggleSwitch()">Switch to Art</button>
+                    <button class="hero-ov-btn ghost" onclick="heroContinue()">Explore <span aria-hidden="true">↓</span></button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Full-screen image panel between the hero and the Men/Women/Kids slider.
@@ -7173,6 +7270,7 @@
         <div class="hero-mid-cap">
             <span class="hero-mid-over">Read this month</span>
             <span class="hero-mid-title" id="heroMidTitle">The Closet<br><em>Magazine</em></span>
+            <p class="hero-mid-desc" id="heroMidDesc">An editorial on second-hand fashion — styling notes, the craft of spotting quality, and the people behind the pieces we pass on.</p>
             <span class="hero-mid-btn">Read the Magazine</span>
         </div>
     </div>
@@ -8868,6 +8966,9 @@
             heroImage.classList.toggle('art-video', category === 'art');
             // The mobile full-screen slider swaps its three main categories by mode.
             updateHm2Categories(category);
+            // Hero caption: the mode-switch button offers the other mode.
+            const modeBtn = document.getElementById('heroModeBtn');
+            if (modeBtn) modeBtn.textContent = category === 'art' ? 'Switch to Fashion' : 'Switch to Art';
             // Mirror the art state on <body> so the header can restyle over the black band.
             document.body.classList.toggle('art-active', category === 'art');
             applyHeroSquareCopy(category);
@@ -11325,6 +11426,19 @@
             if (title) title.innerHTML = isArt
                 ? 'The Gallery<br><em>Magazine</em>'
                 : 'The Closet<br><em>Magazine</em>';
+            const desc = document.getElementById('heroMidDesc');
+            if (desc) desc.textContent = isArt
+                ? 'A quiet study of the makers — studio visits, the provenance of a piece, and the considered lives of those who collect it.'
+                : 'An editorial on second-hand fashion — styling notes, the craft of spotting quality, and the people behind the pieces we pass on.';
+        }
+
+        // Hero "Explore" button — glide to the next section below the hero.
+        function heroContinue() {
+            const mid = document.getElementById('heroMid');
+            if (mid && mid.offsetParent !== null) { mid.scrollIntoView({ behavior: 'smooth' }); return; }
+            const hm2 = document.getElementById('heroMobile2');
+            if (hm2 && hm2.offsetParent !== null) { hm2.scrollIntoView({ behavior: 'smooth' }); return; }
+            window.scrollTo({ top: (window.innerHeight || 600), behavior: 'smooth' });
         }
 
         // The mobile full-screen slider (heroMobile2) shows three main categories.
