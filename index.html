@@ -808,10 +808,10 @@
             }
             .hm2-jacket .hj-media {
                 position: relative;
-                /* Square image inset with an even white frame; a larger bottom white
-                   band under the image. */
-                width: calc(100% - 20px);
-                margin: 0 auto 50px;
+                /* Enlarged square image — only a small white margin on the side edges,
+                   with a modest bottom band under it. */
+                width: calc(100% - 12px);
+                margin: 0 auto 30px;
                 flex: 0 0 auto;
                 aspect-ratio: 1 / 1;
                 overflow: hidden;
@@ -12251,20 +12251,28 @@
                 .feed-nav-more:hover, .feed-nav-more.open { color: #fff; }
                 .feed-nav-pop {
                     position: fixed; z-index: 901; display: none;
-                    grid-template-columns: repeat(2, minmax(120px, 1fr)); gap: 6px;
-                    max-width: 92vw; max-height: 46vh; overflow-y: auto;
                     background: #fff; border: 1px solid rgba(0,0,0,0.12); border-radius: 18px; padding: 12px;
                     box-shadow: 0 14px 44px rgba(0,0,0,0.24);
                 }
-                .feed-nav-pop.open { display: grid; }
+                .feed-nav-pop.open { display: block; }
                 .feed-nav-pop .fnp-title {
-                    grid-column: 1 / -1; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-                    color: #9a9a95; padding: 2px 4px 6px;
+                    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+                    color: #9a9a95; padding: 2px 4px 8px;
+                }
+                /* Windowed slider: exactly three category buttons at a time. Tapping the
+                   third (last in RTL reading order) selects it and slides the window on
+                   by one, revealing the next category. */
+                .fnp-viewport { overflow: hidden; }
+                .fnp-track {
+                    display: flex; direction: rtl; gap: 6px;
+                    transition: transform 0.42s cubic-bezier(0.22,1,0.36,1); will-change: transform;
                 }
                 .fnp-item {
+                    flex: 0 0 100px; width: 100px; box-sizing: border-box;
                     border: 1px solid #e9e9e6; background: #fff; color: #1c1c1c; font-family: inherit;
-                    font-size: 11px; padding: 10px 14px; border-radius: 999px; cursor: pointer;
-                    text-align: center; white-space: nowrap; transition: 0.15s;
+                    font-size: 11px; padding: 10px 10px; border-radius: 999px; cursor: pointer;
+                    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                    transition: border-color 0.15s, background 0.15s, color 0.15s;
                 }
                 .fnp-item:hover { border-color: #111; }
                 .fnp-item.on { background: #111; color: #fff; border-color: #111; }
@@ -12345,19 +12353,46 @@
             }
 
             // ---- Full category chooser popup (opened by the ⋯ button) ----
+            // A three-at-a-time slider: tapping the rightmost visible button slides the
+            // window on by one, revealing the next category; any other button selects.
             function buildPop() {
                 pop.innerHTML = '';
                 const title = document.createElement('div'); title.className = 'fnp-title';
                 title.textContent = 'כל הקטגוריות'; pop.appendChild(title);
-                const mkP = (label, type) => {
+
+                const vp = document.createElement('div'); vp.className = 'fnp-viewport';
+                const track = document.createElement('div'); track.className = 'fnp-track';
+                vp.appendChild(track); pop.appendChild(vp);
+
+                const ITEM = 100, GAP = 6, PER = 3, STEP = ITEM + GAP;
+                const entries = [['All', '']].concat(cats().map(c => [c, c]));
+                const items = entries.map(([label, type]) => {
                     const b = document.createElement('button');
                     b.className = 'fnp-item' + (activeType() === type ? ' on' : '');
-                    b.textContent = label;
-                    b.addEventListener('click', () => { select(type); closePop(); });
-                    pop.appendChild(b);
-                };
-                mkP('All', '');
-                cats().forEach(c => mkP(c, c));
+                    b.textContent = label; b.title = label; b.dataset.type = type;
+                    track.appendChild(b);
+                    return b;
+                });
+
+                const shown = Math.min(PER, items.length);
+                vp.style.width = (shown * ITEM + (shown - 1) * GAP) + 'px';
+                const maxWin = Math.max(0, items.length - PER);
+                let win = 0;
+                function layout(animate) {
+                    track.style.transition = animate ? '' : 'none';
+                    track.style.transform = 'translateX(' + (win * STEP) + 'px)';
+                    if (!animate) { void track.offsetWidth; track.style.transition = ''; }
+                }
+                layout(false);
+
+                items.forEach((b, i) => {
+                    b.addEventListener('click', () => {
+                        // Rightmost visible button (first of the window in RTL) advances
+                        // the slider by one; every other button selects the category.
+                        if (i === win && win < maxWin) { win += 1; layout(true); return; }
+                        select(b.dataset.type); closePop();
+                    });
+                });
             }
             function positionPop(anchor) {
                 const r = bar.getBoundingClientRect();
