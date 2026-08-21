@@ -833,10 +833,9 @@
         #siteHeader.scrolled.over-dark .hdr-mode-pair .upload-plus { color: #fff !important; border-color: #fff !important; }
 
         /* ===== Business (seller) account — stripped header =====
-           Keep only the logo, the + (upload), the profile picture and the switch
-           icon. Hide the menu, search, category toggle and cart. */
+           Keep the logo, the + (upload), the profile picture, the switch icon and
+           the cart. Hide the menu and search. */
         #siteHeader.acct-seller [data-icon="search"],
-        #siteHeader.acct-seller [data-icon="cart"],
         #siteHeader.acct-seller .hdr-searchwrap {
             display: none !important;
         }
