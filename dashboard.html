@@ -85,8 +85,7 @@
                         width 0.4s cubic-bezier(0.22,1,0.36,1);
         }
 
-        .panel { display: none; animation: fadeIn 0.4s ease both; }
-        .panel.is-active { display: block; }
+        .panel { display: block; animation: fadeIn 0.4s ease both; margin-bottom: 40px; }
 
         /* ===== Cards ===== */
         .grid { display: grid; gap: 18px; }
@@ -235,8 +234,6 @@
             <p class="dash-sub">ניהול מפגשים, מלאי, מוניטין ותובנות — הכל במקום אחד.</p>
         </div>
 
-        <!-- Section tabs -->
-        <nav class="sec-nav" id="secNav"></nav>
 
         <!-- ===== 1. זמן ומפגשים ===== -->
         <section class="panel" data-sec="time">
@@ -427,38 +424,39 @@
             { id: 'insights', n: 5, label: 'אנליטיקה' },
             { id: 'inbox',    n: 6, label: 'פניות ושירות' },
         ];
+        // Section navigation bar removed — all panels are shown stacked.
         const nav = document.getElementById('secNav');
-        const ind = document.createElement('span'); ind.className = 'sec-ind';
-        nav.appendChild(ind);
-        SECTIONS.forEach((s, i) => {
-            const b = document.createElement('button');
-            b.className = 'sec-tab' + (i === 0 ? ' is-active' : '');
-            b.dataset.sec = s.id;
-            b.innerHTML = `<span class="num">${s.n}</span> ${s.label}`;
-            b.addEventListener('click', () => show(s.id));
-            nav.appendChild(b);
-        });
-        function moveInd(animate) {
-            const t = nav.querySelector('.sec-tab.is-active'); if (!t) return;
-            if (!animate) ind.style.transition = 'none';
-            ind.style.width = t.offsetWidth + 'px';
-            ind.style.transform = 'translateX(' + t.offsetLeft + 'px)';
-            if (!animate) { void ind.offsetWidth; ind.style.transition = ''; }
+        if (nav) {
+            const ind = document.createElement('span'); ind.className = 'sec-ind';
+            nav.appendChild(ind);
+            SECTIONS.forEach((s, i) => {
+                const b = document.createElement('button');
+                b.className = 'sec-tab' + (i === 0 ? ' is-active' : '');
+                b.dataset.sec = s.id;
+                b.innerHTML = `<span class="num">${s.n}</span> ${s.label}`;
+                b.addEventListener('click', () => show(s.id));
+                nav.appendChild(b);
+            });
+            const moveInd = (animate) => {
+                const t = nav.querySelector('.sec-tab.is-active'); if (!t) return;
+                if (!animate) ind.style.transition = 'none';
+                ind.style.width = t.offsetWidth + 'px';
+                ind.style.transform = 'translateX(' + t.offsetLeft + 'px)';
+                if (!animate) { void ind.offsetWidth; ind.style.transition = ''; }
+            };
+            const show = (id) => {
+                nav.querySelectorAll('.sec-tab').forEach(t => t.classList.toggle('is-active', t.dataset.sec === id));
+                document.querySelectorAll('.panel').forEach(p => p.classList.toggle('is-active', p.dataset.sec === id));
+                moveInd(true);
+                const active = nav.querySelector('.sec-tab.is-active');
+                if (active) active.scrollIntoView({ inline: 'center', block: 'nearest' });
+                document.dispatchEvent(new Event('vero-resize'));
+            };
+            moveInd(false);
+            window.addEventListener('resize', () => moveInd(false));
+            window.addEventListener('load', () => moveInd(false));
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(false));
         }
-        function show(id) {
-            nav.querySelectorAll('.sec-tab').forEach(t => t.classList.toggle('is-active', t.dataset.sec === id));
-            document.querySelectorAll('.panel').forEach(p => p.classList.toggle('is-active', p.dataset.sec === id));
-            moveInd(true);
-            // Keep the chosen tab in view within the scrollable bar.
-            const active = nav.querySelector('.sec-tab.is-active');
-            if (active) active.scrollIntoView({ inline: 'center', block: 'nearest' });
-            document.dispatchEvent(new Event('vero-resize'));
-        }
-        document.querySelector('.panel[data-sec="time"]').classList.add('is-active');
-        moveInd(false);
-        window.addEventListener('resize', () => moveInd(false));
-        window.addEventListener('load', () => moveInd(false));
-        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(false));
 
         // When embedded, hand the parent our section list (it draws the nav above its
         // page bar) and react to the section it selects.
