@@ -77,8 +77,9 @@
             border-bottom: none;
             padding: 4px 0;
             position: fixed;
-            /* Sits a little below the very top edge rather than flush against it. */
-            top: 10px; left: 0; right: 0;
+            /* Sits below the very top edge — and, on notched phones, below the camera
+               line (the device's safe-area inset is added to the offset). */
+            top: calc(10px + env(safe-area-inset-top, 0px)); left: 0; right: 0;
             z-index: 100;
             width: 100%;
             box-shadow: none;
@@ -578,8 +579,17 @@
             left: 0;
             right: 0;
             bottom: 100%;
-            height: 18px;
+            height: calc(18px + env(safe-area-inset-top, 0px));
             background: inherit;
+        }
+        /* On phones the strip above the header covers the camera / status-bar region.
+           Fill it with a black blend — solid black up under the notch, fading to
+           transparent just above the header — so the camera line merges into it. */
+        @media (max-width: 768px) {
+            #siteHeader::before {
+                height: calc(24px + env(safe-area-inset-top, 0px));
+                background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 62%, rgba(0,0,0,0) 100%);
+            }
         }
         #siteHeader.scrolled .header-left > a,
         #siteHeader.scrolled .logo,
