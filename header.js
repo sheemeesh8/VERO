@@ -503,19 +503,17 @@
             transition: transform 0.2s; color: #111; width: 46px; height: 46px;
             display: flex; align-items: center; justify-content: center; padding: 0;
         }
-        #siteHeader .icon-btn svg { width: 25px; height: 25px; stroke: #111 !important; fill: none; }
-        /* Cart & wishlist read a touch larger than the rest of the icon row. */
-        #siteHeader [data-icon="cart"] .icon-btn svg,
-        #siteHeader [data-icon="wishlist"] .icon-btn svg { width: 31px; height: 31px; }
+        /* Every icon glyph in the header shares one size. */
+        #siteHeader .icon-btn svg { width: 24px; height: 24px; stroke: #111 !important; fill: none; }
         #siteHeader .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader .icon-btn:hover { transform: scale(1.1); opacity: 0.65; }
         /* Account cluster: personal-area profile picture + a switch-profile button. */
         #siteHeader .hdr-account { display: inline-flex; align-items: center; gap: 2px; }
         #siteHeader .hdr-avatar-btn { width: 40px; height: 40px; }
         #siteHeader .hdr-avatar {
-            width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
+            width: 24px; height: 24px; border-radius: 50%; overflow: hidden;
             border: 1.5px solid currentColor; background: #e6e4df center / cover no-repeat;
-            display: grid; place-items: center; font-size: 12.50px; font-weight: 500;
+            display: grid; place-items: center; font-size: 10.50px; font-weight: 500;
             color: currentColor; text-transform: uppercase; line-height: 1;
         }
         #siteHeader .hdr-avatar.has-img { border-color: rgba(0,0,0,0.15); }
@@ -526,7 +524,7 @@
             box-shadow: 0 0 0 2px rgba(29,166,90,0.25);
         }
         #siteHeader .hdr-switch { width: 26px; height: 26px; }
-        #siteHeader .hdr-switch svg { width: 15.5px; height: 15.5px; stroke: currentColor !important; fill: none; }
+        #siteHeader .hdr-switch svg { width: 24px; height: 24px; stroke: currentColor !important; fill: none; }
         /* Profile-switch splash: a short WELCOME screen shown between areas. */
         .vero-switch-splash {
             position: fixed; inset: 0; z-index: 99999; background: #fff; color: #111;
@@ -551,7 +549,7 @@
         }
         #siteHeader .upload-plus {
             color: #111 !important; border: 2px solid #111 !important;
-            border-radius: 50%; width: 31px; height: 31px;
+            border-radius: 50%; width: 24px; height: 24px;
             animation: uploadPulse 1.2s ease-in-out infinite;
         }
         #siteHeader.scrolled .upload-plus { color: #111 !important; }
