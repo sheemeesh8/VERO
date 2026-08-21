@@ -81,7 +81,7 @@
         .profile-hero {
             position: relative;
             margin: -120px -40px 40px;     /* cancel the wrap's top+side padding */
-            height: 64vh; min-height: 460px;   /* same size as the storefront hero */
+            height: 100vh; min-height: 100vh;   /* full-screen background */
             background: #23231f center / cover no-repeat;
             display: flex; align-items: flex-end;
             border-bottom: 1px solid #000;
@@ -90,6 +90,21 @@
             content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
             background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.72) 100%);
         }
+        /* Light background image → the auto-contrast switches the hero text to dark,
+           and the bottom wash flips from black to white so the text stays legible. */
+        .profile-hero.hero-dark-text::after {
+            background: linear-gradient(to bottom, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 34%, rgba(255,255,255,0.72) 100%);
+        }
+        .profile-hero.hero-dark-text .ph-inner,
+        .profile-hero.hero-dark-text .hero-name,
+        .profile-hero.hero-dark-text .hero-tag,
+        .profile-hero.hero-dark-text .hero-stat,
+        .profile-hero.hero-dark-text .hero-rating,
+        .profile-hero.hero-dark-text .social-ico {
+            color: #111 !important;
+            text-shadow: 0 1px 10px rgba(255,255,255,0.45);
+        }
+        .profile-hero.hero-dark-text .social-ico { border-color: rgba(0,0,0,0.25); }
         .ph-inner {
             position: relative; z-index: 2; width: 100%;
             display: flex; align-items: flex-end; gap: 20px;
@@ -1863,6 +1878,34 @@
             function paint(url) {
                 if (url) { preview.style.backgroundImage = `url('${url}')`; preview.classList.add('has-img'); }
                 else { preview.style.backgroundImage = ''; preview.classList.remove('has-img'); }
+                applyContrast(url);
+            }
+            // Auto black/white text over the hero, from the image's brightness where
+            // the caption sits (bottom band). Light image → dark text, and vice versa.
+            function applyContrast(url) {
+                if (!url) { preview.classList.remove('hero-dark-text'); return; }
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function () {
+                    try {
+                        const c = document.createElement('canvas');
+                        const W = c.width = 40, H = c.height = 40;
+                        const ctx = c.getContext('2d');
+                        ctx.drawImage(img, 0, 0, W, H);
+                        const y0 = Math.round(H * 0.58);
+                        const data = ctx.getImageData(0, y0, W, H - y0).data;
+                        let sum = 0, n = 0;
+                        for (let i = 0; i < data.length; i += 4) {
+                            sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                            n++;
+                        }
+                        const lum = n ? sum / n / 255 : 0;
+                        preview.classList.toggle('hero-dark-text', lum > 0.62);
+                    } catch (e) {
+                        preview.classList.remove('hero-dark-text');   // tainted/remote → keep white
+                    }
+                };
+                img.src = url;
             }
             paint(readCfg().hero);
             btn.addEventListener('click', () => input.click());
