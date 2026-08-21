@@ -407,6 +407,8 @@
 
         .field { margin-bottom: 22px; }
         .field:last-child { margin-bottom: 0; }
+        .field-error { color: #c0392b; font-size: 11px; margin-top: 6px; min-height: 0; }
+        .field-invalid { border-color: #c0392b !important; }
         .field input, .field textarea {
             width: 100%; border: none; border-bottom: 1px solid #d9d9d4;
             background: transparent; font-family: inherit; font-size: 13.33px; font-weight: 400;
@@ -1510,6 +1512,7 @@
                 <div class="field">
                     <div class="card-label">Email</div>
                     <input id="pf-email" type="email" placeholder="you@email.com">
+                    <div id="pf-email-err" class="field-error"></div>
                 </div>
                 <div class="field seller-only">
                     <div class="card-label">Phone</div>
@@ -1924,12 +1927,13 @@
         })();
 
         // ---- Editable identity fields ----
-        // Like an Instagram personal/business pair: the login — email + phone — is
-        // shared across both profiles (vero_account), while name / location / bio /
-        // socials stay separate per profile (PROFILE_KEY).
+        // Personal and seller profiles are fully independent — no shared login.
+        // Every field, email and phone included, is stored per profile (PROFILE_KEY).
         const fields = { name: 'pf-name', email: 'pf-email', phone: 'pf-phone', location: 'pf-location', bio: 'pf-bio' };
-        const SHARED_KEYS = ['email', 'phone'];
+        const SHARED_KEYS = [];
         const shared = readJSON('vero_account', {});
+        // The other profile's record — used to keep the two accounts' emails distinct.
+        const OTHER_PROFILE_KEY = isSeller ? 'vero_profile' : 'vero_seller_profile';
         Object.entries(fields).forEach(([key, id]) => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -2139,6 +2143,19 @@
         let saveTimer;
         Object.entries(fields).forEach(([key, id]) => {
             document.getElementById(id).addEventListener('input', (e) => {
+                // Block re-using the same email on both accounts.
+                if (key === 'email') {
+                    const val = e.target.value.trim().toLowerCase();
+                    const other = (readJSON(OTHER_PROFILE_KEY, {}).email || '').trim().toLowerCase();
+                    const err = document.getElementById('pf-email-err');
+                    if (val && other && val === other) {
+                        e.target.classList.add('field-invalid');
+                        if (err) err.textContent = 'המייל הזה כבר בשימוש בחשבון השני. בחר/י מייל אחר.';
+                        return;   // don't save a duplicate email
+                    }
+                    e.target.classList.remove('field-invalid');
+                    if (err) err.textContent = '';
+                }
                 if (SHARED_KEYS.includes(key)) {
                     // Shared login detail — saved once for both profiles.
                     shared[key] = e.target.value;
@@ -2884,6 +2901,7 @@
          the embedded dashboard's six sections (seller only) ===== -->
     <script>
     (function statsSubnav() {
+        return;   // Section bar removed — the embedded dashboard shows all sections stacked.
         if (!document.body.classList.contains('is-seller')) return;   // dashboard is seller-only
         const frame = document.getElementById('salesFrame');
         if (!frame) return;
