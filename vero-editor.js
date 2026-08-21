@@ -209,10 +209,10 @@
 
         const toggle = document.createElement('button');
         toggle.id = 'vero-ed-toggle';
-        toggle.title = 'עריכה ידנית (Ctrl+E)';
+        toggle.title = 'עריכה ידנית (Ctrl+Shift+K)';
         toggle.textContent = '✎';
         toggle.onclick = () => setEditing(!editing);
-        // The on-screen ✎ button is hidden — editing is toggled only with Ctrl+E.
+        // The on-screen ✎ button is hidden — editing is toggled only with Ctrl+Shift+K.
         toggle.style.display = 'none';
         document.body.appendChild(toggle);
 
@@ -386,7 +386,7 @@
     }, true);
 
     window.addEventListener('keydown', e => {
-        if (e.ctrlKey && !e.shiftKey && !e.altKey && (e.key === 'E' || e.key === 'e')) {
+        if (e.ctrlKey && e.shiftKey && !e.altKey && (e.key === 'K' || e.key === 'k')) {
             e.preventDefault(); setEditing(!editing); return;
         }
         if (!editing || !sel) return;
