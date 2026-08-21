@@ -1685,6 +1685,26 @@
             background-color: #e6e2da;
         }
 
+        /* ===== Canva "VERO CATEGORIES" video slides (Men / Women / Kids) =====
+           The exported MP4 already carries the full design (title, text, CTA), so
+           the video plays full-bleed and the left text panel is hidden. Falls back
+           to the background photo if the file isn't present yet. */
+        .hero-slide--video .hero-content { display: none; }
+        .hero-slide--video .hero-image {
+            width: 100%;
+            clip-path: none;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .hero-slide--video .hero-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
         /* Entrance animations, retriggered per active slide — slowed for a clearer,
            more drawn-out reveal on each segment change. */
         .hero-slide.animate .hero-image {
@@ -11093,6 +11113,15 @@
         let heroState = { index: 0, timer: null };
         const HERO_INTERVAL = 8000;   // both modes share this slider
 
+        // Exported from the Canva "VERO CATEGORIES" design — one MP4 per segment,
+        // each carrying its full design (title / text / CTA baked in). Drop the
+        // files at these paths and the segment renders as a full-bleed video.
+        const heroVideos = {
+            men:   'assets/hero/men.mp4',
+            women: 'assets/hero/women.mp4',
+            kids:  'assets/hero/kids.mp4'
+        };
+
         function heroSlideHTML(s, i) {
             // A reliable random photo per segment — Lorem Picsum always resolves, and
             // a distinct seed per slide keeps men / women / kids / magazine different.
@@ -11102,6 +11131,20 @@
             };
             const seed = heroSeed[s.key] || (s.magazine ? 'vero-mag-2' : 'vero-' + s.key);
             const bg = `https://picsum.photos/seed/${encodeURIComponent(seed)}/900/1100`;
+            // A Canva video slide: render the MP4 full-bleed, clickable into the
+            // segment. The background photo stays as a poster/fallback.
+            const videoSrc = heroVideos[s.key];
+            if (videoSrc) {
+                return `
+                <div class="hero-slide hero-slide--video">
+                    <div class="hero-image" style="background-image:url('${bg}');"
+                         onclick="selectSegment('${s.key}')">
+                        <video class="hero-video" src="${videoSrc}"
+                               autoplay muted loop playsinline preload="metadata"
+                               poster="${bg}"></video>
+                    </div>
+                </div>`;
+            }
             // How much this segment actually has to offer — the figure in the
             // button's own counter, read from the same catalogue the feed uses.
             const count = s.magazine ? null : buildSegmentProducts(currentCategory, s.key).length;
