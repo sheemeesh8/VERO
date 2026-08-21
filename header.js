@@ -476,7 +476,7 @@
         /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {
             position: relative; display: inline-block; box-sizing: border-box;
-            width: 53.33px; height: 28.33px; flex: 0 0 auto;
+            width: 46px; height: 24px; flex: 0 0 auto;
             background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
             /* Not "all": border-color is mode-driven and must switch immediately when
                the mode flips — transitioning it left the switch showing the old
@@ -484,13 +484,13 @@
             transition: background 0.3s ease; border: 1px solid rgba(0, 0, 0, 0.18);
         }
         #siteHeader .toggle-category::before {
-            content: ''; position: absolute; top: 3.33px; left: 3.33px;
-            width: 21.67px; height: 21.67px; border-radius: 50%; background: #111; z-index: 0;
+            content: ''; position: absolute; top: 3px; left: 3px;
+            width: 18px; height: 18px; border-radius: 50%; background: #111; z-index: 0;
             /* Only the slide animates. The knob's colour is mode-driven, same as the
                track's border, and must switch instantly rather than fade. */
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(25px); }
+        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(22px); }
         /* labels kept in the markup for state/a11y, but not shown */
         #siteHeader .toggle-category .seg {
             position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -499,22 +499,22 @@
         #siteHeader .toggle-category:hover { border-color: rgba(0, 0, 0, 0.45); }
         #siteHeader .icon-btn {
             background: none; border: none; cursor: pointer; font-size: 26.67px;
-            transition: transform 0.2s; color: #111; width: 55px; height: 55px;
+            transition: transform 0.2s; color: #111; width: 46px; height: 46px;
             display: flex; align-items: center; justify-content: center; padding: 0;
         }
-        #siteHeader .icon-btn svg { width: 30.83px; height: 30.83px; stroke: #111 !important; fill: none; }
+        #siteHeader .icon-btn svg { width: 25px; height: 25px; stroke: #111 !important; fill: none; }
         /* Cart & wishlist read a touch larger than the rest of the icon row. */
         #siteHeader [data-icon="cart"] .icon-btn svg,
-        #siteHeader [data-icon="wishlist"] .icon-btn svg { width: 38.33px; height: 38.33px; }
+        #siteHeader [data-icon="wishlist"] .icon-btn svg { width: 31px; height: 31px; }
         #siteHeader .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader .icon-btn:hover { transform: scale(1.1); opacity: 0.65; }
         /* Account cluster: personal-area profile picture + a switch-profile button. */
         #siteHeader .hdr-account { display: inline-flex; align-items: center; gap: 2px; }
-        #siteHeader .hdr-avatar-btn { width: 48.33px; height: 48.33px; }
+        #siteHeader .hdr-avatar-btn { width: 40px; height: 40px; }
         #siteHeader .hdr-avatar {
-            width: 36.67px; height: 36.67px; border-radius: 50%; overflow: hidden;
+            width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
             border: 1.5px solid currentColor; background: #e6e4df center / cover no-repeat;
-            display: grid; place-items: center; font-size: 15.00px; font-weight: 500;
+            display: grid; place-items: center; font-size: 12.50px; font-weight: 500;
             color: currentColor; text-transform: uppercase; line-height: 1;
         }
         #siteHeader .hdr-avatar.has-img { border-color: rgba(0,0,0,0.15); }
@@ -524,8 +524,8 @@
             border-color: #1DA65A !important; border-width: 2.5px;
             box-shadow: 0 0 0 2px rgba(29,166,90,0.25);
         }
-        #siteHeader .hdr-switch { width: 30px; height: 30px; }
-        #siteHeader .hdr-switch svg { width: 18.33px; height: 18.33px; stroke: currentColor !important; fill: none; }
+        #siteHeader .hdr-switch { width: 26px; height: 26px; }
+        #siteHeader .hdr-switch svg { width: 15.5px; height: 15.5px; stroke: currentColor !important; fill: none; }
         /* Profile-switch splash: a short WELCOME screen shown between areas. */
         .vero-switch-splash {
             position: fixed; inset: 0; z-index: 99999; background: #fff; color: #111;
@@ -550,7 +550,7 @@
         }
         #siteHeader .upload-plus {
             color: #111 !important; border: 2px solid #111 !important;
-            border-radius: 50%; width: 38.33px; height: 38.33px;
+            border-radius: 50%; width: 31px; height: 31px;
             animation: uploadPulse 1.2s ease-in-out infinite;
         }
         #siteHeader.scrolled .upload-plus { color: #111 !important; }
@@ -1192,7 +1192,6 @@
                     </div>
                 </span>
                 <span class="hdr-account" data-icon="account">
-                    <span class="hdr-acct-name" id="hdrAcctName"></span>
                     <!-- Personal-area account: the profile picture from vero_profile,
                          shown by default. Clicking it opens the personal area. -->
                     <button class="icon-btn hdr-avatar-btn" title="My Account" onclick="veroOpenArea()">
@@ -2233,11 +2232,6 @@
         const acct = hdr && hdr.querySelector('[data-icon="account"]');
         const left = hdr && hdr.querySelector('.header-left');
         if (acct && left && acct.parentElement !== left) left.appendChild(acct);
-        // Show the account (shop) name beside the picture.
-        const nameEl = document.getElementById('hdrAcctName');
-        if (nameEl && typeof accountName === 'function') {
-            nameEl.textContent = accountName(seller ? 'seller' : 'buyer');
-        }
     }
 
     function count(key) {
