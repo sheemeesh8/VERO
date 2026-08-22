@@ -1178,6 +1178,10 @@
             display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 22px;
         }
+        /* Phones: two matching pieces per row. */
+        @media (max-width: 768px) {
+            .vsp-results { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        }
         .vsp-results .product-card { width: 100%; margin: 0; }
         .vsp-results-empty { color: #9a9a9a; font-size: 11.67px; letter-spacing: 1px; padding: 30px 0; text-align: center; }
         .vsp-apply {
