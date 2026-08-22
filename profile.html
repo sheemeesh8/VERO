@@ -1340,9 +1340,6 @@
         /* The in-page Settings / Statistics pills are now in the bottom bar (both
            modes) — hide the originals; the bar drives their slides in JS. */
         .pf-tabs { display: none; }
-        /* Seller mode: the bottom bar has no Statistics tab, so bring the
-           Settings / Statistics pills back here to keep statistics reachable. */
-        body.is-seller .pf-tabs { display: flex; }
 
         /* The area panels now switch inline (below the hero + followers), exactly
            like the Settings / Statistics slides — no full-screen overlay. */
@@ -1822,17 +1819,13 @@
 
             const tabs = document.createElement('div');
             tabs.className = 'pf-tabs';
-            // Statistics is the default view on entry.
+            // Statistics removed — Settings is the only view now.
             tabs.innerHTML =
-                '<button type="button" class="pf-tab" data-slide="settings">Settings</button>' +
-                '<button type="button" class="pf-tab is-active" data-slide="stats">Statistics</button>';
+                '<button type="button" class="pf-tab is-active" data-slide="settings">Settings</button>';
             grid.parentNode.insertBefore(tabs, grid);
 
             const slideSettings = document.createElement('div');
-            slideSettings.id = 'slideSettings'; slideSettings.className = 'pf-slide';
-            const slideStats = document.createElement('div');
-            slideStats.id = 'slideStats'; slideStats.className = 'pf-slide is-active';
-            tabs.insertAdjacentElement('afterend', slideStats);
+            slideSettings.id = 'slideSettings'; slideSettings.className = 'pf-slide is-active';
             tabs.insertAdjacentElement('afterend', slideSettings);
 
             const contact  = document.querySelector('.contact-card');
@@ -1843,10 +1836,10 @@
             const sales    = document.querySelector('.shop-sales');
             const expenses = document.querySelector('.my-expenses');
 
-            // Settings slide: identity/store details, photos, product sizes, password.
-            [contact, photos, sizeCard, password].forEach(el => { if (el) slideSettings.appendChild(el); });
-            // Statistics slide: the followers/items/following stats + the dashboard.
-            [stats, sales, expenses].forEach(el => { if (el) slideStats.appendChild(el); });
+            // Everything now lives in the single Settings slide; the followers/items/
+            // following stat tiles are deleted, sales/expenses dashboards are kept.
+            [contact, photos, sizeCard, password, sales, expenses].forEach(el => { if (el) slideSettings.appendChild(el); });
+            if (stats) stats.remove();
 
             // The now-empty original containers can be dropped so they don't add gaps.
             const oldGrid = document.querySelector('.grid');
@@ -1854,12 +1847,8 @@
 
             tabs.querySelectorAll('.pf-tab').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const sel = btn.dataset.slide;
-                    tabs.querySelectorAll('.pf-tab').forEach(b => b.classList.toggle('is-active', b === btn));
-                    slideSettings.classList.toggle('is-active', sel === 'settings');
-                    slideStats.classList.toggle('is-active', sel === 'stats');
-                    // Nudge embedded dashboards (My Sales / My Expenses) to re-fit
-                    // now that their slide is visible.
+                    slideSettings.classList.add('is-active');
+                    // Nudge embedded dashboards (My Sales / My Expenses) to re-fit.
                     window.dispatchEvent(new Event('resize'));
                 });
             });
@@ -1929,8 +1918,11 @@
 
         // Follow counts: "following" = shops the user follows (vero_follows);
         // "followers" = people following the user (stored on the profile).
-        document.getElementById('stat-following').textContent = Array.isArray(follows) ? follows.length : 0;
-        document.getElementById('stat-followers').textContent = Number(profile.followers) || 0;
+        // The stat tiles were removed with the Statistics view — guard against null.
+        const statFollowing = document.getElementById('stat-following');
+        if (statFollowing) statFollowing.textContent = Array.isArray(follows) ? follows.length : 0;
+        const statFollowers = document.getElementById('stat-followers');
+        if (statFollowers) statFollowers.textContent = Number(profile.followers) || 0;
 
         // Items live — synced with My Products (vero_listings), active listings only.
         (function fillItems() {
