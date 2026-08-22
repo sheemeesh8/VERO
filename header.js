@@ -1262,7 +1262,6 @@
                 <a onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
                 <a onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
                 <a href="about.html">About Us</a>
-                <a onclick="veroCloseDrawer(); openMagazine()">The Closet Magazine</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
                 <a id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
             </nav>
