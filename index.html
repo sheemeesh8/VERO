@@ -3361,8 +3361,8 @@
         .cat-capsules-cloud::-webkit-scrollbar { width: 0; height: 0; display: none; }
         .cat-cap {
             display: inline-flex; align-items: center; gap: 7px;
-            border: 1px solid rgba(255,255,255,0.55);
-            background: rgba(255,255,255,0.10);
+            border: 1px solid rgba(255,255,255,0.6);
+            background: transparent;
             color: #fff; border-radius: 999px;
             padding: 9px 15px; cursor: pointer;
             font-family: inherit; font-size: 12.50px; font-weight: 500; letter-spacing: 0.2px;
@@ -3370,9 +3370,13 @@
             transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
         }
         .cat-cap:hover { transform: translateY(-1px); border-color: #fff; }
-        .cat-cap .cat-cap-ic { font-size: 13.33px; line-height: 1; }
+        /* Selected = outline only, no fill: a solid white ring, text stays white. */
         .cat-cap.active {
-            background: #fff; color: #111; border-color: #fff; font-weight: 700;
+            background: transparent;
+            color: #fff;
+            border-color: #fff;
+            border-width: 2px;
+            font-weight: 700;
         }
         .cat-cap.disabled { opacity: 0.4; pointer-events: none; }
         /* Narrower windows can't hold six tracks — fall back to a fitting grid. */
@@ -9090,16 +9094,17 @@
         function renderCatCapsules() {
             const cloud = document.getElementById('catCapsulesCloud');
             if (!cloud) return;
-            const list = currentCategory === 'art' ? artCategories : clothingCategories;
+            // Item types = the distinct categories actually present in the mode's feed
+            // (clothing garment/style types, art mediums). No icons — labels only.
+            const list = uniqueSorted(feedBaseProducts().map(p => p.category));
             const chosen = feedFilters.categories || (feedFilters.categories = []);
             const atMax = chosen.length >= CAT_CAPSULE_MAX;
-            cloud.innerHTML = list.map(c => {
-                const active = chosen.includes(c.name);
+            cloud.innerHTML = list.map(name => {
+                const active = chosen.includes(name);
                 const disabled = !active && atMax;
                 return `<button type="button"
                     class="cat-cap${active ? ' active' : ''}${disabled ? ' disabled' : ''}"
-                    onclick="toggleCatCapsule('${c.name.replace(/'/g, "\\'")}')">
-                    <span class="cat-cap-ic">${c.icon || ''}</span>${c.name}</button>`;
+                    onclick="toggleCatCapsule('${name.replace(/'/g, "\\'")}')">${name}</button>`;
             }).join('');
             const hint = document.getElementById('catCapsulesHint');
             if (hint) hint.textContent = chosen.length
