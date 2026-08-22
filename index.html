@@ -3324,6 +3324,57 @@
         /* Clothing video is the default so the panel is never a blank/white screen
            before a mode is picked; the art video takes over only in art mode. */
         body:not([data-mode="art"]) .blank-fullscreen .blank-video--clothing { display: block; }
+
+        /* ===== Category capsule chooser, laid over the low-exposure video ===== */
+        .cat-capsules {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 40px 22px;
+            text-align: center;
+            color: #fff;
+        }
+        .cat-capsules-kicker {
+            font-size: 10.83px; letter-spacing: 3px; text-transform: uppercase;
+            color: rgba(255,255,255,0.7); font-weight: 600;
+        }
+        .cat-capsules-title {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: clamp(26px, 7vw, 40px); font-weight: 400; margin: 2px 0 0;
+            text-shadow: 0 2px 18px rgba(0,0,0,0.5);
+        }
+        .cat-capsules-hint {
+            font-size: 11.67px; letter-spacing: 0.3px; color: rgba(255,255,255,0.82);
+            margin: 0 0 8px; font-weight: 500;
+        }
+        .cat-capsules-cloud {
+            display: flex; flex-wrap: wrap; gap: 10px 10px;
+            align-items: center; justify-content: center;
+            max-width: 620px; max-height: 46vh; overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .cat-capsules-cloud::-webkit-scrollbar { width: 0; height: 0; display: none; }
+        .cat-cap {
+            display: inline-flex; align-items: center; gap: 7px;
+            border: 1px solid rgba(255,255,255,0.55);
+            background: rgba(255,255,255,0.10);
+            color: #fff; border-radius: 999px;
+            padding: 9px 15px; cursor: pointer;
+            font-family: inherit; font-size: 12.50px; font-weight: 500; letter-spacing: 0.2px;
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+        }
+        .cat-cap:hover { transform: translateY(-1px); border-color: #fff; }
+        .cat-cap .cat-cap-ic { font-size: 13.33px; line-height: 1; }
+        .cat-cap.active {
+            background: #fff; color: #111; border-color: #fff; font-weight: 700;
+        }
+        .cat-cap.disabled { opacity: 0.4; pointer-events: none; }
         /* Narrower windows can't hold six tracks — fall back to a fitting grid. */
         @media (max-width: 1100px) {
             .feed-filters {
@@ -7446,15 +7497,22 @@
         <!-- Segment hero slides, populated by JavaScript -->
     </div>
 
-    <!-- ==================== EMPTY FULL-SCREEN SECTION ====================
-         Intentionally blank panel, one full screen tall. Placeholder for future
-         content between the category slider and the feed. -->
+    <!-- ==================== CATEGORY PICKER PANEL ====================
+         Full-screen panel over a low-exposure video. All categories of the active
+         mode are scattered as capsules; pick up to 5 and the feed below updates. -->
     <section class="blank-fullscreen">
         <!-- Each mode plays its own full-bleed video; grey is only the fallback. -->
         <video class="blank-video blank-video--clothing" src="assets/hero/clothing-section.mp4"
                autoplay muted loop playsinline preload="metadata"></video>
         <video class="blank-video blank-video--art" src="assets/hero/art-section.mp4"
                autoplay muted loop playsinline preload="metadata"></video>
+        <!-- Capsule chooser overlay, filled by renderCatCapsules(). -->
+        <div class="cat-capsules" id="catCapsules">
+            <span class="cat-capsules-kicker">Choose your feed</span>
+            <h2 class="cat-capsules-title">Pick your categories</h2>
+            <p class="cat-capsules-hint" id="catCapsulesHint">Select up to 5 — the feed updates to match.</p>
+            <div class="cat-capsules-cloud" id="catCapsulesCloud"><!-- chips --></div>
+        </div>
     </section>
 
     <!-- ==================== INFINITE FEED (Figma layout) ==================== -->
@@ -8263,6 +8321,7 @@
             renderFilters();
             renderCategories();
             renderFeedFilters();
+            renderCatCapsules();
             // Only lazy-load the feed if it was never built (direct landing on category page).
             if (!document.getElementById('feedContainer').children.length) {
                 renderFeed();
@@ -9011,10 +9070,11 @@
             // Switching mode resets the primary filter — and the feed filters with
             // it, since sellers/types/colours differ per mode.
             currentSegment = null;
-            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
+            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null, categories: [] };
             renderFilters();
             renderCategories();
             renderFeedFilters();
+            renderCatCapsules();
             renderFeed();
         }
 
@@ -9022,6 +9082,38 @@
         function toggleCategory(btn, category) {
             setCategory(category);
         }
+
+        // ===== Category capsule chooser (over the video panel above the feed) =====
+        // Scatters every category of the active mode as a capsule; up to 5 can be
+        // picked, and the feed re-renders to show only those categories.
+        const CAT_CAPSULE_MAX = 5;
+        function renderCatCapsules() {
+            const cloud = document.getElementById('catCapsulesCloud');
+            if (!cloud) return;
+            const list = currentCategory === 'art' ? artCategories : clothingCategories;
+            const chosen = feedFilters.categories || (feedFilters.categories = []);
+            const atMax = chosen.length >= CAT_CAPSULE_MAX;
+            cloud.innerHTML = list.map(c => {
+                const active = chosen.includes(c.name);
+                const disabled = !active && atMax;
+                return `<button type="button"
+                    class="cat-cap${active ? ' active' : ''}${disabled ? ' disabled' : ''}"
+                    onclick="toggleCatCapsule('${c.name.replace(/'/g, "\\'")}')">
+                    <span class="cat-cap-ic">${c.icon || ''}</span>${c.name}</button>`;
+            }).join('');
+            const hint = document.getElementById('catCapsulesHint');
+            if (hint) hint.textContent = chosen.length
+                ? `${chosen.length} of ${CAT_CAPSULE_MAX} selected — the feed shows these.`
+                : `Select up to ${CAT_CAPSULE_MAX} — the feed updates to match.`;
+        }
+        window.toggleCatCapsule = function (name) {
+            const chosen = feedFilters.categories || (feedFilters.categories = []);
+            const i = chosen.indexOf(name);
+            if (i >= 0) chosen.splice(i, 1);
+            else if (chosen.length < CAT_CAPSULE_MAX) chosen.push(name);
+            renderCatCapsules();
+            renderFeed();
+        };
 
         // Garment types shown in the clothing slider (art reuses artCategories).
         const clothingSliderCategories = [
@@ -9298,7 +9390,7 @@
         function veroShopAllCats(e) {
             if (e) e.preventDefault();
             currentSegment = null;
-            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
+            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null, categories: [] };
             if (typeof renderFeedFilters === 'function') renderFeedFilters();
             renderFeed();
             const fs = document.querySelector('.feed-section');
@@ -11237,7 +11329,7 @@
             openSellerProfile(name);
         }, true);
 
-        let feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
+        let feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null, categories: [] };
 
         function feedBaseProducts() {
             if (currentSegment) return buildSegmentProducts(currentCategory, currentSegment);
@@ -11253,6 +11345,8 @@
         function feedSource() {
             let list = feedBaseProducts().slice();
             const f = feedFilters;
+            // Capsule chooser: up to 5 categories from the panel above the feed.
+            if (f.categories && f.categories.length) list = list.filter(p => f.categories.includes(p.category));
             if (f.seller) list = list.filter(p => (p.seller || '') === f.seller);
             if (f.type)   list = list.filter(p => (p.category || '') === f.type);
             if (f.fabric) list = list.filter(p => productFabric(p) === f.fabric);
@@ -11364,7 +11458,7 @@
         }
 
         function clearFeedFilters() {
-            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
+            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null, categories: [] };
             renderFeedFilters();
             renderFeed();
         }
@@ -11572,7 +11666,7 @@
         function selectSegment(key) {
             currentSegment = currentSegment === key ? null : key;
             // the segment changes the pool, so rebuild the filter options for it
-            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null };
+            feedFilters = { seller: '', fabric: '', color: '', type: '', sort: '', maxPrice: null, categories: [] };
             renderFeedFilters();
             renderFeed();
             document.querySelector('.feed-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -12516,6 +12610,7 @@
             renderFilters();
             renderCategories();
             renderFeedFilters();
+            renderCatCapsules();
             initializeApp(); // Shows onboarding if needed, then renders feed
             // Deep-link from the drawer: index.html?seg=men|women|kids selects that
             // segment's feed on load.
