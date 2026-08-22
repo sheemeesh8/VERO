@@ -1417,7 +1417,6 @@
         <div class="vsp-overlay" id="veroSearchPage" aria-hidden="true" role="dialog" aria-label="Search">
             <button class="vsp-close" aria-label="Close search" onclick="veroCloseSearchPage()">&times;</button>
             <div class="vsp-inner">
-                <div class="vsp-logo"><img src="vero-logo.png?v=5" alt="VERO" class="vsp-logo-img" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'vsp-logo-txt',textContent:'VERO'}))"></div>
                 <!-- Landing chooser: two rectangles like the personal area. Clicking one
                      opens that search (bar + filters) in the panel below. -->
                 <div class="vsp-chooser" id="vspChooser">
@@ -1609,9 +1608,15 @@
             // Keep the field expanded while a chip filter is in play, so clicking a
             // style / art-category chip (which blurs the input) doesn't hide the row.
             if (vspState.sellerStyle || vspState.artCat) return;
+            // Don't collapse to an empty panel — fall back to the product filter so a
+            // filter is always visible (matches the retired-chooser layout).
             bar.classList.remove('mode-product', 'mode-seller');
+            bar.classList.add('mode-product');
             const page = document.getElementById('veroSearchPage');
-            if (page) page.classList.remove('mode-product', 'mode-seller');
+            if (page) {
+                page.classList.remove('mode-product', 'mode-seller');
+                page.classList.add('mode-product');
+            }
         }, 160);
     };
 
@@ -1801,6 +1806,9 @@
         // recommended sellers listed under the seller row.
         vspBackToChooser();
         vspFillSellerSuggestions();
+        // The chooser is retired, so the panel would otherwise open empty. Default to
+        // the product filter so the wizard (or the art-category chips) is visible at once.
+        vspFocusField('product');
         requestAnimationFrame(() => {
             page.classList.add('open');
             page.setAttribute('aria-hidden', 'false');

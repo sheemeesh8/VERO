@@ -3300,12 +3300,27 @@
 
         /* Empty full-screen placeholder panel between the category slider and the feed. */
         .blank-fullscreen {
+            position: relative;
             display: block;
             width: 100%;
             height: 100vh;
             min-height: 100vh;
             background: #d9d9d9;
+            overflow: hidden;
         }
+        /* Each mode shows its own video; grey shows only if neither matches. */
+        .blank-fullscreen .blank-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        body[data-mode="art"] .blank-fullscreen .blank-video--art { display: block; }
+        /* The art-mode video mirrors the hero's art clip — kept monochrome. */
+        .blank-fullscreen .blank-video--art { filter: grayscale(1); }
+        body[data-mode="clothing"] .blank-fullscreen .blank-video--clothing { display: block; }
         /* Narrower windows can't hold six tracks — fall back to a fitting grid. */
         @media (max-width: 1100px) {
             .feed-filters {
@@ -7436,7 +7451,13 @@
     <!-- ==================== EMPTY FULL-SCREEN SECTION ====================
          Intentionally blank panel, one full screen tall. Placeholder for future
          content between the category slider and the feed. -->
-    <section class="blank-fullscreen"></section>
+    <section class="blank-fullscreen">
+        <!-- Each mode plays its own full-bleed video; grey is only the fallback. -->
+        <video class="blank-video blank-video--clothing" src="assets/hero/clothing-section.mp4"
+               autoplay muted loop playsinline preload="metadata"></video>
+        <video class="blank-video blank-video--art" src="assets/hero/hero-art.mp4"
+               autoplay muted loop playsinline preload="metadata"></video>
+    </section>
 
     <!-- ==================== INFINITE FEED (Figma layout) ==================== -->
     <div class="feed-section">
@@ -12933,6 +12954,11 @@
                 // white separator line / feed below.
                 const cardStop = top + hm2.offsetHeight - window.innerHeight;
                 if (cardStop > top + 8) stops.push(cardStop);
+            }
+            // Empty full-screen panel just before the feed — a landing point of its own.
+            const blank = document.querySelector('.blank-fullscreen');
+            if (blank && blank.offsetParent !== null) {
+                stops.push(blank.getBoundingClientRect().top + (window.scrollY || 0));
             }
             stops.push(feedTop());
             return stops;
