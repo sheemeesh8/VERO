@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>VERO · הרשמה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&family=Oswald:wght@400;500&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --ink:#1c1c1c; --line:#e6e6e3; --muted:#6b6b66; --err:#b23b3b;
+        --f-sans: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        --f-serif: 'Playfair Display', Georgia, serif;
+        --f-label: 'Oswald', 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; }
+    body {
+        font-family: var(--f-sans); color: var(--ink); background: #faf9f7;
+        display: flex; align-items: center; justify-content: center; padding: 32px 22px;
+    }
+    body::before {
+        content: ''; position: fixed; inset: 0; z-index: 0;
+        background: linear-gradient(rgba(250,249,247,.86), rgba(250,249,247,.94)), url('gallery-hero.jpg') center/cover no-repeat fixed;
+    }
+    .wrap { position: relative; z-index: 1; width: 100%; max-width: 380px; }
+    .brand { text-align: center; font-family: var(--f-serif); font-size: 30px; letter-spacing: 8px; font-weight: 500; margin: 0 0 6px; }
+    .tagline { text-align: center; font-family: var(--f-label); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 44px; }
+    h1 { font-family: var(--f-serif); font-size: 26px; font-weight: 500; text-align: center; margin: 0 0 28px; letter-spacing: .3px; }
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+    .field input {
+        width: 100%; border: 1px solid var(--line); border-radius: 12px; background: #fff;
+        padding: 13px 14px; font-size: 14px; font-family: inherit; color: var(--ink); direction: ltr; text-align: right;
+    }
+    .field input:focus { outline: none; border-color: var(--ink); }
+    .btn {
+        width: 100%; border: none; border-radius: 999px; padding: 14px; font-size: 13.5px; font-weight: 600;
+        letter-spacing: .5px; cursor: pointer; background: #000; color: #fff; font-family: inherit; transition: opacity .2s;
+    }
+    .btn:hover { opacity: .82; }
+    .note { min-height: 16px; margin: 10px 0 0; font-size: 11px; color: var(--err); text-align: center; }
+    .foot { text-align: center; margin-top: 30px; font-size: 12.5px; color: var(--muted); }
+    .foot a { color: var(--ink); font-weight: 600; text-decoration: none; }
+</style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="brand">V·E·R·O</div>
+        <div class="tagline">Pre-owned Luxury &amp; Fine Art</div>
+        <h1>יצירת חשבון אישי</h1>
+        <form id="signupForm" autocomplete="on">
+            <div class="field">
+                <label for="name">שם מלא</label>
+                <input type="text" id="name" name="name" placeholder="השם שלך" required>
+            </div>
+            <div class="field">
+                <label for="email">אימייל</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" required>
+            </div>
+            <div class="field">
+                <label for="password">סיסמה</label>
+                <input type="password" id="password" name="password" placeholder="לפחות 6 תווים" minlength="6" required>
+            </div>
+            <button type="submit" class="btn">הרשמה והמשך</button>
+            <p class="note" id="note"></p>
+        </form>
+        <div class="foot">כבר יש לך חשבון? <a href="login.html">כניסה</a></div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        if (VeroAuth.guard('auth')) {
+            document.getElementById('signupForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                var note = document.getElementById('note'); note.textContent = '';
+                var pw = document.getElementById('password').value;
+                if (pw.length < 6) { note.textContent = 'הסיסמה חייבת להכיל לפחות 6 תווים.'; return; }
+                try {
+                    VeroAuth.signUp(
+                        document.getElementById('email').value,
+                        pw,
+                        document.getElementById('name').value.trim()
+                    );
+                    // New user → straight into the onboarding quiz.
+                    location.href = 'onboarding.html';
+                } catch (err) {
+                    note.textContent = err.message === 'EMAIL_TAKEN'
+                        ? 'כבר קיים חשבון עם האימייל הזה.'
+                        : 'לא הצלחנו ליצור את החשבון. נסה שוב.';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

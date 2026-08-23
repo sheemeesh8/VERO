@@ -1268,6 +1268,7 @@
                 <a href="about.html">About Us</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
                 <a id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
+                <a id="veroLogoutLink" onclick="veroCloseDrawer(); veroLogout()">Log out</a>
             </nav>
             <div class="vero-drawer-social">
                 <a href="#" aria-label="Instagram">${DRAWER_ICONS.instagram}</a>
@@ -2115,6 +2116,15 @@
         const next = veroActiveAccount() === 'seller' ? 'buyer' : 'seller';
         localStorage.setItem('vero_active_account', next);
         veroProfileSplash({ name: accountName(next), reload: true });
+    };
+
+    // Log out (Instagram-style): revoke the active session but KEEP the saved
+    // account on the device, then land on the Saved-Accounts screen for one-tap
+    // re-entry. Falls back gracefully if auth.js isn't present on a page.
+    window.veroLogout = function () {
+        try { if (window.VeroAuth) VeroAuth.logout(); else localStorage.removeItem('vero_session'); } catch (e) {}
+        // Navigate the top window (breaks out of the phone frame) to the login screen.
+        try { window.top.location.href = 'login.html'; } catch (e) { location.href = 'login.html'; }
     };
 
     // ---- Long-press account switcher (Instagram-style) ----

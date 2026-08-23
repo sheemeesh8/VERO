@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>VERO · התאמה אישית</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&family=Poppins:wght@200;300;400;500;600&family=Oswald:wght@400;500&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --ink:#1c1c1c; --line:#e6e6e3; --muted:#6b6b66; --err:#b23b3b;
+        --f-sans: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        --f-serif: 'Playfair Display', Georgia, serif;
+        --f-head: 'Poppins', 'Inter', sans-serif;
+        --f-label: 'Oswald', 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+        font-family: var(--f-sans); color: var(--ink);
+        background: #faf9f7;
+        display: flex; align-items: stretch; justify-content: center;
+    }
+    /* Soft editorial backdrop behind the whole flow. */
+    body::before {
+        content: ''; position: fixed; inset: 0; z-index: 0;
+        background: linear-gradient(rgba(250,249,247,.86), rgba(250,249,247,.94)), url('gallery-hero.jpg') center/cover no-repeat fixed;
+    }
+    .shell { position: relative; z-index: 1; width: 100%; max-width: 620px; display: flex; flex-direction: column; height: 100vh; padding: 26px 26px 30px; }
+
+    .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex: 0 0 auto; }
+    .brand { font-family: var(--f-label); font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); }
+    .skip { border: none; background: none; font-family: var(--f-sans); font-size: 12.5px; color: var(--muted); cursor: pointer; text-decoration: underline; }
+    .skip:hover { color: var(--ink); }
+
+    .progress { display: flex; gap: 7px; margin-bottom: 4px; flex: 0 0 auto; }
+    .progress .seg { flex: 1; height: 3px; background: var(--line); border-radius: 999px; transition: background .3s; }
+    .progress .seg.done, .progress .seg.active { background: var(--ink); }
+
+    /* Full-screen slides: the viewport fills remaining height and each step
+       centers its content vertically, so every step reads as its own screen. */
+    .viewport { flex: 1 1 auto; overflow: hidden; min-height: 0; }
+    .track { display: flex; direction: ltr; height: 100%; transition: transform .5s cubic-bezier(.22,1,.36,1); }
+    .step {
+        flex: 0 0 100%; min-width: 100%; direction: rtl; height: 100%;
+        display: flex; flex-direction: column; justify-content: center;
+        overflow-y: auto; padding: 20px 2px;
+    }
+    .step h2 { font-family: var(--f-serif); font-size: clamp(30px, 6vw, 46px); font-weight: 500; letter-spacing: .3px; line-height: 1.12; margin: 0 0 12px; }
+    .step p.sub { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin: 0 0 30px; max-width: 30em; }
+
+    .choices { display: flex; flex-wrap: wrap; gap: 11px; }
+    .choice {
+        border: 1px solid var(--line); background: #fff; border-radius: 999px;
+        padding: 11px 18px; font-size: 13px; font-family: inherit; color: var(--ink);
+        cursor: pointer; transition: background .18s, color .18s, border-color .18s;
+    }
+    .choice:hover { border-color: var(--ink); }
+    .choice.on { background: #000; color: #fff; border-color: #000; }
+
+    /* big single-select cards (scope + intent) */
+    .cards { display: flex; flex-direction: column; gap: 12px; }
+    .card {
+        border: 1px solid var(--line); background: #fff; border-radius: 16px; padding: 18px 20px;
+        cursor: pointer; text-align: right; transition: border-color .18s, background .18s;
+    }
+    .card:hover { border-color: var(--ink); }
+    .card.on { border-color: #000; background: #000; color: #fff; }
+    .card b { display: block; font-family: var(--f-head); font-size: 15px; font-weight: 500; margin-bottom: 3px; }
+    .card span { display: block; font-size: 11.5px; color: var(--muted); }
+    .card.on span { color: #cfcfcf; }
+
+    /* Profile step: cover banner + avatar, both tappable to upload. */
+    .profiler { margin-top: 4px; }
+    .cover {
+        position: relative; height: 150px; border-radius: 18px; overflow: hidden; cursor: pointer;
+        background: #ece9e4 center/cover no-repeat; border: 1px solid var(--line);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .cover .hint { font-size: 11.5px; color: var(--muted); letter-spacing: .5px; }
+    .cover.has .hint { display: none; }
+    .avatar-wrap { display: flex; flex-direction: column; align-items: center; margin-top: -46px; }
+    .avatar {
+        width: 92px; height: 92px; border-radius: 50%; cursor: pointer; overflow: hidden;
+        background: #f5f3f0 center/cover no-repeat; border: 3px solid #faf9f7;
+        box-shadow: 0 2px 10px rgba(0,0,0,.08);
+        display: flex; align-items: center; justify-content: center; color: #b9b6b0; font-size: 30px; font-weight: 200;
+    }
+    .avatar .plus { font-size: 26px; }
+    .avatar.has .plus { display: none; }
+    .avatar-cap { font-size: 11px; color: var(--muted); margin-top: 10px; letter-spacing: .5px; }
+
+    .sizes { display: flex; flex-direction: column; gap: 22px; }
+    .sizeblock label { display: block; font-family: var(--f-label); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+        min-width: 44px; text-align: center; border: 1px solid var(--line); background: #fff;
+        border-radius: 10px; padding: 9px 12px; font-size: 12.5px; font-family: inherit; color: var(--ink); cursor: pointer;
+        transition: background .15s, color .15s, border-color .15s;
+    }
+    .pill:hover { border-color: var(--ink); }
+    .pill.on { background: #000; color: #fff; border-color: #000; }
+
+    .note { min-height: 16px; margin-top: 16px; font-size: 11px; color: var(--err); }
+    .buttons { display: flex; gap: 12px; margin-top: 30px; align-items: center; }
+    .btn {
+        border: none; border-radius: 999px; padding: 14px 30px; font-size: 13.5px; font-weight: 600;
+        letter-spacing: .5px; cursor: pointer; font-family: inherit; transition: opacity .2s, background .2s;
+    }
+    .btn.solid { background: #000; color: #fff; margin-right: auto; }
+    .btn.solid:hover { opacity: .82; }
+    .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    .btn.ghost:hover { background: #f0efec; }
+    @media (max-width: 420px) { .shell { padding: 22px 18px 26px; } }
+</style>
+</head>
+<body>
+    <div class="shell">
+        <div class="top">
+            <div class="brand">VERO · התאמה אישית</div>
+            <button class="skip" id="skipBtn">דלג</button>
+        </div>
+        <div class="progress" id="progress"></div>
+
+        <div class="viewport">
+            <div class="track" id="track">
+
+                <!-- STEP 0 · Profile photo + cover -->
+                <section class="step" data-step="profile">
+                    <h2>הפרופיל שלך</h2>
+                    <p class="sub">הוסף תמונת פרופיל ותמונת רקע — אפשר גם לדלג ולהוסיף בהמשך.</p>
+                    <div class="profiler">
+                        <div class="cover" id="coverBox" onclick="pickCover()">
+                            <span class="hint">+ הוספת תמונת רקע</span>
+                        </div>
+                        <div class="avatar-wrap">
+                            <div class="avatar" id="avatarBox" onclick="pickAvatar()"><span class="plus">+</span></div>
+                            <span class="avatar-cap">תמונת פרופיל</span>
+                        </div>
+                    </div>
+                    <input type="file" id="coverInput" accept="image/*" style="display:none">
+                    <input type="file" id="avatarInput" accept="image/*" style="display:none">
+                </section>
+
+                <!-- STEP 1 · Core scope -->
+                <section class="step" data-step="scope">
+                    <h2>מה מעניין אותך?</h2>
+                    <p class="sub">נשתמש בזה כדי לבנות עבורך פיד מותאם אישית.</p>
+                    <div class="cards" id="scopeCards">
+                        <button type="button" class="card" data-val="fashion"><b>אופנה ופריטים משומשים</b><span>Fashion &amp; Pre-owned</span></button>
+                        <button type="button" class="card" data-val="art"><b>אמנות ועיצוב</b><span>Fine Art &amp; Design</span></button>
+                        <button type="button" class="card" data-val="both"><b>גם וגם</b><span>Both</span></button>
+                    </div>
+                </section>
+
+                <!-- STEP 2 · Fashion style (conditional) -->
+                <section class="step" data-step="fashion">
+                    <h2>הסגנון שלך</h2>
+                    <p class="sub">בחר את כל מה שמדבר אליך — אפשר לבחור כמה.</p>
+                    <div class="choices" id="fashionTags"></div>
+                </section>
+
+                <!-- STEP 3 · Art categories (conditional) -->
+                <section class="step" data-step="art">
+                    <h2>אמנות ואספנות</h2>
+                    <p class="sub">אילו תחומים תרצה לראות?</p>
+                    <div class="choices" id="artTags"></div>
+                </section>
+
+                <!-- STEP 4 · Sizing (conditional) -->
+                <section class="step" data-step="sizes">
+                    <h2>פרופיל מידות</h2>
+                    <p class="sub">כדי שנראה לך רק פריטים שמתאימים לך.</p>
+                    <div class="sizes">
+                        <div class="sizeblock"><label>חולצות</label><div class="pills" id="sizeShirt"></div></div>
+                        <div class="sizeblock"><label>מכנסיים (EU)</label><div class="pills" id="sizePants"></div></div>
+                        <div class="sizeblock"><label>ז'קטים</label><div class="pills" id="sizeJacket"></div></div>
+                        <div class="sizeblock"><label>מעילים</label><div class="pills" id="sizeCoat"></div></div>
+                        <div class="sizeblock"><label>כובעים</label><div class="pills" id="sizeHat"></div></div>
+                        <div class="sizeblock"><label>משקפיים</label><div class="pills" id="sizeGlasses"></div></div>
+                        <div class="sizeblock"><label>כפפות</label><div class="pills" id="sizeGloves"></div></div>
+                    </div>
+                </section>
+
+                <!-- STEP 5 · Primary intent -->
+                <section class="step" data-step="intent">
+                    <h2>מה המטרה שלך?</h2>
+                    <p class="sub">אפשר לשנות את זה בכל עת בהגדרות.</p>
+                    <div class="cards" id="intentCards">
+                        <button type="button" class="card" data-val="buy"><b>קנייה</b><span>Buy</span></button>
+                        <button type="button" class="card" data-val="sell"><b>מכירה</b><span>Sell</span></button>
+                        <button type="button" class="card" data-val="both"><b>קנייה ומכירה</b><span>Both</span></button>
+                        <button type="button" class="card" data-val="explore"><b>השראה ועיון</b><span>Explore &amp; Inspiration</span></button>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+
+        <p class="note" id="note"></p>
+        <div class="buttons">
+            <button class="btn ghost" id="backBtn">חזרה</button>
+            <button class="btn solid" id="nextBtn">הבא</button>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+    if (VeroAuth.guard('onboarding')) {
+        // ---- option data (labels exactly as specified) ----
+        var FASHION_TAGS = [
+            'Quiet Luxury / Old Money', '90s Minimalism', 'Streetwear & Urban',
+            'Y2K & Vintage Trend', 'Classic & Tailored', 'Casual & Everyday', 'Goth & Dark Aesthetic'
+        ];
+        var ART_TAGS = [
+            'Plastic Arts & Painting', 'Sculpture & 3D Design', 'Art Photography',
+            'Collectible Design & Furniture', 'Art Investment & Conservation'
+        ];
+        function range(a, b) { var r = []; for (var i = a; i <= b; i += 2) r.push(i); return r; }
+        var LETTER   = ['XXS','XS','S','M','L','XL','XXL'];
+        var PANTS    = range(34, 46);                  // EU 34–46
+        var HAT      = ['S','M','L','One size'];
+        var GLASSES  = ['Narrow','Regular','Wide'];
+        var GLOVES   = ['XS','S','M','L','XL'];
+
+        // Each sizing block: [dom id, options, answer key]
+        var SIZE_BLOCKS = [
+            ['sizeShirt',   LETTER.concat('Custom'), 'shirt'],
+            ['sizePants',   PANTS,                   'pants'],
+            ['sizeJacket',  LETTER,                  'jacket'],
+            ['sizeCoat',    LETTER,                  'coat'],
+            ['sizeHat',     HAT,                     'hat'],
+            ['sizeGlasses', GLASSES,                 'glasses'],
+            ['sizeGloves',  GLOVES,                  'gloves']
+        ];
+
+        // ---- answer model ----
+        var answers = {
+            scope: '',                       // fashion | art | both
+            fashionStyles: [],
+            artCategories: [],
+            sizes: { shirt:'', pants:'', jacket:'', coat:'', hat:'', glasses:'', gloves:'' },
+            avatar: '', cover: '',
+            intent: ''                       // buy | sell | both | explore
+        };
+
+        var currentUser = VeroAuth.currentUser();
+
+        // ---- build the multi/single selectors ----
+        function chip(container, label, isOn, onClick) {
+            var b = document.createElement('button');
+            b.type = 'button'; b.className = 'choice' + (isOn ? ' on' : ''); b.textContent = label;
+            b.addEventListener('click', function () { onClick(b); });
+            container.appendChild(b);
+        }
+        function pill(container, label, onClick) {
+            var b = document.createElement('button');
+            b.type = 'button'; b.className = 'pill'; b.textContent = label;
+            b.addEventListener('click', function () { onClick(b); });
+            container.appendChild(b);
+        }
+
+        FASHION_TAGS.forEach(function (t) {
+            chip(document.getElementById('fashionTags'), t, false, function (el) {
+                el.classList.toggle('on');
+                toggleIn(answers.fashionStyles, t);
+            });
+        });
+        ART_TAGS.forEach(function (t) {
+            chip(document.getElementById('artTags'), t, false, function (el) {
+                el.classList.toggle('on');
+                toggleIn(answers.artCategories, t);
+            });
+        });
+        function buildPills(id, values, key) {
+            var box = document.getElementById(id);
+            values.forEach(function (v) {
+                pill(box, String(v), function (el) {
+                    box.querySelectorAll('.pill').forEach(function (p) { p.classList.toggle('on', p === el); });
+                    answers.sizes[key] = String(v);
+                });
+            });
+        }
+        SIZE_BLOCKS.forEach(function (b) { buildPills(b[0], b[1], b[2]); });
+
+        // ---- profile photo + cover upload (client-side, saved as data URLs) ----
+        function pickCover()  { document.getElementById('coverInput').click(); }
+        function pickAvatar() { document.getElementById('avatarInput').click(); }
+        window.pickCover = pickCover; window.pickAvatar = pickAvatar;
+        function readImage(input, cb) {
+            var f = input.files && input.files[0]; if (!f) return;
+            var r = new FileReader();
+            r.onload = function () { cb(r.result); };
+            r.readAsDataURL(f);
+        }
+        document.getElementById('coverInput').addEventListener('change', function () {
+            readImage(this, function (url) {
+                answers.cover = url;
+                var box = document.getElementById('coverBox');
+                box.style.backgroundImage = "url('" + url + "')"; box.classList.add('has');
+            });
+        });
+        document.getElementById('avatarInput').addEventListener('change', function () {
+            readImage(this, function (url) {
+                answers.avatar = url;
+                var box = document.getElementById('avatarBox');
+                box.style.backgroundImage = "url('" + url + "')"; box.classList.add('has');
+            });
+        });
+
+        function toggleIn(arr, val) {
+            var i = arr.indexOf(val);
+            if (i === -1) arr.push(val); else arr.splice(i, 1);
+        }
+
+        // single-select cards (scope + intent)
+        function wireCards(containerId, key) {
+            var box = document.getElementById(containerId);
+            box.querySelectorAll('.card').forEach(function (c) {
+                c.addEventListener('click', function () {
+                    box.querySelectorAll('.card').forEach(function (x) { x.classList.toggle('on', x === c); });
+                    answers[key] = c.dataset.val;
+                    document.getElementById('note').textContent = '';
+                    if (key === 'scope') recomputeFlow();
+                });
+            });
+        }
+        wireCards('scopeCards', 'scope');
+        wireCards('intentCards', 'intent');
+
+        // ---- conditional step routing ----
+        // The DOM holds all 5 steps; the active FLOW is a subset depending on
+        // the chosen scope. Fashion steps show for fashion|both; art step for
+        // art|both. Steps are re-flowed whenever scope changes.
+        var ALL = ['profile', 'scope', 'fashion', 'art', 'sizes', 'intent'];
+        var flow = ['profile', 'scope', 'intent'];
+        var pos = 0;
+
+        function recomputeFlow() {
+            var wantsFashion = answers.scope === 'fashion' || answers.scope === 'both';
+            var wantsArt     = answers.scope === 'art'     || answers.scope === 'both';
+            flow = ALL.filter(function (s) {
+                if (s === 'fashion' || s === 'sizes') return wantsFashion;
+                if (s === 'art') return wantsArt;
+                return true; // profile + scope + intent always
+            });
+            if (pos >= flow.length) pos = flow.length - 1;
+            render();
+        }
+
+        var stepEls = {};
+        document.querySelectorAll('.step').forEach(function (el) { stepEls[el.dataset.step] = el; });
+
+        function buildProgress() {
+            var p = document.getElementById('progress');
+            p.innerHTML = '';
+            flow.forEach(function () { var d = document.createElement('div'); d.className = 'seg'; p.appendChild(d); });
+        }
+
+        function render() {
+            buildProgress();
+            // lay the active steps out in flow order inside the track
+            var track = document.getElementById('track');
+            flow.forEach(function (name, i) {
+                var el = stepEls[name];
+                el.style.order = i;
+                el.style.display = '';
+            });
+            ALL.forEach(function (name) {
+                if (flow.indexOf(name) === -1) stepEls[name].style.display = 'none';
+            });
+            track.style.transform = 'translateX(-' + (pos * 100) + '%)';
+            document.querySelectorAll('#progress .seg').forEach(function (s, i) {
+                s.classList.toggle('done', i < pos);
+                s.classList.toggle('active', i === pos);
+            });
+            document.getElementById('backBtn').style.visibility = pos === 0 ? 'hidden' : 'visible';
+            document.getElementById('nextBtn').textContent = pos === flow.length - 1 ? 'סיום' : 'הבא';
+        }
+
+        function validate() {
+            var note = document.getElementById('note'); note.textContent = '';
+            var step = flow[pos];
+            if (step === 'scope' && !answers.scope) { note.textContent = 'בחר תחום עניין כדי להמשיך.'; return false; }
+            if (step === 'intent' && !answers.intent) { note.textContent = 'בחר מטרה כדי לסיים.'; return false; }
+            return true; // style / art / sizes are optional
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', function () {
+            if (!validate()) return;
+            if (pos === flow.length - 1) { finish(); return; }
+            pos++; render();
+        });
+        document.getElementById('backBtn').addEventListener('click', function () {
+            if (pos > 0) { pos--; render(); }
+        });
+        document.getElementById('skipBtn').addEventListener('click', function () {
+            // Skip saves whatever's chosen so far and marks onboarding done.
+            finish(true);
+        });
+
+        function finish(skipped) {
+            // ---- persist to the localStorage stand-ins for the three tables ----
+            var uid = currentUser.id;
+
+            // user_preferences (bound to user_id)
+            var allPrefs = readJSON('vero_user_preferences', {});
+            allPrefs[uid] = {
+                userId: uid,
+                scope: answers.scope || null,
+                fashionStyles: answers.fashionStyles,
+                artCategories: answers.artCategories,
+                intent: answers.intent || null,
+                skipped: !!skipped,
+                updatedAt: Date.now()
+            };
+            localStorage.setItem('vero_user_preferences', JSON.stringify(allPrefs));
+
+            // user_sizes (bound to user_id)
+            var allSizes = readJSON('vero_user_sizes', {});
+            allSizes[uid] = {
+                userId: uid,
+                shirt:   answers.sizes.shirt   || null,
+                pantsEu: answers.sizes.pants   || null,
+                jacket:  answers.sizes.jacket  || null,
+                coat:    answers.sizes.coat    || null,
+                hat:     answers.sizes.hat     || null,
+                glasses: answers.sizes.glasses || null,
+                gloves:  answers.sizes.gloves  || null,
+                updatedAt: Date.now()
+            };
+            localStorage.setItem('vero_user_sizes', JSON.stringify(allSizes));
+
+            // Profile photo + cover → the shared buyer identity (vero_profile) and
+            // the users table, so the header avatar and profile page pick them up.
+            if (answers.avatar || answers.cover) {
+                var prof = readJSON('vero_profile', {}) || {};
+                if (answers.avatar) prof.avatarImg = answers.avatar;
+                if (answers.cover)  prof.coverImg  = answers.cover;
+                localStorage.setItem('vero_profile', JSON.stringify(prof));
+                var users = readJSON('vero_users', []);
+                users.forEach(function (u) { if (u.id === uid && answers.avatar) u.avatar = answers.avatar; });
+                localStorage.setItem('vero_users', JSON.stringify(users));
+            }
+
+            VeroAuth.markOnboarded(uid);
+
+            // Smooth exit, then into the feed.
+            document.body.style.transition = 'opacity .4s ease';
+            document.body.style.opacity = '0';
+            setTimeout(function () { location.href = 'index.html'; }, 400);
+        }
+
+        function readJSON(k, f) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
+
+        // first paint
+        render();
+    }
+    </script>
+</body>
+</html>
