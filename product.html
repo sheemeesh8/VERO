@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,7 +31,7 @@
             margin:0 auto;
             min-height:100%;
             background:var(--bg);
-            padding-bottom:40px;
+            padding-bottom:120px; /* clearance for the floating action pill */
         }
 
         /* header + image share the sand tone; the rest of the page is white */
@@ -146,7 +146,38 @@
         }
         .spec-val{font-size:14.5px;font-weight:400;text-align:right;}
 
-        /* ---------- action buttons ---------- */
+        /* ---------- floating dark action pill (bottom) ---------- */
+        .action-bar{
+            position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom, 0px));
+            z-index:60;
+            display:flex;align-items:stretch;direction:ltr;
+            background:var(--ink);border-radius:999px;padding:5px;
+            box-shadow:0 12px 34px rgba(0,0,0,.28);
+        }
+        .action-item{
+            flex:1;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+            position:relative;background:none;border:none;color:#fff;cursor:pointer;
+            font-family:inherit;font-size:9.5px;letter-spacing:.4px;
+            padding:8px 6px;border-radius:999px;white-space:nowrap;
+            transition:opacity .2s;
+        }
+        .action-item:active{opacity:.55;}
+        .action-item svg{width:21px;height:21px;stroke:#fff;stroke-width:1.6;fill:none;}
+        /* thin dividers between items */
+        .action-item + .action-item::before{
+            content:"";position:absolute;inset-inline-start:0;top:22%;height:56%;
+            width:1px;background:rgba(255,255,255,.16);
+        }
+        /* cart highlighted as the primary action */
+        .action-item.primary{background:#fff;color:var(--ink);}
+        .action-item.primary svg{stroke:var(--ink);}
+        .action-item.primary + .action-item::before,
+        .action-item.primary::before{display:none;}
+        /* wishlist active = filled heart */
+        .action-item.wish.active svg{fill:#fff;}
+
+        /* ---------- (legacy) action buttons ---------- */
         .actions{margin-top:18px;display:flex;flex-direction:column;gap:10px;}
         .btn{
             width:100%;height:56px;display:flex;align-items:center;justify-content:center;gap:9px;
@@ -258,13 +289,10 @@
             <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
         </button>
         <div class="tb-right">
-            <button class="tb-ico" onclick="openSheet('msgSheet')" aria-label="צ'אט עם המוכר">
-                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-            <button class="tb-ico" onclick="openSheet('shareSheet')" aria-label="שיתוף">
+            <button class="tb-ico" onclick="openSheet('shareSheet')" aria-label="Share">
                 <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
             </button>
-            <button class="tb-ico heart" id="heartBtn" onclick="toggleWishlist()" aria-label="רשימת משאלות">
+            <button class="tb-ico heart" id="heartBtn" onclick="toggleWishlist()" aria-label="Wishlist">
                 <svg viewBox="0 0 24 24"><path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-8.3a5 5 0 0 0 0-7.1z"/></svg>
             </button>
         </div>
@@ -279,44 +307,48 @@
 
     <!-- content -->
     <div class="content">
-        <div class="eyebrow" id="eyebrow">יד שנייה · VERO SELECT</div>
-        <h1 class="p-name" id="pName">שם המוצר</h1>
-        <div class="p-company"><a id="pCompany" href="#">שם החברה</a></div>
+        <div class="eyebrow" id="eyebrow">PRE-OWNED · VERO SELECT</div>
+        <h1 class="p-name" id="pName">Product name</h1>
+        <div class="p-company"><a id="pCompany" href="#">Company</a></div>
+
+        <!-- price row (visible near the top) -->
+        <div class="price-row">
+            <span class="price-label">Price</span>
+            <span class="price-value" id="pPrice">₪0.00</span>
+        </div>
 
         <div class="p-seller">
-            <span class="s-label">מוכר:</span>
+            <span class="s-label">Seller:</span>
             <a class="s-name" id="sellerName" href="#">VERO</a>
             <span class="s-rating" id="sellerRating"></span>
         </div>
 
-        <p class="p-desc" id="pDesc">תיאור המוצר יופיע כאן.</p>
+        <p class="p-desc" id="pDesc">Product description appears here.</p>
 
         <!-- spec detail list -->
         <div class="specs" id="specs">
-            <div class="spec-row"><span class="spec-key">מידה</span><span class="spec-val" id="specSize">—</span></div>
-            <div class="spec-row"><span class="spec-key">מצב הפריט</span><span class="spec-val" id="specCondition">—</span></div>
-            <div class="spec-row"><span class="spec-key">סוג הבד</span><span class="spec-val" id="specFabric">—</span></div>
-            <div class="spec-row"><span class="spec-key">מתאים ל־</span><span class="spec-val" id="specAudience">—</span></div>
-            <div class="spec-row"><span class="spec-key">צבע</span><span class="spec-val" id="specColor">—</span></div>
+            <div class="spec-row"><span class="spec-key">Size</span><span class="spec-val" id="specSize">—</span></div>
+            <div class="spec-row"><span class="spec-key">Condition</span><span class="spec-val" id="specCondition">—</span></div>
+            <div class="spec-row"><span class="spec-key">Fabric</span><span class="spec-val" id="specFabric">—</span></div>
+            <div class="spec-row"><span class="spec-key">Fits</span><span class="spec-val" id="specAudience">—</span></div>
+            <div class="spec-row"><span class="spec-key">Color</span><span class="spec-val" id="specColor">—</span></div>
         </div>
+    </div>
 
-        <!-- LV-style price row -->
-        <div class="price-row">
-            <span class="price-label">מחיר</span>
-            <span class="price-value" id="pPrice">₪0.00</span>
-        </div>
-
-        <!-- actions -->
-        <div class="actions">
-            <div class="btn-row">
-                <button class="btn btn-outline" onclick="openSheet('offerSheet')">הצע מחיר</button>
-                <button class="btn btn-outline" onclick="openSheet('msgSheet')">בדוק זמינות</button>
-            </div>
-            <button class="btn btn-primary" onclick="addToCart()">
-                <span>הוסף לעגלת קניות</span>
-                <span class="price-tail" id="buyPrice">₪0.00</span>
-            </button>
-        </div>
+    <!-- floating dark action pill -->
+    <div class="action-bar">
+        <button class="action-item primary" onclick="addToCart()" aria-label="Add to bag">
+            <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+            <span>Bag</span>
+        </button>
+        <button class="action-item" onclick="openSheet('offerSheet')" aria-label="Make an offer">
+            <svg viewBox="0 0 24 24"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>
+            <span>Offer</span>
+        </button>
+        <button class="action-item" onclick="openSheet('msgSheet')" aria-label="Ask the seller">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Ask</span>
+        </button>
     </div>
 </div>
 
@@ -327,8 +359,8 @@
         <div class="confirm-icon" id="confirmIcon">
             <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
         </div>
-        <h3 id="confirmTitle">נוסף לעגלה</h3>
-        <p class="sub" id="confirmSub">הפריט נשמר עבורך</p>
+        <h3 id="confirmTitle">Added to bag</h3>
+        <p class="sub" id="confirmSub">Saved for you</p>
         <div class="mini-card">
             <img class="mc-img" id="confirmImg" src="" alt="">
             <div>
@@ -337,8 +369,8 @@
             </div>
         </div>
         <div class="sheet-actions">
-            <button class="btn btn-outline" onclick="closeSheet('confirmSheet')">המשך לגלוש</button>
-            <button class="btn btn-primary" id="confirmCta" onclick="goCart()">לעגלה</button>
+            <button class="btn btn-outline" onclick="closeSheet('confirmSheet')">Keep browsing</button>
+            <button class="btn btn-primary" id="confirmCta" onclick="goCart()">View bag</button>
         </div>
     </div>
 </div>
@@ -347,16 +379,16 @@
 <div class="overlay" id="offerSheet" onclick="if(event.target===this)closeSheet('offerSheet')">
     <div class="sheet">
         <div class="sheet-grip"></div>
-        <h3>הצעת מחיר</h3>
-        <p class="sub" id="offerSub">שלח למוכר הצעה להתמקחות</p>
+        <h3>Make an offer</h3>
+        <p class="sub" id="offerSub">Send the seller an offer</p>
         <div class="field">
             <span class="cur">₪</span>
             <input type="number" id="offerInput" min="1" step="1" placeholder="0" inputmode="numeric">
         </div>
         <div class="offer-quick" id="offerQuick"></div>
         <div class="sheet-actions">
-            <button class="btn btn-outline" onclick="closeSheet('offerSheet')">ביטול</button>
-            <button class="btn btn-primary" onclick="sendOffer()">שלח הצעה</button>
+            <button class="btn btn-outline" onclick="closeSheet('offerSheet')">Cancel</button>
+            <button class="btn btn-primary" onclick="sendOffer()">Send offer</button>
         </div>
     </div>
 </div>
@@ -365,12 +397,12 @@
 <div class="overlay" id="msgSheet" onclick="if(event.target===this)closeSheet('msgSheet')">
     <div class="sheet">
         <div class="sheet-grip"></div>
-        <h3>שאלה למוכר</h3>
-        <p class="sub" id="msgSub">שאל את המוכר על זמינות הפריט</p>
-        <textarea class="field" id="msgInput" placeholder="היי, האם הפריט עדיין זמין?"></textarea>
+        <h3>Ask the seller</h3>
+        <p class="sub" id="msgSub">Ask the seller about availability</p>
+        <textarea class="field" id="msgInput" placeholder="Hi, is this item still available?"></textarea>
         <div class="sheet-actions">
-            <button class="btn btn-outline" onclick="closeSheet('msgSheet')">ביטול</button>
-            <button class="btn btn-primary" onclick="sendMessage()">שלח הודעה</button>
+            <button class="btn btn-outline" onclick="closeSheet('msgSheet')">Cancel</button>
+            <button class="btn btn-primary" onclick="sendMessage()">Send message</button>
         </div>
     </div>
 </div>
@@ -379,8 +411,8 @@
 <div class="overlay" id="shareSheet" onclick="if(event.target===this)closeSheet('shareSheet')">
     <div class="sheet">
         <div class="sheet-grip"></div>
-        <h3>שיתוף הפריט</h3>
-        <p class="sub">שתפו את המוצר עם חברים</p>
+        <h3>Share</h3>
+        <p class="sub">Share this item with friends</p>
         <div class="share-grid" id="shareGrid"></div>
     </div>
 </div>
@@ -389,7 +421,7 @@
 
 <script>
     const params = new URLSearchParams(location.search);
-    let product = { name:'שם המוצר', price:120, desc:'', seller:'VERO' };
+    let product = { name:'Product name', price:120, desc:'', seller:'VERO' };
     try{
         const raw = params.get('product');
         if(raw) product = Object.assign(product, JSON.parse(decodeURIComponent(raw)));
@@ -407,17 +439,18 @@
     const rating     = Number(product.rating) || 4.5;
     const priceNum   = toNum(product.price);
     const isArt      = product.type === 'art';
-    const desc = product.desc || `${product.name} — ${isArt?'יצירת אמנות':'פריט'} במצב מעולה, זמין כעת בחנות.`;
+    const desc = product.desc || `${product.name} — ${isArt?'artwork':'a piece'} in excellent condition, available now.`;
 
-    const AUDIENCE = { men:'גברים', women:'נשים', kids:'ילדים', unisex:'יוניסקס',
-                       גברים:'גברים', נשים:'נשים', ילדים:'ילדים', יוניסקס:'יוניסקס' };
+    const AUDIENCE = { men:'Men', women:'Women', kids:'Kids', unisex:'Unisex',
+                       גברים:'Men', נשים:'Women', ילדים:'Kids', יוניסקס:'Unisex' };
     const audience = AUDIENCE[(product.audience||product.gender||'').toString().toLowerCase()]
-                     || product.audience || 'יוניסקס';
+                     || product.audience || 'Unisex';
 
     const seed = encodeURIComponent(product.name || 'vero');
-    // The FIRST slide is always the product's own background-removed cut-out.
-    // The rest are different shots of the same item.
-    const cover = product.processed_cover || product.image || product.cover || null;
+    // The FIRST slide is always the product's own background-removed cut-out
+    // (shown on the sand tone). The rest are different shots of the same item.
+    const cover = product.processed_cover || product.image || product.cover
+        || product.original_cover || product.img || product.imageUrl || product.photo || null;
     let extra = (product.images && product.images.length)
         ? product.images.filter(s => s && s !== cover)
         : [ `https://picsum.photos/seed/${seed}-a/900/1100`,
@@ -426,7 +459,7 @@
         : [ `https://picsum.photos/seed/${seed}-1/900/1100`, ...extra ];
 
     // ---- Render header ----
-    document.getElementById('eyebrow').textContent = (isArt?'יצירת אמנות':'יד שנייה') + ' · VERO SELECT';
+    document.getElementById('eyebrow').textContent = (isArt?'ARTWORK':'PRE-OWNED') + ' · VERO SELECT';
     document.getElementById('pName').textContent = product.name;
     const comp = document.getElementById('pCompany');
     comp.textContent = company;
@@ -442,8 +475,6 @@
     } else {
         priceEl.textContent = fmt(priceNum);
     }
-    document.getElementById('buyPrice').textContent = fmt(priceNum);
-
     // Seller row
     const sLink = document.getElementById('sellerName');
     sLink.textContent = sellerName;
@@ -454,11 +485,11 @@
     document.getElementById('pDesc').textContent = desc;
 
     // Specs
-    document.getElementById('specSize').textContent      = product.size || (isArt?'50×70 ס"מ':'M');
-    document.getElementById('specCondition').textContent = product.condition || 'מצב מעולה';
-    document.getElementById('specFabric').textContent    = product.fabric || product.material || (isArt?'קנבס':'כותנה');
+    document.getElementById('specSize').textContent      = product.size || (isArt?'50×70 cm':'M');
+    document.getElementById('specCondition').textContent = product.condition || 'Excellent';
+    document.getElementById('specFabric').textContent    = product.fabric || product.material || (isArt?'Canvas':'Cotton');
     document.getElementById('specAudience').textContent  = audience;
-    document.getElementById('specColor').textContent     = product.color || 'רב-גוני';
+    document.getElementById('specColor').textContent     = product.color || 'Multicolor';
 
     // Gallery slider — all images in one swipeable track with an LV-style
     // progress bar that slides to the current image.
@@ -516,12 +547,12 @@
         localStorage.setItem('vero_cart', JSON.stringify(cart));
         // confirmation popup
         document.getElementById('confirmIcon').innerHTML='<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>';
-        document.getElementById('confirmTitle').textContent='נוסף לעגלה';
-        document.getElementById('confirmSub').textContent='הפריט נשמר עבורך למשך 48 שעות';
+        document.getElementById('confirmTitle').textContent='Added to bag';
+        document.getElementById('confirmSub').textContent='Held for you for 48 hours';
         document.getElementById('confirmImg').src=images[0];
         document.getElementById('confirmName').textContent=product.name;
         document.getElementById('confirmPrice').textContent=fmt(priceNum);
-        document.getElementById('confirmCta').textContent='לעגלה';
+        document.getElementById('confirmCta').textContent='View bag';
         document.getElementById('confirmCta').onclick=goCart;
         openSheet('confirmSheet');
     }
@@ -537,19 +568,19 @@
         const id=`${product.name}|${product.price}`;
         const idx=wl.findIndex(i=>i.id===id);
         if(idx>=0){ wl.splice(idx,1); localStorage.setItem('vero_wishlist',JSON.stringify(wl));
-            reflectWish(); toast('הוסר מרשימת המשאלות'); return; }
+            reflectWish(); toast('Removed from wishlist'); return; }
         wl.push({ id, name:product.name, price:product.price, seller:sellerName, icon:product.icon,
             category:product.category, type:product.type, rating:product.rating, addedAt:Date.now() });
         localStorage.setItem('vero_wishlist',JSON.stringify(wl));
         reflectWish();
         // confirmation popup
         document.getElementById('confirmIcon').innerHTML='<svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
-        document.getElementById('confirmTitle').textContent='נוסף לרשימת המשאלות';
-        document.getElementById('confirmSub').textContent='תוכל למצוא אותו באזור האישי';
+        document.getElementById('confirmTitle').textContent='Added to wishlist';
+        document.getElementById('confirmSub').textContent='Find it in your saved items';
         document.getElementById('confirmImg').src=images[0];
         document.getElementById('confirmName').textContent=product.name;
         document.getElementById('confirmPrice').textContent=fmt(priceNum);
-        document.getElementById('confirmCta').textContent='לרשימה';
+        document.getElementById('confirmCta').textContent='View saved';
         document.getElementById('confirmCta').onclick=()=>location.href='saved.html';
         openSheet('confirmSheet');
     }
@@ -560,7 +591,7 @@
     reflectWish();
 
     // ---------- offer ----------
-    document.getElementById('offerSub').textContent = `מחיר מבוקש: ${fmt(priceNum)} · שלח למוכר הצעה`;
+    document.getElementById('offerSub').textContent = `Asking ${fmt(priceNum)} · send the seller an offer`;
     const oq=document.getElementById('offerQuick');
     [0.7,0.8,0.9].forEach(f=>{
         const v=Math.max(1,Math.round(priceNum*f));
@@ -577,12 +608,12 @@
         offers.push({ name:product.name, seller:sellerName, askPrice:priceNum, offer:amount, at:Date.now() });
         localStorage.setItem('vero_offers',JSON.stringify(offers));
         input.value=''; closeSheet('offerSheet');
-        toast(`ההצעה נשלחה: ${fmt(amount)}`);
+        toast(`Offer sent: ${fmt(amount)}`);
     }
     window.sendOffer=sendOffer;
 
     // ---------- message the seller (syncs to vero_chats inbox) ----------
-    document.getElementById('msgSub').textContent = `שלח הודעה אל ${sellerName} על "${product.name}"`;
+    document.getElementById('msgSub').textContent = `Message ${sellerName} about "${product.name}"`;
     function sendMessage(){
         const input=document.getElementById('msgInput');
         const text=(input.value||input.placeholder).trim();
@@ -592,7 +623,7 @@
         chats[sellerName].push({ sender:'me', content:text, at:Date.now() });
         localStorage.setItem('vero_chats',JSON.stringify(chats));
         input.value=''; closeSheet('msgSheet');
-        toast('ההודעה נשלחה למוכר');
+        toast('Message sent to the seller');
     }
     window.sendMessage=sendMessage;
 
@@ -619,7 +650,7 @@
           svg:'<path fill="#E1306C" d="M12 7.2A4.8 4.8 0 1 0 12 16.8 4.8 4.8 0 0 0 12 7.2zm0 7.9A3.1 3.1 0 1 1 12 8.9a3.1 3.1 0 0 1 0 6.2zM17.9 6a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0zM21 6.1c-.1-1.5-.4-2.8-1.5-3.9S17.1 1 15.6.9C14.1.8 9.9.8 8.4.9 6.9 1 5.6 1.3 4.5 2.4S3 4.5 2.9 6C2.8 7.5 2.8 11.7 2.9 13.2c.1 1.5.4 2.8 1.5 3.9s2.4 1.4 3.9 1.5c1.5.1 5.7.1 7.2 0 1.5-.1 2.8-.4 3.9-1.5s1.4-2.4 1.5-3.9c.1-1.5.1-5.7 0-7.1zm-2 8.7a3.1 3.1 0 0 1-1.8 1.8c-1.2.5-4.1.4-5.5.4s-4.3.1-5.5-.4a3.1 3.1 0 0 1-1.8-1.8c-.5-1.2-.4-4.1-.4-5.5s-.1-4.3.4-5.5a3.1 3.1 0 0 1 1.8-1.8C7.7 4 10.6 4.1 12 4.1s4.3-.1 5.5.4a3.1 3.1 0 0 1 1.8 1.8c.5 1.2.4 4.1.4 5.5s.1 4.3-.4 5.5z"/>',
           // Instagram has no web share intent — copy link so the user can paste into a story/DM.
           href:null },
-        { key:'copy', label:'העתק קישור', color:'#111010',
+        { key:'copy', label:'Copy link', color:'#111010',
           svg:'<path fill="none" stroke="#111010" stroke-width="1.6" d="M9 9h9v9H9zM6 15H3V3h12v3"/>',
           href:null }
     ];
@@ -634,8 +665,8 @@
         if(s.href){ window.open(s.href(u),'_blank','noopener'); }
         else if(s.key==='instagram'){
             if(navigator.share){ navigator.share({title:product.name,text:shareText,url:u}).catch(()=>{}); }
-            else { copyLink(u); toast('הקישור הועתק — הדביקו באינסטגרם'); }
-        } else { copyLink(u); toast('הקישור הועתק ✓'); }
+            else { copyLink(u); toast('Link copied — paste into Instagram'); }
+        } else { copyLink(u); toast('Link copied ✓'); }
     });
     function copyLink(u){
         if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{});
