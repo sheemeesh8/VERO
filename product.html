@@ -83,17 +83,17 @@
         }
 
         /* ---------- content ---------- */
-        .content{padding:24px 22px 0;text-align:left;}
+        .content{padding:14px 22px 0;text-align:left;}
 
         .eyebrow{
             font-size:11px;letter-spacing:3px;text-transform:uppercase;
-            color:var(--muted);margin-bottom:16px;
+            color:var(--muted);margin-bottom:9px;
         }
         .p-name{
             font-size:30px;font-weight:400;line-height:1.2;letter-spacing:.2px;
         }
         .p-company{
-            margin-top:12px;font-size:12.5px;letter-spacing:3px;text-transform:uppercase;
+            margin-top:8px;font-size:12.5px;letter-spacing:3px;text-transform:uppercase;
             color:var(--muted);
         }
         .p-company a{color:inherit;text-decoration:none;}
@@ -115,7 +115,7 @@
         /* seller + rating */
         .p-seller{
             display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-            margin-top:36px;padding:0 0 20px;
+            margin-top:46px;padding:0 0 22px;
             border-bottom:1px solid var(--line);
             font-size:13px;color:#3d382f;
         }
@@ -129,11 +129,11 @@
 
         /* description */
         .p-desc{
-            margin-top:28px;font-size:14.5px;line-height:1.85;color:#413b31;
+            margin-top:34px;font-size:14.5px;line-height:1.85;color:#413b31;
         }
 
         /* quick specs — values on top, emphasised rule, labels beneath it */
-        .quick-specs{margin-top:32px;}
+        .quick-specs{margin-top:44px;}
         .qs-values,.qs-labels{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:center;}
         .qs-values{padding-bottom:7px;border-bottom:1.5px solid var(--ink);}
         .qs-labels{padding-top:7px;}
@@ -155,6 +155,28 @@
         .acc-item.open .acc-head .chev{transform:rotate(180deg);}
         .acc-body{max-height:0;overflow:hidden;transition:max-height .3s ease;}
         .acc-body-inner{padding:0 2px 15px;font-size:15px;font-weight:400;color:#413b31;}
+
+        /* ---------- recommendations slider (no card background) ---------- */
+        .recs{margin-top:52px;}
+        .recs-title{
+            font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);
+            margin-bottom:18px;
+        }
+        .recs-track{
+            display:flex;gap:20px;overflow-x:auto;scrollbar-width:none;
+            padding-bottom:4px;margin:0 -22px;padding-inline:22px;
+        }
+        .recs-track::-webkit-scrollbar{display:none;}
+        .rec{flex:0 0 138px;text-decoration:none;color:var(--ink);}
+        .rec-img{
+            width:100%;aspect-ratio:4/5;background:transparent;overflow:hidden;
+            display:flex;align-items:center;justify-content:center;
+        }
+        .rec-img img{width:100%;height:100%;object-fit:cover;display:block;}
+        .rec-company{
+            margin-top:11px;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+        }
+        .rec-type{margin-top:4px;font-size:13.5px;color:var(--ink);}
 
         /* ---------- floating dark action pill (bottom) ---------- */
         .action-bar{
@@ -360,6 +382,12 @@
                 <div class="acc-body"><div class="acc-body-inner" id="specColor">—</div></div>
             </div>
         </div>
+
+        <!-- recommendations — 10 pieces you may also like -->
+        <div class="recs">
+            <div class="recs-title">You may also like</div>
+            <div class="recs-track" id="recsTrack"></div>
+        </div>
     </div>
 
     <!-- floating dark action pill -->
@@ -549,6 +577,34 @@
             setBar(Math.round(slider.scrollLeft / slider.clientWidth));
         });
     });
+
+    // ---------- recommendations: 10 pieces you may also like ----------
+    (function buildRecs(){
+        const track = document.getElementById('recsTrack');
+        if(!track) return;
+        const BRANDS = ['Studio Vero','Atelier Nord','Denim Lab','Milano Feet','Sole Society',
+                        'Basics Co.','Urban Thread','Horology Co.','Gallery Nine','Art House'];
+        const TYPES  = ['Oxford Shirt','Wool Trousers','Selvedge Jeans','Suede Loafers','Leather Sneakers',
+                        'Striped Tee','Cargo Pants','Automatic Watch','Silk Scarf','Wool Coat'];
+        const rows = [];
+        for(let i=0;i<10;i++){
+            const brand = BRANDS[i % BRANDS.length];
+            const type  = TYPES[i % TYPES.length];
+            const name  = `${brand} ${type}`;
+            const img   = `https://picsum.photos/seed/${encodeURIComponent(name)}-rec/500/620`;
+            const data  = encodeURIComponent(JSON.stringify({
+                name, seller: brand, company: brand, price: 120 + i*40,
+                category: type, rating: 4.3 + (i % 6) * 0.1
+            }));
+            rows.push(
+                `<a class="rec" href="product-showcase.html?product=${data}">
+                    <div class="rec-img"><img src="${img}" alt="${type}" loading="lazy"></div>
+                    <div class="rec-company">${brand}</div>
+                    <div class="rec-type">${type}</div>
+                 </a>`);
+        }
+        track.innerHTML = rows.join('');
+    })();
 
     // ---------- accordion (garment details) ----------
     function toggleAcc(btn){
