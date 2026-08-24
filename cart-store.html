@@ -88,6 +88,22 @@
         .ct-select:focus { outline: none; border-color: #16150f; }
         .ct-count { margin-left: auto; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #a8a399; }
 
+        /* Auto-scrolling cart-summary ticker (total + item count), full-width row. */
+        .cart-ticker {
+            overflow: hidden; white-space: nowrap; width: 100%;
+            border-bottom: 1px solid #e6e1d8;
+            margin: 18px 0 6px; padding: 14px 0;
+        }
+        .cart-ticker-track { display: inline-flex; will-change: transform; animation: cartTicker 16s linear infinite; }
+        .cart-ticker-track:hover { animation-play-state: paused; }
+        .cart-ticker-track .tk {
+            display: inline-flex; align-items: center; padding: 0 20px;
+            font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #16150f;
+        }
+        .cart-ticker-track .tk b { font-weight: 400; }
+        .cart-ticker-track .tk .dot { color: #c9c3b8; margin-left: 40px; }
+        @keyframes cartTicker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
         /* Selection checkbox overlaid on each cart card. */
         .cart-item { position: relative; }
         .cart-select {
@@ -161,6 +177,7 @@
         <p class="head-sub" id="headSub">The items you've gathered, ready to check out.</p>
 
         <div id="toolbarHost"></div>
+        <div id="tickerHost"></div>
         <div id="cartBody"></div>
         <div id="checkoutHost"></div>
     </div>
@@ -345,6 +362,7 @@
                 body.innerHTML = `<div class="cart-empty">Your ${MODE} cart is empty — pieces you add from the feed appear here.</div>`;
                 host.innerHTML = '';
                 document.getElementById('headTotal').innerHTML = '';
+                document.getElementById('tickerHost').innerHTML = '';
                 sub.textContent = "The items you've gathered, ready to check out.";
                 return;
             }
@@ -352,6 +370,7 @@
                 body.innerHTML = `<div class="cart-empty">No items match these filters.</div>`;
                 host.innerHTML = '';
                 document.getElementById('headTotal').innerHTML = '';
+                document.getElementById('tickerHost').innerHTML = '';
                 return;
             }
 
@@ -382,7 +401,16 @@
             sub.textContent = chosen.length
                 ? `${count} selected item${count === 1 ? '' : 's'} · ready to check out.`
                 : `${count} item${count === 1 ? '' : 's'} in your ${MODE} cart · ready to check out.`;
-            document.getElementById('headTotal').innerHTML = `Total <b>₪${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>`;
+            // The total lives on the auto-scrolling ticker (not the header), which keeps
+            // the title row clean and closed-up against the filters.
+            document.getElementById('headTotal').innerHTML = '';
+            const money = '₪' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const seg = `<span class="tk"><b>Total ${money}</b><span class="dot">•</span></span>` +
+                        `<span class="tk"><b>${count} item${count === 1 ? '' : 's'}</b><span class="dot">•</span></span>`;
+            // Repeat enough times to fill the row, doubled so the loop is seamless.
+            const half = seg.repeat(6);
+            document.getElementById('tickerHost').innerHTML =
+                `<div class="cart-ticker"><div class="cart-ticker-track">${half}${half}</div></div>`;
             host.innerHTML = `
                 <div class="checkout">
                     <button class="checkout-btn" onclick="veroCheckout()">Checkout${chosen.length ? ' selected' : ''} &#8594;</button>
