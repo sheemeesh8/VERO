@@ -1,775 +1,630 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <link rel="stylesheet" href="design-system.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VERO - Product</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>VERO — מוצר</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; }
-        /* Product page fits one screen — no page scroll / scrollbar. */
-        html, body { overflow: hidden; }
-        body {
-            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
-            background: #F2F0EF;
-            color: #000;
+        :root{
+            --bg:#F4F2EF;          /* warm sand */
+            --panel:#ffffff;
+            --ink:#111010;         /* near-black text */
+            --muted:#8c8579;       /* label grey */
+            --line:#e4e0d8;        /* hairline */
+            --line-strong:#111010;
+            --sale:#8a6d3b;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+        html,body{height:100%;}
+        body{
+            background:var(--bg);
+            color:var(--ink);
+            font-family:'Aharoni CLM','Segoe UI',sans-serif;
+            -webkit-font-smoothing:antialiased;
+            line-height:1.5;
+        }
+        /* one column, phone-width; scrolls vertically inside the frame */
+        .page{
+            width:100%;
+            max-width:480px;
+            margin:0 auto;
+            min-height:100%;
+            background:var(--bg);
+            padding-bottom:40px;
         }
 
-        /* Adding to cart slides the whole page out before we land on the cart. */
-        body.slide-out { animation: pageSlideOut 0.45s cubic-bezier(0.65, 0.05, 0.1, 1) forwards; overflow: hidden; }
-        @keyframes pageSlideOut { to { transform: translateX(-12%); opacity: 0; } }
-
-        .product-hero {
-            width: 100%;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 64px 48px;
+        /* ---------- top bar ---------- */
+        .topbar{
+            position:sticky;top:0;z-index:30;
+            display:flex;align-items:center;justify-content:space-between;
+            padding:16px 20px 12px;
+            background:linear-gradient(var(--bg) 78%, rgba(244,242,239,0));
+        }
+        .tb-btn{
+            width:42px;height:42px;flex:0 0 auto;
+            display:flex;align-items:center;justify-content:center;
+            border:1px solid var(--line);border-radius:50%;
+            background:var(--panel);color:var(--ink);cursor:pointer;
+            transition:background .2s,color .2s,border-color .2s;
+        }
+        .tb-btn:active{background:var(--ink);color:#fff;border-color:var(--ink);}
+        .tb-btn svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.5;fill:none;}
+        .tb-brand{
+            font-size:13px;letter-spacing:6px;font-weight:700;text-transform:uppercase;
+            padding-inline-start:6px;
         }
 
-        /* ==================================================================
-           PROMO-SLIDE STYLE — the exact same component the promoted-product
-           sliders use across the site, rendered here as one static product.
-           Structure and type mirror index.html's .promo-slider so the product
-           page reads identically to a promoted card.
-           ================================================================== */
-        .promo-slider {
-            position: relative;
-            direction: ltr;
-            width: 100%;
-            max-width: 1180px;
-            /* Design tokens — same values the site's promoted sliders use. */
-            --promo-company: 120px;
-            --pd-title-size: 32px;
-            --pd-desc-size: 21px;
-            --pd-price-size: 18px;
-            --pd-emoji-size: 240px;
-            --pd-img-w: 380px;
-            --pd-img-aspect: 1.15;
-            --pd-gap: 42px;
-            --pd-company-color: #000;
-            --pd-title-color: #000;
-            --pd-desc-color: #000;
-            --pd-panel-bg: #f1f1ef;
-            --pd-btn-bg: #f1f1ef;
-            --pd-btn-color: #111;
-            --pd-btn-h: 53px;
-            --pd-btn-radius: 0px;
-            --pd-btn-border: transparent;
+        /* ---------- gallery ---------- */
+        .gallery{padding:0 0 4px;}
+        .gallery-main{
+            position:relative;width:100%;aspect-ratio:4/5;
+            background:var(--panel);overflow:hidden;
+        }
+        .gallery-main img{width:100%;height:100%;object-fit:cover;display:block;}
+        .gallery-count{
+            position:absolute;bottom:14px;inset-inline-start:14px;
+            padding:5px 12px;border-radius:999px;
+            background:rgba(17,16,16,.62);color:#fff;direction:ltr;
+            font-size:11px;letter-spacing:1px;backdrop-filter:blur(4px);
+        }
+        .gallery-thumbs{
+            display:flex;gap:8px;padding:10px 20px 0;overflow-x:auto;
+            scrollbar-width:none;
+        }
+        .gallery-thumbs::-webkit-scrollbar{display:none;}
+        .gthumb{
+            width:64px;height:80px;flex:0 0 auto;padding:0;cursor:pointer;
+            background:var(--panel);border:1px solid var(--line);overflow:hidden;
+            opacity:.65;transition:opacity .2s,border-color .2s;
+        }
+        .gthumb img{width:100%;height:100%;object-fit:cover;display:block;}
+        .gthumb.active{opacity:1;border-color:var(--line-strong);}
+
+        /* ---------- content ---------- */
+        .content{padding:22px 22px 0;}
+
+        .eyebrow{
+            font-size:11px;letter-spacing:3px;text-transform:uppercase;
+            color:var(--muted);margin-bottom:10px;
+        }
+        .p-name{
+            font-size:29px;font-weight:700;line-height:1.15;letter-spacing:.2px;
+        }
+        .p-company{
+            margin-top:7px;font-size:12.5px;letter-spacing:3px;text-transform:uppercase;
+            color:var(--muted);
+        }
+        .p-company a{color:inherit;text-decoration:none;}
+
+        .p-price{
+            margin-top:18px;font-size:23px;font-weight:400;letter-spacing:.5px;
+        }
+        .p-price .was{
+            font-size:15px;color:var(--muted);text-decoration:line-through;
+            margin-inline-start:10px;
+        }
+        .p-price .off{
+            font-size:12px;color:#fff;background:var(--sale);
+            padding:3px 8px;border-radius:3px;margin-inline-end:10px;letter-spacing:1px;
         }
 
-        .promo-slide {
-            box-sizing: border-box;
-            display: grid;
-            grid-template-columns: minmax(0, 600px) minmax(0, var(--pd-img-w, 620px));
-            justify-content: center;
-            align-items: stretch;
-            gap: var(--pd-gap, 88px);
-            padding: 24px 30px;
+        /* seller + rating */
+        .p-seller{
+            display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+            margin-top:18px;padding:16px 0;
+            border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+            font-size:13px;color:#3d382f;
         }
-        /* Data always on the left column, image always on the right column. */
-        .promo-text  { grid-column: 1; }
-        .promo-image { grid-column: 2; }
+        .p-seller .s-label{color:var(--muted);letter-spacing:1px;}
+        .p-seller .s-name{
+            font-weight:700;text-decoration:underline;text-underline-offset:3px;
+            color:var(--ink);
+        }
+        .p-seller .s-rating{margin-inline-start:auto;letter-spacing:2px;color:var(--ink);}
+        .p-seller .s-rating .num{color:var(--muted);letter-spacing:0;font-size:11px;margin-inline-start:3px;}
 
-        .promo-text {
-            direction: ltr;
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 26px;
-            padding: 14px 0;
-            min-height: 100%;
+        /* description */
+        .p-desc{
+            margin-top:22px;font-size:14.5px;line-height:1.9;color:#413b31;
         }
 
-        .promo-head, .promo-foot {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            align-self: stretch;
-            gap: 8px;
+        /* spec rows — LV-style hairline detail list */
+        .specs{margin-top:26px;border-top:1px solid var(--line);}
+        .spec-row{
+            display:flex;align-items:center;justify-content:space-between;gap:16px;
+            padding:15px 2px;border-bottom:1px solid var(--line);
         }
-        .promo-foot { gap: 12px; }
+        .spec-key{
+            font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+        }
+        .spec-val{font-size:14.5px;font-weight:700;text-align:end;}
 
-        /* Company / seller name — first line, large, regular weight. */
-        .promo-label {
-            font-size: var(--promo-company, 46px);
-            display: block;
-            white-space: nowrap;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            line-height: 1.15;
-            color: var(--pd-company-color, #111);
-            margin: 0;
+        /* ---------- action buttons ---------- */
+        .actions{margin-top:26px;display:flex;flex-direction:column;gap:11px;}
+        .btn{
+            width:100%;height:56px;display:flex;align-items:center;justify-content:center;gap:9px;
+            border-radius:0;cursor:pointer;font-family:inherit;
+            font-size:12px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;
+            border:1.4px solid var(--ink);transition:background .2s,color .2s,opacity .2s;
         }
-        .promo-label > span { white-space: nowrap; }
+        .btn svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.5;fill:none;}
+        .btn-primary{background:var(--ink);color:#fff;}
+        .btn-primary:active{opacity:.8;}
+        .btn-primary .price-tail{font-weight:400;letter-spacing:.5px;opacity:.8;}
+        .btn-outline{background:transparent;color:var(--ink);}
+        .btn-outline:active{background:var(--ink);color:#fff;}
+        .btn-outline.active{background:var(--ink);color:#fff;}
+        .btn-outline.active svg{fill:#fff;}
+        .btn-row{display:flex;gap:11px;}
+        .btn-row .btn{flex:1;font-size:11px;letter-spacing:1.5px;}
 
-        /* Piece's own name — smaller and bold. */
-        .promo-title {
-            font-size: var(--pd-title-size, 36px);
-            font-weight: 700;
-            text-transform: uppercase;
-            overflow-wrap: anywhere;
-            line-height: 1.25;
-            letter-spacing: 0.5px;
-            color: var(--pd-title-color, #111);
-            margin: 0;
+        /* ---------- overlays / popups ---------- */
+        .overlay{
+            position:fixed;inset:0;z-index:200;display:none;
+            align-items:flex-end;justify-content:center;
+            background:rgba(17,16,16,.5);
         }
+        .overlay.show{display:flex;animation:fade .2s ease;}
+        @keyframes fade{from{opacity:0}to{opacity:1}}
+        .sheet{
+            width:100%;max-width:480px;background:var(--panel);
+            border-radius:20px 20px 0 0;padding:26px 24px calc(26px + env(safe-area-inset-bottom));
+            transform:translateY(100%);animation:rise .34s cubic-bezier(.2,.8,.2,1) forwards;
+        }
+        @keyframes rise{to{transform:translateY(0)}}
+        .sheet-grip{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 20px;}
+        .sheet h3{font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+        .sheet p.sub{font-size:12.5px;color:var(--muted);margin-bottom:20px;}
 
-        .promo-desc {
-            font-size: var(--pd-desc-size, 19px);
-            line-height: 1.7;
-            font-weight: 400;
-            color: var(--pd-desc-color, #6b665e);
-            max-width: 480px;
-            margin: 0;
+        /* confirm popup (cart / wishlist) */
+        .confirm-icon{
+            width:56px;height:56px;margin:0 auto 16px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            background:var(--ink);color:#fff;
         }
+        .confirm-icon svg{width:26px;height:26px;stroke:#fff;stroke-width:1.6;fill:none;}
+        .sheet.center{text-align:center;}
+        .mini-card{
+            display:flex;align-items:center;gap:12px;text-align:start;
+            padding:14px;border:1px solid var(--line);margin-bottom:20px;
+        }
+        .mini-card .mc-img{width:52px;height:60px;object-fit:cover;flex:0 0 auto;background:var(--bg);}
+        .mini-card .mc-name{font-weight:700;font-size:14px;}
+        .mini-card .mc-price{font-size:13px;color:var(--muted);margin-top:3px;}
 
-        /* Buy bar: label on the left, price on the right. */
-        .promo-readmore {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            width: 100%;
-            height: var(--pd-btn-h, 66px);
-            box-sizing: border-box;
-            border-radius: var(--pd-btn-radius, 16px);
-            background: var(--pd-btn-bg, #f1f1ef);
-            border: 2px solid var(--pd-btn-border, transparent);
-            cursor: pointer;
-            font-size: var(--pd-price-size, 14px);
-            font-weight: 700;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            color: var(--pd-btn-color, #111);
-            padding: 0 24px;
-            margin-top: 4px;
-            transition: filter 0.25s, transform 0.25s;
+        /* offer / message inputs */
+        .field{
+            display:flex;align-items:center;border:1px solid var(--line);
+            padding:0 16px;height:54px;margin-bottom:14px;
         }
-        .promo-readmore .promo-buyprice { font-weight: 700; letter-spacing: 0.5px; }
-        .promo-readmore:hover { filter: brightness(0.96); transform: translateY(-2px); }
+        .field .cur{color:var(--muted);font-size:17px;margin-inline-end:8px;}
+        .field input{
+            border:none;outline:none;background:transparent;font-family:inherit;
+            font-size:17px;font-weight:700;width:100%;color:var(--ink);
+        }
+        textarea.field{
+            height:auto;min-height:96px;padding:14px 16px;resize:none;
+            font-size:14.5px;font-weight:400;line-height:1.6;display:block;
+        }
+        .offer-quick{display:flex;gap:8px;margin-bottom:18px;}
+        .offer-quick button{
+            flex:1;height:40px;border:1px solid var(--line);background:transparent;
+            font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink);
+            transition:background .2s,color .2s;
+        }
+        .offer-quick button:active{background:var(--ink);color:#fff;}
+        .sheet-actions{display:flex;gap:11px;margin-top:4px;}
+        .sheet-actions .btn{height:52px;}
 
-        /* Wishlist bar — same width, quieter (outline only). */
-        .promo-wish {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: var(--pd-btn-h, 66px);
-            box-sizing: border-box;
-            border-radius: var(--pd-btn-radius, 16px);
-            background: transparent;
-            border: 1px solid #d9d7d2;
-            cursor: pointer;
-            font-size: var(--pd-price-size, 18px);
-            font-weight: 700;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            color: #111;
-            padding: 0 24px;
-            transition: border-color 0.2s, background 0.2s;
+        /* share grid */
+        .share-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 8px;margin-bottom:8px;}
+        .share-item{
+            display:flex;flex-direction:column;align-items:center;gap:8px;
+            background:none;border:none;cursor:pointer;font-family:inherit;color:var(--ink);
         }
-        .promo-wish:hover { border-color: #111; }
-        .promo-wish.active { border-color: #111; background: #f1f1ef; }
+        .share-ic{
+            width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            border:1px solid var(--line);
+        }
+        .share-ic svg{width:24px;height:24px;}
+        .share-item span{font-size:11px;letter-spacing:.5px;color:#413b31;}
 
-        /* Make-an-offer bar — dark, like Depop's "Make Offer". */
-        .promo-offer {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: var(--pd-btn-h, 66px);
-            box-sizing: border-box;
-            border-radius: var(--pd-btn-radius, 16px);
-            background: #111;
-            border: 2px solid #111;
-            cursor: pointer;
-            font-size: var(--pd-price-size, 18px);
-            font-weight: 700;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            color: #fff;
-            padding: 0 24px;
-            transition: filter 0.2s, transform 0.2s;
+        .toast{
+            position:fixed;left:50%;bottom:30px;transform:translate(-50%,20px);
+            background:var(--ink);color:#fff;padding:13px 22px;border-radius:999px;
+            font-size:12px;letter-spacing:1px;z-index:400;opacity:0;pointer-events:none;
+            transition:opacity .3s,transform .3s;
         }
-        .promo-offer:hover { filter: brightness(1.15); transform: translateY(-2px); }
-
-        /* ---- Offer dialog ---- */
-        .offer-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.45);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 400;
-            direction: rtl;
-        }
-        .offer-overlay.show { display: flex; }
-        .offer-modal {
-            background: #fff;
-            width: 100%;
-            max-width: 420px;
-            margin: 20px;
-            padding: 34px 30px 30px;
-            border-radius: 4px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-        }
-        .offer-modal h3 {
-            font-size: 18.33px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-        }
-        .offer-sub { font-size: 11.67px; color: #8a857c; margin-bottom: 22px; }
-        .offer-input-wrap {
-            display: flex;
-            align-items: center;
-            border: 1px solid #d9d7d2;
-            border-radius: 4px;
-            padding: 0 16px;
-            height: 56px;
-            margin-bottom: 22px;
-        }
-        .offer-input-wrap .cur { font-size: 18.33px; color: #8a857c; margin-left: 8px; }
-        .offer-input-wrap input {
-            border: none;
-            outline: none;
-            font-family: inherit;
-            font-size: 18.33px;
-            font-weight: 600;
-            width: 100%;
-            background: transparent;
-            color: #111;
-            direction: ltr;
-            text-align: right;
-        }
-        .offer-actions { display: flex; gap: 12px; }
-        .offer-send, .offer-cancel {
-            flex: 1;
-            height: 52px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 11.67px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: filter 0.2s, background 0.2s;
-        }
-        .offer-send { background: #111; color: #fff; border: 2px solid #111; }
-        .offer-send:hover { filter: brightness(1.15); }
-        .offer-cancel { background: #fff; color: #111; border: 1px solid #d9d7d2; }
-        .offer-cancel:hover { border-color: #111; }
-
-        /* Image panel — flat neutral, icon centred huge. */
-        .promo-image {
-            position: relative;
-            width: 100%;
-            max-width: var(--pd-img-w, 620px);
-            aspect-ratio: 1 / var(--pd-img-aspect, 1.25);
-            margin: 0;
-            background: var(--pd-panel-bg, #f2f0ec);
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: var(--pd-emoji-size, 210px);
-            color: rgba(0, 0, 0, 0.10);
-            overflow: hidden;
-        }
-        .pd-main-frame {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .pd-main-frame img { width: 100%; height: 100%; object-fit: cover; }
-        .product-banner-icon { font-size: var(--pd-emoji-size, 360px); line-height: 1; }
-
-        /* McLaren-style spec row: three columns spanning the slide, thin top rule. */
-        .promo-stats {
-            grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            margin-top: 54px;
-            padding-top: 38px;
-            border-top: 1px solid rgba(0, 0, 0, 0.14);
-        }
-        .promo-stat {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 12px;
-        }
-        .promo-stat-label {
-            font-size: 9.17px;
-            font-weight: 600;
-            letter-spacing: 2.4px;
-            text-transform: uppercase;
-            color: #9a958c;
-        }
-        .promo-stat-value {
-            font-size: clamp(20px, 2vw, 30px);
-            font-weight: 400;
-            letter-spacing: 0.5px;
-            color: var(--pd-title-color, #111);
-            line-height: 1.1;
-        }
-
-        /* The seller's other shots — small squares under the image panel. */
-        .pd-thumbs {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-            justify-content: center;
-        }
-        .pd-thumb {
-            width: 78px;
-            height: 78px;
-            flex: 0 0 auto;
-            background: #f1f1ef;
-            border: 1px solid #e4e2dd;
-            border-radius: 4px;
-            padding: 0;
-            cursor: pointer;
-            overflow: hidden;
-            transition: border-color 0.2s, opacity 0.2s;
-            opacity: 0.85;
-        }
-        .pd-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .pd-thumb:hover { opacity: 1; }
-        .pd-thumb.active { border-color: #111; opacity: 1; }
-        .pd-thumb:focus-visible { outline: 2px solid #111; outline-offset: 2px; }
-
-        /* ==================== TOASTS ==================== */
-        .toast-container { position: fixed; bottom: 24px; left: 24px; z-index: 300; display: flex; flex-direction: column; gap: 10px; }
-        .toast {
-            background: #111; color: #fff; padding: 14px 22px; border-radius: 4px;
-            font-size: 11.67px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-            transform: translateX(-120%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .toast.show { transform: translateX(0); }
-
-        /* ==================== RESPONSIVE ==================== */
-        @media (max-width: 900px) {
-            .product-hero { padding: 32px 18px; }
-            .promo-slider { --promo-company: 64px; --pd-emoji-size: 200px; }
-            .promo-slide { grid-template-columns: 1fr; gap: 24px; padding: 8px 4px; }
-            /* Single-column now — clear the desktop grid-column:2 so the image doesn't
-               land in a zero-width implicit track and collapse (letting the emoji spill). */
-            .promo-image { max-width: 100%; grid-column: auto; }
-            .promo-stats { grid-column: auto; }
-            .promo-stats { margin-top: 34px; padding-top: 26px; gap: 16px; }
-        }
-    </style>
-    <!-- Seller edits + sale prices, shared by every page (single source). -->
-    <script src="product-overrides.js"></script>
-    <!-- VERO manual placement — baked in from the site editor. Kept last so it wins. -->
-    <style>
-        /* VERO manual placement — from the site editor */
-        #pdThumbs {
-            transform: translate(745px, -118px) scale(1.65);
-        }
-
-        #productHero > div.promo-slider:nth-of-type(1) > div.promo-slide {
-            transform: translate(50px, 35px);
-        }
-
-        #productHero > div.promo-slider:nth-of-type(1) > div.promo-slide > div.promo-text:nth-of-type(1) > div.promo-foot:nth-of-type(2) {
-            transform: translate(-161px, 145px);
-        }
-
-        #productName {
-            transform: translate(-211px, 11px) scale(0.75);
-        }
-
-        #productLabel {
-            transform: translate(-162px, 25px);
-        }
-
-        /* Seller + rating row under the product title. */
-        .promo-seller {
-            display: flex; align-items: center; gap: 12px; margin-top: 16px;
-            font-size: 11.67px; color: #333;
-        }
-        .promo-seller .ps-name { letter-spacing: 1px; }
-        .promo-seller .ps-rating { color: #111; letter-spacing: 2px; font-size: 12.50px; }
-        .promo-seller .ps-rating .num { color: #888; letter-spacing: 0; font-size: 10.00px; margin-inline-start: 4px; }
-
-        #pdMainImg {
-            transform: translate(33px, 118px) scale(1.4);
-        }
-
-        #productHero > div.promo-slider:nth-of-type(1) > div.promo-slide > div.promo-text:nth-of-type(1) {
-            transform: translate(26px, -29px);
-        }
-
-        #wishBtn {
-            transform: translate(-100px, 9px) scale(0.65);
-        }
-
-        #productDesc {
-            transform: translate(6px, -115px);
-        }
-
-        #productHero > div.promo-slider:nth-of-type(1) > div.promo-slide > div.promo-text:nth-of-type(1) > div.promo-foot:nth-of-type(2) > button.promo-readmore:nth-of-type(1) {
-            transform: translate(-95px, 38px) scale(0.65);
-        }
-
-        #offerBtn {
-            transform: translate(-98px, 23px) scale(0.65);
-        }
-
-        #pdThumbs > button.pd-thumb:nth-of-type(2) {
-            transform: translate(69px, -116px) scale(1.3);
-        }
-
-        #pdThumbs > button.pd-thumb:nth-of-type(1) {
-            transform: translate(-21px, 4px) scale(1.3);
-        }
-
-        /* On phones the editor's desktop pixel placements above (translate/scale) push
-           elements off-screen and overflow the viewport. Drop them all so the natural
-           single-column responsive layout takes over. */
-        @media (max-width: 900px) {
-            #pdThumbs,
-            #productHero > div.promo-slider:nth-of-type(1) > div.promo-slide,
-            #productHero > div.promo-slider:nth-of-type(1) > div.promo-slide > div.promo-text:nth-of-type(1) > div.promo-foot:nth-of-type(2),
-            #productName,
-            #productLabel,
-            #pdMainImg,
-            #productHero > div.promo-slider:nth-of-type(1) > div.promo-slide > div.promo-text:nth-of-type(1),
-            #wishBtn,
-            #productDesc,
-            #productHero > div.promo-slider:nth-of-type(1) > div.promo-slide > div.promo-text:nth-of-type(1) > div.promo-foot:nth-of-type(2) > button.promo-readmore:nth-of-type(1),
-            #offerBtn,
-            #pdThumbs > button.pd-thumb:nth-of-type(2),
-            #pdThumbs > button.pd-thumb:nth-of-type(1) {
-                transform: none;
-            }
-        }
+        .toast.show{opacity:1;transform:translate(-50%,0);}
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
+    <script src="product-overrides.js"></script>
     <script src="assets/back-button.js"></script>
 </head>
-<body data-sticky="plain">
-    <script>function goBackToStore(){ if (document.referrer && history.length > 1) history.back(); else location.href = "index.html"; }</script>
+<body>
+<div class="page">
 
-    <!-- ==================== PRODUCT (promo-slide style) ==================== -->
-    <div class="product-hero" id="productHero">
-        <div class="promo-slider">
-            <div class="promo-slide">
-                <div class="promo-text">
-                    <div class="promo-head">
-                        <span class="promo-label" id="productLabel">VERO SELECT</span>
-                        <h1 class="promo-title" id="productName">שם המוצר</h1>
-                        <div class="promo-seller" id="productSeller">
-                            <span class="ps-name" id="sellerName"></span>
-                            <span class="ps-rating" id="sellerRating"></span>
-                        </div>
-                    </div>
-                    <div class="promo-foot">
-                        <p class="promo-desc" id="productDesc">תיאור המוצר יופיע כאן</p>
-                        <button class="promo-readmore" onclick="addProductToCart()">
-                            <span class="promo-buylabel">הוסף לעגלה</span>
-                            <span class="promo-buyprice" id="productPrice">₪0.00</span>
-                        </button>
-                        <button class="promo-offer" id="offerBtn" onclick="openOffer()">הצע מחיר</button>
-                        <button class="promo-wish" id="wishBtn" onclick="toggleWishlist()">הוסף לרשימת המשאלות</button>
-                    </div>
-                </div>
-
-                <div class="promo-image" id="pdMainImg">
-                    <div class="pd-main-frame" id="pdMainFrame">
-                        <div class="product-banner-icon" id="productIcon">🎨</div>
-                    </div>
-                </div>
-
-                <div class="promo-stats" id="productSpecs">
-                    <div class="promo-stat">
-                        <span class="promo-stat-label">צבע</span>
-                        <span class="promo-stat-value" id="specColor">—</span>
-                    </div>
-                    <div class="promo-stat">
-                        <span class="promo-stat-label">מידה</span>
-                        <span class="promo-stat-value" id="specSize">—</span>
-                    </div>
-                    <div class="promo-stat">
-                        <span class="promo-stat-label">בד</span>
-                        <span class="promo-stat-value" id="specFabric">—</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- the other shots, under the image panel; click to swap them in -->
-        <div class="pd-thumbs" id="pdThumbs"></div>
+    <!-- top bar -->
+    <div class="topbar">
+        <button class="tb-btn" onclick="goBack()" aria-label="חזרה">
+            <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <span class="tb-brand">VERO</span>
+        <button class="tb-btn" onclick="openSheet('shareSheet')" aria-label="שיתוף">
+            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        </button>
     </div>
 
-    <!-- ==================== OFFER DIALOG ==================== -->
-    <div class="offer-overlay" id="offerOverlay" onclick="if(event.target===this)closeOffer()">
-        <div class="offer-modal" role="dialog" aria-modal="true" aria-labelledby="offerTitle">
-            <h3 id="offerTitle">הצע מחיר</h3>
-            <p class="offer-sub" id="offerSub">שלח למוכר הצעת מחיר להתמקחות</p>
-            <div class="offer-input-wrap">
-                <span class="cur">₪</span>
-                <input type="number" id="offerInput" min="1" step="1" placeholder="0" inputmode="numeric">
-            </div>
-            <div class="offer-actions">
-                <button class="offer-send" onclick="sendOffer()">שלח הצעה</button>
-                <button class="offer-cancel" onclick="closeOffer()">ביטול</button>
+    <!-- gallery -->
+    <div class="gallery">
+        <div class="gallery-main">
+            <img id="mainImg" src="" alt="">
+            <span class="gallery-count" id="galleryCount">1 / 3</span>
+        </div>
+        <div class="gallery-thumbs" id="thumbs"></div>
+    </div>
+
+    <!-- content -->
+    <div class="content">
+        <div class="eyebrow" id="eyebrow">יד שנייה · VERO SELECT</div>
+        <h1 class="p-name" id="pName">שם המוצר</h1>
+        <div class="p-company"><a id="pCompany" href="#">שם החברה</a></div>
+
+        <div class="p-price" id="pPrice">₪0.00</div>
+
+        <div class="p-seller">
+            <span class="s-label">מוכר:</span>
+            <a class="s-name" id="sellerName" href="#">VERO</a>
+            <span class="s-rating" id="sellerRating"></span>
+        </div>
+
+        <p class="p-desc" id="pDesc">תיאור המוצר יופיע כאן.</p>
+
+        <!-- spec detail list -->
+        <div class="specs" id="specs">
+            <div class="spec-row"><span class="spec-key">מידה</span><span class="spec-val" id="specSize">—</span></div>
+            <div class="spec-row"><span class="spec-key">מצב הפריט</span><span class="spec-val" id="specCondition">—</span></div>
+            <div class="spec-row"><span class="spec-key">סוג הבד</span><span class="spec-val" id="specFabric">—</span></div>
+            <div class="spec-row"><span class="spec-key">מתאים ל־</span><span class="spec-val" id="specAudience">—</span></div>
+            <div class="spec-row"><span class="spec-key">צבע</span><span class="spec-val" id="specColor">—</span></div>
+        </div>
+
+        <!-- actions -->
+        <div class="actions">
+            <button class="btn btn-primary" onclick="addToCart()">
+                <span>הוסף לעגלת קניות</span>
+                <span class="price-tail" id="buyPrice">₪0.00</span>
+            </button>
+            <button class="btn btn-outline" id="wishBtn" onclick="toggleWishlist()">
+                <svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
+                <span id="wishLabel">הוסף לרשימת המשאלות</span>
+            </button>
+            <div class="btn-row">
+                <button class="btn btn-outline" onclick="openSheet('offerSheet')">הצע מחיר</button>
+                <button class="btn btn-outline" onclick="openSheet('msgSheet')">שאל על זמינות</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- ==================== TOASTS ==================== -->
-    <div class="toast-container" id="toastContainer"></div>
+<!-- ============ CONFIRM POPUP (cart / wishlist) ============ -->
+<div class="overlay" id="confirmSheet" onclick="if(event.target===this)closeSheet('confirmSheet')">
+    <div class="sheet center">
+        <div class="sheet-grip"></div>
+        <div class="confirm-icon" id="confirmIcon">
+            <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h3 id="confirmTitle">נוסף לעגלה</h3>
+        <p class="sub" id="confirmSub">הפריט נשמר עבורך</p>
+        <div class="mini-card">
+            <img class="mc-img" id="confirmImg" src="" alt="">
+            <div>
+                <div class="mc-name" id="confirmName">—</div>
+                <div class="mc-price" id="confirmPrice">—</div>
+            </div>
+        </div>
+        <div class="sheet-actions">
+            <button class="btn btn-outline" onclick="closeSheet('confirmSheet')">המשך לגלוש</button>
+            <button class="btn btn-primary" id="confirmCta" onclick="goCart()">לעגלה</button>
+        </div>
+    </div>
+</div>
 
-    <!-- ==================== JAVASCRIPT ==================== -->
-    <script>
-        // Cart & Wishlist State
-        let cart = JSON.parse(localStorage.getItem('vero_cart') || '[]');
-        let wishlist = JSON.parse(localStorage.getItem('vero_wishlist') || '[]');
-        let currentProduct = null;
+<!-- ============ OFFER SHEET ============ -->
+<div class="overlay" id="offerSheet" onclick="if(event.target===this)closeSheet('offerSheet')">
+    <div class="sheet">
+        <div class="sheet-grip"></div>
+        <h3>הצעת מחיר</h3>
+        <p class="sub" id="offerSub">שלח למוכר הצעה להתמקחות</p>
+        <div class="field">
+            <span class="cur">₪</span>
+            <input type="number" id="offerInput" min="1" step="1" placeholder="0" inputmode="numeric">
+        </div>
+        <div class="offer-quick" id="offerQuick"></div>
+        <div class="sheet-actions">
+            <button class="btn btn-outline" onclick="closeSheet('offerSheet')">ביטול</button>
+            <button class="btn btn-primary" onclick="sendOffer()">שלח הצעה</button>
+        </div>
+    </div>
+</div>
 
-        function saveState() {
-            localStorage.setItem('vero_cart', JSON.stringify(cart));
-            localStorage.setItem('vero_wishlist', JSON.stringify(wishlist));
-        }
+<!-- ============ MESSAGE SHEET (availability) ============ -->
+<div class="overlay" id="msgSheet" onclick="if(event.target===this)closeSheet('msgSheet')">
+    <div class="sheet">
+        <div class="sheet-grip"></div>
+        <h3>שאלה למוכר</h3>
+        <p class="sub" id="msgSub">שאל את המוכר על זמינות הפריט</p>
+        <textarea class="field" id="msgInput" placeholder="היי, האם הפריט עדיין זמין?"></textarea>
+        <div class="sheet-actions">
+            <button class="btn btn-outline" onclick="closeSheet('msgSheet')">ביטול</button>
+            <button class="btn btn-primary" onclick="sendMessage()">שלח הודעה</button>
+        </div>
+    </div>
+</div>
 
-        function updateBadges() {
-            const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
-            const cb = document.getElementById('cartBadge');
-            const wb = document.getElementById('wishlistBadge');
-            if (cb) { cb.textContent = cartCount; cb.classList.toggle('show', cartCount > 0); }
-            if (wb) { wb.textContent = wishlist.length; wb.classList.toggle('show', wishlist.length > 0); }
-        }
+<!-- ============ SHARE SHEET ============ -->
+<div class="overlay" id="shareSheet" onclick="if(event.target===this)closeSheet('shareSheet')">
+    <div class="sheet">
+        <div class="sheet-grip"></div>
+        <h3>שיתוף הפריט</h3>
+        <p class="sub">שתפו את המוצר עם חברים</p>
+        <div class="share-grid" id="shareGrid"></div>
+    </div>
+</div>
 
-        function showToast(msg) {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = msg;
-            container.appendChild(toast);
-            requestAnimationFrame(() => toast.classList.add('show'));
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 350); }, 2600);
-        }
+<div class="toast" id="toast"></div>
 
-        // Every cart item is held for 48 hours from the moment it was added.
-        const HOLD_MS = 48 * 60 * 60 * 1000;
+<script>
+    const params = new URLSearchParams(location.search);
+    let product = { name:'שם המוצר', price:120, desc:'', seller:'VERO' };
+    try{
+        const raw = params.get('product');
+        if(raw) product = Object.assign(product, JSON.parse(decodeURIComponent(raw)));
+    }catch(e){ console.error(e); }
 
-        function addProductToCart() {
-            if (!currentProduct) return;
-            const id = `${currentProduct.name}|${currentProduct.price}`;
-            const existing = cart.find(i => i.id === id);
-            const now = Date.now();
-            if (existing) {
-                existing.qty++;
-                existing.addedAt = now;
-                existing.expiresAt = now + HOLD_MS;   // adding again restarts the hold
-            } else {
-                cart.push({
-                    id: id, name: currentProduct.name, price: currentProduct.price,
-                    icon: currentProduct.icon, category: currentProduct.category,
-                    seller: currentProduct.seller, rating: currentProduct.rating,
-                    qty: 1, addedAt: now, expiresAt: now + HOLD_MS
-                });
-            }
-            saveState();
-            updateBadges();
-            // Slide the page out, then land straight on the cart.
-            document.body.classList.add('slide-out');
-            setTimeout(() => { window.location.href = 'index.html?open=cart'; }, 460);
-        }
+    // Fold in seller edits + sale price so the price matches the rest of the site.
+    if(window.veroApplyOverride) product = window.veroApplyOverride(product);
 
-        // ---- Gallery: the icon frame plus two more shots of the same item. ----
-        function galleryShots(product) {
-            const seed = encodeURIComponent(product.name || 'vero');
-            return [
-                { icon: product.icon },
-                { src: `https://picsum.photos/seed/${seed}-a/900/900` },
-                { src: `https://picsum.photos/seed/${seed}-b/900/900` }
-            ];
-        }
+    const toNum = v => { const n = parseFloat(String(v==null?'':v).replace(/[^\d.]/g,'')); return isNaN(n)?0:n; };
+    const fmt = p => '₪' + Number(toNum(p)).toFixed(2);
 
-        let galleryItems = [];
+    // ---- Field mapping (matches the seller upload fields) ----
+    const company    = product.company || product.brand || product.seller || 'VERO';
+    const sellerName = product.seller || 'VERO';
+    const rating     = Number(product.rating) || 4.5;
+    const priceNum   = toNum(product.price);
+    const isArt      = product.type === 'art';
+    const desc = product.desc || `${product.name} — ${isArt?'יצירת אמנות':'פריט'} במצב מעולה, זמין כעת בחנות.`;
 
-        function buildGallery(product) {
-            galleryItems = galleryShots(product);
-            const thumbs = document.getElementById('pdThumbs');
-            thumbs.innerHTML = galleryItems.slice(1).map((s, i) =>
-                `<button class="pd-thumb" onclick="showShot(${i + 1})" aria-label="תמונה ${i + 2}">
-                    <img src="${s.src}" alt="" loading="lazy" onerror="this.remove()">
-                 </button>`).join('');
-            showShot(0);
-        }
+    const AUDIENCE = { men:'גברים', women:'נשים', kids:'ילדים', unisex:'יוניסקס',
+                       גברים:'גברים', נשים:'נשים', ילדים:'ילדים', יוניסקס:'יוניסקס' };
+    const audience = AUDIENCE[(product.audience||product.gender||'').toString().toLowerCase()]
+                     || product.audience || 'יוניסקס';
 
-        function showShot(i) {
-            const shot = galleryItems[i];
-            if (!shot) return;
-            const main = document.getElementById('pdMainFrame');
-            main.innerHTML = shot.src
-                ? `<img src="${shot.src}" alt="${currentProduct ? currentProduct.name : ''}">`
-                : `<div class="product-banner-icon" id="productIcon">${shot.icon || '🛍️'}</div>`;
-            document.querySelectorAll('.pd-thumb').forEach((t, idx) => {
-                t.classList.toggle('active', idx + 1 === i);
-            });
-        }
+    const seed = encodeURIComponent(product.name || 'vero');
+    const images = (product.images && product.images.length) ? product.images : [
+        `https://picsum.photos/seed/${seed}-1/900/1100`,
+        `https://picsum.photos/seed/${seed}-2/900/1100`,
+        `https://picsum.photos/seed/${seed}-3/900/1100`
+    ];
 
-        function toggleWishlist() {
-            if (!currentProduct) return;
-            const id = `${currentProduct.name}|${currentProduct.price}`;
-            const btn = document.getElementById('wishBtn');
-            const idx = wishlist.findIndex(i => i.id === id);
-            if (idx >= 0) {
-                wishlist.splice(idx, 1);
-                btn.classList.remove('active');
-                btn.textContent = 'הוסף לרשימת המשאלות';
-                showToast(`הוסר מרשימת המשאלות: ${currentProduct.name}`);
-            } else {
-                wishlist.push({
-                    id, name: currentProduct.name, price: currentProduct.price,
-                    icon: currentProduct.icon, category: currentProduct.category,
-                    seller: currentProduct.seller, rating: currentProduct.rating,
-                    addedAt: Date.now()
-                });
-                btn.classList.add('active');
-                btn.textContent = 'הסר מרשימת המשאלות';
-                showToast(`נוסף לרשימת המשאלות: ${currentProduct.name}`);
-            }
-            saveState();
-            updateBadges();
-        }
+    // ---- Render header ----
+    document.getElementById('eyebrow').textContent = (isArt?'יצירת אמנות':'יד שנייה') + ' · VERO SELECT';
+    document.getElementById('pName').textContent = product.name;
+    const comp = document.getElementById('pCompany');
+    comp.textContent = company;
+    comp.href = `index.html?seller=${encodeURIComponent(sellerName)}`;
 
-        function goHome() { window.location.href = 'index.html'; }
+    // Price (with sale strike-through if on sale)
+    const priceEl = document.getElementById('pPrice');
+    if(product.onSale && product.originalPrice){
+        const was = toNum(product.originalPrice), now = priceNum;
+        const off = was>0 ? Math.round((1-now/was)*100) : 0;
+        priceEl.innerHTML = (off>0?`<span class="off">-${off}%</span>`:'') +
+            `${fmt(now)}<span class="was">${fmt(was)}</span>`;
+    } else {
+        priceEl.textContent = fmt(priceNum);
+    }
+    document.getElementById('buyPrice').textContent = fmt(priceNum);
 
-        // ---- Make an offer (Depop-style) ----
-        function openOffer() {
-            const input = document.getElementById('offerInput');
-            const sub = document.getElementById('offerSub');
-            if (currentProduct) {
-                sub.textContent = `מחיר מבוקש: ₪${currentProduct.price} · שלח למוכר הצעה`;
-                // Pre-fill with a friendly starting offer (~90% of asking).
-                input.placeholder = Math.max(1, Math.round(currentProduct.price * 0.9)).toString();
-            }
-            document.getElementById('offerOverlay').classList.add('show');
-            setTimeout(() => input.focus(), 50);
-        }
-        function closeOffer() {
-            document.getElementById('offerOverlay').classList.remove('show');
-        }
-        function sendOffer() {
-            const input = document.getElementById('offerInput');
-            const amount = parseFloat(input.value);
-            if (!amount || amount <= 0) { input.focus(); return; }
-            // Save the offer locally so the seller area can pick it up later.
-            const offers = JSON.parse(localStorage.getItem('vero_offers') || '[]');
-            offers.push({
-                name: currentProduct ? currentProduct.name : '',
-                seller: currentProduct ? currentProduct.seller : '',
-                askPrice: currentProduct ? currentProduct.price : null,
-                offer: amount,
-                at: Date.now()
-            });
-            localStorage.setItem('vero_offers', JSON.stringify(offers));
-            input.value = '';
-            closeOffer();
-            showToast(`ההצעה נשלחה: ₪${amount}`);
-        }
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOffer(); });
+    // Seller row
+    const sLink = document.getElementById('sellerName');
+    sLink.textContent = sellerName;
+    sLink.href = `index.html?seller=${encodeURIComponent(sellerName)}`;
+    const stars = '★'.repeat(Math.floor(rating)) + (rating%1>=0.5?'☆':'');
+    document.getElementById('sellerRating').innerHTML = `${stars} <span class="num">${rating.toFixed(1)}</span>`;
 
-        // Fit the company/seller name to its column, matching the slider's fitter.
-        function fitLabel() {
-            const el = document.getElementById('productLabel');
-            const col = el.closest('.promo-text');
-            if (!el || !col || !col.clientWidth) return;
-            const base = parseFloat(getComputedStyle(el.closest('.promo-slider')).getPropertyValue('--promo-company')) || 120;
-            const probe = document.createElement('span');
-            probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:83.33px';
-            const cs = getComputedStyle(el);
-            probe.style.fontFamily = cs.fontFamily;
-            probe.style.fontWeight = cs.fontWeight;
-            probe.style.letterSpacing = cs.letterSpacing;
-            probe.style.textTransform = cs.textTransform;
-            document.body.appendChild(probe);
-            probe.textContent = el.textContent.trim();
-            const nameWidth = probe.getBoundingClientRect().width;
-            probe.remove();
-            if (!nameWidth) return;
-            const maxForWidth = (col.clientWidth * 0.94 / nameWidth) * 100;
-            el.style.fontSize = Math.floor(Math.min(base, maxForWidth)) + 'px';
-        }
-        window.addEventListener('resize', fitLabel);
+    document.getElementById('pDesc').textContent = desc;
 
-        // Load product from URL parameter
-        const params = new URLSearchParams(window.location.search);
-        const productData = params.get('product');
+    // Specs
+    document.getElementById('specSize').textContent      = product.size || (isArt?'50×70 ס"מ':'M');
+    document.getElementById('specCondition').textContent = product.condition || 'מצב מעולה';
+    document.getElementById('specFabric').textContent    = product.fabric || product.material || (isArt?'קנבס':'כותנה');
+    document.getElementById('specAudience').textContent  = audience;
+    document.getElementById('specColor').textContent     = product.color || 'רב-גוני';
 
-        if (productData) {
-            try {
-                currentProduct = JSON.parse(decodeURIComponent(productData));
+    // Gallery
+    const mainImg = document.getElementById('mainImg');
+    const countEl = document.getElementById('galleryCount');
+    mainImg.src = images[0]; mainImg.alt = product.name;
+    const thumbs = document.getElementById('thumbs');
+    thumbs.innerHTML = images.map((src,i)=>
+        `<button class="gthumb${i===0?' active':''}" onclick="showImg(${i})" aria-label="תמונה ${i+1}">
+            <img src="${src}" alt="" loading="lazy"></button>`).join('');
+    function showImg(i){
+        mainImg.src = images[i];
+        countEl.textContent = `${i+1} / ${images.length}`;
+        document.querySelectorAll('.gthumb').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+    }
+    window.showImg = showImg;
 
-                // Company/seller name — large first line (same as the slider's label).
-                document.getElementById('productLabel').textContent = currentProduct.seller || 'VERO SELECT';
-                // Piece name — bold second line.
-                document.getElementById('productName').textContent = currentProduct.name;
+    // ---------- sheets ----------
+    function openSheet(id){
+        const s = document.getElementById(id);
+        s.querySelector('.sheet').style.animation='none';
+        s.offsetHeight; s.querySelector('.sheet').style.animation='';
+        s.classList.add('show');
+        if(id==='offerSheet') setTimeout(()=>document.getElementById('offerInput').focus(),300);
+    }
+    function closeSheet(id){ document.getElementById(id).classList.remove('show'); }
+    window.openSheet=openSheet; window.closeSheet=closeSheet;
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show')); });
 
-                // Seller + their rating, under the title.
-                const rating = Number(currentProduct.rating) || 4.5;
-                const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
-                const sName = currentProduct.seller || 'VERO';
-                document.getElementById('sellerName').innerHTML =
-                    `מוכר: <a href="index.html?seller=${encodeURIComponent(sName)}" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">${sName}</a>`;
-                document.getElementById('sellerRating').innerHTML = `${stars} <span class="num">${rating.toFixed(1)}</span>`;
+    function toast(msg){
+        const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+        clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2400);
+    }
 
-                // Seller edits + any discount folded in, so the price matches every card.
-                currentProduct = veroApplyOverride(currentProduct);
-                document.getElementById('productPrice').innerHTML = veroPriceHTML(currentProduct);
-                buildGallery(currentProduct);
+    function goBack(){ if(typeof goBackToStore==='function') return goBackToStore();
+        if(document.referrer && history.length>1) history.back(); else location.href='index.html'; }
+    window.goBack=goBack;
+    function goCart(){ location.href='index.html?open=cart'; }
+    window.goCart=goCart;
 
-                document.getElementById('productDesc').textContent = currentProduct.desc ||
-                    `${currentProduct.name} — פריט יד שנייה במצב מעולה, זמין כעת בחנות.`;
+    // ---------- cart ----------
+    const HOLD = 48*60*60*1000;
+    function addToCart(){
+        const cart = JSON.parse(localStorage.getItem('vero_cart')||'[]');
+        const id = `${product.name}|${product.price}`;
+        const now = Date.now();
+        const ex = cart.find(i=>i.id===id);
+        if(ex){ ex.qty+=1; ex.addedAt=now; ex.expiresAt=now+HOLD; }
+        else cart.push({ id, name:product.name, price:product.price, seller:sellerName,
+            icon:product.icon, category:product.category, type:product.type, rating:product.rating,
+            qty:1, addedAt:now, expiresAt:now+HOLD });
+        localStorage.setItem('vero_cart', JSON.stringify(cart));
+        // confirmation popup
+        document.getElementById('confirmIcon').innerHTML='<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>';
+        document.getElementById('confirmTitle').textContent='נוסף לעגלה';
+        document.getElementById('confirmSub').textContent='הפריט נשמר עבורך למשך 48 שעות';
+        document.getElementById('confirmImg').src=images[0];
+        document.getElementById('confirmName').textContent=product.name;
+        document.getElementById('confirmPrice').textContent=fmt(priceNum);
+        document.getElementById('confirmCta').textContent='לעגלה';
+        document.getElementById('confirmCta').onclick=goCart;
+        openSheet('confirmSheet');
+    }
+    window.addToCart=addToCart;
 
-                // Spec row — Colour / Size / Material, like the slider.
-                document.getElementById('specColor').textContent = currentProduct.color || 'רב-גוני';
-                document.getElementById('specSize').textContent = currentProduct.size || (currentProduct.type === 'art' ? '50×70 ס"מ' : 'M');
-                document.getElementById('specFabric').textContent = currentProduct.fabric || currentProduct.material || (currentProduct.type === 'art' ? 'קנבס' : 'כותנה');
+    // ---------- wishlist ----------
+    function isWished(){
+        const wl=JSON.parse(localStorage.getItem('vero_wishlist')||'[]');
+        return wl.some(i=>i.id===`${product.name}|${product.price}`);
+    }
+    function toggleWishlist(){
+        const wl=JSON.parse(localStorage.getItem('vero_wishlist')||'[]');
+        const id=`${product.name}|${product.price}`;
+        const idx=wl.findIndex(i=>i.id===id);
+        if(idx>=0){ wl.splice(idx,1); localStorage.setItem('vero_wishlist',JSON.stringify(wl));
+            reflectWish(); toast('הוסר מרשימת המשאלות'); return; }
+        wl.push({ id, name:product.name, price:product.price, seller:sellerName, icon:product.icon,
+            category:product.category, type:product.type, rating:product.rating, addedAt:Date.now() });
+        localStorage.setItem('vero_wishlist',JSON.stringify(wl));
+        reflectWish();
+        // confirmation popup
+        document.getElementById('confirmIcon').innerHTML='<svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+        document.getElementById('confirmTitle').textContent='נוסף לרשימת המשאלות';
+        document.getElementById('confirmSub').textContent='תוכל למצוא אותו באזור האישי';
+        document.getElementById('confirmImg').src=images[0];
+        document.getElementById('confirmName').textContent=product.name;
+        document.getElementById('confirmPrice').textContent=fmt(priceNum);
+        document.getElementById('confirmCta').textContent='לרשימה';
+        document.getElementById('confirmCta').onclick=()=>location.href='saved.html';
+        openSheet('confirmSheet');
+    }
+    function reflectWish(){
+        const on=isWished();
+        const btn=document.getElementById('wishBtn');
+        btn.classList.toggle('active',on);
+        document.getElementById('wishLabel').textContent = on?'ברשימת המשאלות ✓':'הוסף לרשימת המשאלות';
+    }
+    window.toggleWishlist=toggleWishlist;
+    reflectWish();
 
-                // Reflect whether this item is already in the wishlist.
-                const wid = `${currentProduct.name}|${currentProduct.price}`;
-                if (wishlist.some(i => i.id === wid)) {
-                    const wb = document.getElementById('wishBtn');
-                    wb.classList.add('active');
-                    wb.textContent = 'הסר מרשימת המשאלות';
-                }
-            } catch (e) {
-                console.error('Error loading product:', e);
-            }
-        }
+    // ---------- offer ----------
+    document.getElementById('offerSub').textContent = `מחיר מבוקש: ${fmt(priceNum)} · שלח למוכר הצעה`;
+    const oq=document.getElementById('offerQuick');
+    [0.7,0.8,0.9].forEach(f=>{
+        const v=Math.max(1,Math.round(priceNum*f));
+        const b=document.createElement('button');
+        b.textContent=fmt(v).replace('.00','');
+        b.onclick=()=>{ document.getElementById('offerInput').value=v; };
+        oq.appendChild(b);
+    });
+    function sendOffer(){
+        const input=document.getElementById('offerInput');
+        const amount=parseFloat(input.value);
+        if(!amount||amount<=0){ input.focus(); return; }
+        const offers=JSON.parse(localStorage.getItem('vero_offers')||'[]');
+        offers.push({ name:product.name, seller:sellerName, askPrice:priceNum, offer:amount, at:Date.now() });
+        localStorage.setItem('vero_offers',JSON.stringify(offers));
+        input.value=''; closeSheet('offerSheet');
+        toast(`ההצעה נשלחה: ${fmt(amount)}`);
+    }
+    window.sendOffer=sendOffer;
 
-        // Initialize
-        updateBadges();
-        fitLabel();
-    </script>
-    <!-- Gentle site-wide animations: page fade-in + reveal-on-scroll. -->
-    <script src="vero-animations.js"></script>
-    <!-- Live manual editor (✎ button, bottom-left) — move & resize any piece. -->
-    <script src="vero-editor.js"></script>
+    // ---------- message the seller (syncs to vero_chats inbox) ----------
+    document.getElementById('msgSub').textContent = `שלח הודעה אל ${sellerName} על "${product.name}"`;
+    function sendMessage(){
+        const input=document.getElementById('msgInput');
+        const text=(input.value||input.placeholder).trim();
+        if(!text) return;
+        const chats=JSON.parse(localStorage.getItem('vero_chats')||'{}');
+        if(!chats[sellerName]) chats[sellerName]=[];
+        chats[sellerName].push({ sender:'me', content:text, at:Date.now() });
+        localStorage.setItem('vero_chats',JSON.stringify(chats));
+        input.value=''; closeSheet('msgSheet');
+        toast('ההודעה נשלחה למוכר');
+    }
+    window.sendMessage=sendMessage;
+
+    // ---------- share ----------
+    function shareUrl(){
+        // A link back to this exact product listing.
+        return location.href;
+    }
+    const shareText = `${product.name} · ${company} — ${fmt(priceNum)} | VERO`;
+    const SHARES = [
+        { key:'whatsapp', label:'WhatsApp', color:'#25D366',
+          svg:'<path fill="#25D366" d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.5-.3.3c-.1.1-.3.3-.1.6.1.3.7 1.1 1.4 1.8 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/>',
+          href:u=>`https://wa.me/?text=${encodeURIComponent(shareText+' '+u)}` },
+        { key:'facebook', label:'Facebook', color:'#1877F2',
+          svg:'<path fill="#1877F2" d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/>',
+          href:u=>`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}` },
+        { key:'telegram', label:'Telegram', color:'#0088cc',
+          svg:'<path fill="#0088cc" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 6.9l-1.6 7.6c-.1.5-.4.7-.9.4l-2.5-1.8-1.2 1.2c-.1.1-.3.2-.5.2l.2-2.6 4.7-4.2c.2-.2-.1-.3-.3-.1L8.4 13 6 12.2c-.5-.2-.5-.5.1-.8l9.3-3.6c.4-.2.8.1.6.9z"/>',
+          href:u=>`https://t.me/share/url?url=${encodeURIComponent(u)}&text=${encodeURIComponent(shareText)}` },
+        { key:'x', label:'X', color:'#111010',
+          svg:'<path fill="#111010" d="M17.5 3h3l-6.6 7.5L21.7 21h-6l-4.7-6.1L5.5 21h-3l7-8L2.7 3h6.1l4.2 5.6L17.5 3zm-1 16h1.6L8.1 4.6H6.4L16.5 19z"/>',
+          href:u=>`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(u)}` },
+        { key:'instagram', label:'Instagram', color:'#E1306C',
+          svg:'<path fill="#E1306C" d="M12 7.2A4.8 4.8 0 1 0 12 16.8 4.8 4.8 0 0 0 12 7.2zm0 7.9A3.1 3.1 0 1 1 12 8.9a3.1 3.1 0 0 1 0 6.2zM17.9 6a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0zM21 6.1c-.1-1.5-.4-2.8-1.5-3.9S17.1 1 15.6.9C14.1.8 9.9.8 8.4.9 6.9 1 5.6 1.3 4.5 2.4S3 4.5 2.9 6C2.8 7.5 2.8 11.7 2.9 13.2c.1 1.5.4 2.8 1.5 3.9s2.4 1.4 3.9 1.5c1.5.1 5.7.1 7.2 0 1.5-.1 2.8-.4 3.9-1.5s1.4-2.4 1.5-3.9c.1-1.5.1-5.7 0-7.1zm-2 8.7a3.1 3.1 0 0 1-1.8 1.8c-1.2.5-4.1.4-5.5.4s-4.3.1-5.5-.4a3.1 3.1 0 0 1-1.8-1.8c-.5-1.2-.4-4.1-.4-5.5s-.1-4.3.4-5.5a3.1 3.1 0 0 1 1.8-1.8C7.7 4 10.6 4.1 12 4.1s4.3-.1 5.5.4a3.1 3.1 0 0 1 1.8 1.8c.5 1.2.4 4.1.4 5.5s.1 4.3-.4 5.5z"/>',
+          // Instagram has no web share intent — copy link so the user can paste into a story/DM.
+          href:null },
+        { key:'copy', label:'העתק קישור', color:'#111010',
+          svg:'<path fill="none" stroke="#111010" stroke-width="1.6" d="M9 9h9v9H9zM6 15H3V3h12v3"/>',
+          href:null }
+    ];
+    const grid=document.getElementById('shareGrid');
+    grid.innerHTML=SHARES.map((s,i)=>
+        `<button class="share-item" data-i="${i}">
+            <span class="share-ic"><svg viewBox="0 0 24 24">${s.svg}</svg></span>
+            <span>${s.label}</span></button>`).join('');
+    grid.addEventListener('click',e=>{
+        const b=e.target.closest('.share-item'); if(!b) return;
+        const s=SHARES[+b.dataset.i]; const u=shareUrl();
+        if(s.href){ window.open(s.href(u),'_blank','noopener'); }
+        else if(s.key==='instagram'){
+            if(navigator.share){ navigator.share({title:product.name,text:shareText,url:u}).catch(()=>{}); }
+            else { copyLink(u); toast('הקישור הועתק — הדביקו באינסטגרם'); }
+        } else { copyLink(u); toast('הקישור הועתק ✓'); }
+    });
+    function copyLink(u){
+        if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{});
+        else { const t=document.createElement('textarea'); t.value=u; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+    }
+</script>
+<!-- Manual edit mode (✎ button bottom-left) — same editor as the rest of the site. -->
+<script src="vero-editor.js"></script>
 </body>
 </html>
