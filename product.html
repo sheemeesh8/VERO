@@ -6,11 +6,12 @@
     <title>VERO — מוצר</title>
     <style>
         :root{
-            --bg:#F4F2EF;          /* warm sand */
+            --bg:#ffffff;          /* page — white */
+            --sand:#F2F0EF;        /* header + image tone */
             --panel:#ffffff;
             --ink:#111010;         /* near-black text */
             --muted:#8c8579;       /* label grey */
-            --line:#e4e0d8;        /* hairline */
+            --line:#e6e2da;        /* hairline */
             --line-strong:#111010;
             --sale:#8a6d3b;
         }
@@ -33,12 +34,15 @@
             padding-bottom:40px;
         }
 
+        /* header + image share the sand tone; the rest of the page is white */
+        .hero{background:var(--sand);}
+
         /* ---------- top bar ---------- */
         .topbar{
             position:sticky;top:0;z-index:30;
             display:flex;align-items:center;justify-content:space-between;
             padding:16px 20px 12px;
-            background:linear-gradient(var(--bg) 78%, rgba(244,242,239,0));
+            background:var(--sand);
         }
         .tb-btn{
             width:42px;height:42px;flex:0 0 auto;
@@ -54,31 +58,34 @@
             padding-inline-start:6px;
         }
 
-        /* ---------- gallery ---------- */
-        .gallery{padding:0 0 4px;}
-        .gallery-main{
-            position:relative;width:100%;aspect-ratio:4/5;
-            background:var(--panel);overflow:hidden;
+        /* ---------- gallery slider ---------- */
+        .gallery{position:relative;padding:0 0 18px;background:var(--sand);}
+        .slider{
+            display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+            scrollbar-width:none;-webkit-overflow-scrolling:touch;direction:ltr;
         }
-        .gallery-main img{width:100%;height:100%;object-fit:cover;display:block;}
+        .slider::-webkit-scrollbar{display:none;}
+        .slide{
+            flex:0 0 100%;scroll-snap-align:center;
+            aspect-ratio:4/5;background:var(--sand);overflow:hidden;
+        }
+        .slide img{width:100%;height:100%;object-fit:cover;display:block;}
         .gallery-count{
-            position:absolute;bottom:14px;inset-inline-start:14px;
+            position:absolute;top:14px;inset-inline-start:14px;
             padding:5px 12px;border-radius:999px;
-            background:rgba(17,16,16,.62);color:#fff;direction:ltr;
+            background:rgba(17,16,16,.55);color:#fff;direction:ltr;
             font-size:11px;letter-spacing:1px;backdrop-filter:blur(4px);
         }
-        .gallery-thumbs{
-            display:flex;gap:8px;padding:10px 20px 0;overflow-x:auto;
-            scrollbar-width:none;
+        /* navigation lines (thin bars; active one widens + darkens) */
+        .nav-lines{
+            position:absolute;bottom:16px;left:0;right:0;
+            display:flex;gap:7px;justify-content:center;align-items:center;z-index:5;
         }
-        .gallery-thumbs::-webkit-scrollbar{display:none;}
-        .gthumb{
-            width:64px;height:80px;flex:0 0 auto;padding:0;cursor:pointer;
-            background:var(--panel);border:1px solid var(--line);overflow:hidden;
-            opacity:.65;transition:opacity .2s,border-color .2s;
+        .nav-line{
+            width:20px;height:3px;border-radius:2px;padding:0;cursor:pointer;
+            border:none;background:rgba(17,16,16,.22);transition:width .25s,background .25s;
         }
-        .gthumb img{width:100%;height:100%;object-fit:cover;display:block;}
-        .gthumb.active{opacity:1;border-color:var(--line-strong);}
+        .nav-line.active{width:34px;background:var(--ink);}
 
         /* ---------- content ---------- */
         .content{padding:22px 22px 0;}
@@ -244,6 +251,7 @@
 <body>
 <div class="page">
 
+  <div class="hero">
     <!-- top bar -->
     <div class="topbar">
         <button class="tb-btn" onclick="goBack()" aria-label="חזרה">
@@ -255,14 +263,13 @@
         </button>
     </div>
 
-    <!-- gallery -->
+    <!-- gallery slider -->
     <div class="gallery">
-        <div class="gallery-main">
-            <img id="mainImg" src="" alt="">
-            <span class="gallery-count" id="galleryCount">1 / 3</span>
-        </div>
-        <div class="gallery-thumbs" id="thumbs"></div>
+        <div class="slider" id="slider"></div>
+        <span class="gallery-count" id="galleryCount">1 / 3</span>
+        <div class="nav-lines" id="navLines"></div>
     </div>
+  </div>
 
     <!-- content -->
     <div class="content">
@@ -402,11 +409,15 @@
                      || product.audience || 'יוניסקס';
 
     const seed = encodeURIComponent(product.name || 'vero');
-    const images = (product.images && product.images.length) ? product.images : [
-        `https://picsum.photos/seed/${seed}-1/900/1100`,
-        `https://picsum.photos/seed/${seed}-2/900/1100`,
-        `https://picsum.photos/seed/${seed}-3/900/1100`
-    ];
+    // The FIRST slide is always the product's own background-removed cut-out.
+    // The rest are different shots of the same item.
+    const cover = product.processed_cover || product.image || product.cover || null;
+    let extra = (product.images && product.images.length)
+        ? product.images.filter(s => s && s !== cover)
+        : [ `https://picsum.photos/seed/${seed}-a/900/1100`,
+            `https://picsum.photos/seed/${seed}-b/900/1100` ];
+    const images = cover ? [cover, ...extra]
+        : [ `https://picsum.photos/seed/${seed}-1/900/1100`, ...extra ];
 
     // ---- Render header ----
     document.getElementById('eyebrow').textContent = (isArt?'יצירת אמנות':'יד שנייה') + ' · VERO SELECT';
@@ -443,20 +454,31 @@
     document.getElementById('specAudience').textContent  = audience;
     document.getElementById('specColor').textContent     = product.color || 'רב-גוני';
 
-    // Gallery
-    const mainImg = document.getElementById('mainImg');
+    // Gallery slider — all images in one swipeable track with nav lines.
+    const slider = document.getElementById('slider');
     const countEl = document.getElementById('galleryCount');
-    mainImg.src = images[0]; mainImg.alt = product.name;
-    const thumbs = document.getElementById('thumbs');
-    thumbs.innerHTML = images.map((src,i)=>
-        `<button class="gthumb${i===0?' active':''}" onclick="showImg(${i})" aria-label="תמונה ${i+1}">
-            <img src="${src}" alt="" loading="lazy"></button>`).join('');
-    function showImg(i){
-        mainImg.src = images[i];
-        countEl.textContent = `${i+1} / ${images.length}`;
-        document.querySelectorAll('.gthumb').forEach((t,idx)=>t.classList.toggle('active',idx===i));
-    }
-    window.showImg = showImg;
+    const navLines = document.getElementById('navLines');
+    slider.innerHTML = images.map((src,i)=>
+        `<div class="slide"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
+    navLines.innerHTML = images.map((_,i)=>
+        `<button class="nav-line${i===0?' active':''}" data-i="${i}" aria-label="תמונה ${i+1}"></button>`).join('');
+    countEl.textContent = `1 / ${images.length}`;
+
+    function goToSlide(i){ slider.scrollTo({ left: slider.clientWidth*i, behavior:'smooth' }); }
+    navLines.addEventListener('click', e=>{
+        const b = e.target.closest('.nav-line'); if(b) goToSlide(+b.dataset.i);
+    });
+    // Reflect the current slide (from swipe or arrow) in the count + nav lines.
+    let rafPending=false;
+    slider.addEventListener('scroll', ()=>{
+        if(rafPending) return; rafPending=true;
+        requestAnimationFrame(()=>{
+            rafPending=false;
+            const i = Math.round(slider.scrollLeft / slider.clientWidth);
+            countEl.textContent = `${i+1} / ${images.length}`;
+            navLines.querySelectorAll('.nav-line').forEach((l,idx)=>l.classList.toggle('active',idx===i));
+        });
+    });
 
     // ---------- sheets ----------
     function openSheet(id){
