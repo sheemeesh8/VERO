@@ -36,7 +36,7 @@
         /* No side image — the cart spreads evenly across the full screen. */
         .wrap {
             max-width: none; margin: 0;
-            padding: 96px clamp(30px, 5vw, 72px) 90px;
+            padding: 58px clamp(30px, 5vw, 72px) 90px;
             animation: cartSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
         @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
@@ -88,21 +88,22 @@
         .ct-select:focus { outline: none; border-color: #16150f; }
         .ct-count { margin-left: auto; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #a8a399; }
 
-        /* Auto-scrolling cart-summary ticker (total + item count), full-width row. */
+        /* Cart-summary slider — one stat at a time (Total / item count), fading
+           and rotating like the profile's follower/products slider. */
         .cart-ticker {
-            overflow: hidden; white-space: nowrap; width: 100%;
-            border-bottom: 1px solid #e6e1d8;
-            margin: 18px 0 6px; padding: 14px 0;
+            position: relative; width: 100%; height: 60px;
+            border-bottom: 1px solid #e6e1d8; margin: 18px 0 6px;
         }
-        .cart-ticker-track { display: inline-flex; will-change: transform; animation: cartTicker 16s linear infinite; }
-        .cart-ticker-track:hover { animation-play-state: paused; }
-        .cart-ticker-track .tk {
-            display: inline-flex; align-items: center; padding: 0 20px;
-            font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #16150f;
+        .cart-stat {
+            position: absolute; left: 50%; top: 50%;
+            transform: translate(-50%, -50%) translateY(10px);
+            opacity: 0; transition: opacity 0.6s ease, transform 0.6s ease;
+            display: flex; flex-direction: column; align-items: center; gap: 7px;
+            text-align: center; pointer-events: none; white-space: nowrap;
         }
-        .cart-ticker-track .tk b { font-weight: 400; }
-        .cart-ticker-track .tk .dot { color: #c9c3b8; margin-left: 40px; }
-        @keyframes cartTicker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .cart-stat.is-active { opacity: 1; transform: translate(-50%, -50%); }
+        .cart-stat .cs-num { font-size: 26px; font-weight: 300; letter-spacing: 3px; line-height: 1; color: #16150f; }
+        .cart-stat .cs-lbl { font-size: 9.5px; letter-spacing: 4px; text-transform: uppercase; color: #a8a399; }
 
         /* Selection checkbox overlaid on each cart card. */
         .cart-item { position: relative; }
@@ -405,12 +406,11 @@
             // the title row clean and closed-up against the filters.
             document.getElementById('headTotal').innerHTML = '';
             const money = '₪' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const seg = `<span class="tk"><b>Total ${money}</b><span class="dot">•</span></span>` +
-                        `<span class="tk"><b>${count} item${count === 1 ? '' : 's'}</b><span class="dot">•</span></span>`;
-            // Repeat enough times to fill the row, doubled so the loop is seamless.
-            const half = seg.repeat(6);
             document.getElementById('tickerHost').innerHTML =
-                `<div class="cart-ticker"><div class="cart-ticker-track">${half}${half}</div></div>`;
+                `<div class="cart-ticker" id="cartTicker">
+                    <div class="cart-stat is-active"><span class="cs-num">${money}</span><span class="cs-lbl">Total</span></div>
+                    <div class="cart-stat"><span class="cs-num">${count}</span><span class="cs-lbl">${count === 1 ? 'Item' : 'Items'}</span></div>
+                 </div>`;
             host.innerHTML = `
                 <div class="checkout">
                     <button class="checkout-btn" onclick="veroCheckout()">Checkout${chosen.length ? ' selected' : ''} &#8594;</button>
@@ -475,6 +475,16 @@
         });
 
         render();
+
+        // Rotate the cart-summary stat every 4s (like the profile's stat slider).
+        setInterval(function () {
+            const slides = document.querySelectorAll('#cartTicker .cart-stat');
+            if (slides.length < 2) return;
+            let cur = [...slides].findIndex(s => s.classList.contains('is-active'));
+            if (cur < 0) cur = 0;
+            slides[cur].classList.remove('is-active');
+            slides[(cur + 1) % slides.length].classList.add('is-active');
+        }, 4000);
 
         // Exit = same upward white-cover wipe as the entry animation.
         const back = document.querySelector('.back');
