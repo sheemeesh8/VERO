@@ -3,382 +3,628 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VERO - Product Showcase</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <title>VERO — מוצר</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; }
-        body {
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #F2F0EF;
-            color: #1c1c1c;
-            -webkit-font-smoothing: antialiased;
+        :root{
+            --bg:#F4F2EF;          /* warm sand */
+            --panel:#ffffff;
+            --ink:#111010;         /* near-black text */
+            --muted:#8c8579;       /* label grey */
+            --line:#e4e0d8;        /* hairline */
+            --line-strong:#111010;
+            --sale:#8a6d3b;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+        html,body{height:100%;}
+        body{
+            background:var(--bg);
+            color:var(--ink);
+            font-family:'Aharoni CLM','Segoe UI',sans-serif;
+            -webkit-font-smoothing:antialiased;
+            line-height:1.5;
+        }
+        /* one column, phone-width; scrolls vertically inside the frame */
+        .page{
+            width:100%;
+            max-width:480px;
+            margin:0 auto;
+            min-height:100%;
+            background:var(--bg);
+            padding-bottom:40px;
         }
 
-        /* Back pill — top-right, exactly like the cart / edit pages. */
-        .back {
-            position: fixed; top: 26px; right: 34px; z-index: 40;
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
-            font-size: 10.00px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
-            background: #F2F0EF; transition: background 0.25s, color 0.25s;
+        /* ---------- top bar ---------- */
+        .topbar{
+            position:sticky;top:0;z-index:30;
+            display:flex;align-items:center;justify-content:space-between;
+            padding:16px 20px 12px;
+            background:linear-gradient(var(--bg) 78%, rgba(244,242,239,0));
         }
-        .back:hover { background: #000; color: #fff; }
-
-        /* Whole page centred on the flat sand background. */
-        .showcase {
-            min-height: 100vh;
-            display: grid;
-            /* Data on the LEFT column, images on the RIGHT column. */
-            grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.3fr);
-            align-items: center;
-            gap: 56px;
-            max-width: 1500px;
-            margin: 0 auto;
-            padding: 48px 56px;
+        .tb-btn{
+            width:42px;height:42px;flex:0 0 auto;
+            display:flex;align-items:center;justify-content:center;
+            border:1px solid var(--line);border-radius:50%;
+            background:var(--panel);color:var(--ink);cursor:pointer;
+            transition:background .2s,color .2s,border-color .2s;
+        }
+        .tb-btn:active{background:var(--ink);color:#fff;border-color:var(--ink);}
+        .tb-btn svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.5;fill:none;}
+        .tb-brand{
+            font-size:13px;letter-spacing:6px;font-weight:700;text-transform:uppercase;
+            padding-inline-start:6px;
         }
 
-        /* ==================== LEFT: the data ==================== */
-        .info { max-width: 540px; }
-        .info-price {
-            font-size: 20.83px;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-            color: #1a1a1a;
-            margin-bottom: 22px;
+        /* ---------- gallery ---------- */
+        .gallery{padding:0 0 4px;}
+        .gallery-main{
+            position:relative;width:100%;aspect-ratio:4/5;
+            background:var(--panel);overflow:hidden;
+        }
+        .gallery-main img{width:100%;height:100%;object-fit:cover;display:block;}
+        .gallery-count{
+            position:absolute;bottom:14px;inset-inline-start:14px;
+            padding:5px 12px;border-radius:999px;
+            background:rgba(17,16,16,.62);color:#fff;direction:ltr;
+            font-size:11px;letter-spacing:1px;backdrop-filter:blur(4px);
+        }
+        .gallery-thumbs{
+            display:flex;gap:8px;padding:10px 20px 0;overflow-x:auto;
+            scrollbar-width:none;
+        }
+        .gallery-thumbs::-webkit-scrollbar{display:none;}
+        .gthumb{
+            width:64px;height:80px;flex:0 0 auto;padding:0;cursor:pointer;
+            background:var(--panel);border:1px solid var(--line);overflow:hidden;
+            opacity:.65;transition:opacity .2s,border-color .2s;
+        }
+        .gthumb img{width:100%;height:100%;object-fit:cover;display:block;}
+        .gthumb.active{opacity:1;border-color:var(--line-strong);}
+
+        /* ---------- content ---------- */
+        .content{padding:22px 22px 0;}
+
+        .eyebrow{
+            font-size:11px;letter-spacing:3px;text-transform:uppercase;
+            color:var(--muted);margin-bottom:10px;
+        }
+        .p-name{
+            font-size:29px;font-weight:700;line-height:1.15;letter-spacing:.2px;
+        }
+        .p-company{
+            margin-top:7px;font-size:12.5px;letter-spacing:3px;text-transform:uppercase;
+            color:var(--muted);
+        }
+        .p-company a{color:inherit;text-decoration:none;}
+
+        .p-price{
+            margin-top:18px;font-size:23px;font-weight:400;letter-spacing:.5px;
+        }
+        .p-price .was{
+            font-size:15px;color:var(--muted);text-decoration:line-through;
+            margin-inline-start:10px;
+        }
+        .p-price .off{
+            font-size:12px;color:#fff;background:var(--sale);
+            padding:3px 8px;border-radius:3px;margin-inline-end:10px;letter-spacing:1px;
         }
 
-        /* Company name — the big heading, thin like the site's page titles. */
-        .info-title {
-            font-size: clamp(52px, 6vw, 88px);
-            font-weight: 200;
-            line-height: 1;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
+        /* seller + rating */
+        .p-seller{
+            display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+            margin-top:18px;padding:16px 0;
+            border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+            font-size:13px;color:#3d382f;
         }
-        /* Product type (jeans / shirt / …) — the sub-heading under the company. */
-        .info-subtitle {
-            font-size: 15.00px;
-            font-weight: 400;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            color: #8a857c;
-            margin-bottom: 26px;
+        .p-seller .s-label{color:var(--muted);letter-spacing:1px;}
+        .p-seller .s-name{
+            font-weight:700;text-decoration:underline;text-underline-offset:3px;
+            color:var(--ink);
+        }
+        .p-seller .s-rating{margin-inline-start:auto;letter-spacing:2px;color:var(--ink);}
+        .p-seller .s-rating .num{color:var(--muted);letter-spacing:0;font-size:11px;margin-inline-start:3px;}
+
+        /* description */
+        .p-desc{
+            margin-top:22px;font-size:14.5px;line-height:1.9;color:#413b31;
         }
 
-        /* Seller + rating row. Name is a link to the seller's store. */
-        .info-seller {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-bottom: 22px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid #e0ddd6;
-            font-size: 11.67px;
-            color: #3a352e;
+        /* spec rows — LV-style hairline detail list */
+        .specs{margin-top:26px;border-top:1px solid var(--line);}
+        .spec-row{
+            display:flex;align-items:center;justify-content:space-between;gap:16px;
+            padding:15px 2px;border-bottom:1px solid var(--line);
         }
-        .info-seller .s-name {
-            color: #1a1a1a;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            text-decoration: underline;
-            text-underline-offset: 3px;
-            cursor: pointer;
+        .spec-key{
+            font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
         }
-        .info-seller .s-name:hover { color: #000; }
-        .info-seller .s-rating { color: #1c1c1c; letter-spacing: 2px; font-size: 12.50px; }
-        .info-seller .s-rating .num { color: #8a857c; letter-spacing: 0; font-size: 10.00px; margin-inline-start: 4px; }
+        .spec-val{font-size:14.5px;font-weight:700;text-align:end;}
 
-        .info-desc {
-            font-size: 15.42px;
-            font-weight: 300;
-            line-height: 1.85;
-            color: #3a352e;
-            margin-bottom: 32px;
+        /* ---------- action buttons ---------- */
+        .actions{margin-top:26px;display:flex;flex-direction:column;gap:11px;}
+        .btn{
+            width:100%;height:56px;display:flex;align-items:center;justify-content:center;gap:9px;
+            border-radius:0;cursor:pointer;font-family:inherit;
+            font-size:12px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;
+            border:1.4px solid var(--ink);transition:background .2s,color .2s,opacity .2s;
         }
+        .btn svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.5;fill:none;}
+        .btn-primary{background:var(--ink);color:#fff;}
+        .btn-primary:active{opacity:.8;}
+        .btn-primary .price-tail{font-weight:400;letter-spacing:.5px;opacity:.8;}
+        .btn-outline{background:transparent;color:var(--ink);}
+        .btn-outline:active{background:var(--ink);color:#fff;}
+        .btn-outline.active{background:var(--ink);color:#fff;}
+        .btn-outline.active svg{fill:#fff;}
+        .btn-row{display:flex;gap:11px;}
+        .btn-row .btn{flex:1;font-size:11px;letter-spacing:1.5px;}
 
-        /* Specs — fabric / colour / size, label above value. */
-        .info-specs {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
-            padding: 22px 0;
-            margin-bottom: 30px;
-            border-top: 1px solid #e0ddd6;
-            border-bottom: 1px solid #e0ddd6;
+        /* ---------- overlays / popups ---------- */
+        .overlay{
+            position:fixed;inset:0;z-index:200;display:none;
+            align-items:flex-end;justify-content:center;
+            background:rgba(17,16,16,.5);
         }
-        .spec-label {
-            display: block;
-            font-size: 10.42px;
-            font-weight: 500;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #9a958c;
-            margin-bottom: 10px;
+        .overlay.show{display:flex;animation:fade .2s ease;}
+        @keyframes fade{from{opacity:0}to{opacity:1}}
+        .sheet{
+            width:100%;max-width:480px;background:var(--panel);
+            border-radius:20px 20px 0 0;padding:26px 24px calc(26px + env(safe-area-inset-bottom));
+            transform:translateY(100%);animation:rise .34s cubic-bezier(.2,.8,.2,1) forwards;
         }
-        .spec-value {
-            font-size: 18.33px;
-            font-weight: 400;
-            color: #1a1a1a;
-        }
+        @keyframes rise{to{transform:translateY(0)}}
+        .sheet-grip{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 20px;}
+        .sheet h3{font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+        .sheet p.sub{font-size:12.5px;color:var(--muted);margin-bottom:20px;}
 
-        /* Buy bar — solid black pill, like the site's primary action. */
-        .btn-buy {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            height: 62px;
-            background: #000;
-            color: #fff;
-            border: 1.4px solid #000;
-            border-radius: 0;
-            font-family: inherit;
-            font-size: 11.67px;
-            font-weight: 500;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            margin-bottom: 14px;
-            transition: opacity 0.2s;
+        /* confirm popup (cart / wishlist) */
+        .confirm-icon{
+            width:56px;height:56px;margin:0 auto 16px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            background:var(--ink);color:#fff;
         }
-        .btn-buy:hover { opacity: 0.78; }
+        .confirm-icon svg{width:26px;height:26px;stroke:#fff;stroke-width:1.6;fill:none;}
+        .sheet.center{text-align:center;}
+        .mini-card{
+            display:flex;align-items:center;gap:12px;text-align:start;
+            padding:14px;border:1px solid var(--line);margin-bottom:20px;
+        }
+        .mini-card .mc-img{width:52px;height:60px;object-fit:cover;flex:0 0 auto;background:var(--bg);}
+        .mini-card .mc-name{font-weight:700;font-size:14px;}
+        .mini-card .mc-price{font-size:13px;color:var(--muted);margin-top:3px;}
 
-        /* Save-for-later — outline pill with a bookmark glyph. */
-        .btn-save {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            height: 62px;
-            background: transparent;
-            color: #1c1c1c;
-            border: 1.4px solid #000;
-            border-radius: 0;
-            font-family: inherit;
-            font-size: 11.67px;
-            font-weight: 500;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+        /* offer / message inputs */
+        .field{
+            display:flex;align-items:center;border:1px solid var(--line);
+            padding:0 16px;height:54px;margin-bottom:14px;
         }
-        .btn-save:hover { background: #000; color: #fff; }
-        .btn-save svg { width: 15px; height: 17px; stroke: currentColor; stroke-width: 1.6; fill: none; }
-        .btn-save.active { background: #000; color: #fff; }
-        .btn-save.active svg { fill: #fff; }
+        .field .cur{color:var(--muted);font-size:17px;margin-inline-end:8px;}
+        .field input{
+            border:none;outline:none;background:transparent;font-family:inherit;
+            font-size:17px;font-weight:700;width:100%;color:var(--ink);
+        }
+        textarea.field{
+            height:auto;min-height:96px;padding:14px 16px;resize:none;
+            font-size:14.5px;font-weight:400;line-height:1.6;display:block;
+        }
+        .offer-quick{display:flex;gap:8px;margin-bottom:18px;}
+        .offer-quick button{
+            flex:1;height:40px;border:1px solid var(--line);background:transparent;
+            font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink);
+            transition:background .2s,color .2s;
+        }
+        .offer-quick button:active{background:var(--ink);color:#fff;}
+        .sheet-actions{display:flex;gap:11px;margin-top:4px;}
+        .sheet-actions .btn{height:52px;}
 
-        /* ==================== RIGHT: the 3 images ==================== */
-        .gallery {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 18px;
+        /* share grid */
+        .share-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 8px;margin-bottom:8px;}
+        .share-item{
+            display:flex;flex-direction:column;align-items:center;gap:8px;
+            background:none;border:none;cursor:pointer;font-family:inherit;color:var(--ink);
         }
-        .gallery-main {
-            width: 100%;
-            aspect-ratio: 4 / 4.7;
-            /* No frame — the image itself fills the area, sitting straight on the
-               page background (transparent cut-outs blend in). */
-            background: transparent;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .share-ic{
+            width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            border:1px solid var(--line);
         }
-        .gallery-main img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .gallery-thumbs {
-            display: flex;
-            gap: 16px;
-            width: 100%;
-        }
-        .gallery-thumb {
-            width: 118px; height: 118px;
-            background: transparent;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-            overflow: hidden;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-        .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .gallery-thumb:hover { opacity: 1; }
-        .gallery-thumb.active { opacity: 1; border-color: #000; }
+        .share-ic svg{width:24px;height:24px;}
+        .share-item span{font-size:11px;letter-spacing:.5px;color:#413b31;}
 
-        /* ==================== RESPONSIVE ==================== */
-        @media (max-width: 900px) {
-            .showcase {
-                grid-template-columns: 1fr;
-                gap: 44px;
-                padding: 40px 22px;
-            }
-            .gallery { order: -1; }
-            .info { max-width: 100%; }
-            .info-title { font-size: 38.33px; }
+        .toast{
+            position:fixed;left:50%;bottom:30px;transform:translate(-50%,20px);
+            background:var(--ink);color:#fff;padding:13px 22px;border-radius:999px;
+            font-size:12px;letter-spacing:1px;z-index:400;opacity:0;pointer-events:none;
+            transition:opacity .3s,transform .3s;
         }
+        .toast.show{opacity:1;transform:translate(-50%,0);}
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
+    <script src="product-overrides.js"></script>
     <script src="assets/back-button.js"></script>
 </head>
 <body>
-    <a class="back" href="index.html">&#8592; חזרה</a>
-    <div class="showcase">
-        <!-- LEFT column: the data -->
-        <div class="info">
-            <div class="info-price" id="price">₪120.00</div>
-            <h1 class="info-title" id="title">שם החברה</h1>
-            <div class="info-subtitle" id="subtitle">סוג מוצר</div>
+<div class="page">
 
-            <div class="info-seller">
-                <span>מוכר:</span>
-                <a class="s-name" id="sellerName" href="#">VERO</a>
-                <span class="s-rating" id="sellerRating"></span>
-            </div>
-
-            <p class="info-desc" id="desc">תיאור המוצר יופיע כאן.</p>
-
-            <div class="info-specs">
-                <div>
-                    <span class="spec-label">בד</span>
-                    <span class="spec-value" id="specFabric">—</span>
-                </div>
-                <div>
-                    <span class="spec-label">צבע</span>
-                    <span class="spec-value" id="specColor">—</span>
-                </div>
-                <div>
-                    <span class="spec-label">מידה</span>
-                    <span class="spec-value" id="specSize">—</span>
-                </div>
-            </div>
-
-            <button class="btn-buy" onclick="addToCart()">
-                <span>הוסף לעגלת קניות</span>
-                <span id="buyPrice">— ₪120.00</span>
-            </button>
-            <button class="btn-save" onclick="toggleWishlist()" id="saveBtn">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"></path></svg>
-                <span id="saveLabel">שמור לאחר כך</span>
-            </button>
-        </div>
-
-        <!-- RIGHT column: 3 product images -->
-        <div class="gallery">
-            <div class="gallery-main" id="mainFrame">
-                <img id="mainImg" src="" alt="">
-            </div>
-            <div class="gallery-thumbs" id="thumbs"></div>
-        </div>
+    <!-- top bar -->
+    <div class="topbar">
+        <button class="tb-btn" onclick="goBack()" aria-label="חזרה">
+            <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <span class="tb-brand">VERO</span>
+        <button class="tb-btn" onclick="openSheet('shareSheet')" aria-label="שיתוף">
+            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        </button>
     </div>
 
-    <script>
-        // ---- Content (overridable via ?product= JSON, same shape as product.html) ----
-        const params = new URLSearchParams(location.search);
-        let product = { name: 'שם המוצר', price: 120, desc: '', seller: 'VERO' };
-        try {
-            const raw = params.get('product');
-            if (raw) product = Object.assign(product, JSON.parse(decodeURIComponent(raw)));
-        } catch (e) { console.error(e); }
+    <!-- gallery -->
+    <div class="gallery">
+        <div class="gallery-main">
+            <img id="mainImg" src="" alt="">
+            <span class="gallery-count" id="galleryCount">1 / 3</span>
+        </div>
+        <div class="gallery-thumbs" id="thumbs"></div>
+    </div>
 
-        const seed = encodeURIComponent(product.name || 'vero');
-        const images = product.images && product.images.length ? product.images : [
-            `https://picsum.photos/seed/${seed}-1/900/1000`,
-            `https://picsum.photos/seed/${seed}-2/900/1000`,
-            `https://picsum.photos/seed/${seed}-3/900/1000`
-        ];
+    <!-- content -->
+    <div class="content">
+        <div class="eyebrow" id="eyebrow">יד שנייה · VERO SELECT</div>
+        <h1 class="p-name" id="pName">שם המוצר</h1>
+        <div class="p-company"><a id="pCompany" href="#">שם החברה</a></div>
 
-        // Field mapping — matches what the seller fills on the upload page.
-        //   company  → the brand/company heading (falls back to the seller/store name)
-        //   type     → product type sub-heading (jeans, shirt…): productType|type|category
-        const company     = product.company || product.brand || product.seller || 'VERO';
-        const productType  = product.productType || product.category ||
-                             (product.type === 'art' ? 'יצירת אמנות' : 'פריט');
-        const sellerName   = product.seller || 'VERO';
-        const rating       = Number(product.rating) || 4.5;
-        const desc = product.desc || `${company} — ${productType}, זמין כעת בחנות.`;
+        <div class="p-price" id="pPrice">₪0.00</div>
 
-        // ---- Render ----
-        function fmt(p) { return '₪' + Number(p).toFixed(2); }
-        document.getElementById('title').textContent = company;
-        document.getElementById('subtitle').textContent = productType;
-        document.getElementById('price').textContent = fmt(product.price);
-        document.getElementById('desc').textContent = desc;
-        document.getElementById('buyPrice').textContent = '— ' + fmt(product.price);
+        <div class="p-seller">
+            <span class="s-label">מוכר:</span>
+            <a class="s-name" id="sellerName" href="#">VERO</a>
+            <span class="s-rating" id="sellerRating"></span>
+        </div>
 
-        // Seller row — name links to the seller's store, rating shown as stars.
-        const sLink = document.getElementById('sellerName');
-        sLink.textContent = sellerName;
-        sLink.href = `index.html?seller=${encodeURIComponent(sellerName)}`;
-        const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
-        document.getElementById('sellerRating').innerHTML = `${stars} <span class="num">${rating.toFixed(1)}</span>`;
+        <p class="p-desc" id="pDesc">תיאור המוצר יופיע כאן.</p>
 
-        // Specs — fabric / colour / size, from the seller's fields.
-        document.getElementById('specFabric').textContent = product.fabric || product.material || (product.type === 'art' ? 'קנבס' : 'כותנה');
-        document.getElementById('specColor').textContent  = product.color || 'רב-גוני';
-        document.getElementById('specSize').textContent   = product.size || (product.type === 'art' ? '50×70 ס"מ' : 'M');
+        <!-- spec detail list -->
+        <div class="specs" id="specs">
+            <div class="spec-row"><span class="spec-key">מידה</span><span class="spec-val" id="specSize">—</span></div>
+            <div class="spec-row"><span class="spec-key">מצב הפריט</span><span class="spec-val" id="specCondition">—</span></div>
+            <div class="spec-row"><span class="spec-key">סוג הבד</span><span class="spec-val" id="specFabric">—</span></div>
+            <div class="spec-row"><span class="spec-key">מתאים ל־</span><span class="spec-val" id="specAudience">—</span></div>
+            <div class="spec-row"><span class="spec-key">צבע</span><span class="spec-val" id="specColor">—</span></div>
+        </div>
 
-        // Gallery — main image + the 3 thumbnails.
-        const mainImg = document.getElementById('mainImg');
-        mainImg.src = images[0];
-        mainImg.alt = company;
-        const thumbs = document.getElementById('thumbs');
-        thumbs.innerHTML = images.map((src, i) =>
-            `<button class="gallery-thumb${i === 0 ? ' active' : ''}" onclick="showImg(${i})" aria-label="תמונה ${i + 1}">
-                <img src="${src}" alt="" loading="lazy">
-             </button>`).join('');
-        function showImg(i) {
-            mainImg.src = images[i];
-            document.querySelectorAll('.gallery-thumb').forEach((t, idx) => t.classList.toggle('active', idx === i));
-        }
+        <!-- actions -->
+        <div class="actions">
+            <button class="btn btn-primary" onclick="addToCart()">
+                <span>הוסף לעגלת קניות</span>
+                <span class="price-tail" id="buyPrice">₪0.00</span>
+            </button>
+            <button class="btn btn-outline" id="wishBtn" onclick="toggleWishlist()">
+                <svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
+                <span id="wishLabel">הוסף לרשימת המשאלות</span>
+            </button>
+            <div class="btn-row">
+                <button class="btn btn-outline" onclick="openSheet('offerSheet')">הצע מחיר</button>
+                <button class="btn btn-outline" onclick="openSheet('msgSheet')">שאל על זמינות</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-        // Cart (syncs with vero_cart, same shape as the rest of the site)
-        function addToCart() {
-            const cart = JSON.parse(localStorage.getItem('vero_cart') || '[]');
-            const id = `${product.name}|${product.price}`;
-            const now = Date.now(), HOLD = 48 * 60 * 60 * 1000;
-            const existing = cart.find(i => i.id === id);
-            if (existing) { existing.qty += 1; existing.addedAt = now; existing.expiresAt = now + HOLD; }
-            else cart.push({ id, name: product.name, price: product.price, seller: sellerName,
-                             icon: product.icon, category: product.category, type: product.type,
-                             rating: product.rating, qty: 1, addedAt: now, expiresAt: now + HOLD });
-            localStorage.setItem('vero_cart', JSON.stringify(cart));
-            location.href = 'index.html?open=cart';
-        }
+<!-- ============ CONFIRM POPUP (cart / wishlist) ============ -->
+<div class="overlay" id="confirmSheet" onclick="if(event.target===this)closeSheet('confirmSheet')">
+    <div class="sheet center">
+        <div class="sheet-grip"></div>
+        <div class="confirm-icon" id="confirmIcon">
+            <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h3 id="confirmTitle">נוסף לעגלה</h3>
+        <p class="sub" id="confirmSub">הפריט נשמר עבורך</p>
+        <div class="mini-card">
+            <img class="mc-img" id="confirmImg" src="" alt="">
+            <div>
+                <div class="mc-name" id="confirmName">—</div>
+                <div class="mc-price" id="confirmPrice">—</div>
+            </div>
+        </div>
+        <div class="sheet-actions">
+            <button class="btn btn-outline" onclick="closeSheet('confirmSheet')">המשך לגלוש</button>
+            <button class="btn btn-primary" id="confirmCta" onclick="goCart()">לעגלה</button>
+        </div>
+    </div>
+</div>
 
-        // Save for later → vero_wishlist (shared with the saved-products page)
-        function toggleWishlist() {
-            const wl = JSON.parse(localStorage.getItem('vero_wishlist') || '[]');
-            const id = `${product.name}|${product.price}`;
-            const btn = document.getElementById('saveBtn');
-            const label = document.getElementById('saveLabel');
-            const idx = wl.findIndex(i => i.id === id);
-            if (idx >= 0) { wl.splice(idx, 1); btn.classList.remove('active'); label.textContent = 'שמור לאחר כך'; }
-            else {
-                wl.push({ id, name: product.name, price: product.price, seller: sellerName,
-                          icon: product.icon, category: product.category, type: product.type,
-                          rating: product.rating, addedAt: Date.now() });
-                btn.classList.add('active'); label.textContent = 'נשמר ✓';
-            }
-            localStorage.setItem('vero_wishlist', JSON.stringify(wl));
-        }
-        (function () {
-            const wl = JSON.parse(localStorage.getItem('vero_wishlist') || '[]');
-            if (wl.some(i => i.id === `${product.name}|${product.price}`)) {
-                document.getElementById('saveBtn').classList.add('active');
-                document.getElementById('saveLabel').textContent = 'נשמר ✓';
-            }
-        })();
-    </script>
-    <!-- Manual edit mode (✎ button bottom-left) — same editor as the rest of the site. -->
-    <script src="vero-editor.js"></script>
+<!-- ============ OFFER SHEET ============ -->
+<div class="overlay" id="offerSheet" onclick="if(event.target===this)closeSheet('offerSheet')">
+    <div class="sheet">
+        <div class="sheet-grip"></div>
+        <h3>הצעת מחיר</h3>
+        <p class="sub" id="offerSub">שלח למוכר הצעה להתמקחות</p>
+        <div class="field">
+            <span class="cur">₪</span>
+            <input type="number" id="offerInput" min="1" step="1" placeholder="0" inputmode="numeric">
+        </div>
+        <div class="offer-quick" id="offerQuick"></div>
+        <div class="sheet-actions">
+            <button class="btn btn-outline" onclick="closeSheet('offerSheet')">ביטול</button>
+            <button class="btn btn-primary" onclick="sendOffer()">שלח הצעה</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ MESSAGE SHEET (availability) ============ -->
+<div class="overlay" id="msgSheet" onclick="if(event.target===this)closeSheet('msgSheet')">
+    <div class="sheet">
+        <div class="sheet-grip"></div>
+        <h3>שאלה למוכר</h3>
+        <p class="sub" id="msgSub">שאל את המוכר על זמינות הפריט</p>
+        <textarea class="field" id="msgInput" placeholder="היי, האם הפריט עדיין זמין?"></textarea>
+        <div class="sheet-actions">
+            <button class="btn btn-outline" onclick="closeSheet('msgSheet')">ביטול</button>
+            <button class="btn btn-primary" onclick="sendMessage()">שלח הודעה</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ SHARE SHEET ============ -->
+<div class="overlay" id="shareSheet" onclick="if(event.target===this)closeSheet('shareSheet')">
+    <div class="sheet">
+        <div class="sheet-grip"></div>
+        <h3>שיתוף הפריט</h3>
+        <p class="sub">שתפו את המוצר עם חברים</p>
+        <div class="share-grid" id="shareGrid"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const params = new URLSearchParams(location.search);
+    let product = { name:'שם המוצר', price:120, desc:'', seller:'VERO' };
+    try{
+        const raw = params.get('product');
+        if(raw) product = Object.assign(product, JSON.parse(decodeURIComponent(raw)));
+    }catch(e){ console.error(e); }
+
+    // Fold in seller edits + sale price so the price matches the rest of the site.
+    if(window.veroApplyOverride) product = window.veroApplyOverride(product);
+
+    const toNum = v => { const n = parseFloat(String(v==null?'':v).replace(/[^\d.]/g,'')); return isNaN(n)?0:n; };
+    const fmt = p => '₪' + Number(toNum(p)).toFixed(2);
+
+    // ---- Field mapping (matches the seller upload fields) ----
+    const company    = product.company || product.brand || product.seller || 'VERO';
+    const sellerName = product.seller || 'VERO';
+    const rating     = Number(product.rating) || 4.5;
+    const priceNum   = toNum(product.price);
+    const isArt      = product.type === 'art';
+    const desc = product.desc || `${product.name} — ${isArt?'יצירת אמנות':'פריט'} במצב מעולה, זמין כעת בחנות.`;
+
+    const AUDIENCE = { men:'גברים', women:'נשים', kids:'ילדים', unisex:'יוניסקס',
+                       גברים:'גברים', נשים:'נשים', ילדים:'ילדים', יוניסקס:'יוניסקס' };
+    const audience = AUDIENCE[(product.audience||product.gender||'').toString().toLowerCase()]
+                     || product.audience || 'יוניסקס';
+
+    const seed = encodeURIComponent(product.name || 'vero');
+    const images = (product.images && product.images.length) ? product.images : [
+        `https://picsum.photos/seed/${seed}-1/900/1100`,
+        `https://picsum.photos/seed/${seed}-2/900/1100`,
+        `https://picsum.photos/seed/${seed}-3/900/1100`
+    ];
+
+    // ---- Render header ----
+    document.getElementById('eyebrow').textContent = (isArt?'יצירת אמנות':'יד שנייה') + ' · VERO SELECT';
+    document.getElementById('pName').textContent = product.name;
+    const comp = document.getElementById('pCompany');
+    comp.textContent = company;
+    comp.href = `index.html?seller=${encodeURIComponent(sellerName)}`;
+
+    // Price (with sale strike-through if on sale)
+    const priceEl = document.getElementById('pPrice');
+    if(product.onSale && product.originalPrice){
+        const was = toNum(product.originalPrice), now = priceNum;
+        const off = was>0 ? Math.round((1-now/was)*100) : 0;
+        priceEl.innerHTML = (off>0?`<span class="off">-${off}%</span>`:'') +
+            `${fmt(now)}<span class="was">${fmt(was)}</span>`;
+    } else {
+        priceEl.textContent = fmt(priceNum);
+    }
+    document.getElementById('buyPrice').textContent = fmt(priceNum);
+
+    // Seller row
+    const sLink = document.getElementById('sellerName');
+    sLink.textContent = sellerName;
+    sLink.href = `index.html?seller=${encodeURIComponent(sellerName)}`;
+    const stars = '★'.repeat(Math.floor(rating)) + (rating%1>=0.5?'☆':'');
+    document.getElementById('sellerRating').innerHTML = `${stars} <span class="num">${rating.toFixed(1)}</span>`;
+
+    document.getElementById('pDesc').textContent = desc;
+
+    // Specs
+    document.getElementById('specSize').textContent      = product.size || (isArt?'50×70 ס"מ':'M');
+    document.getElementById('specCondition').textContent = product.condition || 'מצב מעולה';
+    document.getElementById('specFabric').textContent    = product.fabric || product.material || (isArt?'קנבס':'כותנה');
+    document.getElementById('specAudience').textContent  = audience;
+    document.getElementById('specColor').textContent     = product.color || 'רב-גוני';
+
+    // Gallery
+    const mainImg = document.getElementById('mainImg');
+    const countEl = document.getElementById('galleryCount');
+    mainImg.src = images[0]; mainImg.alt = product.name;
+    const thumbs = document.getElementById('thumbs');
+    thumbs.innerHTML = images.map((src,i)=>
+        `<button class="gthumb${i===0?' active':''}" onclick="showImg(${i})" aria-label="תמונה ${i+1}">
+            <img src="${src}" alt="" loading="lazy"></button>`).join('');
+    function showImg(i){
+        mainImg.src = images[i];
+        countEl.textContent = `${i+1} / ${images.length}`;
+        document.querySelectorAll('.gthumb').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+    }
+    window.showImg = showImg;
+
+    // ---------- sheets ----------
+    function openSheet(id){
+        const s = document.getElementById(id);
+        s.querySelector('.sheet').style.animation='none';
+        s.offsetHeight; s.querySelector('.sheet').style.animation='';
+        s.classList.add('show');
+        if(id==='offerSheet') setTimeout(()=>document.getElementById('offerInput').focus(),300);
+    }
+    function closeSheet(id){ document.getElementById(id).classList.remove('show'); }
+    window.openSheet=openSheet; window.closeSheet=closeSheet;
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show')); });
+
+    function toast(msg){
+        const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+        clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2400);
+    }
+
+    function goBack(){ if(typeof goBackToStore==='function') return goBackToStore();
+        if(document.referrer && history.length>1) history.back(); else location.href='index.html'; }
+    window.goBack=goBack;
+    function goCart(){ location.href='index.html?open=cart'; }
+    window.goCart=goCart;
+
+    // ---------- cart ----------
+    const HOLD = 48*60*60*1000;
+    function addToCart(){
+        const cart = JSON.parse(localStorage.getItem('vero_cart')||'[]');
+        const id = `${product.name}|${product.price}`;
+        const now = Date.now();
+        const ex = cart.find(i=>i.id===id);
+        if(ex){ ex.qty+=1; ex.addedAt=now; ex.expiresAt=now+HOLD; }
+        else cart.push({ id, name:product.name, price:product.price, seller:sellerName,
+            icon:product.icon, category:product.category, type:product.type, rating:product.rating,
+            qty:1, addedAt:now, expiresAt:now+HOLD });
+        localStorage.setItem('vero_cart', JSON.stringify(cart));
+        // confirmation popup
+        document.getElementById('confirmIcon').innerHTML='<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>';
+        document.getElementById('confirmTitle').textContent='נוסף לעגלה';
+        document.getElementById('confirmSub').textContent='הפריט נשמר עבורך למשך 48 שעות';
+        document.getElementById('confirmImg').src=images[0];
+        document.getElementById('confirmName').textContent=product.name;
+        document.getElementById('confirmPrice').textContent=fmt(priceNum);
+        document.getElementById('confirmCta').textContent='לעגלה';
+        document.getElementById('confirmCta').onclick=goCart;
+        openSheet('confirmSheet');
+    }
+    window.addToCart=addToCart;
+
+    // ---------- wishlist ----------
+    function isWished(){
+        const wl=JSON.parse(localStorage.getItem('vero_wishlist')||'[]');
+        return wl.some(i=>i.id===`${product.name}|${product.price}`);
+    }
+    function toggleWishlist(){
+        const wl=JSON.parse(localStorage.getItem('vero_wishlist')||'[]');
+        const id=`${product.name}|${product.price}`;
+        const idx=wl.findIndex(i=>i.id===id);
+        if(idx>=0){ wl.splice(idx,1); localStorage.setItem('vero_wishlist',JSON.stringify(wl));
+            reflectWish(); toast('הוסר מרשימת המשאלות'); return; }
+        wl.push({ id, name:product.name, price:product.price, seller:sellerName, icon:product.icon,
+            category:product.category, type:product.type, rating:product.rating, addedAt:Date.now() });
+        localStorage.setItem('vero_wishlist',JSON.stringify(wl));
+        reflectWish();
+        // confirmation popup
+        document.getElementById('confirmIcon').innerHTML='<svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+        document.getElementById('confirmTitle').textContent='נוסף לרשימת המשאלות';
+        document.getElementById('confirmSub').textContent='תוכל למצוא אותו באזור האישי';
+        document.getElementById('confirmImg').src=images[0];
+        document.getElementById('confirmName').textContent=product.name;
+        document.getElementById('confirmPrice').textContent=fmt(priceNum);
+        document.getElementById('confirmCta').textContent='לרשימה';
+        document.getElementById('confirmCta').onclick=()=>location.href='saved.html';
+        openSheet('confirmSheet');
+    }
+    function reflectWish(){
+        const on=isWished();
+        const btn=document.getElementById('wishBtn');
+        btn.classList.toggle('active',on);
+        document.getElementById('wishLabel').textContent = on?'ברשימת המשאלות ✓':'הוסף לרשימת המשאלות';
+    }
+    window.toggleWishlist=toggleWishlist;
+    reflectWish();
+
+    // ---------- offer ----------
+    document.getElementById('offerSub').textContent = `מחיר מבוקש: ${fmt(priceNum)} · שלח למוכר הצעה`;
+    const oq=document.getElementById('offerQuick');
+    [0.7,0.8,0.9].forEach(f=>{
+        const v=Math.max(1,Math.round(priceNum*f));
+        const b=document.createElement('button');
+        b.textContent=fmt(v).replace('.00','');
+        b.onclick=()=>{ document.getElementById('offerInput').value=v; };
+        oq.appendChild(b);
+    });
+    function sendOffer(){
+        const input=document.getElementById('offerInput');
+        const amount=parseFloat(input.value);
+        if(!amount||amount<=0){ input.focus(); return; }
+        const offers=JSON.parse(localStorage.getItem('vero_offers')||'[]');
+        offers.push({ name:product.name, seller:sellerName, askPrice:priceNum, offer:amount, at:Date.now() });
+        localStorage.setItem('vero_offers',JSON.stringify(offers));
+        input.value=''; closeSheet('offerSheet');
+        toast(`ההצעה נשלחה: ${fmt(amount)}`);
+    }
+    window.sendOffer=sendOffer;
+
+    // ---------- message the seller (syncs to vero_chats inbox) ----------
+    document.getElementById('msgSub').textContent = `שלח הודעה אל ${sellerName} על "${product.name}"`;
+    function sendMessage(){
+        const input=document.getElementById('msgInput');
+        const text=(input.value||input.placeholder).trim();
+        if(!text) return;
+        const chats=JSON.parse(localStorage.getItem('vero_chats')||'{}');
+        if(!chats[sellerName]) chats[sellerName]=[];
+        chats[sellerName].push({ sender:'me', content:text, at:Date.now() });
+        localStorage.setItem('vero_chats',JSON.stringify(chats));
+        input.value=''; closeSheet('msgSheet');
+        toast('ההודעה נשלחה למוכר');
+    }
+    window.sendMessage=sendMessage;
+
+    // ---------- share ----------
+    function shareUrl(){
+        // A link back to this exact product listing.
+        return location.href;
+    }
+    const shareText = `${product.name} · ${company} — ${fmt(priceNum)} | VERO`;
+    const SHARES = [
+        { key:'whatsapp', label:'WhatsApp', color:'#25D366',
+          svg:'<path fill="#25D366" d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.5-.3.3c-.1.1-.3.3-.1.6.1.3.7 1.1 1.4 1.8 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/>',
+          href:u=>`https://wa.me/?text=${encodeURIComponent(shareText+' '+u)}` },
+        { key:'facebook', label:'Facebook', color:'#1877F2',
+          svg:'<path fill="#1877F2" d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/>',
+          href:u=>`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}` },
+        { key:'telegram', label:'Telegram', color:'#0088cc',
+          svg:'<path fill="#0088cc" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 6.9l-1.6 7.6c-.1.5-.4.7-.9.4l-2.5-1.8-1.2 1.2c-.1.1-.3.2-.5.2l.2-2.6 4.7-4.2c.2-.2-.1-.3-.3-.1L8.4 13 6 12.2c-.5-.2-.5-.5.1-.8l9.3-3.6c.4-.2.8.1.6.9z"/>',
+          href:u=>`https://t.me/share/url?url=${encodeURIComponent(u)}&text=${encodeURIComponent(shareText)}` },
+        { key:'x', label:'X', color:'#111010',
+          svg:'<path fill="#111010" d="M17.5 3h3l-6.6 7.5L21.7 21h-6l-4.7-6.1L5.5 21h-3l7-8L2.7 3h6.1l4.2 5.6L17.5 3zm-1 16h1.6L8.1 4.6H6.4L16.5 19z"/>',
+          href:u=>`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(u)}` },
+        { key:'instagram', label:'Instagram', color:'#E1306C',
+          svg:'<path fill="#E1306C" d="M12 7.2A4.8 4.8 0 1 0 12 16.8 4.8 4.8 0 0 0 12 7.2zm0 7.9A3.1 3.1 0 1 1 12 8.9a3.1 3.1 0 0 1 0 6.2zM17.9 6a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0zM21 6.1c-.1-1.5-.4-2.8-1.5-3.9S17.1 1 15.6.9C14.1.8 9.9.8 8.4.9 6.9 1 5.6 1.3 4.5 2.4S3 4.5 2.9 6C2.8 7.5 2.8 11.7 2.9 13.2c.1 1.5.4 2.8 1.5 3.9s2.4 1.4 3.9 1.5c1.5.1 5.7.1 7.2 0 1.5-.1 2.8-.4 3.9-1.5s1.4-2.4 1.5-3.9c.1-1.5.1-5.7 0-7.1zm-2 8.7a3.1 3.1 0 0 1-1.8 1.8c-1.2.5-4.1.4-5.5.4s-4.3.1-5.5-.4a3.1 3.1 0 0 1-1.8-1.8c-.5-1.2-.4-4.1-.4-5.5s-.1-4.3.4-5.5a3.1 3.1 0 0 1 1.8-1.8C7.7 4 10.6 4.1 12 4.1s4.3-.1 5.5.4a3.1 3.1 0 0 1 1.8 1.8c.5 1.2.4 4.1.4 5.5s.1 4.3-.4 5.5z"/>',
+          // Instagram has no web share intent — copy link so the user can paste into a story/DM.
+          href:null },
+        { key:'copy', label:'העתק קישור', color:'#111010',
+          svg:'<path fill="none" stroke="#111010" stroke-width="1.6" d="M9 9h9v9H9zM6 15H3V3h12v3"/>',
+          href:null }
+    ];
+    const grid=document.getElementById('shareGrid');
+    grid.innerHTML=SHARES.map((s,i)=>
+        `<button class="share-item" data-i="${i}">
+            <span class="share-ic"><svg viewBox="0 0 24 24">${s.svg}</svg></span>
+            <span>${s.label}</span></button>`).join('');
+    grid.addEventListener('click',e=>{
+        const b=e.target.closest('.share-item'); if(!b) return;
+        const s=SHARES[+b.dataset.i]; const u=shareUrl();
+        if(s.href){ window.open(s.href(u),'_blank','noopener'); }
+        else if(s.key==='instagram'){
+            if(navigator.share){ navigator.share({title:product.name,text:shareText,url:u}).catch(()=>{}); }
+            else { copyLink(u); toast('הקישור הועתק — הדביקו באינסטגרם'); }
+        } else { copyLink(u); toast('הקישור הועתק ✓'); }
+    });
+    function copyLink(u){
+        if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{});
+        else { const t=document.createElement('textarea'); t.value=u; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+    }
+</script>
+<!-- Manual edit mode (✎ button bottom-left) — same editor as the rest of the site. -->
+<script src="vero-editor.js"></script>
 </body>
 </html>
