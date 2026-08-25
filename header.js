@@ -84,21 +84,40 @@
             box-shadow: none;
             transition: background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
         }
-        /* Sticky header: always pinned at the top with a solid, slightly frosted
-           background and a hairline divider, so it stays legible over any content. */
+        /* Sticky header, pinned at the top. At the top of the page the bar is
+           transparent and all icons are white; once you scroll it gains a solid
+           white background and every icon flips to black. */
         #siteHeader {
             top: 0;
             padding-top: 2px;
             padding-bottom: 10px;
-            background: rgba(255, 255, 255, 0.92);
+            background: transparent;
+            border-bottom: none;
+        }
+        /* Default (top of page): white icons. */
+        #siteHeader .header-left > a,
+        #siteHeader .toggle-category,
+        #siteHeader .icon-btn { color: #fff; }
+        #siteHeader .icon-btn svg { stroke: #fff !important; }
+        #siteHeader .toggle-category { border-color: rgba(255,255,255,0.7); }
+        #siteHeader .toggle-category::before { background: #fff; }
+        #siteHeader .toggle-category .seg { color: #ddd; }
+        #siteHeader .toggle-category .seg.active { color: #111; }
+        /* Sticky / scrolled state: white background, black icons. */
+        #siteHeader.scrolled {
+            background: rgba(255, 255, 255, 0.94);
             -webkit-backdrop-filter: saturate(180%) blur(12px);
             backdrop-filter: saturate(180%) blur(12px);
             border-bottom: 1px solid rgba(0, 0, 0, 0.08);
         }
-        #siteHeader .header-left > a,
-        #siteHeader .toggle-category,
-        #siteHeader .icon-btn { color: #111; }
-        #siteHeader .icon-btn svg { stroke: #111 !important; }
+        #siteHeader.scrolled .header-left > a,
+        #siteHeader.scrolled .toggle-category,
+        #siteHeader.scrolled .icon-btn { color: #111; }
+        #siteHeader.scrolled .icon-btn svg { stroke: #111 !important; }
+        #siteHeader.scrolled .toggle-category { border-color: rgba(0,0,0,0.18); }
+        #siteHeader.scrolled .toggle-category::before { background: #111; }
+        #siteHeader.scrolled .toggle-category .seg { color: #6b6b6b; }
+        #siteHeader.scrolled .toggle-category .seg.active { color: #fff; }
         #siteHeader .header-container {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
