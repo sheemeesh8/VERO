@@ -4337,6 +4337,24 @@
             gap: 26px;
         }
 
+        /* ===== Category page: top bar (back + share), same as the product page ===== */
+        .cat-topbar {
+            position: relative; z-index: 30;
+            display: flex; align-items: center; justify-content: space-between;
+            /* clear the phone camera / status bar so the icons are never hidden */
+            padding: max(34px, calc(env(safe-area-inset-top, 0px) + 14px)) 18px 12px;
+            background: #F2F0EF;
+        }
+        .cat-tb-right { display: flex; align-items: center; gap: 4px; }
+        .cat-tb-ico {
+            width: 40px; height: 40px; flex: 0 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            border: none; background: none; color: #171717; cursor: pointer;
+            transition: opacity .2s;
+        }
+        .cat-tb-ico:active { opacity: .5; }
+        .cat-tb-ico svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+
         /* ===== Category page: full-bleed per-category image hero ===== */
         .cat-hero {
             position: relative;
@@ -7924,8 +7942,19 @@
     <!-- ==================== CATEGORY PAGE ==================== -->
     <div id="categoryView" style="display:none">
         <div class="acat">
-            <!-- HERO — intentionally empty: just the rectangle band, no title or
-                 promo slider. -->
+            <!-- TOP BAR — back arrow + share, same as the product page. -->
+            <div class="cat-topbar">
+                <button class="cat-tb-ico" onclick="history.back()" aria-label="Back">
+                    <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+                </button>
+                <div class="cat-tb-right">
+                    <button class="cat-tb-ico" onclick="shareCategory()" aria-label="Share">
+                        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- HERO — a plain F2F0EF band (filled in showCategoryPage). -->
             <section class="acat-hero acat-hero-empty" id="acatHero"></section>
 
             <!-- FILTERS -->
@@ -12205,6 +12234,20 @@
                 </a>`;
         }
 
+        // Share the current category page — native share sheet where available,
+        // otherwise copy the link.
+        function shareCategory() {
+            const url = location.href;
+            const title = (lastCategory && lastCategory.name ? lastCategory.name + ' | VERO' : 'VERO');
+            if (navigator.share) {
+                navigator.share({ title, url }).catch(() => {});
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(function () {
+                    if (typeof showToast === 'function') showToast('Link copied');
+                });
+            }
+        }
+
         function showCategoryPage(catName, type) {
             lastCategory = { name: catName, type };
             // An art category page repaints its dark boxes burgundy.
@@ -12223,10 +12266,7 @@
             clearInterval(acatState.timer);
             const hero = document.getElementById('acatHero');
             hero.className = 'cat-hero cat-hero--plain';
-            hero.innerHTML =
-                '<button class="cat-hero-back" onclick="history.back()" aria-label="Back">'
-                + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>'
-                + '</button>';
+            hero.innerHTML = '';
 
             // Filter tags (visual — first three active, last muted).
             const tags = type === 'clothing'
