@@ -1029,6 +1029,9 @@
 
         /* ===== User search — same style/size as the product bar, stacked below it ===== */
         .vsp-users { width: 100%; margin-top: 22px; }
+        /* Focusing one bar fades the other out (and back in on blur). */
+        .vsp-searchbar, .vsp-users { transition: opacity 0.3s ease; }
+        .vsp-faded { opacity: 0; pointer-events: none; }
         /* Match .vsp-searchfield exactly so the two rows read as one stacked pair. */
         .vsp-user-search {
             width: 100%; display: flex; align-items: center; gap: 14px;
@@ -1468,7 +1471,7 @@
                 <div class="vsp-searchbar">
                     <div class="vsp-searchfield" id="vspFieldProduct">
                         <input id="vspInput" type="text" placeholder="Search for a product" autocomplete="off"
-                               onfocus="vspFocusField('product')" onblur="vspBlurField('product')"
+                               onfocus="vspFocusField('product'); vspFadeFor('product')" onblur="vspBlurField('product'); vspFadeFor(null)"
                                oninput="vspState_query(this.value)" onkeydown="if(event.key==='Enter')vspSearchProducts()">
                         <button aria-label="Search products" onclick="vspSearchProducts()">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
@@ -1491,6 +1494,7 @@
                 <div class="vsp-users">
                     <div class="vsp-user-search">
                         <input id="vspUserInput" type="text" placeholder="Search users" autocomplete="off"
+                               onfocus="vspFadeFor('user')" onblur="vspFadeFor(null)"
                                oninput="vspRenderUsers(this.value)">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -1585,6 +1589,13 @@
         'Basics Co.', 'Urban Thread', 'Horology Co.', 'Gallery Nine', 'Art House',
         'Designer Collection', 'Vintage Vault', 'Luxe Atelier', 'Forge Studio', 'Pixel Works'
     ];
+    // Focusing one search bar fades the other out; blur (which === null) restores both.
+    window.vspFadeFor = function (which) {
+        const bar = document.querySelector('#veroSearchPage .vsp-searchbar');
+        const users = document.querySelector('#veroSearchPage .vsp-users');
+        if (bar) bar.classList.toggle('vsp-faded', which === 'user');
+        if (users) users.classList.toggle('vsp-faded', which === 'product');
+    };
     window.vspRenderUsers = function (q) {
         const el = document.getElementById('vspUserResults');
         if (!el) return;
