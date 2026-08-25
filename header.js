@@ -930,7 +930,7 @@
             flex: 1 1 50%; min-width: 0;
             display: flex; align-items: center; gap: 14px;
             border: 1.5px solid #111; border-radius: 999px;
-            height: 74px; padding: 0 32px; box-sizing: border-box;
+            height: 58px; padding: 0 26px; box-sizing: border-box;
         }
         @media (max-width: 620px) { .vsp-searchbar { flex-direction: column; } }
         .vsp-searchfield {
@@ -1036,7 +1036,7 @@
         .vsp-user-search {
             width: 100%; display: flex; align-items: center; gap: 14px;
             border: 1.5px solid #111; border-radius: 999px;
-            height: 74px; padding: 0 32px; box-sizing: border-box; background: none;
+            height: 58px; padding: 0 26px; box-sizing: border-box; background: none;
         }
         .vsp-user-search input {
             flex: 1; min-width: 0; border: none; outline: none; background: none;
