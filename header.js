@@ -542,10 +542,14 @@
         #siteHeader .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader .icon-btn:hover { transform: scale(1.1); opacity: 0.65; }
         /* Account cluster: personal-area profile picture + a switch-profile button. */
-        #siteHeader .hdr-account { display: inline-flex; align-items: center; gap: 2px; }
-        #siteHeader .hdr-avatar-btn { width: 34px; height: 34px; }
+        #siteHeader .hdr-account { display: inline-flex; align-items: center; justify-content: center; gap: 0; }
+        /* The avatar button uses the exact same box as every other header icon so
+           the profile never shifts when it swaps between the circle and any other
+           icon (30x34, contents centred). */
+        #siteHeader .hdr-avatar-btn { width: 30px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; }
         #siteHeader .hdr-avatar {
-            width: 20px; height: 20px; border-radius: 50%; overflow: hidden;
+            box-sizing: border-box;
+            width: 22px; height: 22px; border-radius: 50%; overflow: hidden;
             border: 1.5px solid currentColor; background: #e6e4df center / cover no-repeat;
             display: grid; place-items: center; font-size: 10.50px; font-weight: 500;
             color: currentColor; text-transform: uppercase; line-height: 1;
