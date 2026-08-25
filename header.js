@@ -89,8 +89,8 @@
            white background and every icon flips to black. */
         #siteHeader {
             top: 0;
-            /* Push the whole icon row below the phone camera / notch. */
-            padding-top: calc(env(safe-area-inset-top, 0px) + 30px);
+            /* Icons raised up to the camera line. */
+            padding-top: 2px;
             padding-bottom: 10px;
             background: transparent;
             border-bottom: none;
