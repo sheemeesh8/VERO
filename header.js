@@ -84,6 +84,21 @@
             box-shadow: none;
             transition: background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
         }
+        /* Sticky header: always pinned at the top with a solid, slightly frosted
+           background and a hairline divider, so it stays legible over any content. */
+        #siteHeader {
+            top: 0;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+            padding-bottom: 10px;
+            background: rgba(255, 255, 255, 0.92);
+            -webkit-backdrop-filter: saturate(180%) blur(12px);
+            backdrop-filter: saturate(180%) blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        #siteHeader .header-left > a,
+        #siteHeader .toggle-category,
+        #siteHeader .icon-btn { color: #111; }
+        #siteHeader .icon-btn svg { stroke: #111 !important; }
         #siteHeader .header-container {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
@@ -94,7 +109,11 @@
             gap: 24px;
             direction: ltr;
         }
-        #siteHeader .header-left { display: flex; gap: 30px; align-items: center; justify-self: start; grid-column: 1; }
+        #siteHeader .header-left { display: flex; gap: 22px; align-items: center; justify-self: start; grid-column: 1; }
+        /* Left stack: the Art/Fashion toggle on top, the search icon beneath it. */
+        #siteHeader .hdr-left-stack {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
         /* Logo (centre column) removed — keep the icon group pinned to the last column. */
         #siteHeader .header-container > .header-right { grid-column: 3; }
         /* "Menu" / "Search" text buttons on the left, à la couture navigation. */
@@ -1282,16 +1301,18 @@
                         <line x1="3" y1="17" x2="21" y2="17"></line>
                     </svg>
                 </a>
-                <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                </a>
-                <span class="hdr-mode-pair" data-icon="mode">
-                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
-                        <span class="seg active" id="segArt">Art</span>
-                        <span class="seg" id="segFashion">Fashion</span>
-                    </div>
+                <span class="hdr-left-stack">
+                    <span class="hdr-mode-pair" data-icon="mode">
+                        <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
+                            <span class="seg active" id="segArt">Art</span>
+                            <span class="seg" id="segFashion">Fashion</span>
+                        </div>
+                    </span>
+                    <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </a>
                 </span>
             </div>
             <div class="header-right">
