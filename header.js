@@ -1027,18 +1027,20 @@
         .vsp-suggest-card:hover .vero-stars-base { color: rgba(255,255,255,0.35); }
         .vsp-suggest-card:hover .vero-stars-fill { color: #fff; }
 
-        /* ===== User search — a shared people search, avatars ringed in orange ===== */
-        .vsp-users { width: 100%; margin-top: 34px; }
-        .vsp-users .vsp-step-label { margin-bottom: 14px; }
+        /* ===== User search — same style/size as the product bar, stacked below it ===== */
+        .vsp-users { width: 100%; margin-top: 22px; }
+        /* Match .vsp-searchfield exactly so the two rows read as one stacked pair. */
         .vsp-user-search {
-            display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 18px;
-            border: 1px solid rgba(0,0,0,0.16); border-radius: 999px; background: #fff;
+            width: 100%; display: flex; align-items: center; gap: 14px;
+            border: 1.5px solid #111; border-radius: 999px;
+            height: 74px; padding: 0 32px; box-sizing: border-box; background: none;
         }
         .vsp-user-search input {
-            flex: 1; border: none; outline: none; background: transparent;
-            font-family: inherit; font-size: 15px; color: #111;
+            flex: 1; min-width: 0; border: none; outline: none; background: none;
+            font-family: inherit; font-size: 15.00px; font-weight: 500; color: #111;
         }
-        .vsp-user-search svg { width: 18px; height: 18px; stroke: #111; stroke-width: 1.8; fill: none; }
+        .vsp-user-search input::placeholder { color: #9a9a9a; letter-spacing: 0.4px; }
+        .vsp-user-search svg { width: 20px; height: 20px; stroke: #111; stroke-width: 1.8; fill: none; }
         .vsp-user-results {
             display: flex; gap: 18px; flex-wrap: wrap; margin-top: 20px;
         }
@@ -1483,6 +1485,17 @@
                         </button>
                     </div>
                 </div>
+                <!-- Shared user search — same pill as the product bar, directly below it. -->
+                <div class="vsp-users">
+                    <div class="vsp-user-search">
+                        <input id="vspUserInput" type="text" placeholder="Search users" autocomplete="off"
+                               oninput="vspRenderUsers(this.value)">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                    <div class="vsp-user-results" id="vspUserResults"></div>
+                </div>
                 <div class="vsp-cols">
                     <!-- Left half of the page: the sequential choices. -->
                     <div class="vsp-col">
@@ -1529,19 +1542,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Shared user search — people (sellers) as orange-ringed avatars. -->
-                <div class="vsp-users">
-                    <div class="vsp-step-label">Search users</div>
-                    <div class="vsp-user-search">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input id="vspUserInput" type="text" placeholder="Search users" autocomplete="off"
-                               oninput="vspRenderUsers(this.value)">
-                    </div>
-                    <div class="vsp-user-results" id="vspUserResults"></div>
-                </div>
-
                 <!-- Fashion seller search → filter sellers by style. -->
                 <div class="vsp-alt-filter vsp-seller-styles">
                     <div class="vsp-step-label">Style</div>
