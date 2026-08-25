@@ -18,19 +18,18 @@
     // data-icon attributes on the markup below — any key left out of the list
     // keeps its markup position, and an unknown key is ignored.
     //
-    // At runtime you can also reorder without editing the file:
-    //   veroSetIconOrder(['cart', 'wishlist', 'mode', 'chats', 'account', 'upload'])
-    //   veroResetIconOrder()          // back to the default below
-    // A runtime order is remembered in localStorage and wins over this default.
+    // The order is fixed in code — there is NO stored/remembered previous order.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
     const ICON_ORDER = ['search', 'cart', 'account'];
-    const ICON_ORDER_KEY = 'vero_header_icon_order_v2';
+
+    // Purge any previously-saved icon order from the browser, so no old layout
+    // memory can ever override the order defined above.
+    try {
+        localStorage.removeItem('vero_header_icon_order');
+        localStorage.removeItem('vero_header_icon_order_v2');
+    } catch (e) { /* storage unavailable — nothing to purge */ }
 
     function currentIconOrder() {
-        try {
-            const saved = JSON.parse(localStorage.getItem(ICON_ORDER_KEY) || 'null');
-            if (Array.isArray(saved) && saved.length) return saved;
-        } catch (e) { /* malformed stored order — fall back to the default */ }
         return ICON_ORDER;
     }
 
@@ -49,15 +48,9 @@
         });
     }
 
-    window.veroSetIconOrder = function (order) {
-        if (!Array.isArray(order)) return;
-        localStorage.setItem(ICON_ORDER_KEY, JSON.stringify(order));
-        applyIconOrder();
-    };
-    window.veroResetIconOrder = function () {
-        localStorage.removeItem(ICON_ORDER_KEY);
-        applyIconOrder();
-    };
+    // Kept for compatibility, but ordering is no longer persisted anywhere.
+    window.veroSetIconOrder = function () { applyIconOrder(); };
+    window.veroResetIconOrder = function () { applyIconOrder(); };
 
     // ---- Styles (injected once; appended late so it wins over any page CSS) ----
     const CSS = `
