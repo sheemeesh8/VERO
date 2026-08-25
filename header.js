@@ -1042,7 +1042,10 @@
             width: 100%; display: flex; align-items: center; gap: 14px;
             border: 1.5px solid #111; border-radius: 999px;
             height: 58px; padding: 0 26px; box-sizing: border-box; background: none;
+            transition: height 0.35s cubic-bezier(0.2,0.8,0.2,1), opacity 0.3s ease;
         }
+        /* Focusing the user bar grows it up to the product bar's height. */
+        .vsp-user-search.vsp-user-expanded { height: 80px; }
         .vsp-user-search input {
             flex: 1; min-width: 0; border: none; outline: none; background: none;
             font-family: inherit; font-size: 15.00px; font-weight: 500; color: #111;
@@ -1230,6 +1233,7 @@
             /* Product bar taller than the user bar on phones. */
             .vsp-searchbar, .vsp-searchfield { height: 70px; }
             .vsp-user-search { height: 52px; }
+            .vsp-user-search.vsp-user-expanded { height: 70px; }
         }
 `;
 
@@ -1602,6 +1606,9 @@
         const users = document.querySelector('#veroSearchPage .vsp-users');
         if (bar) bar.classList.toggle('vsp-faded', which === 'user');
         if (users) users.classList.toggle('vsp-faded', which === 'product');
+        // Grow the user bar up to the product bar's height while it's focused.
+        const userBar = document.querySelector('#veroSearchPage .vsp-user-search');
+        if (userBar) userBar.classList.toggle('vsp-user-expanded', which === 'user');
         // Product filters appear only when the product bar is focused.
         const cols = document.querySelector('#veroSearchPage .vsp-cols');
         const alts = document.querySelectorAll('#veroSearchPage .vsp-alt-filter');
