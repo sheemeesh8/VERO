@@ -23,7 +23,7 @@
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['cart', 'mode', 'account'];
+    const ICON_ORDER = ['cart', 'mode', 'account', 'edit'];
     const ICON_ORDER_KEY = 'vero_header_icon_order_v2';
 
     function currentIconOrder() {
@@ -1312,6 +1312,16 @@
                     <button class="icon-btn hdr-switch" title="Switch account" onclick="veroSwitchAccount()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/>
+                        </svg>
+                    </button>
+                </span>
+                <span class="hdr-edit" data-icon="edit">
+                    <!-- Manual edit mode: turns key text fields on the page into
+                         editable regions; leaving edit mode saves them. -->
+                    <button class="icon-btn edit-toggle" id="editToggle" onclick="if(window.toggleEditMode)toggleEditMode()" title="Edit Mode" aria-label="Edit Mode">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
                         </svg>
                     </button>
                 </span>
