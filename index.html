@@ -7539,7 +7539,12 @@
     <style>
         .catfull {
             position: relative; z-index: 5;
-            width: 100%; height: 100vh; overflow: hidden; background: #000;
+            width: 100%; height: 100vh; min-height: 100vh;
+            overflow: hidden; background: #000;
+            /* Same one-gesture "catch" scroll as the Men/Women/Kids panel: the
+               section lands as a full screen and can't be flicked past in one go. */
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
         }
         .catfull-slider {
             display: flex; height: 100%;
@@ -7594,16 +7599,26 @@
         }
         .catfull-arrow:hover { background: #111; color: #fff; }
         .catfull-arrow svg { width: 22px; height: 22px; }
-        /* Slide dots. */
+        /* Nav line — identical to the Men/Women/Kids slider's guiding line:
+           a continuous translucent track split into equal segments, the active
+           segment filled white. Sits just above the white card. */
         .catfull-dots {
-            position: absolute; left: 0; right: 0; bottom: calc(25% + 16px);
-            display: flex; justify-content: center; gap: 7px; z-index: 2;
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            bottom: calc(25% + 18px);
+            width: 210px; height: 2.5px; border-radius: 2px;
+            overflow: hidden;
+            display: flex; gap: 0;
+            background: rgba(255,255,255,0.34);   /* the continuous track line */
+            z-index: 4; pointer-events: none;
         }
         .catfull-dot {
-            width: 6px; height: 6px; border-radius: 50%;
-            background: rgba(255,255,255,.5); transition: background .2s, width .2s;
+            flex: 1 1 0; height: 100%;
+            background: transparent;               /* inactive segments show the track */
+            border-radius: 0;
+            transition: background 0.25s ease;
         }
-        .catfull-dot.active { background: #fff; width: 18px; border-radius: 3px; }
+        .catfull-dot.active { background: #fff; }  /* inner guiding line */
     </style>
     <section class="catfull" id="catFull">
         <div class="catfull-slider" id="catfullSlider">
@@ -13166,6 +13181,8 @@
             const gate = () => {
                 // The last full-screen panel before the feed: the category picker if it's
                 // on screen, else the Men/Women/Kids slider.
+                const cat = document.getElementById('catFull');
+                if (cat && cat.offsetParent !== null) return cat;
                 const blank = document.querySelector('.blank-fullscreen');
                 if (blank && blank.offsetParent !== null) return blank;
                 const el = document.getElementById('heroMobile2');
@@ -13304,6 +13321,11 @@
                 // white separator line / feed below.
                 const cardStop = top + hm2.offsetHeight - window.innerHeight;
                 if (cardStop > top + 8) stops.push(cardStop);
+            }
+            // Full-screen category slider — catches like the M/W/K panel above.
+            const cat = document.getElementById('catFull');
+            if (cat && cat.offsetParent !== null) {
+                stops.push(cat.getBoundingClientRect().top + (window.scrollY || 0));
             }
             // Empty full-screen panel just before the feed — a landing point of its own.
             const blank = document.querySelector('.blank-fullscreen');
