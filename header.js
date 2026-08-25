@@ -1274,18 +1274,7 @@
     // ---- Markup (identical everywhere) ----
     const MARKUP = `
         <div class="header-container">
-            <div class="header-left">
-                <a class="hdr-textbtn" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu">
-                    <span class="vero-hamburger"><span></span><span></span><span></span></span>
-                    <span class="hdr-textbtn-label">Menu</span>
-                </a>
-                <a class="hdr-textbtn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <span class="hdr-textbtn-label">Search</span>
-                </a>
-            </div>
+            <div class="header-left"></div>
             <div class="header-right"></div>
         </div>
     `;
