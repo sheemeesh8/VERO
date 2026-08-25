@@ -1309,6 +1309,31 @@
             .vsp-user-search { height: 52px; }
             .vsp-user-search.vsp-user-expanded { height: 70px; }
         }
+
+        /* ===== FINAL OVERRIDE: every header icon is white in ALL states =====
+           Placed last (and with !important) so it beats the default #111 icon
+           block and the black Art/Fashion switch block earlier in this file. */
+        #siteHeader .icon-btn,
+        #siteHeader.scrolled .icon-btn,
+        #siteHeader.force-dark .icon-btn,
+        #siteHeader.force-light .icon-btn,
+        #siteHeader .header-left > a,
+        #siteHeader.scrolled .header-left > a { color: #fff !important; }
+        #siteHeader .icon-btn svg,
+        #siteHeader.scrolled .icon-btn svg,
+        #siteHeader.force-dark .icon-btn svg,
+        #siteHeader.force-light .icon-btn svg { stroke: #fff !important; }
+        #siteHeader .icon-btn svg[data-fill],
+        #siteHeader.scrolled .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
+        /* Art/Fashion switch: white track + white knob in every state. */
+        #siteHeader .hdr-mode-pair .toggle-category,
+        #siteHeader.scrolled .hdr-mode-pair .toggle-category,
+        #siteHeader.force-dark .hdr-mode-pair .toggle-category,
+        #siteHeader.force-light .hdr-mode-pair .toggle-category { border-color: #fff !important; }
+        #siteHeader .hdr-mode-pair .toggle-category::before,
+        #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
+        #siteHeader.force-dark .hdr-mode-pair .toggle-category::before,
+        #siteHeader.force-light .hdr-mode-pair .toggle-category::before { background: #fff !important; }
 `;
 
     // ---- Markup (identical everywhere) ----
