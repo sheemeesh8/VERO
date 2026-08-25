@@ -7420,10 +7420,21 @@
                     <span class="hm2-swipe">Slide for more</span>
                 </div>
             </a>
+            <a class="hm2-slide">
+                <img class="hm2-video" src="https://loremflickr.com/800/1300/fashion,unisex,streetwear?lock=44" alt="">
+                <div class="hm2-cap">
+                    <span class="hm2-over">Choose your side</span>
+                    <span class="hm2-title">UNISEX</span>
+                    <p class="hm2-desc">No labels, just pieces — the full collection, open to everyone.</p>
+                    <span class="hm2-btn">DISCOVER</span>
+                    <span class="hm2-swipe">Slide for more</span>
+                </div>
+            </a>
         </div>
         <!-- The Men/Women/Kids guiding line, above the white band of the categories card. -->
         <div class="hm2-dots" id="hm2Dots">
             <span class="hm2-dot active"></span>
+            <span class="hm2-dot"></span>
             <span class="hm2-dot"></span>
             <span class="hm2-dot"></span>
         </div>
@@ -7446,6 +7457,17 @@
             var prev = document.getElementById('hm2Prev');
             var next = document.getElementById('hm2Next');
             var count = slider.querySelectorAll('.hm2-slide').length;
+            // Slide order → the gender the category slider below should show.
+            var GENDERS = ['men', 'women', 'kids', 'unisex'];
+            var lastGender = null;
+
+            function syncGender(i) {
+                var g = GENDERS[i] || 'men';
+                if (g !== lastGender) {
+                    lastGender = g;
+                    if (window.renderCatfull) window.renderCatfull(g);
+                }
+            }
 
             function current() { return Math.round(slider.scrollLeft / slider.clientWidth); }
             function go(i) {
@@ -7455,7 +7477,9 @@
             slider.addEventListener('scroll', function () {
                 var i = current();
                 dotEls.forEach(function (d, n) { d.classList.toggle('active', n === i); });
+                syncGender(i);
             }, { passive: true });
+            syncGender(current());   // set the category slider to the opening slide
             if (prev) prev.addEventListener('click', function () { go(current() - 1); });
             if (next) next.addEventListener('click', function () { go(current() + 1); });
         }
@@ -7572,7 +7596,7 @@
             box-sizing: border-box;
             direction: ltr; text-align: left;
         }
-        .catfull-text { min-width: 0; }
+        .catfull-text { min-width: 0; transform: translateY(-14px); }
         /* Card copy in the site font, Aharoni CLM — lighter, airier and more
            elegant than the default. The stack mirrors the M/W/K titles. */
         .catfull-kicker,
@@ -7629,64 +7653,84 @@
         .catfull-dot.active { background: #fff; }  /* inner guiding line */
     </style>
     <section class="catfull" id="catFull">
-        <div class="catfull-slider" id="catfullSlider">
-            <div class="catfull-slide">
-                <img class="catfull-img" src="clothing-hero.png" alt="">
-                <div class="catfull-card">
-                    <div class="catfull-text">
-                        <span class="catfull-kicker">Category</span>
-                        <h2 class="catfull-title">Coats</h2>
-                        <p class="catfull-desc">Outerwear built to last — tailored coats and jackets for every season.</p>
-                    </div>
-                    <button class="catfull-arrow" onclick="openCategory('clothing', 2)" aria-label="Open Coats">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </button>
-                </div>
-            </div>
-            <div class="catfull-slide">
-                <img class="catfull-img" src="hero-beach.jpg" alt="">
-                <div class="catfull-card">
-                    <div class="catfull-text">
-                        <span class="catfull-kicker">Category</span>
-                        <h2 class="catfull-title">Shoes</h2>
-                        <p class="catfull-desc">From everyday sneakers to statement soles — step into the collection.</p>
-                    </div>
-                    <button class="catfull-arrow" onclick="openCategory('clothing', 4)" aria-label="Open Shoes">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </button>
-                </div>
-            </div>
-            <div class="catfull-slide">
-                <img class="catfull-img" src="magazine-hero.jpg" alt="">
-                <div class="catfull-card">
-                    <div class="catfull-text">
-                        <span class="catfull-kicker">Category</span>
-                        <h2 class="catfull-title">Bags</h2>
-                        <p class="catfull-desc">Leather and canvas, carried well — bags chosen for quality and character.</p>
-                    </div>
-                    <button class="catfull-arrow" onclick="openCategory('clothing', 10)" aria-label="Open Bags">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="catfull-dots" id="catfullDots">
-            <span class="catfull-dot active"></span>
-            <span class="catfull-dot"></span>
-            <span class="catfull-dot"></span>
-        </div>
+        <!-- Slides + nav line are rendered by renderCatfull(gender), driven by the
+             active slide of the Men/Women/Kids/Unisex slider above. -->
+        <div class="catfull-slider" id="catfullSlider"></div>
+        <div class="catfull-dots" id="catfullDots"></div>
     </section>
     <script>
     (function () {
-        function initCatfull() {
+        // The full clothing catalogue — same order (and indices) as
+        // clothingSliderCategories, so openCategory('clothing', i) lands on the
+        // matching category page.
+        var CLOTHING = [
+            { name: 'T-Shirts',   img: 'tshirt,fashion',    desc: 'Everyday essentials, done right — soft tees built to last.' },
+            { name: 'Pants',      img: 'jeans,denim',       desc: 'From denim to tailoring — trousers for every day.' },
+            { name: 'Coats',      img: 'coat,jacket',       desc: 'Outerwear built to last — coats and jackets for every season.' },
+            { name: 'Hats',       img: 'hat,cap',           desc: 'The finishing touch — caps, beanies and brimmed classics.' },
+            { name: 'Shoes',      img: 'sneakers,shoes',    desc: 'From sneakers to statement soles — step into the collection.' },
+            { name: 'Dresses',    img: 'dress,fashion',     desc: 'Effortless and elegant — dresses for every occasion.' },
+            { name: 'Skirts',     img: 'skirt,fashion',     desc: 'Movement and ease — skirts from mini to maxi.' },
+            { name: 'Sweaters',   img: 'sweater,wool',      desc: 'Warmth with character — knitwear in natural fibres.' },
+            { name: 'Suits',      img: 'suit,menswear',     desc: 'Sharp tailoring — suits cut for a modern fit.' },
+            { name: 'Swimwear',   img: 'swimwear,beach',    desc: 'Sun-ready pieces — swimwear made for the water.' },
+            { name: 'Bags',       img: 'bag,leather',       desc: 'Leather and canvas, carried well — chosen for quality.' },
+            { name: 'High Heels', img: 'highheels,shoes',   desc: 'Elevated and refined — heels for a standout step.' },
+            { name: 'Boots',      img: 'boots,leather',     desc: 'Built for the season — boots in leather and suede.' },
+            { name: 'Socks',      img: 'socks,cotton',      desc: 'The small details — socks in soft, lasting cotton.' },
+            { name: 'Gloves',     img: 'gloves,winter',     desc: 'Cold-weather comfort — gloves that keep their shape.' },
+            { name: 'Scarves',    img: 'scarf,fashion',     desc: 'Wrapped in softness — scarves for warmth and style.' },
+            { name: 'Belts',      img: 'belt,leather',      desc: 'A quiet upgrade — belts in full-grain leather.' },
+            { name: 'Jewelry',    img: 'jewelry,ring',      desc: 'Understated shine — rings, chains and everyday pieces.' },
+            { name: 'Sunglasses', img: 'sunglasses',        desc: 'Frame your look — sunglasses with timeless lines.' },
+            { name: 'Pajamas',    img: 'pajamas,sleepwear', desc: 'Rest in comfort — sleepwear in gentle fabrics.' }
+        ];
+        // Which categories belong to each side. Unisex is the whole catalogue.
+        var GENDER_CATS = {
+            men:    [0, 1, 2, 8, 4, 12, 7, 16, 18],
+            women:  [5, 6, 11, 10, 17, 2, 7, 18, 15],
+            kids:   [0, 1, 4, 7, 3, 19, 13, 14],
+            unisex: CLOTHING.map(function (_, i) { return i; })
+        };
+
+        function arrowSvg() {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+        }
+
+        // Render the full-screen category slider for one gender.
+        window.renderCatfull = function (gender) {
             var slider = document.getElementById('catfullSlider');
             var dots = document.getElementById('catfullDots');
-            if (!slider || !dots) return;
-            var dotEls = dots.querySelectorAll('.catfull-dot');
+            if (!slider) return;
+            var idxs = GENDER_CATS[gender] || GENDER_CATS.men;
+            slider.innerHTML = idxs.map(function (ci) {
+                var c = CLOTHING[ci];
+                return '<div class="catfull-slide">'
+                    + '<img class="catfull-img" src="https://loremflickr.com/800/1300/' + encodeURIComponent(c.img) + '?lock=' + ci + '" alt="">'
+                    + '<div class="catfull-card"><div class="catfull-text">'
+                    + '<span class="catfull-kicker">Category</span>'
+                    + '<h2 class="catfull-title">' + c.name + '</h2>'
+                    + '<p class="catfull-desc">' + c.desc + '</p></div>'
+                    + '<button class="catfull-arrow" onclick="openCategory(\'clothing\', ' + ci + ')" aria-label="Open ' + c.name + '">'
+                    + arrowSvg() + '</button></div></div>';
+            }).join('');
+            if (dots) {
+                dots.innerHTML = idxs.map(function (_, n) {
+                    return '<span class="catfull-dot' + (n === 0 ? ' active' : '') + '"></span>';
+                }).join('');
+            }
+            slider.scrollLeft = 0;
+        };
+
+        function initCatfull() {
+            var slider = document.getElementById('catfullSlider');
+            if (!slider) return;
             slider.addEventListener('scroll', function () {
+                var dotEls = document.getElementById('catfullDots').querySelectorAll('.catfull-dot');
                 var i = Math.round(slider.scrollLeft / slider.clientWidth);
                 dotEls.forEach(function (d, n) { d.classList.toggle('active', n === i); });
             }, { passive: true });
+            window.renderCatfull('men');   // default until the slider above says otherwise
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initCatfull);
