@@ -1028,7 +1028,7 @@
         .vsp-suggest-card:hover .vero-stars-fill { color: #fff; }
 
         /* ===== User search — same style/size as the product bar, stacked below it ===== */
-        .vsp-users { width: 100%; margin-top: 22px; }
+        .vsp-users { width: 100%; margin-top: 10px; }
         /* Focusing one bar fades the other out (and back in on blur). */
         .vsp-searchbar { transition: opacity 0.3s ease; }
         .vsp-users { transition: opacity 0.3s ease, max-height 0.35s ease, margin-top 0.35s ease; overflow: hidden; max-height: 600px; }
@@ -1044,8 +1044,17 @@
         /* Product filters stay hidden until the product search bar is focused. */
         .vsp-cols.vsp-collapsed { display: none !important; }
         .vsp-alt-filter.vsp-collapsed { display: none !important; }
-        .vsp-cols.vsp-shown { animation: vspColsIn 0.4s ease both; }
-        @keyframes vspColsIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        /* Refined entrance for the product filters: settle up with a soft
+           scale + blur, then the two columns stagger in. */
+        .vsp-cols.vsp-shown { animation: vspColsIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @keyframes vspColsIn {
+            0%   { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(3px); }
+            100% { opacity: 1; transform: none; filter: blur(0); }
+        }
+        .vsp-cols.vsp-shown .vsp-col { animation: vspColIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        .vsp-cols.vsp-shown .vsp-col:nth-child(1) { animation-delay: 0.08s; }
+        .vsp-cols.vsp-shown .vsp-col:nth-child(2) { animation-delay: 0.18s; }
+        @keyframes vspColIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
         /* Match .vsp-searchfield exactly so the two rows read as one stacked pair. */
         .vsp-user-search {
             width: 100%; display: flex; align-items: center; gap: 14px;
