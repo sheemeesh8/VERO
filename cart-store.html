@@ -36,7 +36,7 @@
         /* No side image — the cart spreads evenly across the full screen. */
         .wrap {
             max-width: none; margin: 0;
-            padding: 58px clamp(30px, 5vw, 72px) 90px;
+            padding: 8px clamp(20px, 5vw, 72px) 90px;
             animation: cartSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
         @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
@@ -50,16 +50,20 @@
         /* Title row with the Clothing / Art cart toggle beside it. */
         .head-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 
-        /* Header action icons: one Filters button (opens all filters) + Share. */
-        .cart-actions { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
-        .ca-btn {
-            width: 42px; height: 42px; flex: none; border: 1px solid #d8d3ca; border-radius: 50%;
-            background: transparent; color: #16150f; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: border-color 0.2s, background 0.2s;
+        /* Top bar — same clean style as the product page: back on one side,
+           Filters + Share on the other, plain icon buttons. */
+        .cart-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: max(20px, env(safe-area-inset-top,0px)) 4px 16px;
         }
-        .ca-btn:hover { border-color: #16150f; }
-        .ca-btn svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+        .cart-topbar .tb-right { display: flex; align-items: center; gap: 4px; }
+        .tb-ico {
+            width: 42px; height: 42px; flex: none; border: none; background: none;
+            color: #16150f; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.2s;
+        }
+        .tb-ico:active { opacity: 0.5; }
+        .tb-ico svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.6; fill: none; }
 
         /* Filters bottom-sheet. */
         .cart-sheet-overlay {
@@ -192,22 +196,28 @@
 </head>
 <body>
     <div class="page-cover"></div>
-    <a class="back" href="index.html">&#8592; חזרה</a>
 
     <div class="wrap">
+        <!-- Clean top bar (same style as the product page). -->
+        <div class="cart-topbar">
+            <a class="back-btn tb-ico" href="index.html" aria-label="Back">
+                <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+            </a>
+            <div class="tb-right">
+                <button class="tb-ico" onclick="openFilters()" aria-label="Filters">
+                    <svg viewBox="0 0 24 24"><path d="M3 5h18M7 12h10M11 19h2"/></svg>
+                </button>
+                <button class="tb-ico" onclick="shareCart()" aria-label="Share">
+                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                </button>
+            </div>
+        </div>
+
         <div class="head-row">
             <h1 class="head-title">Cart</h1>
             <div class="mode-toggle">
                 <button class="mode-btn active" data-mode="clothing">Clothing</button>
                 <button class="mode-btn" data-mode="art">Art</button>
-            </div>
-            <div class="cart-actions">
-                <button class="ca-btn" onclick="openFilters()" aria-label="Filters">
-                    <svg viewBox="0 0 24 24"><path d="M3 5h18M7 12h10M11 19h2"/></svg>
-                </button>
-                <button class="ca-btn" onclick="shareCart()" aria-label="Share">
-                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-                </button>
             </div>
             <div class="head-total" id="headTotal"></div>
         </div>
@@ -544,7 +554,7 @@
         }, 4000);
 
         // Exit = same upward white-cover wipe as the entry animation.
-        const back = document.querySelector('.back');
+        const back = document.querySelector('.back-btn');
         if (back) back.addEventListener('click', (e) => {
             e.preventDefault();
             const cover = document.createElement('div');
