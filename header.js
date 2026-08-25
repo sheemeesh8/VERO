@@ -23,7 +23,7 @@
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['mode', 'cart', 'account'];
+    const ICON_ORDER = ['search', 'cart', 'account'];
     const ICON_ORDER_KEY = 'vero_header_icon_order_v2';
 
     function currentIconOrder() {
@@ -488,7 +488,7 @@
         /* While the header floats transparent over the hero image, the logo is white;
            once the header turns solid (scrolled), it reverts to black (rule above). */
         #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: brightness(0) invert(1) !important; }
-        #siteHeader .header-right { display: flex; gap: 20px; align-items: center; flex: 1; justify-content: flex-end; }
+        #siteHeader .header-right { display: flex; gap: 10px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
            the wrapper itself is transparent to layout — both controls are direct flex
@@ -1301,21 +1301,19 @@
                         <line x1="3" y1="17" x2="21" y2="17"></line>
                     </svg>
                 </a>
-                <span class="hdr-left-stack">
-                    <span class="hdr-mode-pair" data-icon="mode">
-                        <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
-                            <span class="seg active" id="segArt">Art</span>
-                            <span class="seg" id="segFashion">Fashion</span>
-                        </div>
-                    </span>
-                    <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </a>
+                <span class="hdr-mode-pair" data-icon="mode">
+                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
+                        <span class="seg active" id="segArt">Art</span>
+                        <span class="seg" id="segFashion">Fashion</span>
+                    </div>
                 </span>
             </div>
             <div class="header-right">
+                <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </a>
                 <span class="hdr-cart" data-icon="cart">
                     <a class="icon-btn icon-wrap" href="cart-store.html" title="Cart" aria-label="Cart">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
