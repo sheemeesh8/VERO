@@ -959,7 +959,7 @@
         /* The filter split into two halves of the page. Fades out once the buyer
            starts typing a search. */
         .vsp-cols {
-            width: 100%; margin-top: 30px;
+            width: 100%; margin-top: 14px;
             display: none; grid-template-columns: 1fr 1fr; gap: 44px 96px;
             align-items: start;
             transition: opacity 0.4s ease, transform 0.4s ease;
@@ -1030,8 +1030,17 @@
         /* ===== User search — same style/size as the product bar, stacked below it ===== */
         .vsp-users { width: 100%; margin-top: 22px; }
         /* Focusing one bar fades the other out (and back in on blur). */
-        .vsp-searchbar, .vsp-users { transition: opacity 0.3s ease; }
+        .vsp-searchbar { transition: opacity 0.3s ease; }
+        .vsp-users { transition: opacity 0.3s ease, max-height 0.35s ease, margin-top 0.35s ease; overflow: hidden; max-height: 600px; }
         .vsp-faded { opacity: 0; pointer-events: none; }
+        /* When the product bar is focused, collapse the user block so the filters
+           sit right under the search bar. */
+        .vsp-users.vsp-faded { max-height: 0; margin-top: 0; }
+        /* Three recommended sellers fade in, staggered. */
+        .vsp-user-results.vsp-users-in .vsp-user { animation: vspUserIn 0.45s ease both; }
+        .vsp-user-results.vsp-users-in .vsp-user:nth-child(2) { animation-delay: 0.09s; }
+        .vsp-user-results.vsp-users-in .vsp-user:nth-child(3) { animation-delay: 0.18s; }
+        @keyframes vspUserIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         /* Product filters stay hidden until the product search bar is focused. */
         .vsp-cols.vsp-collapsed { display: none !important; }
         .vsp-alt-filter.vsp-collapsed { display: none !important; }
@@ -1619,6 +1628,14 @@
         // Grow the user bar up to the product bar's height while it's focused.
         const userBar = document.querySelector('#veroSearchPage .vsp-user-search');
         if (userBar) userBar.classList.toggle('vsp-user-expanded', which === 'user');
+        const results = document.getElementById('vspUserResults');
+        if (which === 'user') {
+            // After the bar finishes stretching, fade in three recommended sellers.
+            setTimeout(vspShowSellerSuggestions, 360);
+        } else if (results) {
+            const ui = document.getElementById('vspUserInput');
+            if (!ui || !ui.value.trim()) results.innerHTML = '';   // leaving empty → clear
+        }
         // Product filters appear only when the product bar is focused.
         const cols = document.querySelector('#veroSearchPage .vsp-cols');
         const alts = document.querySelectorAll('#veroSearchPage .vsp-alt-filter');
@@ -1630,19 +1647,31 @@
             alts.forEach(a => a.classList.add('vsp-collapsed'));
         }
     };
+    function vspUserCard(u) {
+        return `<a class="vsp-user" href="index.html?seller=${encodeURIComponent(u)}">
+                    <span class="vsp-user-av"><img src="https://i.pravatar.cc/150?u=${encodeURIComponent(u)}" alt="${u}" loading="lazy"></span>
+                    <span class="vsp-user-name">${u}</span>
+                 </a>`;
+    }
+    // Three recommended sellers that fade in when the user bar is focused (empty).
+    window.vspShowSellerSuggestions = function () {
+        const el = document.getElementById('vspUserResults');
+        const input = document.getElementById('vspUserInput');
+        if (!el || !input) return;
+        if (input.value.trim() || document.activeElement !== input) return;  // typing/blurred → skip
+        el.innerHTML = VSP_USERS.slice(0, 3).map(vspUserCard).join('');
+        el.classList.remove('vsp-users-in'); void el.offsetWidth; el.classList.add('vsp-users-in');
+    };
     window.vspRenderUsers = function (q) {
         const el = document.getElementById('vspUserResults');
         if (!el) return;
+        el.classList.remove('vsp-users-in');
         const query = (q || '').trim().toLowerCase();
-        // Don't suggest anyone until the shopper starts typing.
-        if (!query) { el.innerHTML = ''; return; }
+        // Empty while focused → the three recommended sellers; otherwise clear.
+        if (!query) { vspShowSellerSuggestions(); return; }
         const list = VSP_USERS.filter(u => u.toLowerCase().includes(query));
         el.innerHTML = list.length
-            ? list.map(u =>
-                `<a class="vsp-user" href="index.html?seller=${encodeURIComponent(u)}">
-                    <span class="vsp-user-av"><img src="https://i.pravatar.cc/150?u=${encodeURIComponent(u)}" alt="${u}" loading="lazy"></span>
-                    <span class="vsp-user-name">${u}</span>
-                 </a>`).join('')
+            ? list.map(vspUserCard).join('')
             : '<span class="vsp-user-empty">No users found</span>';
     };
 
