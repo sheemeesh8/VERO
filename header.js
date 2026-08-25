@@ -1482,6 +1482,7 @@
                 <div class="vsp-searchbar">
                     <div class="vsp-searchfield" id="vspFieldProduct">
                         <input id="vspInput" type="text" placeholder="Search for a product" autocomplete="off"
+                               onmousedown="vspToggleField(this, event)"
                                onfocus="vspFocusField('product'); vspFadeFor('product')" onblur="vspBlurField('product'); vspFadeFor(null)"
                                oninput="vspState_query(this.value)" onkeydown="if(event.key==='Enter')vspSearchProducts()">
                         <button aria-label="Search products" onclick="vspSearchProducts()">
@@ -1505,6 +1506,7 @@
                 <div class="vsp-users">
                     <div class="vsp-user-search">
                         <input id="vspUserInput" type="text" placeholder="Search users" autocomplete="off"
+                               onmousedown="vspToggleField(this, event)"
                                onfocus="vspFadeFor('user')" onblur="vspFadeFor(null)"
                                oninput="vspRenderUsers(this.value)">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
@@ -1600,6 +1602,14 @@
         'Basics Co.', 'Urban Thread', 'Horology Co.', 'Gallery Nine', 'Art House',
         'Designer Collection', 'Vintage Vault', 'Luxe Atelier', 'Forge Studio', 'Pixel Works'
     ];
+    // Clicking an already-focused, still-empty search bar cancels it (toggles off).
+    // If the shopper has started typing, a repeat click does nothing.
+    window.vspToggleField = function (input, e) {
+        if (document.activeElement === input && !input.value.trim()) {
+            if (e) e.preventDefault();
+            input.blur();
+        }
+    };
     // Focusing one search bar fades the other out; blur (which === null) restores both.
     window.vspFadeFor = function (which) {
         const bar = document.querySelector('#veroSearchPage .vsp-searchbar');
