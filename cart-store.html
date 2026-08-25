@@ -178,19 +178,28 @@
             font-size: 12.50px; color: #9a9a95; text-align: center;
         }
 
-        /* Checkout bar — spread across the full width. */
-        .checkout {
-            display: flex; align-items: center; justify-content: space-between; gap: 24px;
-            padding: 30px 0 0; margin-top: 48px; border-top: 1px solid #000; flex-wrap: wrap;
+        /* Action bar — three cells: Checkout · selected count · Select all. */
+        .cart-actionbar {
+            display: grid; grid-template-columns: 1.4fr 1fr 1fr;
+            align-items: stretch; margin-top: 48px;
+            border: 1px solid #16150f;
         }
-        .checkout-total { font-size: 12.50px; letter-spacing: 0.5px; }
-        .checkout-total b { font-size: 25.00px; font-weight: 300; margin-left: 10px; }
-        .checkout-btn {
-            border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
-            font-family: inherit; font-size: 10.00px; letter-spacing: 2px; padding: 15px 40px;
-            text-transform: uppercase; transition: opacity 0.2s;
+        .cab-cell {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 4px; min-height: 62px; padding: 12px 10px; text-align: center;
+            font-family: inherit; background: transparent; color: #16150f;
+            font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
         }
-        .checkout-btn:hover { opacity: 0.78; }
+        .cab-cell + .cab-cell { border-left: 1px solid #16150f; }
+        button.cab-cell { border-top: none; border-right: none; border-bottom: none; cursor: pointer; transition: opacity 0.2s, background 0.2s, color 0.2s; }
+        /* Checkout = the filled primary cell. */
+        .cab-checkout { background: #16150f; color: #fff; }
+        .cab-checkout:hover { opacity: 0.82; }
+        /* Middle = live count of ticked items (not a button). */
+        .cab-count .cab-num { font-size: 22px; font-weight: 300; letter-spacing: 2px; }
+        .cab-count .cab-lbl { font-size: 8.5px; letter-spacing: 3px; color: #a8a399; }
+        /* Select all / Clear toggle. */
+        .cab-select:hover { background: #16150f; color: #fff; }
     </style>
     <!-- The product card, shared by every page (single source: product-card.css). -->
     <link rel="stylesheet" href="product-card.css">
@@ -467,9 +476,17 @@
                     <div class="cart-stat is-active"><span class="cs-num">${money}</span><span class="cs-lbl">Total</span></div>
                     <div class="cart-stat"><span class="cs-num">${count}</span><span class="cs-lbl">${count === 1 ? 'Item' : 'Items'}</span></div>
                  </div>`;
+            const allSel = mine.length > 0 && chosen.length === mine.length;
             host.innerHTML = `
-                <div class="checkout">
-                    <button class="checkout-btn" onclick="veroCheckout()">Checkout${chosen.length ? ' selected' : ''} &#8594;</button>
+                <div class="cart-actionbar">
+                    <button class="cab-cell cab-checkout" onclick="veroCheckout()">Checkout &#8594;</button>
+                    <div class="cab-cell cab-count">
+                        <span class="cab-num">${chosen.length}</span>
+                        <span class="cab-lbl">Selected</span>
+                    </div>
+                    <button class="cab-cell cab-select" onclick="${allSel ? 'deselectAll()' : 'selectAll()'}">
+                        ${allSel ? 'Clear' : 'Select all'}
+                    </button>
                 </div>`;
         }
 

@@ -752,54 +752,82 @@
         }
         #siteHeader .vero-hamburger span { width: 100%; }
 
-        /* ===== Slide-in menu (rebuilt) — white, minimalist, quiet luxury ===== */
+        /* ===== Menu — rebuilt: a quiet, editorial full-height panel ===== */
         .vero-drawer-overlay {
-            position: fixed; inset: 0; background: rgba(20,18,14,0.32);
-            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
+            position: fixed; inset: 0; background: rgba(20,18,14,0.30);
+            -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+            opacity: 0; visibility: hidden; transition: opacity 0.45s ease, visibility 0.45s ease;
             z-index: 200;
         }
         .vero-drawer-overlay.open { opacity: 1; visibility: visible; }
         .vero-drawer {
-            position: fixed; top: 0; left: 0; height: 100%; width: 340px; max-width: 84vw;
-            background: #ffffff; z-index: 201; transform: translateX(-100%);
-            transition: transform 0.4s cubic-bezier(0.2,0.8,0.2,1);
-            box-shadow: 2px 0 44px rgba(0,0,0,0.12);
+            position: fixed; top: 0; left: 0; height: 100%; width: 400px; max-width: 90vw;
+            background: #faf9f6; color: #1b1916; z-index: 201; transform: translateX(-100%);
+            transition: transform 0.55s cubic-bezier(0.16,1,0.3,1);
+            box-shadow: 30px 0 80px rgba(0,0,0,0.10);
             display: flex; flex-direction: column;
-            padding: calc(22px + env(safe-area-inset-top,0px)) 28px calc(24px + env(safe-area-inset-bottom,0px));
+            padding: calc(30px + env(safe-area-inset-top,0px)) 34px calc(30px + env(safe-area-inset-bottom,0px));
             box-sizing: border-box; direction: ltr; text-align: left;
         }
         .vero-drawer.open { transform: translateX(0); }
+
+        /* Header row: wordmark + hairline close */
         .vero-drawer-head {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 26px;
+            padding-bottom: 30px; border-bottom: 1px solid #e7e2d8; margin-bottom: 14px;
         }
         .vero-drawer-head .vero-drawer-logo {
-            font-size: 15px; font-weight: 700; letter-spacing: 6px;
-            text-transform: uppercase; color: #16150f;
+            font-size: 15px; font-weight: 400; letter-spacing: 8px;
+            text-transform: uppercase; color: #1b1916;
         }
         .vero-drawer-close {
-            background: none; border: none; cursor: pointer; font-size: 26px;
-            line-height: 1; color: #16150f; padding: 0; width: 34px; height: 34px;
+            background: none; border: none; cursor: pointer; padding: 0;
+            width: 30px; height: 30px; position: relative; color: #1b1916;
+            transition: opacity 0.25s ease, transform 0.4s ease;
         }
-        .vero-drawer-close:hover { opacity: 0.5; }
-        .vero-drawer-nav { display: flex; flex-direction: column; }
+        .vero-drawer-close::before, .vero-drawer-close::after {
+            content: ""; position: absolute; left: 4px; right: 4px; top: 50%;
+            height: 1px; background: currentColor;
+        }
+        .vero-drawer-close::before { transform: rotate(45deg); }
+        .vero-drawer-close::after  { transform: rotate(-45deg); }
+        .vero-drawer-close:hover { opacity: 0.55; transform: rotate(90deg); }
+
+        /* Primary navigation — large, light, numbered */
+        .vero-drawer-nav { display: flex; flex-direction: column; counter-reset: navitem; }
         .vero-drawer-nav a {
-            font-size: 19px; font-weight: 400; letter-spacing: 0.5px; color: #16150f;
-            text-decoration: none; padding: 14px 0; border-bottom: 1px solid #ece8e0;
-            transition: opacity 0.2s ease, padding-left 0.2s ease; cursor: pointer;
+            position: relative; display: flex; align-items: baseline; gap: 14px;
+            font-size: 27px; font-weight: 300; letter-spacing: 0.5px; color: #1b1916;
+            text-decoration: none; padding: 15px 0; cursor: pointer;
+            transition: color 0.25s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);
         }
-        .vero-drawer-nav a:hover { opacity: 0.55; padding-left: 5px; }
+        .vero-drawer-nav a.primary::before {
+            counter-increment: navitem; content: counter(navitem,decimal-leading-zero);
+            font-size: 9px; font-weight: 400; letter-spacing: 1.5px; color: #b3ab9c;
+            transform: translateY(-6px);
+        }
+        .vero-drawer-nav a:hover { transform: translateX(8px); color: #6e5a3a; }
+
+        /* Secondary section — personal area, quieter and smaller */
         .vero-drawer-nav .vero-drawer-heading {
-            font-size: 9.5px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase;
-            color: #a8a399; padding: 24px 0 4px;
+            font-size: 9px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+            color: #b3ab9c; padding: 26px 0 6px; margin-top: 12px;
+            border-top: 1px solid #e7e2d8;
         }
+        .vero-drawer-nav a.secondary {
+            font-size: 14px; font-weight: 400; letter-spacing: 1.5px; color: #57524a;
+            padding: 11px 0; text-transform: uppercase;
+        }
+        .vero-drawer-nav a.secondary:hover { color: #1b1916; transform: translateX(6px); }
+
+        /* Footer — socials */
         .vero-drawer-social {
-            margin-top: auto; padding-top: 24px;
-            display: flex; align-items: center; gap: 20px;
+            margin-top: auto; padding-top: 26px;
+            display: flex; align-items: center; gap: 22px;
         }
-        .vero-drawer-social a { color: #a8a399; display: inline-flex; transition: color 0.2s ease; }
-        .vero-drawer-social a:hover { color: #16150f; }
-        .vero-drawer-social svg { width: 20px; height: 20px; }
+        .vero-drawer-social a { color: #b3ab9c; display: inline-flex; transition: color 0.25s ease; }
+        .vero-drawer-social a:hover { color: #1b1916; }
+        .vero-drawer-social svg { width: 18px; height: 18px; }
 
         @media (max-width: 768px) {
             #siteHeader .logo { font-size: 16.67px; letter-spacing: 3px; justify-self: center; }
@@ -1306,14 +1334,14 @@
                 <button class="vero-drawer-close" aria-label="Close menu" onclick="veroCloseDrawer()">&times;</button>
             </div>
             <nav class="vero-drawer-nav">
-                <a onclick="veroCloseDrawer(); showMain()">Home</a>
-                <a onclick="veroCloseDrawer(); veroGoSegment('men')">Men</a>
-                <a onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
-                <a onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
-                <a href="about.html">About Us</a>
+                <a class="primary" onclick="veroCloseDrawer(); showMain()">Home</a>
+                <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('men')">Men</a>
+                <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
+                <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
+                <a class="primary" href="about.html">About</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
-                <a id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
-                <a id="veroLogoutLink" onclick="veroCloseDrawer(); veroLogout()">Log out</a>
+                <a class="secondary" id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
+                <a class="secondary" id="veroLogoutLink" onclick="veroCloseDrawer(); veroLogout()">Log out</a>
             </nav>
             <div class="vero-drawer-social">
                 <a href="#" aria-label="Instagram">${DRAWER_ICONS.instagram}</a>
