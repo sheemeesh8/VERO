@@ -77,9 +77,8 @@
             border-bottom: none;
             padding: 4px 0;
             position: fixed;
-            /* Pushed further down so the phone camera / notch doesn't overlap the
-               icons — respects the device safe-area inset on top of a base offset. */
-            top: calc(env(safe-area-inset-top, 0px) + 34px); left: 0; right: 0;
+            /* Sits a little below the very top edge rather than flush against it. */
+            top: 10px; left: 0; right: 0;
             z-index: 100;
             width: 100%;
             box-shadow: none;
@@ -1288,14 +1287,14 @@
                         <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </a>
-            </div>
-            <div class="header-right">
                 <span class="hdr-mode-pair" data-icon="mode">
                     <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
                         <span class="seg active" id="segArt">Art</span>
                         <span class="seg" id="segFashion">Fashion</span>
                     </div>
                 </span>
+            </div>
+            <div class="header-right">
                 <span class="hdr-cart" data-icon="cart">
                     <a class="icon-btn icon-wrap" href="cart-store.html" title="Cart" aria-label="Cart">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
