@@ -88,7 +88,7 @@
            background and a hairline divider, so it stays legible over any content. */
         #siteHeader {
             top: 0;
-            padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+            padding-top: 2px;
             padding-bottom: 10px;
             background: rgba(255, 255, 255, 0.92);
             -webkit-backdrop-filter: saturate(180%) blur(12px);
