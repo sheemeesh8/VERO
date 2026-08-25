@@ -77,8 +77,9 @@
             border-bottom: none;
             padding: 4px 0;
             position: fixed;
-            /* Sits a little below the very top edge rather than flush against it. */
-            top: 10px; left: 0; right: 0;
+            /* Pushed further down so the phone camera / notch doesn't overlap the
+               icons — respects the device safe-area inset on top of a base offset. */
+            top: calc(env(safe-area-inset-top, 0px) + 34px); left: 0; right: 0;
             z-index: 100;
             width: 100%;
             box-shadow: none;
