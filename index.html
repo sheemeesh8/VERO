@@ -126,20 +126,6 @@
         }
         button, a, .icon-btn { -webkit-tap-highlight-color: transparent; }
 
-        /* ==================== EDIT MODE ==================== */
-        body.edit-mode .editable {
-            background: rgba(0, 66, 37, 0.06);
-            outline: 1px dashed rgba(0, 66, 37, 0.35);
-            outline-offset: 2px;
-            border-radius: 3px;
-            cursor: text;
-        }
-        body.edit-mode .editable:hover { background: rgba(0, 66, 37, 0.12); }
-        body.edit-mode .editable:focus { outline: 1.5px solid #004225; }
-        /* Pencil toggle in the header — turns solid green when active. */
-        #siteHeader .edit-toggle.active,
-        #siteHeader .edit-toggle.active svg { color: #004225 !important; stroke: #004225 !important; }
-
         .container {
             max-width: 1600px;
             margin: 0 auto;
@@ -7181,7 +7167,7 @@
     <!-- ==================== HEADER ==================== -->
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
-    <script src="header.js?v=8"></script>
+    <script src="header.js?v=9"></script>
 
 <!-- ==================== UPLOAD PRODUCT VIEW ==================== -->
     <div id="uploadProductView">
@@ -9304,57 +9290,6 @@
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 350);
             }, 2600);
-        }
-
-        // ==================== EDIT MODE (manual, pencil toggle) ====================
-        // Toggled by the ✏️ button in the header. Turns key text fields into
-        // contentEditable regions; leaving edit mode saves them to localStorage.
-        window.toggleEditMode = function () {
-            const isOn = document.body.classList.toggle('edit-mode');
-            const btn = document.getElementById('editToggle');
-            if (btn) btn.classList.toggle('active', isOn);
-            if (isOn) {
-                makeEditable();
-                showToast('מצב עריכה מופעל ✏️');
-            } else {
-                disableEditable();
-                saveEditedContent();
-                showToast('השינויים נשמרו 💾');
-            }
-        };
-
-        const EDIT_SELECTORS = [
-            '.product-name', '.product-price', '.product-seller',
-            '.featured-text h3', '.featured-price', '.featured-text p',
-            '.cart-card-name', '.cart-card-price', '.category-text h3'
-        ];
-
-        function makeEditable() {
-            document.querySelectorAll(EDIT_SELECTORS.join(',')).forEach(el => {
-                el.contentEditable = 'true';
-                el.classList.add('editable');
-            });
-        }
-
-        function disableEditable() {
-            document.querySelectorAll('.editable').forEach(el => {
-                el.contentEditable = 'false';
-                el.classList.remove('editable');
-            });
-        }
-
-        function saveEditedContent() {
-            const edited = { products: {}, timestamp: new Date().toISOString() };
-            document.querySelectorAll('.product-card').forEach(card => {
-                const id = card.dataset.id;
-                if (!id) return;
-                edited.products[id] = {
-                    name: card.querySelector('.product-name')?.textContent,
-                    price: card.querySelector('.product-price')?.textContent,
-                    seller: card.querySelector('.product-seller')?.textContent
-                };
-            });
-            localStorage.setItem('veroEdits', JSON.stringify(edited));
         }
 
         // Second-hand marketplace: each product is a one-off. Once someone claims

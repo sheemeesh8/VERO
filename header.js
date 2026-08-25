@@ -23,7 +23,7 @@
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['cart', 'mode', 'account', 'edit'];
+    const ICON_ORDER = [];
     const ICON_ORDER_KEY = 'vero_header_icon_order_v2';
 
     function currentIconOrder() {
@@ -1286,46 +1286,7 @@
                     <span class="hdr-textbtn-label">Search</span>
                 </a>
             </div>
-            <div class="header-right">
-                <span class="hdr-cart" data-icon="cart">
-                    <a class="icon-btn icon-wrap" href="cart-store.html" title="Cart" aria-label="Cart">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                        </svg>
-                        <span class="badge" id="cartBadge"></span>
-                    </a>
-                </span>
-                <span class="hdr-mode-pair" data-icon="mode">
-                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
-                        <span class="seg active" id="segArt">Art</span>
-                        <span class="seg" id="segFashion">Fashion</span>
-                    </div>
-                </span>
-                <span class="hdr-account" data-icon="account">
-                    <!-- Personal-area account: the profile picture from vero_profile,
-                         shown by default. Clicking it opens the personal area. -->
-                    <button class="icon-btn hdr-avatar-btn" title="My Account (hold to switch profile)">
-                        <span class="hdr-avatar" id="hdrAvatar">V</span>
-                    </button>
-                    <!-- Switch profile: jump to the separate Seller Area (business) account. -->
-                    <button class="icon-btn hdr-switch" title="Switch account" onclick="veroSwitchAccount()">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/>
-                        </svg>
-                    </button>
-                </span>
-                <span class="hdr-edit" data-icon="edit">
-                    <!-- Manual edit mode: turns key text fields on the page into
-                         editable regions; leaving edit mode saves them. -->
-                    <button class="icon-btn edit-toggle" id="editToggle" onclick="if(window.toggleEditMode)toggleEditMode()" title="Edit Mode" aria-label="Edit Mode">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 20h9"></path>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-                        </svg>
-                    </button>
-                </span>
-            </div>
+            <div class="header-right"></div>
         </div>
     `;
 
