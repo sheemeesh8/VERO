@@ -930,7 +930,7 @@
             flex: 1 1 50%; min-width: 0;
             display: flex; align-items: center; gap: 14px;
             border: 1.5px solid #111; border-radius: 999px;
-            height: 58px; padding: 0 26px; box-sizing: border-box;
+            height: 70px; padding: 0 30px; box-sizing: border-box;
         }
         @media (max-width: 620px) { .vsp-searchbar { flex-direction: column; } }
         .vsp-searchfield {
@@ -1226,8 +1226,9 @@
         .vsp-apply:hover { background: #fff; color: #111; }
         @media (max-width: 600px) {
             .vsp-inner { padding: 48px 18px 80px; }
-            /* Keep both search bars the same medium height on phones. */
-            .vsp-searchbar, .vsp-searchfield, .vsp-user-search { height: 52px; }
+            /* Product bar taller than the user bar on phones. */
+            .vsp-searchbar, .vsp-searchfield { height: 62px; }
+            .vsp-user-search { height: 52px; }
         }
 `;
 
