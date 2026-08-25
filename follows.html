@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO — Network</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1c1c1c; background: #fff; overflow-x: hidden;
+        }
+        .back {
+            position: fixed; top: 26px; right: 26px; z-index: 40;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border: 1.4px solid #000; border-radius: 999px;
+            font-size: 10px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
+            background: #fff; transition: background 0.25s, color 0.25s;
+        }
+        .back:hover { background: #000; color: #fff; }
+
+        .wrap {
+            padding: 96px 22px 40px;
+            animation: fadeIn 0.6s ease 0.05s both;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .head-title { font-size: clamp(40px, 12vw, 58px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+
+        /* Segmented tab control: Following / Followers. */
+        .seg {
+            display: flex; margin: 26px 0 18px;
+            border: 1.4px solid #111; border-radius: 999px; overflow: hidden;
+        }
+        .seg-btn {
+            flex: 1 1 0; padding: 14px 8px; border: none; background: #fff; cursor: pointer;
+            font-family: inherit; font-size: 11px; font-weight: 500; letter-spacing: 2px;
+            text-transform: uppercase; color: #111; transition: background 0.2s, color 0.2s;
+        }
+        .seg-btn .seg-count { opacity: 0.55; margin-left: 6px; font-weight: 400; }
+        .seg-btn.on { background: #111; color: #fff; }
+        .seg-btn.on .seg-count { opacity: 0.7; }
+
+        /* Search field — filters the active list. */
+        .search { position: relative; margin-bottom: 20px; }
+        .search svg {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            width: 18px; height: 18px; stroke: #9a9a95; stroke-width: 1.7; fill: none;
+        }
+        .search input {
+            width: 100%; padding: 15px 16px 15px 44px;
+            border: 1.4px solid rgba(0,0,0,0.16); border-radius: 999px;
+            font-family: inherit; font-size: 14px; color: #1c1c1c; background: #fff;
+        }
+        .search input:focus { outline: none; border-color: #111; }
+
+        .list { display: flex; flex-direction: column; gap: 2px; }
+        .row {
+            display: flex; align-items: center; gap: 14px; padding: 12px 4px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .avatar {
+            flex: 0 0 auto; width: 50px; height: 50px; border-radius: 50%;
+            background: #ece9e3 center / cover no-repeat;
+            display: grid; place-items: center;
+            font-size: 17px; font-weight: 500; color: #7c7469;
+        }
+        .who { min-width: 0; flex: 1; }
+        .who .name { font-size: 15px; font-weight: 500; letter-spacing: 0.2px; }
+        .who .handle { font-size: 12px; color: #9a9a95; margin-top: 2px; }
+        .act {
+            flex: 0 0 auto; padding: 9px 18px; border-radius: 999px; cursor: pointer;
+            font-family: inherit; font-size: 10px; font-weight: 500; letter-spacing: 1.5px;
+            text-transform: uppercase; border: 1.4px solid #111;
+            background: #111; color: #fff; transition: background 0.2s, color 0.2s;
+        }
+        .act.following { background: #fff; color: #111; }
+        .empty { padding: 40px 6px; color: #9a9a95; font-size: 13px; text-align: center; }
+    </style>
+</head>
+<body>
+    <a class="back" href="buyer-profile.html" onclick="if(history.length>1){history.back();return false;}">&#8592; BACK</a>
+
+    <div class="wrap">
+        <h1 class="head-title">Network</h1>
+
+        <div class="seg" id="seg">
+            <button class="seg-btn on" data-tab="following">Following <span class="seg-count" id="cntFollowing">0</span></button>
+            <button class="seg-btn" data-tab="followers">Followers <span class="seg-count" id="cntFollowers">0</span></button>
+        </div>
+
+        <div class="search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+            <input type="search" id="q" placeholder="Search people…" autocomplete="off">
+        </div>
+
+        <div class="list" id="list"></div>
+    </div>
+
+    <script>
+        // ===================== NETWORK DATA =====================
+        // People this member follows, and people who follow them. In the real build
+        // these come from the account; here we read localStorage with a demo fallback.
+        const DEMO_FOLLOWING = [
+            { name: 'Studio Noir',   handle: '@studionoir',  following: true },
+            { name: 'Maya Levi',     handle: '@mayalevi',    following: true },
+            { name: 'Urban Thread',  handle: '@urbanthread', following: true },
+            { name: 'Daniel Cohen',  handle: '@danielc',     following: true },
+            { name: 'Gallery Nine',  handle: '@gallerynine', following: true },
+            { name: 'Noa Bar',       handle: '@noabar',      following: true }
+        ];
+        const DEMO_FOLLOWERS = [
+            { name: 'Tom Aviv',      handle: '@tomaviv',     following: false },
+            { name: 'Studio Vero',   handle: '@studiovero',  following: true },
+            { name: 'Lior Peretz',   handle: '@liorp',       following: false },
+            { name: 'Art House',     handle: '@arthouse',    following: false },
+            { name: 'Shira Ben',     handle: '@shiraben',    following: true }
+        ];
+        function load(key, demo) {
+            try { const v = JSON.parse(localStorage.getItem(key)); if (Array.isArray(v) && v.length) return v; } catch (e) {}
+            return demo;
+        }
+        const DATA = {
+            following: load('vero_following', DEMO_FOLLOWING),
+            followers: load('vero_followers', DEMO_FOLLOWERS)
+        };
+
+        let tab = (location.hash.replace('#', '') === 'followers') ? 'followers' : 'following';
+        let query = '';
+
+        const listEl = document.getElementById('list');
+        const initials = n => n.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+        function render() {
+            document.getElementById('cntFollowing').textContent = DATA.following.length;
+            document.getElementById('cntFollowers').textContent = DATA.followers.length;
+            document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+
+            const people = DATA[tab].filter(p =>
+                !query || p.name.toLowerCase().includes(query) || p.handle.toLowerCase().includes(query));
+
+            if (!people.length) {
+                listEl.innerHTML = `<div class="empty">${query ? 'No people match your search.' : 'No one here yet.'}</div>`;
+                return;
+            }
+            listEl.innerHTML = people.map((p, i) => `
+                <div class="row">
+                    <div class="avatar">${initials(p.name)}</div>
+                    <div class="who">
+                        <div class="name">${p.name}</div>
+                        <div class="handle">${p.handle}</div>
+                    </div>
+                    <button class="act ${p.following ? 'following' : ''}" data-name="${p.name}">
+                        ${p.following ? 'Following' : 'Follow'}
+                    </button>
+                </div>`).join('');
+        }
+
+        // Tab switching.
+        document.getElementById('seg').addEventListener('click', e => {
+            const b = e.target.closest('.seg-btn'); if (!b) return;
+            tab = b.dataset.tab; render();
+        });
+        // Live search over the active list.
+        document.getElementById('q').addEventListener('input', e => {
+            query = e.target.value.trim().toLowerCase(); render();
+        });
+        // Follow / Unfollow toggle in either list.
+        listEl.addEventListener('click', e => {
+            const btn = e.target.closest('.act'); if (!btn) return;
+            const person = DATA[tab].find(p => p.name === btn.dataset.name);
+            if (person) { person.following = !person.following; render(); }
+        });
+
+        render();
+    </script>
+</body>
+</html>

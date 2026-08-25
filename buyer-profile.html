@@ -555,16 +555,28 @@
             position: absolute; left: 0; right: 0; bottom: 100%;
             height: 46px; pointer-events: none; display: none;
             background:
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='28' viewBox='0 0 200 28' preserveAspectRatio='none'%3E%3Cpath d='M0 16 C 33 4 66 4 100 16 C 133 28 166 28 200 16 L200 28 L0 28 Z' fill='%23ffffff'/%3E%3C/svg%3E") repeat-x bottom / 200px 28px,
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='28' viewBox='0 0 200 28' preserveAspectRatio='none'%3E%3Cpath d='M0 20 C 50 10 90 30 130 20 C 165 12 185 24 200 20 L200 28 L0 28 Z' fill='rgba(255,255,255,0.55)'/%3E%3C/svg%3E") repeat-x bottom / 160px 24px;
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='28' viewBox='0 0 200 28' preserveAspectRatio='none'%3E%3Cpath d='M0 16 C 33 4 66 4 100 16 C 133 28 166 28 200 16 L200 28 L0 28 Z' fill='%23ffffff'/%3E%3C/svg%3E") repeat-x bottom / 200px 28px;
             animation: pfWave 6s linear infinite;
         }
         @keyframes pfWave {
-            from { background-position: 0 bottom, 0 bottom; }
-            to   { background-position: -200px bottom, 160px bottom; }
+            from { background-position: 0 bottom; }
+            to   { background-position: -200px bottom; }
         }
         .hero.is-live .pf-waves { display: block; }
         .hero.is-live .pf-panel::before { display: none; }   /* waves take over from the blend */
+        /* Equalise the two big lines so the surname and the stat label sit on the
+           same baseline. */
+        .pf-first, .pf-fnum { line-height: 40px; }
+        .pf-last, .pf-flbl { margin-top: 6px; }
+        /* Rotating stat: Followers → Following, one at a time. */
+        #heroStats { position: relative; min-width: 122px; min-height: 56px; }
+        #heroStats .hero-stat {
+            position: absolute; top: 0; right: 0; left: auto; bottom: auto;
+            display: flex; flex-direction: column; align-items: flex-end; text-align: right;
+            opacity: 0; transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease; pointer-events: none;
+        }
+        #heroStats .hero-stat.is-active { opacity: 1; transform: none; }
         /* Portrait crop — keep the face in view near the top of the frame. */
         .hero { background-position: center 18%; }
     </style>
@@ -607,9 +619,16 @@
                         <span class="pf-first" id="storeName">Your Name</span>
                         <span class="pf-last" id="storeLast"></span>
                     </div>
-                    <div class="pf-follow">
-                        <span class="pf-fnum" id="followers">0</span>
-                        <span class="pf-flbl">Followers</span>
+                    <!-- Followers → Following, one stat at a time (auto-rotating). -->
+                    <div class="pf-follow" id="heroStats">
+                        <div class="hero-stat is-active">
+                            <span class="pf-fnum" id="followers">0</span>
+                            <span class="pf-flbl">Followers</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="pf-fnum" id="following">0</span>
+                            <span class="pf-flbl">Following</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -660,6 +679,7 @@
             name: 'Your Name',
             tag: 'A short line about you.',
             followers: 0,
+            following: 0,             // how many people this member follows
             hero: 'women-hero.jpg',   // hero background, set in My Profile
             avatar: '',               // profile picture, set in My Profile
             // Optional promo banner — only shown if the buyer turns one on. It is
@@ -688,6 +708,7 @@
             if (cfg.hero)   BUYER.hero = cfg.hero;
             if (cfg.avatar) BUYER.avatar = cfg.avatar;
             if (typeof cfg.followers === 'number') BUYER.followers = cfg.followers;
+            if (typeof cfg.following === 'number') BUYER.following = cfg.following;
             if (cfg.socials) BUYER.socials = cfg.socials;
             if (cfg.banner)  BUYER.banner = Object.assign({}, BUYER.banner, cfg.banner);
             if (Array.isArray(cfg.products)) {
@@ -748,6 +769,28 @@
             document.getElementById('storeLast').textContent  = parts.join(' ');
         })();
         document.getElementById('followers').textContent = BUYER.followers.toLocaleString('en-US');
+        document.getElementById('following').textContent = (Number(BUYER.following) || 0).toLocaleString('en-US');
+        // Hero stats slider — rotate Followers ↔ Following every 4 seconds.
+        (function(){
+            const slides = document.querySelectorAll('#heroStats .hero-stat');
+            if (slides.length < 2) return;
+            let i = 0;
+            setInterval(function(){
+                slides[i].classList.remove('is-active');
+                i = (i + 1) % slides.length;
+                slides[i].classList.add('is-active');
+            }, 4000);
+        })();
+        // Tapping the stat opens the Network page on the matching tab.
+        (function wireStatsLink(){
+            const stats = document.getElementById('heroStats');
+            if (!stats) return;
+            stats.style.cursor = 'pointer';
+            stats.addEventListener('click', function(){
+                const onFollowing = stats.querySelector('.hero-stat.is-active #following');
+                location.href = 'follows.html#' + (onFollowing ? 'following' : 'followers');
+            });
+        })();
         // The portrait fills the card — prefer the profile picture, fall back to the hero.
         document.getElementById('hero').style.backgroundImage = `url('${BUYER.avatar || BUYER.hero}')`;
         document.getElementById('itemCount').textContent = PRODUCTS.length;
