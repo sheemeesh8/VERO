@@ -469,7 +469,7 @@
         /* While the header floats transparent over the hero image, the logo is white;
            once the header turns solid (scrolled), it reverts to black (rule above). */
         #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: brightness(0) invert(1) !important; }
-        #siteHeader .header-right { display: flex; gap: 26px; align-items: center; flex: 1; justify-content: flex-end; }
+        #siteHeader .header-right { display: flex; gap: 20px; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
            the wrapper itself is transparent to layout — both controls are direct flex
@@ -478,7 +478,7 @@
         /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {
             position: relative; display: inline-block; box-sizing: border-box;
-            width: 46px; height: 24px; flex: 0 0 auto;
+            width: 40px; height: 21px; flex: 0 0 auto;
             background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
             /* Not "all": border-color is mode-driven and must switch immediately when
                the mode flips — transitioning it left the switch showing the old
@@ -487,12 +487,12 @@
         }
         #siteHeader .toggle-category::before {
             content: ''; position: absolute; top: 3px; left: 3px;
-            width: 18px; height: 18px; border-radius: 50%; background: #111; z-index: 0;
+            width: 15px; height: 15px; border-radius: 50%; background: #111; z-index: 0;
             /* Only the slide animates. The knob's colour is mode-driven, same as the
                track's border, and must switch instantly rather than fade. */
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(22px); }
+        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(19px); }
         /* labels kept in the markup for state/a11y, but not shown */
         #siteHeader .toggle-category .seg {
             position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -501,18 +501,18 @@
         #siteHeader .toggle-category:hover { border-color: rgba(0, 0, 0, 0.45); }
         #siteHeader .icon-btn {
             background: none; border: none; cursor: pointer; font-size: 26.67px;
-            transition: transform 0.2s; color: #111; width: 46px; height: 46px;
+            transition: transform 0.2s; color: #111; width: 38px; height: 38px;
             display: flex; align-items: center; justify-content: center; padding: 0;
         }
         /* Every icon glyph in the header shares one size. */
-        #siteHeader .icon-btn svg { width: 24px; height: 24px; stroke: #111 !important; fill: none; }
+        #siteHeader .icon-btn svg { width: 20px; height: 20px; stroke: #111 !important; fill: none; }
         #siteHeader .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         #siteHeader .icon-btn:hover { transform: scale(1.1); opacity: 0.65; }
         /* Account cluster: personal-area profile picture + a switch-profile button. */
         #siteHeader .hdr-account { display: inline-flex; align-items: center; gap: 2px; }
-        #siteHeader .hdr-avatar-btn { width: 40px; height: 40px; }
+        #siteHeader .hdr-avatar-btn { width: 34px; height: 34px; }
         #siteHeader .hdr-avatar {
-            width: 24px; height: 24px; border-radius: 50%; overflow: hidden;
+            width: 20px; height: 20px; border-radius: 50%; overflow: hidden;
             border: 1.5px solid currentColor; background: #e6e4df center / cover no-repeat;
             display: grid; place-items: center; font-size: 10.50px; font-weight: 500;
             color: currentColor; text-transform: uppercase; line-height: 1;
@@ -524,8 +524,8 @@
             border-color: #1DA65A !important; border-width: 2.5px;
             box-shadow: 0 0 0 2px rgba(29,166,90,0.25);
         }
-        #siteHeader .hdr-switch { width: 26px; height: 26px; }
-        #siteHeader .hdr-switch svg { width: 24px; height: 24px; stroke: currentColor !important; fill: none; }
+        #siteHeader .hdr-switch { width: 22px; height: 22px; }
+        #siteHeader .hdr-switch svg { width: 20px; height: 20px; stroke: currentColor !important; fill: none; }
         /* Long-press profile switcher (Instagram-style): a small card listing the
            personal + business accounts; tap one to switch to it. */
         .vero-acct-switcher {
