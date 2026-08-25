@@ -504,6 +504,99 @@
             transform-origin: top left;
         }
         }  /* end DISABLED manual-placement @media */
+        /* ===================== NEW PROFILE CARD =====================
+           Full-bleed photo with a white panel pinned to the bottom: name (first
+           line big, surname small) + follower count, then a full-width black pill
+           button. A slim top bar over the photo carries Share + Back. Appended
+           last so it wins over the older hero styles (incl. the mobile block). */
+        .back { display: none !important; }             /* replaced by the in-hero Back arrow */
+        .hero {
+            height: 100vh; height: 100dvh; min-height: 0;
+            flex-direction: column; justify-content: flex-end; align-items: stretch;
+            border-bottom: none;
+        }
+        .hero::after {
+            inset: 0 0 auto 0; height: 130px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.28), rgba(0,0,0,0));
+        }
+        .pf-topbar {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: max(34px, calc(env(safe-area-inset-top, 0px) + 14px)) 14px 12px;
+            direction: ltr; flex-direction: row-reverse;   /* Share left, Back right */
+        }
+        .tb-ico {
+            width: 40px; height: 40px; flex: 0 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            border: none; background: none; color: #fff; cursor: pointer;
+            text-decoration: none; transition: opacity 0.2s;
+        }
+        .tb-ico:active { opacity: 0.5; }
+        .tb-ico svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+        .pf-panel {
+            position: relative; z-index: 2;
+            background: #fff; color: #111; direction: ltr; text-align: left;
+            padding: 26px 26px calc(26px + env(safe-area-inset-bottom, 0px));
+        }
+        .pf-idrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+        .pf-names { display: flex; flex-direction: column; min-width: 0; }
+        .pf-first {
+            font-size: 34px; font-weight: 400; letter-spacing: 6px; line-height: 1;
+            color: #171717; text-transform: uppercase; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+        .pf-last {
+            margin-top: 9px; font-size: 12px; font-weight: 400; letter-spacing: 4px;
+            color: #9a9a95; text-transform: uppercase;
+        }
+        .pf-last:empty { display: none; }
+        .pf-follow { flex: none; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+        .pf-follow .hf-num, .pf-fnum {
+            font-size: 34px; font-weight: 400; letter-spacing: 2px; line-height: 1; color: #171717;
+        }
+        .pf-flbl { margin-top: 9px; font-size: 11px; letter-spacing: 3px; color: #9a9a95; text-transform: uppercase; }
+        /* Sticky action bar pinned to the bottom of the viewport: Follow + Message. */
+        .pf-actionbar {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+            display: flex; gap: 12px; align-items: center; direction: ltr;
+            padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 0px));
+            background: #fff; border-top: 1px solid rgba(0,0,0,0.08);
+        }
+        .pf-actionbar .follow-btn, .pf-msg {
+            flex: 1 1 0; margin: 0; padding: 17px; border-radius: 999px;
+            font-family: inherit; font-size: 13px; font-weight: 500; letter-spacing: 2px;
+            text-transform: uppercase; text-align: center; cursor: pointer;
+        }
+        .follow-btn { border: 1.5px solid #111; background: #111; color: #fff; }
+        .follow-btn:active { opacity: 0.85; }
+        .follow-btn.following { background: #fff; color: #111; }
+        .pf-msg { border: 1.5px solid #111; background: #fff; color: #111; }
+        .pf-msg:active { opacity: 0.85; }
+        /* The white data area takes the bottom third; the photo fills the top two-thirds. */
+        .pf-panel {
+            height: 33.34dvh; box-sizing: border-box;
+            display: flex; flex-direction: column; justify-content: center;
+            padding-top: 22px; padding-bottom: 78px;   /* clear the fixed action bar */
+        }
+        .feed { padding-bottom: 96px; }
+        /* Soft, short fade so the white panel melts into the photo without
+           reaching the name/followers text below it. */
+        .pf-panel::before {
+            content: ""; position: absolute; left: 0; right: 0; bottom: 100%;
+            height: 64px; pointer-events: none;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 70%, #fff 100%);
+        }
+        /* Portrait crop — keep the subject in view near the top of the frame. */
+        .hero { background-position: center 18%; }
+        /* Rotating stat in the card: Followers → Following → Products, one at a time. */
+        #heroStats { position: relative; min-width: 122px; min-height: 56px; }
+        #heroStats .hero-stat {
+            position: absolute; top: 0; right: 0; left: auto; bottom: auto;
+            display: flex; flex-direction: column; align-items: flex-end; text-align: right;
+            opacity: 0; transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease; pointer-events: none;
+        }
+        #heroStats .hero-stat.is-active { opacity: 1; transform: none; }
     </style>
     <link rel="stylesheet" href="product-card.css">
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
@@ -528,35 +621,50 @@
              big and thin at bottom-left, its OPEN status + Follow beside it, and
              the follower count set large at bottom-right. -->
         <div class="hero" id="hero">
-            <span class="verified-check" id="verifiedCheck" title="VERO Verified Store" aria-label="VERO Verified Store">✓</span>
-            <div class="hero-inner">
-                <div class="hero-row">
-                    <div class="hero-lead">
-                        <h1 class="hero-name" id="storeName">Studio Noir</h1>
-                        <div class="hero-meta">
-                            <span class="hero-status" id="storeStatus">Open</span>
-                            <button class="follow-btn" id="followBtn">Follow</button>
-                            <button class="hero-socials-btn" id="socialsBtn" type="button" aria-haspopup="dialog">Socials</button>
-                        </div>
+            <!-- Top bar over the photo: Back (left) and Share (right). -->
+            <div class="pf-topbar">
+                <a class="tb-ico" href="index.html" aria-label="Back" onclick="if(history.length>1){history.back();return false;}">
+                    <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+                </a>
+                <button class="tb-ico" type="button" id="shareBtn" aria-label="Share">
+                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                </button>
+            </div>
+            <!-- White panel: name + followers, then the action button. -->
+            <div class="pf-panel">
+                <div class="pf-idrow">
+                    <div class="pf-names">
+                        <span class="pf-first" id="storeName">Studio Noir</span>
+                        <span class="pf-last" id="storeLast"></span>
                     </div>
-                    <!-- Followers / Following / Products — one big letterspaced stat
-                         at a time, auto-rotating (see the #heroStats rotator). -->
-                    <div class="hero-followers" id="heroStats">
+                    <!-- Followers / Following / Products — one stat at a time,
+                         auto-rotating (see the #heroStats rotator). -->
+                    <div class="pf-follow" id="heroStats">
                         <div class="hero-stat is-active">
-                            <span class="hf-num" id="followers">1,284</span>
-                            <span class="hf-lbl">Followers</span>
+                            <span class="pf-fnum" id="followers">1,284</span>
+                            <span class="pf-flbl">Followers</span>
                         </div>
                         <div class="hero-stat">
-                            <span class="hf-num" id="following">0</span>
-                            <span class="hf-lbl">Following</span>
+                            <span class="pf-fnum" id="following">0</span>
+                            <span class="pf-flbl">Following</span>
                         </div>
                         <div class="hero-stat">
-                            <span class="hf-num" id="itemCount">0</span>
-                            <span class="hf-lbl">Products</span>
+                            <span class="pf-fnum" id="itemCount">0</span>
+                            <span class="pf-flbl">Products</span>
                         </div>
                     </div>
                 </div>
             </div>
+            <!-- Hidden stubs kept so existing scripts still find their elements. -->
+            <span id="verifiedCheck" hidden></span>
+            <span id="storeStatus" hidden>Open</span>
+            <button id="socialsBtn" hidden></button>
+        </div>
+
+        <!-- Sticky bottom action bar: Message + Follow. -->
+        <div class="pf-actionbar">
+            <button class="pf-msg" type="button" id="messageBtn">Message</button>
+            <button class="follow-btn" id="followBtn">Follow</button>
         </div>
 
         <!-- CATEGORY FILTER BAR — the clothing-type categories the store offers
@@ -800,7 +908,27 @@
         }
 
         // Hero + ad + header text.
-        document.getElementById('storeName').textContent = STORE.name;
+        // Split the name so the card shows the first word large and the rest small.
+        (function setName(){
+            const parts = String(STORE.name || '').trim().split(/\s+/);
+            document.getElementById('storeName').textContent = parts.shift() || 'Store';
+            document.getElementById('storeLast').textContent  = parts.join(' ');
+        })();
+        // Message — open the chats page to start a conversation with this store.
+        (function wireMessage(){
+            const btn = document.getElementById('messageBtn');
+            if (btn) btn.addEventListener('click', function(){ location.href = 'chats.html'; });
+        })();
+        // Share — native share sheet when available, else copy the link.
+        (function wireShare(){
+            const btn = document.getElementById('shareBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function(){
+                const data = { title: STORE.name, url: location.href };
+                if (navigator.share) { navigator.share(data).catch(function(){}); }
+                else if (navigator.clipboard) { navigator.clipboard.writeText(location.href); }
+            });
+        })();
         document.getElementById('followers').textContent = STORE.followers.toLocaleString('en-US');
         document.getElementById('following').textContent = (Number(STORE.following) || 0).toLocaleString('en-US');
         document.getElementById('hero').style.backgroundImage = `url('${STORE.hero}')`;
