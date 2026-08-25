@@ -1222,7 +1222,8 @@
         .vsp-apply:hover { background: #fff; color: #111; }
         @media (max-width: 600px) {
             .vsp-inner { padding: 48px 18px 80px; }
-            .vsp-searchbar { height: 52px; }
+            /* Keep both search bars the same medium height on phones. */
+            .vsp-searchbar, .vsp-searchfield, .vsp-user-search { height: 52px; }
         }
 `;
 
