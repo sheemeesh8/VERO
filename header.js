@@ -510,6 +510,7 @@
         #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: brightness(0) invert(1) !important; }
         #siteHeader .header-right { display: flex; gap: 0; align-items: center; flex: 1; justify-content: flex-end; }
         #siteHeader .header-right .icon-btn { width: 30px; height: 34px; }
+        #siteHeader .header-right .hdr-avatar-btn { width: 30px; height: 34px; }
         #siteHeader .header-right .icon-wrap { margin-left: 0; }
         /* The switch and the plus keep their shared styling through this wrapper, but
            the wrapper itself is transparent to layout — both controls are direct flex
