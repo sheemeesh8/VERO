@@ -1033,7 +1033,7 @@
         .vsp-searchbar, .vsp-users { transition: opacity 0.3s ease; }
         .vsp-faded { opacity: 0; pointer-events: none; }
         /* Product filters stay hidden until the product search bar is focused. */
-        .vsp-cols.vsp-collapsed { display: none; }
+        .vsp-cols.vsp-collapsed { display: none !important; }
         .vsp-alt-filter.vsp-collapsed { display: none !important; }
         .vsp-cols.vsp-shown { animation: vspColsIn 0.4s ease both; }
         @keyframes vspColsIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
