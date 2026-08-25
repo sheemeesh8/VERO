@@ -4314,6 +4314,22 @@
         .acat-filter.active { color: #111; font-weight: 600; }
         .acat-filter .x { color: #111; }
 
+        /* ---- Price + upload-time sort controls (replace the tag chips) ---- */
+        .acat-sort {
+            display: flex; justify-content: center; flex-wrap: wrap;
+            gap: 12px; width: 100%;
+        }
+        .acat-sort-sel {
+            font: inherit; letter-spacing: 1.5px; text-transform: uppercase;
+            color: #111; background-color: #F2F0EF;
+            border: 1px solid rgba(0,0,0,.14); border-radius: 999px;
+            padding: 10px 34px 10px 16px; cursor: pointer;
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat; background-position: right 14px center;
+        }
+        .acat-sort-sel:focus { outline: none; border-color: rgba(0,0,0,.35); }
+
         /* ---- Grid ---- */
         #acatContent, #resultsContent { padding: 34px 7vw 90px; }
         /* Hold the category slider to a fixed 1600px-class column rather than letting
@@ -12112,6 +12128,9 @@
                     icon: meta.icon,
                     seller: sellers[i % sellers.length],
                     rating: parseFloat((4.4 + ((i * 3) % 6) / 10).toFixed(1)),
+                    // Deterministic "uploaded" time so the upload-time sort is stable:
+                    // item 0 is the newest, each later item an hour older.
+                    uploaded: Date.now() - i * 3600000,
                     type
                 };
             });
@@ -12248,6 +12267,41 @@
             }
         }
 
+        // Category listing state + price/upload-time sorting.
+        let acatCtx = null;
+        let acatAllItems = [];
+        function acatPriceNum(p) { return parseFloat(String(p).replace(/[^\d.]/g, '')) || 0; }
+        function acatApplySort() { renderAcatContent(); }
+        function renderAcatContent() {
+            if (!acatCtx) return;
+            const type = acatCtx.type;
+            const priceSel = document.getElementById('acatSortPrice');
+            const timeSel = document.getElementById('acatSortTime');
+            const price = priceSel ? priceSel.value : '';
+            const time = timeSel ? timeSel.value : '';
+            let items = acatAllItems.slice();
+            // Time first, then price — so a chosen price order always wins.
+            if (time === 'new') items.sort((a, b) => b.uploaded - a.uploaded);
+            else if (time === 'old') items.sort((a, b) => a.uploaded - b.uploaded);
+            if (price === 'asc') items.sort((a, b) => acatPriceNum(a.price) - acatPriceNum(b.price));
+            else if (price === 'desc') items.sort((a, b) => acatPriceNum(b.price) - acatPriceNum(a.price));
+
+            const content = document.getElementById('acatContent');
+            content.innerHTML = '';
+            for (let b = 0; b < ACAT_BLOCKS; b++) {   // 10 products per block, each followed by a promo slider
+                const slice = items.slice(b * 10, b * 10 + 10);
+                if (!slice.length) break;
+                const grid = document.createElement('div');
+                grid.className = 'acat-grid';
+                grid.innerHTML = slice.map(productCardHTML).join('');
+                content.appendChild(grid);
+
+                const slider = createPromoSlider(buildCategoryFeatured(acatCtx.catName, type, b * 5));
+                content.appendChild(slider);
+                promoGo(slider.dataset.uid, 0);
+            }
+        }
+
         function showCategoryPage(catName, type) {
             lastCategory = { name: catName, type };
             // An art category page repaints its dark boxes burgundy.
@@ -12268,28 +12322,28 @@
             hero.className = 'cat-hero cat-hero--plain';
             hero.innerHTML = '';
 
-            // Filter tags (visual — first three active, last muted).
-            const tags = type === 'clothing'
-                ? [catName, 'Fashion', 'Every day', 'Miniatures']
-                : [catName, 'Modern', 'Classic', 'Prints'];
-            document.getElementById('acatFilters').innerHTML = tags.map((t, i) =>
-                `<button class="acat-filter${i < 3 ? ' active' : ''}">${i < 3 ? '<span class="x">&times;</span> ' : ''}${t}</button>`
-            ).join('');
+            // Sort controls — filter the listing by price and by upload time.
+            document.getElementById('acatFilters').innerHTML =
+                '<div class="acat-sort">'
+                + '<select class="acat-sort-sel" id="acatSortPrice" onchange="acatApplySort()" aria-label="Sort by price">'
+                +   '<option value="">Price</option>'
+                +   '<option value="asc">Price: Low to High</option>'
+                +   '<option value="desc">Price: High to Low</option>'
+                + '</select>'
+                + '<select class="acat-sort-sel" id="acatSortTime" onchange="acatApplySort()" aria-label="Sort by upload time">'
+                +   '<option value="">Upload time</option>'
+                +   '<option value="new">Newest first</option>'
+                +   '<option value="old">Oldest first</option>'
+                + '</select>'
+                + '</div>';
 
-            // Product grid — a promoted slider is inserted after every 10 products.
-            const content = document.getElementById('acatContent');
-            content.innerHTML = '';
-            for (let b = 0; b < ACAT_BLOCKS; b++) {   // 10 products per block, each followed by a promo slider
-                const items = buildCategoryItems(catName, type, 10, b * 10);
-                const grid = document.createElement('div');
-                grid.className = 'acat-grid';
-                grid.innerHTML = items.map(productCardHTML).join('');
-                content.appendChild(grid);
-
-                const slider = createPromoSlider(buildCategoryFeatured(catName, type, b * 5));
-                content.appendChild(slider);
-                promoGo(slider.dataset.uid, 0);
+            // Build the whole listing once, then render it (sorted on demand).
+            acatCtx = { catName, type };
+            acatAllItems = [];
+            for (let b = 0; b < ACAT_BLOCKS; b++) {
+                acatAllItems.push.apply(acatAllItems, buildCategoryItems(catName, type, 10, b * 10));
             }
+            renderAcatContent();
 
             // Punch the header hole once the hero box has its final size.
             syncHeaderHole();
