@@ -1032,6 +1032,10 @@
         /* Focusing one bar fades the other out (and back in on blur). */
         .vsp-searchbar, .vsp-users { transition: opacity 0.3s ease; }
         .vsp-faded { opacity: 0; pointer-events: none; }
+        /* Product filters stay hidden until the product search bar is focused. */
+        .vsp-cols.vsp-collapsed { display: none; }
+        .vsp-cols.vsp-shown { animation: vspColsIn 0.4s ease both; }
+        @keyframes vspColsIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         /* Match .vsp-searchfield exactly so the two rows read as one stacked pair. */
         .vsp-user-search {
             width: 100%; display: flex; align-items: center; gap: 14px;
@@ -1503,7 +1507,7 @@
                     </div>
                     <div class="vsp-user-results" id="vspUserResults"></div>
                 </div>
-                <div class="vsp-cols">
+                <div class="vsp-cols vsp-collapsed">
                     <!-- Left half of the page: the sequential choices. -->
                     <div class="vsp-col">
                         <div class="vsp-step show" data-step="gender">
@@ -1596,6 +1600,12 @@
         const users = document.querySelector('#veroSearchPage .vsp-users');
         if (bar) bar.classList.toggle('vsp-faded', which === 'user');
         if (users) users.classList.toggle('vsp-faded', which === 'product');
+        // Product filters appear only when the product bar is focused.
+        const cols = document.querySelector('#veroSearchPage .vsp-cols');
+        if (cols) {
+            if (which === 'product') { cols.classList.remove('vsp-collapsed'); cols.classList.add('vsp-shown'); }
+            else if (which === 'user') { cols.classList.add('vsp-collapsed'); }
+        }
     };
     window.vspRenderUsers = function (q) {
         const el = document.getElementById('vspUserResults');
