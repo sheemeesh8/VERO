@@ -23,7 +23,7 @@
     //   veroResetIconOrder()          // back to the default below
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = [];
+    const ICON_ORDER = ['mode', 'cart', 'account'];
     const ICON_ORDER_KEY = 'vero_header_icon_order_v2';
 
     function currentIconOrder() {
@@ -1274,8 +1274,45 @@
     // ---- Markup (identical everywhere) ----
     const MARKUP = `
         <div class="header-container">
-            <div class="header-left"></div>
-            <div class="header-right"></div>
+            <div class="header-left">
+                <a class="icon-btn" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu" title="Menu">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                        <line x1="3" y1="7" x2="21" y2="7"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="17" x2="21" y2="17"></line>
+                    </svg>
+                </a>
+                <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </a>
+            </div>
+            <div class="header-right">
+                <span class="hdr-mode-pair" data-icon="mode">
+                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
+                        <span class="seg active" id="segArt">Art</span>
+                        <span class="seg" id="segFashion">Fashion</span>
+                    </div>
+                </span>
+                <span class="hdr-cart" data-icon="cart">
+                    <a class="icon-btn icon-wrap" href="cart-store.html" title="Cart" aria-label="Cart">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle>
+                            <path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path>
+                        </svg>
+                        <span class="badge" id="cartBadge"></span>
+                    </a>
+                </span>
+                <span class="hdr-account" data-icon="account">
+                    <button class="icon-btn" onclick="veroGoAccount('buyer','profile.html')" title="My Account" aria-label="My Account">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="8" r="4"></circle>
+                            <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
+                        </svg>
+                    </button>
+                </span>
+            </div>
         </div>
     `;
 
