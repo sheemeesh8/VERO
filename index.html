@@ -4593,6 +4593,12 @@
             font-size: 34px;
             padding: 3% 6%;
         }
+        /* Real product photo filling the card image area (category page only). */
+        .acat-grid .product-image img.pc-photo {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover; padding: 0; display: block;
+        }
         .acat-grid .product-info { padding: 12px 14px 14px; gap: 10px; }
         .acat-grid .pc-left { gap: 8px; }
 
@@ -12296,6 +12302,19 @@
                 const grid = document.createElement('div');
                 grid.className = 'acat-grid';
                 grid.innerHTML = slice.map(productCardHTML).join('');
+                // Drop a real photo into each card's image area (keyword = category).
+                grid.querySelectorAll('.product-card').forEach(function (card, k) {
+                    const box = card.querySelector('.product-image');
+                    if (!box) return;
+                    const cat = card.getAttribute('data-category') || acatCtx.catName;
+                    const kw = type === 'clothing' ? cat + ',fashion' : cat + ',art';
+                    const img = document.createElement('img');
+                    img.className = 'pc-photo';
+                    img.loading = 'lazy';
+                    img.alt = '';
+                    img.src = 'https://loremflickr.com/500/300/' + encodeURIComponent(kw) + '?lock=' + (b * 10 + k);
+                    box.insertBefore(img, box.firstChild);
+                });
                 content.appendChild(grid);
 
                 const slider = createPromoSlider(buildCategoryFeatured(acatCtx.catName, type, b * 5));
