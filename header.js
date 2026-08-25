@@ -24,7 +24,7 @@
     // A runtime order is remembered in localStorage and wins over this default.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
     const ICON_ORDER = ['cart', 'mode', 'account'];
-    const ICON_ORDER_KEY = 'vero_header_icon_order';
+    const ICON_ORDER_KEY = 'vero_header_icon_order_v2';
 
     function currentIconOrder() {
         try {
