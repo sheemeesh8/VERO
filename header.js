@@ -89,8 +89,8 @@
            white background and every icon flips to black. */
         #siteHeader {
             top: 0;
-            /* Icons raised up to the camera line. */
-            padding-top: 2px;
+            /* Icons sit just below the camera line. */
+            padding-top: 14px;
             padding-bottom: 10px;
             background: transparent;
             border-bottom: none;
