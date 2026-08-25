@@ -13460,9 +13460,22 @@
 
         // The stacked section stops below the top: hero (0), the Men/Women/Kids slider
         // (mobile only), and the top of the feed. Each is a landing point for the glide.
+        // True only while the home view owns the scroll — the section glide must not
+        // touch the category / cart / other full-page views.
+        function homeScrollActive() {
+            const mv = document.getElementById('mainView');
+            return mv && mv.style.display !== 'none';
+        }
         function feedTop() {
             const f = document.querySelector('.feed-section');
-            return f ? f.getBoundingClientRect().top + (window.scrollY || 0) : Infinity;
+            // The feed is retired (hidden) — the page ends at the category slider, so
+            // its bottom is the last landing point. A laid-out feed uses its own top.
+            if (f && f.offsetParent !== null) return f.getBoundingClientRect().top + (window.scrollY || 0);
+            const cat = document.getElementById('catFull');
+            if (cat && cat.offsetParent !== null) {
+                return cat.getBoundingClientRect().top + (window.scrollY || 0) + cat.offsetHeight;
+            }
+            return Infinity;
         }
         function sectionStops() {
             const stops = [0];
@@ -13501,6 +13514,7 @@
         // over while at/above the top of the feed; inside the feed the wheel scrolls
         // the product list normally.
         window.addEventListener('wheel', function (e) {
+            if (!homeScrollActive()) return;   // let other views scroll natively
             const y = window.scrollY || window.pageYOffset;
             const ft = feedTop();
 
@@ -13553,7 +13567,7 @@
             tAxis = 0;
         }, { passive: true });
         window.addEventListener('touchmove', function (e) {
-            if (tAxis === -1) return;
+            if (tAxis === -1 || !homeScrollActive()) return;
             const dx = e.touches[0].clientX - tStartX;
             const dy = e.touches[0].clientY - tStartY;
             if (tAxis === 0 && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
@@ -13566,7 +13580,7 @@
             }
         }, { passive: false });
         window.addEventListener('touchend', function (e) {
-            if (tAxis !== 1) { tAxis = 0; return; }
+            if (tAxis !== 1 || !homeScrollActive()) { tAxis = 0; return; }
             tAxis = 0;
             const y = window.scrollY || window.pageYOffset;
             if (y > feedTop() + 4 || animating) return;
