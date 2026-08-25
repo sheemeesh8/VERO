@@ -1042,8 +1042,10 @@
         .vsp-user-search input::placeholder { color: #9a9a9a; letter-spacing: 0.4px; }
         .vsp-user-search svg { width: 20px; height: 20px; stroke: #111; stroke-width: 1.8; fill: none; }
         .vsp-user-results {
-            display: flex; gap: 18px; flex-wrap: wrap; margin-top: 20px;
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 22px 12px; justify-items: center; margin-top: 20px;
         }
+        .vsp-user-results:empty { margin-top: 0; }
         .vsp-user {
             display: flex; flex-direction: column; align-items: center; gap: 9px;
             width: 78px; text-decoration: none; color: #111;
@@ -1587,7 +1589,9 @@
         const el = document.getElementById('vspUserResults');
         if (!el) return;
         const query = (q || '').trim().toLowerCase();
-        const list = VSP_USERS.filter(u => !query || u.toLowerCase().includes(query));
+        // Don't suggest anyone until the shopper starts typing.
+        if (!query) { el.innerHTML = ''; return; }
+        const list = VSP_USERS.filter(u => u.toLowerCase().includes(query));
         el.innerHTML = list.length
             ? list.map(u =>
                 `<a class="vsp-user" href="index.html?seller=${encodeURIComponent(u)}">
