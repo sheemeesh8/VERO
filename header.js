@@ -1363,11 +1363,10 @@
                     </a>
                 </span>
                 <span class="hdr-account" data-icon="account">
-                    <button class="icon-btn" onclick="veroGoAccount('buyer','profile.html')" title="My Account" aria-label="My Account">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="8" r="4"></circle>
-                            <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
-                        </svg>
+                    <!-- Personal-area account: the profile picture from vero_profile.
+                         Clicking it opens the personal area; hold to switch profile. -->
+                    <button class="icon-btn hdr-avatar-btn" title="My Account (hold to switch profile)">
+                        <span class="hdr-avatar" id="hdrAvatar">V</span>
                     </button>
                 </span>
             </div>
