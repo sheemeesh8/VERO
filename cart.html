@@ -152,19 +152,25 @@
         .sel-bar .sel-count { font-size: 10.00px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(255,255,255,0.7); }
         .sel-bar .sel-total { font-size: 18.33px; font-weight: 600; letter-spacing: 0.5px; }
 
-        /* Checkout bar — same framed language as the other cards. */
-        .checkout {
-            display: flex; align-items: center; justify-content: space-between; gap: 24px;
-            padding: 28px 0; margin-top: 40px; flex-wrap: wrap;
+        /* Action bar — three cells: Checkout · selected count · Select all. */
+        .cart-actionbar {
+            display: grid; grid-template-columns: 1.4fr 1fr 1fr;
+            align-items: stretch; margin-top: 44px; border: 1px solid #16150f;
         }
-        .checkout-total { font-size: 12.50px; letter-spacing: 0.5px; }
-        .checkout-total b { font-size: 25.00px; font-weight: 300; margin-left: 10px; }
-        .checkout-btn {
-            border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
-            font-family: inherit; font-size: 10.00px; letter-spacing: 2px; padding: 15px 40px;
-            text-transform: uppercase; transition: opacity 0.2s;
+        .cab-cell {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 4px; min-height: 62px; padding: 12px 10px; text-align: center;
+            font-family: inherit; background: transparent; color: #16150f;
+            font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
         }
-        .checkout-btn:hover { opacity: 0.78; }
+        .cab-cell + .cab-cell { border-left: 1px solid #16150f; }
+        button.cab-cell { border: none; cursor: pointer; transition: opacity 0.2s, background 0.2s, color 0.2s; }
+        .cab-checkout { background: #16150f; color: #fff; }
+        .cab-checkout:hover { opacity: 0.82; }
+        .cab-checkout:disabled { opacity: 0.4; cursor: not-allowed; }
+        .cab-count .cab-num { font-size: 22px; font-weight: 300; letter-spacing: 2px; }
+        .cab-count .cab-lbl { font-size: 8.5px; letter-spacing: 3px; color: #a8a399; }
+        .cab-select:hover { background: #16150f; color: #fff; }
 
         /* VERO manual placement — from the site editor */
         div.wrap:nth-of-type(3) > div.head-row:nth-of-type(1) > div.mode-toggle {
@@ -283,6 +289,15 @@
             if (selected.has(idx)) selected.delete(idx); else selected.add(idx);
             render();
         };
+        // Select / clear every item in the active (Clothing / Art) cart.
+        window.selectAllVisible = function () {
+            cart.forEach((it, i) => { if (typeOf(it) === MODE) selected.add(i); });
+            render();
+        };
+        window.deselectAllVisible = function () {
+            cart.forEach((it, i) => { if (typeOf(it) === MODE) selected.delete(i); });
+            render();
+        };
 
         const priceNum = p => parseFloat(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
         const priceStr = p => {
@@ -377,10 +392,17 @@
             const selCount = chosen.reduce((s, { it }) => s + (it.qty || 1), 0);
             const selTotal = chosen.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
             const selTotalStr = selTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const allSel = mine.length > 0 && chosen.length === mine.length;
             host.innerHTML = `
-                <div class="checkout">
-                    <button class="checkout-btn" onclick="veroCheckout()"${selCount ? '' : ' disabled style="opacity:.4;cursor:not-allowed;"'}>Checkout &#8594;</button>
-                    <div class="checkout-total">${selCount} selected <b>₪${selTotalStr}</b></div>
+                <div class="cart-actionbar">
+                    <button class="cab-cell cab-checkout" onclick="veroCheckout()"${selCount ? '' : ' disabled'}>Checkout &#8594;</button>
+                    <div class="cab-cell cab-count">
+                        <span class="cab-num">${selCount}</span>
+                        <span class="cab-lbl">Selected</span>
+                    </div>
+                    <button class="cab-cell cab-select" onclick="${allSel ? 'deselectAllVisible()' : 'selectAllVisible()'}">
+                        ${allSel ? 'Clear' : 'Select all'}
+                    </button>
                 </div>`;
 
             // Sticky summary popup — visible only while something is ticked.
