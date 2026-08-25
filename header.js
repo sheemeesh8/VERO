@@ -930,7 +930,7 @@
             flex: 1 1 50%; min-width: 0;
             display: flex; align-items: center; gap: 14px;
             border: 1.5px solid #111; border-radius: 999px;
-            height: 70px; padding: 0 30px; box-sizing: border-box;
+            height: 80px; padding: 0 32px; box-sizing: border-box;
         }
         @media (max-width: 620px) { .vsp-searchbar { flex-direction: column; } }
         .vsp-searchfield {
@@ -1034,6 +1034,7 @@
         .vsp-faded { opacity: 0; pointer-events: none; }
         /* Product filters stay hidden until the product search bar is focused. */
         .vsp-cols.vsp-collapsed { display: none; }
+        .vsp-alt-filter.vsp-collapsed { display: none !important; }
         .vsp-cols.vsp-shown { animation: vspColsIn 0.4s ease both; }
         @keyframes vspColsIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         /* Match .vsp-searchfield exactly so the two rows read as one stacked pair. */
@@ -1227,7 +1228,7 @@
         @media (max-width: 600px) {
             .vsp-inner { padding: 48px 18px 80px; }
             /* Product bar taller than the user bar on phones. */
-            .vsp-searchbar, .vsp-searchfield { height: 62px; }
+            .vsp-searchbar, .vsp-searchfield { height: 70px; }
             .vsp-user-search { height: 52px; }
         }
 `;
@@ -1555,12 +1556,12 @@
                     </div>
                 </div>
                 <!-- Fashion seller search → filter sellers by style. -->
-                <div class="vsp-alt-filter vsp-seller-styles">
+                <div class="vsp-alt-filter vsp-seller-styles vsp-collapsed">
                     <div class="vsp-step-label">Style</div>
                     <div class="vsp-chips">${VSP_STYLES.map(s => chip('sellerStyle', s)).join('')}</div>
                 </div>
                 <!-- Art mode (products or sellers) → filter by art category. -->
-                <div class="vsp-alt-filter vsp-art-cats">
+                <div class="vsp-alt-filter vsp-art-cats vsp-collapsed">
                     <div class="vsp-step-label">Art category</div>
                     <div class="vsp-chips">${VSP_ART_CATEGORIES.map(c => chip('artCat', c)).join('')}</div>
                 </div>
@@ -1603,9 +1604,13 @@
         if (users) users.classList.toggle('vsp-faded', which === 'product');
         // Product filters appear only when the product bar is focused.
         const cols = document.querySelector('#veroSearchPage .vsp-cols');
-        if (cols) {
-            if (which === 'product') { cols.classList.remove('vsp-collapsed'); cols.classList.add('vsp-shown'); }
-            else if (which === 'user') { cols.classList.add('vsp-collapsed'); }
+        const alts = document.querySelectorAll('#veroSearchPage .vsp-alt-filter');
+        if (which === 'product') {
+            if (cols) { cols.classList.remove('vsp-collapsed'); cols.classList.add('vsp-shown'); }
+            alts.forEach(a => a.classList.remove('vsp-collapsed'));
+        } else if (which === 'user') {
+            if (cols) cols.classList.add('vsp-collapsed');
+            alts.forEach(a => a.classList.add('vsp-collapsed'));
         }
     };
     window.vspRenderUsers = function (q) {
