@@ -568,6 +568,21 @@
            same baseline. */
         .pf-first, .pf-fnum { line-height: 40px; }
         .pf-last, .pf-flbl { margin-top: 6px; }
+        /* Personal-profile extras: online status + bio in the white panel. */
+        .pf-status {
+            display: inline-flex; align-items: center; gap: 7px; margin-top: 12px;
+            font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #3a8a4f;
+        }
+        .pf-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #3fae63; }
+        .pf-status.is-closed { color: #9a9a95; }
+        .pf-status.is-closed::before { background: #c2c2bd; }
+        .pf-bio {
+            margin-top: 12px; font-size: 13px; line-height: 1.5; color: #6a6a6a; max-width: 92%;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .pf-bio:empty { display: none; }
+        /* Let the panel grow past a third when bio/status need the room. */
+        .pf-panel { height: auto; min-height: 33.34dvh; }
         /* Rotating stat: Followers → Following, one at a time. */
         #heroStats { position: relative; min-width: 122px; min-height: 56px; }
         #heroStats .hero-stat {
@@ -618,6 +633,7 @@
                     <div class="pf-names">
                         <span class="pf-first" id="storeName">Your Name</span>
                         <span class="pf-last" id="storeLast"></span>
+                        <span class="pf-status is-closed" id="storeStatus">Offline</span>
                     </div>
                     <!-- Followers → Following, one stat at a time (auto-rotating). -->
                     <div class="pf-follow" id="heroStats">
@@ -631,10 +647,10 @@
                         </div>
                     </div>
                 </div>
+                <p class="pf-bio" id="storeBio"></p>
             </div>
             <!-- Hidden stubs kept so existing scripts still find their elements. -->
             <span id="itemCount" hidden>0</span>
-            <span id="storeStatus" hidden>Offline</span>
             <span id="verifiedCheck" hidden></span>
             <span id="heroAvatar" hidden></span>
             <button id="socialsBtn" hidden></button>
@@ -770,6 +786,7 @@
         })();
         document.getElementById('followers').textContent = BUYER.followers.toLocaleString('en-US');
         document.getElementById('following').textContent = (Number(BUYER.following) || 0).toLocaleString('en-US');
+        document.getElementById('storeBio').textContent = BUYER.tag || '';
         // Hero stats slider — rotate Followers ↔ Following every 4 seconds.
         (function(){
             const slides = document.querySelectorAll('#heroStats .hero-stat');
