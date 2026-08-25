@@ -1617,6 +1617,13 @@
         if (document.activeElement === input && !input.value.trim()) {
             if (e) e.preventDefault();
             input.blur();
+            // Cancelling the product search collapses its filters too.
+            if (input.id === 'vspInput') {
+                const cols = document.querySelector('#veroSearchPage .vsp-cols');
+                if (cols) { cols.classList.add('vsp-collapsed'); cols.classList.remove('vsp-shown'); }
+                document.querySelectorAll('#veroSearchPage .vsp-alt-filter')
+                    .forEach(a => a.classList.add('vsp-collapsed'));
+            }
         }
     };
     // Focusing one search bar fades the other out; blur (which === null) restores both.
