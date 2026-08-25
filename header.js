@@ -1029,13 +1029,9 @@
 
         /* ===== User search — same style/size as the product bar, stacked below it ===== */
         .vsp-users { width: 100%; margin-top: 10px; }
-        /* Focusing one bar fades the other out (and back in on blur). */
-        .vsp-searchbar { transition: opacity 0.3s ease; }
-        .vsp-users { transition: opacity 0.35s ease, max-height 0.35s ease, margin-top 0.35s ease; overflow: hidden; max-height: 600px; }
+        /* Every swap is a plain opacity fade in / fade out. */
+        .vsp-searchbar, .vsp-users { transition: opacity 0.32s ease; }
         .vsp-faded { opacity: 0; pointer-events: none; }
-        /* When the product bar is focused, collapse the user block so the filters
-           sit right under the search bar. */
-        .vsp-users.vsp-faded { max-height: 0; margin-top: 0; }
         /* Three recommended sellers fade in, staggered. */
         .vsp-user-results.vsp-users-in .vsp-user { animation: vspUserIn 0.45s ease both; }
         .vsp-user-results.vsp-users-in .vsp-user:nth-child(2) { animation-delay: 0.09s; }
@@ -1044,10 +1040,9 @@
         /* Product filters stay hidden until the product search bar is focused. */
         .vsp-cols.vsp-collapsed { display: none !important; }
         .vsp-alt-filter.vsp-collapsed { display: none !important; }
-        /* Crossfade: the filters fade in on exactly the timing the user bar
-           fades out, so the two swap into each other. */
-        .vsp-cols.vsp-shown { animation: vspColsIn 0.35s ease both; }
-        @keyframes vspColsIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        /* Filters fade in on the same timing the user bar fades out (crossfade). */
+        .vsp-cols.vsp-shown { animation: vspColsIn 0.32s ease both; }
+        @keyframes vspColsIn { from { opacity: 0; } to { opacity: 1; } }
         /* Match .vsp-searchfield exactly so the two rows read as one stacked pair. */
         .vsp-user-search {
             width: 100%; display: flex; align-items: center; gap: 14px;
@@ -1628,32 +1623,57 @@
             }
         }
     };
-    // Focusing one search bar fades the other out; blur (which === null) restores both.
+    const VSP_FADE = 320;   // ms — one fade leg (out, then in)
+    // A plain fade-out that then removes the element from flow (display:none).
+    function vspFadeOut(el) {
+        if (!el) return;
+        clearTimeout(el._ft);
+        el.classList.add('vsp-faded');
+        el._ft = setTimeout(() => { el.style.display = 'none'; }, VSP_FADE);
+    }
+    // A plain fade-in from display:none.
+    function vspFadeIn(el) {
+        if (!el) return;
+        clearTimeout(el._ft);
+        el.style.display = '';
+        el.classList.add('vsp-faded');        // start invisible
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('vsp-faded')));
+    }
+
+    // Focusing a bar swaps content by fade-out then fade-in (a clean crossfade).
     window.vspFadeFor = function (which) {
         const bar = document.querySelector('#veroSearchPage .vsp-searchbar');
         const users = document.querySelector('#veroSearchPage .vsp-users');
-        if (bar) bar.classList.toggle('vsp-faded', which === 'user');
-        if (users) users.classList.toggle('vsp-faded', which === 'product');
-        // Grow the user bar up to the product bar's height while it's focused.
         const userBar = document.querySelector('#veroSearchPage .vsp-user-search');
-        if (userBar) userBar.classList.toggle('vsp-user-expanded', which === 'user');
-        const results = document.getElementById('vspUserResults');
-        if (which === 'user') {
-            // After the bar finishes stretching, fade in three recommended sellers.
-            setTimeout(vspShowSellerSuggestions, 360);
-        } else if (results) {
-            const ui = document.getElementById('vspUserInput');
-            if (!ui || !ui.value.trim()) results.innerHTML = '';   // leaving empty → clear
-        }
-        // Product filters appear only when the product bar is focused.
         const cols = document.querySelector('#veroSearchPage .vsp-cols');
-        const alts = document.querySelectorAll('#veroSearchPage .vsp-alt-filter');
+        const alts = [...document.querySelectorAll('#veroSearchPage .vsp-alt-filter')];
+        const results = document.getElementById('vspUserResults');
+        // The non-focused product bar just dims; it never leaves.
+        if (bar) bar.classList.toggle('vsp-faded', which === 'user');
+        // Grow the user bar up to the product bar's height while it's focused.
+        if (userBar) userBar.classList.toggle('vsp-user-expanded', which === 'user');
+
+        const showCols = el => {
+            if (!el) return;
+            el.classList.remove('vsp-collapsed');
+            vspFadeIn(el);
+        };
+
         if (which === 'product') {
-            if (cols) { cols.classList.remove('vsp-collapsed'); cols.classList.add('vsp-shown'); }
-            alts.forEach(a => a.classList.remove('vsp-collapsed'));
+            // Fade the user bar out, then fade the filters in where it was.
+            vspFadeOut(users);
+            setTimeout(() => { showCols(cols); alts.forEach(a => showCols(a)); }, VSP_FADE);
         } else if (which === 'user') {
-            if (cols) cols.classList.add('vsp-collapsed');
-            alts.forEach(a => a.classList.add('vsp-collapsed'));
+            // Fade the filters out, then fade the user bar back in.
+            vspFadeOut(cols); alts.forEach(a => vspFadeOut(a));
+            setTimeout(() => { vspFadeIn(users); setTimeout(vspShowSellerSuggestions, VSP_FADE); }, VSP_FADE);
+        } else {
+            // Blur with nothing chosen: bring the user bar back, drop empty results.
+            vspFadeIn(users);
+            if (results) {
+                const ui = document.getElementById('vspUserInput');
+                if (!ui || !ui.value.trim()) results.innerHTML = '';
+            }
         }
     };
     function vspUserCard(u) {
