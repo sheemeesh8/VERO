@@ -1280,10 +1280,92 @@
             transform-origin: top left;
         }
 
-        #storeRectName {
-            transform: translate(-49px, 5px);
-            transform-origin: top left;
+        #storeRectName { transform: none; }   /* card layout — drop the old offset hack */
+
+        /* ===================================================================
+           SETTINGS HERO AS A CARD — identical to the storefront / profilefront:
+           full-bleed photo with a white panel pinned to the bottom, a Back/Share
+           top bar, and a dark action popup that reveals on scroll.
+           =================================================================== */
+        .profile-hero {
+            margin: -120px -40px 0;
+            height: 100vh; height: 100dvh; min-height: 0;
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch;
+            border-bottom: none;
+            background-position: center 18%;
         }
+        .profile-hero::after { inset: 0 0 auto 0; height: 130px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.28), rgba(0,0,0,0)); }
+        .profile-hero.hero-dark-text::after { background: linear-gradient(to bottom, rgba(0,0,0,0.28), rgba(0,0,0,0)); }
+        .profile-hero .ph-inner, .profile-hero .ph-side, .profile-hero .ph-badges { display: none; }
+
+        .pf-topbar {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: max(34px, calc(env(safe-area-inset-top, 0px) + 14px)) 14px 12px;
+            direction: ltr; flex-direction: row-reverse;
+        }
+        .tb-ico {
+            width: 40px; height: 40px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+            border: none; background: none; color: #111; cursor: pointer; text-decoration: none; transition: opacity 0.2s;
+        }
+        .tb-ico:active { opacity: 0.5; }
+        .tb-ico svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+
+        .pf-panel {
+            position: relative; z-index: 2; background: #fff; color: #111; direction: ltr; text-align: left;
+            padding: 22px 26px calc(26px + env(safe-area-inset-bottom, 0px));
+            display: flex; flex-direction: column; justify-content: flex-start;
+        }
+        .pf-idrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+        .pf-names { display: flex; flex-direction: column; min-width: 0; }
+        .pf-first { font-size: 34px; font-weight: 400; letter-spacing: 6px; line-height: 40px; color: #171717;
+            text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pf-last { margin-top: 6px; font-size: 12px; font-weight: 400; letter-spacing: 4px; color: #9a9a95; text-transform: uppercase; }
+        .pf-last:empty { display: none; }
+        .pf-follow { flex: none; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+        .pf-fnum { font-size: 34px; font-weight: 400; letter-spacing: 2px; line-height: 40px; color: #171717; }
+        .pf-flbl { margin-top: 6px; font-size: 11px; letter-spacing: 3px; color: #9a9a95; text-transform: uppercase; }
+        #phStats { position: relative; min-width: 122px; min-height: 56px; }
+        #phStats .hero-stat {
+            position: absolute; top: 0; right: 0; display: flex; flex-direction: column; align-items: flex-end; text-align: right;
+            opacity: 0; transform: translateY(10px); transition: opacity 0.5s ease, transform 0.5s ease; pointer-events: none;
+        }
+        #phStats .hero-stat.is-active { opacity: 1; transform: none; }
+        .pf-status { display: inline-flex; align-items: center; gap: 7px;
+            font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #3a8a4f; }
+        .pf-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #3fae63; }
+        .pf-status.is-closed { color: #9a9a95; }
+        .pf-status.is-closed::before { background: #c2c2bd; }
+        .pf-bio { font-size: 13px; line-height: 1.5; color: #6a6a6a; max-width: 92%;
+            display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .pf-bio:empty { display: none; }
+        .pf-meta { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+
+        /* Animated wave, shown only when live (buyer online / seller open). */
+        .pf-waves { position: absolute; left: 0; right: 0; bottom: 100%; height: 46px; pointer-events: none; display: none;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='28' viewBox='0 0 200 28' preserveAspectRatio='none'%3E%3Cpath d='M0 16 C 33 4 66 4 100 16 C 133 28 166 28 200 16 L200 28 L0 28 Z' fill='%23ffffff'/%3E%3C/svg%3E") repeat-x bottom / 200px 28px;
+            animation: pfWave 6s linear infinite; }
+        @keyframes pfWave { from { background-position: 0 bottom; } to { background-position: -200px bottom; } }
+        .profile-hero.is-live .pf-waves { display: block; }
+
+        /* Dark action popup, revealing on scroll. */
+        .pf-actionbar {
+            position: fixed; bottom: 20px; left: 50%; z-index: 60; direction: ltr;
+            display: flex; gap: 6px; align-items: center; max-width: 94vw; overflow-x: auto;
+            padding: 5px; border-radius: 999px; background: rgba(20,20,20,0.94); backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.18); box-shadow: 0 6px 26px rgba(0,0,0,0.28);
+            transform: translateX(-50%) translateY(180%); opacity: 0; pointer-events: none;
+            transition: transform 0.5s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease;
+        }
+        .pf-actionbar::-webkit-scrollbar { display: none; }
+        .pf-actionbar.revealed { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+        .pf-actionbar .ph-action {
+            flex: 0 0 auto; margin: 0; padding: 10px 18px; border: none; border-radius: 999px;
+            background: transparent; color: #b5b5b0; white-space: nowrap;
+            font-family: inherit; font-size: 10px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer;
+        }
+        .pf-actionbar .ph-action:hover { background: rgba(255,255,255,0.12); color: #fff; }
     </style>
 
     <!-- ===================================================================
@@ -1547,29 +1629,51 @@
     <div class="wrap">
         <!-- Storefront-style hero: background image, name, rating, tagline, followers. -->
         <div class="profile-hero" id="storeBgPreview">
-            <div class="ph-inner">
-                <!-- A true 1:1 preview of the public profile hero: name + verified +
-                     follow, the About description, the rating, and the followers /
-                     items stats with the socials button — exactly as the visitor sees. -->
-                <div class="ph-preview hero-tag-row">
-                    <div class="hero-lead">
-                        <div class="hero-name-row">
-                            <h1 class="hero-name" id="storeRectName">My Store</h1>
-                            <span class="verified-check" title="VERO Verified" aria-label="VERO Verified">✓</span>
+            <!-- Top bar over the photo: Back (right) and Share (left), black icons. -->
+            <div class="pf-topbar">
+                <a class="tb-ico" href="index.html" aria-label="Back" onclick="if(history.length>1){history.back();return false;}">
+                    <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                </a>
+                <button class="tb-ico" type="button" id="shareBtn" aria-label="Share">
+                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                </button>
+            </div>
+            <!-- White panel: name + rotating stat, then status + bio — same card as
+                 the storefront / profilefront. -->
+            <div class="pf-panel">
+                <div class="pf-waves" aria-hidden="true"></div>
+                <div class="pf-idrow">
+                    <div class="pf-names">
+                        <span class="pf-first" id="storeRectName">My Store</span>
+                        <span class="pf-last" id="storeRectLast"></span>
+                    </div>
+                    <div class="pf-follow" id="phStats">
+                        <div class="hero-stat is-active">
+                            <span class="pf-fnum" id="phFollowers">0</span>
+                            <span class="pf-flbl">Followers</span>
                         </div>
-                        <!-- Settings navigation pills (images 2 & 4). The third pill
-                             differs by mode: opening hours for the shop, profile
-                             picture for the personal profile. -->
-                        <div class="ph-actions">
-                            <button type="button" class="ph-action" id="heroChangeBg">Change background</button>
-                            <button type="button" class="ph-action seller-only" id="heroShowStore">Show storefront</button>
-                            <button type="button" class="ph-action buyer-only" id="heroShowProfile">Show profilefront</button>
-                            <button type="button" class="ph-action seller-only" id="heroOpeningHours">Change opening hours</button>
-                            <button type="button" class="ph-action buyer-only" id="heroChangePic">Change profile picture</button>
+                        <div class="hero-stat">
+                            <span class="pf-fnum" id="phItems">0</span>
+                            <span class="pf-flbl" id="phStatLbl">Products</span>
                         </div>
                     </div>
                 </div>
-                <figure class="ph-avatar"><div class="avatar" id="storeAvatar">V</div></figure>
+                <div class="pf-meta">
+                    <span class="pf-status" id="phStatus">Online</span>
+                    <p class="pf-bio" id="storeCoverTag"></p>
+                </div>
+            </div>
+            <!-- Kept for existing scripts. -->
+            <figure class="ph-avatar" hidden><div class="avatar" id="storeAvatar">V</div></figure>
+            <span class="verified-check" id="verifiedCheck" hidden></span>
+            <!-- Sticky action popup — the settings controls, mode-specific. Reveals
+                 on scroll like the public card's action bar. -->
+            <div class="pf-actionbar">
+                <button type="button" class="ph-action seller-only" id="heroChangeBg">Change background</button>
+                <button type="button" class="ph-action seller-only" id="heroOpeningHours">Opening hours</button>
+                <button type="button" class="ph-action seller-only" id="heroShowStore">Show storefront</button>
+                <button type="button" class="ph-action buyer-only" id="heroChangePic">Change photo</button>
+                <button type="button" class="ph-action buyer-only" id="heroShowProfile">Show profilefront</button>
             </div>
         </div>
 
@@ -2011,6 +2115,61 @@
             });
         })();
 
+        // ---- Settings hero card: status, photo, waves, share, action popup ----
+        (function heroCard() {
+            const hero = document.getElementById('storeBgPreview');
+            if (!hero) return;
+            // Second stat label: seller shows Products, buyer shows Items.
+            const lbl = document.getElementById('phStatLbl');
+            if (lbl) lbl.textContent = isSeller ? 'Products' : 'Items';
+
+            // Buyer: the profile picture IS the card photo (background).
+            if (!isSeller && profile.avatarImg) {
+                hero.style.backgroundImage = `url('${profile.avatarImg}')`;
+                hero.classList.remove('hero-dark-text');
+            }
+
+            // Status: seller = Open/Closed (from opening hours), buyer = Online/Offline.
+            const st = document.getElementById('phStatus');
+            let live = true;
+            if (st) {
+                if (isSeller) {
+                    let cfg; try { cfg = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { cfg = {}; }
+                    const hours = cfg.hours; live = true;
+                    if (hours && typeof hours === 'object') {
+                        const now = new Date(); const d = hours[now.getDay()];
+                        if (!d || !d.open || !d.close) live = false;
+                        else { const cur = now.getHours()*60+now.getMinutes();
+                            const m = t => { const [h,mm] = String(t).split(':').map(Number); return h*60+(mm||0); };
+                            live = cur >= m(d.open) && cur < m(d.close); }
+                    }
+                    st.textContent = live ? 'Open' : 'Closed';
+                } else {
+                    let seen = 0; try { seen = Number(localStorage.getItem('vero_last_seen')) || 0; } catch (e) {}
+                    live = !!seen && (Date.now() - seen < 5*60*1000);
+                    st.textContent = live ? 'Online' : 'Offline';
+                }
+                st.classList.toggle('is-closed', !live);
+            }
+            hero.classList.toggle('is-live', live);
+
+            // Share.
+            const share = document.getElementById('shareBtn');
+            if (share) share.addEventListener('click', function(){
+                const data = { title: profile.name || 'VERO', url: location.href };
+                if (navigator.share) navigator.share(data).catch(function(){});
+                else if (navigator.clipboard) navigator.clipboard.writeText(location.href);
+            });
+
+            // The action popup reveals once the full-screen card is scrolled past.
+            const bar = hero.querySelector('.pf-actionbar');
+            if (bar) {
+                const update = () => bar.classList.toggle('revealed', window.scrollY > hero.offsetHeight * 0.55);
+                window.addEventListener('scroll', update, { passive: true });
+                update();
+            }
+        })();
+
         // ---- Editable identity fields ----
         // Personal and seller profiles are fully independent — no shared login.
         // Every field, email and phone included, is stored per profile (PROFILE_KEY).
@@ -2072,7 +2231,11 @@
         // The store name overlaid on the cover.
         function refreshStoreRectName() {
             const el = document.getElementById('storeRectName');
-            if (el) el.textContent = (profile.name || '').trim() || 'My Store';
+            const last = document.getElementById('storeRectLast');
+            const full = ((profile.name || '').trim()) || (isSeller ? 'My Store' : 'My Profile');
+            const parts = full.split(/\s+/);
+            if (el)   el.textContent = parts.shift() || full;
+            if (last) last.textContent = parts.join(' ');
         }
         refreshStoreRectName();
 
