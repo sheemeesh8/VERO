@@ -930,7 +930,7 @@
             flex: 1 1 50%; min-width: 0;
             display: flex; align-items: center; gap: 14px;
             border: 1.5px solid #111; border-radius: 999px;
-            height: 80px; padding: 0 32px; box-sizing: border-box;
+            height: 86px; padding: 0 32px; box-sizing: border-box;
         }
         @media (max-width: 620px) { .vsp-searchbar { flex-direction: column; } }
         .vsp-searchfield {
@@ -1045,7 +1045,7 @@
             transition: height 0.35s cubic-bezier(0.2,0.8,0.2,1), opacity 0.3s ease;
         }
         /* Focusing the user bar grows it up to the product bar's height. */
-        .vsp-user-search.vsp-user-expanded { height: 80px; }
+        .vsp-user-search.vsp-user-expanded { height: 86px; }
         .vsp-user-search input {
             flex: 1; min-width: 0; border: none; outline: none; background: none;
             font-family: inherit; font-size: 15.00px; font-weight: 500; color: #111;
