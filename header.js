@@ -106,15 +106,15 @@
         #siteHeader .toggle-category .seg.active { color: #111; }
         /* Sticky / scrolled state: white background, black icons. */
         #siteHeader.scrolled {
-            background: rgba(255, 255, 255, 0.94);
+            background: rgba(20, 20, 20, 0.6);
             -webkit-backdrop-filter: saturate(180%) blur(12px);
             backdrop-filter: saturate(180%) blur(12px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
         #siteHeader.scrolled .header-left > a,
         #siteHeader.scrolled .toggle-category,
-        #siteHeader.scrolled .icon-btn { color: #111; }
-        #siteHeader.scrolled .icon-btn svg { stroke: #111 !important; }
+        #siteHeader.scrolled .icon-btn { color: #fff; }
+        #siteHeader.scrolled .icon-btn svg { stroke: #fff !important; }
         #siteHeader.scrolled .toggle-category { border-color: rgba(0,0,0,0.18); }
         #siteHeader.scrolled .toggle-category::before { background: #111; }
         #siteHeader.scrolled .toggle-category .seg { color: #6b6b6b; }
