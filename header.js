@@ -1027,6 +1027,33 @@
         .vsp-suggest-card:hover .vero-stars-base { color: rgba(255,255,255,0.35); }
         .vsp-suggest-card:hover .vero-stars-fill { color: #fff; }
 
+        /* ===== User search — a shared people search, avatars ringed in orange ===== */
+        .vsp-users { width: 100%; margin-top: 34px; }
+        .vsp-users .vsp-step-label { margin-bottom: 14px; }
+        .vsp-user-search {
+            display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 18px;
+            border: 1px solid rgba(0,0,0,0.16); border-radius: 999px; background: #fff;
+        }
+        .vsp-user-search input {
+            flex: 1; border: none; outline: none; background: transparent;
+            font-family: inherit; font-size: 15px; color: #111;
+        }
+        .vsp-user-search svg { width: 18px; height: 18px; stroke: #111; stroke-width: 1.8; fill: none; }
+        .vsp-user-results {
+            display: flex; gap: 18px; flex-wrap: wrap; margin-top: 20px;
+        }
+        .vsp-user {
+            display: flex; flex-direction: column; align-items: center; gap: 9px;
+            width: 78px; text-decoration: none; color: #111;
+        }
+        .vsp-user-av {
+            width: 66px; height: 66px; border-radius: 50%; padding: 3px;
+            border: 2px solid #E8842B; display: block; box-sizing: border-box;
+        }
+        .vsp-user-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+        .vsp-user-name { font-size: 11px; letter-spacing: 0.5px; text-align: center; line-height: 1.3; }
+        .vsp-user-empty { font-size: 12px; color: #9a958c; letter-spacing: 1px; }
+
         /* ===== Landing chooser — two rectangles like the personal area ===== */
         .vsp-chooser {
             width: 100%; margin-top: 40px; display: flex; height: 58vh; min-height: 320px;
@@ -1502,6 +1529,19 @@
                         </div>
                     </div>
                 </div>
+                <!-- Shared user search — people (sellers) as orange-ringed avatars. -->
+                <div class="vsp-users">
+                    <div class="vsp-step-label">Search users</div>
+                    <div class="vsp-user-search">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input id="vspUserInput" type="text" placeholder="Search users" autocomplete="off"
+                               oninput="vspRenderUsers(this.value)">
+                    </div>
+                    <div class="vsp-user-results" id="vspUserResults"></div>
+                </div>
+
                 <!-- Fashion seller search → filter sellers by style. -->
                 <div class="vsp-alt-filter vsp-seller-styles">
                     <div class="vsp-step-label">Style</div>
@@ -1534,7 +1574,28 @@
         wrap.id = 'veroSearchPageRoot';
         wrap.innerHTML = SEARCH_MARKUP;
         document.body.appendChild(wrap);
+        vspRenderUsers('');   // seed the user search with everyone
     }
+
+    // ---- Shared user search: people rendered as orange-ringed avatars ----
+    const VSP_USERS = [
+        'Studio Vero', 'Atelier Nord', 'Denim Lab', 'Milano Feet', 'Sole Society',
+        'Basics Co.', 'Urban Thread', 'Horology Co.', 'Gallery Nine', 'Art House',
+        'Designer Collection', 'Vintage Vault', 'Luxe Atelier', 'Forge Studio', 'Pixel Works'
+    ];
+    window.vspRenderUsers = function (q) {
+        const el = document.getElementById('vspUserResults');
+        if (!el) return;
+        const query = (q || '').trim().toLowerCase();
+        const list = VSP_USERS.filter(u => !query || u.toLowerCase().includes(query));
+        el.innerHTML = list.length
+            ? list.map(u =>
+                `<a class="vsp-user" href="index.html?seller=${encodeURIComponent(u)}">
+                    <span class="vsp-user-av"><img src="https://i.pravatar.cc/150?u=${encodeURIComponent(u)}" alt="${u}" loading="lazy"></span>
+                    <span class="vsp-user-name">${u}</span>
+                 </a>`).join('')
+            : '<span class="vsp-user-empty">No users found</span>';
+    };
 
     // The stages, in order. material + colour + price all live in the 'final' stage.
     const VSP_STAGES = ['gender', 'type', 'size', 'final'];
