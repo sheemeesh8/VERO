@@ -48,7 +48,35 @@
         .head-sub { display: none; }
 
         /* Title row with the Clothing / Art cart toggle beside it. */
-        .head-row { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+        .head-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+
+        /* Header action icons: one Filters button (opens all filters) + Share. */
+        .cart-actions { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+        .ca-btn {
+            width: 42px; height: 42px; flex: none; border: 1px solid #d8d3ca; border-radius: 50%;
+            background: transparent; color: #16150f; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .ca-btn:hover { border-color: #16150f; }
+        .ca-btn svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+
+        /* Filters bottom-sheet. */
+        .cart-sheet-overlay {
+            position: fixed; inset: 0; background: rgba(20,18,14,0.4);
+            display: none; align-items: flex-end; justify-content: center; z-index: 300;
+        }
+        .cart-sheet-overlay.show { display: flex; }
+        .cart-sheet {
+            width: 100%; max-width: 560px; background: #fff;
+            border-radius: 20px 20px 0 0; padding: 22px 24px calc(28px + env(safe-area-inset-bottom,0px));
+            transform: translateY(100%); animation: cartSheetRise 0.34s cubic-bezier(0.2,0.8,0.2,1) forwards;
+        }
+        @keyframes cartSheetRise { to { transform: translateY(0); } }
+        .cart-sheet .sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: #e6e1d8; margin: 0 auto 18px; }
+        .cart-sheet h3 { font-size: 14px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
+        /* Inside the sheet the toolbar stacks; no big top margin or underline. */
+        .cart-sheet .cart-toolbar { margin-top: 0; padding-bottom: 0; border-bottom: none; gap: 22px; }
         .mode-toggle {
             display: inline-flex; border: 1px solid #d8d3ca; border-radius: 999px; overflow: hidden;
         }
@@ -173,14 +201,30 @@
                 <button class="mode-btn active" data-mode="clothing">Clothing</button>
                 <button class="mode-btn" data-mode="art">Art</button>
             </div>
+            <div class="cart-actions">
+                <button class="ca-btn" onclick="openFilters()" aria-label="Filters">
+                    <svg viewBox="0 0 24 24"><path d="M3 5h18M7 12h10M11 19h2"/></svg>
+                </button>
+                <button class="ca-btn" onclick="shareCart()" aria-label="Share">
+                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                </button>
+            </div>
             <div class="head-total" id="headTotal"></div>
         </div>
         <p class="head-sub" id="headSub">The items you've gathered, ready to check out.</p>
 
-        <div id="toolbarHost"></div>
         <div id="tickerHost"></div>
         <div id="cartBody"></div>
         <div id="checkoutHost"></div>
+    </div>
+
+    <!-- Filters bottom-sheet — holds every filter behind the header button. -->
+    <div class="cart-sheet-overlay" id="filterOverlay" onclick="if(event.target===this)closeFilters()">
+        <div class="cart-sheet">
+            <div class="sheet-grip"></div>
+            <h3>Filters</h3>
+            <div id="toolbarHost"></div>
+        </div>
     </div>
 
     <script>
@@ -461,6 +505,19 @@
             document.body.appendChild(cover);
             requestAnimationFrame(() => requestAnimationFrame(() => { cover.style.transform = 'translateY(0)'; }));
             setTimeout(() => { window.location.href = 'chats.html'; }, 640);
+        };
+
+        // Filters live behind the header button, in a bottom sheet.
+        window.openFilters = function () { document.getElementById('filterOverlay').classList.add('show'); };
+        window.closeFilters = function () { document.getElementById('filterOverlay').classList.remove('show'); };
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeFilters(); });
+
+        // Share the cart (native share where available, otherwise copy the link).
+        window.shareCart = function () {
+            const url = location.href;
+            const text = 'My VERO cart';
+            if (navigator.share) { navigator.share({ title: 'VERO', text, url }).catch(() => {}); return; }
+            if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
         };
 
         // Clothing / Art toggle — two carts, built the same way.
