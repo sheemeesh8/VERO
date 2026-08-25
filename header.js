@@ -1043,7 +1043,7 @@
         .vsp-user-search svg { width: 20px; height: 20px; stroke: #111; stroke-width: 1.8; fill: none; }
         .vsp-user-results {
             display: grid; grid-template-columns: repeat(4, 1fr);
-            gap: 22px 12px; justify-items: center; margin-top: 20px;
+            gap: 38px 12px; justify-items: center; margin-top: 22px;
         }
         .vsp-user-results:empty { margin-top: 0; }
         .vsp-user {
