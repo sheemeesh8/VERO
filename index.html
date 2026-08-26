@@ -7700,8 +7700,34 @@
         .home-rect .hr-card {
             position: absolute; left: 0; right: 0; bottom: 0;
             background: #fff; padding: 7px 14px 8px;
-            display: flex; flex-direction: column; gap: 3px;
+            display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+            text-align: left; direction: ltr;
         }
+        /* Section heading above each carousel — gives separation. */
+        .rects-heading {
+            font-family: 'Aharoni CLM','Segoe UI',sans-serif;
+            font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
+            color: #171717; font-weight: 500;
+            padding: 20px 8px 8px; direction: ltr; text-align: left; background: #fff;
+        }
+        /* Styles carousel — solid black tiles, name + arrow, no image. */
+        .style-rects .home-rect { background: #111; }
+        .style-tile-inner {
+            position: absolute; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 18px; padding: 16px; text-align: center;
+        }
+        .style-tile-name {
+            font-family: 'Aharoni CLM','Segoe UI',sans-serif;
+            color: #fff; font-size: 20px; font-weight: 500; letter-spacing: .04em;
+        }
+        .style-tile-arrow {
+            width: 46px; height: 46px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.6); background: transparent; color: #fff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: background .2s ease, color .2s ease;
+        }
+        .style-tile-arrow:hover { background: #fff; color: #111; }
+        .style-tile-arrow svg { width: 20px; height: 20px; }
         .home-rect .hr-kicker {
             font-family: 'Aharoni CLM','Segoe UI',sans-serif;
             font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: #a99f86;
@@ -7808,12 +7834,15 @@
         body[data-mode="art"] .hm2-slide--unisex,
         body[data-mode="art"] .hm2-dot--unisex { display: none; }
     </style>
-    <section class="home-rects" id="catFull">
-        <!-- Two tall category tiles, populated + rotated by renderCatfull(gender),
-             driven by the active slide of the Men/Women/Kids/Unisex slider above. -->
-        <a class="home-rect" id="homeRectA"><span class="hr-inner"><span class="hr-img"></span><span class="hr-card"><span class="hr-title"></span></span></span></a>
-        <a class="home-rect" id="homeRectB"><span class="hr-inner"><span class="hr-img"></span><span class="hr-card"><span class="hr-title"></span></span></span></a>
-    </section>
+    <div class="rects-heading">Categories</div>
+    <!-- Category carousel — one tile per category, two per screen, swipeable.
+         Populated by renderCatfull(gender). -->
+    <section class="home-rects" id="catFull"></section>
+
+    <div class="rects-heading">Styles</div>
+    <!-- Styles carousel — same layout, black tiles with the style name + an
+         arrow to enter it. Populated by renderStyles(). -->
+    <section class="home-rects style-rects" id="styleRects"></section>
     <script>
     (function () {
         // The full clothing catalogue — same order (and indices) as
@@ -7869,8 +7898,29 @@
             host.scrollLeft = 0;
         };
 
+        // Styles carousel — black tiles, each with a style name and an arrow to
+        // enter that style's browse view.
+        var STYLES_LIST = ['Y2K', 'Vintage', 'Streetwear', 'Grunge', 'Minimalist', 'Boho',
+            'Preppy', 'Sportswear', 'Retro', 'Techwear', 'Formalwear', 'Athleisure'];
+        window.enterStyle = function (name) {
+            if (typeof window.veroOpenSearchPage === 'function') window.veroOpenSearchPage();
+        };
+        function renderStyles() {
+            var host = document.getElementById('styleRects');
+            if (!host) return;
+            host.innerHTML = STYLES_LIST.map(function (name) {
+                var safe = name.replace(/'/g, '');
+                return '<div class="home-rect"><span class="style-tile-inner">'
+                    + '<span class="style-tile-name">' + name + '</span>'
+                    + '<button class="style-tile-arrow" onclick="enterStyle(\'' + safe + '\')" aria-label="Enter ' + name + '">'
+                    + arrowSvg() + '</button></span></div>';
+            }).join('');
+            host.scrollLeft = 0;
+        }
+
         function initCatfull() {
             if (document.getElementById('catFull')) window.renderCatfull('men');
+            renderStyles();
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initCatfull);
