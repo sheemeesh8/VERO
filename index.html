@@ -450,6 +450,26 @@
         header.scrolled .icon-btn svg { stroke: #111 !important; }
         header.scrolled .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
 
+        /* On entering the feed the header turns solid WHITE with BLACK content.
+           header.js ships a dark sticky look at equal/greater specificity, so these
+           overrides use `header#siteHeader.scrolled` + !important to win. */
+        header#siteHeader.scrolled {
+            background: #fff !important;
+            -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+            border-bottom: 1px solid rgba(0,0,0,0.08) !important;
+            box-shadow: 0 1px 12px rgba(0,0,0,0.05) !important;
+        }
+        header#siteHeader.scrolled .header-left > a,
+        header#siteHeader.scrolled .logo,
+        header#siteHeader.scrolled .toggle-category,
+        header#siteHeader.scrolled .icon-btn { color: #111 !important; }
+        header#siteHeader.scrolled .icon-btn svg { stroke: #111 !important; }
+        header#siteHeader.scrolled .upload-plus { color: #111 !important; }
+        header#siteHeader.scrolled .toggle-category { border-color: rgba(0,0,0,0.18) !important; }
+        header#siteHeader.scrolled .toggle-category::before { background: #111 !important; }
+        header#siteHeader.scrolled .toggle-category .seg { color: #6b6b6b !important; }
+        header#siteHeader.scrolled .toggle-category .seg.active { color: #fff !important; }
+
         /* Homepage photos removed on request — only the hero image is kept.
            Hides the product photos, category tiles and collection-card photos. */
         .achs-photo,
@@ -7681,16 +7701,22 @@
         /* ===== Two tall category rectangles (replaces the full-screen slider) ===== */
         .home-rects {
             position: relative; z-index: 5;
-            display: flex; gap: 4px;
+            display: flex; gap: 0;
             width: 100%; box-sizing: border-box;
-            padding: 4px; margin: 0; background: #fff;
+            padding: 0; margin: 0; background: #fff;
             overflow-x: auto; scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
         }
         .home-rects::-webkit-scrollbar { height: 0; width: 0; display: none; }
-        .home-rect {
-            flex: 0 0 calc(50% - 2px); min-width: 0; position: relative; display: block;
+        /* Each slide holds two category tiles, with an even gap between them and
+           matching gaps on both outer edges. */
+        .rect-page {
+            flex: 0 0 100%; box-sizing: border-box;
+            display: flex; gap: 8px; padding: 0 8px; direction: ltr;
             scroll-snap-align: start;
+        }
+        .home-rect {
+            flex: 1 1 0; min-width: 0; position: relative; display: block;
             height: 46vh; max-height: 430px; min-height: 260px;
             border-radius: 0; overflow: hidden;
             text-decoration: none; cursor: pointer; background: #eae7e0;
@@ -7839,10 +7865,6 @@
         body[data-mode="art"] .hm2-slide--unisex,
         body[data-mode="art"] .hm2-dot--unisex { display: none; }
     </style>
-    <div class="rects-heading rects-heading--top">Filter by Category</div>
-    <!-- Category carousel — one tile per category, two per screen, swipeable.
-         Populated by renderCatfull(gender). -->
-    <section class="home-rects" id="catFull"></section>
     <script>
     (function () {
         // The full clothing catalogue — same order (and indices) as
@@ -7888,13 +7910,20 @@
             var host = document.getElementById('catFull');
             if (!host) return;
             var idxs = GENDER_CATS[gender] || GENDER_CATS.men;
-            host.innerHTML = idxs.map(function (ci) {
+            function tile(ci) {
                 var c = CLOTHING[ci];
                 var url = 'https://picsum.photos/seed/' + encodeURIComponent(c.name) + '/700/1100';
                 return '<a class="home-rect" onclick="openCategory(\'clothing\', ' + ci + ')" aria-label="Open ' + c.name + '">'
                     + '<span class="hr-inner"><span class="hr-img" style="background-image:url(\'' + url + '\')"></span>'
                     + '<span class="hr-card"><span class="hr-title">' + c.name + '</span></span></span></a>';
-            }).join('');
+            }
+            // Group into slides of two categories each.
+            var pages = '';
+            for (var i = 0; i < idxs.length; i += 2) {
+                pages += '<div class="rect-page">' + tile(idxs[i])
+                    + (idxs[i + 1] != null ? tile(idxs[i + 1]) : '') + '</div>';
+            }
+            host.innerHTML = pages;
             host.scrollLeft = 0;
         };
 
