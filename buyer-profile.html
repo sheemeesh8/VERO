@@ -606,6 +606,55 @@
         #heroStats .hero-stat.is-active { opacity: 1; transform: none; }
         /* Portrait crop — keep the face in view near the top of the frame. */
         .hero { background-position: center 18%; }
+
+        /* ===================== IMAGE-STYLE PROFILE FRONT =====================
+           Contained cover photo with a floating + button, then a white card:
+           centred name, a 3-column stat row with a hairline, and the bio. */
+        .hero {
+            height: auto !important; min-height: 0 !important;
+            aspect-ratio: 4 / 5; justify-content: flex-start; overflow: visible;
+        }
+        .hero::after { display: none; }
+        .tb-ico { background: rgba(255,255,255,0.85); border-radius: 50%; width: 38px; height: 38px; }
+        .pf-plus {
+            position: absolute; right: 20px; bottom: -28px; z-index: 6;
+            width: 56px; height: 56px; border-radius: 50%;
+            background: #fff; border: 1.5px solid #111; color: #111;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+            transition: background .2s, color .2s, transform .2s;
+        }
+        .pf-plus svg { width: 26px; height: 26px; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; }
+        .pf-plus.on { background: #111; color: #fff; }
+        .pf-plus:active { transform: scale(0.94); }
+        .pf-card {
+            position: relative; z-index: 2; background: #fff; color: #111;
+            direction: ltr; text-align: center;
+            padding: 44px 26px calc(28px + env(safe-area-inset-bottom,0px));
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .pf-card .pf-names { display: flex; flex-direction: column; align-items: center; }
+        .pf-card .pf-first {
+            font-size: 30px; font-weight: 400; letter-spacing: 7px; line-height: 1;
+            color: #171717; text-transform: uppercase; white-space: normal;
+        }
+        .pf-card .pf-last { margin-top: 8px; font-size: 11px; letter-spacing: 5px; color: #9a9a95; text-transform: uppercase; }
+        .pf-card .pf-last:empty { display: none; }
+        .pf-stats { width: 100%; max-width: 330px; margin: 26px 0 0; }
+        .pf-stats-nums, .pf-stats-lbls { display: grid; grid-template-columns: repeat(3, 1fr); }
+        .pf-stats-nums { padding-bottom: 12px; border-bottom: 1px solid #e6e6e2; }
+        .pf-stats-lbls { padding-top: 12px; }
+        .pf-stats .pf-fnum { font-size: 22px; font-weight: 400; letter-spacing: 1px; color: #171717; text-align: center; line-height: 1; }
+        .pf-stats .pf-flbl { font-size: 9px; letter-spacing: 2px; color: #9a9a95; text-transform: uppercase; text-align: center; margin: 0; }
+        .pf-card .pf-bio {
+            margin: 22px auto 0; max-width: 300px; text-align: center;
+            font-size: 13px; line-height: 1.6; color: #6a6a6a;
+            display: block; -webkit-line-clamp: unset; overflow: visible;
+        }
+        .pf-card .pf-bio:empty { display: none; }
+        .pf-status { display: none !important; }
+        .pf-actionbar { display: none !important; }
+        .pf-waves { display: none !important; }
     </style>
     <link rel="stylesheet" href="product-card.css">
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
@@ -638,41 +687,44 @@
                     <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
                 </button>
             </div>
-            <!-- White panel: name + followers. -->
-            <div class="pf-panel">
-                <div class="pf-waves" aria-hidden="true"></div>
-                <div class="pf-idrow">
-                    <div class="pf-names">
-                        <span class="pf-first" id="storeName">Your Name</span>
-                        <span class="pf-last" id="storeLast"></span>
-                    </div>
-                    <!-- Followers → Following, one stat at a time (auto-rotating). -->
-                    <div class="pf-follow" id="heroStats">
-                        <div class="hero-stat is-active">
-                            <span class="pf-fnum" id="followers">0</span>
-                            <span class="pf-flbl">Followers</span>
-                        </div>
-                        <div class="hero-stat">
-                            <span class="pf-fnum" id="following">0</span>
-                            <span class="pf-flbl">Following</span>
-                        </div>
-                    </div>
-                </div>
-                <!-- Status + bio on one line, below the slider. -->
-                <div class="pf-meta">
-                    <span class="pf-status is-closed" id="storeStatus">Offline</span>
-                    <p class="pf-bio" id="storeBio"></p>
-                </div>
-            </div>
+            <!-- Circular + follow button, floating on the photo's bottom-right.
+                 Drives the hidden #followBtn so the follow logic + count stay intact. -->
+            <button class="pf-plus" id="pfPlus" type="button" aria-label="Follow"
+                onclick="(function(b){var fb=document.getElementById('followBtn');if(fb)fb.click();b.classList.toggle('on',!!(fb&&fb.classList.contains('following')));})(this)">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
+            </button>
             <!-- Hidden stubs kept so existing scripts still find their elements. -->
-            <span id="itemCount" hidden>0</span>
             <span id="verifiedCheck" hidden></span>
             <span id="heroAvatar" hidden></span>
             <button id="socialsBtn" hidden></button>
         </div>
 
-        <!-- Sticky bottom action bar: Message + Follow. -->
-        <div class="pf-actionbar">
+        <!-- White card below the photo: centred name, a 3-column stat row with a
+             hairline, then the bio. -->
+        <div class="pf-card">
+            <div class="pf-names">
+                <span class="pf-first" id="storeName">Your Name</span>
+                <span class="pf-last" id="storeLast"></span>
+            </div>
+            <div class="pf-stats">
+                <div class="pf-stats-nums">
+                    <span class="pf-fnum" id="following">0</span>
+                    <span class="pf-fnum" id="itemCount">0</span>
+                    <span class="pf-fnum" id="followers">0</span>
+                </div>
+                <div class="pf-stats-lbls">
+                    <span class="pf-flbl">Following</span>
+                    <span class="pf-flbl">iTeams in Store</span>
+                    <span class="pf-flbl">Followers</span>
+                </div>
+            </div>
+            <p class="pf-bio" id="storeBio"></p>
+            <span class="pf-status is-closed" id="storeStatus" hidden>Offline</span>
+        </div>
+
+        <!-- Sticky bottom action bar (hidden) — kept so the follow logic still runs
+             through #followBtn, driven by the + button above. -->
+        <div class="pf-actionbar" style="display:none">
             <button class="pf-msg" type="button" id="messageBtn">Message</button>
             <button class="follow-btn" id="followBtn">Follow</button>
         </div>
