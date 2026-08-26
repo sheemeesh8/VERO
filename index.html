@@ -7681,14 +7681,17 @@
         /* ===== Two tall category rectangles (replaces the full-screen slider) ===== */
         .home-rects {
             position: relative; z-index: 5;
-            display: flex; gap: 8px;
+            display: flex; gap: 4px;
             width: 100%; box-sizing: border-box;
             padding: 4px; margin: 0; background: #fff;
-            scroll-snap-align: start;
+            overflow-x: auto; scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
         }
+        .home-rects::-webkit-scrollbar { height: 0; width: 0; display: none; }
         .home-rect {
-            flex: 1 1 0; min-width: 0; position: relative; display: block;
-            height: 56vh; max-height: 520px; min-height: 300px;
+            flex: 0 0 calc(50% - 2px); min-width: 0; position: relative; display: block;
+            scroll-snap-align: start;
+            height: 46vh; max-height: 430px; min-height: 260px;
             border-radius: 0; overflow: hidden;
             text-decoration: none; cursor: pointer; background: #eae7e0;
         }
@@ -7808,8 +7811,8 @@
     <section class="home-rects" id="catFull">
         <!-- Two tall category tiles, populated + rotated by renderCatfull(gender),
              driven by the active slide of the Men/Women/Kids/Unisex slider above. -->
-        <a class="home-rect" id="homeRectA"><span class="hr-inner"><span class="hr-img"></span><span class="hr-card"><span class="hr-kicker">Category</span><span class="hr-title"></span></span></span></a>
-        <a class="home-rect" id="homeRectB"><span class="hr-inner"><span class="hr-img"></span><span class="hr-card"><span class="hr-kicker">Category</span><span class="hr-title"></span></span></span></a>
+        <a class="home-rect" id="homeRectA"><span class="hr-inner"><span class="hr-img"></span><span class="hr-card"><span class="hr-title"></span></span></span></a>
+        <a class="home-rect" id="homeRectB"><span class="hr-inner"><span class="hr-img"></span><span class="hr-card"><span class="hr-title"></span></span></span></a>
     </section>
     <script>
     (function () {
@@ -7850,52 +7853,24 @@
             return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
         }
 
-        // Two tall category rectangles. The left tile cycles the even-indexed
-        // categories of the active gender, the right tile the odd-indexed ones;
-        // each rotates on a timer with a soft crossfade. Clicking opens the page.
-        var RECT_IDS = ['homeRectA', 'homeRectB'];
-        var catfullState = { lists: [[], []], pos: [0, 0], timer: null };
-
-        function paintRect(which) {
-            var el = document.getElementById(RECT_IDS[which]);
-            if (!el) return;
-            var list = catfullState.lists[which];
-            if (!list || !list.length) return;
-            var ci = list[catfullState.pos[which] % list.length];
-            var c = CLOTHING[ci];
-            var inner = el.querySelector('.hr-inner');
-            var img = el.querySelector('.hr-img');
-            var title = el.querySelector('.hr-title');
-            if (inner) inner.style.opacity = '0';
-            setTimeout(function () {
-                if (img) img.style.backgroundImage = "url('https://picsum.photos/seed/" + encodeURIComponent(c.name) + "/700/1100')";
-                if (title) title.textContent = c.name;
-                el.onclick = function () { openCategory('clothing', ci); };
-                if (inner) inner.style.opacity = '1';
-            }, 240);
-        }
-
-        // Render the two category rectangles for one gender.
+        // Category carousel: one tall rectangle per category of the active gender,
+        // two visible per screen, swipeable horizontally. Clicking opens the page.
         window.renderCatfull = function (gender) {
-            if (!document.getElementById('homeRectA')) return;
+            var host = document.getElementById('catFull');
+            if (!host) return;
             var idxs = GENDER_CATS[gender] || GENDER_CATS.men;
-            catfullState.lists = [
-                idxs.filter(function (_, n) { return n % 2 === 0; }),
-                idxs.filter(function (_, n) { return n % 2 === 1; })
-            ];
-            if (!catfullState.lists[1].length) catfullState.lists[1] = catfullState.lists[0].slice();
-            catfullState.pos = [0, 0];
-            paintRect(0); paintRect(1);
+            host.innerHTML = idxs.map(function (ci) {
+                var c = CLOTHING[ci];
+                var url = 'https://picsum.photos/seed/' + encodeURIComponent(c.name) + '/700/1100';
+                return '<a class="home-rect" onclick="openCategory(\'clothing\', ' + ci + ')" aria-label="Open ' + c.name + '">'
+                    + '<span class="hr-inner"><span class="hr-img" style="background-image:url(\'' + url + '\')"></span>'
+                    + '<span class="hr-card"><span class="hr-title">' + c.name + '</span></span></span></a>';
+            }).join('');
+            host.scrollLeft = 0;
         };
 
         function initCatfull() {
-            if (!document.getElementById('homeRectA')) return;
-            window.renderCatfull('men');   // default until the slider above says otherwise
-            if (catfullState.timer) clearInterval(catfullState.timer);
-            catfullState.timer = setInterval(function () {
-                catfullState.pos[0]++; catfullState.pos[1]++;
-                paintRect(0); paintRect(1);
-            }, 4500);
+            if (document.getElementById('catFull')) window.renderCatfull('men');
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initCatfull);
