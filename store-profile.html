@@ -654,7 +654,6 @@
             aspect-ratio: 4 / 5; justify-content: flex-start; overflow: visible;
         }
         .hero::after { display: none; }
-        .tb-ico { background: rgba(255,255,255,0.85); border-radius: 50%; width: 38px; height: 38px; }
         /* Floating + follow button, straddling the photo's bottom edge. */
         .pf-plus {
             position: absolute; right: 20px; bottom: -28px; z-index: 6;
@@ -664,35 +663,49 @@
             cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.18);
             transition: background .2s, color .2s, transform .2s;
         }
-        .pf-plus svg { width: 26px; height: 26px; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; }
-        .pf-plus.on { background: #111; color: #fff; }
+        .pf-plus svg { position: absolute; width: 26px; height: 26px; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .pf-plus-add { stroke: #111; }
+        .pf-plus-check { stroke: #1da65a; opacity: 0; transform: scale(0.3); }
         .pf-plus:active { transform: scale(0.94); }
+        /* Followed: the + swaps for a green check that pops + draws in. */
+        .pf-plus.on { border-color: #1da65a; }
+        .pf-plus.on .pf-plus-add { opacity: 0; }
+        .pf-plus.on .pf-plus-check {
+            opacity: 1; transform: scale(1);
+            animation: pfCheckPop 0.4s cubic-bezier(0.2,1,0.3,1);
+        }
+        .pf-plus.on .pf-plus-check polyline {
+            stroke-dasharray: 30; stroke-dashoffset: 30; animation: pfCheckDraw 0.45s ease 0.05s forwards;
+        }
+        @keyframes pfCheckPop { 0% { transform: scale(0.3); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pfCheckDraw { to { stroke-dashoffset: 0; } }
         /* White card below the photo. */
         .pf-card {
             position: relative; z-index: 2; background: #fff; color: #111;
             direction: ltr; text-align: center;
-            padding: 44px 26px calc(28px + env(safe-area-inset-bottom,0px));
+            padding: 22px 26px calc(24px + env(safe-area-inset-bottom,0px));
             display: flex; flex-direction: column; align-items: center;
         }
         .pf-card .pf-names { display: flex; flex-direction: column; align-items: center; }
         .pf-card .pf-first {
-            font-size: 30px; font-weight: 400; letter-spacing: 7px; line-height: 1;
-            color: #171717; text-transform: uppercase; white-space: normal;
+            font-size: 22px; font-weight: 400; letter-spacing: 5px; line-height: 1;
+            color: #171717; text-transform: uppercase; white-space: normal; text-align: center;
         }
-        .pf-card .pf-last { margin-top: 8px; font-size: 11px; letter-spacing: 5px; color: #9a9a95; text-transform: uppercase; }
+        .pf-card .pf-last { margin-top: 7px; font-size: 10px; letter-spacing: 4px; color: #9a9a95; text-transform: uppercase; text-align: center; }
         .pf-card .pf-last:empty { display: none; }
         /* 3-column stats spread the full card width, with a continuous hairline
            between numbers and labels. First column reads left, middle centres,
            last reads right — like the reference. */
-        .pf-stats { width: 100%; max-width: none; margin: 26px 0 0; }
+        .pf-stats { width: 100%; max-width: none; margin: 14px 0 0; }
         .pf-stats-nums, .pf-stats-lbls { display: grid; grid-template-columns: repeat(3, 1fr); }
-        .pf-stats-nums { padding-bottom: 12px; border-bottom: 1px solid #e6e6e2; }
+        .pf-stats-nums { padding-bottom: 12px; border-bottom: 1px solid #cfcfc9; }
         .pf-stats-lbls { padding-top: 12px; }
         .pf-stats .pf-fnum { font-size: 24px; font-weight: 400; letter-spacing: 1px; color: #171717; line-height: 1; }
         .pf-stats .pf-flbl { font-size: 9px; letter-spacing: 2px; color: #9a9a95; text-transform: uppercase; margin: 0; }
         .pf-stats-nums > :nth-child(1), .pf-stats-lbls > :nth-child(1) { text-align: left; }
         .pf-stats-nums > :nth-child(2), .pf-stats-lbls > :nth-child(2) { text-align: center; }
         .pf-stats-nums > :nth-child(3), .pf-stats-lbls > :nth-child(3) { text-align: right; }
+        .pf-stats .link { cursor: pointer; }
         /* Centred bio. */
         .pf-card .pf-bio {
             margin: 22px auto 0; max-width: 300px; text-align: center;
@@ -703,6 +716,45 @@
         .pf-status { display: none !important; }
         .pf-actionbar { display: none !important; }
         .pf-waves { display: none !important; }
+
+        /* Bottom-left on the photo: status + Opening-Hours button. */
+        .pf-hero-hours {
+            position: absolute; left: 16px; bottom: 16px; z-index: 6;
+            display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+        }
+        .phh-status {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #fff;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+        }
+        .phh-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #3fae63; box-shadow: 0 0 0 3px rgba(63,174,99,0.25); }
+        .phh-status.is-closed { color: #ededed; }
+        .phh-status.is-closed::before { background: #c2c2bd; box-shadow: 0 0 0 3px rgba(0,0,0,0.15); }
+        .phh-btn {
+            border: none; cursor: pointer; background: rgba(255,255,255,0.92); color: #111;
+            font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 9px 14px; border-radius: 999px;
+            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+        }
+        .phh-btn:active { opacity: 0.85; }
+        /* Opening-hours popup. */
+        .hours-overlay {
+            position: fixed; inset: 0; z-index: 120; display: none;
+            align-items: center; justify-content: center;
+            background: rgba(20,18,14,0.45); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+        }
+        .hours-overlay.open { display: flex; }
+        .hours-modal { width: 280px; max-width: 86vw; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .hours-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border-bottom: 1px solid #eee; }
+        .hours-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #171717; }
+        .hours-x { border: none; background: none; font-size: 22px; line-height: 1; color: #999; cursor: pointer; }
+        .hours-list { padding: 8px 18px 16px; }
+        .hours-row { display: flex; justify-content: space-between; padding: 9px 0; font-size: 13px; color: #444; border-bottom: 1px solid #f2f2f0; }
+        .hours-row:last-child { border-bottom: none; }
+        .hours-row.today { color: #111; font-weight: 600; }
+        .hours-val { color: #6a6a6a; }
+        .hours-row.today .hours-val { color: #111; }
     </style>
     <link rel="stylesheet" href="product-card.css">
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
@@ -741,8 +793,15 @@
                  stay intact, and reflects the followed state with the .on class. -->
             <button class="pf-plus" id="pfPlus" type="button" aria-label="Follow"
                 onclick="(function(b){var fb=document.getElementById('followBtn');if(fb)fb.click();b.classList.toggle('on',!!(fb&&fb.classList.contains('following')));})(this)">
-                <svg viewBox="0 0 24 24"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
+                <svg class="pf-plus-add" viewBox="0 0 24 24"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
+                <svg class="pf-plus-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
+            <!-- Bottom-left on the photo: OPEN/CLOSED status above an Opening-Hours
+                 button that opens the full weekly schedule (set in My Shop settings). -->
+            <div class="pf-hero-hours">
+                <span class="phh-status" id="storeStatus">Open</span>
+                <button class="phh-btn" type="button" onclick="openHoursPopup()">Opening Hours</button>
+            </div>
             <!-- Hidden stubs kept so existing scripts still find their elements. -->
             <span id="verifiedCheck" hidden></span>
             <button id="socialsBtn" hidden></button>
@@ -757,18 +816,17 @@
             </div>
             <div class="pf-stats">
                 <div class="pf-stats-nums">
-                    <span class="pf-fnum" id="following">0</span>
+                    <span class="pf-fnum link" id="following" onclick="location.href='follows.html#following'">0</span>
                     <span class="pf-fnum" id="itemCount">0</span>
-                    <span class="pf-fnum" id="followers">1,284</span>
+                    <span class="pf-fnum link" id="followers" onclick="location.href='follows.html#followers'">1,284</span>
                 </div>
                 <div class="pf-stats-lbls">
-                    <span class="pf-flbl">Following</span>
+                    <span class="pf-flbl link" onclick="location.href='follows.html#following'">Following</span>
                     <span class="pf-flbl">iTeams in Store</span>
-                    <span class="pf-flbl">Followers</span>
+                    <span class="pf-flbl link" onclick="location.href='follows.html#followers'">Followers</span>
                 </div>
             </div>
             <p class="pf-bio" id="storeBio"></p>
-            <span class="pf-status" id="storeStatus" hidden>Open</span>
         </div>
 
         <!-- Sticky bottom action bar (hidden) — kept so the follow logic still runs
@@ -844,6 +902,36 @@
             <div class="soc-links" id="socLinks"></div>
         </div>
     </div>
+
+    <!-- Opening-hours popup — the weekly schedule from the seller's settings. -->
+    <div class="hours-overlay" id="hoursOverlay" onclick="if(event.target===this)closeHoursPopup()">
+        <div class="hours-modal" role="dialog" aria-modal="true" aria-label="Opening hours">
+            <div class="hours-head">
+                <span class="hours-title">Opening Hours</span>
+                <button class="hours-x" type="button" onclick="closeHoursPopup()" aria-label="Close">&times;</button>
+            </div>
+            <div class="hours-list" id="hoursList"></div>
+        </div>
+    </div>
+    <script>
+        // Reads the weekly hours from the same stores the page uses (My Shop
+        // settings): vero_store_config, then vero_seller_profile overrides.
+        window.openHoursPopup = function () {
+            var hours = {};
+            try { var c = JSON.parse(localStorage.getItem('vero_store_config')) || {}; if (c.hours) hours = c.hours; } catch (e) {}
+            try { var s = JSON.parse(localStorage.getItem('vero_seller_profile')) || {}; if (s.hours) hours = s.hours; } catch (e) {}
+            var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            var today = new Date().getDay();
+            document.getElementById('hoursList').innerHTML = days.map(function (d, i) {
+                var day = hours[i];
+                var val = (day && day.open && day.close) ? (day.open + ' – ' + day.close) : 'Closed';
+                return '<div class="hours-row' + (i === today ? ' today' : '') + '">'
+                    + '<span class="hours-day">' + d + '</span><span class="hours-val">' + val + '</span></div>';
+            }).join('');
+            document.getElementById('hoursOverlay').classList.add('open');
+        };
+        window.closeHoursPopup = function () { document.getElementById('hoursOverlay').classList.remove('open'); };
+    </script>
 
     <script>
         // ===================== DEMO DATA =====================

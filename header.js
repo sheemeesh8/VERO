@@ -830,12 +830,6 @@
             transition: color 0.25s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);
         }
         .vero-drawer-nav a:hover { transform: translateX(8px); color: #6e5a3a; }
-        /* Decorative black hairline to the RIGHT of each item, stretching almost to
-           the drawer's right edge (purely visual). */
-        .vero-drawer-nav a::after {
-            content: ""; flex: 1 1 auto; align-self: center;
-            height: 1px; background: #111; margin-right: 48%;
-        }
 
         /* Secondary section — personal area, quieter and smaller */
         .vero-drawer-nav .vero-drawer-heading {
