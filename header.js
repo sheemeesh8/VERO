@@ -834,7 +834,7 @@
            the drawer's right edge (purely visual). */
         .vero-drawer-nav a::after {
             content: ""; flex: 1 1 auto; align-self: center;
-            height: 1px; background: #111; margin-right: -28px;
+            height: 1px; background: #111; margin-right: 48%;
         }
 
         /* Secondary section — personal area, quieter and smaller */
