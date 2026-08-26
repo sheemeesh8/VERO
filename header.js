@@ -830,11 +830,11 @@
             transition: color 0.25s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);
         }
         .vero-drawer-nav a:hover { transform: translateX(8px); color: #6e5a3a; }
-        /* Decorative hairline to the left of each item, reaching almost to the
-           drawer's left edge (purely visual). */
-        .vero-drawer-nav a::before {
-            content: ""; position: absolute; top: 50%; left: -28px;
-            width: 22px; height: 1px; background: #d8d2c6; transform: translateY(-50%);
+        /* Decorative black hairline to the RIGHT of each item, stretching almost to
+           the drawer's right edge (purely visual). */
+        .vero-drawer-nav a::after {
+            content: ""; flex: 1 1 auto; align-self: center;
+            height: 1px; background: #111; margin-right: -28px;
         }
 
         /* Secondary section — personal area, quieter and smaller */
@@ -1399,7 +1399,6 @@
                     Add Product
                 </a>
                 <a class="secondary" id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
-                <a class="secondary" id="veroAboutUsLink" href="about.html">About Us</a>
                 <a class="secondary" id="veroLogoutLink" onclick="veroCloseDrawer(); veroLogout()">Log out</a>
             </nav>
             <div class="vero-drawer-social">
