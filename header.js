@@ -794,52 +794,48 @@
         }
         .vero-drawer-overlay.open { opacity: 1; visibility: visible; }
         .vero-drawer {
-            position: fixed; top: 0; left: 0; height: 100%; width: 400px; max-width: 90vw;
+            position: fixed; top: 0; left: 0; height: 100%; width: 320px; max-width: 72vw;
             background: #faf9f6; color: #1b1916; z-index: 201; transform: translateX(-100%);
             transition: transform 0.55s cubic-bezier(0.16,1,0.3,1);
             box-shadow: 30px 0 80px rgba(0,0,0,0.10);
+            border-radius: 22px; overflow: hidden;
             display: flex; flex-direction: column;
             padding: calc(30px + env(safe-area-inset-top,0px)) 34px calc(30px + env(safe-area-inset-bottom,0px));
             box-sizing: border-box; direction: ltr; text-align: left;
         }
         .vero-drawer.open { transform: translateX(0); }
 
-        /* Header row: wordmark + hairline close */
+        /* Header row: back arrow (matches the page headers) */
         .vero-drawer-head {
-            display: flex; align-items: center; justify-content: space-between;
-            padding-bottom: 30px; border-bottom: 1px solid #e7e2d8; margin-bottom: 14px;
-        }
-        .vero-drawer-head .vero-drawer-logo {
-            font-size: 15px; font-weight: 400; letter-spacing: 8px;
-            text-transform: uppercase; color: #1b1916;
+            display: flex; align-items: center; justify-content: flex-start;
+            padding-bottom: 24px; border-bottom: 1px solid #e7e2d8; margin-bottom: 14px;
         }
         .vero-drawer-close {
             background: none; border: none; cursor: pointer; padding: 0;
-            width: 30px; height: 30px; position: relative; color: #1b1916;
-            transition: opacity 0.25s ease, transform 0.4s ease;
+            width: 30px; height: 30px; display: inline-flex; align-items: center;
+            justify-content: center; margin-left: -4px; color: #1b1916;
+            transition: opacity 0.25s ease, transform 0.3s ease;
         }
-        .vero-drawer-close::before, .vero-drawer-close::after {
-            content: ""; position: absolute; left: 4px; right: 4px; top: 50%;
-            height: 1px; background: currentColor;
-        }
-        .vero-drawer-close::before { transform: rotate(45deg); }
-        .vero-drawer-close::after  { transform: rotate(-45deg); }
-        .vero-drawer-close:hover { opacity: 0.55; transform: rotate(90deg); }
+        .vero-drawer-close svg { width: 24px; height: 24px; }
+        .vero-drawer-close:hover { opacity: 0.55; transform: translateX(-3px); }
 
-        /* Primary navigation — large, light, numbered */
-        .vero-drawer-nav { display: flex; flex-direction: column; counter-reset: navitem; }
+        /* Primary navigation — large, light (Aharoni CLM, smaller labels, no numbers).
+           Grows to fill the drawer height so items spread down the full page. */
+        .vero-drawer-nav { display: flex; flex-direction: column; flex: 1 1 auto; justify-content: space-between; }
         .vero-drawer-nav a {
             position: relative; display: flex; align-items: baseline; gap: 14px;
-            font-size: 27px; font-weight: 300; letter-spacing: 0.5px; color: #1b1916;
-            text-decoration: none; padding: 15px 0; cursor: pointer;
+            font-family: 'Aharoni CLM', 'Aharoni', 'Assistant', sans-serif;
+            font-size: 20px; font-weight: 300; letter-spacing: 0.5px; color: #1b1916;
+            text-decoration: none; padding: 12px 0; cursor: pointer;
             transition: color 0.25s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);
         }
-        .vero-drawer-nav a.primary::before {
-            counter-increment: navitem; content: counter(navitem,decimal-leading-zero);
-            font-size: 9px; font-weight: 400; letter-spacing: 1.5px; color: #b3ab9c;
-            transform: translateY(-6px);
-        }
         .vero-drawer-nav a:hover { transform: translateX(8px); color: #6e5a3a; }
+        /* Decorative hairline to the left of each item, reaching almost to the
+           drawer's left edge (purely visual). */
+        .vero-drawer-nav a::before {
+            content: ""; position: absolute; top: 50%; left: -28px;
+            width: 22px; height: 1px; background: #d8d2c6; transform: translateY(-50%);
+        }
 
         /* Secondary section — personal area, quieter and smaller */
         .vero-drawer-nav .vero-drawer-heading {
@@ -852,6 +848,8 @@
             padding: 11px 0; text-transform: uppercase;
         }
         .vero-drawer-nav a.secondary:hover { color: #1b1916; transform: translateX(6px); }
+        .vero-drawer-nav a.secondary.action { align-items: center; gap: 9px; color: #1b1916; }
+        .vero-drawer-nav a.secondary.action svg { flex: none; }
 
         /* Footer — socials */
         .vero-drawer-social {
@@ -1363,7 +1361,7 @@
                     </a>
                 </span>
                 <span class="hdr-account" data-icon="account">
-                    <button class="icon-btn" onclick="veroOpenAccountSwitcher(this)" title="Choose profile" aria-label="Choose profile">
+                    <button class="icon-btn hdr-account-btn" title="My Account (hold to switch profile)" aria-label="My Account">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="8" r="4"></circle>
                             <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
@@ -1385,8 +1383,9 @@
         <div class="vero-drawer-overlay" id="veroDrawerOverlay" onclick="veroCloseDrawer()"></div>
         <aside class="vero-drawer" id="veroDrawer" aria-hidden="true">
             <div class="vero-drawer-head">
-                <span class="vero-drawer-logo">VERO</span>
-                <button class="vero-drawer-close" aria-label="Close menu" onclick="veroCloseDrawer()">&times;</button>
+                <button class="vero-drawer-close" aria-label="Back" onclick="veroCloseDrawer()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"></polyline></svg>
+                </button>
             </div>
             <nav class="vero-drawer-nav">
                 <a class="primary" onclick="veroCloseDrawer(); showMain()">Home</a>
@@ -1395,7 +1394,12 @@
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
                 <a class="primary" href="about.html">About</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
+                <a class="secondary action" id="veroAddProductLink" onclick="veroCloseDrawer(); openUploadProduct()">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Product
+                </a>
                 <a class="secondary" id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
+                <a class="secondary" id="veroAboutUsLink" href="about.html">About Us</a>
                 <a class="secondary" id="veroLogoutLink" onclick="veroCloseDrawer(); veroLogout()">Log out</a>
             </nav>
             <div class="vero-drawer-social">
@@ -2424,19 +2428,22 @@
     };
 
     function wireAccountLongPress() {
-        const btn = document.querySelector('#siteHeader .hdr-avatar-btn');
+        const btn = document.querySelector('#siteHeader .hdr-avatar-btn, #siteHeader .hdr-account-btn');
         if (!btn) return;
-        let timer = null, longFired = false;
-        const start = () => { longFired = false; timer = setTimeout(() => { longFired = true; window.veroOpenAccountSwitcher(btn); }, 480); };
-        const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
-        btn.addEventListener('pointerdown', start);
-        btn.addEventListener('pointerup', cancel);
-        btn.addEventListener('pointerleave', cancel);
-        btn.addEventListener('pointercancel', cancel);
-        btn.addEventListener('contextmenu', e => e.preventDefault());
+        // Single click opens the personal area; DOUBLE click switches the profile
+        // (buyer ↔ seller) directly.
+        let clickTimer = null;
+        btn.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+            window.veroSwitchAccount();
+        });
         btn.addEventListener('click', () => {
-            if (longFired) { longFired = false; return; }   // long-press already handled it
-            window.veroOpenArea();
+            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
+            clickTimer = setTimeout(() => {
+                clickTimer = null;
+                window.veroOpenArea();
+            }, 280);
         });
     }
 

@@ -7678,6 +7678,35 @@
             overflow: hidden; background: #000;
             scroll-snap-align: start; scroll-snap-stop: always;
         }
+        /* ===== Two tall category rectangles (replaces the full-screen slider) ===== */
+        .home-rects {
+            position: relative; z-index: 5;
+            display: flex; gap: 8px;
+            width: 100%; box-sizing: border-box;
+            padding: 8px; margin: 0; background: #fff;
+            scroll-snap-align: start;
+        }
+        .home-rect {
+            flex: 1 1 0; min-width: 0; position: relative; display: block;
+            height: 84vh; max-height: 780px; min-height: 420px;
+            border-radius: 10px; overflow: hidden;
+            text-decoration: none; cursor: pointer; background: #eae7e0;
+        }
+        .home-rect .hr-inner { position: absolute; inset: 0; opacity: 1; transition: opacity 0.5s ease; }
+        .home-rect .hr-img { position: absolute; inset: 0; background: #ddd center/cover no-repeat; }
+        .home-rect .hr-card {
+            position: absolute; left: 0; right: 0; bottom: 0;
+            background: #fff; padding: 7px 14px 8px;
+            display: flex; flex-direction: column; gap: 3px;
+        }
+        .home-rect .hr-kicker {
+            font-family: 'Aharoni CLM','Segoe UI',sans-serif;
+            font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: #a99f86;
+        }
+        .home-rect .hr-title {
+            font-family: 'Aharoni CLM','Segoe UI',sans-serif;
+            font-size: 18px; font-weight: 500; color: #171717; line-height: 1.12;
+        }
         .catfull-slider {
             display: flex; height: 100%;
             overflow-x: auto; overflow-y: hidden;
@@ -7776,12 +7805,11 @@
         body[data-mode="art"] .hm2-slide--unisex,
         body[data-mode="art"] .hm2-dot--unisex { display: none; }
     </style>
-    <section class="catfull" id="catFull">
-        <!-- Slides + nav line are rendered by renderCatfull(gender), driven by the
-             active slide of the Men/Women/Kids/Unisex slider above. -->
-        <div class="catfull-slider" id="catfullSlider"></div>
-        <div class="catfull-swipe">Slide for more</div>
-        <div class="catfull-dots" id="catfullDots"></div>
+    <section class="home-rects" id="catFull">
+        <!-- Two tall category tiles, populated + rotated by renderCatfull(gender),
+             driven by the active slide of the Men/Women/Kids/Unisex slider above. -->
+        <a class="home-rect" id="homeRectA"><span class="hr-inner"><span class="hr-img"></span><span class="hr-card"><span class="hr-kicker">Category</span><span class="hr-title"></span></span></span></a>
+        <a class="home-rect" id="homeRectB"><span class="hr-inner"><span class="hr-img"></span><span class="hr-card"><span class="hr-kicker">Category</span><span class="hr-title"></span></span></span></a>
     </section>
     <script>
     (function () {
@@ -7822,40 +7850,52 @@
             return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
         }
 
-        // Render the full-screen category slider for one gender.
+        // Two tall category rectangles. The left tile cycles the even-indexed
+        // categories of the active gender, the right tile the odd-indexed ones;
+        // each rotates on a timer with a soft crossfade. Clicking opens the page.
+        var RECT_IDS = ['homeRectA', 'homeRectB'];
+        var catfullState = { lists: [[], []], pos: [0, 0], timer: null };
+
+        function paintRect(which) {
+            var el = document.getElementById(RECT_IDS[which]);
+            if (!el) return;
+            var list = catfullState.lists[which];
+            if (!list || !list.length) return;
+            var ci = list[catfullState.pos[which] % list.length];
+            var c = CLOTHING[ci];
+            var inner = el.querySelector('.hr-inner');
+            var img = el.querySelector('.hr-img');
+            var title = el.querySelector('.hr-title');
+            if (inner) inner.style.opacity = '0';
+            setTimeout(function () {
+                if (img) img.style.backgroundImage = "url('https://picsum.photos/seed/" + encodeURIComponent(c.name) + "/700/1100')";
+                if (title) title.textContent = c.name;
+                el.onclick = function () { openCategory('clothing', ci); };
+                if (inner) inner.style.opacity = '1';
+            }, 240);
+        }
+
+        // Render the two category rectangles for one gender.
         window.renderCatfull = function (gender) {
-            var slider = document.getElementById('catfullSlider');
-            var dots = document.getElementById('catfullDots');
-            if (!slider) return;
+            if (!document.getElementById('homeRectA')) return;
             var idxs = GENDER_CATS[gender] || GENDER_CATS.men;
-            slider.innerHTML = idxs.map(function (ci) {
-                var c = CLOTHING[ci];
-                return '<div class="catfull-slide">'
-                    + '<img class="catfull-img" src="https://picsum.photos/seed/' + encodeURIComponent(c.name) + '/800/1300" alt="">'
-                    + '<div class="catfull-card"><div class="catfull-text">'
-                    + '<span class="catfull-kicker">Category</span>'
-                    + '<h2 class="catfull-title">' + c.name + '</h2>'
-                    + '<p class="catfull-desc">' + c.desc + '</p></div>'
-                    + '<button class="catfull-arrow" onclick="openCategory(\'clothing\', ' + ci + ')" aria-label="Open ' + c.name + '">'
-                    + arrowSvg() + '</button></div></div>';
-            }).join('');
-            if (dots) {
-                dots.innerHTML = idxs.map(function (_, n) {
-                    return '<span class="catfull-dot' + (n === 0 ? ' active' : '') + '"></span>';
-                }).join('');
-            }
-            slider.scrollLeft = 0;
+            catfullState.lists = [
+                idxs.filter(function (_, n) { return n % 2 === 0; }),
+                idxs.filter(function (_, n) { return n % 2 === 1; })
+            ];
+            if (!catfullState.lists[1].length) catfullState.lists[1] = catfullState.lists[0].slice();
+            catfullState.pos = [0, 0];
+            paintRect(0); paintRect(1);
         };
 
         function initCatfull() {
-            var slider = document.getElementById('catfullSlider');
-            if (!slider) return;
-            slider.addEventListener('scroll', function () {
-                var dotEls = document.getElementById('catfullDots').querySelectorAll('.catfull-dot');
-                var i = Math.round(slider.scrollLeft / slider.clientWidth);
-                dotEls.forEach(function (d, n) { d.classList.toggle('active', n === i); });
-            }, { passive: true });
+            if (!document.getElementById('homeRectA')) return;
             window.renderCatfull('men');   // default until the slider above says otherwise
+            if (catfullState.timer) clearInterval(catfullState.timer);
+            catfullState.timer = setInterval(function () {
+                catfullState.pos[0]++; catfullState.pos[1]++;
+                paintRect(0); paintRect(1);
+            }, 4500);
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initCatfull);
@@ -9400,11 +9440,21 @@
 
         // Toggle Switch - switches between clothing and art
         function toggleSwitch() {
-            if (currentCategory === 'clothing') {
-                setCategory('art');
-            } else {
-                setCategory('clothing');
+            const next = currentCategory === 'clothing' ? 'art' : 'clothing';
+            // Cross-fade the switch: fade a light veil in, swap the mode behind it,
+            // then fade the veil back out.
+            let ov = document.getElementById('modeFade');
+            if (!ov) {
+                ov = document.createElement('div');
+                ov.id = 'modeFade';
+                ov.style.cssText = 'position:fixed;inset:0;background:#fbfaf7;opacity:0;pointer-events:none;z-index:150;transition:opacity 0.28s ease';
+                document.body.appendChild(ov);
             }
+            ov.style.opacity = '1';
+            setTimeout(function () {
+                setCategory(next);
+                requestAnimationFrame(function () { ov.style.opacity = '0'; });
+            }, 280);
         }
 
         // Set Category Helper
