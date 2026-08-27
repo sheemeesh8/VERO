@@ -44,16 +44,12 @@
 
         .back {
             position: fixed; top: 26px; right: 34px; z-index: 40;
-            display: inline-flex; align-items: center; gap: 12px;
-            padding: 6px 4px; border: none; border-radius: 0;
-            font-size: 14px; letter-spacing: 2px; text-decoration: none; color: #fff;
-            background: none; color: #fff; mix-blend-mode: difference;
-            transition: opacity 0.25s;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
+            font-size: 10.00px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
+            background: #fff; transition: background 0.25s, color 0.25s;
         }
-        /* difference blend inverts the button against whatever is behind it, so it
-           stays readable over the dark hero and the white feed alike. */
-        .back svg, .back img { width: 22px; height: 22px; }
-        .back:hover { opacity: 0.7; }
+        .back:hover { background: #000; color: #fff; }
 
         .wrap {
             max-width: none; margin: 0;
@@ -302,6 +298,27 @@
         .pf-slide { display: none; }
         .pf-slide.is-active { display: block; animation: pfSlideIn 0.4s ease both; }
         @keyframes pfSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+        /* ===== Settings category navigation — minimalist pill bar, one group at a
+           time. Files every section under a named tab so the page reads clean. ===== */
+        .set-nav {
+            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+            margin: 4px 0 34px; position: sticky; top: 0; z-index: 20;
+            padding: 12px 0; background: linear-gradient(#fff 70%, rgba(255,255,255,0));
+        }
+        .set-nav-btn {
+            appearance: none; border: 1px solid #e4e0d7; background: #fff; color: #8a8a85;
+            font-family: inherit; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+            padding: 10px 20px; border-radius: 999px; cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+        .set-nav-btn:hover { color: #111; border-color: #111; }
+        .set-nav-btn.is-active { background: #111; color: #fff; border-color: #111; }
+        .set-slide { display: none; }
+        .set-slide.is-active { display: block; animation: pfSlideIn 0.4s ease both; }
+        .set-slide > .card,
+        .set-slide > section { margin-top: 0; }
+        .set-slide > * + * { margin-top: 26px; }
         /* Edit controls sit below the name, in place of the tagline. */
         .ph-edit { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
         /* Borderless — just the text labels over the hero, no pill frame. */
@@ -1681,269 +1698,6 @@
             </div>
         </div>
 
-        <!-- Opening-hours editor — sets the OPEN / CLOSED status shown on the
-             storefront. Saved to vero_store_config.hours as {0..6:{open,close}|null}
-             (0 = Sunday), which store-profile.html reads. -->
-        <div class="oh-overlay" id="ohOverlay">
-            <div class="oh-modal" role="dialog" aria-modal="true" aria-label="Opening hours">
-                <div class="oh-head">
-                    <div class="oh-title">Opening hours</div>
-                    <button type="button" class="oh-x" id="ohClose" aria-label="Close">&times;</button>
-                </div>
-                <div class="oh-sub">These set the OPEN / CLOSED badge on your storefront.</div>
-                <div id="ohDays"></div>
-                <div class="oh-actions">
-                    <button type="button" class="oh-btn ghost" id="ohCancel">Cancel</button>
-                    <button type="button" class="oh-btn solid" id="ohSave">Save hours</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid">
-            <!-- Identity card (editable, saved to localStorage) -->
-            <div class="card contact-card">
-                <div class="field">
-                    <div class="card-label" id="nameLabel">Name</div>
-                    <input id="pf-name" type="text" placeholder="Your name">
-                    <div class="card-hint seller-only" style="margin:6px 0 0;">The name shown publicly on your feed and products.</div>
-                </div>
-                <div class="field">
-                    <div class="card-label">Email</div>
-                    <input id="pf-email" type="email" placeholder="you@email.com">
-                    <div id="pf-email-err" class="field-error"></div>
-                </div>
-                <div class="field seller-only">
-                    <div class="card-label">Phone</div>
-                    <input id="pf-phone" type="tel" placeholder="+972 5X-XXX-XXXX">
-                </div>
-                <div class="field buyer-only">
-                    <div class="card-label">Location</div>
-                    <input id="pf-location" type="text" placeholder="City, Country">
-                </div>
-                <div class="field">
-                    <div class="card-label">About</div>
-                    <textarea id="pf-bio" rows="1" maxlength="200" placeholder="A short line about you"></textarea>
-                    <div class="char-count seller-only"><span id="bioCount">0</span>/200</div>
-                </div>
-                <div class="field">
-                    <div class="card-label">Socials</div>
-                    <div class="socials-icons">
-                        <button type="button" class="social-ico" data-social="instagram" aria-label="Instagram" aria-expanded="false">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
-                        </button>
-                        <button type="button" class="social-ico" data-social="tiktok" aria-label="TikTok" aria-expanded="false">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.1 3c.3 2.2 1.7 3.9 3.9 4.2v2.6c-1.4 0-2.8-.5-3.9-1.2v5.7a5.3 5.3 0 1 1-5.3-5.3c.3 0 .6 0 .9.1v2.7a2.6 2.6 0 1 0 1.8 2.5V3h2.6z"/></svg>
-                        </button>
-                        <button type="button" class="social-ico" data-social="twitter" aria-label="Twitter / X" aria-expanded="false">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 3h3l-6.6 7.6L21.8 21h-6l-4.3-5.6L6.5 21h-3l7.1-8.1L2.4 3h6.1l3.9 5.2L17.5 3zm-1.1 16.1h1.7L8 4.8H6.2l10.2 14.3z"/></svg>
-                        </button>
-                        <button type="button" class="social-ico" data-social="facebook" aria-label="Facebook" aria-expanded="false">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.2c-1.2 0-1.6.75-1.6 1.5V12h2.7l-.43 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>
-                        </button>
-                    </div>
-                    <div class="social-rows">
-                        <div class="social-row" data-row="instagram"><input id="pf-instagram" type="url" placeholder="Instagram URL"></div>
-                        <div class="social-row" data-row="tiktok"><input id="pf-tiktok" type="url" placeholder="TikTok URL"></div>
-                        <div class="social-row" data-row="twitter"><input id="pf-twitter" type="url" placeholder="Twitter / X URL"></div>
-                        <div class="social-row" data-row="facebook"><input id="pf-facebook" type="url" placeholder="Facebook URL"></div>
-                    </div>
-                </div>
-                <!-- ===== Business shop settings — merged into this card (seller only) ===== -->
-                <div class="field seller-only" style="grid-column:1 / -1;">
-                    <div class="card-label" style="color:#111; letter-spacing:2px; text-transform:uppercase; font-size:10px; margin-top:6px;">Store settings</div>
-                </div>
-                <div class="field seller-only">
-                    <div class="card-label">Specialty</div>
-                    <select id="st-specialty">
-                        <option value="" disabled selected>Choose your field…</option>
-                        <option value="fashion">Fashion</option>
-                        <option value="art">Art</option>
-                        <option value="both">Fashion &amp; Art</option>
-                    </select>
-                </div>
-                <div class="field seller-only">
-                    <div class="card-label">Store location</div>
-                    <input id="st-location" type="text" placeholder="City, Country">
-                </div>
-                <div class="field seller-only">
-                    <div class="card-label">Business hours</div>
-                    <input id="st-hours" type="text" placeholder="e.g. Sun–Thu, 09:00–18:00">
-                </div>
-                <div class="field seller-only">
-                    <div class="card-label">Shipping regions</div>
-                    <input id="st-shipping" type="text" placeholder="e.g. Israel, EU, Worldwide">
-                </div>
-                <div class="field seller-only" style="grid-column:1 / -1;">
-                    <div class="card-label">Return policy</div>
-                    <textarea id="st-returns" rows="1" placeholder="e.g. 14-day returns on unworn items"></textarea>
-                </div>
-                <div class="field seller-only">
-                    <div class="card-label">Business / VAT ID</div>
-                    <input id="st-vat" type="text" placeholder="Registered business number">
-                </div>
-                <div class="save-note" id="saveNote">Changes save automatically.</div>
-            </div>
-
-            <!-- Right column: preferences + live stats from the site -->
-            <div class="col-right">
-                <!-- ===== Photos — profile picture + background, in the settings list
-                     for both profiles ===== -->
-                <div class="card" id="photosCard" style="margin-top:24px; text-align:center;">
-                    <div class="store-cover-actions" style="gap:14px; padding-top:4px; justify-content:center; flex-wrap:wrap;">
-                        <button type="button" class="change-photo buyer-only" id="showProfileBtn" onclick="window.open('buyer-profile.html','_blank','noopener')">Show profile</button>
-                        <button type="button" class="change-photo" id="changeStorePhoto">Change profile photo</button>
-                        <button type="button" class="change-photo" id="changeBg">Change background image</button>
-                    </div>
-                    <input id="pf-photo" type="file" accept="image/*" hidden>
-                    <input id="storeBgInput" type="file" accept="image/*" hidden>
-                </div>
-
-                <div class="stats">
-                    <div class="stat stat--plain">
-                        <div class="stat-num" id="stat-followers">0</div>
-                        <div class="stat-name">Followers</div>
-                    </div>
-                    <div class="stat stat--plain">
-                        <div class="stat-num" id="stat-items">0</div>
-                        <div class="stat-name">Items live</div>
-                    </div>
-                    <div class="stat stat--plain">
-                        <div class="stat-num" id="stat-following">0</div>
-                        <div class="stat-name">Following</div>
-                    </div>
-                </div>
-
-                <!-- Product sizes — moved to the buyer's My Profile (hidden in shop mode) -->
-                <div class="card buyer-only" id="sizeCard" style="margin-top:24px;">
-                    <div class="section-head">
-                        <div class="card-label" style="margin:0;">Product sizes</div>
-                        <div class="section-note">What you carry</div>
-                    </div>
-                    <div class="card-hint" style="margin-top:8px;">For each item choose the sizes you stock — the buyer sees exactly these. Clothing runs XS–XXXL; shoes are an EU range.</div>
-                    <div id="sizeList"></div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- My Sales sits directly under the profile, seller-only. The dashboard
-             loads in an iframe (full isolation from this page's own scripts) and
-             is auto-sized to its content so the whole page scrolls as one — no
-             nested scrollbar. -->
-        <section class="shop-sales seller-only">
-            <iframe id="salesFrame" title="Sales dashboard" src="dashboard.html?embed=1&from=seller" scrolling="no"></iframe>
-        </section>
-
-        <!-- ===== MY STORE (seller-only) — set a cover image for each category and
-             file every product into a category. Saves to vero_store_config, which
-             store-profile.html reads. ===== -->
-        <style>
-            .my-store .card { margin-top: 24px; }
-            .ms-cats { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-            .ms-cat { display: flex; align-items: center; gap: 12px; }
-            .ms-cat-thumb {
-                width: 52px; height: 52px; flex: none; border-radius: 8px;
-                background: #efece4 center/cover no-repeat; border: 1px solid #e7e2d8; cursor: pointer;
-                display: flex; align-items: center; justify-content: center;
-                font-size: 8px; letter-spacing: 1px; line-height: 1.3; color: #9a9a95; text-align: center;
-            }
-            .ms-cat-name { font-size: 14px; letter-spacing: 0.5px; color: #1b1916; }
-            .ms-products { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-            .ms-product { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-            .ms-product-name { font-size: 13px; color: #1b1916; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .ms-product select { flex: none; padding: 6px 10px; border: 1px solid #e7e2d8; border-radius: 8px; background: #fff; font-family: inherit; font-size: 12px; color: #1b1916; }
-            .ms-empty { font-size: 12px; color: #9a9a95; margin-top: 10px; }
-        </style>
-        <section class="my-store seller-only" id="myStore">
-            <div class="card">
-                <div class="card-title">My Store</div>
-                <div class="card-hint">Give each category a cover image, and file every product into a category — this is exactly what shoppers see on your storefront.</div>
-                <div class="section-head" style="margin-top:20px;"><div class="card-label" style="margin:0;">Category images</div></div>
-                <div id="msCats" class="ms-cats"></div>
-                <div class="section-head" style="margin-top:24px;"><div class="card-label" style="margin:0;">Product categories</div></div>
-                <div id="msProducts" class="ms-products"></div>
-            </div>
-            <input id="msImgInput" type="file" accept="image/*" hidden>
-        </section>
-        <script>
-        (function () {
-            var sec = document.getElementById('myStore');
-            if (!sec) return;
-            var read = function () { try { return JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { return {}; } };
-            var write = function (c) { localStorage.setItem('vero_store_config', JSON.stringify(c)); };
-            var cfg = read();
-            cfg.categories = Array.isArray(cfg.categories) ? cfg.categories : [];
-            cfg.products = Array.isArray(cfg.products) ? cfg.products : [];
-            var catsBox = document.getElementById('msCats');
-            var prodBox = document.getElementById('msProducts');
-            var imgInput = document.getElementById('msImgInput');
-            var pendingCat = null;
-            var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]; }); };
-            function renderCats() {
-                if (!cfg.categories.length) { catsBox.innerHTML = '<div class="ms-empty">No categories yet — add them from your storefront first.</div>'; return; }
-                catsBox.innerHTML = cfg.categories.map(function (c, i) {
-                    var bg = c.image ? (' style="background-image:url(\'' + c.image + '\')"') : '';
-                    return '<div class="ms-cat"><button type="button" class="ms-cat-thumb" data-i="' + i + '"' + bg + '>' + (c.image ? '' : 'Add<br>image') + '</button>'
-                        + '<span class="ms-cat-name">' + esc(c.name) + '</span></div>';
-                }).join('');
-            }
-            function renderProducts() {
-                if (!cfg.products.length) { prodBox.innerHTML = '<div class="ms-empty">No products yet.</div>'; return; }
-                var names = cfg.categories.map(function (c) { return c.name; });
-                prodBox.innerHTML = cfg.products.map(function (p, i) {
-                    var opts = '<option value="">— category —</option>' + names.map(function (n) {
-                        return '<option' + (p.cat === n ? ' selected' : '') + '>' + esc(n) + '</option>';
-                    }).join('');
-                    return '<div class="ms-product"><span class="ms-product-name">' + esc(p.name || ('Item ' + (i + 1))) + '</span>'
-                        + '<select data-i="' + i + '">' + opts + '</select></div>';
-                }).join('');
-            }
-            catsBox.addEventListener('click', function (e) {
-                var b = e.target.closest('.ms-cat-thumb'); if (!b) return;
-                pendingCat = +b.dataset.i; imgInput.click();
-            });
-            imgInput.addEventListener('change', function () {
-                var file = imgInput.files && imgInput.files[0];
-                if (!file || pendingCat == null) return;
-                var r = new FileReader();
-                r.onload = function () { cfg.categories[pendingCat].image = r.result; write(cfg); renderCats(); pendingCat = null; imgInput.value = ''; };
-                r.readAsDataURL(file);
-            });
-            prodBox.addEventListener('change', function (e) {
-                var s = e.target.closest('select'); if (!s) return;
-                cfg.products[+s.dataset.i].cat = s.value; write(cfg);
-            });
-            renderCats();
-            renderProducts();
-        })();
-        </script>
-
-        <!-- My Expenses sits directly under the profile, buyer-only — the same
-             embedded, auto-sized pattern as My Sales above, so the whole page
-             scrolls as one with no nested scrollbar. -->
-        <section class="my-expenses buyer-only">
-            <iframe id="expensesFrame" title="Expenses summary" src="expenses.html?embed=1" scrolling="no"></iframe>
-        </section>
-
-        <!-- ===== Change password — buyer's My Profile only, below the expenses summary ===== -->
-        <div class="card buyer-only" id="passwordCard" style="margin-top:24px;">
-            <div class="card-title">Change password</div>
-            <div class="card-hint">Manage your account security.</div>
-            <div class="field">
-                <div class="card-label">Current password</div>
-                <input id="pw-current" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
-            </div>
-            <div class="field">
-                <div class="card-label">New password</div>
-                <input id="pw-new" type="password" placeholder="At least 8 characters">
-            </div>
-            <div class="field">
-                <div class="card-label">Confirm new password</div>
-                <input id="pw-confirm" type="password" placeholder="Repeat new password">
-            </div>
-            <button class="btn-dark" id="pwSave" type="button">Update password</button>
-            <div class="save-note" id="pwNote"></div>
-        </div>
     </div>
 
     <script>
@@ -2005,47 +1759,68 @@
             if (photos && stats) stats.insertAdjacentElement('afterend', photos);
         })();
 
-        // ---- Split the page into two slides: Settings and Statistics, toggled by
-        //      a pair of nav tabs under the hero. ----
-        (function splitSlides() {
+        // ---- Category navigation: a minimalist nav bar under the hero that files
+        //      every settings section into a named group and shows one at a time. ----
+        (function buildSettingsNav() {
             const wrap = document.querySelector('.wrap');
             const grid = document.querySelector('.grid');
             if (!wrap || !grid) return;
+            const seller = document.body.classList.contains('is-seller');
 
-            const tabs = document.createElement('div');
-            tabs.className = 'pf-tabs';
-            // Statistics removed — Settings is the only view now.
-            tabs.innerHTML =
-                '<button type="button" class="pf-tab is-active" data-slide="settings">Settings</button>';
-            grid.parentNode.insertBefore(tabs, grid);
+            const el = {
+                contact:  document.querySelector('.contact-card'),
+                photos:   document.getElementById('photosCard'),
+                sizeCard: document.getElementById('sizeCard'),
+                password: document.getElementById('passwordCard'),
+                stats:    document.querySelector('.stats'),
+                sales:    document.querySelector('.shop-sales'),
+                expenses: document.querySelector('.my-expenses'),
+                myStore:  document.getElementById('myStore')
+            };
+            if (el.stats) el.stats.remove();   // stat tiles retired
 
-            const slideSettings = document.createElement('div');
-            slideSettings.id = 'slideSettings'; slideSettings.className = 'pf-slide is-active';
-            tabs.insertAdjacentElement('afterend', slideSettings);
+            // Groups per mode. Each group becomes a nav tab + a slide.
+            const groups = seller ? [
+                { id: 'profile', label: 'Profile',  items: [el.contact, el.photos] },
+                { id: 'store',   label: 'My Store', items: [el.myStore] },
+                { id: 'sales',   label: 'Sales',    items: [el.sales] }
+            ] : [
+                { id: 'profile',  label: 'Profile',  items: [el.contact, el.photos, el.sizeCard] },
+                { id: 'expenses', label: 'Expenses', items: [el.expenses] },
+                { id: 'security', label: 'Security', items: [el.password] }
+            ];
 
-            const contact  = document.querySelector('.contact-card');
-            const photos   = document.getElementById('photosCard');
-            const sizeCard = document.getElementById('sizeCard');
-            const password = document.getElementById('passwordCard');
-            const stats    = document.querySelector('.stats');
-            const sales    = document.querySelector('.shop-sales');
-            const expenses = document.querySelector('.my-expenses');
+            const nav = document.createElement('div');
+            nav.className = 'set-nav';
+            const slidesWrap = document.createElement('div');
+            slidesWrap.className = 'set-slides';
+            grid.parentNode.insertBefore(nav, grid);
+            grid.parentNode.insertBefore(slidesWrap, grid);
 
-            // Everything now lives in the single Settings slide; the followers/items/
-            // following stat tiles are deleted, sales/expenses dashboards are kept.
-            [contact, photos, sizeCard, password, sales, expenses].forEach(el => { if (el) slideSettings.appendChild(el); });
-            if (stats) stats.remove();
+            groups.forEach((g, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'set-nav-btn' + (idx === 0 ? ' is-active' : '');
+                btn.dataset.group = g.id;
+                btn.textContent = g.label;
+                nav.appendChild(btn);
 
-            // The now-empty original containers can be dropped so they don't add gaps.
+                const slide = document.createElement('div');
+                slide.className = 'set-slide' + (idx === 0 ? ' is-active' : '');
+                slide.dataset.group = g.id;
+                g.items.forEach(it => { if (it) slide.appendChild(it); });
+                slidesWrap.appendChild(slide);
+            });
+
             const oldGrid = document.querySelector('.grid');
             if (oldGrid) oldGrid.remove();
 
-            tabs.querySelectorAll('.pf-tab').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    slideSettings.classList.add('is-active');
-                    // Nudge embedded dashboards (My Sales / My Expenses) to re-fit.
-                    window.dispatchEvent(new Event('resize'));
-                });
+            nav.addEventListener('click', (e) => {
+                const b = e.target.closest('.set-nav-btn');
+                if (!b) return;
+                nav.querySelectorAll('.set-nav-btn').forEach(x => x.classList.toggle('is-active', x === b));
+                slidesWrap.querySelectorAll('.set-slide').forEach(s => s.classList.toggle('is-active', s.dataset.group === b.dataset.group));
+                window.dispatchEvent(new Event('resize'));   // re-fit embedded dashboards
             });
         })();
 
@@ -2478,7 +2253,9 @@
 
         let saveTimer;
         Object.entries(fields).forEach(([key, id]) => {
-            document.getElementById(id).addEventListener('input', (e) => {
+            const fieldEl = document.getElementById(id);
+            if (!fieldEl) return;
+            fieldEl.addEventListener('input', (e) => {
                 // Block re-using the same email on both accounts.
                 if (key === 'email') {
                     const val = e.target.value.trim().toLowerCase();
