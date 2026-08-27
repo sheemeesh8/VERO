@@ -3,7 +3,8 @@
 
    Loaded on every page (right after back-button.js). It injects a small
    stylesheet and appends a shared <footer> to the end of <body>, so every
-   page closes with the same minimalist VERO footer.
+   page closes with the same modern black VERO footer that blends up into
+   the page above it (a transparent→black gradient, no hard divider line).
 
    Skipped for embedded views (?embed=1) — panels loaded inside another
    page's iframe (dashboards, cards) must not carry their own footer.
@@ -14,23 +15,21 @@
     try { if (/[?&]embed=1\b/.test(decodeURIComponent(window.top.location.hash || ''))) return; } catch (e) {}
 
     var css =
-        '.vero-footer{width:100%;margin-top:0;background:#fff;border-top:1px solid #000;' +
-        ' font-family:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#1c1c1c;}' +
-        '.vero-footer .vf-inner{max-width:520px;margin:0 auto;padding:44px 26px 40px;' +
-        ' display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px;}' +
-        '.vero-footer .vf-brand{font-size:26px;font-weight:300;letter-spacing:10px;text-transform:uppercase;' +
-        ' padding-left:10px;color:#111;}' +
-        '.vero-footer .vf-tag{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#9a9a95;margin-top:-10px;}' +
-        '.vero-footer .vf-links{display:flex;flex-wrap:wrap;justify-content:center;gap:22px;}' +
-        '.vero-footer .vf-links a{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#57524a;' +
+        '.vero-footer{width:100%;border:none;' +
+        ' background:linear-gradient(to bottom, rgba(10,10,10,0) 0, #0a0a0a 96px);' +
+        ' font-family:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f4f4f2;}' +
+        '.vero-footer .vf-inner{max-width:520px;margin:0 auto;padding:104px 26px 40px;' +
+        ' display:flex;flex-direction:column;align-items:center;text-align:center;gap:26px;}' +
+        '.vero-footer .vf-links{display:flex;flex-wrap:wrap;justify-content:center;gap:26px;}' +
+        '.vero-footer .vf-links a{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#8f8f8a;' +
         ' text-decoration:none;transition:color .2s;}' +
-        '.vero-footer .vf-links a:hover{color:#000;}' +
+        '.vero-footer .vf-links a:hover{color:#fff;}' +
         '.vero-footer .vf-socials{display:flex;gap:14px;}' +
-        '.vero-footer .vf-socials a{width:38px;height:38px;border-radius:50%;border:1px solid #d9d5cc;' +
-        ' display:grid;place-items:center;color:#1c1c1c;transition:background .2s,color .2s,border-color .2s;}' +
-        '.vero-footer .vf-socials a:hover{background:#000;color:#fff;border-color:#000;}' +
+        '.vero-footer .vf-socials a{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.22);' +
+        ' display:grid;place-items:center;color:#e6e6e2;transition:background .2s,color .2s,border-color .2s;}' +
+        '.vero-footer .vf-socials a:hover{background:#fff;color:#0a0a0a;border-color:#fff;}' +
         '.vero-footer .vf-socials svg{width:17px;height:17px;}' +
-        '.vero-footer .vf-copy{font-size:9px;letter-spacing:1.5px;color:#b0b0aa;}';
+        '.vero-footer .vf-copy{font-size:9px;letter-spacing:2px;color:#5f5f5b;}';
     var style = document.createElement('style');
     style.setAttribute('data-vero-footer', '1');
     style.textContent = css;
@@ -39,8 +38,6 @@
     var YEAR = new Date().getFullYear();
     var HTML =
         '<div class="vf-inner">' +
-            '<div class="vf-brand">VERO</div>' +
-            '<div class="vf-tag">Fashion &amp; Art Marketplace</div>' +
             '<nav class="vf-links">' +
                 '<a href="index.html">Home</a>' +
                 '<a href="about.html">About</a>' +
