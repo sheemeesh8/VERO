@@ -10,6 +10,18 @@
    page's iframe (dashboards, cards) must not carry their own footer.
 ------------------------------------------------------------------ */
 (function () {
+    // Footer removed site-wide by request — this file is now a no-op. Also strips
+    // any footer already injected before this ran. Restore by deleting this block.
+    (function removeFooter(){
+        var kill = function(){
+            var f = document.querySelector('.vero-footer'); if (f) f.remove();
+            var s = document.querySelector('style[data-vero-footer]'); if (s) s.remove();
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kill);
+        else kill();
+    })();
+    return;
+
     // Don't add a footer to embedded/iframed panels.
     if (/[?&]embed=1\b/.test(location.search)) return;
     try { if (/[?&]embed=1\b/.test(decodeURIComponent(window.top.location.hash || ''))) return; } catch (e) {}
