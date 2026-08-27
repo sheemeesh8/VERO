@@ -804,6 +804,62 @@
         .feed-title { color: #1c1c1c; }
         .feed-note { color: #b0b0aa; }
         .feed { grid-template-columns: 1fr 1fr !important; gap: 14px !important; padding: 22px 14px 96px !important; }
+
+        /* =================================================================
+           LIONCHA STOREFRONT HERO — brand + tagline top-left, OPENING HOURS
+           beneath, FOLLOW bottom-left, follower count bottom-right, and a
+           SWIPE FOR MORE hint centred at the base. Reuses the existing hero
+           IDs (#storeName / #storeBio / #followers / #followBtn) so the
+           populate + follow scripts keep working. Placed last so it wins.
+           ================================================================= */
+        #hero { align-items: stretch; }
+        .pf-overlay.lioncha {
+            position: absolute; inset: 0; z-index: 2; direction: ltr; text-align: left;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: stretch;
+            padding: 64px 30px calc(34px + env(safe-area-inset-bottom,0px));
+            background: linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0) 26%);
+        }
+        .lioncha .lc-top { max-width: 82%; }
+        .lioncha .lc-namerow { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0 9px; }
+        .lioncha #storeName, .lioncha #storeLast {
+            font-size: clamp(40px, 13vw, 60px); font-weight: 200; letter-spacing: 1px;
+            line-height: 0.9; text-transform: uppercase; color: #fff; text-align: left;
+        }
+        .lioncha #storeLast:empty { display: none; }
+        .lioncha .lc-vbadge {
+            flex: none; margin-top: 7px; width: 19px; height: 19px; border-radius: 50%;
+            background: #e8492b; color: #fff; font: 700 11px/1 Georgia, 'Times New Roman', serif;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .lioncha .lc-tag {
+            margin: 16px 0 0; max-width: none; text-align: left; overflow: visible;
+            display: block; -webkit-line-clamp: unset;
+            font-size: 15px; font-weight: 300; letter-spacing: 1px;
+            line-height: 1.3; text-transform: uppercase; color: rgba(255,255,255,0.95);
+        }
+        .lioncha .lc-tag:empty { display: none; }
+        .lioncha .lc-hours { margin-top: 30px; }
+        .lioncha .lc-hoursbtn {
+            background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit;
+            color: #fff; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 3px;
+            line-height: 1.5; text-transform: uppercase;
+        }
+        .lioncha .lc-bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
+        .lioncha .lc-follow {
+            background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; color: #fff;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 27px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+        }
+        .lioncha .lc-follow svg { width: 22px; height: 22px; fill: #fff; stroke: none; }
+        .lioncha .lc-follow.is-following { opacity: 0.7; }
+        .lioncha .lc-fnum { text-align: right; line-height: 1; }
+        .lioncha .lc-fnum b { display: block; font-size: 30px; font-weight: 600; letter-spacing: 0.5px; color: #fff; }
+        .lioncha .lc-fnum span { display: block; margin-top: 6px; font-size: 12px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.85); }
+        .lioncha .lc-swipe {
+            position: absolute; left: 50%; bottom: calc(15px + env(safe-area-inset-bottom,0px)); transform: translateX(-50%);
+            font-size: 8.5px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;
+            color: rgba(255,255,255,0.72); white-space: nowrap;
+        }
     </style>
     <link rel="stylesheet" href="product-card.css">
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
@@ -844,35 +900,34 @@
             <!-- Content overlaid on the bottom of the hero image: an action row
                  (status + hours on the left, follow + on the right), then the
                  centred name, the 3-column stats, and the bio. -->
-            <div class="pf-overlay">
-                <div class="pf-overlay-top">
-                    <div class="pf-hero-hours">
-                        <span class="phh-status" id="storeStatus">Open</span>
-                        <button class="phh-btn" type="button" onclick="openHoursPopup()">Opening Hours</button>
+            <div class="pf-overlay lioncha">
+                <div class="lc-top">
+                    <div class="lc-namerow">
+                        <span class="pf-first" id="storeName">Studio Noir</span>
+                        <span class="pf-last" id="storeLast"></span>
+                        <span class="lc-vbadge" aria-label="Verified">V</span>
                     </div>
-                    <button class="pf-plus" id="pfPlus" type="button" aria-label="Follow"
-                        onclick="(function(b){var fb=document.getElementById('followBtn');if(fb)fb.click();b.classList.toggle('on',!!(fb&&fb.classList.contains('following')));})(this)">
-                        <svg class="pf-plus-add" viewBox="0 0 24 24"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
-                        <svg class="pf-plus-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    <p class="lc-tag" id="storeBio">The best for your closet</p>
+                    <div class="lc-hours">
+                        <button class="lc-hoursbtn" type="button" onclick="openHoursPopup()">Opening<br>Hours</button>
+                    </div>
+                </div>
+                <div class="lc-bottom">
+                    <button class="lc-follow" id="pfPlus" type="button" aria-label="Follow"
+                        onclick="var fb=document.getElementById('followBtn');if(fb){fb.click();var on=fb.classList.contains('following');this.classList.toggle('is-following',on);this.querySelector('.lc-follow-label').textContent=on?'Following':'Follow';}">
+                        <span class="lc-follow-label">Follow</span>
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     </button>
-                </div>
-                <div class="pf-names">
-                    <span class="pf-first" id="storeName">Studio Noir</span>
-                    <span class="pf-last" id="storeLast"></span>
-                </div>
-                <div class="pf-stats">
-                    <div class="pf-stats-nums">
-                        <span class="pf-fnum link" id="following" onclick="location.href='follows.html#following'">0</span>
-                        <span class="pf-fnum" id="itemCount">0</span>
-                        <span class="pf-fnum link" id="followers" onclick="location.href='follows.html#followers'">1,284</span>
-                    </div>
-                    <div class="pf-stats-lbls">
-                        <span class="pf-flbl link" onclick="location.href='follows.html#following'">Following</span>
-                        <span class="pf-flbl">iTeams in Store</span>
-                        <span class="pf-flbl link" onclick="location.href='follows.html#followers'">Followers</span>
+                    <div class="lc-fnum">
+                        <b id="followers">158</b>
+                        <span>Followers</span>
                     </div>
                 </div>
-                <p class="pf-bio" id="storeBio"></p>
+                <span class="lc-swipe">Swipe for more</span>
+                <!-- Hidden stat stubs kept so the populate script still finds them. -->
+                <span id="storeStatus" hidden>Open</span>
+                <span id="following" hidden>0</span>
+                <span id="itemCount" hidden>0</span>
             </div>
         </div>
 

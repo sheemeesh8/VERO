@@ -677,6 +677,74 @@
         .pf-status { display: none !important; }
         .pf-actionbar { display: none !important; }
         .pf-waves { display: none !important; }
+
+        /* =================================================================
+           DANIEL PROFILEFRONT — a centred card stack (name + SHEMESH on top,
+           a contained portrait card, then followers / FOLLOW / swipe) over a
+           soft blurred backdrop of the same portrait. Reuses the hero IDs so
+           the populate + follow scripts keep working. Placed last so it wins.
+           ================================================================= */
+        #hero {
+            justify-content: center !important;
+            background: linear-gradient(180deg,#d9d2c6 0%,#cdc7bd 45%,#b7bac0 100%) !important;
+            overflow: hidden;
+        }
+        #hero::after { display: none !important; }   /* drop the dark bottom gradient */
+        .dn-bg {
+            position: absolute; inset: -8%; z-index: 0;
+            background-size: cover; background-position: center;
+            filter: blur(26px) saturate(1.05) brightness(1.05);
+            transform: scale(1.15);
+        }
+        .dn-bg::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(226,220,210,0.42) 0%, rgba(210,206,200,0.30) 50%, rgba(180,184,190,0.44) 100%);
+        }
+        .pf-overlay.daniel {
+            position: absolute; inset: 0; z-index: 2; direction: ltr; text-align: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            width: 100%; padding: 58px 26px calc(44px + env(safe-area-inset-bottom,0px)); color: #2a2724;
+        }
+        .daniel .dn-names { display: flex; flex-direction: column; align-items: center; }
+        .daniel .dn-namerow { display: flex; align-items: center; gap: 9px; }
+        .daniel #storeName {
+            font-size: clamp(34px, 11vw, 50px); font-weight: 700; letter-spacing: 2px;
+            line-height: 1; text-transform: uppercase; color: #fff; text-align: center;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.18);
+        }
+        .daniel .dn-vbadge {
+            flex: none; width: 18px; height: 18px; border-radius: 50%;
+            background: #e8492b; color: #fff; font: 700 10px/1 Georgia, 'Times New Roman', serif;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .daniel #storeLast {
+            margin-top: 8px; font-size: 14px; font-weight: 400; letter-spacing: 7px;
+            text-transform: uppercase; color: rgba(255,255,255,0.85); text-align: center;
+            text-shadow: 0 1px 12px rgba(0,0,0,0.16);
+        }
+        .daniel #storeLast:empty { display: none; }
+        .daniel .dn-card {
+            margin: 26px 0 24px; width: 63%; max-width: 300px; aspect-ratio: 3 / 4;
+            border-radius: 4px; overflow: hidden; background: #cfc8bd;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+        }
+        .daniel .dn-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .daniel .dn-card img:not([src]), .daniel .dn-card img[src=""] { opacity: 0; }
+        .daniel .dn-fnum { text-align: center; line-height: 1; }
+        .daniel .dn-fnum b { display: block; font-size: 30px; font-weight: 700; letter-spacing: 1px; color: #26231f; }
+        .daniel .dn-fnum span { display: block; margin-top: 8px; font-size: 12px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: #6b665f; }
+        .daniel .dn-follow {
+            margin-top: 26px; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit;
+            color: #1c1a17; display: flex; align-items: center; gap: 9px;
+            font-size: 25px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+        }
+        .daniel .dn-follow svg { width: 20px; height: 20px; fill: #1c1a17; stroke: none; }
+        .daniel .dn-follow.is-following { opacity: 0.55; }
+        .daniel .dn-swipe {
+            position: absolute; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom,0px)); transform: translateX(-50%);
+            font-size: 8.5px; font-weight: 400; letter-spacing: 4px;
+            text-transform: uppercase; color: rgba(40,37,33,0.55); white-space: nowrap;
+        }
     </style>
     <link rel="stylesheet" href="product-card.css">
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
@@ -717,32 +785,34 @@
             <!-- Content overlaid on the bottom of the hero image: an action row
                  (online status left, follow + right), the centred name, the
                  3-column stats, and the bio. -->
-            <div class="pf-overlay">
-                <div class="pf-overlay-top">
-                    <div class="pf-hero-hours"><span class="phh-status is-closed" id="storeStatus">Offline</span></div>
-                    <button class="pf-plus" id="pfPlus" type="button" aria-label="Follow"
-                        onclick="(function(b){var fb=document.getElementById('followBtn');if(fb)fb.click();b.classList.toggle('on',!!(fb&&fb.classList.contains('following')));})(this)">
-                        <svg class="pf-plus-add" viewBox="0 0 24 24"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
-                        <svg class="pf-plus-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                    </button>
-                </div>
-                <div class="pf-names">
-                    <span class="pf-first" id="storeName">Your Name</span>
+            <!-- Blurred backdrop of the same portrait (set from JS). -->
+            <div class="dn-bg" id="dnBg"></div>
+            <div class="pf-overlay daniel">
+                <div class="dn-names">
+                    <div class="dn-namerow">
+                        <span class="pf-first" id="storeName">Your Name</span>
+                        <span class="dn-vbadge" aria-label="Verified">V</span>
+                    </div>
                     <span class="pf-last" id="storeLast"></span>
                 </div>
-                <div class="pf-stats">
-                    <div class="pf-stats-nums">
-                        <span class="pf-fnum link" id="following" onclick="location.href='follows.html#following'">0</span>
-                        <span class="pf-fnum" id="itemCount">0</span>
-                        <span class="pf-fnum link" id="followers" onclick="location.href='follows.html#followers'">0</span>
-                    </div>
-                    <div class="pf-stats-lbls">
-                        <span class="pf-flbl link" onclick="location.href='follows.html#following'">Following</span>
-                        <span class="pf-flbl">iTeams in Store</span>
-                        <span class="pf-flbl link" onclick="location.href='follows.html#followers'">Followers</span>
-                    </div>
+                <div class="dn-card">
+                    <img id="pfCardImg" alt="">
                 </div>
-                <p class="pf-bio" id="storeBio"></p>
+                <div class="dn-fnum">
+                    <b id="followers">0</b>
+                    <span>Followers</span>
+                </div>
+                <button class="dn-follow" id="pfPlus" type="button" aria-label="Follow"
+                    onclick="var fb=document.getElementById('followBtn');if(fb){fb.click();var on=fb.classList.contains('following');this.classList.toggle('is-following',on);this.querySelector('.dn-follow-label').textContent=on?'Following':'Follow';}">
+                    <span class="dn-follow-label">Follow</span>
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <span class="dn-swipe">Swipe for more</span>
+                <!-- Hidden stubs kept so existing scripts still find their elements. -->
+                <span id="storeStatus" class="is-closed" hidden>Offline</span>
+                <span id="following" hidden>0</span>
+                <span id="itemCount" hidden>0</span>
+                <p class="pf-bio" id="storeBio" hidden></p>
             </div>
         </div>
 
@@ -900,7 +970,13 @@
             });
         })();
         // The portrait fills the card — prefer the profile picture, fall back to the hero.
-        document.getElementById('hero').style.backgroundImage = `url('${BUYER.avatar || BUYER.hero}')`;
+        (function setPortrait(){
+            const src = BUYER.avatar || BUYER.hero;
+            const bg = `url('${src}')`;
+            document.getElementById('hero').style.backgroundImage = bg;
+            const blur = document.getElementById('dnBg'); if (blur) blur.style.backgroundImage = bg;
+            const card = document.getElementById('pfCardImg'); if (card && src) card.src = src;
+        })();
         document.getElementById('itemCount').textContent = PRODUCTS.length;
 
         // Message — open the chats page to start a conversation with this member.
