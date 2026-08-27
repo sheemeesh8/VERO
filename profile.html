@@ -1875,6 +1875,13 @@
         html:has(body:not(.is-seller)) { scroll-snap-type: y proximity; scroll-behavior: smooth; }
         body:not(.is-seller) { scroll-behavior: smooth; }
         body:not(.is-seller) #slideStats { scroll-snap-align: start; }
+        /* Give every buyer section a full screen of room — short sections (e.g. My
+           Products) otherwise can't scroll past the hero, which hid the tab bar.
+           This also makes each area longer and more comfortable to read. */
+        body:not(.is-seller) .build-panel {
+            min-height: 100vh; min-height: 100dvh;
+            scroll-snap-align: start;
+        }
         body:not(.is-seller) #storeBgPreview .pf-panel,
         body:not(.is-seller) #storeBgPreview .pf-waves { display: none !important; }
         body:not(.is-seller) #storeBgPreview::after {
@@ -3623,7 +3630,11 @@
         function updateBarReveal() {
             const areaOpen = wrap && wrap.classList.contains('area-mode');
             const y = window.scrollY || document.documentElement.scrollTop || 0;
-            const passed = areaOpen || !heroEl || y > (heroEl.offsetHeight - 90);
+            // Once you've opened a content area (anything but the Statistics landing
+            // and the profile), keep the bar up so switching tabs never drops it.
+            const active = bar.querySelector('.area-tab.is-active');
+            const inArea = active && active.dataset.id !== 'statistics' && active.dataset.id !== 'profile';
+            const passed = areaOpen || inArea || !heroEl || y > (heroEl.offsetHeight - 90);
             bar.classList.toggle('revealed', passed);
         }
         window.addEventListener('scroll', updateBarReveal, { passive: true });
@@ -3672,9 +3683,6 @@
                 overlay.classList.remove('open');
                 if (wrap) wrap.classList.remove('area-mode');
                 showSection(area.section);
-                // Smoothly bring the chosen section into view (below the hero).
-                const secEl = document.getElementById(area.section);
-                if (secEl) secEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 return;
             }
 
