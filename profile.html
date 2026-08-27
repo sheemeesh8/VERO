@@ -432,6 +432,13 @@
             border-right: 1px solid #cfcbc3; border-top: 1px solid #cfcbc3;
             border-top-right-radius: 7px;
         }
+
+        /* The section's own top title is lifted into the hero panel (see JS), so
+           hide it in place — the sub-title ("Change Password") stays put. */
+        .build-panel .ps-title:not(.ps-title--sub) { display: none; }
+        /* Hero name shows the active section's title — smaller and wrapping so long
+           titles ("Profile Settings", "Negotiation") fit beside the followers. */
+        .pf-first.is-title { font-size: 22px; letter-spacing: 3px; line-height: 1.2; white-space: normal; }
         .ps-field { margin-bottom: 30px; }
         .ps-label {
             font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
@@ -1820,6 +1827,7 @@
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <script src="assets/back-button.js"></script>
+    <script src="assets/footer.js"></script>
 </head>
 <body>
     <div class="page-cover"></div>
@@ -1871,7 +1879,6 @@
                 <button type="button" class="ph-action seller-only" id="heroChangeBg">Change background</button>
                 <button type="button" class="ph-action seller-only" id="heroOpeningHours">Opening hours</button>
                 <button type="button" class="ph-action seller-only" id="heroShowStore">Show storefront</button>
-                <button type="button" class="ph-action buyer-only" id="heroChangePic">Change photo</button>
                 <button type="button" class="ph-action buyer-only" id="heroShowProfile">Show profilefront</button>
             </div>
         </div>
@@ -3386,8 +3393,15 @@
         // ---- Personal-area sections: the nav bar swaps which full-screen
         //      .build-panel shows below the hero (buyer mode only). ----
         const sections = Array.from(document.querySelectorAll('.build-panel'));
+        const heroNameEl = document.getElementById('storeRectName');
+        const heroLastEl = document.getElementById('storeRectLast');
         function showSection(secId) {
             sections.forEach(s => { s.style.display = (s.id === secId) ? 'block' : 'none'; });
+            // Lift the section's title into the hero name panel.
+            const sec = document.getElementById(secId);
+            const t = sec && sec.querySelector('.ps-title');
+            if (heroNameEl && t) { heroNameEl.textContent = t.textContent; heroNameEl.classList.add('is-title'); }
+            if (heroLastEl) heroLastEl.textContent = '';
         }
         if (!seller && sections.length) showSection('slideProfile');   // default view
 
