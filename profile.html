@@ -1876,6 +1876,24 @@
         body:not(.is-seller) #storeBgPreview .ps-preview-card img {
             width: 100%; height: 100%; object-fit: cover; display: block;
         }
+        /* Header icons read white over the photo backdrop in the buyer preview. */
+        body:not(.is-seller) #storeBgPreview .tb-ico { color: #fff; }
+        /* Change-background / change-photo pills, pinned to the bottom of the preview. */
+        .ps-preview-actions { display: none; }
+        body:not(.is-seller) #storeBgPreview .ps-preview-actions {
+            display: flex; position: absolute; left: 0; right: 0; z-index: 3; direction: ltr;
+            bottom: calc(30px + env(safe-area-inset-bottom,0px));
+            justify-content: center; gap: 10px; flex-wrap: wrap; padding: 0 20px;
+        }
+        body:not(.is-seller) #storeBgPreview .ps-preview-btn {
+            font-family: 'Poppins', 'Inter', sans-serif; cursor: pointer;
+            font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #fff;
+            padding: 12px 18px; border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.14);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            transition: background .2s, color .2s;
+        }
+        body:not(.is-seller) #storeBgPreview .ps-preview-btn:active { background: #fff; color: #111; }
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <script src="assets/back-button.js"></script>
@@ -1896,12 +1914,27 @@
                 <button class="tb-ico" type="button" id="shareBtn" aria-label="Share">
                     <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
                 </button>
+                <!-- Buyer settings only: preview the public profilefront. -->
+                <button class="tb-ico buyer-only" type="button" id="settingsEye" aria-label="Preview profilefront"
+                    onclick="window.open('buyer-profile.html', '_blank', 'noopener')">
+                    <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
             </div>
             <!-- Buyer settings preview: just the two images — the background picture
                  (hero bg) and the profile picture in a centred card. No data. -->
             <div class="ps-preview-card buyer-only" id="settingsCard">
                 <img id="settingsCardImg" alt="">
             </div>
+            <!-- Buyer settings only: change the two images straight from the preview. -->
+            <div class="ps-preview-actions buyer-only">
+                <button type="button" class="ps-preview-btn" id="psChangeBg"
+                    onclick="document.getElementById('storeBgInput').click()">Change background</button>
+                <button type="button" class="ps-preview-btn" id="psChangePhoto"
+                    onclick="document.getElementById('pf-photo').click()">Change profile picture</button>
+            </div>
+            <!-- Hidden pickers the change buttons (and the existing handlers) trigger. -->
+            <input type="file" id="storeBgInput" accept="image/*" hidden>
+            <input type="file" id="pf-photo" accept="image/*" hidden>
             <!-- White panel: name + rotating stat, then status + bio — same card as
                  the storefront / profilefront. -->
             <div class="pf-panel">
@@ -2817,6 +2850,8 @@
                 localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
                 refreshAvatar();
                 refreshStoreAvatar();
+                const ci = document.getElementById('settingsCardImg');
+                if (ci) ci.src = reader.result;   // live-update the buyer preview card
             };
             reader.readAsDataURL(file);
         });
