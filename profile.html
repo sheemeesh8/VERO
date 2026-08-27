@@ -3273,12 +3273,13 @@
             { id: 'assistant',  label: 'My Assistant', empty: true },
             { id: 'settings',   label: 'Settings',   slide: 'settings', sep: true },
         ] : [
-            { id: 'profile',    label: 'My Profile'   },
-            { id: 'products',   label: 'My Products',  src: 'products.html' + q },
-            { id: 'chats',      label: 'My Chats',     src: 'chats.html' + q },
-            { id: 'cart',       label: 'My Cart',      src: 'cart.html' + q },
-            { id: 'assistant',  label: 'My Assistant', empty: true },
-            { id: 'settings',   label: 'Settings',   slide: 'settings', sep: true },
+            // Personal area: each tab shows one full-screen section in place (no
+            // iframe) — the nav bar swaps which .build-panel is visible below the hero.
+            { id: 'profile',     label: 'My Profile',  section: 'slideProfile' },
+            { id: 'sizes',       label: 'My Sizes',    section: 'slideSizes' },
+            { id: 'products',    label: 'My Products', section: 'slideProducts' },
+            { id: 'chats',       label: 'My Chats',    section: 'slideChats' },
+            { id: 'negotiation', label: 'Negotiation', section: 'slideNegotiation' },
         ];
 
         // The hero name element — its text is swapped to the active section's title,
@@ -3370,6 +3371,14 @@
         const wrap = document.querySelector('.wrap');
         (wrap || document.body).appendChild(overlay);
 
+        // ---- Personal-area sections: the nav bar swaps which full-screen
+        //      .build-panel shows below the hero (buyer mode only). ----
+        const sections = Array.from(document.querySelectorAll('.build-panel'));
+        function showSection(secId) {
+            sections.forEach(s => { s.style.display = (s.id === secId) ? 'block' : 'none'; });
+        }
+        if (!seller && sections.length) showSection('slideProfile');   // default view
+
         // ---- Reveal the tab bar only once the hero image has been passed ----
         // While the full-screen hero fills the viewport the bar stays hidden; it
         // slides up the moment you scroll past the image (or open another area).
@@ -3418,8 +3427,18 @@
             if (id !== 'profile') bar.classList.add('revealed');
             else if (typeof updateBarReveal === 'function') updateBarReveal();
 
-            // Settings / Statistics → show the profile's own slide (in place).
             const area = AREAS.find(a => a.id === id);
+
+            // Personal-area section: swap the visible full-screen .build-panel in
+            // place (below the hero), no iframe overlay.
+            if (area && area.section) {
+                overlay.classList.remove('open');
+                if (wrap) wrap.classList.remove('area-mode');
+                showSection(area.section);
+                return;
+            }
+
+            // Settings / Statistics → show the profile's own slide (in place).
             if (area && area.slide) {
                 overlay.classList.remove('open');
                 if (wrap) wrap.classList.remove('area-mode');
