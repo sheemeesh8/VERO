@@ -16,10 +16,12 @@
 
     var css =
         '.vero-footer{width:100%;border:none;' +
-        ' background:linear-gradient(to bottom, rgba(10,10,10,0) 0, #0a0a0a 96px);' +
+        // Short, smooth ease from the page into black (multi-stop ≈ ease-in curve).
+        ' background:linear-gradient(to bottom, rgba(10,10,10,0) 0px, rgba(10,10,10,0.08) 10px,' +
+        ' rgba(10,10,10,0.28) 22px, rgba(10,10,10,0.62) 36px, rgba(10,10,10,0.88) 48px, #0a0a0a 58px);' +
         ' font-family:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f4f4f2;}' +
-        '.vero-footer .vf-inner{max-width:520px;margin:0 auto;padding:104px 26px 40px;' +
-        ' display:flex;flex-direction:column;align-items:center;text-align:center;gap:26px;}' +
+        '.vero-footer .vf-inner{max-width:520px;margin:0 auto;padding:64px 26px 30px;' +
+        ' display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px;}' +
         '.vero-footer .vf-links{display:flex;flex-wrap:wrap;justify-content:center;gap:26px;}' +
         '.vero-footer .vf-links a{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#8f8f8a;' +
         ' text-decoration:none;transition:color .2s;}' +
