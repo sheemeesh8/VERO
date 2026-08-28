@@ -100,6 +100,31 @@
         }
         .drafts-link:hover .count { background: #fff; color: #000; }
 
+        /* Drafts slide overlay — slides in from the left. */
+        .drafts-slide-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0, 0, 0, 0.3);
+            animation: draftsSlideFadeIn 0.3s ease-out both;
+            opacity: 0;
+        }
+        .drafts-slide-overlay.show { opacity: 1; }
+        .drafts-slide-panel {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 100%; max-width: 90vw; background: #fff;
+            z-index: 1001; box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+            animation: draftsSlidePanelIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+            overflow: auto;
+        }
+        @keyframes draftsSlidePanelIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes draftsSlideFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .drafts-slide-close {
+            position: absolute; top: 20px; right: 20px; z-index: 1002;
+            width: 40px; height: 40px; border: none; background: #f0f0ec; border-radius: 50%;
+            font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .drafts-slide-close:hover { background: #e0e0da; }
+
         /* Product grid + cards. */
         .prod-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -311,9 +336,9 @@
             <a class="upload-link" href="index.html?open=upload">
                 <span class="plus">+</span> Upload a product
             </a>
-            <a class="drafts-link" href="drafts.html">
+            <button class="drafts-link" onclick="openDraftsSlide()" type="button">
                 Drafts <span class="count" id="draftCount">0</span>
-            </a>
+            </button>
         </div>
 
         <!-- Active / live listings -->
@@ -713,6 +738,56 @@
             wrap.style.transition = 'opacity 0.5s ease';
             wrap.style.opacity = '0';
             setTimeout(() => { window.location.href = back.getAttribute('href'); }, 560);
+        });
+
+        // ===== Drafts slide overlay =====
+        window.openDraftsSlide = function () {
+            if (document.getElementById('draftSlideOverlay')) return; // already open
+
+            // Create overlay backdrop
+            const overlay = document.createElement('div');
+            overlay.id = 'draftSlideOverlay';
+            overlay.className = 'drafts-slide-overlay';
+            overlay.onclick = (e) => { if (e.target === overlay) closeDraftsSlide(); };
+
+            // Create panel with close button and iframe
+            const panel = document.createElement('div');
+            panel.className = 'drafts-slide-panel';
+            panel.innerHTML = `
+                <button class="drafts-slide-close" onclick="closeDraftsSlide()">✕</button>
+                <iframe id="draftSlideFrame" style="width:100%; height:100%; border:none; margin-top:20px;" src="drafts.html${isSeller ? '?from=seller' : ''}"></iframe>
+            `;
+
+            document.body.appendChild(overlay);
+            document.body.appendChild(panel);
+
+            // Trigger animation
+            requestAnimationFrame(() => {
+                overlay.classList.add('show');
+            });
+
+            // Prevent scroll on body
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeDraftsSlide = function () {
+            const overlay = document.getElementById('draftSlideOverlay');
+            const panel = document.querySelector('.drafts-slide-panel');
+            if (!overlay) return;
+
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.remove();
+                if (panel) panel.remove();
+                document.body.style.overflow = '';
+            }, 300);
+        };
+
+        // Close slide on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('draftSlideOverlay')) {
+                closeDraftsSlide();
+            }
         });
     </script>
     <script src="vero-editor.js"></script>
