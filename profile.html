@@ -602,22 +602,31 @@
         body:not(.is-seller) #slideSizes .sz-menu .sz-item:nth-child(7) { animation-delay: 0.46s; }
         body:not(.is-seller) #slideSizes .sz-menu .sz-item:nth-child(8) { animation-delay: 0.53s; }
 
-        /* Size-picker: centred item title, then chips spread as a full-width grid
-           that fills the whole slide (across the width, distributed down the length). */
+        /* Inside the size-picker the page intro is hidden, so the picker owns the
+           whole slide cleanly (no stray text above the chips). */
+        body:not(.is-seller) #slideSizes .sz--detail > .ps-title,
+        body:not(.is-seller) #slideSizes .sz--detail > .ps-sub { display: none; }
+
+        /* Size-picker: the detail view is a full-height flex column so the chosen
+           item's chips sit as a tidy, vertically-centred grid — the back arrow pinned
+           at the top, a bottom inset keeping clear of the floating nav bar. */
+        body:not(.is-seller) #slideSizes .sz-detail {
+            display: flex; flex-direction: column; padding-bottom: 96px;
+        }
         .sz-detail .sz-cat-name {
             text-align: center; font-size: 15px; letter-spacing: 4px; border-bottom: none;
             padding-bottom: 0; margin-bottom: 24px; color: #1c1c1c;
         }
         .sz-detail .sz-cat-name::after { display: none; }   /* drop the corner curl when centred */
         body:not(.is-seller) #slideSizes .sz-detail .sz-cat.is-open {
-            display: flex; flex-direction: column; flex: 1 1 auto;
+            display: flex; flex-direction: column; justify-content: center; flex: 1 1 auto;
         }
         body:not(.is-seller) #slideSizes .sz-detail .sz-chips {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
-            flex: 1 1 auto; align-content: space-between;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+            align-content: center; justify-items: stretch;
         }
         body:not(.is-seller) #slideSizes .sz-detail .sz-chip {
-            width: 100%; min-width: 0; padding: 22px 0; font-size: 14px; letter-spacing: 1.5px;
+            width: 100%; min-width: 0; padding: 18px 0; font-size: 14px; letter-spacing: 1.5px;
         }
         .sz-detail .sz-range { justify-content: center; }
 
@@ -2561,9 +2570,11 @@
                 var arr = Array.isArray(d[key]) ? d[key] : [];
                 return arr.join(', ');
             }
+            var root = document.getElementById('szRoot');
             function open(cat) {
                 cats.forEach(function (c) { c.classList.toggle('is-open', c === cat); });
                 slider.classList.add('is-detail');
+                if (root) root.classList.add('sz--detail');   // hides the intro text in the picker
                 if (back) back.focus();
             }
             var rows = cats.map(function (cat) {
@@ -2590,7 +2601,9 @@
                 });
             }
             if (back) back.addEventListener('click', function () {
-                slider.classList.remove('is-detail'); refreshRows();
+                slider.classList.remove('is-detail');
+                if (root) root.classList.remove('sz--detail');
+                refreshRows();
             });
             // Keep each row's preview in sync as chips / shoe range change inside detail.
             detail.addEventListener('click', function (e) {
