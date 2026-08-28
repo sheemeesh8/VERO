@@ -2,7 +2,15 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- App-style viewport: fill the notch area, no user pinch-zoom. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- Keep the phone on the freshest deploy: revalidate the shell every load so a
+         new GitHub Pages build shows up without a manual cache clear. -->
+    <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>VERO</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -120,7 +128,11 @@
             if (file && !/\.html$/.test(file)) file += '.html';   // tolerate clean-URL servers
             var safe = file && /^[a-zA-Z0-9_-]+\.html$/.test(file) && file !== 'phone-frame.html'
                        && /^(\?[\w=&%.-]*)?$/.test(query);
-            frame.src = safe ? file + query : 'index.html';
+            var target = safe ? file + query : 'index.html';
+            // Cache-bust the first load so a fresh GitHub Pages build always wins over
+            // a stale browser copy — keeps the phone in step with the latest deploy.
+            target += (target.indexOf('?') >= 0 ? '&' : '?') + '_ts=' + Date.now();
+            frame.src = target;
         })();
         function hideFrameScrollbar() {
             try {
@@ -130,8 +142,18 @@
                     var s = d.createElement('style');
                     s.id = 'pf-hide-sb';
                     s.textContent =
+                        // No scrollbars anywhere (scrolling still works).
                         'html,body{scrollbar-width:none!important;-ms-overflow-style:none!important;}' +
-                        'html::-webkit-scrollbar,body::-webkit-scrollbar,*::-webkit-scrollbar{width:0!important;height:0!important;display:none!important;}';
+                        'html::-webkit-scrollbar,body::-webkit-scrollbar,*::-webkit-scrollbar{width:0!important;height:0!important;display:none!important;}' +
+                        // ---- App-feel layer (applied to every inner page) ----
+                        // No blue tap-highlight, no long-press callout menu.
+                        '*{-webkit-tap-highlight-color:transparent!important;-webkit-touch-callout:none!important;}' +
+                        // No pull-to-refresh / rubber-band bounce; no auto text-resize.
+                        'html,body{overscroll-behavior:none!important;-webkit-text-size-adjust:100%!important;}' +
+                        // Text is not selectable (like a native app)…
+                        'body,body *{-webkit-user-select:none!important;user-select:none!important;}' +
+                        // …except real inputs, where typing/selection must still work.
+                        'input,textarea,select,[contenteditable="true"],[contenteditable=""]{-webkit-user-select:text!important;user-select:text!important;}';
                     (d.head || d.documentElement).appendChild(s);
                 }
             } catch (e) { /* cross-origin (e.g. served over http) — ignore */ }
