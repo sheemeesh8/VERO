@@ -6569,12 +6569,65 @@
             transform: translateY(0); filter: grayscale(1) brightness(0.72);
             -webkit-mask-image: none; mask-image: none;
         }
-        #uploadProductView .cat-card::after { opacity: 1; }
+        #uploadProductView .cat-card::after {
+            opacity: 1;
+            /* scrim weighted to the TOP now that the copy lives up there */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.15) 42%, rgba(0,0,0,0) 70%);
+        }
         #uploadProductView .cat-card-vlabel { display: block; color: rgba(255,255,255,0.7); }
-        #uploadProductView .cat-card-body { top: auto; bottom: 0; }
+        /* Title block raised to the top of each slide, clear of the header. */
+        #uploadProductView .cat-card-body {
+            top: calc(env(safe-area-inset-top, 0px) + 92px); bottom: auto;
+        }
         #uploadProductView .cat-card-body h2 { color: #fff; }
         #uploadProductView .cat-card-body p { color: rgba(255,255,255,0.82); }
         #uploadProductView .cat-card-cta { border-color: #fff; color: #fff; }
+
+        /* Slider header: a right-pointing back arrow that exits the upload flow,
+           dropped below the phone camera line and floating over the slides. */
+        .cat-slider-header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 520;
+            direction: ltr;   /* keep the arrow pinned to the right regardless of page dir */
+            display: flex; align-items: center; justify-content: flex-end;
+            padding: calc(env(safe-area-inset-top, 0px) + 26px) 18px 12px;
+            pointer-events: none;
+        }
+        .cat-slider-back {
+            pointer-events: auto;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; padding: 0; margin: 0;
+            border: none; background: none; cursor: pointer; color: #fff;
+        }
+        .cat-slider-back svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.9; }
+
+        /* "Slide for more" hint + guide line, pinned to the bottom of the slider. */
+        .cat-slider-hint {
+            position: fixed; left: 0; right: 0;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 26px); z-index: 520;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            pointer-events: none;
+        }
+        .cat-slider-hint-text {
+            font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+            color: rgba(255,255,255,0.82);
+        }
+        .cat-slider-hint-line {
+            width: 120px; height: 1px; background: rgba(255,255,255,0.35);
+            position: relative; overflow: hidden;
+        }
+        /* A bright segment sweeps along the line to suggest horizontal swiping. */
+        .cat-slider-hint-line::after {
+            content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 40px;
+            background: rgba(255,255,255,0.95);
+            animation: catSlideHint 1.8s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+        }
+        @keyframes catSlideHint {
+            0%   { transform: translateX(-40px); }
+            60%, 100% { transform: translateX(120px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .cat-slider-hint-line::after { animation: none; }
+        }
 
         /* ===================== Photo guide → white ===================== */
         #uploadProductView .guide-page {
@@ -7228,6 +7281,17 @@
     <div id="uploadProductView">
         <!-- INITIAL CATEGORY SELECTION FULL SCREEN -->
         <div id="categorySelectorFull" class="category-selector-full">
+            <!-- Slider header: right-pointing back arrow, exits the upload flow. -->
+            <header class="cat-slider-header">
+                <button type="button" class="cat-slider-back" onclick="closeUploadProduct()" aria-label="Back">
+                    <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </header>
+            <!-- Swipe hint pinned at the bottom of every slide. -->
+            <div class="cat-slider-hint" aria-hidden="true">
+                <span class="cat-slider-hint-text">Slide for more</span>
+                <span class="cat-slider-hint-line"></span>
+            </div>
             <div class="cat-card" onclick="selectCategoryInit('clothing')">
                 <div class="cat-card-bg" style="background-image:url('clothing-hero.png')"></div>
                 <span class="cat-card-vlabel">Clothing</span>
