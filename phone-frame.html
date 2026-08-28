@@ -192,14 +192,23 @@
         // during the fetch is never visible. When the new page's 'load' fires we drop
         // the cover and slide the fresh page in over the paper base.
         var cover = document.getElementById('pfCover');
-        function showCover() { cover.classList.add('is-on'); }
-        function hideCover() { cover.classList.remove('is-on'); }
+        var coverTimer = null;
+        function showCover() {
+            cover.classList.add('is-on');
+            // Failsafe: if the next page's 'load' never fires (a navigation that was
+            // cancelled, a mailto/tel/download, a stalled fetch), drop the cover anyway
+            // so the app can never get stuck behind a blank paper screen.
+            clearTimeout(coverTimer);
+            coverTimer = setTimeout(hideCover, 2500);
+        }
+        function hideCover() { clearTimeout(coverTimer); cover.classList.remove('is-on'); }
 
         // (Re)attach the pagehide listener to whichever document is currently framed.
         function armPageHide() {
             try {
                 var w = frame.contentWindow;
                 if (!w) return;
+                w.removeEventListener('pagehide', showCover);
                 w.addEventListener('pagehide', showCover);
             } catch (e) { /* cross-origin — ignore */ }
         }
