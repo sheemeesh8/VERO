@@ -2654,4 +2654,28 @@
     } else {
         document.addEventListener('DOMContentLoaded', render);
     }
+
+    // ---- Page preloading: fetch pages on hover for instant navigation ----
+    // When hovering over a navigation link, prefetch the target page into
+    // the Service Worker cache so it loads instantly when clicked.
+    const preloadedPages = new Set();
+    function preloadPage(url) {
+        if (preloadedPages.has(url) || !url || !url.endsWith('.html')) return;
+        preloadedPages.add(url);
+        fetch(url, { priority: 'low' }).catch(() => {});
+    }
+    document.addEventListener('mouseover', (e) => {
+        const link = e.target.closest('a[href], button[onclick*="profile"], button[onclick*="seller"]');
+        if (!link) return;
+
+        // Extract target URL from href or onclick
+        let url = link.getAttribute('href');
+        if (!url) {
+            const onclick = link.getAttribute('onclick') || '';
+            const match = onclick.match(/['"]([^'"]*\.html[^'"]*)['"]/);
+            url = match ? match[1].split('?')[0] : null;
+        }
+        if (url && url.startsWith('http')) url = null;  // skip external links
+        if (url) preloadPage(url);
+    }, { passive: true });
 })();
