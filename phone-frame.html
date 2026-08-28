@@ -40,14 +40,17 @@
             padding: 10px;                 /* thin, even Samsung bezel */
             box-shadow: 0 0 0 2px #2b2b2b, 0 24px 70px rgba(0, 0, 0, 0.6);
         }
-        /* The screen: white, rounded to sit inside the bezel, clips the content. */
+        /* The screen: rounded to sit inside the bezel, clips the content. The base
+           colour is a soft warm paper (NOT stark white) so any loading gap between
+           pages reads as a calm surface instead of a white flash. */
+        :root { --pf-paper: #f4f1ec; }
         .screen {
             position: relative;
             width: 100%;
             height: 100%;
             border-radius: 36px;
             overflow: hidden;
-            background: #fff;
+            background: var(--pf-paper);
             display: flex;
             flex-direction: column;
         }
@@ -72,18 +75,33 @@
             width: 100%;
             border: 0;
             display: block;
+            position: relative;
+            z-index: 2;
+            /* Paper (not white) while the inner page's own CSS is still painting. */
+            background: var(--pf-paper);
         }
-        /* Slide-in-from-top on every in-frame navigation. Masks the iframe reload
-           (which otherwise stutters / flashes white) with a quick downward glide,
-           so page-to-page transitions feel smooth. */
-        /* Same motion as the search page (header.js .vsp-overlay): a clean slide
-           down from the top, no fade — 0.55s on the search easing curve. */
+        /* Cover panel: a paper surface that sits OVER the iframe only during the
+           fetch gap (from the outgoing page's pagehide to the new page's load), so
+           the momentary blank iframe is never seen. Removed the instant the new page
+           is ready, and the fresh page then slides in over the paper base. */
+        .pf-cover {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background: var(--pf-paper);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .pf-cover.is-on { opacity: 1; visibility: visible; }
+        /* Fast slide-in-from-top on every in-frame navigation, over the paper base —
+           no white, no fade. */
         @keyframes pfSlideIn {
             from { transform: translateY(-100%); }
             to   { transform: translateY(0); }
         }
         .screen iframe.pf-enter {
-            animation: pfSlideIn 0.55s cubic-bezier(0.65, 0.05, 0.1, 1);
+            animation: pfSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
         @media (prefers-reduced-motion: reduce) {
             .screen iframe.pf-enter { animation: none; }
@@ -105,6 +123,8 @@
             <!-- The whole site lives in here. index.html detects it is framed and renders
                  the real homepage instead of bouncing back to this frame. -->
             <iframe title="VERO" id="siteFrame"></iframe>
+            <!-- Paper cover shown only during the page-to-page fetch gap. -->
+            <div class="pf-cover" id="pfCover"></div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
         </div>
@@ -165,11 +185,33 @@
             void frame.offsetWidth;          // force reflow so the animation restarts
             frame.classList.add('pf-enter');
         }
+
+        // ---- No-white-flash page transitions ----
+        // The moment the current page starts navigating away (pagehide, same-origin)
+        // we raise a paper cover over the iframe, so the browser's blank white repaint
+        // during the fetch is never visible. When the new page's 'load' fires we drop
+        // the cover and slide the fresh page in over the paper base.
+        var cover = document.getElementById('pfCover');
+        function showCover() { cover.classList.add('is-on'); }
+        function hideCover() { cover.classList.remove('is-on'); }
+
+        // (Re)attach the pagehide listener to whichever document is currently framed.
+        function armPageHide() {
+            try {
+                var w = frame.contentWindow;
+                if (!w) return;
+                w.addEventListener('pagehide', showCover);
+            } catch (e) { /* cross-origin — ignore */ }
+        }
+
         frame.addEventListener('load', function () {
             hideFrameScrollbar();
-            playSlideIn();
+            hideCover();          // new page is ready — reveal it
+            playSlideIn();        // …sliding in over the paper base
+            armPageHide();        // arm the cover for the next navigation
         });
         hideFrameScrollbar();
+        armPageHide();
     </script>
 </body>
 </html>
