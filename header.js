@@ -2304,9 +2304,17 @@
     // the fallback below) can share the exact same transition.
     window.veroSlideToCart = function (url) {
         const dest = url || 'cart-store.html';
+        const navigate = () => {
+            // Preserve frame context: if loaded via phone-frame, navigate in-frame.
+            if (window.self !== window.top) {
+                window.top.location.hash = '#page=' + encodeURIComponent(dest);
+            } else {
+                location.href = dest;
+            }
+        };
         // Respect users who asked for less motion — just navigate.
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            location.href = dest; return;
+            navigate(); return;
         }
         if (document.getElementById('veroCartSlide')) return;   // already transitioning
         const panel = document.createElement('div');
@@ -2315,7 +2323,7 @@
             'transform:translateX(100%);transition:transform .5s cubic-bezier(.22,1,.36,1);will-change:transform';
         document.body.appendChild(panel);
         requestAnimationFrame(() => requestAnimationFrame(() => { panel.style.transform = 'translateX(0)'; }));
-        setTimeout(() => { location.href = dest; }, 470);
+        setTimeout(navigate, 470);
     };
 
     // ---- Account state (Instagram / TikTok style) ----
@@ -2338,7 +2346,13 @@
     // Open the "rectangles" hub that matches the active account — seller-area for
     // the business account, buyer-area (personal) for the buyer account.
     window.veroOpenArea = function () {
-        location.href = veroActiveAccount() === 'seller' ? 'seller-area.html' : 'profile.html';
+        const dest = veroActiveAccount() === 'seller' ? 'seller-area.html' : 'profile.html';
+        // Preserve frame context: if loaded via phone-frame, navigate in-frame.
+        if (window.self !== window.top) {
+            window.top.location.hash = '#page=' + encodeURIComponent(dest);
+        } else {
+            location.href = dest;
+        }
     };
 
     // Enter a given account context and navigate to its hub page. Used by the
@@ -2449,7 +2463,16 @@
         opts = opts || {};
         const go = () => {
             if (opts.reload) location.reload();
-            else location.href = opts.dest || 'index.html';
+            else {
+                const dest = opts.dest || 'index.html';
+                // Preserve frame context: if loaded via phone-frame, navigate in-frame
+                // using the #page= parameter instead of breaking out of the frame.
+                if (window.self !== window.top) {
+                    window.top.location.hash = '#page=' + encodeURIComponent(dest);
+                } else {
+                    location.href = dest;
+                }
+            }
         };
         const name = opts.name || accountName(veroActiveAccount());
         // Respect reduced-motion — skip the animation and just switch.
