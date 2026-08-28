@@ -1816,6 +1816,46 @@
             box-shadow: 0 0 0 2px rgba(20,20,20,0.95);
         }
         .area-tab.has-dot .area-dot { display: block; }
+
+        /* Fixed top header for the buyer personal area: the active page's title with
+           a back arrow, dropped below the phone camera line. Mirrors the tab bar's
+           reveal — hidden over the full-screen hero, slides down once you're inside a
+           section. */
+        .pa-header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 65;
+            display: flex; align-items: center; gap: 10px;
+            padding: calc(env(safe-area-inset-top, 0px) + 30px) 16px 12px;
+            background: rgba(255,255,255,0.94); backdrop-filter: blur(8px);
+            border-bottom: 1px solid #e6e2d9;
+            transform: translateY(-100%); opacity: 0; pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease;
+        }
+        .pa-header.revealed { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        .pa-back {
+            flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+            width: 34px; height: 34px; padding: 0; margin: 0;
+            border: none; background: none; cursor: pointer; color: #1c1c1c;
+        }
+        .pa-back svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .pa-title {
+            flex: 1 1 auto; text-align: center; font-size: 13px; font-weight: 500;
+            letter-spacing: 4px; text-transform: uppercase; color: #1c1c1c;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-right: 34px;   /* balance the back button so the title stays centred */
+        }
+        /* With the fixed header carrying the title, drop each section's in-place title
+           band. */
+        body:not(.is-seller) .build-panel .ps-title:not(.ps-title--sub) { display: none; }
+        /* An activated section is raised over the hero as its own full-screen, self-
+           scrolling layer, so tapping a tab shows that page instantly (no reliance on
+           snap scrolling). Headroom for the top header, tail room for the nav bar. */
+        body:not(.is-seller) .build-panel.pa-current {
+            position: fixed; inset: 0; z-index: 55;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            background: #fff; padding-top: 92px; padding-bottom: 110px;
+            scroll-snap-align: none;
+        }
+
         /* Thin divider between the areas and the Settings / Statistics buttons. */
         .area-sep { width: 1px; align-self: stretch; margin: 5px 4px; background: rgba(255,255,255,0.22); flex: none; }
 
@@ -3937,6 +3977,30 @@
         bar.insertBefore(ind, bar.firstChild);
         document.body.appendChild(bar);
 
+        // ---- Fixed top header (buyer personal area): back arrow + active page title.
+        //      Reveals together with the bottom tab bar (hidden over the hero). ----
+        let paHeader = null, paTitleEl = null;
+        if (!seller) {
+            document.body.classList.add('pa-has-header');
+            paHeader = document.createElement('header');
+            paHeader.className = 'pa-header';
+            const paBack = document.createElement('button');
+            paBack.type = 'button'; paBack.className = 'pa-back'; paBack.setAttribute('aria-label', 'Back');
+            paBack.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>';
+            paBack.addEventListener('click', function () {
+                // Prefer real history (returns to wherever the hub was opened from);
+                // fall back to the storefront home if this is the first page.
+                if (window.history.length > 1) window.history.back();
+                else location.href = 'index.html';
+            });
+            paTitleEl = document.createElement('span');
+            paTitleEl.className = 'pa-title';
+            paHeader.appendChild(paBack);
+            paHeader.appendChild(paTitleEl);
+            document.body.appendChild(paHeader);
+        }
+        function setPaTitle(text) { if (paTitleEl) paTitleEl.textContent = (text || '').trim(); }
+
         function moveIndicator(animate) {
             const t = bar.querySelector('.area-tab.is-active');
             if (!t) return;
@@ -3987,6 +4051,7 @@
             const t = sec && sec.querySelector('.ps-title');
             if (heroNameEl && t) { heroNameEl.textContent = t.textContent; heroNameEl.classList.add('is-title'); }
             if (heroLastEl) heroLastEl.textContent = '';
+            if (t) setPaTitle(t.textContent);   // mirror the title into the fixed top header
         }
         if (!seller && sections.length) showSection('slideStats');   // default view (landing)
 
@@ -4003,6 +4068,7 @@
             const inArea = active && active.dataset.id !== 'statistics' && active.dataset.id !== 'profile';
             const passed = areaOpen || inArea || !heroEl || y > (heroEl.offsetHeight - 90);
             bar.classList.toggle('revealed', passed);
+            if (paHeader) paHeader.classList.toggle('revealed', passed);   // top header follows the same reveal
         }
         window.addEventListener('scroll', updateBarReveal, { passive: true });
         window.addEventListener('resize', updateBarReveal);
@@ -4044,12 +4110,19 @@
 
             const area = AREAS.find(a => a.id === id);
 
-            // Personal-area section: swap the visible full-screen .build-panel in
-            // place (below the hero), no iframe overlay.
+            // Personal-area section: swap the visible full-screen .build-panel in.
+            // The sections sit one snap-page BELOW the hero, and the mandatory scroll
+            // snap makes programmatic scrolling unreliable — so the tapped section is
+            // raised as a fixed full-screen layer over the hero (via .pa-current) so it
+            // appears immediately, exactly like the seller area's overlay pages.
             if (area && area.section) {
                 overlay.classList.remove('open');
                 if (wrap) wrap.classList.remove('area-mode');
                 showSection(area.section);
+                sections.forEach(function (s) {
+                    s.classList.toggle('pa-current', s.id === area.section);
+                });
+                if (paHeader) paHeader.classList.add('revealed');
                 return;
             }
 
