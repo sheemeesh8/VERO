@@ -63,6 +63,19 @@
             border: 0;
             display: block;
         }
+        /* Slide-in-from-top on every in-frame navigation. Masks the iframe reload
+           (which otherwise stutters / flashes white) with a quick downward glide,
+           so page-to-page transitions feel smooth. */
+        @keyframes pfSlideIn {
+            from { transform: translateY(-100%); opacity: 0.35; }
+            to   { transform: translateY(0);     opacity: 1; }
+        }
+        .screen iframe.pf-enter {
+            animation: pfSlideIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .screen iframe.pf-enter { animation: none; }
+        }
         /* No scrollbar on the frame itself. */
         body::-webkit-scrollbar, .screen::-webkit-scrollbar { width: 0; height: 0; display: none; }
         /* On a real phone (narrow screen) drop the device chrome — the site fills the
@@ -119,7 +132,17 @@
                 }
             } catch (e) { /* cross-origin (e.g. served over http) — ignore */ }
         }
-        frame.addEventListener('load', hideFrameScrollbar);
+        // Replay the slide-in animation on every navigation the iframe performs
+        // (each inner link is a full document load, so 'load' fires per page).
+        function playSlideIn() {
+            frame.classList.remove('pf-enter');
+            void frame.offsetWidth;          // force reflow so the animation restarts
+            frame.classList.add('pf-enter');
+        }
+        frame.addEventListener('load', function () {
+            hideFrameScrollbar();
+            playSlideIn();
+        });
         hideFrameScrollbar();
     </script>
 </body>
