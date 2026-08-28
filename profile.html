@@ -575,9 +575,12 @@
            from flex:1 inside the .sz column — NOT from making the slider a flexbox,
            which would collapse the 200%-wide track and reveal both views at once. */
         body:not(.is-seller) #slideSizes .sz { display: flex; flex-direction: column; min-height: calc(100vh - 40px); }
-        body:not(.is-seller) #slideSizes .sz-slider { flex: 1 1 auto; }
-        body:not(.is-seller) #slideSizes .sz-track { height: 100%; }
-        body:not(.is-seller) #slideSizes .sz-menu { height: 100%; }
+        body:not(.is-seller) #slideSizes .sz-slider { flex: 1 1 auto; display: flex; align-items: stretch; }
+        /* The track stretches to the slider's full height as a flex child (percentage
+           heights don't resolve reliably through the flex chain). flex:0 0 auto keeps
+           its 200% width so only one view shows and the other stays clipped off-screen. */
+        body:not(.is-seller) #slideSizes .sz-track { flex: 0 0 auto; height: auto; align-items: stretch; }
+        body:not(.is-seller) #slideSizes .sz-menu { height: auto; }
         body:not(.is-seller) #slideSizes .sz-menu .sz-item { flex: 1 1 0; }
 
         /* Size-picker: centred item title, then chips spread as a full-width grid
@@ -609,27 +612,45 @@
         }
         .mp-btn:hover { opacity: 0.85; }
         .mp-filterbar {
+            position: relative;
             display: flex; align-items: center; gap: 10px;
             border-bottom: 1px solid #cfcbc3; padding-bottom: 8px; margin-bottom: 24px;
         }
-        .mp-filter-lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #1c1c1c; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-        .mp-filter-lbl svg { width: 13px; height: 13px; }
+        /* "Filter by" is now the button that opens the sort menu. */
+        .mp-filter-lbl {
+            font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #1c1c1c;
+            display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+            background: none; border: none; padding: 0; font-family: inherit; cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .mp-filter-lbl:hover { opacity: 0.65; }
+        .mp-filter-lbl svg { width: 13px; height: 13px; transition: transform 0.25s ease; }
+        .mp-filterbar.is-open .mp-filter-lbl svg { transform: rotate(180deg); }
         .mp-filterbar input {
             flex: 1; border: none; background: transparent; font-family: inherit;
             font-size: 12px; color: #1c1c1c; padding: 4px 0;
         }
         .mp-filterbar input:focus { outline: none; }
         .mp-filter-state { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; white-space: nowrap; }
-        /* Sort bar — active filters: newest, most viewed, most wishlisted, longest on shelf. */
-        .mp-sortbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
-        .mp-sort {
-            border: 1px solid #d9d5cc; background: #fff; color: #6a6a66; font-family: inherit;
-            font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-            padding: 8px 13px; border-radius: 999px; cursor: pointer;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        /* Sort menu — drops down from the "Filter by" button: newest, most viewed,
+           most wishlisted, longest on shelf. */
+        .mp-sortmenu {
+            position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
+            min-width: 190px; background: #fff; border: 1px solid #e5e1d8; border-radius: 12px;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.14); padding: 6px;
+            display: flex; flex-direction: column; gap: 2px;
+            opacity: 0; visibility: hidden; transform: translateY(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
         }
-        .mp-sort:hover { border-color: #000; color: #1c1c1c; }
-        .mp-sort.is-active { background: #000; color: #fff; border-color: #000; }
+        .mp-filterbar.is-open .mp-sortmenu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .mp-sort {
+            border: none; background: none; color: #4a4a45; font-family: inherit; text-align: left;
+            font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+            padding: 11px 13px; border-radius: 8px; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .mp-sort:hover { background: #f4f2ee; color: #1c1c1c; }
+        .mp-sort.is-active { background: #000; color: #fff; }
 
         /* Product cards — site-wide 2-up grid, gap 14, side inset 14. */
         .mp-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -2280,16 +2301,17 @@
                         onclick="location.href='drafts.html'">Manage drafts</button>
                 </div>
                 <div class="mp-filterbar">
-                    <span class="mp-filter-lbl">Filter by
+                    <button type="button" class="mp-filter-lbl" id="mpFilterBtn" aria-expanded="false" aria-haspopup="true">
+                        <span id="mpFilterText">Filter by</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h18l-7 8v5l-4 2v-7z"/></svg>
-                    </span>
+                    </button>
                     <input type="text" id="mpFilter" placeholder="Search your products">
-                </div>
-                <div class="mp-sortbar" id="mpSort">
-                    <button type="button" class="mp-sort is-active" data-sort="new">Newest</button>
-                    <button type="button" class="mp-sort" data-sort="views">Most viewed</button>
-                    <button type="button" class="mp-sort" data-sort="wish">Most wishlisted</button>
-                    <button type="button" class="mp-sort" data-sort="shelf">Longest on shelf</button>
+                    <div class="mp-sortmenu" id="mpSort" role="menu">
+                        <button type="button" class="mp-sort is-active" data-sort="new" role="menuitem">Newest</button>
+                        <button type="button" class="mp-sort" data-sort="views" role="menuitem">Most viewed</button>
+                        <button type="button" class="mp-sort" data-sort="wish" role="menuitem">Most wishlisted</button>
+                        <button type="button" class="mp-sort" data-sort="shelf" role="menuitem">Longest on shelf</button>
+                    </div>
                 </div>
                 <div class="mp-cards" id="mpCards">
                     <div class="mp-empty">No products yet.</div>
@@ -2644,11 +2666,31 @@
                 }).join('');
             }
             if (filterInput) filterInput.addEventListener('input', function () { state.q = filterInput.value; render(); });
+
+            // "Filter by" now opens a dropdown that holds the sort options.
+            var filterBar = document.querySelector('#slideProducts .mp-filterbar');
+            var filterBtn = document.getElementById('mpFilterBtn');
+            var filterText = document.getElementById('mpFilterText');
+            function closeMenu() {
+                if (filterBar) filterBar.classList.remove('is-open');
+                if (filterBtn) filterBtn.setAttribute('aria-expanded', 'false');
+            }
+            if (filterBtn) filterBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var open = filterBar.classList.toggle('is-open');
+                filterBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
             if (sortBar) sortBar.addEventListener('click', function (e) {
                 var b = e.target.closest('.mp-sort'); if (!b) return;
                 state.sort = b.dataset.sort;
                 sortBar.querySelectorAll('.mp-sort').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+                // Reflect the chosen sort in the button label.
+                if (filterText) filterText.textContent = b.textContent.trim();
+                closeMenu();
                 render();
+            });
+            document.addEventListener('click', function (e) {
+                if (filterBar && filterBar.classList.contains('is-open') && !filterBar.contains(e.target)) closeMenu();
             });
             render();
         })();
