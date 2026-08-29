@@ -32,22 +32,25 @@
             display: flex; align-items: center; justify-content: center; }
         .pu-close svg { width: 22px; height: 22px; }
         .pu-step-lbl { display: none; }
-        .pu-bar { height: 3px; border-radius: 999px; background: #f0ece4; overflow: hidden; }
+        .pu-bar { display: none; }
         .pu-bar-fill { height: 100%; width: 0; background: #1b1916; border-radius: 999px; transition: width 0.4s cubic-bezier(0.22,1,0.36,1); }
 
         /* ---- Slides — cross-fade between steps ---- */
         .pu-viewport { flex: 1 1 auto; overflow: hidden; position: relative; background: #fff; }
         .pu-track { position: relative; height: 100%; }
         .pu-slide { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: #fff;
-            transition: opacity 0.19s ease; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 22px 28px 48px; }
+            transition: opacity 0.19s ease; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 22px 28px 30px;
+            display: flex; flex-direction: column; }
         .pu-slide.active { opacity: 1; pointer-events: auto; }
         .pu-slide::-webkit-scrollbar { display: none; }
-        .pu-h { font-family: 'Aharoni CLM','Segoe UI',sans-serif; font-size: 30px; font-weight: 400;
+        /* Everything below the heading fills the page, spreading down to the buttons. */
+        .pu-fill { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: space-between; gap: 26px; }
+        .pu-h { flex: none; font-family: 'Aharoni CLM','Segoe UI',sans-serif; font-size: 30px; font-weight: 400;
             letter-spacing: 1px; text-transform: uppercase; color: #1b1916; margin-bottom: 10px; line-height: 1.05; }
-        .pu-sub { font-size: 12px; color: #b0a99c; margin-bottom: 44px; line-height: 1.6; font-weight: 300; }
+        .pu-sub { flex: none; font-size: 12px; color: #b0a99c; margin-bottom: 30px; line-height: 1.6; font-weight: 300; }
 
-        /* ---- Fields — airy, quiet, hairline ---- */
-        .pu-field { margin-bottom: 34px; }
+        /* ---- Fields — spacing handled by the .pu-fill space-between ---- */
+        .pu-field { margin-bottom: 0; }
         .pu-field > label { display: block; font-size: 9px; letter-spacing: 2.6px; text-transform: uppercase;
             color: #b0a99c; font-weight: 600; margin-bottom: 13px; }
         .pu-field input, .pu-field textarea { width: 100%; border: none; border-bottom: 1px solid #efeae2;
@@ -328,6 +331,17 @@
         var slides = track.querySelectorAll('.pu-slide');
         var total = slides.length;
         var step = 0;
+
+        // Wrap each slide's body (everything under the heading + sub) so it can
+        // spread down to the buttons via space-between.
+        slides.forEach(function (slide) {
+            var fill = document.createElement('div');
+            fill.className = 'pu-fill';
+            Array.prototype.slice.call(slide.children).forEach(function (kid) {
+                if (!kid.classList.contains('pu-h') && !kid.classList.contains('pu-sub')) fill.appendChild(kid);
+            });
+            slide.appendChild(fill);
+        });
         var barFill = document.getElementById('puBarFill');
         var stepLbl = document.getElementById('puStepLbl');
         var backBtn = document.getElementById('puBack');
