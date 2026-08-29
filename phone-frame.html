@@ -100,11 +100,27 @@
             from { transform: translateY(-100%); }
             to   { transform: translateY(0); }
         }
+        @keyframes pfSlideInRight {
+            from { transform: translateY(100%); }
+            to   { transform: translateY(0); }
+        }
+        @keyframes pfSlideOut {
+            from { transform: translateY(0); }
+            to   { transform: translateY(100%); }
+        }
         .screen iframe.pf-enter {
             animation: pfSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
+        .screen iframe.pf-enter.pf-forward {
+            animation: pfSlideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .screen iframe.pf-exit {
+            animation: pfSlideOut 0.3s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+        }
         @media (prefers-reduced-motion: reduce) {
-            .screen iframe.pf-enter { animation: none; }
+            .screen iframe.pf-enter,
+            .screen iframe.pf-enter.pf-forward,
+            .screen iframe.pf-exit { animation: none; }
         }
         /* Welcome splash — shown on every entry over the top of everything, then
            fades out to reveal the home feed. */
@@ -218,13 +234,28 @@
                 }
             } catch (e) { /* cross-origin (e.g. served over http) — ignore */ }
         }
+        // Track navigation direction: forward (default) or backward (back button)
+        var isGoingBack = false;
+
         // Replay the slide-in animation on every navigation the iframe performs
         // (each inner link is a full document load, so 'load' fires per page).
         function playSlideIn() {
-            frame.classList.remove('pf-enter');
+            frame.classList.remove('pf-enter', 'pf-forward', 'pf-exit');
             void frame.offsetWidth;          // force reflow so the animation restarts
-            frame.classList.add('pf-enter');
+
+            // Apply direction-based animation
+            if (isGoingBack) {
+                frame.classList.add('pf-exit');
+                isGoingBack = false;  // reset for next navigation
+            } else {
+                frame.classList.add('pf-enter', 'pf-forward');
+            }
         }
+
+        // Detect back navigation via popstate (browser back button)
+        window.addEventListener('popstate', () => {
+            isGoingBack = true;
+        });
 
         // ---- No-white-flash page transitions ----
         // The moment the current page starts navigating away (pagehide, same-origin)
@@ -275,6 +306,28 @@
             playSlideIn();        // …sliding in over the paper base
             armPageHide();        // arm the cover for the next navigation
             dismissSplash();      // first load done → retire the welcome splash (idempotent)
+
+            // Detect back button clicks within the framed page
+            try {
+                var w = frame.contentWindow;
+                if (w) {
+                    // Hook history.back() to set back flag
+                    var origBack = w.history.back.bind(w.history);
+                    w.history.back = function () {
+                        isGoingBack = true;
+                        origBack();
+                    };
+                    // Also detect pagehide triggered by back navigation
+                    w.addEventListener('pagehide', function (e) {
+                        // If this is a back navigation, the flag is already set by popstate
+                        // But for manual history.back() calls, ensure flag is set
+                        if (e.persisted === false) {
+                            // Page is being unloaded; check if it's likely a back
+                            // (We detect via popstate, so this is a backup)
+                        }
+                    });
+                }
+            } catch (e) { /* cross-origin — ignore */ }
         });
         hideFrameScrollbar();
         armPageHide();
