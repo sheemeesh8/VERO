@@ -1042,6 +1042,17 @@
         .card-title { font-size: 9.17px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
         .card-hint { font-size: 10.00px; color: #9a9a95; line-height: 1.5; margin-bottom: 16px; }
 
+        /* "My Store" access card (seller settings → My Store tab). */
+        .ms-desc { font-size: 12px; line-height: 1.6; color: #6b6b66; margin: 0 0 18px; }
+        .ms-open {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 26px; border: 1px solid #000; background: #000; color: #fff;
+            font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 1px;
+            text-transform: uppercase; cursor: pointer; border-radius: 0;
+            transition: background 0.2s, color 0.2s;
+        }
+        .ms-open:hover { background: #fff; color: #000; }
+
         /* Favorite-brand chips + free-text add field. */
         .chip-input { display: flex; flex-wrap: wrap; gap: 10px; }
         .brand-chip {
@@ -2847,6 +2858,29 @@
                 expenses: document.querySelector('.my-expenses'),
                 myStore:  document.getElementById('myStore')
             };
+
+            // The "My Store" settings group had no content element (getElementById
+            // returned null), so its tab opened an empty slide. Build a card that
+            // gives the seller access to their public storefront (store-profile.html).
+            if (seller && !el.myStore) {
+                const card = document.createElement('div');
+                card.className = 'card store-card seller-only';
+                card.id = 'myStore';
+                card.innerHTML =
+                    '<div class="card-title">My Store</div>' +
+                    '<p class="ms-desc">Your public storefront — the page buyers see when they open your shop.</p>' +
+                    '<button type="button" class="ms-open">Open my store &rarr;</button>';
+                card.querySelector('.ms-open').addEventListener('click', function () {
+                    const dest = 'store-profile.html';
+                    // Stay inside the phone frame when framed; navigate directly otherwise.
+                    if (window.self !== window.top) {
+                        window.top.location.hash = '#page=' + encodeURIComponent(dest);
+                    } else {
+                        location.href = dest;
+                    }
+                });
+                el.myStore = card;
+            }
             if (el.stats) el.stats.remove();   // stat tiles retired
 
             // Groups per mode. Each group becomes a nav tab + a slide.
