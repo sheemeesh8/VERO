@@ -102,27 +102,35 @@
         .sa-cue svg { width: 16px; height: 16px; }
         @keyframes saBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(4px); } }
 
-        /* ===================== App-style bottom NAV BAR ===================== */
-        :root { --sa-nav-h: 68px; }
+        /* ============ Floating pill NAV BAR (copied from profile.html) ============
+           A dark rounded pill with a single white sliding indicator on the active
+           tab — the same design as the buyer personal-area tab bar. */
+        :root { --sa-nav-h: 64px; }
         .sa-nav {
-            position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
-            height: calc(var(--sa-nav-h) + env(safe-area-inset-bottom, 0px));
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            display: flex; align-items: stretch;
-            background: rgba(255,255,255,0.94);
-            -webkit-backdrop-filter: blur(20px) saturate(1.2);
-            backdrop-filter: blur(20px) saturate(1.2);
-            border-top: 1px solid #ece8e1;
+            position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
+            z-index: 60; display: flex; align-items: stretch; gap: 6px;
+            max-width: 94vw; overflow-x: auto;
+            background: rgba(20,20,20,0.94);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 5px;
+            box-shadow: 0 6px 26px rgba(0,0,0,0.28);
         }
-        .sa-nav a, .sa-nav button {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-            background: none; border: none; cursor: pointer; text-decoration: none;
-            color: #1b1916; font-family: inherit; transition: opacity 0.2s;
+        .sa-nav::-webkit-scrollbar { display: none; }
+        .sa-tab {
+            position: relative; z-index: 1; border: none; background: transparent;
+            font-family: inherit; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+            color: #b5b5b0; padding: 9px 16px; border-radius: 999px; cursor: pointer;
+            white-space: nowrap; text-decoration: none; transition: color 0.2s;
         }
-        .sa-nav a:active { opacity: 0.5; }
-        .sa-nav svg { width: 22px; height: 22px; stroke-width: 1.6; }
-        .sa-nav .nl { font-size: 8px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; }
-        .sa-nav .disabled { opacity: 0.4; cursor: default; }
+        .sa-tab:hover { color: #fff; }
+        .sa-tab.is-active { color: #111; }
+        .sa-tab.disabled { color: #6f6f6a; }
+        /* Sliding white active-tab indicator. */
+        .sa-ind {
+            position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; z-index: 0;
+            background: #fff; border-radius: 999px; pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), width 0.4s cubic-bezier(0.22,1,0.36,1);
+        }
 
         /* ======================= SECTION 2 — SETTINGS ======================= */
         .sa-settings {
@@ -278,24 +286,14 @@
 
     </div>
 
-    <!-- ==================== App-style bottom navigation ==================== -->
-    <nav class="sa-nav">
-        <a href="products.html?from=seller">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-            <span class="nl">My Products</span>
-        </a>
-        <a href="chats.html?from=seller">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a8.5 8.5 0 0 1-.9-4A8.38 8.38 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/></svg>
-            <span class="nl">Buyers Chat</span>
-        </a>
-        <a href="offers-received.html?from=seller">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>
-            <span class="nl">Negotiation</span>
-        </a>
-        <a href="#" class="disabled" id="navAssistant">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><path d="M18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
-            <span class="nl">My Assistant</span>
-        </a>
+    <!-- ============ Floating pill navigation (profile.html style) ============ -->
+    <nav class="sa-nav" id="saNav">
+        <span class="sa-ind" id="saInd"></span>
+        <a class="sa-tab is-active" href="#" id="tabShop">My Shop</a>
+        <a class="sa-tab" href="products.html?from=seller">My Products</a>
+        <a class="sa-tab" href="chats.html?from=seller">Buyers Chat</a>
+        <a class="sa-tab" href="offers-received.html?from=seller">Negotiation</a>
+        <a class="sa-tab disabled" href="#" id="navAssistant">My Assistant</a>
     </nav>
 
     <script>
@@ -329,6 +327,27 @@
             e.preventDefault();
             alert('My Assistant — coming soon');
         });
+
+        /* ---- Nav pill: place the white sliding indicator under the active tab. ---- */
+        (function navIndicator() {
+            var nav = document.getElementById('saNav'), ind = document.getElementById('saInd');
+            if (!nav || !ind) return;
+            var active = nav.querySelector('.sa-tab.is-active');
+            var place = function () {
+                if (!active) return;
+                ind.style.width = active.offsetWidth + 'px';
+                ind.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+            };
+            place();
+            window.addEventListener('resize', place);
+            // "My Shop" is this page — clicking it just returns to the top.
+            var shop = document.getElementById('tabShop');
+            if (shop) shop.addEventListener('click', function (e) {
+                e.preventDefault();
+                var sc = document.querySelector('.sa-scroll');
+                if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        })();
     })();
     </script>
 
