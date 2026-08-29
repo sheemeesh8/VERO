@@ -2655,27 +2655,55 @@
         document.addEventListener('DOMContentLoaded', render);
     }
 
-    // ---- Page preloading: fetch pages on hover for instant navigation ----
-    // When hovering over a navigation link, prefetch the target page into
-    // the Service Worker cache so it loads instantly when clicked.
+    // ---- Page prefetching for instant navigation ----
+    // Warms the browser's HTTP cache so a tapped page is already downloaded and
+    // renders near-instantly. On the phone there is no hover, so the real win is
+    // the PROACTIVE prefetch below (runs on idle after load).
     const preloadedPages = new Set();
     function preloadPage(url) {
-        if (preloadedPages.has(url) || !url || !url.endsWith('.html')) return;
+        if (!url) return;
+        url = url.split('#')[0];
+        if (preloadedPages.has(url) || !/\.html($|\?)/.test(url) || url.startsWith('http')) return;
         preloadedPages.add(url);
+        // <link rel="prefetch"> lets the browser fetch at idle priority and keep it
+        // in the HTTP cache for the next real navigation.
+        try {
+            const l = document.createElement('link');
+            l.rel = 'prefetch';
+            l.href = url;
+            document.head.appendChild(l);
+        } catch (e) {}
+        // Belt-and-braces: also fetch (some engines cache the response body).
         fetch(url, { priority: 'low' }).catch(() => {});
     }
+
+    // Hover intent (desktop): prefetch the link under the cursor.
     document.addEventListener('mouseover', (e) => {
         const link = e.target.closest('a[href], button[onclick*="profile"], button[onclick*="seller"]');
         if (!link) return;
-
-        // Extract target URL from href or onclick
         let url = link.getAttribute('href');
         if (!url) {
             const onclick = link.getAttribute('onclick') || '';
             const match = onclick.match(/['"]([^'"]*\.html[^'"]*)['"]/);
-            url = match ? match[1].split('?')[0] : null;
+            url = match ? match[1] : null;
         }
-        if (url && url.startsWith('http')) url = null;  // skip external links
         if (url) preloadPage(url);
     }, { passive: true });
+
+    // Proactive prefetch (mobile + desktop): once the current page is quiet, pull
+    // the pages a user is most likely to open next into cache, so tapping them is
+    // near-instant. Keeps the list small so it doesn't hog bandwidth.
+    function warmCommonPages() {
+        [
+            'index.html', 'profile.html', 'products.html', 'seller-area.html',
+            'seller-settings.html', 'chats.html', 'cart-store.html', 'cart.html',
+            'buyer-profile.html', 'store-profile.html', 'drafts.html',
+            'offers-received.html', 'saved.html', 'follows.html'
+        ].forEach(preloadPage);
+    }
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(warmCommonPages, { timeout: 3000 });
+    } else {
+        setTimeout(warmCommonPages, 1200);
+    }
 })();

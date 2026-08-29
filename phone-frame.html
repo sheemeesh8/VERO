@@ -88,7 +88,9 @@
             to   { transform: translateY(0); }
         }
         .screen iframe.pf-enter {
-            animation: pfSlideInDown 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+            /* Near-instant page-to-page transition (0.01s) — the new page just
+               appears, no drawn-out slide. */
+            animation: pfSlideInDown 0.01s linear both;
         }
 
         /* Instant paper cover (no fade) shown only during the fetch gap, so the
@@ -180,7 +182,7 @@
         // ?page=<file>.html param lets a directly-opened inner page (e.g. a profile)
         // hand off to this frame and still load itself. Only a bare local filename is
         // accepted, so the param can't point the frame at an arbitrary URL.
-        (function () {
+        function pageTargetFromHash(cacheBust) {
             var raw = (location.hash.match(/[#&]page=([^&]+)/) || [])[1];
             raw = raw ? decodeURIComponent(raw) : null;
             // Split an optional query string (e.g. profile.html?from=seller) off the
@@ -191,11 +193,25 @@
             var safe = file && /^[a-zA-Z0-9_-]+\.html$/.test(file) && file !== 'phone-frame.html'
                        && /^(\?[\w=&%.-]*)?$/.test(query);
             var target = safe ? file + query : 'index.html';
-            // Cache-bust the first load so a fresh GitHub Pages build always wins over
-            // a stale browser copy — keeps the phone in step with the latest deploy.
-            target += (target.indexOf('?') >= 0 ? '&' : '?') + '_ts=' + Date.now();
-            frame.src = target;
-        })();
+            if (cacheBust) target += (target.indexOf('?') >= 0 ? '&' : '?') + '_ts=' + Date.now();
+            return target;
+        }
+        // Compare two targets ignoring the cache-bust param, so a hashchange to the
+        // page already showing doesn't pointlessly reload it.
+        function samePage(a, b) {
+            var strip = function (u) { return u.replace(/([?&])_ts=\d+/, '$1').replace(/[?&]$/, ''); };
+            return strip(a) === strip(b);
+        }
+        // Initial load (with cache-bust so a fresh deploy always wins).
+        frame.src = pageTargetFromHash(true);
+
+        // In-frame navigation via the #page= hash (veroGoAccount / veroOpenArea /
+        // veroSlideToCart set window.top.location.hash). Without this listener the hash
+        // would change but the iframe would never move — so honour it here.
+        window.addEventListener('hashchange', function () {
+            var next = pageTargetFromHash(false);
+            if (!samePage(frame.src, next)) frame.src = next;
+        });
         function hideFrameScrollbar() {
             try {
                 var d = frame.contentDocument;
@@ -302,6 +318,28 @@
                 caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
             }
         }
+
+        // ---- Proactive page prefetch (runs in the persistent frame, covers every
+        //      inner page) — pull the pages a user is most likely to open next into
+        //      the browser's HTTP cache, so tapping any of them loads near-instantly.
+        //      This is the real fix for slow navigation on the phone (no hover there).
+        (function warmPages() {
+            var warmed = {};
+            function warm(u) {
+                if (warmed[u]) return; warmed[u] = 1;
+                try { var l = document.createElement('link'); l.rel = 'prefetch'; l.href = u; document.head.appendChild(l); } catch (e) {}
+                fetch(u, { priority: 'low' }).catch(function () {});
+            }
+            var pages = [
+                'index.html', 'profile.html', 'products.html', 'seller-area.html',
+                'seller-settings.html', 'chats.html', 'cart-store.html', 'cart.html',
+                'buyer-profile.html', 'store-profile.html', 'drafts.html',
+                'offers-received.html', 'saved.html', 'follows.html', 'product.html'
+            ];
+            var run = function () { pages.forEach(warm); };
+            if ('requestIdleCallback' in window) requestIdleCallback(run, { timeout: 2500 });
+            else setTimeout(run, 1000);
+        })();
     </script>
 </body>
 </html>
