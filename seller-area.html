@@ -163,6 +163,43 @@
         .sw input:checked + .track::before { transform: translateX(16px); }
         /* A hidden field (toggle off) dims its input so the state reads at a glance. */
         .sss-field.is-hidden input, .sss-field.is-hidden textarea { opacity: 0.4; }
+
+        /* ---- Segmented control (single choice, e.g. what you sell) ---- */
+        .sss-seg { display: flex; gap: 8px; }
+        .sss-seg button {
+            flex: 1; padding: 11px 6px; border: 1px solid #ece8e1; background: #fff;
+            border-radius: 10px; font-family: inherit; font-size: 12px; letter-spacing: 0.4px;
+            color: #7c766c; cursor: pointer; transition: all 0.18s;
+        }
+        .sss-seg button.on { background: #1b1916; border-color: #1b1916; color: #fff; }
+
+        /* ---- Multi-select chips (e.g. payment methods) ---- */
+        .sss-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sss-chips button {
+            padding: 9px 16px; border: 1px solid #ece8e1; background: #fff;
+            border-radius: 999px; font-family: inherit; font-size: 12px; color: #7c766c;
+            cursor: pointer; transition: all 0.18s;
+        }
+        .sss-chips button.on { background: #9a7d52; border-color: #9a7d52; color: #fff; }
+
+        /* ---- Input with a fixed prefix (e.g. @handle) ---- */
+        .sss-prefix { display: flex; align-items: center; border-bottom: 1px solid #ece8e1; }
+        .sss-prefix span { color: #a29c90; font-size: 15px; padding-right: 2px; }
+        .sss-prefix input { border: none !important; }
+
+        /* ---- Opening-hours editor ---- */
+        .hours-row {
+            display: grid; grid-template-columns: 42px 38px 1fr; align-items: center; gap: 10px;
+            padding: 9px 0; border-bottom: 1px solid #f4f1ec;
+        }
+        .hours-row .hr-day { font-size: 12px; font-weight: 600; color: #1b1916; }
+        .hours-row .hr-times { display: flex; align-items: center; gap: 8px; }
+        .hours-row .hr-times input {
+            width: 84px; border: 1px solid #ece8e1; border-radius: 8px; padding: 6px 8px;
+            font-family: inherit; font-size: 13px; color: #1b1916; background: #fff;
+        }
+        .hours-row.closed .hr-times { opacity: 0.35; pointer-events: none; }
+        .hours-row .hr-dash { color: #b8b2a6; font-size: 12px; }
     </style>
 </head>
 <body class="is-seller">
@@ -261,10 +298,17 @@
         var readP = function () { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
         var data = readP();
         var save = function () { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} };
+        // Store config holds the opening hours the hero reads for OPEN / CLOSED.
+        var SKEY = 'vero_store_config';
+        var readS = function () { try { return JSON.parse(localStorage.getItem(SKEY)) || {}; } catch (e) { return {}; } };
+        var store = readS();
+        var saveStore = function () { try { localStorage.setItem(SKEY, JSON.stringify(store)); } catch (e) {} };
+
         data.socials = data.socials || {};
+        data.payments = data.payments || [];
         // Visibility flags for the storefront. Default ON when never set.
         data.show = data.show || {};
-        ['bio', 'location', 'instagram', 'tiktok', 'facebook'].forEach(function (k) {
+        ['bio', 'location', 'instagram', 'tiktok', 'facebook', 'website'].forEach(function (k) {
             if (typeof data.show[k] !== 'boolean') data.show[k] = true;
         });
 
@@ -275,7 +319,9 @@
             opts = opts || {};
             var input = opts.textarea
                 ? '<textarea ' + attr + '="' + key + '" placeholder="' + (opts.ph || '') + '"></textarea>'
-                : '<input ' + attr + '="' + key + '" type="' + (opts.type || 'text') + '" placeholder="' + (opts.ph || '') + '">';
+                : (opts.prefix
+                    ? '<div class="sss-prefix"><span>' + opts.prefix + '</span><input ' + attr + '="' + key + '" type="' + (opts.type || 'text') + '" placeholder="' + (opts.ph || '') + '"></div>'
+                    : '<input ' + attr + '="' + key + '" type="' + (opts.type || 'text') + '" placeholder="' + (opts.ph || '') + '">');
             var lab = '<label>' + label + '</label>';
             if (opts.toggle) {
                 lab = '<div class="sss-labrow">' + lab +
@@ -285,21 +331,74 @@
             }
             return '<div class="sss-field">' + lab + input + '</div>';
         }
+        // Single-choice segmented control.
+        function segment(label, key, options) {
+            return '<div class="sss-field"><label>' + label + '</label><div class="sss-seg" data-seg="' + key + '">' +
+                options.map(function (o) { return '<button type="button" data-val="' + o.v + '">' + o.t + '</button>'; }).join('') +
+                '</div></div>';
+        }
+        // Multi-select chips.
+        function chips(label, key, options) {
+            return '<div class="sss-field"><label>' + label + '</label><div class="sss-chips" data-chip="' + key + '">' +
+                options.map(function (o) { return '<button type="button" data-val="' + o.v + '">' + o.t + '</button>'; }).join('') +
+                '</div></div>';
+        }
+        // Opening-hours editor (Sun–Sat) → vero_store_config.hours.
+        function hoursEditor() {
+            var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            var rows = days.map(function (d, i) {
+                return '<div class="hours-row" data-hday="' + i + '">' +
+                    '<span class="hr-day">' + d + '</span>' +
+                    '<span class="sw"><input type="checkbox" data-hopen="' + i + '"><span class="track"></span></span>' +
+                    '<span class="hr-times"><input type="time" data-htime="open" data-hd="' + i + '">' +
+                    '<span class="hr-dash">–</span><input type="time" data-htime="close" data-hd="' + i + '"></span>' +
+                    '</div>';
+            }).join('');
+            return '<div class="sss-field"><label>Opening hours</label>' + rows + '</div>';
+        }
 
         host.innerHTML =
-            // ---------- Group 1: Business details (public) ----------
+            // ---------- Group 1: Business identity (public) ----------
             '<div class="sss-group">' +
               '<h2 class="sss-title">Business details</h2>' +
               '<p class="sss-cap">Shown to buyers on your storefront</p>' +
               field('Shop name', 'data-k', 'name', { ph: 'Your shop name' }) +
+              field('Username', 'data-k', 'handle', { prefix: '@', ph: 'yourshop' }) +
               field('About', 'data-k', 'bio', { textarea: true, ph: 'Tell buyers about your shop', toggle: 'bio' }) +
+              segment('What you sell', 'category', [{ v: 'fashion', t: 'Fashion' }, { v: 'art', t: 'Art' }, { v: 'both', t: 'Both' }]) +
+              field('Style tags', 'data-k', 'tags', { ph: 'vintage, streetwear, designer' }) +
+            '</div>' +
+            // ---------- Group 2: Contact & location ----------
+            '<div class="sss-group">' +
+              '<h2 class="sss-title">Contact &amp; location</h2>' +
+              '<p class="sss-cap">How buyers reach you and meet up</p>' +
               field('Email', 'data-k', 'email', { type: 'email', ph: 'you@example.com' }) +
+              field('Phone / WhatsApp', 'data-k', 'phone', { type: 'tel', ph: '05x-xxxxxxx' }) +
               field('Location', 'data-k', 'location', { ph: 'City, Country', toggle: 'location' }) +
+              field('Meetup spots', 'data-k', 'meetups', { ph: 'Where you meet buyers (e.g. Tel Aviv center)' }) +
+            '</div>' +
+            // ---------- Group 3: Social links ----------
+            '<div class="sss-group">' +
+              '<h2 class="sss-title">Social links</h2>' +
+              '<p class="sss-cap">Toggle each to show it on your storefront</p>' +
               field('Instagram', 'data-s', 'instagram', { type: 'url', ph: 'https://instagram.com/…', toggle: 'instagram' }) +
               field('TikTok', 'data-s', 'tiktok', { type: 'url', ph: 'https://tiktok.com/@…', toggle: 'tiktok' }) +
               field('Facebook', 'data-s', 'facebook', { type: 'url', ph: 'https://facebook.com/…', toggle: 'facebook' }) +
+              field('Website', 'data-s', 'website', { type: 'url', ph: 'https://…', toggle: 'website' }) +
             '</div>' +
-            // ---------- Group 2: Login details (private) ----------
+            // ---------- Group 4: Shop preferences ----------
+            '<div class="sss-group">' +
+              '<h2 class="sss-title">Shop preferences</h2>' +
+              '<p class="sss-cap">How your shop runs</p>' +
+              chips('Payment accepted', 'payments', [{ v: 'cash', t: 'Cash' }, { v: 'bit', t: 'Bit' }, { v: 'paybox', t: 'PayBox' }, { v: 'card', t: 'Card' }]) +
+              segment('Delivery', 'delivery', [{ v: 'meetup', t: 'Meetup only' }, { v: 'ship', t: 'Ships' }, { v: 'both', t: 'Both' }]) +
+              hoursEditor() +
+              field('Shop policies', 'data-k', 'policies', { textarea: true, ph: 'Returns, item condition, anything buyers should know' }) +
+              '<div class="sss-field"><div class="sss-labrow"><label>Vacation mode</label>' +
+                '<span class="sw"><input type="checkbox" data-flag="vacation"><span class="track"></span></span></div>' +
+                '<p class="sss-cap" style="margin:6px 0 0">Pauses your shop — buyers see “On a break”.</p></div>' +
+            '</div>' +
+            // ---------- Group 5: Login details (private) ----------
             '<div class="sss-group">' +
               '<h2 class="sss-title">Login details</h2>' +
               '<p class="sss-cap">Private — used to sign in to your account</p>' +
@@ -317,6 +416,7 @@
             noteTimer = setTimeout(function () { note.textContent = 'Changes save automatically.'; }, 1400);
         }
         var heroName = document.getElementById('saName');
+        var heroStatus = document.getElementById('saStatus'), heroStatusLbl = document.getElementById('saStatusLbl');
 
         // ---- Business: top-level fields (vero_seller_profile) ----
         host.querySelectorAll('input[data-k], textarea[data-k]').forEach(function (el) {
@@ -345,6 +445,81 @@
                 data.show[k] = el.checked; save(); flagSaved(); sync();
             });
         });
+        // ---- Segmented single-choice controls (category, delivery) ----
+        host.querySelectorAll('.sss-seg').forEach(function (seg) {
+            var key = seg.getAttribute('data-seg');
+            var paint = function () {
+                seg.querySelectorAll('button').forEach(function (b) {
+                    b.classList.toggle('on', b.getAttribute('data-val') === data[key]);
+                });
+            };
+            paint();
+            seg.querySelectorAll('button').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    data[key] = b.getAttribute('data-val'); save(); flagSaved(); paint();
+                });
+            });
+        });
+        // ---- Multi-select chips (payments) ----
+        host.querySelectorAll('.sss-chips').forEach(function (grp) {
+            var key = grp.getAttribute('data-chip');
+            var arr = data[key] = data[key] || [];
+            var paint = function () {
+                grp.querySelectorAll('button').forEach(function (b) {
+                    b.classList.toggle('on', arr.indexOf(b.getAttribute('data-val')) !== -1);
+                });
+            };
+            paint();
+            grp.querySelectorAll('button').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    var v = b.getAttribute('data-val'), i = arr.indexOf(v);
+                    if (i === -1) arr.push(v); else arr.splice(i, 1);
+                    save(); flagSaved(); paint();
+                });
+            });
+        });
+        // ---- Vacation mode flag (also reflected live in the hero status) ----
+        (function vacation() {
+            var el = host.querySelector('input[data-flag="vacation"]');
+            if (!el) return;
+            el.checked = !!data.vacation;
+            var reflect = function () {
+                if (!heroStatus) return;
+                if (data.vacation) { heroStatus.classList.add('closed'); if (heroStatusLbl) heroStatusLbl.textContent = 'On a break'; }
+            };
+            reflect();
+            el.addEventListener('change', function () {
+                data.vacation = el.checked; save(); flagSaved();
+                if (heroStatus && heroStatusLbl) {
+                    if (el.checked) { heroStatus.classList.add('closed'); heroStatusLbl.textContent = 'On a break'; }
+                    else { heroStatusLbl.textContent = 'Open'; heroStatus.classList.remove('closed'); }
+                }
+            });
+        })();
+        // ---- Opening-hours editor → vero_store_config.hours ----
+        (function hours() {
+            store.hours = store.hours || {};
+            host.querySelectorAll('.hours-row').forEach(function (row) {
+                var d = row.getAttribute('data-hday');
+                var toggle = row.querySelector('input[data-hopen]');
+                var openI = row.querySelector('input[data-htime="open"]');
+                var closeI = row.querySelector('input[data-htime="close"]');
+                var h = store.hours[d];
+                var isOpen = h !== null && h !== undefined;
+                toggle.checked = isOpen;
+                openI.value = (h && h.open) || '09:00';
+                closeI.value = (h && h.close) || '18:00';
+                row.classList.toggle('closed', !isOpen);
+                var commit = function () {
+                    if (!toggle.checked) { store.hours[d] = null; }
+                    else { store.hours[d] = { open: openI.value || '09:00', close: closeI.value || '18:00' }; }
+                    saveStore(); flagSaved();
+                };
+                toggle.addEventListener('change', function () { row.classList.toggle('closed', !toggle.checked); commit(); });
+                openI.addEventListener('input', commit);
+                closeI.addEventListener('input', commit);
+            });
+        })();
 
         // ---- Login details (vero_users via VeroAuth) ----
         (function loginGroup() {
