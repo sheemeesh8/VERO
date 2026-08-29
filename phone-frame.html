@@ -281,9 +281,29 @@
             playSlideIn();        // slide the new page down from the top
             hideCover();          // drop the paper cover so the slide is visible over paper
             armPageHide();        // arm the cover for the next navigation
+            rememberCurrentPage();// keep the URL hash on the page shown, so a refresh stays here
         });
         hideFrameScrollbar();
         armPageHide();
+
+        // ---- Refresh stays on the current page ----
+        // In-frame navigations (location.href inside the iframe) don't change the top
+        // URL, so a browser refresh would reload the ORIGINAL #page. On every inner
+        // load, mirror the iframe's current page into the top hash (replaceState, so it
+        // fires no hashchange and adds no history entry). On refresh, phone-frame then
+        // reopens that same page.
+        function rememberCurrentPage() {
+            try {
+                var loc = frame.contentWindow.location;
+                var file = (loc.pathname.split('/').pop() || '');
+                if (!/\.html$/.test(file) || file === 'phone-frame.html') return;
+                // Keep meaningful params (e.g. ?from=seller) but drop the _ts cache-bust.
+                var q = (loc.search || '').replace(/([?&])_ts=\d+/g, '$1').replace(/[?&]+$/, '');
+                if (q === '?') q = '';
+                var wanted = '#page=' + file + q;
+                if (location.hash !== wanted) history.replaceState(null, '', wanted);
+            } catch (e) { /* cross-origin — ignore */ }
+        }
 
         // ---- Clean up any previously-registered Service Worker + its caches ----
         // A caching SW fought the cache-busting that keeps the phone on the freshest

@@ -2169,53 +2169,9 @@
         body:not(.is-seller) #storeBgPreview .ps-preview-btn:active { opacity: 0.55; }
 
         /* =====================================================================
-           SELLER SETTINGS — REDESIGN
-           Layout: a full-screen hero IMAGE on top; the settings content flows in a
-           clean WHITE area directly BELOW it; and a premium, always-visible bottom
-           NAVIGATION bar switches between sections. VERO minimalist LV/RL palette
-           (white, sand #F4F2EE, charcoal #1b1916, gold #9a7d52).
+           SELLER SETTINGS — renders the SELLER "My Shop" layout (seller mode).
+           Same design as profile.html?from=seller; only difference is no waves.
            ===================================================================== */
-        :root { --ss-ink:#1b1916; --ss-sand:#F4F2EE; --ss-gold:#9a7d52; --ss-line:#ece8e1; --ss-muted:#a29c90; }
-
-        /* ---- Hero: full-screen image, gentle bottom scrim, name reads over it ---- */
-        .profile-hero { height: 100vh; min-height: 100vh; border-bottom: none; }
-        .profile-hero::after { background: linear-gradient(to bottom, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%); }
-
-        /* ---- Content flows BELOW the hero (not a full-screen overlay) ---- */
-        html:has(body:not(.is-seller)) { scroll-snap-type: y proximity; scroll-behavior: smooth; }
-        body:not(.is-seller) .build-panel {
-            min-height: 100vh; background: #fff; scroll-snap-align: start;
-        }
-        body:not(.is-seller) .build-panel.pa-current {
-            position: static; inset: auto; z-index: auto; background: #fff;
-            overflow-y: visible; padding: 44px 22px 140px;   /* clear the bottom nav */
-        }
-        /* Section title band — quiet, centred, hairline under it. */
-        body:not(.is-seller) .build-panel .ps-title:not(.ps-title--sub) {
-            color: var(--ss-ink); border-bottom-color: var(--ss-line);
-        }
-
-        /* ---- Premium bottom NAVIGATION bar (always visible) ---- */
-        .area-tabs {
-            bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
-            background: rgba(27,25,22,0.97); backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.10);
-            box-shadow: 0 10px 34px rgba(0,0,0,0.30);
-            padding: 6px;
-            /* Force it permanently visible — it is the primary navigation. */
-            transform: translateX(-50%) !important; opacity: 1 !important; pointer-events: auto !important;
-        }
-        .area-tab {
-            color: rgba(255,255,255,0.62); font-size: 10px; letter-spacing: 1.4px;
-            padding: 11px 15px; min-height: 40px;
-        }
-        .area-tab:hover { color: #fff; }
-        .area-tab.is-active { color: var(--ss-ink); }   /* dark text over the gold pill */
-        .area-ind { background: var(--ss-gold); }        /* gold sliding active pill */
-        .area-tab .area-dot { box-shadow: 0 0 0 2px rgba(27,25,22,0.97); }
-
-        /* "My Sizes" tab was removed — hide its section so it never scrolls into view. */
-        #slideSizes { display:none !important; }
         /* No decorative hero waves, any mode (kills a cached div too). */
         .pf-waves, .profile-hero.is-live .pf-waves { display: none !important; }
     </style>
@@ -2840,14 +2796,11 @@
         // Normally from ?from=seller. When the page is opened through phone-frame.html
         // the mode may ride in the frame's #page=…?from=seller hash (some static servers
         // strip the inner query), so read that same-origin hash as a fallback.
-        // seller-settings.html always renders the tabbed personal-area LAYOUT (the
-        // buyer settings structure), themed black — so the seller mode is forced off
-        // here regardless of any ?from=seller, and the AREAS below use the buyer branch.
-        let isSeller = false;
-        // The personal profile and the seller (business) profile are split into two
-        // separate stores so editing one never bleeds into the other. Personal →
-        // vero_profile; seller "My Shop" → vero_seller_profile.
-        const PROFILE_KEY = 'vero_seller_settings';   // separate seller store (only the password is shared with the buyer account)
+        // seller-settings.html renders the SELLER "My Shop" layout (same design as the
+        // seller hero the user wants). Seller mode is forced ON regardless of the URL.
+        let isSeller = true;
+        // Shares the seller "My Shop" store so this page and My Shop stay in sync.
+        const PROFILE_KEY = 'vero_seller_profile';
         if (isSeller) {
             // Seller "My Shop" only changes the labels + navigation targets — the
             // page structure below is built identically for both modes.
@@ -3980,10 +3933,9 @@
     (function areaTabs() {
         // Works in both modes. In seller mode the tabs mirror the seller hub
         // (seller-area.html): My Shop / My Products / Buyer Chats / Offers Received.
-        // Forced to the buyer personal-area layout (the tabbed settings structure),
-        // themed black — this is the seller SETTINGS page, not the seller hub.
-        let seller = false;
-        const q = '?embed=1';
+        // Renders the SELLER "My Shop" layout — the seller hero + settings the user wants.
+        let seller = true;
+        const q = '?from=seller&embed=1';
 
         // The five rectangles, in order. The first is this page itself (no iframe);
         // "My Assistant" has no page yet, so it shows a reserved placeholder.
