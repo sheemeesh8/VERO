@@ -31,14 +31,16 @@
         .pu-close { width: 34px; height: 34px; border: none; background: none; cursor: pointer; color: #1b1916;
             display: flex; align-items: center; justify-content: center; }
         .pu-close svg { width: 22px; height: 22px; }
-        .pu-step-lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a29c90; font-weight: 600; }
+        .pu-step-lbl { display: none; }
         .pu-bar { height: 3px; border-radius: 999px; background: #f0ece4; overflow: hidden; }
         .pu-bar-fill { height: 100%; width: 0; background: #1b1916; border-radius: 999px; transition: width 0.4s cubic-bezier(0.22,1,0.36,1); }
 
-        /* ---- Slider ---- */
-        .pu-viewport { flex: 1 1 auto; overflow: hidden; position: relative; }
-        .pu-track { display: flex; height: 100%; transition: transform 0.42s cubic-bezier(0.22,1,0.36,1); }
-        .pu-slide { min-width: 100%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 22px 28px 48px; }
+        /* ---- Slides — cross-fade between steps ---- */
+        .pu-viewport { flex: 1 1 auto; overflow: hidden; position: relative; background: #fff; }
+        .pu-track { position: relative; height: 100%; }
+        .pu-slide { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: #fff;
+            transition: opacity 0.19s ease; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 22px 28px 48px; }
+        .pu-slide.active { opacity: 1; pointer-events: auto; }
         .pu-slide::-webkit-scrollbar { display: none; }
         .pu-h { font-family: 'Aharoni CLM','Segoe UI',sans-serif; font-size: 30px; font-weight: 400;
             letter-spacing: 1px; text-transform: uppercase; color: #1b1916; margin-bottom: 10px; line-height: 1.05; }
@@ -102,6 +104,14 @@
             background: rgba(242,240,239,0.92); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #8a8478; }
         .pu-slot.working .pu-slot-status { display: flex; }
         .pu-hint { margin-top: 14px; font-size: 11px; color: #b0a99c; line-height: 1.6; font-weight: 300; }
+
+        /* ---- Big centred price ---- */
+        .pu-price-big { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin: 26px 0 48px; }
+        .pu-price-big .cur { font-family: 'Aharoni CLM','Segoe UI',sans-serif; font-size: 30px; font-weight: 400; color: #b0a99c; }
+        .pu-price-big input { font-family: 'Aharoni CLM','Segoe UI',sans-serif; font-size: 58px; font-weight: 400;
+            text-align: center; border: none; background: transparent; color: #1b1916; width: 180px; padding: 0; }
+        .pu-price-big input:focus { outline: none; }
+        .pu-price-big input::placeholder { color: #e4ddd1; }
 
         /* ---- Deal Score gauge ---- */
         .pu-deal { margin-top: 30px; padding: 22px; border: 1px solid #f0ece4; border-radius: 16px; background: #fff; }
@@ -262,7 +272,7 @@
                 <section class="pu-slide">
                     <h2 class="pu-h">Price</h2>
                     <p class="pu-sub">Set your price — we'll show how it compares to similar pieces.</p>
-                    <div class="pu-field"><label>Price (₪)</label><input data-k="price" id="puPrice" type="number" inputmode="numeric" placeholder="0"></div>
+                    <div class="pu-price-big"><span class="cur" style="font-family:Arial,'Segoe UI',sans-serif!important">₪</span><input data-k="price" id="puPrice" type="number" inputmode="numeric" placeholder="0"></div>
                     <div class="pu-deal" id="puDeal">
                         <div class="pu-deal-top">
                             <span class="pu-deal-verdict" id="puDealVerdict">Deal score</span>
@@ -323,16 +333,30 @@
         var backBtn = document.getElementById('puBack');
         var nextBtn = document.getElementById('puNext');
 
-        function render() {
-            track.style.transform = 'translateX(' + (-step * 100) + '%)';
+        // Show the current step (no cross-fade ghosting: the old slide fades out
+        // first, then the new one fades in — a clean fade through white).
+        function show() {
+            slides.forEach(function (s, i) { s.classList.toggle('active', i === step); });
             barFill.style.width = ((step + 1) / total * 100) + '%';
             stepLbl.textContent = 'Step ' + (step + 1) + ' / ' + total;
             backBtn.disabled = step === 0;
             nextBtn.style.display = (step === total - 1) ? 'none' : '';   // last slide has its own buttons
             if (step === total - 1) renderCard();
         }
-        backBtn.addEventListener('click', function () { if (step > 0) { step--; render(); } });
-        nextBtn.addEventListener('click', function () { if (step < total - 1) { step++; render(); } });
+        var animating = false;
+        function goTo(target) {
+            if (animating || target < 0 || target > total - 1 || target === step) return;
+            animating = true;
+            slides[step].classList.remove('active');   // fade the current out
+            setTimeout(function () {
+                step = target;
+                show();                                  // then fade the new in
+                animating = false;
+            }, 190);
+        }
+        function render() { show(); }
+        backBtn.addEventListener('click', function () { goTo(step - 1); });
+        nextBtn.addEventListener('click', function () { goTo(step + 1); });
         document.getElementById('puClose').addEventListener('click', function () { location.href = 'seller-area.html'; });
 
         // ---- Text / number fields ----
