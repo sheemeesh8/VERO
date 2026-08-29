@@ -110,27 +110,6 @@
         @media (prefers-reduced-motion: reduce) {
             .screen iframe.pf-enter { animation: none; }
         }
-        /* Welcome splash — shown on every entry over the top of everything, then
-           fades out to reveal the home feed. */
-        .pf-splash {
-            position: absolute; inset: 0; z-index: 40;
-            display: flex; align-items: center; justify-content: center;
-            background: #0c0c0c;
-            transition: opacity 0.6s ease;
-        }
-        .pf-splash-text {
-            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            color: #fff; font-size: 26px; letter-spacing: 6px; text-transform: uppercase;
-            text-align: center; font-weight: 500;
-            animation: pfSplashText 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        @keyframes pfSplashText {
-            from { opacity: 0; transform: translateY(10px); letter-spacing: 12px; }
-            to   { opacity: 1; transform: translateY(0); letter-spacing: 6px; }
-        }
-        .pf-splash.gone { opacity: 0; pointer-events: none; }
-        .pf-splash.hidden { display: none; }
-
         /* No scrollbar on the frame itself. */
         body::-webkit-scrollbar, .screen::-webkit-scrollbar { width: 0; height: 0; display: none; }
         /* On a real phone (narrow screen) drop the device chrome — the site fills the
@@ -150,8 +129,6 @@
             <iframe title="VERO" id="siteFrame"></iframe>
             <!-- Paper cover shown only during the page-to-page fetch gap. -->
             <div class="pf-cover" id="pfCover"></div>
-            <!-- Welcome splash shown on every entry, then fades to reveal the home feed. -->
-            <div class="pf-splash" id="pfSplash"><span class="pf-splash-text">Welcome to VERO</span></div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
         </div>
@@ -280,28 +257,11 @@
             } catch (e) { /* cross-origin — ignore */ }
         }
 
-        // ---- Welcome splash: shown once on entry, then fades to reveal the feed ----
-        var splash = document.getElementById('pfSplash');
-        var splashStart = Date.now();
-        var splashDone = false;
-        function dismissSplash() {
-            if (splashDone || !splash) return;
-            splashDone = true;
-            var MIN_MS = 1500;   // keep the welcome on screen at least this long
-            var wait = Math.max(0, MIN_MS - (Date.now() - splashStart));
-            setTimeout(function () {
-                splash.classList.add('gone');
-                setTimeout(function () { splash.classList.add('hidden'); }, 650);
-            }, wait);
-        }
-        setTimeout(dismissSplash, 4000);   // failsafe if the first load never fires
-
         frame.addEventListener('load', function () {
             hideFrameScrollbar();
             playSlideIn();        // slide the new page down from the top
             hideCover();          // drop the paper cover so the slide is visible over paper
             armPageHide();        // arm the cover for the next navigation
-            dismissSplash();      // first load done → retire the welcome splash (idempotent)
         });
         hideFrameScrollbar();
         armPageHide();
