@@ -4252,6 +4252,98 @@
         window.addEventListener('resize', () => { if (statsVisible()) moveInd(false); });
     })();
     </script>
+    <!-- ===== Seller shop settings — a clean, self-contained form shown directly
+         BELOW the hero. The page's older grid/pf-slide settings machinery is broken
+         (no .grid in the markup), so this replaces it. Reads/writes vero_seller_profile
+         (same store as the hero and My Shop). ===== -->
+    <style>
+        #sellerShopSettings {
+            position: relative; z-index: 3; background: #fff;
+            padding: 40px 22px calc(120px + env(safe-area-inset-bottom, 0px));
+            max-width: 620px; margin: 0 auto;
+        }
+        #sellerShopSettings .sss-title {
+            font-family: 'Aharoni CLM','Segoe UI',sans-serif;
+            font-size: 24px; font-weight: 700; color: #1b1916; letter-spacing: 0.5px;
+            padding-bottom: 12px; margin-bottom: 26px; border-bottom: 1px solid #ece8e1;
+        }
+        #sellerShopSettings .sss-field { margin-bottom: 22px; }
+        #sellerShopSettings label {
+            display: block; font-size: 10px; letter-spacing: 2.4px; text-transform: uppercase;
+            color: #a29c90; font-weight: 700; margin-bottom: 9px;
+        }
+        #sellerShopSettings input, #sellerShopSettings textarea {
+            width: 100%; border: none; border-bottom: 1px solid #ece8e1;
+            background: transparent; font-family: inherit; font-size: 15px; color: #1b1916;
+            padding: 9px 2px; transition: border-color 0.2s;
+        }
+        #sellerShopSettings textarea { min-height: 84px; line-height: 1.55; resize: vertical; }
+        #sellerShopSettings input:focus, #sellerShopSettings textarea:focus {
+            outline: none; border-bottom-color: #9a7d52;
+        }
+        #sellerShopSettings .sss-row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+        #sellerShopSettings .sss-note { font-size: 11px; color: #a29c90; margin-top: 4px; min-height: 15px; }
+        @media (max-width: 420px) { #sellerShopSettings .sss-row { grid-template-columns: 1fr; } }
+    </style>
+    <script>
+    (function sellerShopSettings() {
+        if (!document.body.classList.contains('is-seller')) return;
+        var KEY = 'vero_seller_profile';
+        var read = function () { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
+        var data = read();
+        var save = function () { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} };
+
+        var sec = document.createElement('section');
+        sec.id = 'sellerShopSettings';
+        sec.innerHTML =
+            '<h2 class="sss-title">Shop Settings</h2>' +
+            '<div class="sss-field"><label>Shop name</label><input data-k="name" type="text" placeholder="Your shop name"></div>' +
+            '<div class="sss-field"><label>About</label><textarea data-k="bio" placeholder="Tell buyers about your shop"></textarea></div>' +
+            '<div class="sss-row">' +
+              '<div class="sss-field"><label>Email</label><input data-k="email" type="email" placeholder="you@example.com"></div>' +
+              '<div class="sss-field"><label>Phone</label><input data-k="phone" type="tel" placeholder="Phone number"></div>' +
+            '</div>' +
+            '<div class="sss-field"><label>Location</label><input data-k="location" type="text" placeholder="City, Country"></div>' +
+            '<div class="sss-row">' +
+              '<div class="sss-field"><label>Instagram</label><input data-s="instagram" type="url" placeholder="https://instagram.com/…"></div>' +
+              '<div class="sss-field"><label>TikTok</label><input data-s="tiktok" type="url" placeholder="https://tiktok.com/@…"></div>' +
+            '</div>' +
+            '<div class="sss-field"><label>Facebook</label><input data-s="facebook" type="url" placeholder="https://facebook.com/…"></div>' +
+            '<div class="sss-note" id="sssNote">Changes save automatically.</div>';
+
+        // Insert directly below the hero.
+        var hero = document.getElementById('storeBgPreview');
+        if (hero && hero.parentNode) hero.insertAdjacentElement('afterend', sec);
+        else document.body.appendChild(sec);
+
+        var note = sec.querySelector('#sssNote');
+        var noteTimer = null;
+        function flagSaved() {
+            if (!note) return;
+            note.textContent = 'Saved ✓';
+            clearTimeout(noteTimer);
+            noteTimer = setTimeout(function () { note.textContent = 'Changes save automatically.'; }, 1400);
+        }
+
+        // Top-level fields.
+        sec.querySelectorAll('input[data-k], textarea[data-k]').forEach(function (el) {
+            var k = el.getAttribute('data-k');
+            if (data[k] != null) el.value = data[k];
+            el.addEventListener('input', function () { data[k] = el.value; save(); flagSaved(); });
+        });
+        // Social links (nested under data.socials, matching the storefront reader).
+        data.socials = data.socials || {};
+        sec.querySelectorAll('input[data-s]').forEach(function (el) {
+            var k = el.getAttribute('data-s');
+            if (data.socials[k]) el.value = data.socials[k];
+            el.addEventListener('input', function () {
+                data.socials = data.socials || {};
+                data.socials[k] = el.value.trim();
+                save(); flagSaved();
+            });
+        });
+    })();
+    </script>
     <script src="vero-editor.js"></script>
 </body>
 </html>
