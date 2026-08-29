@@ -928,17 +928,25 @@
             let prof = {}, store = {};
             try { prof  = JSON.parse(localStorage.getItem('vero_profile'))      || {}; } catch (e) {}
             try { store = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
-            if (prof.name && prof.name.trim()) BUYER.name = prof.name.trim();
+            // Name: the settings page stores the first name (prof.name) and the
+            // surname (prof.lastName) separately — compose the full name so the
+            // surname the buyer typed actually shows here.
+            const first = (prof.name || '').trim();
+            const last  = (prof.lastName || '').trim();
+            const full  = [first, last].filter(Boolean).join(' ');
+            if (full) BUYER.name = full;
             if (prof.bio  && prof.bio.trim())  BUYER.tag  = prof.bio.trim();
             if (prof.avatarImg) BUYER.avatar = prof.avatarImg;
             if (store.hero)     BUYER.hero   = store.hero;
-            if (prof.socials) {
-                const s = Object.assign({}, BUYER.socials);
-                ['instagram', 'tiktok', 'twitter', 'facebook', 'website'].forEach(k => {
-                    if (prof.socials[k]) s[k] = prof.socials[k];
-                });
-                BUYER.socials = s;
-            }
+            // Socials: the buyer settings slide (.ps-social inputs) stores each link
+            // as a FLAT field (prof.instagram / prof.tiktok / prof.facebook), while an
+            // older path nested them under prof.socials. Read both so links set in
+            // My Profile always appear here.
+            const s = Object.assign({}, BUYER.socials, prof.socials || {});
+            ['instagram', 'tiktok', 'twitter', 'facebook', 'website'].forEach(k => {
+                if (prof[k]) s[k] = prof[k];
+            });
+            BUYER.socials = s;
         })();
 
         // ===================== RENDER =====================
