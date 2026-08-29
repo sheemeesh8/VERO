@@ -111,14 +111,22 @@
         /* ======================= SECTION 2 — SETTINGS ======================= */
         .sa-settings {
             background: #fff;
-            display: flex; flex-direction: column; justify-content: center;
+            display: flex; flex-direction: column; justify-content: flex-start;
             padding: 54px 24px calc(60px + env(safe-area-inset-bottom, 0px));
         }
         .sss-inner { width: 100%; max-width: 560px; margin: 0 auto; }
+
+        /* ---- Category group ---- */
+        .sss-group { margin-bottom: 44px; }
+        .sss-group:last-child { margin-bottom: 0; }
         .sss-title {
             font-family: 'Aharoni CLM','Segoe UI',sans-serif;
             font-size: 24px; font-weight: 700; color: #1b1916; letter-spacing: 0.5px;
-            padding-bottom: 12px; margin-bottom: 26px; border-bottom: 1px solid #ece8e1;
+            padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid #ece8e1;
+        }
+        .sss-cap {
+            font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #b8b2a6;
+            font-weight: 600; margin-bottom: 24px;
         }
         .sss-field { margin-bottom: 22px; }
         .sss-inner label {
@@ -133,8 +141,28 @@
         .sss-inner textarea { min-height: 84px; line-height: 1.55; resize: vertical; }
         .sss-inner input:focus, .sss-inner textarea:focus { outline: none; border-bottom-color: #9a7d52; }
         .sss-row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
-        .sss-note { font-size: 11px; color: #a29c90; margin-top: 4px; min-height: 15px; }
+        .sss-note { font-size: 11px; color: #a29c90; margin-top: 10px; min-height: 15px; }
         @media (max-width: 420px) { .sss-row { grid-template-columns: 1fr; } }
+
+        /* ---- Label row with an inline visibility toggle ---- */
+        .sss-labrow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+        .sss-labrow label { margin-bottom: 0; }
+        /* iOS-style switch (controls whether the field shows on the storefront). */
+        .sw { position: relative; display: inline-block; width: 38px; height: 22px; flex: none; }
+        .sw input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .sw .track {
+            position: absolute; inset: 0; cursor: pointer; border-radius: 999px;
+            background: #e4e0d8; transition: background 0.22s;
+        }
+        .sw .track::before {
+            content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+            background: #fff; border-radius: 50%; transition: transform 0.22s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.22);
+        }
+        .sw input:checked + .track { background: #9a7d52; }
+        .sw input:checked + .track::before { transform: translateX(16px); }
+        /* A hidden field (toggle off) dims its input so the state reads at a glance. */
+        .sss-field.is-hidden input, .sss-field.is-hidden textarea { opacity: 0.4; }
     </style>
 </head>
 <body class="is-seller">
@@ -219,30 +247,66 @@
     })();
     </script>
 
-    <!-- ===== Shop settings — self-contained, reads/writes vero_seller_profile
-         (same store the hero and My Shop use). ===== -->
+    <!-- Auth table (vero_users / vero_session) — needed for the login-details group. -->
+    <script src="auth.js"></script>
+
+    <!-- ===== Shop settings — two stacked categories:
+         1) Business details (public: shown to buyers) → vero_seller_profile
+         2) Login details (private account) → vero_users via VeroAuth
+         Bio, Location and each social carry a visibility toggle that decides
+         whether they appear on the public storefront. ===== -->
     <script>
     (function shopSettings() {
         var KEY = 'vero_seller_profile';
-        var read = function () { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
-        var data = read();
+        var readP = function () { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
+        var data = readP();
         var save = function () { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} };
+        data.socials = data.socials || {};
+        // Visibility flags for the storefront. Default ON when never set.
+        data.show = data.show || {};
+        ['bio', 'location', 'instagram', 'tiktok', 'facebook'].forEach(function (k) {
+            if (typeof data.show[k] !== 'boolean') data.show[k] = true;
+        });
 
         var host = document.getElementById('sssInner');
+
+        // A field with an optional visibility toggle in its label row.
+        function field(label, attr, key, opts) {
+            opts = opts || {};
+            var input = opts.textarea
+                ? '<textarea ' + attr + '="' + key + '" placeholder="' + (opts.ph || '') + '"></textarea>'
+                : '<input ' + attr + '="' + key + '" type="' + (opts.type || 'text') + '" placeholder="' + (opts.ph || '') + '">';
+            var lab = '<label>' + label + '</label>';
+            if (opts.toggle) {
+                lab = '<div class="sss-labrow">' + lab +
+                      '<span class="sw"><input type="checkbox" data-show="' + opts.toggle + '"><span class="track"></span></span>' +
+                      '</div>';
+                return '<div class="sss-field" data-field="' + opts.toggle + '">' + lab + input + '</div>';
+            }
+            return '<div class="sss-field">' + lab + input + '</div>';
+        }
+
         host.innerHTML =
-            '<h2 class="sss-title">Shop Settings</h2>' +
-            '<div class="sss-field"><label>Shop name</label><input data-k="name" type="text" placeholder="Your shop name"></div>' +
-            '<div class="sss-field"><label>About</label><textarea data-k="bio" placeholder="Tell buyers about your shop"></textarea></div>' +
-            '<div class="sss-row">' +
-              '<div class="sss-field"><label>Email</label><input data-k="email" type="email" placeholder="you@example.com"></div>' +
-              '<div class="sss-field"><label>Phone</label><input data-k="phone" type="tel" placeholder="Phone number"></div>' +
+            // ---------- Group 1: Business details (public) ----------
+            '<div class="sss-group">' +
+              '<h2 class="sss-title">Business details</h2>' +
+              '<p class="sss-cap">Shown to buyers on your storefront</p>' +
+              field('Shop name', 'data-k', 'name', { ph: 'Your shop name' }) +
+              field('About', 'data-k', 'bio', { textarea: true, ph: 'Tell buyers about your shop', toggle: 'bio' }) +
+              field('Email', 'data-k', 'email', { type: 'email', ph: 'you@example.com' }) +
+              field('Location', 'data-k', 'location', { ph: 'City, Country', toggle: 'location' }) +
+              field('Instagram', 'data-s', 'instagram', { type: 'url', ph: 'https://instagram.com/…', toggle: 'instagram' }) +
+              field('TikTok', 'data-s', 'tiktok', { type: 'url', ph: 'https://tiktok.com/@…', toggle: 'tiktok' }) +
+              field('Facebook', 'data-s', 'facebook', { type: 'url', ph: 'https://facebook.com/…', toggle: 'facebook' }) +
             '</div>' +
-            '<div class="sss-field"><label>Location</label><input data-k="location" type="text" placeholder="City, Country"></div>' +
-            '<div class="sss-row">' +
-              '<div class="sss-field"><label>Instagram</label><input data-s="instagram" type="url" placeholder="https://instagram.com/…"></div>' +
-              '<div class="sss-field"><label>TikTok</label><input data-s="tiktok" type="url" placeholder="https://tiktok.com/@…"></div>' +
+            // ---------- Group 2: Login details (private) ----------
+            '<div class="sss-group">' +
+              '<h2 class="sss-title">Login details</h2>' +
+              '<p class="sss-cap">Private — used to sign in to your account</p>' +
+              '<div class="sss-field"><label>Login email</label><input data-login="email" type="email" placeholder="you@example.com"></div>' +
+              '<div class="sss-field"><label>New password</label><input data-login="password" type="password" placeholder="Leave blank to keep current"></div>' +
+              '<div class="sss-note" id="loginNote"></div>' +
             '</div>' +
-            '<div class="sss-field"><label>Facebook</label><input data-s="facebook" type="url" placeholder="https://facebook.com/…"></div>' +
             '<div class="sss-note" id="sssNote">Changes save automatically.</div>';
 
         var note = host.querySelector('#sssNote'), noteTimer = null;
@@ -252,9 +316,9 @@
             clearTimeout(noteTimer);
             noteTimer = setTimeout(function () { note.textContent = 'Changes save automatically.'; }, 1400);
         }
-        // When the name changes here, keep the hero name in sync live.
         var heroName = document.getElementById('saName');
 
+        // ---- Business: top-level fields (vero_seller_profile) ----
         host.querySelectorAll('input[data-k], textarea[data-k]').forEach(function (el) {
             var k = el.getAttribute('data-k');
             if (data[k] != null) el.value = data[k];
@@ -263,16 +327,59 @@
                 if (k === 'name' && heroName) heroName.textContent = el.value || 'My Store';
             });
         });
-        data.socials = data.socials || {};
+        // ---- Business: social links (nested under data.socials) ----
         host.querySelectorAll('input[data-s]').forEach(function (el) {
             var k = el.getAttribute('data-s');
             if (data.socials[k]) el.value = data.socials[k];
             el.addEventListener('input', function () {
-                data.socials = data.socials || {};
-                data.socials[k] = el.value.trim();
-                save(); flagSaved();
+                data.socials[k] = el.value.trim(); save(); flagSaved();
             });
         });
+        // ---- Visibility toggles (data.show[*]) ----
+        host.querySelectorAll('input[data-show]').forEach(function (el) {
+            var k = el.getAttribute('data-show');
+            var fieldEl = host.querySelector('[data-field="' + k + '"]');
+            var sync = function () { if (fieldEl) fieldEl.classList.toggle('is-hidden', !el.checked); };
+            el.checked = data.show[k]; sync();
+            el.addEventListener('change', function () {
+                data.show[k] = el.checked; save(); flagSaved(); sync();
+            });
+        });
+
+        // ---- Login details (vero_users via VeroAuth) ----
+        (function loginGroup() {
+            var loginNote = host.querySelector('#loginNote');
+            var emailEl = host.querySelector('input[data-login="email"]');
+            var pwEl = host.querySelector('input[data-login="password"]');
+            var Auth = window.VeroAuth;
+            var user = (Auth && Auth.currentUser) ? Auth.currentUser() : null;
+            if (!user) {
+                emailEl.disabled = true; pwEl.disabled = true;
+                if (loginNote) loginNote.textContent = 'Sign in to manage your login details.';
+                return;
+            }
+            emailEl.value = user.email || '';
+
+            var writeUser = function (mutate) {
+                var users = [];
+                try { users = JSON.parse(localStorage.getItem('vero_users')) || []; } catch (e) { users = []; }
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].id === user.id) { mutate(users[i]); break; }
+                }
+                try { localStorage.setItem('vero_users', JSON.stringify(users)); } catch (e) {}
+            };
+
+            emailEl.addEventListener('input', function () {
+                var v = emailEl.value.trim().toLowerCase();
+                writeUser(function (u) { u.email = v; }); flagSaved();
+            });
+            pwEl.addEventListener('input', function () {
+                var v = pwEl.value;
+                if (!v) return;   // blank = keep current password
+                var seal = (Auth.SecureStore && Auth.SecureStore.seal) ? Auth.SecureStore.seal : null;
+                if (seal) { writeUser(function (u) { u.pwHash = seal(v); }); flagSaved(); }
+            });
+        })();
     })();
     </script>
 </body>
