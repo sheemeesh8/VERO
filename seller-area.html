@@ -132,6 +132,20 @@
             transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), width 0.4s cubic-bezier(0.22,1,0.36,1);
         }
 
+        /* ---- Area overlay: other tabs load their page in place (iframe) so the
+               floating nav pill never disappears when switching tabs. ---- */
+        .sa-overlay { position: fixed; inset: 0; z-index: 40; display: none; background: #fff; }
+        .sa-overlay.open { display: block; }
+        .sa-panel { display: none; width: 100%; height: 100%; }
+        .sa-panel.is-active { display: block; }
+        .sa-panel iframe { width: 100%; height: 100%; border: 0; display: block; }
+        .sa-empty {
+            width: 100%; height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 10px; text-align: center; color: #1b1916;
+        }
+        .sa-empty h2 { font-family: 'Aharoni CLM','Segoe UI',sans-serif; font-size: 26px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; }
+        .sa-empty p { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a29c90; }
+
         /* ======================= SECTION 2 — SETTINGS ======================= */
         .sa-settings {
             background: #fff;
@@ -286,14 +300,23 @@
 
     </div>
 
+    <!-- Area overlay — each non-Shop tab loads its page here (in place), so the
+         floating nav pill stays put instead of disappearing on navigation. -->
+    <div class="sa-overlay" id="saOverlay">
+        <div class="sa-panel" data-id="products"><iframe title="My Products" data-src="products.html?from=seller"></iframe></div>
+        <div class="sa-panel" data-id="chats"><iframe title="Buyers Chat" data-src="chats.html?from=seller"></iframe></div>
+        <div class="sa-panel" data-id="offers"><iframe title="Negotiation" data-src="offers-received.html?from=seller"></iframe></div>
+        <div class="sa-panel" data-id="assistant"><div class="sa-empty"><h2>My Assistant</h2><p>Coming soon</p></div></div>
+    </div>
+
     <!-- ============ Floating pill navigation (profile.html style) ============ -->
     <nav class="sa-nav" id="saNav">
         <span class="sa-ind" id="saInd"></span>
-        <a class="sa-tab is-active" href="#" id="tabShop">My Shop</a>
-        <a class="sa-tab" href="products.html?from=seller">My Products</a>
-        <a class="sa-tab" href="chats.html?from=seller">Buyers Chat</a>
-        <a class="sa-tab" href="offers-received.html?from=seller">Negotiation</a>
-        <a class="sa-tab disabled" href="#" id="navAssistant">My Assistant</a>
+        <button class="sa-tab is-active" type="button" data-id="shop">My Shop</button>
+        <button class="sa-tab" type="button" data-id="products">My Products</button>
+        <button class="sa-tab" type="button" data-id="chats">Buyers Chat</button>
+        <button class="sa-tab" type="button" data-id="offers">Negotiation</button>
+        <button class="sa-tab" type="button" data-id="assistant">My Assistant</button>
     </nav>
 
     <script>
@@ -321,32 +344,45 @@
         var tagEl = document.getElementById('saTag');
         if (tagEl) tagEl.textContent = profile.bio || store.tagline || 'The best for your closet';
 
-        /* ---- My Assistant tab: no page yet — keep it inert with a hint. ---- */
-        var navAsst = document.getElementById('navAssistant');
-        if (navAsst) navAsst.addEventListener('click', function (e) {
-            e.preventDefault();
-            alert('My Assistant — coming soon');
-        });
-
-        /* ---- Nav pill: place the white sliding indicator under the active tab. ---- */
-        (function navIndicator() {
+        /* ---- Nav pill + area overlay: switch tabs in place so the bar never
+               disappears. Non-Shop tabs load their page in a lazy iframe. ---- */
+        (function areaNav() {
             var nav = document.getElementById('saNav'), ind = document.getElementById('saInd');
+            var overlay = document.getElementById('saOverlay'), sc = document.querySelector('.sa-scroll');
             if (!nav || !ind) return;
-            var active = nav.querySelector('.sa-tab.is-active');
-            var place = function () {
-                if (!active) return;
-                ind.style.width = active.offsetWidth + 'px';
-                ind.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+            var tabs = Array.prototype.slice.call(nav.querySelectorAll('.sa-tab'));
+
+            var moveInd = function (animate) {
+                var t = nav.querySelector('.sa-tab.is-active');
+                if (!t) return;
+                if (!animate) ind.style.transition = 'none';
+                ind.style.width = t.offsetWidth + 'px';
+                ind.style.transform = 'translateX(' + t.offsetLeft + 'px)';
+                if (!animate) { void ind.offsetWidth; ind.style.transition = ''; }
             };
-            place();
-            window.addEventListener('resize', place);
-            // "My Shop" is this page — clicking it just returns to the top.
-            var shop = document.getElementById('tabShop');
-            if (shop) shop.addEventListener('click', function (e) {
-                e.preventDefault();
-                var sc = document.querySelector('.sa-scroll');
-                if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+
+            function activate(id) {
+                tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.id === id); });
+                moveInd(true);
+                if (id === 'shop') {
+                    if (overlay) overlay.classList.remove('open');
+                    return;
+                }
+                if (overlay) {
+                    overlay.classList.add('open');
+                    overlay.querySelectorAll('.sa-panel').forEach(function (p) {
+                        p.classList.toggle('is-active', p.dataset.id === id);
+                    });
+                    var fr = overlay.querySelector('.sa-panel.is-active iframe');
+                    if (fr && !fr.src && fr.dataset.src) fr.src = fr.dataset.src;   // lazy load
+                }
+            }
+
+            tabs.forEach(function (t) { t.addEventListener('click', function () { activate(t.dataset.id); }); });
+            moveInd(false);
+            window.addEventListener('resize', function () { moveInd(false); });
+            window.addEventListener('load', function () { moveInd(false); });
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { moveInd(false); });
         })();
     })();
     </script>
