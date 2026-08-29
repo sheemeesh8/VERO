@@ -2169,25 +2169,54 @@
         body:not(.is-seller) #storeBgPreview .ps-preview-btn:active { opacity: 0.55; }
 
         /* =====================================================================
-           SELLER SETTINGS — layout
-           Full-screen hero IMAGE, then a full-screen WHITE settings area below it,
-           with strong sticky scrolling (y mandatory) between them. This relies on
-           the base personal-area layout (hero 100vh, .build-panel #fff, .pa-current
-           a full-screen white layer, html scroll-snap-type: y mandatory) — so the
-           only page-specific rule needed is hiding the removed "My Sizes" section.
+           SELLER SETTINGS — REDESIGN
+           Layout: a full-screen hero IMAGE on top; the settings content flows in a
+           clean WHITE area directly BELOW it; and a premium, always-visible bottom
+           NAVIGATION bar switches between sections. VERO minimalist LV/RL palette
+           (white, sand #F4F2EE, charcoal #1b1916, gold #9a7d52).
            ===================================================================== */
-        /* Full-screen hero image. */
-        .profile-hero { height: 100vh; min-height: 100vh; }
-        /* Below it: each settings section is a full-screen WHITE page. */
-        body:not(.is-seller) .build-panel { min-height: 100vh; background: #fff; }
-        body:not(.is-seller) .build-panel.pa-current { background: #fff; }
-        /* Strong sticky scroll between the hero and the white area. */
-        html:has(body:not(.is-seller)) { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
-        body:not(.is-seller) .build-panel { scroll-snap-align: start; scroll-snap-stop: always; }
+        :root { --ss-ink:#1b1916; --ss-sand:#F4F2EE; --ss-gold:#9a7d52; --ss-line:#ece8e1; --ss-muted:#a29c90; }
+
+        /* ---- Hero: full-screen image, gentle bottom scrim, name reads over it ---- */
+        .profile-hero { height: 100vh; min-height: 100vh; border-bottom: none; }
+        .profile-hero::after { background: linear-gradient(to bottom, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%); }
+
+        /* ---- Content flows BELOW the hero (not a full-screen overlay) ---- */
+        html:has(body:not(.is-seller)) { scroll-snap-type: y proximity; scroll-behavior: smooth; }
+        body:not(.is-seller) .build-panel {
+            min-height: 100vh; background: #fff; scroll-snap-align: start;
+        }
+        body:not(.is-seller) .build-panel.pa-current {
+            position: static; inset: auto; z-index: auto; background: #fff;
+            overflow-y: visible; padding: 44px 22px 140px;   /* clear the bottom nav */
+        }
+        /* Section title band — quiet, centred, hairline under it. */
+        body:not(.is-seller) .build-panel .ps-title:not(.ps-title--sub) {
+            color: var(--ss-ink); border-bottom-color: var(--ss-line);
+        }
+
+        /* ---- Premium bottom NAVIGATION bar (always visible) ---- */
+        .area-tabs {
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+            background: rgba(27,25,22,0.97); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.10);
+            box-shadow: 0 10px 34px rgba(0,0,0,0.30);
+            padding: 6px;
+            /* Force it permanently visible — it is the primary navigation. */
+            transform: translateX(-50%) !important; opacity: 1 !important; pointer-events: auto !important;
+        }
+        .area-tab {
+            color: rgba(255,255,255,0.62); font-size: 10px; letter-spacing: 1.4px;
+            padding: 11px 15px; min-height: 40px;
+        }
+        .area-tab:hover { color: #fff; }
+        .area-tab.is-active { color: var(--ss-ink); }   /* dark text over the gold pill */
+        .area-ind { background: var(--ss-gold); }        /* gold sliding active pill */
+        .area-tab .area-dot { box-shadow: 0 0 0 2px rgba(27,25,22,0.97); }
+
         /* "My Sizes" tab was removed — hide its section so it never scrolls into view. */
         #slideSizes { display:none !important; }
-        /* No waves anywhere on this page, in any mode (kills the div even if a cached
-           copy still ships it). */
+        /* No decorative hero waves, any mode (kills a cached div too). */
         .pf-waves, .profile-hero.is-live .pf-waves { display: none !important; }
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
@@ -4173,6 +4202,10 @@
                     s.classList.toggle('pa-current', s.id === area.section);
                 });
                 if (paHeader) paHeader.classList.add('revealed');
+                // Content flows BELOW the full-screen hero — scroll it into view so a
+                // nav tap reveals the section instead of leaving the hero on screen.
+                const heroBottom = heroEl ? heroEl.offsetHeight - 1 : 0;
+                window.scrollTo({ top: heroBottom, behavior: 'smooth' });
                 return;
             }
 
