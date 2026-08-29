@@ -1424,7 +1424,7 @@
             // Seller account → the seller hub (My Shop, My Products, Buyer Chats…).
             link.textContent = 'Seller Area';
             if (heading) heading.textContent = 'Seller Area';
-            link.setAttribute('onclick', "veroSellerGone()");
+            link.setAttribute('onclick', "veroCloseDrawer(); veroGoAccount('seller','seller-area.html')");
         } else {
             // Personal account → the personal hub (My Profile, My Chats, My Cart…).
             link.textContent = 'My Profile';
@@ -2344,22 +2344,21 @@
             : (prof.name || 'My Profile');
     }
 
-    // The old seller area + storefront pages were deleted and are being rebuilt.
-    // Every entry point that used to reach them now routes here so no existing
-    // button resurrects the removed pages.
+    // The public storefront (store-profile.html) is still deleted and being
+    // rebuilt, so the search seller-card + "show storefront" buttons route here.
     window.veroSellerGone = function () {
         try { veroCloseDrawer(); } catch (e) {}
-        alert('אזור המוכרים בבנייה מחדש');
+        alert('החנות הציבורית בבנייה מחדש');
     };
 
     // Open the "rectangles" hub that matches the active account — seller-area for
     // the business account, buyer-area (personal) for the buyer account.
     window.veroOpenArea = function () {
-        if (veroActiveAccount() === 'seller') { veroSellerGone(); return; }
+        const dest = veroActiveAccount() === 'seller' ? 'seller-area.html' : 'profile.html';
         // Inside phone-frame this navigates the IFRAME (self, not top), so the app
         // stays framed — no need to touch the top hash (which could equal the target
         // and silently do nothing). A relative URL always reloads within the frame.
-        location.href = veroBust('profile.html');
+        location.href = veroBust(dest);
     };
 
     // Enter a given account context and navigate to its hub page. Used by the
@@ -2370,10 +2369,7 @@
     window.veroGoAccount = function (account, dest) {
         const acct = account === 'seller' ? 'seller' : 'buyer';
         localStorage.setItem('vero_active_account', acct);
-        // Seller hub was deleted (being rebuilt): switch the account but show the
-        // rebuild notice instead of navigating to the removed seller-area page.
-        if (acct === 'seller') { veroSellerGone(); return; }
-        veroProfileSplash({ name: accountName(acct), dest: dest || 'profile.html' });
+        veroProfileSplash({ name: accountName(acct), dest: dest || (acct === 'seller' ? 'seller-area.html' : 'profile.html') });
     };
 
     // Toggle between the personal and seller accounts without leaving the feed:
@@ -2505,7 +2501,7 @@
     ensure('openCart', () => window.veroSlideToCart());
     ensure('vchatOpenInbox', () => nav('index.html?open=chats'));
     ensure('openBuyerArea', () => nav('profile.html'));
-    ensure('openSellerArea', () => window.veroSellerGone());
+    ensure('openSellerArea', () => nav('seller-area.html'));
     ensure('openUploadProduct', () => nav('index.html?open=upload'));
     ensure('openMenu', () => nav('index.html?open=magazine'));
     // The magazine reader (magazine.js defines the real window.openMagazine on
@@ -2697,7 +2693,7 @@
     // near-instant. Keeps the list small so it doesn't hog bandwidth.
     function warmCommonPages() {
         [
-            'index.html', 'profile.html', 'products.html',
+            'index.html', 'profile.html', 'products.html', 'seller-area.html',
             'chats.html', 'cart-store.html', 'cart.html',
             'buyer-profile.html', 'drafts.html',
             'offers-received.html', 'saved.html', 'follows.html'

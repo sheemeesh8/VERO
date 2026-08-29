@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Phone-only presentation: opened as a top-level window this page hands off to
+         phone-frame.html, which reloads it inside a phone-width iframe. Inside that
+         frame (window.top !== self) the check is skipped, so the page renders. -->
+    <script>
+      if (window.self === window.top) {
+        var pf = location.pathname.split('/').pop() || 'index';
+        if (!/\.html$/.test(pf)) pf += '.html';
+        location.replace('phone-frame.html#page=' + encodeURIComponent(pf + location.search));
+      }
+    </script>
+    <title>VERO — Seller Area</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/fonts/aharoni.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1b1916; background: #fff;
+            overflow-x: hidden;
+        }
+
+        /* ---- Two full-height sections, scroll-snapped so each fills the frame ---- */
+        .sa-scroll {
+            height: 100vh; height: 100dvh;
+            overflow-y: auto; overflow-x: hidden;
+            scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .sa-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
+        .sa-section {
+            position: relative;
+            min-height: 100vh; min-height: 100dvh;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+
+        /* ---- BACK pill (over the hero) ---- */
+        .back {
+            position: absolute; top: 26px; right: 24px; z-index: 40;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border: 1.4px solid #1b1916; border-radius: 999px;
+            font-size: 10px; letter-spacing: 1.5px; text-decoration: none; color: #1b1916;
+            background: rgba(255,255,255,0.92); transition: background 0.25s, color 0.25s;
+        }
+        .back:hover { background: #1b1916; color: #fff; }
+        .back svg { width: 15px; height: 15px; }
+
+        /* ========================= SECTION 1 — HERO ========================= */
+        .sa-hero { display: flex; flex-direction: column; background: #efece7; }
+        /* The image fills the upper part of the frame. */
+        .sa-hero-img {
+            flex: 1 1 auto;
+            background: #23231f center / cover no-repeat;
+            min-height: 0;
+        }
+        /* White info band sitting on the bottom seam, like a storefront card. */
+        .sa-hero-band {
+            flex: none;
+            background: #fff;
+            padding: 30px 26px calc(34px + env(safe-area-inset-bottom, 0px));
+            display: flex; align-items: flex-end; justify-content: space-between; gap: 18px;
+            border-top: 1px solid #f0ede7;
+        }
+        .sa-name {
+            font-family: 'Aharoni CLM','Segoe UI',sans-serif;
+            font-size: 34px; line-height: 1.02; font-weight: 700; letter-spacing: 1px;
+            color: #1b1916; text-transform: uppercase;
+        }
+        .sa-sub {
+            margin-top: 10px;
+            font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #a29c90; font-weight: 600;
+        }
+        .sa-status {
+            margin-top: 12px;
+            display: inline-flex; align-items: center; gap: 7px;
+            font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; color: #1b1916;
+        }
+        .sa-status .dot { width: 8px; height: 8px; border-radius: 50%; background: #37946b; }
+        .sa-status.closed .dot { background: #c15b4a; }
+        .sa-stat { text-align: right; flex: none; }
+        .sa-stat-num {
+            font-family: 'Aharoni CLM','Segoe UI',sans-serif;
+            font-size: 30px; font-weight: 700; color: #1b1916; line-height: 1;
+        }
+        .sa-stat-lbl {
+            margin-top: 8px;
+            font-size: 9px; letter-spacing: 2.4px; text-transform: uppercase; color: #a29c90; font-weight: 600;
+        }
+        /* Scroll cue nudging the user toward the settings section below. */
+        .sa-cue {
+            position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: #b8b2a6;
+            animation: saBob 1.8s ease-in-out infinite; pointer-events: none;
+        }
+        .sa-cue svg { width: 16px; height: 16px; }
+        @keyframes saBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(4px); } }
+
+        /* ======================= SECTION 2 — SETTINGS ======================= */
+        .sa-settings {
+            background: #fff;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 54px 24px calc(60px + env(safe-area-inset-bottom, 0px));
+        }
+        .sss-inner { width: 100%; max-width: 560px; margin: 0 auto; }
+        .sss-title {
+            font-family: 'Aharoni CLM','Segoe UI',sans-serif;
+            font-size: 24px; font-weight: 700; color: #1b1916; letter-spacing: 0.5px;
+            padding-bottom: 12px; margin-bottom: 26px; border-bottom: 1px solid #ece8e1;
+        }
+        .sss-field { margin-bottom: 22px; }
+        .sss-inner label {
+            display: block; font-size: 10px; letter-spacing: 2.4px; text-transform: uppercase;
+            color: #a29c90; font-weight: 700; margin-bottom: 9px;
+        }
+        .sss-inner input, .sss-inner textarea {
+            width: 100%; border: none; border-bottom: 1px solid #ece8e1;
+            background: transparent; font-family: inherit; font-size: 15px; color: #1b1916;
+            padding: 9px 2px; transition: border-color 0.2s;
+        }
+        .sss-inner textarea { min-height: 84px; line-height: 1.55; resize: vertical; }
+        .sss-inner input:focus, .sss-inner textarea:focus { outline: none; border-bottom-color: #9a7d52; }
+        .sss-row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+        .sss-note { font-size: 11px; color: #a29c90; margin-top: 4px; min-height: 15px; }
+        @media (max-width: 420px) { .sss-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body class="is-seller">
+    <div class="sa-scroll">
+
+        <!-- ===================== SECTION 1 — HERO ===================== -->
+        <section class="sa-section sa-hero" id="saHero">
+            <a class="back" href="index.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                BACK
+            </a>
+            <div class="sa-hero-img" id="saHeroImg"></div>
+            <div class="sa-hero-band">
+                <div class="sa-hero-id">
+                    <div class="sa-name" id="saName">My Store</div>
+                    <div class="sa-sub">Store</div>
+                    <div class="sa-status" id="saStatus"><span class="dot"></span><span id="saStatusLbl">Open</span></div>
+                </div>
+                <div class="sa-stat">
+                    <div class="sa-stat-num" id="saFollowers">0</div>
+                    <div class="sa-stat-lbl">Followers</div>
+                </div>
+            </div>
+            <div class="sa-cue">
+                <span>Settings</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 2 — SETTINGS ==================== -->
+        <section class="sa-section sa-settings" id="saSettings">
+            <div class="sss-inner" id="sssInner"></div>
+        </section>
+
+    </div>
+
+    <script>
+    (function sellerArea() {
+        // Force the seller context so the header/rest of the app reads as the shop.
+        try { localStorage.setItem('vero_active_account', 'seller'); } catch (e) {}
+
+        var read = function (key) { try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; } };
+        var profile = read('vero_seller_profile');
+        var store   = read('vero_store_config');
+
+        /* ---- Hero: background image, name, status, followers ---- */
+        var heroImg = store.hero || profile.hero || '';
+        var imgEl = document.getElementById('saHeroImg');
+        if (heroImg) {
+            imgEl.style.backgroundImage = 'url("' + heroImg + '")';
+        } else {
+            // Calm sand gradient when no cover has been set yet.
+            imgEl.style.background = 'linear-gradient(160deg, #d8cfc2 0%, #efe9e0 55%, #f6f3ee 100%)';
+        }
+
+        var name = profile.name || store.name || 'My Store';
+        document.getElementById('saName').textContent = name;
+
+        // Followers: reuse the shared counter if present.
+        var followers = 0;
+        try { followers = JSON.parse(localStorage.getItem('vero_followers')); } catch (e) {}
+        if (typeof followers !== 'number') {
+            followers = (typeof profile.followers === 'number') ? profile.followers : 0;
+        }
+        document.getElementById('saFollowers').textContent = Number(followers || 0).toLocaleString('en-US');
+
+        // Open / Closed from opening hours for today (vero_store_config.hours).
+        (function status() {
+            var el = document.getElementById('saStatus'), lbl = document.getElementById('saStatusLbl');
+            var hours = store.hours || {};
+            var today = hours[new Date().getDay()];
+            var open = true; // default: shop reads as open until hours say otherwise
+            if (today === null) open = false;
+            else if (today && today.open && today.close) {
+                var now = new Date(), cur = now.getHours() * 60 + now.getMinutes();
+                var toMin = function (t) { var p = String(t).split(':'); return (+p[0]) * 60 + (+p[1] || 0); };
+                open = cur >= toMin(today.open) && cur < toMin(today.close);
+            }
+            lbl.textContent = open ? 'Open' : 'Closed';
+            el.classList.toggle('closed', !open);
+        })();
+    })();
+    </script>
+
+    <!-- ===== Shop settings — self-contained, reads/writes vero_seller_profile
+         (same store the hero and My Shop use). ===== -->
+    <script>
+    (function shopSettings() {
+        var KEY = 'vero_seller_profile';
+        var read = function () { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
+        var data = read();
+        var save = function () { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} };
+
+        var host = document.getElementById('sssInner');
+        host.innerHTML =
+            '<h2 class="sss-title">Shop Settings</h2>' +
+            '<div class="sss-field"><label>Shop name</label><input data-k="name" type="text" placeholder="Your shop name"></div>' +
+            '<div class="sss-field"><label>About</label><textarea data-k="bio" placeholder="Tell buyers about your shop"></textarea></div>' +
+            '<div class="sss-row">' +
+              '<div class="sss-field"><label>Email</label><input data-k="email" type="email" placeholder="you@example.com"></div>' +
+              '<div class="sss-field"><label>Phone</label><input data-k="phone" type="tel" placeholder="Phone number"></div>' +
+            '</div>' +
+            '<div class="sss-field"><label>Location</label><input data-k="location" type="text" placeholder="City, Country"></div>' +
+            '<div class="sss-row">' +
+              '<div class="sss-field"><label>Instagram</label><input data-s="instagram" type="url" placeholder="https://instagram.com/…"></div>' +
+              '<div class="sss-field"><label>TikTok</label><input data-s="tiktok" type="url" placeholder="https://tiktok.com/@…"></div>' +
+            '</div>' +
+            '<div class="sss-field"><label>Facebook</label><input data-s="facebook" type="url" placeholder="https://facebook.com/…"></div>' +
+            '<div class="sss-note" id="sssNote">Changes save automatically.</div>';
+
+        var note = host.querySelector('#sssNote'), noteTimer = null;
+        function flagSaved() {
+            if (!note) return;
+            note.textContent = 'Saved ✓';
+            clearTimeout(noteTimer);
+            noteTimer = setTimeout(function () { note.textContent = 'Changes save automatically.'; }, 1400);
+        }
+        // When the name changes here, keep the hero name in sync live.
+        var heroName = document.getElementById('saName');
+
+        host.querySelectorAll('input[data-k], textarea[data-k]').forEach(function (el) {
+            var k = el.getAttribute('data-k');
+            if (data[k] != null) el.value = data[k];
+            el.addEventListener('input', function () {
+                data[k] = el.value; save(); flagSaved();
+                if (k === 'name' && heroName) heroName.textContent = el.value || 'My Store';
+            });
+        });
+        data.socials = data.socials || {};
+        host.querySelectorAll('input[data-s]').forEach(function (el) {
+            var k = el.getAttribute('data-s');
+            if (data.socials[k]) el.value = data.socials[k];
+            el.addEventListener('input', function () {
+                data.socials = data.socials || {};
+                data.socials[k] = el.value.trim();
+                save(); flagSaved();
+            });
+        });
+    })();
+    </script>
+</body>
+</html>
