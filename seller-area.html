@@ -132,11 +132,16 @@
             transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), width 0.4s cubic-bezier(0.22,1,0.36,1);
         }
 
-        /* ---- Area overlay: other tabs load their page in place (iframe) so the
-               floating nav pill never disappears when switching tabs. ---- */
-        .sa-overlay { position: fixed; inset: 0; z-index: 40; display: none; background: #fff; }
+        /* ---- Area panel: other tabs load their page as the SECOND section, below
+               the hero — so the hero is never covered and stays reachable by
+               scrolling up. Only one of (settings | this) is shown at a time. ---- */
+        .sa-overlay {
+            display: none; background: #fff;
+            min-height: 100vh; min-height: 100dvh;
+            scroll-snap-align: start; scroll-snap-stop: always;
+        }
         .sa-overlay.open { display: block; }
-        .sa-panel { display: none; width: 100%; height: 100%; }
+        .sa-panel { display: none; width: 100%; height: 100vh; height: 100dvh; }
         .sa-panel.is-active { display: block; }
         .sa-panel iframe { width: 100%; height: 100%; border: 0; display: block; }
         .sa-empty {
@@ -293,20 +298,20 @@
             </div>
         </section>
 
-        <!-- ==================== SECTION 2 — SETTINGS ==================== -->
+        <!-- ==================== SECTION 2 — SETTINGS ("My Shop") ==================== -->
         <section class="sa-section sa-settings" id="saSettings">
             <div class="sss-inner" id="sssInner"></div>
         </section>
 
-    </div>
+        <!-- SECTION 2 (alt) — other tabs load their page here, BELOW the hero, so the
+             hero is never covered. Only one of settings / this shows at a time. -->
+        <div class="sa-overlay" id="saOverlay">
+            <div class="sa-panel" data-id="products"><iframe title="My Products" data-src="products.html?from=seller"></iframe></div>
+            <div class="sa-panel" data-id="chats"><iframe title="Buyers Chat" data-src="chats.html?from=seller"></iframe></div>
+            <div class="sa-panel" data-id="offers"><iframe title="Negotiation" data-src="offers-received.html?from=seller"></iframe></div>
+            <div class="sa-panel" data-id="assistant"><div class="sa-empty"><h2>My Assistant</h2><p>Coming soon</p></div></div>
+        </div>
 
-    <!-- Area overlay — each non-Shop tab loads its page here (in place), so the
-         floating nav pill stays put instead of disappearing on navigation. -->
-    <div class="sa-overlay" id="saOverlay">
-        <div class="sa-panel" data-id="products"><iframe title="My Products" data-src="products.html?from=seller"></iframe></div>
-        <div class="sa-panel" data-id="chats"><iframe title="Buyers Chat" data-src="chats.html?from=seller"></iframe></div>
-        <div class="sa-panel" data-id="offers"><iframe title="Negotiation" data-src="offers-received.html?from=seller"></iframe></div>
-        <div class="sa-panel" data-id="assistant"><div class="sa-empty"><h2>My Assistant</h2><p>Coming soon</p></div></div>
     </div>
 
     <!-- ============ Floating pill navigation (profile.html style) ============ -->
@@ -361,20 +366,29 @@
                 if (!animate) { void ind.offsetWidth; ind.style.transition = ''; }
             };
 
+            var settings = document.getElementById('saSettings');
             function activate(id) {
                 tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.id === id); });
                 moveInd(true);
+                // The hero is always the first section and is never covered — only the
+                // SECOND section swaps between "My Shop" settings and a tab's page.
                 if (id === 'shop') {
                     if (overlay) overlay.classList.remove('open');
-                    return;
-                }
-                if (overlay) {
+                    if (settings) settings.style.display = '';
+                } else if (overlay) {
+                    if (settings) settings.style.display = 'none';
                     overlay.classList.add('open');
                     overlay.querySelectorAll('.sa-panel').forEach(function (p) {
                         p.classList.toggle('is-active', p.dataset.id === id);
                     });
                     var fr = overlay.querySelector('.sa-panel.is-active iframe');
                     if (fr && !fr.src && fr.dataset.src) fr.src = fr.dataset.src;   // lazy load
+                }
+                // Bring the content section (below the hero) into view; the hero stays
+                // one scroll up, never removed.
+                if (sc) {
+                    var target = (id === 'shop') ? settings : overlay;
+                    if (target) sc.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
                 }
             }
 
