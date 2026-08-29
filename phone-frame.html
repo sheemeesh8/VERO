@@ -80,47 +80,19 @@
             /* Paper (not white) while the inner page's own CSS is still painting. */
             background: var(--pf-paper);
         }
-        /* Cover panel: a paper surface that sits OVER the iframe only during the
-           fetch gap (from the outgoing page's pagehide to the new page's load), so
-           the momentary blank iframe is never seen. Removed the instant the new page
-           is ready, and the fresh page then slides in over the paper base. */
-        .pf-cover {
-            position: absolute;
-            inset: 0;
-            z-index: 5;
-            background: var(--pf-paper);
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-        .pf-cover.is-on { opacity: 1; visibility: visible; }
-        /* Fast slide-in-from-top on every in-frame navigation, over the paper base —
-           no white, no fade. */
-        /* Smooth slide animations with no white flash */
+        /* Every in-frame navigation: the new page slides DOWN from the top over the
+           paper base (.screen background) — no white, no fade. One animation for all
+           navigations (forward and back alike), so transitions feel consistent. */
         @keyframes pfSlideInDown {
-            from { transform: translateY(-100%); opacity: 1; }
-            to   { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes pfSlideOutUp {
-            from { transform: translateY(0); opacity: 1; }
-            to   { transform: translateY(-100%); opacity: 1; }
-        }
-
-        .screen iframe {
-            /* Prevent white flash by showing paper color behind */
-            background: var(--pf-paper);
+            from { transform: translateY(-100%); }
+            to   { transform: translateY(0); }
         }
         .screen iframe.pf-enter {
-            animation: pfSlideInDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        .screen iframe.pf-enter.pf-forward {
-            animation: pfSlideInDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        .screen iframe.pf-exit {
-            animation: pfSlideOutUp 0.3s cubic-bezier(0.65, 0.05, 0.36, 1) both;
+            animation: pfSlideInDown 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        /* Stronger cover: stays visible longer to hide white flash completely */
+        /* Instant paper cover (no fade) shown only during the fetch gap, so the
+           browser's blank white repaint between documents is never visible. */
         .pf-cover {
             position: absolute;
             inset: 0;
@@ -131,16 +103,10 @@
             pointer-events: none;
             transition: none;
         }
-        .pf-cover.is-on {
-            opacity: 1;
-            visibility: visible;
-            transition: none;
-        }
+        .pf-cover.is-on { opacity: 1; visibility: visible; }
 
         @media (prefers-reduced-motion: reduce) {
-            .screen iframe.pf-enter,
-            .screen iframe.pf-enter.pf-forward,
-            .screen iframe.pf-exit { animation: none; }
+            .screen iframe.pf-enter { animation: none; }
         }
         /* Welcome splash — shown on every entry over the top of everything, then
            fades out to reveal the home feed. */
@@ -254,28 +220,16 @@
                 }
             } catch (e) { /* cross-origin (e.g. served over http) — ignore */ }
         }
-        // Track navigation direction: forward (default) or backward (back button)
-        var isGoingBack = false;
 
         // Replay the slide-in animation on every navigation the iframe performs
         // (each inner link is a full document load, so 'load' fires per page).
+        // One consistent slide for ALL navigations — forward and back alike: the new
+        // page slides down from the top over the paper base.
         function playSlideIn() {
-            frame.classList.remove('pf-enter', 'pf-forward', 'pf-exit');
+            frame.classList.remove('pf-enter');
             void frame.offsetWidth;          // force reflow so the animation restarts
-
-            // Apply direction-based animation
-            if (isGoingBack) {
-                frame.classList.add('pf-exit');
-                isGoingBack = false;  // reset for next navigation
-            } else {
-                frame.classList.add('pf-enter', 'pf-forward');
-            }
+            frame.classList.add('pf-enter');
         }
-
-        // Detect back navigation via popstate (browser back button)
-        window.addEventListener('popstate', () => {
-            isGoingBack = true;
-        });
 
         // ---- No-white-flash page transitions ----
         // The moment the current page starts navigating away (pagehide, same-origin)
@@ -293,11 +247,11 @@
             coverTimer = setTimeout(hideCover, 2500);
         }
         function hideCover() {
+            // Drop the cover immediately: behind the iframe is the paper base of
+            // .screen, so the new page slides down over paper (never white). Keeping
+            // the cover up during the slide would hide the animation.
             clearTimeout(coverTimer);
-            // Wait for animation to complete before hiding cover (350ms for animation + margin)
-            setTimeout(() => {
-                cover.classList.remove('is-on');
-            }, 350);
+            cover.classList.remove('is-on');
         }
 
         // (Re)attach the pagehide listener to whichever document is currently framed.
@@ -328,45 +282,25 @@
 
         frame.addEventListener('load', function () {
             hideFrameScrollbar();
-            playSlideIn();        // slide the new page in
-            hideCover();          // hide cover after animation starts (350ms to match animation)
+            playSlideIn();        // slide the new page down from the top
+            hideCover();          // drop the paper cover so the slide is visible over paper
             armPageHide();        // arm the cover for the next navigation
             dismissSplash();      // first load done → retire the welcome splash (idempotent)
-
-            // Detect back button clicks within the framed page
-            try {
-                var w = frame.contentWindow;
-                if (w) {
-                    // Hook history.back() to set back flag
-                    var origBack = w.history.back.bind(w.history);
-                    w.history.back = function () {
-                        isGoingBack = true;
-                        origBack();
-                    };
-                    // Also detect pagehide triggered by back navigation
-                    w.addEventListener('pagehide', function (e) {
-                        // If this is a back navigation, the flag is already set by popstate
-                        // But for manual history.back() calls, ensure flag is set
-                        if (e.persisted === false) {
-                            // Page is being unloaded; check if it's likely a back
-                            // (We detect via popstate, so this is a backup)
-                        }
-                    });
-                }
-            } catch (e) { /* cross-origin — ignore */ }
         });
         hideFrameScrollbar();
         armPageHide();
 
-        // ---- Service Worker: fast page navigation via caching ----
-        // Registers a service worker that caches HTML pages for instant navigation.
-        // First visit caches key pages; subsequent visits use the cache for speed.
+        // ---- Clean up any previously-registered Service Worker + its caches ----
+        // A caching SW fought the cache-busting that keeps the phone on the freshest
+        // deploy, so it is removed. This unregisters any lingering SW and clears its
+        // caches so no device stays stuck on a stale version.
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(reg => {
-                console.log('Service Worker registered for fast page loads');
-            }).catch(err => {
-                console.log('Service Worker registration failed:', err);
-            });
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                regs.forEach(reg => reg.unregister());
+            }).catch(() => {});
+            if (window.caches && caches.keys) {
+                caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
+            }
         }
     </script>
 </body>
