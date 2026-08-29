@@ -96,27 +96,47 @@
         .pf-cover.is-on { opacity: 1; visibility: visible; }
         /* Fast slide-in-from-top on every in-frame navigation, over the paper base —
            no white, no fade. */
-        @keyframes pfSlideIn {
-            from { transform: translateY(-100%); }
-            to   { transform: translateY(0); }
+        /* Smooth slide animations with no white flash */
+        @keyframes pfSlideInDown {
+            from { transform: translateY(-100%); opacity: 1; }
+            to   { transform: translateY(0); opacity: 1; }
         }
-        @keyframes pfSlideInRight {
-            from { transform: translateY(100%); }
-            to   { transform: translateY(0); }
+        @keyframes pfSlideOutUp {
+            from { transform: translateY(0); opacity: 1; }
+            to   { transform: translateY(-100%); opacity: 1; }
         }
-        @keyframes pfSlideOut {
-            from { transform: translateY(0); }
-            to   { transform: translateY(100%); }
+
+        .screen iframe {
+            /* Prevent white flash by showing paper color behind */
+            background: var(--pf-paper);
         }
         .screen iframe.pf-enter {
-            animation: pfSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            animation: pfSlideInDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
         .screen iframe.pf-enter.pf-forward {
-            animation: pfSlideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            animation: pfSlideInDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
         .screen iframe.pf-exit {
-            animation: pfSlideOut 0.3s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+            animation: pfSlideOutUp 0.3s cubic-bezier(0.65, 0.05, 0.36, 1) both;
         }
+
+        /* Stronger cover: stays visible longer to hide white flash completely */
+        .pf-cover {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background: var(--pf-paper);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: none;
+        }
+        .pf-cover.is-on {
+            opacity: 1;
+            visibility: visible;
+            transition: none;
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .screen iframe.pf-enter,
             .screen iframe.pf-enter.pf-forward,
@@ -272,7 +292,13 @@
             clearTimeout(coverTimer);
             coverTimer = setTimeout(hideCover, 2500);
         }
-        function hideCover() { clearTimeout(coverTimer); cover.classList.remove('is-on'); }
+        function hideCover() {
+            clearTimeout(coverTimer);
+            // Wait for animation to complete before hiding cover (350ms for animation + margin)
+            setTimeout(() => {
+                cover.classList.remove('is-on');
+            }, 350);
+        }
 
         // (Re)attach the pagehide listener to whichever document is currently framed.
         function armPageHide() {
@@ -302,8 +328,8 @@
 
         frame.addEventListener('load', function () {
             hideFrameScrollbar();
-            hideCover();          // new page is ready — reveal it
-            playSlideIn();        // …sliding in over the paper base
+            playSlideIn();        // slide the new page in
+            hideCover();          // hide cover after animation starts (350ms to match animation)
             armPageHide();        // arm the cover for the next navigation
             dismissSplash();      // first load done → retire the welcome splash (idempotent)
 
