@@ -2297,6 +2297,13 @@
     });
 
     // ---- Cart slide-in transition ----
+    // Cache-buster: append a _ts param so the browser always fetches the freshest
+    // deploy on JS-driven navigations (no manual hard-refresh needed).
+    window.veroBust = function (u) {
+        if (!u || /[?&]_ts=/.test(u)) return u;
+        return u + (u.indexOf('?') >= 0 ? '&' : '?') + '_ts=' + Date.now();
+    };
+
     // Accessing the cart from the header glides a white panel in from the right,
     // then navigates — cart-store.html continues the motion by sliding its own
     // content in from the same side, so the cart reads as one panel sliding in.
@@ -2305,7 +2312,7 @@
     window.veroSlideToCart = function (url) {
         const dest = url || 'cart-store.html';
         // Inside phone-frame this navigates the IFRAME, so the app stays framed.
-        const navigate = () => { location.href = dest; };
+        const navigate = () => { location.href = veroBust(dest); };
         // Respect users who asked for less motion — just navigate.
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             navigate(); return;
@@ -2344,7 +2351,7 @@
         // Inside phone-frame this navigates the IFRAME (self, not top), so the app
         // stays framed — no need to touch the top hash (which could equal the target
         // and silently do nothing). A relative URL always reloads within the frame.
-        location.href = dest;
+        location.href = veroBust(dest);
     };
 
     // Enter a given account context and navigate to its hub page. Used by the
@@ -2456,7 +2463,7 @@
         const go = () => {
             if (opts.reload) location.reload();
             // Inside phone-frame this navigates the IFRAME, so the app stays framed.
-            else location.href = opts.dest || 'index.html';
+            else location.href = veroBust(opts.dest || 'index.html');
         };
         const name = opts.name || accountName(veroActiveAccount());
         // Respect reduced-motion — skip the animation and just switch.

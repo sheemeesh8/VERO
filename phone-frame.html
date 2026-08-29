@@ -211,6 +211,25 @@
                         'input,textarea,select,[contenteditable="true"],[contenteditable=""]{-webkit-user-select:text!important;user-select:text!important;}';
                     (d.head || d.documentElement).appendChild(s);
                 }
+                // ---- Auto cache-busting for in-frame link navigation ----
+                // Appends a _ts param to plain same-origin .html link clicks so the
+                // browser always fetches the freshest deploy (no manual hard-refresh).
+                // Skips links with their own onclick (their handler navigates) and
+                // external / hash / new-tab links.
+                if (!d.__pfNavBust) {
+                    d.__pfNavBust = true;
+                    d.addEventListener('click', function (e) {
+                        var a = e.target && e.target.closest && e.target.closest('a[href]');
+                        if (!a || a.hasAttribute('onclick') || a.target === '_blank') return;
+                        var href = a.getAttribute('href');
+                        if (!href || href.charAt(0) === '#') return;
+                        if (/^(https?:|mailto:|tel:|javascript:|data:)/i.test(href)) return;
+                        if (!/\.html(\?|$)/.test(href) || /[?&]_ts=/.test(href)) return;
+                        e.preventDefault();
+                        var sep = href.indexOf('?') >= 0 ? '&' : '?';
+                        d.location.href = href + sep + '_ts=' + Date.now();
+                    }, false);
+                }
             } catch (e) { /* cross-origin (e.g. served over http) — ignore */ }
         }
 
