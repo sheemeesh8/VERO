@@ -257,8 +257,8 @@
             // Real editorial photographs already in the project — cycled through the
             // feature plates so the issue reads like a shot magazine (emoji fallback).
             heroImgs: isArt
-                ? ['gallery-hero.jpg', 'art-hero.png', 'magazine-hero.jpg']
-                : ['men-hero.jpg', 'women-hero.jpg', 'hero-beach.jpg', 'clothing-hero.png', 'magazine-hero.jpg'],
+                ? ['gallery-hero.jpg', 'art-hero.jpg', 'magazine-hero.jpg']
+                : ['men-hero.jpg', 'women-hero.jpg', 'hero-beach.jpg', 'clothing-hero.jpg', 'magazine-hero.jpg'],
         };
     }
 
