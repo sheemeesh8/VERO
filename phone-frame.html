@@ -318,17 +318,15 @@
             } catch (e) { /* cross-origin — ignore */ }
         }
 
-        // ---- Clean up any previously-registered Service Worker + its caches ----
-        // A caching SW fought the cache-busting that keeps the phone on the freshest
-        // deploy, so it is removed. This unregisters any lingering SW and clears its
-        // caches so no device stays stuck on a stale version.
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(regs => {
-                regs.forEach(reg => reg.unregister());
-            }).catch(() => {});
-            if (window.caches && caches.keys) {
-                caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
-            }
+        // ---- Clear any stale SW caches, but KEEP our install SW registered ----
+        // The app installs as a standalone PWA (opens full-screen, no browser bars).
+        // That requires the service worker registered in <head> (sw.js) to stay alive,
+        // so we must NOT unregister it here. sw.js is a pure network-first pass-through
+        // — it never caches — so it does not fight the cache-busting that keeps the
+        // phone on the freshest deploy. We still one-time clear any leftover caches
+        // that an OLDER caching SW may have written on this device.
+        if (window.caches && caches.keys) {
+            caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
         }
 
         // ---- Proactive page prefetch (runs in the persistent frame, covers every
