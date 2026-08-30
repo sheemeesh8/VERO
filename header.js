@@ -2502,7 +2502,7 @@
     ensure('vchatOpenInbox', () => nav('index.html?open=chats'));
     ensure('openBuyerArea', () => nav('profile.html'));
     ensure('openSellerArea', () => nav('seller-area.html'));
-    ensure('openUploadProduct', () => nav('product-upload.html'));
+    ensure('openUploadProduct', () => nav('upload-start.html'));
     ensure('openMenu', () => nav('index.html?open=magazine'));
     // The magazine reader (magazine.js defines the real window.openMagazine on
     // pages that load it; elsewhere fall back to opening it on the home page).
