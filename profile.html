@@ -4097,6 +4097,9 @@
         ind.className = 'area-ind';
         bar.insertBefore(ind, bar.firstChild);
         document.body.appendChild(bar);
+        // Once the user starts switching tabs, pin the bar up so it never drops
+        // back down (translateY 180%) when landing on the Statistics/Profile tabs.
+        let barPinned = false;
 
         // ---- Fixed top header (buyer personal area): back arrow + active page title.
         //      Reveals together with the bottom tab bar (hidden over the hero). ----
@@ -4187,7 +4190,7 @@
             // and the profile), keep the bar up so switching tabs never drops it.
             const active = bar.querySelector('.area-tab.is-active');
             const inArea = active && active.dataset.id !== 'statistics' && active.dataset.id !== 'profile';
-            const passed = areaOpen || inArea || !heroEl || y > (heroEl.offsetHeight - 90);
+            const passed = barPinned || areaOpen || inArea || !heroEl || y > (heroEl.offsetHeight - 90);
             bar.classList.toggle('revealed', passed);
             if (paHeader) paHeader.classList.toggle('revealed', passed);   // top header follows the same reveal
         }
@@ -4225,6 +4228,7 @@
             setHeroTitle(id);   // show this section's title where the name sits
             if (wrap) wrap.classList.toggle('title-only', id !== 'profile');   // hero shows only the title off-profile
             // Keep the tab bar visible when switching between any areas, including MY PROFILE.
+            barPinned = true;   // never let a later scroll drop the bar back down
             bar.classList.add('revealed');
             if (paHeader) paHeader.classList.add('revealed');
 
