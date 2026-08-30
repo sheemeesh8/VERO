@@ -106,6 +106,22 @@
     .pill.on { background: #000; color: #fff; border-color: #000; }
 
     .note { min-height: 16px; margin-top: 16px; font-size: 11px; color: var(--err); }
+
+    /* ---- Username step ---- */
+    .uf-field { position: relative; max-width: 30em; }
+    .uf-input-wrap { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 0 14px; transition: border-color .15s; }
+    .uf-input-wrap.ok { border-color: #1f9d55; }
+    .uf-input-wrap.bad { border-color: var(--err); }
+    .uf-at { color: var(--muted); font-size: 16px; margin-inline-end: 2px; }
+    .uf-input { flex: 1; border: none; outline: none; background: none; font-family: inherit; font-size: 16px; color: var(--ink); padding: 14px 6px; direction: ltr; text-align: left; }
+    .uf-status { min-height: 16px; margin-top: 8px; font-size: 12px; }
+    .uf-status.ok { color: #1f9d55; }
+    .uf-status.bad { color: var(--err); }
+    .uf-status.checking { color: var(--muted); }
+    .uf-suggest-label { font-size: 11.5px; color: var(--muted); margin: 18px 0 8px; }
+    .uf-suggests { display: flex; flex-wrap: wrap; gap: 8px; }
+    .uf-sug { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 13px; font-size: 12.5px; font-family: inherit; color: var(--ink); cursor: pointer; direction: ltr; transition: background .15s, border-color .15s; }
+    .uf-sug:hover { border-color: var(--ink); }
     .buttons { display: flex; gap: 12px; margin-top: 30px; align-items: center; }
     .btn {
         border: none; border-radius: 999px; padding: 14px 30px; font-size: 13.5px; font-weight: 600;
@@ -146,6 +162,23 @@
                     </div>
                     <input type="file" id="coverInput" accept="image/*" style="display:none">
                     <input type="file" id="avatarInput" accept="image/*" style="display:none">
+                </section>
+
+                <!-- STEP · Username (Instagram-style, unique) -->
+                <section class="step" data-step="username">
+                    <h2>שם המשתמש שלך</h2>
+                    <p class="sub">כך אנשים ימצאו אותך ויראו אותך בפרופיל. אפשר לשנות בהמשך.</p>
+                    <div class="uf-field">
+                        <div class="uf-input-wrap" id="ufWrap">
+                            <span class="uf-at">@</span>
+                            <input class="uf-input" id="ufInput" type="text" inputmode="latin"
+                                   autocomplete="off" autocapitalize="none" spellcheck="false"
+                                   maxlength="30" placeholder="username">
+                        </div>
+                        <p class="uf-status" id="ufStatus"></p>
+                        <p class="uf-suggest-label" id="ufSugLabel" style="display:none">הצעות פנויות:</p>
+                        <div class="uf-suggests" id="ufSuggests"></div>
+                    </div>
                 </section>
 
                 <!-- STEP 1 · Core scope -->
@@ -211,6 +244,7 @@
     </div>
 
     <script src="auth.js"></script>
+    <script src="username.js"></script>
     <script src="auth-video.js"></script>
     <script>
     if (VeroAuth.guard('onboarding')) {
@@ -335,12 +369,66 @@
         wireCards('scopeCards', 'scope');
         wireCards('intentCards', 'intent');
 
+        // ---- Username step ----
+        answers.username = '';
+        (function usernameStep() {
+            var input = document.getElementById('ufInput');
+            var wrap = document.getElementById('ufWrap');
+            var status = document.getElementById('ufStatus');
+            var sugBox = document.getElementById('ufSuggests');
+            var sugLabel = document.getElementById('ufSugLabel');
+            if (!input) return;
+            var uid = currentUser && currentUser.id;
+
+            function paint() {
+                var raw = input.value;
+                var name = VeroUsername.normalize(raw);
+                // Reflect the normalized value back so the user sees the real handle.
+                if (raw !== name) { var p = input.selectionStart; input.value = name; }
+                answers.username = name;
+                if (!name) {
+                    wrap.className = 'uf-input-wrap';
+                    status.className = 'uf-status'; status.textContent = '';
+                    return;
+                }
+                var res = VeroUsername.check(name, uid);
+                wrap.className = 'uf-input-wrap ' + (res.state === 'ok' ? 'ok' : 'bad');
+                status.className = 'uf-status ' + (res.state === 'ok' ? 'ok' : 'bad');
+                status.textContent = (res.state === 'ok' ? '✓ ' : '') + res.msg;
+            }
+            input.addEventListener('input', paint);
+
+            function fillSuggestions() {
+                var seeds = [];
+                if (currentUser && currentUser.name) seeds.push(currentUser.name);
+                if (currentUser && currentUser.username) seeds.push(currentUser.username);
+                if (currentUser && currentUser.email) seeds.push(currentUser.email.split('@')[0]);
+                var list = VeroUsername.suggest(seeds, uid, 5);
+                sugBox.innerHTML = '';
+                if (!list.length) { sugLabel.style.display = 'none'; return; }
+                sugLabel.style.display = '';
+                list.forEach(function (s) {
+                    var b = document.createElement('button');
+                    b.type = 'button'; b.className = 'uf-sug'; b.textContent = '@' + s;
+                    b.addEventListener('click', function () { input.value = s; paint(); input.focus(); });
+                    sugBox.appendChild(b);
+                });
+            }
+            // Prefill from any handle already chosen, else leave empty with suggestions.
+            var existing = VeroUsername.get();
+            if (existing) { input.value = existing; }
+            paint();
+            fillSuggestions();
+            // Refresh suggestions the first time the step becomes visible.
+            window.__ufFillSuggestions = fillSuggestions;
+        })();
+
         // ---- conditional step routing ----
         // The DOM holds all 5 steps; the active FLOW is a subset depending on
         // the chosen scope. Fashion steps show for fashion|both; art step for
         // art|both. Steps are re-flowed whenever scope changes.
-        var ALL = ['profile', 'scope', 'fashion', 'art', 'sizes', 'intent'];
-        var flow = ['profile', 'scope', 'intent'];
+        var ALL = ['profile', 'username', 'scope', 'fashion', 'art', 'sizes', 'intent'];
+        var flow = ['profile', 'username', 'scope', 'intent'];
         var pos = 0;
 
         function recomputeFlow() {
@@ -349,7 +437,7 @@
             flow = ALL.filter(function (s) {
                 if (s === 'fashion' || s === 'sizes') return wantsFashion;
                 if (s === 'art') return wantsArt;
-                return true; // profile + scope + intent always
+                return true; // profile + username + scope + intent always
             });
             if (pos >= flow.length) pos = flow.length - 1;
             render();
@@ -388,6 +476,10 @@
         function validate() {
             var note = document.getElementById('note'); note.textContent = '';
             var step = flow[pos];
+            if (step === 'username') {
+                var res = VeroUsername.check(answers.username, currentUser && currentUser.id);
+                if (res.state !== 'ok') { note.textContent = res.msg || 'בחר שם משתמש תקין כדי להמשיך.'; return false; }
+            }
             if (step === 'scope' && !answers.scope) { note.textContent = 'בחר תחום עניין כדי להמשיך.'; return false; }
             if (step === 'intent' && !answers.intent) { note.textContent = 'בחר מטרה כדי לסיים.'; return false; }
             return true; // style / art / sizes are optional
@@ -449,6 +541,9 @@
                 users.forEach(function (u) { if (u.id === uid && answers.avatar) u.avatar = answers.avatar; });
                 localStorage.setItem('vero_users', JSON.stringify(users));
             }
+
+            // Persist the chosen username (Instagram-style handle).
+            if (answers.username) { try { VeroUsername.set(answers.username, uid); } catch (e) {} }
 
             VeroAuth.markOnboarded(uid);
 
