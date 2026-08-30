@@ -84,7 +84,7 @@
             top: 0;
             /* Icons sit just below the phone's camera punch-hole (the frame's island is
                at ~13px; on a real device the notch is covered by the safe-area inset). */
-            padding-top: calc(env(safe-area-inset-top, 0px) + 30px);
+            padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
             padding-bottom: 10px;
             background: transparent;
             border-bottom: none;
