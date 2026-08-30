@@ -318,15 +318,15 @@
             } catch (e) { /* cross-origin — ignore */ }
         }
 
-        // ---- Clear any stale SW caches, but KEEP our install SW registered ----
-        // The app installs as a standalone PWA (opens full-screen, no browser bars).
-        // That requires the service worker registered in <head> (sw.js) to stay alive,
-        // so we must NOT unregister it here. sw.js is a pure network-first pass-through
-        // — it never caches — so it does not fight the cache-busting that keeps the
-        // phone on the freshest deploy. We still one-time clear any leftover caches
-        // that an OLDER caching SW may have written on this device.
+        // ---- Keep our install SW registered; keep ITS caches ----
+        // The app installs as a standalone PWA and its speed comes from sw.js caching
+        // the heavy assets (see sw.js: stale-while-revalidate). So we must NOT wipe the
+        // SW's own caches here. We only delete caches from an OLDER caching scheme
+        // (anything not prefixed 'vero-'), so no device stays stuck on a stale build.
         if (window.caches && caches.keys) {
-            caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
+            caches.keys().then(function (keys) {
+                keys.forEach(function (k) { if (k.indexOf('vero-') !== 0) caches.delete(k); });
+            }).catch(function () {});
         }
 
         // ---- Proactive page prefetch (runs in the persistent frame, covers every
