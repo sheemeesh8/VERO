@@ -597,11 +597,17 @@
             feedEl.scrollTop = feedEl.scrollHeight;
         }
 
+        const recvOffers = readJSON('vero_received_offers', []);
         function itemFor(seller) {
             const o = offs.find(x => (x.seller || 'VERO') === seller && x.name);
             if (o) return o.name;
             const c = items.find(x => (x.seller || 'VERO') === seller && x.name);
             if (c) return c.name;
+            // Seller side: the counterpart is a buyer — look up their accepted offer.
+            const r = Array.isArray(recvOffers) && recvOffers.find(x => x.buyer === seller && x.name);
+            if (r) return r.name;
+            const deal = (readJSON('vero_deals', {}) || {})[seller];
+            if (deal && deal.item) return deal.item;
             return '';
         }
 
@@ -671,8 +677,9 @@
             if (!openSeller) { dealEl.hidden = true; return; }
             const d = DEALS[openSeller];
             dealEl.hidden = false;
-            const itemLine = openItem
-                ? `<div class="cpd-item"><b>${esc(openItem)}</b></div>`
+            const itemName = openItem || (d && d.item) || '';
+            const itemLine = itemName
+                ? `<div class="cpd-item"><b>${esc(itemName)}</b></div>`
                 : `<div class="cpd-item">תיאום איסוף פריט</div>`;
 
             // --- No deal yet: offer to start ---
@@ -685,7 +692,7 @@
                     </div>
                     <div class="cpd-actions"><button class="cpd-btn" id="dStart">התחל תיאום איסוף</button></div>`;
                 dealEl.querySelector('#dStart').onclick = () => {
-                    DEALS[openSeller] = { item: openItem || '', status: 'coordinating', updatedAt: Date.now() };
+                    DEALS[openSeller] = { item: itemName || '', status: 'coordinating', updatedAt: Date.now() };
                     saveDeals();
                     pushSys(openSeller, 'התחלתם לתאם איסוף של הפריט');
                     renderDeal();

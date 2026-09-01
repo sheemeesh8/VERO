@@ -109,6 +109,9 @@
         }
         .oc-resolved.accepted { background: #e8f5ec; color: #1f8f4e; border: 1px solid #bfe4cd; }
         .oc-resolved.declined { background: #f4eaea; color: #b23b3b; border: 1px solid #e6cccc; }
+        .oc-openchat { display: inline-block; margin-top: 10px; font-size: 10.5px; letter-spacing: 0.5px;
+            color: #1c1c1c; text-decoration: none; border-bottom: 1px solid #1c1c1c; padding-bottom: 2px; }
+        .oc-openchat:hover { opacity: 0.6; }
         .oc-buyer { font-size: 10.83px; color: #6b6b66; }
         .oc-buyer b { font-weight: 600; color: #1c1c1c; }
     </style>
@@ -201,7 +204,10 @@
                            <button class="oc-accept" data-ract="accept" data-i="${i}">Accept</button>
                            <button class="oc-decline" data-ract="decline" data-i="${i}">Decline</button>
                        </div>`
-                    : `<div class="oc-resolved ${o.status}">${o.status === 'accepted' ? 'Accepted ✓' : 'Declined'}</div>`;
+                    : o.status === 'accepted'
+                        ? `<div class="oc-resolved accepted">Accepted ✓</div>
+                           <a class="oc-openchat" href="chats.html?from=seller">תאם איסוף בצ'אט →</a>`
+                        : `<div class="oc-resolved declined">Declined</div>`;
                 return `
                     <div class="offer-cube" data-i="${i}">
                         <div class="oc-top">
@@ -225,12 +231,31 @@
         }
         renderRecv();
 
+        // Accepting an offer opens a deal in the seller's chat with that buyer,
+        // seeded with the item so the pickup can be coordinated right away.
+        function openDealWithBuyer(o) {
+            try {
+                const buyer = o.buyer || 'Buyer';
+                const deals = JSON.parse(localStorage.getItem('vero_deals') || '{}');
+                if (!deals[buyer]) {
+                    deals[buyer] = { item: o.name || '', status: 'coordinating', updatedAt: Date.now() };
+                    localStorage.setItem('vero_deals', JSON.stringify(deals));
+                }
+                const chats = JSON.parse(localStorage.getItem('vero_chats') || '{}');
+                if (!Array.isArray(chats[buyer])) chats[buyer] = [];
+                chats[buyer].push({ sender: 'system', content: `קיבלת את ההצעה על ${o.name || 'הפריט'} — תאמו איסוף`, at: Date.now() });
+                localStorage.setItem('vero_chats', JSON.stringify(chats));
+            } catch (e) {}
+        }
+
         recvGrid.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-ract]');
             if (!btn) return;
             const i = Number(btn.dataset.i);
-            recvOffers[i].status = btn.dataset.ract === 'accept' ? 'accepted' : 'declined';
+            const accepted = btn.dataset.ract === 'accept';
+            recvOffers[i].status = accepted ? 'accepted' : 'declined';
             saveRecv();
+            if (accepted) openDealWithBuyer(recvOffers[i]);
             renderRecv();
         });
 
