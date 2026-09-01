@@ -93,6 +93,9 @@
         }
         .chat-body { min-width: 0; flex: 1; }
         .chat-name { font-size: 12.50px; font-weight: 500; }
+        .chat-deal { display: inline-block; font-size: 7.5px; letter-spacing: 0.8px; text-transform: uppercase;
+            vertical-align: middle; margin-inline-start: 7px; padding: 2px 7px; border-radius: 999px;
+            background: #000; color: #fff; }
         .chat-preview {
             font-size: 10.83px; color: #6b6b66; margin-top: 2px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -494,6 +497,14 @@
         document.getElementById('lastActive').textContent  = lastAt ? (timeAgo(lastAt) + ' ago') : '—';
 
         const el = document.getElementById('chatList');
+        // Small "active deal" tag on a chat row, with the current step.
+        const DEAL_LBL = { coordinating: 'מתאמים', scheduled: 'מפגש נקבע', handoff: 'תשלום', paid: 'הושלם' };
+        function dealBadge(seller) {
+            const d = (readJSON('vero_deals', {}) || {})[seller];
+            if (!d || d.status === 'done' || !DEAL_LBL[d.status]) return '';
+            return ` <span class="chat-deal">עסקה · ${DEAL_LBL[d.status]}</span>`;
+        }
+
         let chatSlide = 0;
         const CHATS_PER_SLIDE = 5;
         function renderList(query = '') {
@@ -521,7 +532,7 @@
                     <div class="chat-row" data-i="${i}">
                         <div class="chat-avatar">${t.icon}</div>
                         <div class="chat-body">
-                            <div class="chat-name">${t.seller}</div>
+                            <div class="chat-name">${t.seller}${dealBadge(t.seller)}</div>
                             <div class="chat-preview">${t.preview}</div>
                         </div>
                         <div class="chat-time">${timeAgo(t.at)}</div>
@@ -624,7 +635,13 @@
             setTimeout(() => inputEl.focus(), 300);
         }
 
-        function closeChat() { panel.classList.remove('open'); openSeller = null; document.getElementById('cpDeal').hidden = true; }
+        function closeChat() {
+            panel.classList.remove('open'); openSeller = null;
+            document.getElementById('cpDeal').hidden = true;
+            // Refresh the inbox so deal tags reflect any progress made in the room.
+            const sv = document.getElementById('chatSearch');
+            renderList(sv ? sv.value : '');
+        }
 
         function sendMessage() {
             const text = inputEl.value.trim();
