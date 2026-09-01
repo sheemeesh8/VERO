@@ -426,7 +426,10 @@
 
     <script>
         // Route "back" to whichever area we arrived from — seller or buyer.
-        if (new URLSearchParams(location.search).get('from') === 'seller') {
+        // VIEW_ROLE drives the deal room's wording: as a seller the counterpart is
+        // the buyer and "I" hand the item over; as a buyer it's the reverse.
+        const VIEW_ROLE = new URLSearchParams(location.search).get('from') === 'seller' ? 'seller' : 'buyer';
+        if (VIEW_ROLE === 'seller') {
             document.querySelector('.head-title').textContent = 'Buyer Chats';
             const back = document.querySelector('.back');
             if (back) back.setAttribute('href', 'index.html');
@@ -746,8 +749,17 @@
                 return;
             }
 
-            // --- Step 2: scheduled — meet & confirm handoff ---
+            // --- Step 2: scheduled — meet & confirm handoff (role-aware) ---
             if (d.status === 'scheduled') {
+                const seller = VIEW_ROLE === 'seller';
+                const mineFlag  = seller ? 'sellerGave' : 'buyerGot';
+                const theirFlag = seller ? 'buyerGot'   : 'sellerGave';
+                const myBtn   = seller ? 'מסרתי את הפריט' : 'קיבלתי את הפריט';
+                const myLabel = seller ? 'אתה: מסרתי'     : 'אתה: קיבלתי';
+                const theirLabel = seller ? 'קונה: קיבל'  : 'מוכר: מסר';
+                const myConfirmSys = seller ? 'אישרת שמסרת את הפריט ✓' : 'אישרת שקיבלת את הפריט ✓';
+                const theirConfirmSys = seller ? 'הקונה אישר שקיבל את הפריט ✓' : 'המוכר אישר שמסר את הפריט ✓';
+                const theirReply = seller ? 'קיבלתי, תודה רבה! 🙏' : 'מוסר! תיהנה מהפריט 😊';
                 dealEl.innerHTML = `
                     <div class="cpd-top">${itemLine}<span class="cpd-chip progress">מפגש נקבע</span></div>
                     ${steps(d.status)}
@@ -755,15 +767,15 @@
                         <div><span class="k">מקום</span>${esc(d.place||'—')}</div>
                         <div><span class="k">מועד</span>${esc(d.time||'—')}</div>
                     </div>
-                    <div><div class="cpd-title">אישור קבלת הפריט</div>
-                        <div class="cpd-sub">אחרי המפגש — אשרו שקיבלתם את הפריט. גם המוכר מאשר שמסר אותו.</div></div>
+                    <div><div class="cpd-title">אישור מסירת הפריט</div>
+                        <div class="cpd-sub">אחרי המפגש — כל צד מאשר את המסירה מצדו.</div></div>
                     <div class="cpd-confirmrow">
-                        <span class="${d.buyerGot?'yes':''}">${d.buyerGot?'✓ ':''}אתה: קיבלתי</span>
-                        <span class="${d.sellerGave?'yes':''}">${d.sellerGave?'✓ ':''}מוכר: מסרתי</span>
+                        <span class="${d[mineFlag]?'yes':''}">${d[mineFlag]?'✓ ':''}${myLabel}</span>
+                        <span class="${d[theirFlag]?'yes':''}">${d[theirFlag]?'✓ ':''}${theirLabel}</span>
                     </div>
                     <div class="cpd-actions">
                         <button class="cpd-btn ghost" id="dReschedule">שנה תיאום</button>
-                        <button class="cpd-btn" id="dGot" ${d.buyerGot?'disabled style="opacity:.5"':''}>קיבלתי את הפריט</button>
+                        <button class="cpd-btn" id="dGot" ${d[mineFlag]?'disabled style="opacity:.5"':''}>${myBtn}</button>
                     </div>`;
                 dealEl.querySelector('#dReschedule').onclick = () => {
                     d.status = 'coordinating'; d.updatedAt = Date.now(); saveDeals();
@@ -771,16 +783,16 @@
                     renderDeal();
                 };
                 const gotBtn = dealEl.querySelector('#dGot');
-                if (gotBtn && !d.buyerGot) gotBtn.onclick = () => {
-                    d.buyerGot = true; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, 'אישרת שקיבלת את הפריט ✓');
+                if (gotBtn && !d[mineFlag]) gotBtn.onclick = () => {
+                    d[mineFlag] = true; d.updatedAt = Date.now(); saveDeals();
+                    pushSys(openSeller, myConfirmSys);
                     renderDeal();
-                    // Seller confirms the handoff from their side.
+                    // The counterpart confirms their side.
                     setTimeout(() => {
                         if (!DEALS[openSeller]) return;
-                        d.sellerGave = true; saveDeals();
-                        pushSeller(openSeller, 'מוסר! תיהנה מהפריט 😊');
-                        pushSys(openSeller, 'המוכר אישר שמסר את הפריט ✓');
+                        d[theirFlag] = true; saveDeals();
+                        pushSeller(openSeller, theirReply);
+                        pushSys(openSeller, theirConfirmSys);
                         if (d.buyerGot && d.sellerGave) { d.status = 'handoff'; saveDeals(); }
                         renderDeal();
                     }, 1000);
@@ -810,7 +822,9 @@
                     <div class="cpd-top">${itemLine}<span class="cpd-chip done">הושלם</span></div>
                     ${steps('done')}
                     <div><div class="cpd-title">איך היה? השאר ביקורת</div>
-                        <div class="cpd-sub">הדירוג עוזר לקונים הבאים לסמוך על ${esc(openSeller)}.</div></div>
+                        <div class="cpd-sub">${VIEW_ROLE === 'seller'
+                            ? `דרג את הקונה ${esc(openSeller)} — עוזר למוכרים הבאים.`
+                            : `הדירוג עוזר לקונים הבאים לסמוך על ${esc(openSeller)}.`}</div></div>
                     <div class="cpd-stars" id="dStars">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
                     <div class="cpd-actions"><button class="cpd-btn" id="dReview">שלח ביקורת</button></div>`;
                 let picked = d.rating || 0;
