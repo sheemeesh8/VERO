@@ -266,6 +266,58 @@
         }
         .cp-send:hover { opacity: 0.75; }
 
+        /* ===== Deal room — coordinate a pickup, confirm the handoff ===== */
+        .cp-deal {
+            border-bottom: 1px solid #000; background: #fff;
+            padding: 16px clamp(20px, 5vw, 60px); display: flex; flex-direction: column; gap: 14px;
+        }
+        .cp-deal[hidden] { display: none; }
+        .cpd-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .cpd-item { font-size: 11px; letter-spacing: 0.4px; color: #1c1c1c; min-width: 0;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cpd-item b { font-weight: 600; }
+        .cpd-chip {
+            flex: none; font-size: 8.5px; letter-spacing: 1.4px; text-transform: uppercase;
+            padding: 5px 11px; border-radius: 999px; border: 1px solid #000; background: #fff; color: #000;
+        }
+        .cpd-chip.done { background: #000; color: #fff; }
+        .cpd-chip.progress { background: #f1efe9; }
+        /* Step tracker */
+        .cpd-steps { display: flex; gap: 6px; }
+        .cpd-step { flex: 1; height: 3px; background: #e3e0d8; border-radius: 2px; }
+        .cpd-step.on { background: #000; }
+        /* Action block */
+        .cpd-title { font-size: 13px; font-weight: 500; letter-spacing: 0.3px; }
+        .cpd-sub { font-size: 10.5px; color: #7a766c; line-height: 1.5; margin-top: 3px; }
+        .cpd-fields { display: flex; flex-direction: column; gap: 8px; }
+        .cpd-fields input {
+            border: 1px solid #000; background: #fff; font-family: inherit; font-size: 11.5px; padding: 11px 13px;
+        }
+        .cpd-fields input:focus { outline: none; border-color: #9a7d52; }
+        .cpd-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .cpd-btn {
+            flex: 1 1 auto; border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
+            font-family: inherit; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 12px 16px; transition: opacity 0.2s, background 0.2s;
+        }
+        .cpd-btn:hover { opacity: 0.82; }
+        .cpd-btn.ghost { background: #fff; color: #000; }
+        .cpd-btn.ghost:hover { background: #f0efec; opacity: 1; }
+        .cpd-meet { font-size: 11px; line-height: 1.7; color: #1c1c1c; }
+        .cpd-meet .k { color: #9a9a95; letter-spacing: 1px; text-transform: uppercase; font-size: 8.5px; margin-inline-end: 8px; }
+        .cpd-confirmrow { display: flex; gap: 12px; font-size: 9.5px; color: #7a766c; letter-spacing: 0.4px; }
+        .cpd-confirmrow .yes { color: #1f8f4e; }
+        /* System bubble in the feed (deal log). */
+        .cp-bubble.system {
+            align-self: center; max-width: 90%; text-align: center; background: #f1efe9; color: #6b6b6b;
+            border: 1px dashed #cfcabf; font-size: 10px; letter-spacing: 0.4px;
+        }
+        .cp-bubble.system .cp-time { text-align: center; }
+        /* Star rating for the review card. */
+        .cpd-stars { display: flex; gap: 6px; }
+        .cpd-stars button { border: none; background: none; cursor: pointer; font-size: 22px; line-height: 1; color: #d8d4c8; padding: 0; transition: color 0.15s; }
+        .cpd-stars button.on { color: #d4a017; }
+
         @media (max-width: 780px) {
             .grid { grid-template-columns: 1fr; }
             /* Let the single column shrink to the viewport instead of expanding to
@@ -360,6 +412,8 @@
                 <div class="cp-status">Usually replies within a day</div>
             </div>
         </div>
+        <!-- Deal room: coordinate a pickup and confirm the handoff. Rendered by JS. -->
+        <div class="cp-deal" id="cpDeal" hidden></div>
         <div class="cp-feed" id="cpFeed"></div>
         <div class="cp-input-row">
             <input class="cp-input" id="cpInput" type="text" placeholder="Write a message…" autocomplete="off">
@@ -513,6 +567,7 @@
         const feedEl = document.getElementById('cpFeed');
         const inputEl = document.getElementById('cpInput');
         let openSeller = null;
+        let openItem = '';
 
         // Canned seller replies, cycled for a life-like conversation.
         const SELLER_LINES = [
@@ -542,18 +597,28 @@
             feedEl.scrollTop = feedEl.scrollHeight;
         }
 
+        function itemFor(seller) {
+            const o = offs.find(x => (x.seller || 'VERO') === seller && x.name);
+            if (o) return o.name;
+            const c = items.find(x => (x.seller || 'VERO') === seller && x.name);
+            if (c) return c.name;
+            return '';
+        }
+
         function openChat(i) {
             const t = list[i];
             openSeller = t.seller;
+            openItem = itemFor(t.seller);
             seedThread(t);
             document.getElementById('cpName').textContent = t.seller;
             document.getElementById('cpAvatar').textContent = t.icon || '💬';
             renderFeed();
+            renderDeal();
             panel.classList.add('open');
             setTimeout(() => inputEl.focus(), 300);
         }
 
-        function closeChat() { panel.classList.remove('open'); openSeller = null; }
+        function closeChat() { panel.classList.remove('open'); openSeller = null; document.getElementById('cpDeal').hidden = true; }
 
         function sendMessage() {
             const text = inputEl.value.trim();
@@ -571,6 +636,183 @@
                     renderFeed();
                 }
             }, 900);
+        }
+
+        // ===== Deal room: pickup coordination + handoff (payment handled off-app) =====
+        // Per-seller deal record in vero_deals:
+        //   { item, status, place, time, buyerGot, sellerGave, paid, rating, updatedAt }
+        // status flow: coordinating → scheduled → handoff → paid → done
+        const DEALS = readJSON('vero_deals', {});
+        const saveDeals = () => localStorage.setItem('vero_deals', JSON.stringify(DEALS));
+        const dealEl = document.getElementById('cpDeal');
+
+        function pushSys(seller, text) {
+            if (!CHATS[seller]) CHATS[seller] = [];
+            CHATS[seller].push({ sender: 'system', content: text, at: Date.now() });
+            saveChats();
+            if (openSeller === seller) renderFeed();
+        }
+        function pushSeller(seller, text) {
+            if (!CHATS[seller]) CHATS[seller] = [];
+            CHATS[seller].push({ sender: 'seller', content: text, at: Date.now() });
+            saveChats();
+            if (openSeller === seller) renderFeed();
+        }
+
+        const STEP_OF = { coordinating: 0, scheduled: 1, handoff: 2, paid: 3, done: 3 };
+        function steps(status) {
+            const on = STEP_OF[status] ?? 0;
+            return '<div class="cpd-steps">' + [0,1,2,3].map(i =>
+                `<span class="cpd-step${i <= on ? ' on' : ''}"></span>`).join('') + '</div>';
+        }
+        const esc = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+
+        function renderDeal() {
+            if (!openSeller) { dealEl.hidden = true; return; }
+            const d = DEALS[openSeller];
+            dealEl.hidden = false;
+            const itemLine = openItem
+                ? `<div class="cpd-item"><b>${esc(openItem)}</b></div>`
+                : `<div class="cpd-item">תיאום איסוף פריט</div>`;
+
+            // --- No deal yet: offer to start ---
+            if (!d) {
+                dealEl.innerHTML = `
+                    <div class="cpd-top">${itemLine}<span class="cpd-chip">לא התחיל</span></div>
+                    <div>
+                        <div class="cpd-title">תיאום קבלת הפריט</div>
+                        <div class="cpd-sub">תאמו מקום ושעה למפגש. התשלום מתבצע ביניכם במפגש (מחוץ לאפליקציה).</div>
+                    </div>
+                    <div class="cpd-actions"><button class="cpd-btn" id="dStart">התחל תיאום איסוף</button></div>`;
+                dealEl.querySelector('#dStart').onclick = () => {
+                    DEALS[openSeller] = { item: openItem || '', status: 'coordinating', updatedAt: Date.now() };
+                    saveDeals();
+                    pushSys(openSeller, 'התחלתם לתאם איסוף של הפריט');
+                    renderDeal();
+                };
+                return;
+            }
+
+            // --- Step 1: coordinating — propose a place + time ---
+            if (d.status === 'coordinating') {
+                dealEl.innerHTML = `
+                    <div class="cpd-top">${itemLine}<span class="cpd-chip progress">מתאמים</span></div>
+                    ${steps(d.status)}
+                    <div><div class="cpd-title">הצע מקום ושעה למפגש</div>
+                        <div class="cpd-sub">איפה ומתי נוח לכם להיפגש לאיסוף?</div></div>
+                    <div class="cpd-fields">
+                        <input id="dPlace" type="text" placeholder="מקום — למשל: תחנת רכבת סבידור, ת״א" value="${esc(d.place||'')}">
+                        <input id="dTime"  type="text" placeholder="מועד — למשל: מחר ב-18:00" value="${esc(d.time||'')}">
+                    </div>
+                    <div class="cpd-actions"><button class="cpd-btn" id="dPropose">שלח הצעת מפגש</button></div>`;
+                dealEl.querySelector('#dPropose').onclick = () => {
+                    const place = dealEl.querySelector('#dPlace').value.trim();
+                    const time  = dealEl.querySelector('#dTime').value.trim();
+                    if (!place || !time) { alert('נא למלא מקום ומועד'); return; }
+                    d.place = place; d.time = time; d.status = 'scheduled'; d.updatedAt = Date.now(); saveDeals();
+                    pushSys(openSeller, `הצעת מפגש נשלחה — ${place}, ${time}`);
+                    renderDeal();
+                    // Seller (simulated) confirms shortly.
+                    setTimeout(() => {
+                        if (!DEALS[openSeller]) return;
+                        pushSeller(openSeller, `מעולה, נתראה ב${time} ב${place}. אביא את הפריט 🙌`);
+                        pushSys(openSeller, 'המוכר אישר את המפגש ✓');
+                    }, 1100);
+                };
+                return;
+            }
+
+            // --- Step 2: scheduled — meet & confirm handoff ---
+            if (d.status === 'scheduled') {
+                dealEl.innerHTML = `
+                    <div class="cpd-top">${itemLine}<span class="cpd-chip progress">מפגש נקבע</span></div>
+                    ${steps(d.status)}
+                    <div class="cpd-meet">
+                        <div><span class="k">מקום</span>${esc(d.place||'—')}</div>
+                        <div><span class="k">מועד</span>${esc(d.time||'—')}</div>
+                    </div>
+                    <div><div class="cpd-title">אישור קבלת הפריט</div>
+                        <div class="cpd-sub">אחרי המפגש — אשרו שקיבלתם את הפריט. גם המוכר מאשר שמסר אותו.</div></div>
+                    <div class="cpd-confirmrow">
+                        <span class="${d.buyerGot?'yes':''}">${d.buyerGot?'✓ ':''}אתה: קיבלתי</span>
+                        <span class="${d.sellerGave?'yes':''}">${d.sellerGave?'✓ ':''}מוכר: מסרתי</span>
+                    </div>
+                    <div class="cpd-actions">
+                        <button class="cpd-btn ghost" id="dReschedule">שנה תיאום</button>
+                        <button class="cpd-btn" id="dGot" ${d.buyerGot?'disabled style="opacity:.5"':''}>קיבלתי את הפריט</button>
+                    </div>`;
+                dealEl.querySelector('#dReschedule').onclick = () => {
+                    d.status = 'coordinating'; d.updatedAt = Date.now(); saveDeals();
+                    pushSys(openSeller, 'התיאום נפתח מחדש');
+                    renderDeal();
+                };
+                const gotBtn = dealEl.querySelector('#dGot');
+                if (gotBtn && !d.buyerGot) gotBtn.onclick = () => {
+                    d.buyerGot = true; d.updatedAt = Date.now(); saveDeals();
+                    pushSys(openSeller, 'אישרת שקיבלת את הפריט ✓');
+                    renderDeal();
+                    // Seller confirms the handoff from their side.
+                    setTimeout(() => {
+                        if (!DEALS[openSeller]) return;
+                        d.sellerGave = true; saveDeals();
+                        pushSeller(openSeller, 'מוסר! תיהנה מהפריט 😊');
+                        pushSys(openSeller, 'המוכר אישר שמסר את הפריט ✓');
+                        if (d.buyerGot && d.sellerGave) { d.status = 'handoff'; saveDeals(); }
+                        renderDeal();
+                    }, 1000);
+                };
+                return;
+            }
+
+            // --- Step 3: handoff done — mark paid (off-app) ---
+            if (d.status === 'handoff') {
+                dealEl.innerHTML = `
+                    <div class="cpd-top">${itemLine}<span class="cpd-chip progress">תשלום</span></div>
+                    ${steps(d.status)}
+                    <div><div class="cpd-title">תשלום</div>
+                        <div class="cpd-sub">התשלום מתבצע ביניכם ישירות (מזומן / העברה / ביט). סמנו כאן כששולם.</div></div>
+                    <div class="cpd-actions"><button class="cpd-btn" id="dPaid">סמן ששולם</button></div>`;
+                dealEl.querySelector('#dPaid').onclick = () => {
+                    d.status = 'paid'; d.paid = true; d.updatedAt = Date.now(); saveDeals();
+                    pushSys(openSeller, 'סומן ששולם 💸 — העסקה הושלמה');
+                    renderDeal();
+                };
+                return;
+            }
+
+            // --- Step 4: paid — leave a review, then done ---
+            if (d.status === 'paid') {
+                dealEl.innerHTML = `
+                    <div class="cpd-top">${itemLine}<span class="cpd-chip done">הושלם</span></div>
+                    ${steps('done')}
+                    <div><div class="cpd-title">איך היה? השאר ביקורת</div>
+                        <div class="cpd-sub">הדירוג עוזר לקונים הבאים לסמוך על ${esc(openSeller)}.</div></div>
+                    <div class="cpd-stars" id="dStars">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
+                    <div class="cpd-actions"><button class="cpd-btn" id="dReview">שלח ביקורת</button></div>`;
+                let picked = d.rating || 0;
+                const paint = () => dealEl.querySelectorAll('#dStars button').forEach(b =>
+                    b.classList.toggle('on', Number(b.dataset.n) <= picked));
+                dealEl.querySelectorAll('#dStars button').forEach(b =>
+                    b.onclick = () => { picked = Number(b.dataset.n); paint(); });
+                paint();
+                dealEl.querySelector('#dReview').onclick = () => {
+                    if (!picked) { alert('בחר דירוג בכוכבים'); return; }
+                    d.rating = picked; d.status = 'done'; d.updatedAt = Date.now(); saveDeals();
+                    pushSys(openSeller, `השארת ביקורת: ${'★'.repeat(picked)}${'☆'.repeat(5-picked)}`);
+                    renderDeal();
+                };
+                return;
+            }
+
+            // --- Done: summary ---
+            dealEl.innerHTML = `
+                <div class="cpd-top">${itemLine}<span class="cpd-chip done">✓ הושלם</span></div>
+                ${steps('done')}
+                <div class="cpd-meet">
+                    <div><span class="k">נאסף</span>${esc(d.place||'—')} · ${esc(d.time||'—')}</div>
+                    ${d.rating?`<div><span class="k">דירוג</span>${'★'.repeat(d.rating)}${'☆'.repeat(5-d.rating)}</div>`:''}
+                </div>
+                <div class="cpd-sub">העסקה הושלמה. תודה שהשתמשת ב-VERO 🤍</div>`;
         }
 
         document.getElementById('cpBack').addEventListener('click', closeChat);
