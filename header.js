@@ -1378,15 +1378,8 @@
                         </svg>
                         <span class="badge" id="cartBadge"></span>
                     </button>
-                    <!-- Bare icons that drop out beneath the cart on tap: Cart + Wishlist. -->
+                    <!-- Bare wishlist heart that drops out beneath the cart on tap. -->
                     <div class="hdr-wish-pop" id="cartMenu" role="menu" aria-hidden="true">
-                        <a class="hwp-ico" role="menuitem" href="cart-store.html" title="Cart" aria-label="Cart" onclick="veroPickCart(event)">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle>
-                                <path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path>
-                            </svg>
-                            <span class="badge" id="cartMenuBadge"></span>
-                        </a>
                         <a class="hwp-ico" role="menuitem" href="wishlist.html" title="Wishlist" aria-label="Wishlist" onclick="veroPickWishlist(event)">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
