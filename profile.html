@@ -2258,14 +2258,14 @@
             <div class="ps-preview-hint buyer-only">גרור להזזה • פינץ' להגדלה • הקש פעמיים לאיפוס</div>
             <div class="ps-preview-actions buyer-only">
                 <label class="ps-preview-btn" for="storeBgInput"
-                       onclick="document.getElementById('storeBgInput').value='';">Change background (image/video)</label>
+                       onclick="document.getElementById('storeBgInput').value='';">Change background</label>
                 <label class="ps-preview-btn" for="pf-photo"
                        onclick="document.getElementById('pf-photo').value='';">Change profile picture</label>
             </div>
             <!-- The <label for=…> pattern is the reliable way to open a file picker
                  on mobile browsers (Samsung Internet, iOS Safari); a hidden input
                  opened via input.click() is refused there when off-screen. -->
-            <input type="file" id="storeBgInput" accept="image/*,video/*" hidden>
+            <input type="file" id="storeBgInput" accept="image/*" hidden>
             <input type="file" id="pf-photo" accept="image/*" hidden>
             <!-- White panel: name + rotating stat, then status + bio — same card as
                  the storefront / profilefront. -->
@@ -3218,34 +3218,17 @@
             input.addEventListener('change', async (e) => {
                 const file = e.target.files && e.target.files[0];
                 if (!file) { return; }
-                const isVideo = /^video\//.test(file.type);
                 try {
-                    if (isVideo) {
-                        // IndexedDB holds the clip, so the cap is generous (not the
-                        // ~5MB localStorage limit) — just guard against absurd files.
-                        if (file.size > 50 * 1024 * 1024) {
-                            alert('הסרטון גדול מדי (מקסימום 50MB). נסה קובץ קצר או קטן יותר.');
-                            input.value = ''; return;
-                        }
-                        await veroMediaSet('heroVideo', file);
-                        await veroMediaDelete('hero');
-                        const cfg = readCfg();
-                        cfg.heroVideo = VERO_IDB_FLAG;
-                        delete cfg.hero;
-                        localStorage.setItem('vero_store_config', JSON.stringify(cfg));
-                        paintVideo(URL.createObjectURL(file));
-                    } else {
-                        const blob = await downscaleImageBlob(file, 1600, 0.85);
-                        await veroMediaSet('hero', blob);
-                        await veroMediaDelete('heroVideo');
-                        const cfg = readCfg();
-                        cfg.hero = VERO_IDB_FLAG;
-                        delete cfg.heroVideo;
-                        localStorage.setItem('vero_store_config', JSON.stringify(cfg));
-                        paint(URL.createObjectURL(blob));
-                    }
+                    const blob = await downscaleImageBlob(file, 1600, 0.85);
+                    await veroMediaSet('hero', blob);
+                    await veroMediaDelete('heroVideo');
+                    const cfg = readCfg();
+                    cfg.hero = VERO_IDB_FLAG;
+                    delete cfg.heroVideo;
+                    localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+                    paint(URL.createObjectURL(blob));
                 } catch (err) {
-                    alert('לא הצלחנו לשמור את הקובץ. נסה שוב או קובץ אחר.');
+                    alert('לא הצלחנו לשמור את התמונה. נסה שוב או תמונה אחרת.');
                 }
                 input.value = '';
             });
