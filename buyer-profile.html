@@ -93,8 +93,12 @@
             border-bottom: 1px solid #000;
             display: flex; align-items: flex-end;
         }
+        .hero > video.hero-video {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 0; pointer-events: none;
+        }
         .hero::after {
-            content: ""; position: absolute; inset: 0;
+            content: ""; position: absolute; inset: 0; z-index: 1;
             background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.55) 100%);
         }
         .hero-inner { position: relative; z-index: 2; padding: 0 44px 40px; color: #fff; width: 100%; }
@@ -945,7 +949,8 @@
             if (full) BUYER.name = full;
             if (prof.bio  && prof.bio.trim())  BUYER.tag  = prof.bio.trim();
             if (prof.avatarImg) BUYER.avatar = prof.avatarImg;
-            if (store.hero)     BUYER.hero   = store.hero;
+            if (store.hero)      BUYER.hero      = store.hero;
+            if (store.heroVideo) BUYER.heroVideo = store.heroVideo;
             // Socials: the buyer settings slide (.ps-social inputs) stores each link
             // as a FLAT field (prof.instagram / prof.tiktok / prof.facebook), while an
             // older path nested them under prof.socials. Read both so links set in
@@ -1016,8 +1021,23 @@
         (function setPortrait(){
             const avatar = BUYER.avatar || BUYER.hero;   // profile picture (fallback to cover)
             const cover  = BUYER.hero  || BUYER.avatar;   // background picture (fallback to avatar)
-            document.getElementById('hero').style.backgroundImage = `url('${cover}')`;
-            const bg = document.getElementById('dnBg'); if (bg) bg.style.backgroundImage = `url('${cover}')`;
+            const heroEl = document.getElementById('hero');
+            if (BUYER.heroVideo) {
+                let v = heroEl.querySelector('video.hero-video');
+                if (!v) {
+                    v = document.createElement('video');
+                    v.className = 'hero-video';
+                    v.autoplay = true; v.loop = true; v.muted = true; v.playsInline = true;
+                    v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.setAttribute('autoplay', '');
+                    heroEl.insertBefore(v, heroEl.firstChild);
+                }
+                v.src = BUYER.heroVideo;
+                v.play && v.play().catch(() => {});
+                heroEl.style.backgroundImage = '';
+            } else {
+                heroEl.style.backgroundImage = `url('${cover}')`;
+            }
+            const bg = document.getElementById('dnBg'); if (bg && cover) bg.style.backgroundImage = `url('${cover}')`;
             const card = document.getElementById('pfCardImg'); if (card && avatar) card.src = avatar;
         })();
         document.getElementById('itemCount').textContent = PRODUCTS.length;

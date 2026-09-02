@@ -82,6 +82,10 @@
             display: flex; align-items: flex-end;
             border-bottom: 1px solid #000;
         }
+        .profile-hero > video.hero-video {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 0; pointer-events: none;
+        }
         .profile-hero::after {
             content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
             background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.72) 100%);
@@ -2239,14 +2243,14 @@
             <!-- Buyer settings only: change the two images straight from the preview. -->
             <div class="ps-preview-actions buyer-only">
                 <button type="button" class="ps-preview-btn" id="psChangeBg"
-                    onclick="document.getElementById('storeBgInput').click()">Change background</button>
+                    onclick="document.getElementById('storeBgInput').click()">Change background (image/video)</button>
                 <button type="button" class="ps-preview-btn" id="psChangePhoto"
                     onclick="document.getElementById('pf-photo').click()">Change profile picture</button>
             </div>
             <!-- Pickers the change buttons (and the existing handlers) trigger. Kept
                  in the layout but visually hidden — a display:none/hidden file input
                  can't be reliably opened by .click() on mobile. -->
-            <input type="file" id="storeBgInput" accept="image/*"
+            <input type="file" id="storeBgInput" accept="image/*,video/*"
                    style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;left:-9999px;">
             <input type="file" id="pf-photo" accept="image/*"
                    style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;left:-9999px;">
@@ -3118,15 +3122,41 @@
         // Member-since: set once on first visit, then remembered (kept for stats).
         if (!profile.since) { profile.since = Date.now(); localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }
 
-        // ---- Store background image → saved on vero_store_config.hero, which
-        //      store-profile.html reads to paint the storefront hero. ----
+        // ---- Store background image / video → saved on vero_store_config.hero
+        //      (image data URL) or vero_store_config.heroVideo (video data URL);
+        //      the storefront and buyer-profile pages read both to paint the hero. ----
         (function storeBackground() {
             const preview = document.getElementById('storeBgPreview');
             const btn = document.getElementById('changeBg');
             const input = document.getElementById('storeBgInput');
             if (!preview || !input) return;   // #changeBg is optional; the input is what matters
             const readCfg = () => { try { return JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { return {}; } };
+            function getVideoEl() {
+                let v = preview.querySelector('video.hero-video');
+                if (!v) {
+                    v = document.createElement('video');
+                    v.className = 'hero-video';
+                    v.autoplay = true; v.loop = true; v.muted = true;
+                    v.playsInline = true; v.setAttribute('playsinline', '');
+                    v.setAttribute('muted', ''); v.setAttribute('autoplay', '');
+                    preview.insertBefore(v, preview.firstChild);
+                }
+                return v;
+            }
+            function removeVideoEl() {
+                const v = preview.querySelector('video.hero-video');
+                if (v) v.remove();
+            }
+            function paintVideo(url) {
+                const v = getVideoEl();
+                v.src = url;
+                v.play && v.play().catch(() => {});
+                preview.style.backgroundImage = '';
+                preview.classList.add('has-img');
+                preview.classList.remove('hero-dark-text');
+            }
             function paint(url) {
+                removeVideoEl();
                 if (url) { preview.style.backgroundImage = `url('${url}')`; preview.classList.add('has-img'); }
                 else { preview.style.backgroundImage = ''; preview.classList.remove('has-img'); }
                 applyContrast(url);
@@ -3158,21 +3188,74 @@
                 };
                 img.src = url;
             }
-            paint(readCfg().hero);
+            const initCfg = readCfg();
+            if (initCfg.heroVideo) paintVideo(initCfg.heroVideo);
+            else paint(initCfg.hero);
             if (btn) btn.addEventListener('click', () => input.click());
             input.addEventListener('change', (e) => {
                 const file = e.target.files && e.target.files[0];
                 if (!file) return;
+                const isVideo = /^video\//.test(file.type);
+                if (isVideo) {
+                    if (file.size > 8 * 1024 * 1024) {
+                        alert('הסרטון גדול מדי (מקסימום 8MB). נסה קובץ קצר או קטן יותר.');
+                        input.value = ''; return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const cfg = readCfg();
+                        cfg.heroVideo = reader.result;
+                        delete cfg.hero;
+                        try {
+                            localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+                            paintVideo(cfg.heroVideo);
+                        } catch (err) {
+                            alert('אין מספיק מקום לשמור את הסרטון. נסה קובץ קטן יותר.');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    downscaleImage(file, 1600, 0.85).then(dataUrl => {
+                        const cfg = readCfg();
+                        cfg.hero = dataUrl;
+                        delete cfg.heroVideo;
+                        try {
+                            localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+                            paint(cfg.hero);
+                        } catch (err) {
+                            alert('אין מספיק מקום לשמור את התמונה. נסה תמונה קטנה יותר.');
+                        }
+                    }).catch(() => alert('לא הצלחנו לטעון את התמונה.'));
+                }
+                input.value = '';
+            });
+        })();
+
+        // Shrink a picture on a canvas → JPEG data URL. Keeps localStorage under
+        // its ~5MB per-origin cap when a user uploads a huge camera photo.
+        function downscaleImage(file, maxDim, quality) {
+            return new Promise((resolve, reject) => {
                 const reader = new FileReader();
+                reader.onerror = () => reject(reader.error);
                 reader.onload = () => {
-                    const cfg = readCfg();
-                    cfg.hero = reader.result;
-                    localStorage.setItem('vero_store_config', JSON.stringify(cfg));
-                    paint(cfg.hero);
+                    const img = new Image();
+                    img.onerror = () => reject(new Error('decode'));
+                    img.onload = () => {
+                        let w = img.naturalWidth, h = img.naturalHeight;
+                        const scale = Math.min(1, maxDim / Math.max(w, h));
+                        w = Math.round(w * scale); h = Math.round(h * scale);
+                        const c = document.createElement('canvas');
+                        c.width = w; c.height = h;
+                        const ctx = c.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        try { resolve(c.toDataURL('image/jpeg', quality || 0.85)); }
+                        catch (e) { resolve(reader.result); }
+                    };
+                    img.src = reader.result;
                 };
                 reader.readAsDataURL(file);
             });
-        })();
+        }
 
         // ---- Settings hero card: status, photo, waves, share, action popup ----
         (function heroCard() {
@@ -3185,13 +3268,15 @@
             // Buyer: two images — the background picture fills the hero, the
             // profile picture sits in the centred preview card.
             if (!isSeller) {
-                let cover = '';
-                try { cover = (JSON.parse(localStorage.getItem('vero_store_config')) || {}).hero || ''; } catch (e) {}
-                if (!cover) cover = 'women-hero.jpg';
-                hero.style.backgroundImage = `url('${cover}')`;
+                let cfg = {};
+                try { cfg = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
+                const cover = cfg.hero || (cfg.heroVideo ? '' : 'women-hero.jpg');
+                // storeBackground() paints the video when heroVideo is present; only
+                // set a still image here when no video is configured.
+                if (!cfg.heroVideo) hero.style.backgroundImage = `url('${cover}')`;
                 hero.classList.remove('hero-dark-text');
                 const ci = document.getElementById('settingsCardImg');
-                if (ci) ci.src = profile.avatarImg || cover;
+                if (ci) ci.src = profile.avatarImg || cover || 'women-hero.jpg';
             }
 
             // Status: seller = Open/Closed (from opening hours), buyer = Online/Offline.
@@ -3444,16 +3529,16 @@
         if (photoInput) photoInput.addEventListener('change', (e) => {
             const file = e.target.files && e.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                profile.avatarImg = reader.result;
-                localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+            downscaleImage(file, 800, 0.9).then(dataUrl => {
+                profile.avatarImg = dataUrl;
+                try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }
+                catch (err) { alert('אין מספיק מקום לשמור את התמונה. נסה תמונה קטנה יותר.'); return; }
                 refreshAvatar();
                 refreshStoreAvatar();
                 const ci = document.getElementById('settingsCardImg');
-                if (ci) ci.src = reader.result;   // live-update the buyer preview card
-            };
-            reader.readAsDataURL(file);
+                if (ci) ci.src = dataUrl;   // live-update the buyer preview card
+            }).catch(() => alert('לא הצלחנו לטעון את התמונה.'));
+            photoInput.value = '';
         });
 
         // ---- Bio character counter (max 200) ----
