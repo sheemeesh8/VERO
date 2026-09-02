@@ -773,41 +773,24 @@
             font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         #siteHeader .badge.show { display: flex; }
-        /* Cart / Wishlist dropdown, revealed on tapping the cart icon. */
+        /* Wishlist heart that drops out from beneath the cart icon on tap. */
         #siteHeader .hdr-cart { position: relative; }
         #siteHeader .hdr-cart-btn { background: none; border: none; cursor: pointer; padding: 0; color: inherit; }
-        #siteHeader .hdr-cart-menu {
-            position: absolute; top: calc(100% + 12px); right: 0; z-index: 260;
-            min-width: 208px; padding: 7px; direction: rtl;
-            background: #fff; border: 1px solid #ecebe7; border-radius: 16px;
-            box-shadow: 0 18px 44px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.06);
-            opacity: 0; visibility: hidden; transform: translateY(-8px) scale(0.98);
-            transform-origin: top right;
-            transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.22,1,0.36,1), visibility 0.2s;
+        #siteHeader .hdr-wish-pop {
+            position: absolute; top: 100%; left: 50%; z-index: 260;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 38px; height: 38px; margin-top: 4px; color: inherit; text-decoration: none;
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transform: translate(-50%, -10px) scale(0.7);
+            transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1), visibility 0.24s;
         }
-        #siteHeader .hdr-cart-menu.open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
-        /* Little pointer up to the cart icon. */
-        #siteHeader .hdr-cart-menu::before {
-            content: ""; position: absolute; top: -6px; right: 18px; width: 12px; height: 12px;
-            background: #fff; border-left: 1px solid #ecebe7; border-top: 1px solid #ecebe7;
-            transform: rotate(45deg);
+        #siteHeader .hdr-wish-pop.open {
+            opacity: 1; visibility: visible; pointer-events: auto;
+            transform: translate(-50%, 0) scale(1);
         }
-        #siteHeader .hcm-item {
-            position: relative; display: flex; align-items: center; gap: 12px;
-            padding: 12px 12px; border-radius: 11px; text-decoration: none;
-            color: #1c1c1c; font-family: 'Poppins', 'Inter', 'Segoe UI', sans-serif;
-            font-size: 13.5px; letter-spacing: 0.2px; transition: background 0.16s;
-        }
-        #siteHeader .hcm-item:hover { background: #f5f4f1; }
-        #siteHeader .hcm-ico { display: inline-flex; color: #111; flex: none; }
-        #siteHeader .hcm-label { flex: 1; text-align: right; font-weight: 500; }
-        #siteHeader .hcm-badge {
-            min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
-            background: #EB2323; color: #fff; font-size: 10px; font-weight: 700;
-            display: none; align-items: center; justify-content: center; line-height: 1;
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-        }
-        #siteHeader .hcm-badge.show { display: flex; }
+        #siteHeader .hdr-wish-pop svg { display: block; }
+        #siteHeader .hdr-wish-pop:hover svg { fill: currentColor; }
+        #siteHeader .hdr-wish-pop .badge { top: -2px; right: -2px; }
         /* Hamburger (replaces the old Social link) */
         #siteHeader .vero-hamburger {
             display: inline-flex; flex-direction: column; align-items: flex-end; justify-content: center;
@@ -1382,35 +1365,20 @@
                     </svg>
                 </a>
                 <span class="hdr-cart" data-icon="cart">
-                    <button class="icon-btn icon-wrap hdr-cart-btn" title="Cart & Wishlist" aria-label="Cart & Wishlist" aria-haspopup="true" aria-expanded="false" onclick="veroToggleCartMenu(event)">
+                    <button class="icon-btn icon-wrap hdr-cart-btn" title="Cart" aria-label="Cart" aria-expanded="false" onclick="veroToggleCartMenu(event)">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle>
                             <path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path>
                         </svg>
                         <span class="badge" id="cartBadge"></span>
                     </button>
-                    <!-- Dropdown revealed on tap: pick the Cart or the Wishlist. -->
-                    <div class="hdr-cart-menu" id="cartMenu" role="menu" aria-hidden="true">
-                        <a class="hcm-item" role="menuitem" href="cart-store.html" onclick="veroPickCart(event)">
-                            <span class="hcm-ico">
-                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle>
-                                    <path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path>
-                                </svg>
-                            </span>
-                            <span class="hcm-label">עגלת קניות</span>
-                            <span class="hcm-badge" id="cartMenuBadge"></span>
-                        </a>
-                        <a class="hcm-item" role="menuitem" href="wishlist.html" onclick="veroPickWishlist(event)">
-                            <span class="hcm-ico">
-                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
-                                </svg>
-                            </span>
-                            <span class="hcm-label">רשימת משאלות</span>
-                            <span class="hcm-badge" id="wishMenuBadge"></span>
-                        </a>
-                    </div>
+                    <!-- Bare heart icon that drops out beneath the cart on tap → the wishlist. -->
+                    <a class="hdr-wish-pop" id="cartMenu" href="wishlist.html" aria-hidden="true" tabindex="-1" title="Wishlist" aria-label="Wishlist" onclick="veroPickWishlist(event)">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
+                        </svg>
+                        <span class="badge" id="wishMenuBadge"></span>
+                    </a>
                 </span>
                 <span class="hdr-account" data-icon="account">
                     <button class="icon-btn hdr-account-btn" title="My Account (hold to switch profile)" aria-label="My Account">
@@ -2714,17 +2682,23 @@
         if (menu) menu.setAttribute('aria-hidden', 'true');
         if (btn) btn.setAttribute('aria-expanded', 'false');
     };
+    // First tap on the cart icon reveals the wishlist heart beneath it; a second
+    // tap (heart already showing) goes to the cart. Tapping the heart → wishlist.
     window.veroToggleCartMenu = function (e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         const menu = document.getElementById('cartMenu');
         const btn = document.querySelector('.hdr-cart-btn');
-        if (!menu) { window.veroSlideToCart && window.veroSlideToCart(); return; }
-        // Refresh the little counts each time it opens.
+        if (!menu) { window.veroSlideToCart && window.veroSlideToCart('cart-store.html'); return; }
         try { updateBadgesFromStorage(); } catch (_) {}
-        const willOpen = !menu.classList.contains('open');
-        menu.classList.toggle('open', willOpen);
-        menu.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
-        if (btn) btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (menu.classList.contains('open')) {
+            // Heart already out → the cart icon now takes you to the cart.
+            window.veroCloseCartMenu();
+            window.veroPickCart();
+            return;
+        }
+        menu.classList.add('open');
+        menu.setAttribute('aria-hidden', 'false');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
     };
     window.veroPickCart = function (e) {
         if (e) e.preventDefault();
