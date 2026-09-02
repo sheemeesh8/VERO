@@ -2634,9 +2634,16 @@
         // Personal account shows the profile picture; seller account shows the
         // store's initial so you can tell at a glance which account you're in.
         if (!seller && prof.avatarImg) {
-            el.style.backgroundImage = `url('${prof.avatarImg}')`;
-            el.classList.add('has-img');
-            el.textContent = '';
+            // The avatar may live in IndexedDB (avatarImg === 'idb'); resolve it.
+            if (prof.avatarImg === 'idb' && typeof window.veroResolveMedia === 'function') {
+                window.veroResolveMedia('idb', 'avatar').then(url => {
+                    if (url) { el.style.backgroundImage = `url('${url}')`; el.classList.add('has-img'); el.textContent = ''; }
+                });
+            } else if (prof.avatarImg !== 'idb') {
+                el.style.backgroundImage = `url('${prof.avatarImg}')`;
+                el.classList.add('has-img');
+                el.textContent = '';
+            }
         } else {
             el.style.backgroundImage = '';
             el.classList.remove('has-img');

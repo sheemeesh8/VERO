@@ -780,6 +780,7 @@
             font-family: 'League Spartan', 'Poppins', sans-serif !important;
         }
     </style>
+    <script src="media-store.js"></script>
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
     <script src="username.js"></script>
@@ -1018,11 +1019,15 @@
         })();
         // Two images: the profile picture fills the centre card; the background
         // picture (the buyer's hero/cover) fills the full-screen backdrop.
-        (function setPortrait(){
-            const avatar = BUYER.avatar || BUYER.hero;   // profile picture (fallback to cover)
-            const cover  = BUYER.hero  || BUYER.avatar;   // background picture (fallback to avatar)
+        (async function setPortrait(){
+            // Media may live in IndexedDB (value === 'idb'); resolve to real URLs.
+            const resolve = (v, k) => (typeof window.veroResolveMedia === 'function'
+                ? window.veroResolveMedia(v, k) : Promise.resolve(v));
+            const avatarSrc = (await resolve(BUYER.avatar, 'avatar')) || (await resolve(BUYER.hero, 'hero'));
+            const coverSrc  = (await resolve(BUYER.hero, 'hero')) || (await resolve(BUYER.avatar, 'avatar'));
+            const videoSrc  = BUYER.heroVideo ? await resolve(BUYER.heroVideo, 'heroVideo') : null;
             const heroEl = document.getElementById('hero');
-            if (BUYER.heroVideo) {
+            if (videoSrc) {
                 let v = heroEl.querySelector('video.hero-video');
                 if (!v) {
                     v = document.createElement('video');
@@ -1031,16 +1036,16 @@
                     v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.setAttribute('autoplay', '');
                     heroEl.insertBefore(v, heroEl.firstChild);
                 }
-                v.src = BUYER.heroVideo;
+                v.src = videoSrc;
                 v.play && v.play().catch(() => {});
                 heroEl.style.backgroundImage = '';
-            } else {
-                heroEl.style.backgroundImage = `url('${cover}')`;
+            } else if (coverSrc) {
+                heroEl.style.backgroundImage = `url('${coverSrc}')`;
             }
-            const bg = document.getElementById('dnBg'); if (bg && cover) bg.style.backgroundImage = `url('${cover}')`;
+            const bg = document.getElementById('dnBg'); if (bg && coverSrc) bg.style.backgroundImage = `url('${coverSrc}')`;
             const card = document.getElementById('pfCardImg');
-            if (card && avatar) {
-                card.src = avatar;
+            if (card && avatarSrc) {
+                card.src = avatarSrc;
                 // Mirror the crop the buyer set in profile settings (profile.avatarPos).
                 try {
                     const prof = JSON.parse(localStorage.getItem('vero_profile')) || {};

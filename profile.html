@@ -2218,6 +2218,7 @@
         body:not(.is-seller) #storeBgPreview .ps-preview-card { cursor: grab; user-select: none; -webkit-user-select: none; }
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
+    <script src="media-store.js"></script>
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
     <script src="username.js"></script>
@@ -3195,52 +3196,57 @@
                 };
                 img.src = url;
             }
-            const initCfg = readCfg();
-            if (initCfg.heroVideo) paintVideo(initCfg.heroVideo);
-            else paint(initCfg.hero);
+            // Paint whatever is configured, resolving IndexedDB-backed media.
+            (async function initHero() {
+                const cfg = readCfg();
+                if (cfg.heroVideo) {
+                    const url = await veroResolveMedia(cfg.heroVideo, 'heroVideo');
+                    if (url) return paintVideo(url);
+                }
+                let url = await veroResolveMedia(cfg.hero, 'hero');
+                // Buyer settings show a default cover when nothing is set yet.
+                if (!url && typeof isSeller !== 'undefined' && !isSeller) url = 'women-hero.jpg';
+                paint(url);
+            })();
             if (btn) btn.addEventListener('click', () => input.click());
-            input.addEventListener('change', (e) => {
+            input.addEventListener('change', async (e) => {
                 const file = e.target.files && e.target.files[0];
-                if (!file) return;
+                if (!file) { return; }
                 const isVideo = /^video\//.test(file.type);
-                if (isVideo) {
-                    if (file.size > 8 * 1024 * 1024) {
-                        alert('הסרטון גדול מדי (מקסימום 8MB). נסה קובץ קצר או קטן יותר.');
-                        input.value = ''; return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = () => {
+                try {
+                    if (isVideo) {
+                        // IndexedDB holds the clip, so the cap is generous (not the
+                        // ~5MB localStorage limit) — just guard against absurd files.
+                        if (file.size > 50 * 1024 * 1024) {
+                            alert('הסרטון גדול מדי (מקסימום 50MB). נסה קובץ קצר או קטן יותר.');
+                            input.value = ''; return;
+                        }
+                        await veroMediaSet('heroVideo', file);
+                        await veroMediaDelete('hero');
                         const cfg = readCfg();
-                        cfg.heroVideo = reader.result;
+                        cfg.heroVideo = VERO_IDB_FLAG;
                         delete cfg.hero;
-                        try {
-                            localStorage.setItem('vero_store_config', JSON.stringify(cfg));
-                            paintVideo(cfg.heroVideo);
-                        } catch (err) {
-                            alert('אין מספיק מקום לשמור את הסרטון. נסה קובץ קטן יותר.');
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    downscaleImage(file, 1600, 0.85).then(dataUrl => {
+                        localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+                        paintVideo(URL.createObjectURL(file));
+                    } else {
+                        const blob = await downscaleImageBlob(file, 1600, 0.85);
+                        await veroMediaSet('hero', blob);
+                        await veroMediaDelete('heroVideo');
                         const cfg = readCfg();
-                        cfg.hero = dataUrl;
+                        cfg.hero = VERO_IDB_FLAG;
                         delete cfg.heroVideo;
-                        try {
-                            localStorage.setItem('vero_store_config', JSON.stringify(cfg));
-                            paint(cfg.hero);
-                        } catch (err) {
-                            alert('אין מספיק מקום לשמור את התמונה. נסה תמונה קטנה יותר.');
-                        }
-                    }).catch(() => alert('לא הצלחנו לטעון את התמונה.'));
+                        localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+                        paint(URL.createObjectURL(blob));
+                    }
+                } catch (err) {
+                    alert('לא הצלחנו לשמור את הקובץ. נסה שוב או קובץ אחר.');
                 }
                 input.value = '';
             });
         })();
 
-        // Shrink a picture on a canvas → JPEG data URL. Keeps localStorage under
-        // its ~5MB per-origin cap when a user uploads a huge camera photo.
-        function downscaleImage(file, maxDim, quality) {
+        // Shrink a picture on a canvas → a JPEG Blob, stored in IndexedDB.
+        function downscaleImageBlob(file, maxDim, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onerror = () => reject(reader.error);
@@ -3253,10 +3259,8 @@
                         w = Math.round(w * scale); h = Math.round(h * scale);
                         const c = document.createElement('canvas');
                         c.width = w; c.height = h;
-                        const ctx = c.getContext('2d');
-                        ctx.drawImage(img, 0, 0, w, h);
-                        try { resolve(c.toDataURL('image/jpeg', quality || 0.85)); }
-                        catch (e) { resolve(reader.result); }
+                        c.getContext('2d').drawImage(img, 0, 0, w, h);
+                        c.toBlob(b => b ? resolve(b) : reject(new Error('toBlob')), 'image/jpeg', quality || 0.85);
                     };
                     img.src = reader.result;
                 };
@@ -3275,15 +3279,20 @@
             // Buyer: two images — the background picture fills the hero, the
             // profile picture sits in the centred preview card.
             if (!isSeller) {
-                let cfg = {};
-                try { cfg = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
-                const cover = cfg.hero || (cfg.heroVideo ? '' : 'women-hero.jpg');
-                // storeBackground() paints the video when heroVideo is present; only
-                // set a still image here when no video is configured.
-                if (!cfg.heroVideo) hero.style.backgroundImage = `url('${cover}')`;
                 hero.classList.remove('hero-dark-text');
+                // storeBackground() owns the hero background/video (resolving any
+                // IndexedDB-backed media). Here we only fill the centred preview
+                // card image, again resolving IDB pointers to a usable URL.
                 const ci = document.getElementById('settingsCardImg');
-                if (ci) ci.src = profile.avatarImg || cover || 'women-hero.jpg';
+                if (ci) {
+                    (async () => {
+                        let cfg = {};
+                        try { cfg = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
+                        const avatar = await veroResolveMedia(profile.avatarImg, 'avatar');
+                        const cover = await veroResolveMedia(cfg.hero, 'hero');
+                        ci.src = avatar || cover || 'women-hero.jpg';
+                    })();
+                }
             }
 
             // Status: seller = Open/Closed (from opening hours), buyer = Online/Offline.
@@ -3346,15 +3355,22 @@
         // the name (falls back to V).
         const avatarEl = document.getElementById('avatar');
         const sideImageEl = document.querySelector('.side-image');
+        // The avatar may live in IndexedDB (profile.avatarImg === 'idb'); resolve it
+        // to a usable URL once, then paint from this.
+        let avatarObjURL = null;
+        async function resolveAvatar() {
+            avatarObjURL = await veroResolveMedia(profile.avatarImg, 'avatar');
+            refreshAvatar();
+        }
         function refreshAvatar() {
             if (!avatarEl) return;   // store card now uses empty rectangles, no avatar
-            if (profile.avatarImg) {
-                avatarEl.style.backgroundImage = `url('${profile.avatarImg}')`;
+            if (profile.avatarImg && avatarObjURL) {
+                avatarEl.style.backgroundImage = `url('${avatarObjURL}')`;
                 avatarEl.textContent = '';
                 avatarEl.classList.add('has-img');
                 // The big side image mirrors the profile photo, in full colour.
                 if (sideImageEl) {
-                    sideImageEl.style.backgroundImage = `url('${profile.avatarImg}')`;
+                    sideImageEl.style.backgroundImage = `url('${avatarObjURL}')`;
                     sideImageEl.style.filter = 'none';
                 }
             } else {
@@ -3366,14 +3382,14 @@
             }
             if (typeof refreshStoreAvatar === 'function') refreshStoreAvatar();
         }
-        refreshAvatar();
+        resolveAvatar();
 
         // Mirror the profile photo onto the Store-appearance avatar.
         function refreshStoreAvatar() {
             const el = document.getElementById('storeAvatar');
             if (!el) return;
-            if (profile.avatarImg) {
-                el.style.backgroundImage = `url('${profile.avatarImg}')`;
+            if (profile.avatarImg && avatarObjURL) {
+                el.style.backgroundImage = `url('${avatarObjURL}')`;
                 el.classList.add('has-img');
                 el.textContent = '';
             } else {
@@ -3531,21 +3547,25 @@
             };
         }
 
-        // ---- Profile picture upload (stored as a data URL on the profile) ----
+        // ---- Profile picture upload (stored as a Blob in IndexedDB) ----
         const photoInput = document.getElementById('pf-photo');
-        if (photoInput) photoInput.addEventListener('change', (e) => {
+        if (photoInput) photoInput.addEventListener('change', async (e) => {
             const file = e.target.files && e.target.files[0];
             if (!file) return;
-            downscaleImage(file, 800, 0.9).then(dataUrl => {
-                profile.avatarImg = dataUrl;
+            try {
+                const blob = await downscaleImageBlob(file, 800, 0.9);
+                await veroMediaSet('avatar', blob);
+                profile.avatarImg = VERO_IDB_FLAG;
                 profile.avatarPos = { x: 0, y: 0, scale: 1.18 };   // start centred; user can drag/pinch to reframe
-                try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }
-                catch (err) { alert('אין מספיק מקום לשמור את התמונה. נסה תמונה קטנה יותר.'); return; }
+                localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+                avatarObjURL = URL.createObjectURL(blob);
                 refreshAvatar();
                 refreshStoreAvatar();
                 const ci = document.getElementById('settingsCardImg');
-                if (ci) { ci.src = dataUrl; applyCardTransform(); }
-            }).catch(() => alert('לא הצלחנו לטעון את התמונה.'));
+                if (ci) { ci.src = avatarObjURL; applyCardTransform(); }
+            } catch (err) {
+                alert('לא הצלחנו לשמור את התמונה. נסה שוב.');
+            }
             photoInput.value = '';
         });
 
