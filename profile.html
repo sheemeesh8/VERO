@@ -4217,6 +4217,15 @@
             localStorage.setItem(SEEN_KEY(id), SIG[id]());
             const t = tabFor(id); if (t) t.classList.remove('has-dot');
         }
+        // A deal that awaits a tap from the user (propose / mark paid / review)
+        // keeps a dot on the Chats tab until it advances — beyond the change dot.
+        function dealNeedsAction() {
+            const deals = readJSON('vero_deals') || {};
+            return Object.keys(deals).some(k => {
+                const d = deals[k];
+                return d && ['coordinating', 'handoff', 'paid'].indexOf(d.status) !== -1;
+            });
+        }
         function refreshDots() {
             Object.keys(SIG).forEach(id => {
                 const cur = SIG[id]();
@@ -4225,6 +4234,9 @@
                 const t = tabFor(id);
                 if (t) t.classList.toggle('has-dot', cur !== seen);
             });
+            // Persistent deal indicator on the Chats tab.
+            const ct = tabFor('chats');
+            if (ct && dealNeedsAction()) ct.classList.add('has-dot');
         }
         refreshDots();
         // Re-check when another tab/iframe writes to storage, and on focus.
