@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO — My Wishlist</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&family=Oswald:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1c1c1c; background: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Entry: the image holds static on the left while the content slides in
+           from the left — nothing covers the image on load. */
+        .page-cover { display: none; }
+
+        .back {
+            position: fixed; top: 26px; right: 34px; z-index: 40;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
+            font-size: 10.00px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
+            background: #fff; transition: background 0.25s, color 0.25s;
+        }
+        .back:hover { background: #000; color: #fff; }
+
+        .wrap {
+            max-width: none; margin: 0;
+            padding: 120px 40px 80px;
+            /* The data slides in from the left, out from behind the static image. */
+            animation: slideInLeft 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+        }
+        /* Fade in — no sideways slide. */
+        @keyframes slideInLeft {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        /* Image on the left, one-rectangle width, matching the other pages. */
+        .side-image {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 20vw;
+            background: #2a2a28 url('assets/cart-hero.jpg') center / cover no-repeat;
+            filter: grayscale(1);
+            border-right: 1px solid #000;
+            /* Sits above the content so the data slides out from behind it. */
+            z-index: 5;
+        }
+        /* Left side image removed — content fills the full width. */
+        .side-image { display: none; }
+
+        .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+        .head-sub { margin-top: 16px; font-size: 12.50px; color: #6b6b66; letter-spacing: 0.5px; }
+
+        /* Title row with the Clothing / Art toggle beside it. */
+        .head-row { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+        .mode-toggle {
+            display: inline-flex; border: 1.4px solid #000; border-radius: 999px; overflow: hidden;
+        }
+        .mode-btn {
+            padding: 11px 26px; font-family: inherit; font-size: 10.00px; letter-spacing: 1.5px;
+            text-transform: uppercase; background: #fff; color: #1c1c1c; border: none; cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .mode-btn.active { background: #000; color: #fff; }
+
+        /* Total shown up top, beside the title. */
+        .head-total { margin-left: auto; font-size: 11.67px; letter-spacing: 0.5px; color: #1c1c1c; }
+        .head-total b { font-size: 25.00px; font-weight: 300; margin-left: 8px; }
+
+        /* Summary slider — identical to the cart: one stat at a time, fading. */
+        .cart-ticker {
+            position: relative; width: 100%; height: 34px;
+            border-bottom: 1px solid #16150f; margin: 30px 0 16px;
+        }
+        .cart-stat {
+            position: absolute; left: 0; right: 0; top: 50%;
+            transform: translateY(-50%) translateY(10px);
+            opacity: 0; transition: opacity 0.6s ease, transform 0.6s ease;
+            display: flex; flex-direction: row-reverse; align-items: center;
+            justify-content: space-between;
+            pointer-events: none; white-space: nowrap;
+        }
+        .cart-stat.is-active { opacity: 1; transform: translateY(-50%); }
+        .cart-stat .cs-num { font-size: 18px; font-weight: 300; letter-spacing: 2px; line-height: 1; color: #16150f; }
+        .cart-stat .cs-lbl { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: #a8a399; }
+
+        /* Category sections within a list. */
+        .cat-section { margin-top: 44px; }
+        .cat-label {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+            font-size: 10.00px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95;
+            border-bottom: 1px solid #000; padding-bottom: 12px; margin-bottom: 26px;
+        }
+        .cat-label b { color: #1c1c1c; font-weight: 500; letter-spacing: 2px; }
+
+        /* A grid of the site's product cards — same object as the feed. */
+        .cart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 28px;
+        }
+        /* Phones: always two product cards per row, side by side. */
+        @media (max-width: 768px) {
+            .cart-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+            /* Uniform 14px side inset site-wide, so cards are the same size everywhere. */
+            .wrap { padding-left: 14px; padding-right: 14px; }
+        }
+        .cart-empty {
+            margin-top: 52px; border: 1px solid #000; padding: 60px 40px;
+            font-size: 12.50px; color: #9a9a95; text-align: center;
+        }
+
+        /* Per-card select box — a black square that shows a white ✓ when the item
+           is chosen. Sits opposite the trash control. */
+        .product-card .pc-check {
+            position: absolute; top: 10px; left: 10px; z-index: 3;
+            width: 30px; height: 30px; border-radius: 6px;
+            border: 1.6px solid #111; background: #fff; cursor: pointer;
+            display: grid; place-items: center; padding: 0; transition: background 0.15s, transform 0.15s;
+        }
+        .product-card .pc-check:hover { transform: scale(1.08); }
+        .product-card .pc-check.on { background: #111; }
+        .product-card .pc-check svg { width: 18px; height: 18px; stroke: #fff; stroke-width: 3; fill: none; display: none; }
+        .product-card .pc-check.on svg { display: block; }
+
+        /* Action bar — same dark-pill language as the cart. */
+        .cart-actionbar {
+            position: fixed; left: 50%; transform: translateX(-50%);
+            bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 90;
+            display: flex; align-items: stretch; gap: 6px;
+            width: max-content; max-width: 92vw;
+            background: rgba(20,20,20,0.94);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 5px;
+            box-shadow: 0 6px 26px rgba(0,0,0,0.28);
+        }
+        /* Inside the personal-area hub, sit above the area-tabs nav. */
+        html.embed .cart-actionbar { bottom: 92px; }
+        /* Clearance so the last cards aren't hidden behind the fixed bar. */
+        .wrap { padding-bottom: 140px; }
+        .cab-cell {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px; min-height: 52px; padding: 8px 14px; border-radius: 999px;
+            font-family: inherit; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+            color: #b5b5b0; background: transparent; white-space: nowrap; text-align: center;
+            transition: background 0.2s, color 0.2s, opacity 0.2s;
+        }
+        button.cab-cell { border: none; cursor: pointer; }
+        .cab-checkout { flex: 1.3; background: #fff; color: #111; }
+        .cab-checkout:hover { opacity: 0.9; }
+        .cab-checkout:disabled { opacity: 0.45; cursor: not-allowed; }
+        .cab-count .cab-num { font-size: 17px; font-weight: 600; letter-spacing: 1px; color: #fff; }
+        .cab-count .cab-lbl { font-size: 8px; letter-spacing: 2px; color: #8f8f8a; }
+        .cab-select:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    </style>
+    <!-- The product card, shared by every page (single source: product-card.css). -->
+    <link rel="stylesheet" href="product-card.css">
+    <link rel="stylesheet" href="assets/fonts/aharoni.css">
+    <script src="assets/back-button.js"></script>
+    <script src="assets/footer.js"></script>
+</head>
+<body>
+    <!-- Embedded inside profile.html (?embed=1): the page title + back button are
+         hidden — the title is shown in the profile hero instead. -->
+    <script>if (new URLSearchParams(location.search).get('embed')) document.documentElement.classList.add('embed');</script>
+    <style>
+        html.embed .back, html.embed .head-title, html.embed .head-sub { display: none !important; }
+        html.embed .wrap { padding-top: 40px; }
+
+        /* ===== Minimal redesign (soft hairline chrome, quiet filters) ===== */
+        .cart-empty {
+            border: 1px solid #ecebe7; border-radius: 18px; background: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 10px 34px rgba(0,0,0,0.045);
+        }
+    </style>
+    <div class="page-cover"></div>
+    <div class="side-image"></div>
+    <a class="back" href="profile.html">&#8592; חזרה</a>
+
+    <div class="wrap">
+        <div class="head-row">
+            <h1 class="head-title">My Wishlist</h1>
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="clothing">Clothing</button>
+                <button class="mode-btn" data-mode="art">Art</button>
+            </div>
+            <div class="head-total" id="headTotal"></div>
+        </div>
+        <p class="head-sub" id="headSub">The pieces you've saved to come back to.</p>
+
+        <div id="tickerHost"></div>
+        <div id="cartBody"></div>
+        <div id="checkoutHost"></div>
+    </div>
+
+    <script>
+        const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
+        let wishlist = readJSON('vero_wishlist', []);
+        if (!Array.isArray(wishlist)) wishlist = [];
+
+        // The art categories from the site — anything else counts as clothing.
+        const ART_CATS = new Set(['Acrylic','Oil','Watercolor','Mixed Media','Digital','Gouache',
+            'Pastel','Epoxy','Stone Sculpture','Metal Sculpture','Ceramic','Photography','Sculpture','Painting']);
+        const typeOf = it => it.type === 'art' || it.type === 'clothing'
+            ? it.type
+            : (ART_CATS.has(it.category) ? 'art' : 'clothing');
+
+        // Open the tab that actually has items, so the list never reads "empty"
+        // while the other type holds the saved pieces.
+        let MODE = wishlist.some(it => typeOf(it) === 'clothing') ? 'clothing'
+                 : wishlist.some(it => typeOf(it) === 'art') ? 'art' : 'clothing';
+
+        // Which items (by index) are ticked. Everything starts selected.
+        const selected = new Set(wishlist.map((_, i) => i));
+        window.toggleSelect = function (idx) {
+            if (selected.has(idx)) selected.delete(idx); else selected.add(idx);
+            render();
+        };
+        window.selectAllVisible = function () {
+            wishlist.forEach((it, i) => { if (typeOf(it) === MODE) selected.add(i); });
+            render();
+        };
+        window.deselectAllVisible = function () {
+            wishlist.forEach((it, i) => { if (typeOf(it) === MODE) selected.delete(i); });
+            render();
+        };
+
+        const priceNum = p => parseFloat(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
+        const priceStr = p => {
+            const s = String(p == null ? '' : p).trim();
+            return s.startsWith('₪') ? s : '₪' + priceNum(p).toFixed(2);
+        };
+
+        // Same product page link the feed builds.
+        function productPageUrl(item) {
+            const data = {
+                name: item.name, price: item.price, icon: item.icon,
+                category: item.category, seller: item.seller, rating: item.rating, type: item.type
+            };
+            return `product-showcase.html?product=${encodeURIComponent(JSON.stringify(data))}`;
+        }
+
+        // One feed product-card per wishlist item — the exact markup product-card.css expects.
+        function cartCardHTML(item, idx) {
+            const rating = item.rating || 4.5;
+            const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
+            const on = selected.has(idx) ? ' on' : '';
+            return `
+                <a href="${productPageUrl(item)}" class="product-card cart-item" data-idx="${idx}">
+                    <div class="product-image">${item.icon || '🛍️'}
+                        <button class="pc-check${on}" title="Select" aria-label="Select"
+                                onclick="event.preventDefault(); event.stopPropagation(); toggleSelect(${idx})">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </button>
+                        <button class="product-icon remove" title="Remove from wishlist"
+                                onclick="event.preventDefault(); event.stopPropagation(); removeItem(${idx})">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price"><span class="vprice">${priceStr(item.price)}</span></div>
+                        </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${item.seller || 'Vero Store'}</div>
+                            <div class="product-name">${item.name || 'Item'}</div>
+                            <div class="product-rating">${stars}</div>
+                        </div>
+                    </div>
+                </a>`;
+        }
+
+        function render() {
+            const body = document.getElementById('cartBody');
+            const host = document.getElementById('checkoutHost');
+            const sub = document.getElementById('headSub');
+
+            // This list = the items whose type matches the active toggle.
+            const mine = wishlist.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
+
+            if (!mine.length) {
+                body.innerHTML = `<div class="cart-empty">Your ${MODE} wishlist is empty — tap the heart on any piece to save it here.</div>`;
+                host.innerHTML = '';
+                document.getElementById('headTotal').innerHTML = '';
+                document.getElementById('tickerHost').innerHTML = '';
+                sub.textContent = "The pieces you've saved to come back to.";
+                return;
+            }
+
+            // Group into product categories (Shirts, Shoes, Pants, Watches…).
+            const groups = new Map();
+            mine.forEach(row => {
+                const c = row.it.category || 'Other';
+                if (!groups.has(c)) groups.set(c, []);
+                groups.get(c).push(row);
+            });
+
+            body.innerHTML = [...groups.entries()].map(([cat, rows]) => `
+                <div class="cat-section">
+                    <div class="cat-label"><b>${cat}</b><span>${rows.length} item${rows.length === 1 ? '' : 's'}</span></div>
+                    <div class="cart-grid">
+                        ${rows.map(r => cartCardHTML(r.it, r.idx)).join('')}
+                    </div>
+                </div>`).join('');
+
+            const count = mine.length;
+            const total = mine.reduce((s, { it }) => s + priceNum(it.price), 0);
+            sub.textContent = `${count} item${count === 1 ? '' : 's'} saved in your ${MODE} wishlist.`;
+            document.getElementById('headTotal').innerHTML = '';
+            const money = '₪' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('tickerHost').innerHTML =
+                `<div class="cart-ticker" id="cartTicker">
+                    <div class="cart-stat is-active"><span class="cs-num">${money}</span><span class="cs-lbl">Total value</span></div>
+                    <div class="cart-stat"><span class="cs-num">${count}</span><span class="cs-lbl">${count === 1 ? 'Item' : 'Items'}</span></div>
+                 </div>`;
+
+            // Action bar: move the ticked items into the cart, or select/clear all.
+            const chosen = mine.filter(({ idx }) => selected.has(idx));
+            const selCount = chosen.length;
+            const allSel = mine.length > 0 && chosen.length === mine.length;
+            host.innerHTML = `
+                <div class="cart-actionbar">
+                    <button class="cab-cell cab-checkout" onclick="veroMoveToCart()"${selCount ? '' : ' disabled'}>Add to cart &#8594;</button>
+                    <div class="cab-cell cab-count">
+                        <span class="cab-num">${selCount}</span>
+                        <span class="cab-lbl">Selected</span>
+                    </div>
+                    <button class="cab-cell cab-select" onclick="${allSel ? 'deselectAllVisible()' : 'selectAllVisible()'}">
+                        ${allSel ? 'Clear' : 'Select all'}
+                    </button>
+                </div>`;
+        }
+
+        // Remove keeps the wishlist store in sync.
+        window.removeItem = function (idx) {
+            wishlist.splice(idx, 1);
+            localStorage.setItem('vero_wishlist', JSON.stringify(wishlist));
+            // Indices shifted — resync the selection to the remaining items.
+            selected.clear();
+            wishlist.forEach((_, i) => selected.add(i));
+            render();
+        };
+
+        // Move the ticked items into the cart (kept in the wishlist too — saving
+        // and buying aren't mutually exclusive).
+        window.veroMoveToCart = function () {
+            const chosen = wishlist
+                .map((it, idx) => ({ it, idx }))
+                .filter(({ it, idx }) => typeOf(it) === MODE && selected.has(idx));
+            if (!chosen.length) return;
+
+            let cart = readJSON('vero_cart', []);
+            if (!Array.isArray(cart)) cart = [];
+            chosen.forEach(({ it }) => {
+                const exists = cart.some(c => c.name === it.name && String(c.price) === String(it.price));
+                if (!exists) cart.push({
+                    name: it.name, seller: it.seller, icon: it.icon, price: it.price,
+                    rating: it.rating, type: it.type, category: it.category, qty: 1
+                });
+            });
+            localStorage.setItem('vero_cart', JSON.stringify(cart));
+
+            // Slide out and open the cart so the buyer sees the pieces landed there.
+            const cover = document.createElement('div');
+            cover.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:60;transform:translateY(100%);transition:transform .6s cubic-bezier(.76,0,.24,1)';
+            document.body.appendChild(cover);
+            requestAnimationFrame(() => requestAnimationFrame(() => { cover.style.transform = 'translateY(0)'; }));
+            setTimeout(() => { window.location.href = 'cart-store.html'; }, 640);
+        };
+
+        // Clothing / Art toggle — two lists, built the same way.
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                MODE = btn.dataset.mode;
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+                render();
+            });
+        });
+
+        // Reflect the auto-chosen tab in the toggle UI before the first render.
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === MODE));
+
+        render();
+
+        // Rotate the summary stat every 4s (same as the cart).
+        setInterval(function () {
+            const slides = document.querySelectorAll('#cartTicker .cart-stat');
+            if (slides.length < 2) return;
+            let cur = [...slides].findIndex(s => s.classList.contains('is-active'));
+            if (cur < 0) cur = 0;
+            slides[cur].classList.remove('is-active');
+            slides[(cur + 1) % slides.length].classList.add('is-active');
+        }, 4000);
+
+        // Exit mirrors the entry: fade the data out, then go back.
+        const back = document.querySelector('.back');
+        if (back) back.addEventListener('click', (e) => {
+            e.preventDefault();
+            const wrap = document.querySelector('.wrap');
+            wrap.style.animation = 'none';
+            void wrap.offsetWidth;
+            wrap.style.transition = 'opacity 0.5s ease';
+            wrap.style.opacity = '0';
+            setTimeout(() => { window.location.href = back.getAttribute('href'); }, 560);
+        });
+    </script>
+    <script src="vero-editor.js"></script>
+</body>
+</html>
