@@ -778,8 +778,8 @@
         #siteHeader .hdr-cart-btn { background: none; border: none; cursor: pointer; padding: 0; color: inherit; }
         #siteHeader .hdr-wish-pop {
             position: absolute; top: 100%; left: 50%; z-index: 260;
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 38px; height: 38px; margin-top: 4px; color: inherit; text-decoration: none;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            margin-top: 6px; padding: 2px;
             opacity: 0; visibility: hidden; pointer-events: none;
             transform: translate(-50%, -10px) scale(0.7);
             transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1), visibility 0.24s;
@@ -788,9 +788,15 @@
             opacity: 1; visibility: visible; pointer-events: auto;
             transform: translate(-50%, 0) scale(1);
         }
-        #siteHeader .hdr-wish-pop svg { display: block; }
-        #siteHeader .hdr-wish-pop:hover svg { fill: currentColor; }
-        #siteHeader .hdr-wish-pop .badge { top: -2px; right: -2px; }
+        #siteHeader .hwp-ico {
+            position: relative; display: inline-flex; align-items: center; justify-content: center;
+            width: 38px; height: 38px; color: inherit; text-decoration: none;
+            transition: transform 0.18s ease;
+        }
+        #siteHeader .hwp-ico:hover { transform: scale(1.12); }
+        #siteHeader .hwp-ico:hover svg { fill: currentColor; }
+        #siteHeader .hwp-ico svg { display: block; }
+        #siteHeader .hdr-wish-pop .badge { top: -1px; right: -1px; }
         /* Hamburger (replaces the old Social link) */
         #siteHeader .vero-hamburger {
             display: inline-flex; flex-direction: column; align-items: flex-end; justify-content: center;
@@ -1372,13 +1378,22 @@
                         </svg>
                         <span class="badge" id="cartBadge"></span>
                     </button>
-                    <!-- Bare heart icon that drops out beneath the cart on tap → the wishlist. -->
-                    <a class="hdr-wish-pop" id="cartMenu" href="wishlist.html" aria-hidden="true" tabindex="-1" title="Wishlist" aria-label="Wishlist" onclick="veroPickWishlist(event)">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
-                        </svg>
-                        <span class="badge" id="wishMenuBadge"></span>
-                    </a>
+                    <!-- Bare icons that drop out beneath the cart on tap: Cart + Wishlist. -->
+                    <div class="hdr-wish-pop" id="cartMenu" role="menu" aria-hidden="true">
+                        <a class="hwp-ico" role="menuitem" href="cart-store.html" title="Cart" aria-label="Cart" onclick="veroPickCart(event)">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle>
+                                <path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path>
+                            </svg>
+                            <span class="badge" id="cartMenuBadge"></span>
+                        </a>
+                        <a class="hwp-ico" role="menuitem" href="wishlist.html" title="Wishlist" aria-label="Wishlist" onclick="veroPickWishlist(event)">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
+                            </svg>
+                            <span class="badge" id="wishMenuBadge"></span>
+                        </a>
+                    </div>
                 </span>
                 <span class="hdr-account" data-icon="account">
                     <button class="icon-btn hdr-account-btn" title="My Account (hold to switch profile)" aria-label="My Account">
@@ -2682,23 +2697,17 @@
         if (menu) menu.setAttribute('aria-hidden', 'true');
         if (btn) btn.setAttribute('aria-expanded', 'false');
     };
-    // First tap on the cart icon reveals the wishlist heart beneath it; a second
-    // tap (heart already showing) goes to the cart. Tapping the heart → wishlist.
+    // Tapping the cart icon reveals the Cart + Wishlist icons beneath it.
     window.veroToggleCartMenu = function (e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         const menu = document.getElementById('cartMenu');
         const btn = document.querySelector('.hdr-cart-btn');
         if (!menu) { window.veroSlideToCart && window.veroSlideToCart('cart-store.html'); return; }
         try { updateBadgesFromStorage(); } catch (_) {}
-        if (menu.classList.contains('open')) {
-            // Heart already out → the cart icon now takes you to the cart.
-            window.veroCloseCartMenu();
-            window.veroPickCart();
-            return;
-        }
-        menu.classList.add('open');
-        menu.setAttribute('aria-hidden', 'false');
-        if (btn) btn.setAttribute('aria-expanded', 'true');
+        const willOpen = !menu.classList.contains('open');
+        menu.classList.toggle('open', willOpen);
+        menu.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+        if (btn) btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
     };
     window.veroPickCart = function (e) {
         if (e) e.preventDefault();
