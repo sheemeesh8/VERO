@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>VERO — Peacock Intro</title>
+<style>
+  /* ---------------------------------------------------------------------------
+     Cinematic peacock splash — VERO
+     Single self-contained file. Vanilla JS + inline SVG + GSAP (+ MorphSVG).
+     Open the file directly in a browser to run. No build step.
+  --------------------------------------------------------------------------- */
+  :root {
+    --bg-dark: #0A0D0B;   /* near-black entrance background      */
+    --bg-final: #FFFFFF;  /* pure white lock background          */
+    --glow: #FFFFFF;      /* luminous plumage                    */
+    --logo: #000000;      /* final flat logo                     */
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg-dark);
+    overflow: hidden;
+  }
+
+  /* Full-viewport stage, always centered and responsive. */
+  #stage {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: var(--bg-dark);       /* animated to white on dissolve */
+    will-change: background-color;
+  }
+
+  /* The SVG scales with the viewport while preserving aspect ratio. */
+  #peacock-svg {
+    width: min(78vmin, 720px);
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+
+  /* Skip button (accessibility / dev convenience). */
+  #skip {
+    position: fixed;
+    bottom: 18px;
+    right: 20px;
+    z-index: 10;
+    font: 500 12px/1 system-ui, sans-serif;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.35);
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.18);
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color .3s, border-color .3s, opacity .6s;
+  }
+  #skip:hover { color: rgba(255,255,255,.8); border-color: rgba(255,255,255,.5); }
+  #skip.on-white { color: rgba(0,0,0,.35); border-color: rgba(0,0,0,.15); }
+  #skip.gone { opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <!--
+      The peacock is drawn as an SVG. Two path "states" are provided that share
+      the SAME NUMBER OF ANCHOR POINTS so the morph between them is clean:
+        #path-entrance  — detailed, luminous entrance silhouette
+        #path-logo      — simplified, flat final logo (same pose)
+      The visible <path id="peacock-path"> starts on the entrance data and is
+      morphed onto the logo data during the dissolve phase.
+    -->
+    <svg id="peacock-svg" viewBox="0 0 400 480" role="img"
+         aria-label="Stylized peacock resolving into a minimalist logo">
+      <defs>
+        <!-- Deep forest radial vignette behind the bird. -->
+        <radialGradient id="vignette" cx="50%" cy="42%" r="62%">
+          <stop offset="0%"  stop-color="#12332a" stop-opacity="0.9"/>
+          <stop offset="42%" stop-color="#0b1f2b" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#0A0D0B" stop-opacity="0"/>
+        </radialGradient>
+
+        <!-- Luminous plumage gradient: bright core fading to shadow. -->
+        <linearGradient id="plumage" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%"   stop-color="#ffffff"/>
+          <stop offset="55%"  stop-color="#e7f0f2"/>
+          <stop offset="100%" stop-color="#8fa7ad"/>
+        </linearGradient>
+
+        <!-- Soft glow/blur filter for the dramatic rim lighting. -->
+        <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+
+        <!-- Moving "spotlight": a soft radial mask swept across the bird to
+             simulate a tracking light easing over the plumage. -->
+        <radialGradient id="light-grad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"  stop-color="#fff" stop-opacity="1"/>
+          <stop offset="60%" stop-color="#fff" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <mask id="light-mask">
+          <rect x="0" y="0" width="400" height="480" fill="#fff" opacity="0.18"/>
+          <circle id="light-circle" cx="120" cy="230" r="170" fill="url(#light-grad)"/>
+        </mask>
+      </defs>
+
+      <!-- Background vignette (fades out during dissolve). -->
+      <rect id="vignette-rect" x="-40" y="-40" width="480" height="560" fill="url(#vignette)"/>
+
+      <!-- Parallax group: panned slowly left-to-right for the tracking shot. -->
+      <g id="parallax">
+        <!-- Glow copy sitting under the crisp bird, lit through the moving mask. -->
+        <path id="peacock-glow"
+              fill="url(#plumage)" filter="url(#glow)" mask="url(#light-mask)"
+              opacity="0.9"/>
+        <!-- The main, visible bird. Its fill animates white -> black. -->
+        <path id="peacock-path" fill="url(#plumage)"/>
+      </g>
+
+      <!-- Hidden source paths (identical anchor structure) for MorphSVG/Flubber. -->
+      <path id="path-entrance" style="display:none" d="
+        M 150 70
+        C 148 58 156 48 168 50
+        C 165 40 175 34 182 42
+        C 182 30 194 28 196 40
+        C 202 30 214 34 210 46
+        C 220 44 226 54 216 60
+        C 232 66 226 84 212 82
+        C 224 96 214 118 198 112
+        C 208 130 214 156 210 184
+        C 246 150 300 140 344 168
+        C 322 156 300 168 300 190
+        C 330 182 360 200 366 232
+        C 344 214 320 222 320 246
+        C 350 244 372 272 366 306
+        C 344 282 320 292 322 316
+        C 348 322 360 356 340 382
+        C 326 358 302 362 300 386
+        C 316 404 306 436 282 436
+        C 292 418 276 408 264 420
+        C 262 398 240 396 236 416
+        C 232 392 210 396 212 418
+        C 206 398 186 402 190 422
+        C 178 400 156 410 162 432
+        C 146 410 120 420 122 446
+        C 108 420 120 392 146 388
+        C 176 384 196 360 200 330
+        C 184 344 160 342 150 324
+        C 168 330 186 320 188 302
+        C 170 300 158 282 166 264
+        C 176 280 196 278 200 260
+        C 182 248 178 222 194 206
+        C 190 232 206 244 216 236
+        C 204 214 180 214 170 232
+        C 168 208 176 176 160 150
+        C 166 176 150 190 138 178
+        C 150 160 142 138 124 138
+        C 140 128 144 106 130 96
+        C 146 100 158 90 154 76
+        C 152 74 151 72 150 70
+        Z"/>
+      <path id="path-logo" style="display:none" d="
+        M 150 70
+        C 149 60 155 52 166 54
+        C 164 44 174 40 180 48
+        C 181 34 193 34 195 46
+        C 200 34 213 40 208 50
+        C 219 50 224 58 214 63
+        C 229 70 224 86 211 84
+        C 222 98 213 118 198 113
+        C 207 131 213 156 210 184
+        C 250 152 300 144 344 170
+        C 320 160 302 172 302 192
+        C 332 184 359 202 364 232
+        C 342 216 322 224 322 246
+        C 351 246 371 272 364 305
+        C 343 284 322 293 323 316
+        C 349 323 359 355 339 380
+        C 325 358 303 363 301 386
+        C 315 405 305 435 282 435
+        C 291 419 277 409 265 420
+        C 263 399 241 397 237 416
+        C 233 393 211 397 213 418
+        C 207 399 187 403 191 422
+        C 179 401 157 410 163 432
+        C 147 411 121 420 123 446
+        C 109 421 121 393 147 389
+        C 177 385 197 361 201 331
+        C 185 345 161 343 151 325
+        C 169 331 187 321 189 303
+        C 171 301 159 283 167 265
+        C 177 281 197 279 201 261
+        C 183 249 179 223 195 207
+        C 191 233 207 245 217 237
+        C 205 215 181 215 171 233
+        C 169 209 177 177 161 151
+        C 167 177 151 191 139 179
+        C 151 161 143 139 125 139
+        C 141 129 145 107 131 97
+        C 147 101 159 91 155 77
+        C 153 75 151 72 150 70
+        Z"/>
+    </svg>
+  </div>
+
+  <button id="skip" aria-label="Skip intro">Skip</button>
+
+  <!-- GSAP + MorphSVG plugin (with a Flubber fallback if MorphSVG is blocked). -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MorphSVGPlugin.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+
+  <script>
+  (function () {
+    "use strict";
+
+    // -----------------------------------------------------------------------
+    // Element refs
+    // -----------------------------------------------------------------------
+    var stage      = document.getElementById("stage");
+    var svg         = document.getElementById("peacock-svg");
+    var path        = document.getElementById("peacock-path");
+    var glowPath    = document.getElementById("peacock-glow");
+    var parallax    = document.getElementById("parallax");
+    var lightCircle = document.getElementById("light-circle");
+    var vignette    = document.getElementById("vignette-rect");
+    var skipBtn     = document.getElementById("skip");
+
+    var ENTRANCE = document.getElementById("path-entrance").getAttribute("d");
+    var LOGO     = document.getElementById("path-logo").getAttribute("d");
+
+    var TOKENS = { bgDark: "#0A0D0B", bgFinal: "#FFFFFF", glow: "#FFFFFF", logo: "#000000" };
+
+    // Both hidden and visible paths start on the entrance silhouette.
+    path.setAttribute("d", ENTRANCE);
+    glowPath.setAttribute("d", ENTRANCE);
+
+    var completed = false;
+
+    // -----------------------------------------------------------------------
+    // Completion signalling: custom event + optional callback.
+    // Listen with:  document.addEventListener('peacock-intro:complete', fn)
+    // or set window.onPeacockIntroComplete = fn before this script runs.
+    // -----------------------------------------------------------------------
+    function fireComplete() {
+      if (completed) return;
+      completed = true;
+      skipBtn.classList.add("gone");
+      var detail = { at: Date.now() };
+      document.dispatchEvent(new CustomEvent("peacock-intro:complete", { detail: detail }));
+      if (typeof window.onPeacockIntroComplete === "function") {
+        try { window.onPeacockIntroComplete(detail); } catch (e) { /* no-op */ }
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Snap straight to the final locked frame (used for reduced-motion and skip).
+    // -----------------------------------------------------------------------
+    function lockFinalFrame() {
+      if (window.gsap) gsap.killTweensOf("*");
+      path.setAttribute("d", LOGO);
+      path.setAttribute("fill", TOKENS.logo);
+      path.removeAttribute("filter");
+      glowPath.setAttribute("opacity", "0");
+      vignette.setAttribute("opacity", "0");
+      stage.style.background = TOKENS.bgFinal;
+      document.documentElement.style.background = TOKENS.bgFinal;
+      document.body.style.background = TOKENS.bgFinal;
+      parallax.setAttribute("transform", "translate(0,0)");
+      skipBtn.classList.add("on-white");
+      fireComplete();
+    }
+
+    // -----------------------------------------------------------------------
+    // Reduced-motion: skip the whole show.
+    // -----------------------------------------------------------------------
+    var reduceMotion = window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Provide a morph setter that uses MorphSVG when present, else Flubber.
+    function morphTween(tl, at, dur) {
+      var hasMorph = window.gsap && gsap.plugins && gsap.plugins.morphSVG ||
+                     (window.MorphSVGPlugin);
+      if (window.MorphSVGPlugin) {
+        // Preferred, GSAP-native path morph.
+        tl.to(path, { duration: dur, morphSVG: LOGO, ease: "power2.inOut" }, at);
+      } else if (window.flubber) {
+        // Free fallback: interpolate the "d" attribute manually via flubber.
+        var interp = flubber.interpolate(ENTRANCE, LOGO, { maxSegmentLength: 4 });
+        var proxy = { t: 0 };
+        tl.to(proxy, {
+          duration: dur, t: 1, ease: "power2.inOut",
+          onUpdate: function () { path.setAttribute("d", interp(proxy.t)); }
+        }, at);
+      } else {
+        // Last resort: hard swap at the midpoint.
+        tl.call(function () { path.setAttribute("d", LOGO); }, null, at + dur / 2);
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Main timeline.
+    // -----------------------------------------------------------------------
+    function play() {
+      if (window.MorphSVGPlugin && window.gsap && gsap.registerPlugin) {
+        gsap.registerPlugin(MorphSVGPlugin);
+      }
+
+      var tl = gsap.timeline({ defaults: { ease: "power2.inOut" }, onComplete: fireComplete });
+
+      // Initial hidden state.
+      gsap.set(parallax, { transform: "translateX(-26px)" });
+      gsap.set(path, { attr: { "fill-opacity": 0 } });
+      gsap.set(glowPath, { attr: { opacity: 0 } });
+
+      // 0–2.5s  ENTRANCE: reveal by moving light + slow tracking pan/parallax.
+      tl.to(path,     { attr: { "fill-opacity": 1 }, duration: 1.2 }, 0.1);
+      tl.to(glowPath, { attr: { opacity: 0.9 },       duration: 1.4 }, 0.1);
+      // Sweep the spotlight across the plumage.
+      tl.fromTo(lightCircle,
+        { attr: { cx: 90,  cy: 260 } },
+        { attr: { cx: 320, cy: 210 }, duration: 2.4 }, 0);
+      // Slow tracking pan (parallax) left -> right.
+      tl.to(parallax, { transform: "translateX(20px)", duration: 2.5 }, 0);
+
+      // 2.5–4s  HERALDIC POSE: ease to a stop, settle. (Subtle "breath" settle.)
+      tl.to(parallax, { transform: "translateX(0px)", duration: 1.5, ease: "power2.out" }, 2.5);
+      tl.to(lightCircle, { attr: { cx: 200, cy: 220, r: 210 }, duration: 1.5 }, 2.5);
+
+      // 4–5.5s  MORPH + DISSOLVE.
+      // Background dark -> white.
+      tl.to([stage], { backgroundColor: TOKENS.bgFinal, duration: 1.5 }, 4.0);
+      tl.to(document.documentElement, { backgroundColor: TOKENS.bgFinal, duration: 1.5 }, 4.0);
+      tl.to(document.body, { backgroundColor: TOKENS.bgFinal, duration: 1.5 }, 4.0);
+      tl.to(vignette, { attr: { opacity: 0 }, duration: 1.2 }, 4.0);
+      // Flatten lighting: kill glow + blur, remove gradient toward solid black.
+      tl.to(glowPath, { attr: { opacity: 0 }, duration: 1.0 }, 4.0);
+      tl.to(path, { attr: { fill: TOKENS.logo }, duration: 1.4 }, 4.1);
+      tl.call(function () { path.removeAttribute("filter"); }, null, 4.1);
+      // Morph the detailed silhouette into the flat logo.
+      morphTween(tl, 4.0, 1.5);
+
+      // 5.5s+  LOCK: snap to centered static frame.
+      tl.set(parallax, { transform: "translate(0,0)" }, 5.5);
+      tl.call(function () { skipBtn.classList.add("on-white"); }, null, 5.4);
+      tl.to({}, { duration: 0.5 }, 5.5); // brief hold before onComplete
+
+      return tl;
+    }
+
+    // -----------------------------------------------------------------------
+    // Kick-off.
+    // -----------------------------------------------------------------------
+    function start() {
+      if (reduceMotion || !window.gsap) {
+        lockFinalFrame();
+        return;
+      }
+      play();
+    }
+
+    skipBtn.addEventListener("click", lockFinalFrame);
+    // Wait for fonts/layout to be ready, then start on next frame.
+    if (document.readyState === "complete") requestAnimationFrame(start);
+    else window.addEventListener("load", function () { requestAnimationFrame(start); });
+  })();
+  </script>
+</body>
+</html>
