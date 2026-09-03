@@ -13,50 +13,129 @@
     <title>VERO — List an Item</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&family=Arimo:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; }
-        body { font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1b1916; background: #fff; overflow: hidden; }
-        .us { height: 100vh; height: 100dvh; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top,0px) + 22px) 24px calc(24px + env(safe-area-inset-bottom,0px)); }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #fff; background: #000; overflow: hidden;
+        }
 
-        .us-top { flex: none; display: flex; justify-content: flex-end; }
-        .us-exit { width: 34px; height: 34px; border: none; background: none; cursor: pointer; color: #111;
-            display: inline-flex; align-items: center; justify-content: center; }
+        .us { position: relative; height: 100vh; height: 100dvh; overflow: hidden; background: #000; }
+
+        /* Top bar: exit + photo-guide link, floating over the slider. */
+        .us-top {
+            position: absolute; top: calc(env(safe-area-inset-top,0px) + 18px);
+            left: 22px; right: 22px; z-index: 5;
+            display: flex; align-items: center; justify-content: space-between;
+            pointer-events: none;
+        }
+        .us-top > * { pointer-events: auto; }
+        .us-guide-link {
+            font-family: 'Poppins','Inter',sans-serif;
+            font-size: 9px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase;
+            color: rgba(255,255,255,0.85); background: none; border: none; cursor: pointer;
+            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.55);
+            text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+        }
+        .us-exit {
+            width: 34px; height: 34px; border: none; background: none; cursor: pointer; color: #fff;
+            display: inline-flex; align-items: center; justify-content: center;
+            text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+        }
         .us-exit svg { width: 23px; height: 23px; }
 
-        .us-head { flex: none; margin: 6px 0 26px; }
-        .us-h { font-family: 'Aharoni CLM','Segoe UI',sans-serif; font-size: 30px; font-weight: 400;
-            letter-spacing: 1px; text-transform: uppercase; line-height: 1.05; }
-        .us-sub { margin-top: 10px; font-size: 10.5px; color: #9a938a; letter-spacing: 0.5px; line-height: 1.85; font-weight: 300; }
+        /* Horizontal snap slider — mirrors .hm2-slider on the feed. */
+        .us-slider {
+            display: flex; width: 100%; height: 100%;
+            overflow-x: auto; overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; -ms-overflow-style: none;
+            direction: ltr;
+        }
+        .us-slider::-webkit-scrollbar { width: 0; height: 0; display: none; }
+        .us-slide {
+            flex: 0 0 100%; width: 100%; height: 100%;
+            scroll-snap-align: start; scroll-snap-stop: always;
+            background-color: #23231f; background-size: cover; background-position: center center;
+            position: relative; display: flex; align-items: center; justify-content: center;
+            text-decoration: none; color: #fff;
+        }
+        /* Hero-style scrim so the caption reads over the image. */
+        .us-slide::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.35) 100%);
+            pointer-events: none;
+        }
 
-        /* Cards fill the remaining height, spread evenly. */
-        .us-cards { flex: 1 1 auto; display: flex; flex-direction: column; gap: 14px; }
-        .us-card { position: relative; flex: 1 1 auto; border-radius: 20px; overflow: hidden; cursor: pointer;
-            border: none; background: #23231f center / cover no-repeat; color: #fff; text-align: left;
-            display: flex; flex-direction: column; justify-content: flex-end; padding: 22px; transition: transform 0.15s; font-family: inherit; }
-        .us-card:active { transform: scale(0.985); }
-        .us-card::after { content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0) 70%); }
-        .us-card > * { position: relative; z-index: 1; }
-        .us-card .us-card-t { font-family: 'Aharoni CLM','Segoe UI',sans-serif; font-size: 26px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; }
-        .us-card .us-card-s { margin-top: 5px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.8); font-weight: 300; }
-        /* The guide card is quieter (a lighter, secondary option). */
-        .us-card.us-guide-card { flex: 0 0 92px; background: #f6f4f1; color: #1b1916; padding: 0 22px;
-            flex-direction: row; align-items: center; gap: 16px; }
-        .us-card.us-guide-card::after { display: none; }
-        .us-guide-card .us-gi { width: 40px; height: 40px; border-radius: 50%; background: #fff; flex: none;
-            display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px rgba(30,25,20,0.08); }
-        .us-guide-card .us-gi svg { width: 20px; height: 20px; stroke: #1b1916; }
-        .us-guide-card .us-card-t { font-size: 15px; letter-spacing: 1px; }
-        .us-guide-card .us-card-s { color: #9a938a; margin-top: 3px; }
+        /* Caption — matches .hm2-cap sizing & rhythm. */
+        .us-cap {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; height: 100%;
+            z-index: 1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 0 28px; text-align: center; color: #fff;
+            max-width: 420px;
+            text-shadow: 0 2px 18px rgba(0,0,0,0.45);
+        }
+        .us-over {
+            font-family: 'Poppins','Inter',sans-serif !important;
+            font-size: 8.5px; font-weight: 300; letter-spacing: 5px; text-transform: uppercase;
+            color: #7ba597; margin-bottom: 14px;
+        }
+        .us-title {
+            font-family: 'Aharoni CLM','Segoe UI',sans-serif !important;
+            font-size: 72px; font-weight: 400; line-height: 1; letter-spacing: 4px;
+            text-transform: uppercase; margin-bottom: 22px;
+        }
+        .us-desc {
+            font-family: 'Arimo','Segoe UI',sans-serif !important;
+            font-size: 11px; font-weight: 400; line-height: 1.6;
+            color: rgba(255,255,255,0.9); margin: 0 0 30px; max-width: 300px;
+        }
+        .us-btn {
+            font-family: 'Poppins','Inter',sans-serif !important;
+            font-size: 12px; font-weight: 400; letter-spacing: 5px; text-transform: uppercase;
+            color: #fff; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.7);
+        }
+        /* "Slide for more" hint pinned near the bottom of the screen. */
+        .us-swipe {
+            position: absolute;
+            bottom: calc(env(safe-area-inset-bottom,0px) + 60px);
+            left: 50%; transform: translateX(-50%);
+            font-family: 'Poppins','Inter',sans-serif !important;
+            font-size: 8.5px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;
+            color: rgba(255,255,255,0.72);
+            white-space: nowrap;
+        }
 
-        /* ---- Guide sheet ---- */
-        .us-sheet { position: fixed; inset: 0; z-index: 60; background: rgba(20,18,16,0.45); display: none;
+        /* Guiding-line dots — same look as .hm2-dots on the feed slider. */
+        .us-dots {
+            position: absolute;
+            bottom: calc(env(safe-area-inset-bottom,0px) + 36px);
+            left: 50%; transform: translateX(-50%);
+            width: 210px; height: 2.5px;
+            border-radius: 2px; overflow: hidden;
+            display: flex; gap: 0;
+            background: rgba(255,255,255,0.34);
+            z-index: 4; pointer-events: none;
+        }
+        .us-dot { flex: 1 1 0; height: 100%; background: transparent; transition: background 0.25s ease; }
+        .us-dot.active { background: #fff; }
+
+        /* Single-slide case (seller with one category): hide slider chrome. */
+        .us-slider.single .us-swipe,
+        .us-slider.single .us-dots { display: none; }
+
+        /* ---- Guide sheet (unchanged behavior) ---- */
+        .us-sheet { position: fixed; inset: 0; z-index: 60; background: rgba(20,18,16,0.55); display: none;
             align-items: flex-end; }
         .us-sheet.open { display: flex; }
-        .us-sheet-body { width: 100%; background: #fff; border-radius: 22px 22px 0 0; padding: 26px 26px calc(30px + env(safe-area-inset-bottom,0px));
+        .us-sheet-body { width: 100%; background: #fff; color: #1b1916;
+            border-radius: 22px 22px 0 0; padding: 26px 26px calc(30px + env(safe-area-inset-bottom,0px));
             max-height: 82vh; overflow-y: auto; }
         .us-sheet-h { font-family: 'Aharoni CLM','Segoe UI',sans-serif; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; }
         .us-tip { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid #f4f1ec; }
@@ -71,15 +150,15 @@
 <body>
     <div class="us">
         <div class="us-top">
+            <button class="us-guide-link" type="button" id="usGuideBtn">Photo guide</button>
             <button class="us-exit" type="button" id="usExit" aria-label="Exit">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
             </button>
         </div>
-        <div class="us-head">
-            <h1 class="us-h">List an item</h1>
-            <p class="us-sub">Choose what you're listing, or read the photo guide first.</p>
-        </div>
-        <div class="us-cards" id="usCards"></div>
+
+        <div class="us-slider" id="usSlider"></div>
+
+        <div class="us-dots" id="usDots"></div>
     </div>
 
     <!-- Photo guide sheet -->
@@ -101,28 +180,58 @@
         var cat = '';
         try { cat = (JSON.parse(localStorage.getItem('vero_seller_profile')) || {}).category || ''; } catch (e) {}
 
-        // Which category cards to offer:
-        //  • Seller with a single choice → just that one.
-        //  • Seller "both", or any buyer → both.
         var showClothing = true, showArt = true;
         if (acct === 'seller' && (cat === 'fashion' || cat === 'art')) {
             showClothing = (cat === 'fashion');
             showArt = (cat === 'art');
         }
 
-        var cards = [];
-        if (showClothing) cards.push({ t: 'Clothing', s: 'Fashion & apparel', img: 'clothing-hero.jpg', href: 'product-upload.html?picked=1' });
-        if (showArt) cards.push({ t: 'Art', s: 'Artwork & collectibles', img: 'art-hero.jpg', href: 'product-upload-art.html?picked=1' });
+        var slides = [];
+        if (showClothing) slides.push({
+            over: 'Choose your side', t: 'Clothing',
+            desc: "Refine your everyday with our curated men's, women's and kids' collections — timeless tailoring, modern ease.",
+            img: 'clothing-hero.jpg', href: 'product-upload.html?picked=1'
+        });
+        if (showArt) slides.push({
+            over: 'Choose your side', t: 'Art',
+            desc: 'Original artwork and collectibles — paintings, sculptures and one-of-a-kind pieces for the home.',
+            img: 'art-hero.jpg', href: 'product-upload-art.html?picked=1'
+        });
 
-        var host = document.getElementById('usCards');
-        host.innerHTML = cards.map(function (c) {
-            return '<a class="us-card" href="' + c.href + '" style="background-image:url(\'' + c.img + '\')">' +
-                '<span class="us-card-t">' + c.t + '</span><span class="us-card-s">' + c.s + '</span></a>';
-        }).join('') +
-            '<button class="us-card us-guide-card" type="button" id="usGuideBtn">' +
-              '<span class="us-gi"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>' +
-              '<span><span class="us-card-t">Photo guide</span><span class="us-card-s">How to shoot your item</span></span>' +
-            '</button>';
+        var slider = document.getElementById('usSlider');
+        var dots = document.getElementById('usDots');
+
+        slider.innerHTML = slides.map(function (c) {
+            return '<a class="us-slide" href="' + c.href + '" style="background-image:url(\'' + c.img + '\')">' +
+                     '<div class="us-cap">' +
+                       '<span class="us-over">' + c.over + '</span>' +
+                       '<span class="us-title">' + c.t.toUpperCase() + '</span>' +
+                       '<p class="us-desc">' + c.desc + '</p>' +
+                       '<span class="us-btn">Discover</span>' +
+                     '</div>' +
+                     '<span class="us-swipe">Slide for more</span>' +
+                   '</a>';
+        }).join('');
+
+        dots.innerHTML = slides.map(function (_, i) {
+            return '<span class="us-dot' + (i === 0 ? ' active' : '') + '"></span>';
+        }).join('');
+
+        if (slides.length <= 1) {
+            slider.classList.add('single');
+        }
+
+        // Update the active guiding-line segment as the user swipes.
+        var dotEls = dots.querySelectorAll('.us-dot');
+        function updateActive() {
+            var w = slider.clientWidth || 1;
+            var idx = Math.round(slider.scrollLeft / w);
+            if (idx < 0) idx = 0;
+            if (idx > dotEls.length - 1) idx = dotEls.length - 1;
+            dotEls.forEach(function (d, i) { d.classList.toggle('active', i === idx); });
+        }
+        slider.addEventListener('scroll', updateActive, { passive: true });
+        window.addEventListener('resize', updateActive);
 
         // Guide sheet
         var sheet = document.getElementById('usGuideSheet');
