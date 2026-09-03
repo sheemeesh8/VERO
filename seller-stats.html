@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Phone-only presentation: opened as a top-level window this page hands off to
+         phone-frame.html. Inside a frame (window.top !== self) the check is skipped. -->
+    <script>
+      if (window.self === window.top) {
+        var pf = location.pathname.split('/').pop() || 'index';
+        if (!/\.html$/.test(pf)) pf += '.html';
+        location.replace('phone-frame.html#page=' + encodeURIComponent(pf + location.search));
+      }
+    </script>
+    <title>moravchick — סטטיסטיקות מוכר</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --available: #1f8f4e;   /* 🟢 זמין */
+            --reserved:  #c9922b;   /* 🟡 מוזמן */
+            --sold:      #b23b3b;   /* 🔴 נמכר */
+            --gold:      #9a7d52;
+            --ink: #1c1c1c;
+            --muted: #7a7a75;
+            --line: #e9e9e6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fff; direction: rtl; color: var(--ink);
+            overflow-x: hidden; font-size: 14px; line-height: 1.5;
+        }
+
+        /* Standalone chrome (hidden when embedded ?embed=1). */
+        .back {
+            position: fixed; top: 22px; left: 22px; z-index: 40;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 9px 18px; border: 1.4px solid #000; border-radius: 999px;
+            font-size: 10px; letter-spacing: 1.5px; text-decoration: none; color: var(--ink);
+            background: #fff; transition: background 0.25s, color 0.25s;
+        }
+        .back:hover { background: #000; color: #fff; }
+        html.is-embed .back { display: none !important; }
+
+        .wrap { position: relative; z-index: 1; padding: 72px 20px 60px; max-width: 640px; margin: 0 auto; animation: fadeIn 0.5s ease both; }
+        html.is-embed .wrap { padding: 24px 18px 48px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .st-head { margin-bottom: 18px; }
+        .st-title { font-size: clamp(26px, 7vw, 34px); font-weight: 200; letter-spacing: 0.5px; }
+        .st-sub { margin-top: 6px; color: var(--muted); font-size: 12px; }
+
+        /* Period segmented control (day / week / month). */
+        .seg {
+            display: inline-flex; gap: 4px; margin: 14px 0 24px; padding: 4px;
+            background: rgba(20,20,20,0.96); border-radius: 999px;
+        }
+        .seg button {
+            border: none; background: transparent; color: #b5b5b0; font-family: inherit;
+            font-size: 11px; font-weight: 500; letter-spacing: 0.4px; padding: 8px 18px;
+            border-radius: 999px; cursor: pointer; transition: color 0.2s, background 0.25s;
+        }
+        .seg button.on { background: #fff; color: #111; }
+
+        .sec-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 34px 0 14px; }
+
+        /* Cards + grid. */
+        .grid { display: grid; gap: 14px; }
+        .g2 { grid-template-columns: 1fr 1fr; }
+        .g4 { grid-template-columns: 1fr 1fr; }
+        .card { border: 1px solid var(--line); border-radius: 16px; padding: 18px; background: #fff; }
+        .card.dark { background: #111; color: #fff; border-color: #111; }
+        .card-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .card-t { font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+        .card-d { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
+
+        /* KPI tile. */
+        .kpi-num { font-size: 30px; font-weight: 200; line-height: 1; margin-top: 12px; }
+        .kpi-lbl { font-size: 10px; letter-spacing: 1.2px; color: var(--muted); margin-top: 8px; }
+        .delta { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; margin-top: 8px; }
+        .delta.up { color: var(--available); }
+        .delta.down { color: var(--sold); }
+        .delta.flat { color: var(--muted); }
+
+        /* Bar chart (heights set inline). */
+        .bars { display: flex; align-items: flex-end; gap: 8px; height: 128px; margin-top: 18px; }
+        .bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; justify-content: flex-end; height: 100%; }
+        .bar .fill { width: 100%; max-width: 30px; background: #111; border-radius: 6px 6px 0 0; min-height: 4px; transition: height 0.5s cubic-bezier(0.22,1,0.36,1); }
+        .bar .fill.gold { background: var(--gold); }
+        .bar .cap { font-size: 9px; color: var(--muted); white-space: nowrap; }
+        .bar .val { font-size: 9.5px; font-weight: 600; }
+
+        /* Grouped bars (store vs product views). */
+        .gbars { display: flex; align-items: flex-end; gap: 12px; height: 128px; margin-top: 16px; }
+        .gcol { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 5px; height: 100%; position: relative; }
+        .gcol .pair { display: flex; align-items: flex-end; gap: 5px; height: 100%; width: 100%; justify-content: center; }
+        .gcol .fill { width: 14px; border-radius: 5px 5px 0 0; min-height: 4px; transition: height 0.5s; }
+        .gcol .fill.store { background: #111; }
+        .gcol .fill.prod  { background: var(--gold); }
+        .gcol .cap { position: absolute; bottom: -20px; font-size: 9px; color: var(--muted); }
+        .legend { display: flex; gap: 16px; margin-top: 30px; font-size: 10.5px; color: var(--muted); }
+        .legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+        /* Progress meter. */
+        .meter { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; margin-top: 10px; }
+        .meter > span { display: block; height: 100%; background: #111; border-radius: 999px; transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+        .meter > span.gold { background: var(--gold); }
+        .goal-row { margin-bottom: 20px; }
+        .goal-row:last-child { margin-bottom: 0; }
+        .goal-top { display: flex; justify-content: space-between; align-items: baseline; }
+        .goal-lbl { font-size: 12px; font-weight: 600; }
+        .goal-val { font-size: 11px; color: var(--muted); }
+
+        /* Status tiles. */
+        .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; display: inline-block; }
+        .dot.green { background: var(--available); }
+        .dot.amber { background: var(--reserved); }
+        .dot.red   { background: var(--sold); }
+        .dot.grey  { background: var(--muted); }
+
+        /* Product rows (top viewed / attention). */
+        .prow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+        .prow:last-child { border-bottom: none; }
+        .pthumb { width: 44px; height: 44px; border-radius: 10px; background: #f4f4f1 center/cover no-repeat; flex: none; display: grid; place-items: center; font-size: 20px; color: #c7c2b8; }
+        .pmain { flex: 1; min-width: 0; }
+        .pname { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pmeta { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+        .pval { font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: 10.5px; font-weight: 500; }
+        .empty { text-align: center; color: var(--muted); font-size: 11px; padding: 18px 0; }
+
+        /* Buttons. */
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+            padding: 12px 20px; border-radius: 999px; border: 1.4px solid #111; background: #fff;
+            color: #111; font-family: inherit; font-size: 11px; letter-spacing: 0.5px; font-weight: 500;
+            cursor: pointer; min-height: 44px; text-decoration: none; transition: background 0.2s, color 0.2s;
+        }
+        .btn:hover { background: #111; color: #fff; }
+        .btn.wide { width: 100%; margin-top: 16px; }
+    </style>
+    <link rel="stylesheet" href="assets/fonts/aharoni.css">
+    <script src="assets/back-button.js"></script>
+    <script src="assets/footer.js"></script>
+</head>
+<body>
+    <script>
+      (function(){ if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.classList.add('is-embed'); })();
+    </script>
+    <a class="back" href="seller-area.html">&#8594; חזרה</a>
+
+    <div class="wrap">
+        <div class="st-head">
+            <h1 class="st-title">הסטטיסטיקות שלי</h1>
+            <p class="st-sub" id="stSub">מלאי, עוקבים, צפיות והכנסות — הכל במקום אחד.</p>
+        </div>
+
+        <!-- Period toggle -->
+        <div class="seg" id="periodSeg">
+            <button type="button" data-p="day">יומי</button>
+            <button type="button" data-p="week" class="on">שבועי</button>
+            <button type="button" data-p="month">חודשי</button>
+        </div>
+
+        <!-- 1. KPI row -->
+        <div class="grid g4" id="kpiRow"></div>
+
+        <!-- 2. Followers growth -->
+        <div class="sec-title">צמיחת עוקבים</div>
+        <div class="card">
+            <div class="card-h">
+                <div><div class="card-t">עוקבים לאורך זמן</div><div class="card-d" id="folSub">המגמה בתקופה האחרונה</div></div>
+                <span class="chip"><span class="dot green"></span><span id="folTotal">0</span></span>
+            </div>
+            <div class="bars" id="folBars"></div>
+            <div style="margin-top:22px;">
+                <div class="goal-top"><span class="goal-lbl">ליעד הבא</span><span class="goal-val" id="folGoalVal"></span></div>
+                <div class="meter"><span id="folMeter" class="gold" style="width:0"></span></div>
+            </div>
+        </div>
+
+        <!-- 3. Views: store vs products -->
+        <div class="sec-title">צפיות: חנות מול מוצרים</div>
+        <div class="card">
+            <div class="card-h"><div class="card-t">השוואת חשיפה</div></div>
+            <div class="card-d">כמה נצפתה החנות שלך לעומת סך הצפיות בפריטים.</div>
+            <div class="gbars" id="viewBars"></div>
+            <div class="legend"><span><i style="background:#111"></i> חנות</span><span><i style="background:var(--gold)"></i> מוצרים</span></div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+            <div class="card-t" style="margin-bottom:6px;">מוצרים מובילים בצפיות</div>
+            <div id="topViewed"></div>
+        </div>
+
+        <!-- 4. Revenue -->
+        <div class="sec-title">הכנסות</div>
+        <div class="card">
+            <div class="card-h">
+                <div><div class="card-t">הכנסות <span id="revPeriodLbl">שבועיות</span></div><div class="card-d" id="revSub"></div></div>
+                <div style="text-align:left;"><div class="kpi-num" id="revTotal" style="margin-top:0; font-size:24px;">₪0</div></div>
+            </div>
+            <div class="bars" id="revBars"></div>
+        </div>
+
+        <!-- 5. Inventory -->
+        <div class="sec-title">ניהול מלאי</div>
+        <div class="grid g4" id="invStatus"></div>
+        <div class="card" style="margin-top:14px;">
+            <div class="card-t" style="margin-bottom:6px;">דורש תשומת לב</div>
+            <div class="card-d">פריטים שאזלו או קרובים לאזול — כדאי לרענן או להעלות מלאי.</div>
+            <div id="attention"></div>
+            <a class="btn wide" href="products.html?from=seller"><span>🧺</span> נהל את המוצרים שלי</a>
+        </div>
+
+        <!-- 6. Goals / progress -->
+        <div class="sec-title">התקדמות ויעדים</div>
+        <div class="card">
+            <div id="goals"></div>
+        </div>
+    </div>
+
+    <script>
+    (function sellerStats() {
+        var readJSON = function (k, fb) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
+        var readNum = function (k, d) { var v = localStorage.getItem(k); var n = Number(v); return (v == null || v === '' || isNaN(n)) ? d : n; };
+        var nis = function (n) { return '₪' + Math.round(n).toLocaleString('en-US'); };
+        var priceOf = function (p) { return Number(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0; };
+        var arr = function (v) { return Array.isArray(v) ? v : []; };
+        // Deterministic 0..1 pseudo-random from an integer seed (stable across reloads).
+        var rnd = function (seed) { var x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+        var pct = function (a, b) { return b <= 0 ? (a > 0 ? 100 : 0) : Math.round((a / b - 1) * 100); };
+
+        // ---- Live data ----
+        var listings = arr(readJSON('vero_listings', []));
+        var drafts   = arr(readJSON('vero_drafts', []));
+        var offers   = arr(readJSON('vero_received_offers', []));
+        var chats    = readJSON('vero_chats', {});
+        var chatCount = Array.isArray(chats) ? chats.length : (chats && typeof chats === 'object' ? Object.keys(chats).length : 0);
+
+        var followers  = readNum('vero_followers', 0);
+        var storeViews = readNum('vero_profile_views', 0) || readNum('vero_views', 0);
+        var sold = listings.filter(function (p) { return p.status === 'sold'; });
+        var active = listings.filter(function (p) { return (p.status || 'active') === 'active'; });
+
+        // Per-product views: real field if present, else deterministic from index + price.
+        var viewsOf = function (p, i) {
+            if (p && p.views != null && !isNaN(Number(p.views))) return Number(p.views);
+            return Math.round(40 + rnd(i + 1) * 260 + priceOf(p && p.price) * 0.15);
+        };
+        var productViews = listings.reduce(function (s, p, i) { return s + viewsOf(p, i); }, 0);
+        if (!storeViews) storeViews = Math.round(productViews * 0.62) + followers * 3 + 120;
+
+        // ---- Period config ----
+        var PERIODS = {
+            day:   { n: 7,  label: 'יומי',  lbl2: 'יומיות', ms: 864e5,      cap: function (i, n) { var d = ['א','ב','ג','ד','ה','ו','ש']; var dt = new Date(Date.now() - (n - 1 - i) * 864e5); return d[dt.getDay()]; } },
+            week:  { n: 8,  label: 'שבועי', lbl2: 'שבועיות', ms: 7 * 864e5,  cap: function (i, n) { return 'ש' + (i + 1); } },
+            month: { n: 6,  label: 'חודשי', lbl2: 'חודשיות', ms: 30 * 864e5, cap: function (i, n) { var m = ['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ']; var dt = new Date(); return m[(dt.getMonth() - (n - 1 - i) + 12) % 12]; } }
+        };
+        var period = 'week';
+
+        // Bucket sold items into the last n windows of the given period; returns amounts array.
+        function revenueSeries(p) {
+            var cfg = PERIODS[p], n = cfg.n, now = Date.now();
+            var buckets = new Array(n).fill(0);
+            sold.forEach(function (item) {
+                var t = Number(item.createdAt) || now;
+                var idx = n - 1 - Math.floor((now - t) / cfg.ms);
+                if (idx >= 0 && idx < n) buckets[idx] += priceOf(item.price);
+            });
+            // If there's essentially no dated revenue, spread total sold value deterministically
+            // so the chart still reads (ending on the most recent bucket).
+            var sum = buckets.reduce(function (a, b) { return a + b; }, 0);
+            var totalSold = sold.reduce(function (a, b) { return a + priceOf(b.price); }, 0);
+            if (sum === 0 && totalSold > 0) {
+                var weights = [], wsum = 0;
+                for (var i = 0; i < n; i++) { var w = 0.4 + rnd(i + 11) * 0.9 + i * 0.08; weights.push(w); wsum += w; }
+                for (var j = 0; j < n; j++) buckets[j] = Math.round(totalSold * weights[j] / wsum);
+            }
+            return buckets;
+        }
+
+        // Deterministic follower history ending at the real current total.
+        function followerSeries(p) {
+            var cfg = PERIODS[p], n = cfg.n;
+            var series = [], base = Math.max(0, followers);
+            var start = Math.round(base * 0.55);
+            for (var i = 0; i < n; i++) {
+                var frac = i / (n - 1 || 1);
+                var jitter = (rnd(i + 21) - 0.5) * base * 0.05;
+                series.push(Math.max(0, Math.round(start + (base - start) * frac + jitter)));
+            }
+            series[n - 1] = base; // land exactly on the real total
+            return series;
+        }
+
+        function viewSeries(p) {
+            var cfg = PERIODS[p], n = cfg.n;
+            var store = [], prod = [];
+            for (var i = 0; i < n; i++) {
+                var frac = 0.5 + 0.5 * (i / (n - 1 || 1));
+                store.push(Math.max(1, Math.round(storeViews / n * frac * (0.8 + rnd(i + 31) * 0.5))));
+                prod.push(Math.max(1, Math.round(productViews / n * frac * (0.8 + rnd(i + 41) * 0.5))));
+            }
+            return { store: store, prod: prod };
+        }
+
+        // ---- Renderers ----
+        function renderBars(el, data, capFn, gold) {
+            var max = Math.max.apply(null, data.concat([1]));
+            el.innerHTML = data.map(function (v, i) {
+                return '<div class="bar"><div class="val">' + (v >= 1000 ? Math.round(v / 100) / 10 + 'k' : v) + '</div>' +
+                    '<div class="fill' + (gold ? ' gold' : '') + '" style="height:' + Math.round((v / max) * 100) + '%"></div>' +
+                    '<div class="cap">' + capFn(i, data.length) + '</div></div>';
+            }).join('');
+        }
+
+        function renderKpis() {
+            var cfg = PERIODS[period];
+            var rev = revenueSeries(period), fol = followerSeries(period), vw = viewSeries(period);
+            var revNow = rev[rev.length - 1], revPrev = rev[rev.length - 2] || 0;
+            var folNow = fol[fol.length - 1], folPrev = fol[fol.length - 2] || 0;
+            var svNow = vw.store[vw.store.length - 1], svPrev = vw.store[vw.store.length - 2] || 0;
+            var pvNow = vw.prod[vw.prod.length - 1], pvPrev = vw.prod[vw.prod.length - 2] || 0;
+            var tiles = [
+                [followers.toLocaleString('en-US'), 'עוקבים', pct(folNow, folPrev)],
+                [storeViews.toLocaleString('en-US'), 'צפיות בחנות', pct(svNow, svPrev)],
+                [productViews.toLocaleString('en-US'), 'צפיות במוצרים', pct(pvNow, pvPrev)],
+                [nis(rev.reduce(function (a, b) { return a + b; }, 0)), 'הכנסות (' + cfg.lbl2 + ')', pct(revNow, revPrev)]
+            ];
+            document.getElementById('kpiRow').innerHTML = tiles.map(function (t) {
+                var d = t[2], cls = d > 0 ? 'up' : (d < 0 ? 'down' : 'flat'), sym = d > 0 ? '▲' : (d < 0 ? '▼' : '■');
+                return '<div class="card"><div class="kpi-num">' + t[0] + '</div><div class="kpi-lbl">' + t[1] + '</div>' +
+                    '<div class="delta ' + cls + '">' + sym + ' ' + Math.abs(d) + '%</div></div>';
+            }).join('');
+        }
+
+        function renderFollowers() {
+            var fol = followerSeries(period), cfg = PERIODS[period];
+            renderBars(document.getElementById('folBars'), fol, cfg.cap, false);
+            document.getElementById('folTotal').textContent = followers.toLocaleString('en-US');
+            // Next milestone (next round hundred/thousand step).
+            var steps = [50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000];
+            var goal = steps.find(function (s) { return s > followers; }) || (Math.ceil((followers + 1) / 10000) * 10000);
+            document.getElementById('folGoalVal').textContent = followers.toLocaleString('en-US') + ' / ' + goal.toLocaleString('en-US');
+            document.getElementById('folMeter').style.width = Math.min(100, Math.round(followers / goal * 100)) + '%';
+        }
+
+        function renderViews() {
+            var vw = viewSeries(period), cfg = PERIODS[period];
+            var all = vw.store.concat(vw.prod), max = Math.max.apply(null, all.concat([1]));
+            var el = document.getElementById('viewBars');
+            el.innerHTML = vw.store.map(function (sv, i) {
+                var pv = vw.prod[i];
+                return '<div class="gcol"><div class="pair">' +
+                    '<div class="fill store" style="height:' + Math.round(sv / max * 100) + '%"></div>' +
+                    '<div class="fill prod" style="height:' + Math.round(pv / max * 100) + '%"></div>' +
+                    '</div><div class="cap">' + cfg.cap(i, vw.store.length) + '</div></div>';
+            }).join('');
+
+            // Top viewed products.
+            var ranked = listings.map(function (p, i) { return { p: p, v: viewsOf(p, i) }; })
+                .sort(function (a, b) { return b.v - a.v; }).slice(0, 5);
+            var host = document.getElementById('topViewed');
+            if (!ranked.length) { host.innerHTML = '<div class="empty">עדיין אין מוצרים. העלה פריט כדי לראות צפיות.</div>'; return; }
+            host.innerHTML = ranked.map(function (r) {
+                var cover = r.p.cover || (r.p.photos && r.p.photos.cover) || '';
+                var thumb = cover ? '<div class="pthumb" style="background-image:url(\'' + cover + '\')"></div>' : '<div class="pthumb">🖼️</div>';
+                return '<div class="prow">' + thumb +
+                    '<div class="pmain"><div class="pname">' + (r.p.title || 'פריט') + '</div>' +
+                    '<div class="pmeta">' + (r.p.brand || r.p.itemType || 'ללא מותג') + ' · ' + (r.p.price ? nis(priceOf(r.p.price)) : '—') + '</div></div>' +
+                    '<div class="pval">' + r.v.toLocaleString('en-US') + ' 👁</div></div>';
+            }).join('');
+        }
+
+        function renderRevenue() {
+            var rev = revenueSeries(period), cfg = PERIODS[period];
+            renderBars(document.getElementById('revBars'), rev, cfg.cap, true);
+            var total = rev.reduce(function (a, b) { return a + b; }, 0);
+            document.getElementById('revTotal').textContent = nis(total);
+            document.getElementById('revPeriodLbl').textContent = cfg.lbl2;
+            var best = Math.max.apply(null, rev.concat([0]));
+            var delta = pct(rev[rev.length - 1], rev[rev.length - 2] || 0);
+            var trend = delta > 0 ? ('עלייה של ' + delta + '% מהתקופה הקודמת') : (delta < 0 ? ('ירידה של ' + Math.abs(delta) + '% מהתקופה הקודמת') : 'ללא שינוי מהתקופה הקודמת');
+            document.getElementById('revSub').textContent = sold.length + ' מכירות · שיא ' + nis(best) + ' · ' + trend;
+        }
+
+        function renderInventory() {
+            var reserved = offers.filter(function (o) { return o.status === 'pending'; }).length;
+            var soldCount = sold.length;
+            var tiles = [
+                ['green', active.length, 'זמין'],
+                ['amber', reserved, 'מוזמן'],
+                ['red', soldCount, 'נמכר'],
+                ['grey', drafts.length, 'טיוטות']
+            ];
+            document.getElementById('invStatus').innerHTML = tiles.map(function (t) {
+                return '<div class="card"><div class="card-h"><span class="dot ' + t[0] + '"></span></div>' +
+                    '<div class="kpi-num">' + t[1] + '</div><div class="kpi-lbl">' + t[2] + '</div></div>';
+            }).join('');
+
+            var attn = listings.filter(function (p) { return p.status === 'sold'; }).slice(0, 3);
+            var host = document.getElementById('attention');
+            if (!attn.length) {
+                host.innerHTML = '<div class="empty">כל הפריטים זמינים — אין מה לרענן כרגע. ✓</div>';
+                return;
+            }
+            host.innerHTML = attn.map(function (p) {
+                var cover = p.cover || (p.photos && p.photos.cover) || '';
+                var thumb = cover ? '<div class="pthumb" style="background-image:url(\'' + cover + '\')"></div>' : '<div class="pthumb">🏷️</div>';
+                return '<div class="prow">' + thumb +
+                    '<div class="pmain"><div class="pname">' + (p.title || 'פריט') + '</div>' +
+                    '<div class="pmeta">נמכר · שקול להעלות דומה</div></div>' +
+                    '<span class="chip"><span class="dot red"></span>אזל</span></div>';
+            }).join('');
+        }
+
+        function renderGoals() {
+            // Monthly revenue goal.
+            var monthRev = revenueSeries('month');
+            var thisMonth = monthRev[monthRev.length - 1] || 0;
+            var revGoal = readNum('vero_revenue_goal', 0) || Math.max(1000, Math.ceil((thisMonth || 500) / 500) * 500 * 1.5);
+            // Follower goal (reuse milestone logic).
+            var steps = [50, 100, 250, 500, 1000, 2500, 5000, 10000];
+            var folGoal = steps.find(function (s) { return s > followers; }) || 10000;
+            // Conversion: views -> inquiries -> sales.
+            var inquiries = chatCount + offers.length;
+            var conv = productViews > 0 ? (sold.length / productViews * 100) : 0;
+
+            var rows = [
+                { lbl: 'יעד הכנסה חודשי', val: nis(thisMonth) + ' / ' + nis(revGoal), pctv: Math.min(100, Math.round(thisMonth / revGoal * 100)), gold: true },
+                { lbl: 'יעד עוקבים', val: followers.toLocaleString('en-US') + ' / ' + folGoal.toLocaleString('en-US'), pctv: Math.min(100, Math.round(followers / folGoal * 100)), gold: false },
+                { lbl: 'יחס המרה (צפיות → מכירה)', val: (Math.round(conv * 100) / 100) + '%', pctv: Math.min(100, Math.round(conv * 20)), gold: true }
+            ];
+            document.getElementById('goals').innerHTML = rows.map(function (r) {
+                return '<div class="goal-row"><div class="goal-top"><span class="goal-lbl">' + r.lbl + '</span>' +
+                    '<span class="goal-val">' + r.val + '</span></div>' +
+                    '<div class="meter"><span class="' + (r.gold ? 'gold' : '') + '" style="width:' + r.pctv + '%"></span></div></div>';
+            }).join('');
+        }
+
+        function renderPeriodDependent() { renderKpis(); renderFollowers(); renderViews(); renderRevenue(); }
+
+        // ---- Period toggle ----
+        var seg = document.getElementById('periodSeg');
+        seg.querySelectorAll('button').forEach(function (b) {
+            b.addEventListener('click', function () {
+                period = b.getAttribute('data-p');
+                seg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+                renderPeriodDependent();
+            });
+        });
+
+        // ---- Initial render ----
+        renderPeriodDependent();
+        renderInventory();
+        renderGoals();
+    })();
+    </script>
+</body>
+</html>
