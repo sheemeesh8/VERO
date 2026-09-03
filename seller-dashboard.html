@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Phone-only presentation: opened as a top-level window, hand off to the phone
+         frame (same pattern the other inner pages use) so the dashboard always renders
+         inside the device chrome. Inside the frame (window.top !== self) we render. -->
+    <script>
+      (function () {
+        var pf = location.pathname.split('/').pop() || 'seller-dashboard.html';
+        if (window.self === window.top) location.replace('phone-frame.html#page=' + pf);
+      })();
+    </script>
+    <title>moravchick — לוח בקרה למוכר</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+        /* =====================================================================
+           SELLER DASHBOARD — a control-center "home" for the shop owner.
+           Overview KPIs, sales trend, pending offers, alerts and quick actions,
+           all driven by live localStorage data with graceful synthetic fallbacks.
+           Shares the visual language of dashboard.html (cards, KPI tiles, pills).
+           Mobile-first (renders inside the 412px phone frame), scales up on wider
+           viewports. RTL Hebrew.
+        ===================================================================== */
+        :root {
+            --ink: #1c1c1c;
+            --muted: #7a7a75;
+            --line: #ecece9;
+            --line-strong: #e2e2de;
+            --paper: #ffffff;
+            --sand: #f6f5f2;
+            --green: #1f8f4e;   /* available / positive */
+            --amber: #c9922b;   /* reserved / pending  */
+            --red:   #b23b3b;   /* sold / urgent       */
+            --gold:  #b8952f;   /* rank accent         */
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--sand);
+            direction: rtl; color: var(--ink);
+            font-size: 14px; line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 40px;
+        }
+
+        .wrap {
+            max-width: 720px; margin: 0 auto;
+            padding: 20px 16px 60px;
+            animation: fade 0.5s ease both;
+        }
+        @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        @media (min-width: 760px) { .wrap { padding: 34px 26px 80px; } }
+
+        /* ---- Greeting header ---- */
+        .top { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+        .avatar {
+            width: 52px; height: 52px; border-radius: 50%; flex: none;
+            background: #111 center/cover; color: #fff; display: grid; place-items: center;
+            font-family: 'Playfair Display', serif; font-size: 22px; overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .top .id { flex: 1; min-width: 0; }
+        .hello { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+        .shop { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; line-height: 1.15;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rank {
+            display: inline-flex; align-items: center; gap: 6px; margin-top: 5px;
+            font-size: 10px; letter-spacing: 0.5px; color: var(--gold);
+            border: 1px solid rgba(184,149,47,0.4); background: rgba(184,149,47,0.07);
+            padding: 4px 10px; border-radius: 999px;
+        }
+        .rank .g { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+
+        /* ---- Section heading ---- */
+        .sec-title {
+            font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+            color: var(--muted); margin: 26px 2px 12px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .sec-title a { color: var(--muted); text-decoration: none; font-size: 10px; letter-spacing: 0.5px; }
+        .sec-title a:hover { color: var(--ink); }
+
+        /* ---- Cards ---- */
+        .grid { display: grid; gap: 12px; }
+        .g2 { grid-template-columns: 1fr 1fr; }
+        .g4 { grid-template-columns: 1fr 1fr; }
+        @media (min-width: 760px) { .g4 { grid-template-columns: repeat(4, 1fr); } }
+        .card {
+            background: var(--paper); border: 1px solid var(--line);
+            border-radius: 16px; padding: 16px;
+        }
+        .card.dark { background: #111; color: #fff; border-color: #111; }
+
+        /* ---- KPI tiles ---- */
+        .kpi { position: relative; overflow: hidden; }
+        .kpi .ic { font-size: 16px; opacity: 0.85; }
+        .kpi-num { font-size: 27px; font-weight: 200; line-height: 1.05; margin-top: 10px; letter-spacing: 0.3px; }
+        .kpi.dark .kpi-num, .card.dark .kpi-num { color: #fff; }
+        .kpi-lbl { font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-top: 7px; }
+        .card.dark .kpi-lbl { color: rgba(255,255,255,0.62); }
+        .kpi .delta { font-size: 10px; margin-top: 6px; font-weight: 500; }
+        .delta.up { color: var(--green); } .delta.down { color: var(--red); }
+        .card.dark .delta.up { color: #7fd6a0; }
+
+        /* ---- Sales trend (mini bar chart) ---- */
+        .trend-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+        .trend-big { font-size: 24px; font-weight: 200; }
+        .trend-cap { font-size: 10px; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; }
+        .bars { display: flex; align-items: flex-end; gap: 7px; height: 92px; margin-top: 16px; }
+        .bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .bar .fill { width: 100%; background: #fff; border-radius: 5px 5px 2px 2px; min-height: 4px;
+                     transition: height 0.6s cubic-bezier(0.22,1,0.36,1); opacity: 0.9; }
+        .bar.peak .fill { background: var(--gold); opacity: 1; }
+        .bar .cap { font-size: 9px; color: rgba(255,255,255,0.55); }
+
+        /* ---- List rows (offers / orders) ---- */
+        .row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+        .row:last-child { border-bottom: none; }
+        .row .thumb { width: 42px; height: 42px; border-radius: 10px; background: var(--sand); flex: none;
+                      display: grid; place-items: center; font-size: 20px; }
+        .row .main { flex: 1; min-width: 0; }
+        .row .main b { font-size: 13px; font-weight: 500; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .row .main span { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
+        .row .amt { font-size: 13px; font-weight: 600; white-space: nowrap; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px;
+            border: 1px solid var(--line-strong); font-size: 10.5px; font-weight: 500; white-space: nowrap;
+        }
+        .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+        .dot.green { background: var(--green); } .dot.amber { background: var(--amber); } .dot.red { background: var(--red); }
+
+        .mini-btns { display: flex; gap: 8px; }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            padding: 9px 15px; border-radius: 999px; border: 1.3px solid #111; background: var(--paper);
+            color: #111; font-family: inherit; font-size: 11px; letter-spacing: 0.3px; font-weight: 500;
+            cursor: pointer; min-height: 38px; transition: background 0.2s, color 0.2s, opacity 0.2s;
+            text-decoration: none;
+        }
+        .btn:hover { background: #111; color: #fff; }
+        .btn.solid { background: #111; color: #fff; }
+        .btn.solid:hover { opacity: 0.85; }
+        .btn.ghost { border-color: var(--line-strong); color: var(--muted); }
+        .btn.ghost:hover { background: var(--sand); color: #111; border-color: #111; }
+        .btn.sm { min-height: 34px; padding: 7px 13px; font-size: 10.5px; }
+        .btn.wide { width: 100%; }
+
+        .empty { text-align: center; color: var(--muted); font-size: 12px; padding: 22px 6px; }
+
+        /* ---- Alerts ---- */
+        .alert { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+        .alert:last-child { border-bottom: none; }
+        .alert .badge { width: 38px; height: 38px; border-radius: 10px; flex: none; display: grid; place-items: center; font-size: 18px; }
+        .alert .badge.g { background: rgba(31,143,78,0.1); }
+        .alert .badge.a { background: rgba(201,146,43,0.12); }
+        .alert .badge.r { background: rgba(178,59,59,0.1); }
+        .alert .main { flex: 1; min-width: 0; }
+        .alert .main b { font-size: 12.5px; font-weight: 500; }
+        .alert .main span { font-size: 11px; color: var(--muted); display: block; margin-top: 1px; }
+        .alert a { text-decoration: none; }
+
+        /* ---- Quick actions ---- */
+        .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .action {
+            background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+            padding: 15px 8px; text-align: center; text-decoration: none; color: var(--ink);
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+        }
+        .action:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: 0 8px 22px rgba(0,0,0,0.05); }
+        .action .ai { font-size: 22px; }
+        .action .al { font-size: 10.5px; font-weight: 500; letter-spacing: 0.2px; }
+        .action .badge-n {
+            position: absolute; top: 8px; left: 8px; background: var(--red); color: #fff;
+            font-size: 9px; min-width: 16px; height: 16px; border-radius: 999px; padding: 0 4px;
+            display: grid; place-items: center;
+        }
+        .action { position: relative; }
+
+        .foot { text-align: center; color: var(--muted); font-size: 10px; letter-spacing: 1px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <!-- ===== Greeting ===== -->
+        <div class="top">
+            <div class="avatar" id="avatar">M</div>
+            <div class="id">
+                <div class="hello">שלום, בעל/ת החנות</div>
+                <div class="shop" id="shopName">My Store</div>
+                <span class="rank"><span class="g"></span><span id="rankLbl">Established Boutique</span></span>
+            </div>
+        </div>
+
+        <!-- ===== KPI overview ===== -->
+        <div class="sec-title">סקירה כללית · החודש</div>
+        <div class="grid g4" id="kpis"></div>
+
+        <!-- ===== Sales trend ===== -->
+        <div class="sec-title">מגמת מכירות · 7 ימים אחרונים</div>
+        <div class="card dark">
+            <div class="trend-head">
+                <div>
+                    <div class="trend-big" id="trendTotal">₪0</div>
+                    <div class="trend-cap">סה״כ בשבוע האחרון</div>
+                </div>
+                <div class="chip" style="border-color:rgba(255,255,255,0.2); color:#fff;"><span class="dot green"></span><span id="trendDelta">—</span></div>
+            </div>
+            <div class="bars" id="trendBars"></div>
+        </div>
+
+        <!-- ===== Pending offers ===== -->
+        <div class="sec-title">הצעות ממתינות <a href="offers-received.html?from=seller">לכל ההצעות ←</a></div>
+        <div class="card" id="offersCard"></div>
+
+        <!-- ===== Recent orders / deliveries ===== -->
+        <div class="sec-title">מכירות אחרונות <a href="products.html?from=seller">לכל המוצרים ←</a></div>
+        <div class="card" id="ordersCard"></div>
+
+        <!-- ===== Alerts ===== -->
+        <div class="sec-title">דורש תשומת לב</div>
+        <div class="card" id="alertsCard"></div>
+
+        <!-- ===== Quick actions ===== -->
+        <div class="sec-title">פעולות מהירות</div>
+        <div class="actions" id="actions"></div>
+
+        <div class="foot">moravchick · לוח בקרה למוכר</div>
+    </div>
+
+    <script>
+        // ---------- helpers ----------
+        var readJSON = function (k, fb) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
+        var arr = function (v) { return Array.isArray(v) ? v : []; };
+        var len = function (v) { return Array.isArray(v) ? v.length : (v && typeof v === 'object' ? Object.keys(v).length : 0); };
+        var nis = function (n) { return '₪' + Math.round(n || 0).toLocaleString('en-US'); };
+        var priceOf = function (p) { return Number(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0; };
+        var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); };
+        var el = function (id) { return document.getElementById(id); };
+
+        // ---------- live data ----------
+        var listings = arr(readJSON('vero_listings', []));
+        var drafts   = readJSON('vero_drafts', []);
+        var offers   = arr(readJSON('vero_received_offers', []));
+        if (!offers.length) offers = arr(readJSON('vero_offers', []));
+        var chats    = readJSON('vero_chats', {});
+        var wishlist = readJSON('vero_wishlist', []);
+        var sellerP  = readJSON('vero_seller_profile', {}) || {};
+        var storeC   = readJSON('vero_store_config', {}) || {};
+
+        var active = listings.filter(function (p) { return (p.status || 'active') === 'active'; });
+        var sold   = listings.filter(function (p) { return p.status === 'sold'; });
+
+        // ---------- greeting ----------
+        (function () {
+            var name = sellerP.name || storeC.name || 'My Store';
+            el('shopName').textContent = name;
+            var av = el('avatar');
+            var img = sellerP.avatar || sellerP.logo || storeC.logo;
+            if (img) { av.innerHTML = '<img src="' + esc(img) + '" alt="">'; }
+            else { av.textContent = (name.trim()[0] || 'M').toUpperCase(); }
+            // Rank derived from number of completed deliveries.
+            var d = sold.length;
+            var rank = d >= 25 ? 'Top Verified Gallery' : d >= 10 ? 'Established Boutique' : 'Emerging Seller';
+            el('rankLbl').textContent = rank;
+        })();
+
+        // ---------- KPI overview ----------
+        (function () {
+            var revenue = sold.reduce(function (s, p) { return s + priceOf(p.sale && p.sale.price != null ? p.sale.price : p.price); }, 0);
+            var saves = len(wishlist) || (86 + listings.length * 3);
+            var views = readJSON('vero_views_monthly', null);
+            if (views == null) views = 1240 + listings.length * 37;   // synthetic fallback
+            var tiles = [
+                { ic: '💰', num: nis(revenue), lbl: 'הכנסות', delta: '+12%', up: true, dark: true },
+                { ic: '📦', num: sold.length, lbl: 'מכירות', delta: sold.length ? '+' + sold.length : '—', up: true },
+                { ic: '🏷️', num: active.length, lbl: 'פריטים פעילים', delta: active.length + ' באוויר', up: true },
+                { ic: '👁️', num: Number(views).toLocaleString('en-US'), lbl: 'צפיות', delta: '+' + saves + ' שמירות', up: true }
+            ];
+            el('kpis').innerHTML = tiles.map(function (t) {
+                return '<div class="card kpi' + (t.dark ? ' dark' : '') + '">' +
+                    '<div class="ic">' + t.ic + '</div>' +
+                    '<div class="kpi-num">' + t.num + '</div>' +
+                    '<div class="kpi-lbl">' + t.lbl + '</div>' +
+                    '<div class="delta ' + (t.up ? 'up' : 'down') + '">' + t.delta + '</div>' +
+                    '</div>';
+            }).join('');
+        })();
+
+        // ---------- Sales trend (7 days) ----------
+        (function () {
+            var days = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+            var now = Date.now(), buckets = [0, 0, 0, 0, 0, 0, 0];
+            // Distribute real sold items into day buckets by soldAt; seed if none.
+            sold.forEach(function (p) {
+                var t = p.soldAt || p.listedAt || now;
+                var idx = 6 - Math.min(6, Math.floor((now - t) / 864e5));
+                if (idx >= 0 && idx < 7) buckets[idx] += priceOf(p.sale && p.sale.price != null ? p.sale.price : p.price);
+            });
+            var total = buckets.reduce(function (a, b) { return a + b; }, 0);
+            if (total === 0) { buckets = [120, 0, 340, 210, 90, 480, 260]; total = buckets.reduce(function (a, b) { return a + b; }, 0); }
+            var max = Math.max.apply(null, buckets) || 1;
+            var peak = buckets.indexOf(max);
+            el('trendTotal').textContent = nis(total);
+            el('trendDelta').textContent = '+' + Math.round((buckets[6] / (max)) * 100) + '% מול אתמול';
+            el('trendBars').innerHTML = buckets.map(function (v, i) {
+                var h = Math.max(4, Math.round((v / max) * 100));
+                return '<div class="bar' + (i === peak ? ' peak' : '') + '"><div class="fill" style="height:' + h + '%"></div><div class="cap">' + days[i] + '</div></div>';
+            }).join('');
+        })();
+
+        // ---------- Pending offers ----------
+        (function () {
+            var pend = offers.filter(function (o) { return !o.status || o.status === 'pending'; }).slice(0, 3);
+            var seed = [
+                { name: 'Wool coat', buyer: 'Maya L.', offer: 230, askPrice: 269, icon: '🧥' },
+                { name: 'Silk scarf', buyer: 'Noa B.', offer: 175, askPrice: 210, icon: '🧣' }
+            ];
+            var rows = pend.length ? pend : seed;
+            var html = rows.map(function (o) {
+                var ic = o.icon || '🏷️';
+                return '<div class="row">' +
+                    '<div class="thumb">' + ic + '</div>' +
+                    '<div class="main"><b>' + esc(o.name || 'פריט') + '</b>' +
+                    '<span>מ־' + esc(o.buyer || 'קונה') + ' · הצעה ' + nis(o.offer) +
+                    (o.askPrice ? ' <span style="opacity:.7">(מבוקש ' + nis(o.askPrice) + ')</span>' : '') + '</span></div>' +
+                    '<div class="mini-btns"><a class="btn solid sm" href="offers-received.html?from=seller">אשר</a></div>' +
+                    '</div>';
+            }).join('');
+            el('offersCard').innerHTML = html || '<div class="empty">אין הצעות ממתינות כרגע.</div>';
+        })();
+
+        // ---------- Recent sales ----------
+        (function () {
+            var recent = sold.slice().sort(function (a, b) { return (b.soldAt || 0) - (a.soldAt || 0); }).slice(0, 3);
+            var seed = [
+                { name: 'Knit sweater', icon: '🧶', price: 189, buyer: 'Shira P.' },
+                { name: 'Leather tote', icon: '👜', price: 240, buyer: 'Daniel K.' }
+            ];
+            var rows = recent.length ? recent : seed;
+            el('ordersCard').innerHTML = rows.map(function (p) {
+                var price = priceOf(p.sale && p.sale.price != null ? p.sale.price : p.price);
+                var buyer = (p.sale && p.sale.buyer) || p.buyer || '';
+                return '<div class="row">' +
+                    '<div class="thumb">' + (p.icon || '📦') + '</div>' +
+                    '<div class="main"><b>' + esc(p.name || 'פריט') + '</b>' +
+                    '<span>' + (buyer ? 'נמסר ל־' + esc(buyer) + ' · ' : 'נמכר · ') + 'צ׳ק-אין הושלם ✓</span></div>' +
+                    '<div class="amt">' + nis(price) + '</div>' +
+                    '</div>';
+            }).join('') || '<div class="empty">עדיין אין מכירות. הפריט הראשון שלך ממש מעבר לפינה.</div>';
+        })();
+
+        // ---------- Alerts ----------
+        (function () {
+            var items = [];
+            var draftN = len(drafts);
+            if (draftN) items.push({ c: 'a', ic: '📝', b: draftN + ' טיוטות ממתינות לפרסום', s: 'סיים והעלה כדי שיופיעו בחנות', href: 'drafts.html?from=seller' });
+            var pendN = offers.filter(function (o) { return !o.status || o.status === 'pending'; }).length;
+            if (pendN) items.push({ c: 'r', ic: '💬', b: pendN + ' הצעות מחכות לתשובה', s: 'קונים ממתינים לאישור', href: 'offers-received.html?from=seller' });
+            var chatN = len(chats);
+            if (chatN) items.push({ c: 'g', ic: '📨', b: chatN + ' שיחות פעילות', s: 'מענה מהיר משפר את דירוג המוכר', href: 'chats.html?from=seller' });
+            if (active.length <= 2) items.push({ c: 'a', ic: '📉', b: 'מלאי נמוך', s: 'רק ' + active.length + ' פריטים פעילים — כדאי להעלות עוד', href: 'product-upload.html?from=seller' });
+            if (!items.length) items.push({ c: 'g', ic: '✅', b: 'הכל מעודכן', s: 'אין משימות פתוחות. עבודה יפה!', href: '' });
+
+            el('alertsCard').innerHTML = items.map(function (a) {
+                var inner = '<div class="badge ' + a.c + '">' + a.ic + '</div>' +
+                    '<div class="main"><b>' + a.b + '</b><span>' + a.s + '</span></div>' +
+                    (a.href ? '<span class="btn ghost sm">פתח</span>' : '');
+                return a.href ? '<a class="alert" href="' + a.href + '" style="color:inherit">' + inner + '</a>'
+                              : '<div class="alert">' + inner + '</div>';
+            }).join('');
+        })();
+
+        // ---------- Quick actions ----------
+        (function () {
+            var pendN = offers.filter(function (o) { return !o.status || o.status === 'pending'; }).length;
+            var actions = [
+                { ai: '➕', al: 'העלאת פריט', href: 'product-upload.html?from=seller' },
+                { ai: '🏷️', al: 'המוצרים שלי', href: 'products.html?from=seller' },
+                { ai: '💬', al: 'הצעות', href: 'offers-received.html?from=seller', n: pendN },
+                { ai: '📨', al: 'צ׳אטים', href: 'chats.html?from=seller', n: len(chats) },
+                { ai: '📊', al: 'סטטיסטיקות', href: 'dashboard.html' },
+                { ai: '⚙️', al: 'הגדרות חנות', href: 'seller-area.html' }
+            ];
+            el('actions').innerHTML = actions.map(function (a) {
+                return '<a class="action" href="' + a.href + '">' +
+                    (a.n ? '<span class="badge-n">' + a.n + '</span>' : '') +
+                    '<span class="ai">' + a.ai + '</span><span class="al">' + a.al + '</span></a>';
+            }).join('');
+        })();
+    </script>
+</body>
+</html>
