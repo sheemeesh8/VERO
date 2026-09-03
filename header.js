@@ -832,9 +832,10 @@
 
         /* Header row: back arrow (matches the page headers) */
         .vero-drawer-head {
-            display: flex; align-items: center; justify-content: flex-start;
+            display: flex; align-items: center; justify-content: space-between;
             padding-bottom: 24px; border-bottom: 1px solid #e7e2d8; margin-bottom: 14px;
         }
+        .vero-drawer-logo { height: 34px; width: auto; display: block; margin-right: 2px; }
         .vero-drawer-close {
             background: none; border: none; cursor: pointer; padding: 0;
             width: 30px; height: 30px; display: inline-flex; align-items: center;
@@ -1421,6 +1422,7 @@
                 <button class="vero-drawer-close" aria-label="Back" onclick="veroCloseDrawer()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"></polyline></svg>
                 </button>
+                <img class="vero-drawer-logo" src="peacock-logo.png?v=1" alt="VERO" />
             </div>
             <nav class="vero-drawer-nav">
                 <a class="primary" onclick="veroCloseDrawer(); showMain()">Home</a>
