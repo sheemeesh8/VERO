@@ -359,6 +359,46 @@
             border: 1px solid #ecebe7; background: #f7f6f3; border-radius: 999px;
         }
         .chat-search:focus-within { border-color: #111; background: #fff; }
+
+        /* ===== More comfortable, mobile-first inbox ===== */
+        /* Single column: drop the desktop stats card, let the conversation list fill. */
+        .grid { display: block; margin-top: 26px; }
+        .grid > .card:first-child { display: none; }              /* hide the stats sidebar */
+        .col-right .card { padding: 0; border-bottom: none; }
+        .col-right .card > .card-label { display: none; }         /* the list needs no label */
+        .head-title { font-size: clamp(30px, 8vw, 46px); }
+        .wrap { padding: 96px 20px 90px; }
+        .chat-search { width: 100%; min-width: 0; flex: 1; }
+
+        /* Time filter chips, led by the existing calendar filter icon. */
+        .chat-filters {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-top: 22px; padding-bottom: 4px;
+        }
+        .chat-filter-ico { width: 19px; height: 19px; flex: 0 0 auto; color: #6b6b66; margin-right: 2px; }
+        .chat-filter-ico svg { width: 100%; height: 100%; display: block; }
+        .chat-chip {
+            padding: 8px 15px; border: 1.4px solid #e4e2dc; border-radius: 999px;
+            font-family: inherit; font-size: 11px; letter-spacing: 0.4px; color: #6b6b66;
+            background: #fff; cursor: pointer; white-space: nowrap; transition: all 0.18s ease;
+        }
+        .chat-chip:hover { border-color: #cfccc4; }
+        .chat-chip.active { background: #111; color: #fff; border-color: #111; }
+
+        /* A calm, tappable conversation list — no horizontal slider. */
+        .chat-list { display: block !important; overflow: visible !important; margin-top: 8px; }
+        .chat-track { display: block !important; width: 100% !important; transform: none !important; }
+        .chat-slide { display: block !important; }
+        .chat-list .chat-row {
+            height: auto !important; padding: 15px 12px; gap: 14px; border-radius: 14px;
+            border-bottom: 1px solid #f1f0ec;
+        }
+        .chat-list .chat-row:active { background: #f2f0ec; }
+        .chat-avatar { width: 54px; height: 54px; font-size: 20px; border-color: #e6e4df; background: #faf9f6; }
+        .chat-name { font-size: 13.5px; }
+        .chat-preview { font-size: 11.5px; margin-top: 3px; }
+        .chat-time { font-size: 10px; }
+        .chat-nav { display: none !important; }                   /* slider nav no longer used */
     </style>
     <div class="page-cover"></div>
     <div class="side-image"></div>
@@ -370,6 +410,17 @@
             <input class="chat-search" id="chatSearch" type="text" placeholder="Search sellers…" autocomplete="off">
         </div>
         <p class="head-sub">Your conversations with sellers and buyers.</p>
+
+        <!-- Time filters, led by the existing "filter by date" calendar icon. -->
+        <div class="chat-filters" id="chatFilters">
+            <span class="chat-filter-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </span>
+            <button class="chat-chip active" data-range="all" type="button">All</button>
+            <button class="chat-chip" data-range="today" type="button">Today</button>
+            <button class="chat-chip" data-range="week" type="button">This week</button>
+            <button class="chat-chip" data-range="month" type="button">This month</button>
+        </div>
 
         <div class="grid">
             <!-- Left: conversation overview -->
@@ -508,30 +559,37 @@
             return ` <span class="chat-deal">עסקה · ${DEAL_LBL[d.status]}</span>`;
         }
 
-        let chatSlide = 0;
-        const CHATS_PER_SLIDE = 5;
-        function renderList(query = '') {
-            const q = query.trim().toLowerCase();
-            // Only sellers that exist in the chat inbox are searchable.
+        // Active time filter + current search query, applied together on every render.
+        let chatRange = 'all';
+        let chatQuery = '';
+        const DAY = 86400000;
+        function inRange(at) {
+            if (chatRange === 'all' || !at) return chatRange === 'all';
+            const now = new Date();
+            if (chatRange === 'today') {
+                const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+                return at >= start;
+            }
+            if (chatRange === 'week')  return at >= Date.now() - 7 * DAY;
+            if (chatRange === 'month') return at >= Date.now() - 30 * DAY;
+            return true;
+        }
+        function renderList() {
+            const q = chatQuery.trim().toLowerCase();
             const rows = list
                 .map((t, i) => ({ t, i }))
-                .filter(({ t }) => !q || t.seller.toLowerCase().includes(q));
-            const oldNav = document.getElementById('chatNav');
-            if (oldNav) oldNav.remove();
+                .filter(({ t }) => (!q || t.seller.toLowerCase().includes(q)) && inRange(t.at));
             if (!list.length) {
                 el.innerHTML = '<div class="chat-empty">No conversations yet — start one from any product page.</div>';
                 return;
             }
             if (!rows.length) {
-                el.innerHTML = `<div class="chat-empty">No sellers match “${query}”.</div>`;
+                const why = q ? `No sellers match “${chatQuery}”.` : 'No conversations in this period.';
+                el.innerHTML = `<div class="chat-empty">${why}</div>`;
                 return;
             }
-            // Exactly five conversations per slide.
-            const slides = [];
-            for (let i = 0; i < rows.length; i += CHATS_PER_SLIDE) slides.push(rows.slice(i, i + CHATS_PER_SLIDE));
-            if (chatSlide >= slides.length) chatSlide = 0;
-            el.innerHTML = '<div class="chat-track" id="chatTrack">' + slides.map(group =>
-                '<div class="chat-slide">' + group.map(({ t, i }) => `
+            // A single, calm vertical list — comfortable to scan and tap.
+            el.innerHTML = '<div class="chat-track">' + rows.map(({ t, i }) => `
                     <div class="chat-row" data-i="${i}">
                         <div class="chat-avatar">${t.icon}</div>
                         <div class="chat-body">
@@ -539,40 +597,25 @@
                             <div class="chat-preview">${t.preview}</div>
                         </div>
                         <div class="chat-time">${timeAgo(t.at)}</div>
-                    </div>`).join('') + '</div>').join('') + '</div>';
-
-            const track = document.getElementById('chatTrack');
-            let nav = null;
-            function go(n) {
-                chatSlide = Math.max(0, Math.min(slides.length - 1, n));
-                track.style.transform = `translateX(-${chatSlide * 100}%)`;
-                if (nav) {
-                    nav.querySelector('.prev').disabled = chatSlide === 0;
-                    nav.querySelector('.next').disabled = chatSlide === slides.length - 1;
-                    nav.querySelectorAll('.chat-dots .d').forEach((d, j) => d.classList.toggle('on', j === chatSlide));
-                }
-            }
-            if (slides.length > 1) {
-                nav = document.createElement('div');
-                nav.className = 'chat-nav'; nav.id = 'chatNav';
-                nav.innerHTML = `
-                    <button class="chat-arrow prev" aria-label="Previous">&#8249;</button>
-                    <button class="chat-arrow next" aria-label="Next">&#8250;</button>
-                    <div class="chat-dots">${slides.map((_, i) => `<button class="d${i === 0 ? ' on' : ''}" aria-label="Slide ${i + 1}"></button>`).join('')}</div>`;
-                el.after(nav);
-                nav.querySelector('.prev').addEventListener('click', () => go(chatSlide - 1));
-                nav.querySelector('.next').addEventListener('click', () => go(chatSlide + 1));
-                nav.querySelectorAll('.chat-dots .d').forEach((d, i) => d.addEventListener('click', () => go(i)));
-            }
-            go(chatSlide);
+                    </div>`).join('') + '</div>';
         }
         renderList();
+
+        // Time-filter chips.
+        document.getElementById('chatFilters').addEventListener('click', (e) => {
+            const chip = e.target.closest('.chat-chip');
+            if (!chip) return;
+            document.querySelectorAll('#chatFilters .chat-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            chatRange = chip.dataset.range;
+            renderList();
+        });
         el.addEventListener('click', (e) => {
             const row = e.target.closest('.chat-row');
             if (row) openChat(+row.dataset.i);
         });
         // Search sellers — restricted to those already in the chat inbox.
-        document.getElementById('chatSearch').addEventListener('input', (e) => renderList(e.target.value));
+        document.getElementById('chatSearch').addEventListener('input', (e) => { chatQuery = e.target.value; renderList(); });
 
         // ===== Chat with a seller — persisted to vero_chats, works like the deal room =====
         const CHATS = readJSON('vero_chats', {});   // { sellerName: [ {sender, content, at} ] }
@@ -643,7 +686,8 @@
             document.getElementById('cpDeal').hidden = true;
             // Refresh the inbox so deal tags reflect any progress made in the room.
             const sv = document.getElementById('chatSearch');
-            renderList(sv ? sv.value : '');
+            chatQuery = sv ? sv.value : '';
+            renderList();
         }
 
         function sendMessage() {
