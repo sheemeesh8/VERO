@@ -27,4 +27,4 @@ app.post('/api/studio-cover', upload.single('image'), async (req, res) => {
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`VERO studio engine listening on :${PORT}`));
+app.listen(PORT, () => console.log(`moravchick studio engine listening on :${PORT}`));

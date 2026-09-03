@@ -1,9 +1,9 @@
 /* ------------------------------------------------------------------
-   VERO — one FOOTER for the whole site.
+   moravchick — one FOOTER for the whole site.
 
    Loaded on every page (right after back-button.js). It injects a small
    stylesheet and appends a shared <footer> to the end of <body>, so every
-   page closes with the same modern black VERO footer that blends up into
+   page closes with the same modern black moravchick footer that blends up into
    the page above it (a transparent→black gradient, no hard divider line).
 
    Skipped for embedded views (?embed=1) — panels loaded inside another
@@ -63,7 +63,7 @@
                 '<a href="#" aria-label="TikTok"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.1 3c.3 2.2 1.7 3.9 3.9 4.2v2.6c-1.4 0-2.8-.5-3.9-1.2v5.7a5.3 5.3 0 1 1-5.3-5.3c.3 0 .6 0 .9.1v2.7a2.6 2.6 0 1 0 1.8 2.5V3h2.6z"/></svg></a>' +
                 '<a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.2c-1.2 0-1.6.75-1.6 1.5V12h2.7l-.43 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg></a>' +
             '</div>' +
-            '<div class="vf-copy">&copy; ' + YEAR + ' VERO. All rights reserved.</div>' +
+            '<div class="vf-copy">&copy; ' + YEAR + ' moravchick. All rights reserved.</div>' +
         '</div>';
 
     function run() {

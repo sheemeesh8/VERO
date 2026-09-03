@@ -1,5 +1,5 @@
 /* ============================================================================
- * VERO · username.js — Instagram-style usernames (handles)
+ * moravchick · username.js — Instagram-style usernames (handles)
  * ----------------------------------------------------------------------------
  * Client-only, like the rest of the prototype. A username is unique, lowercase,
  * and made of a–z, 0–9, dot and underscore (3–30 chars) — the Instagram rule
@@ -9,7 +9,7 @@
  *   - vero_saved_accounts[*].username (device roster)
  *
  * Uniqueness is enforced against the accounts stored ON THIS DEVICE. There is
- * no server, so global uniqueness (across every VERO user in the world) needs a
+ * no server, so global uniqueness (across every moravchick user in the world) needs a
  * backend — this module is shaped so isTaken()/reserve() can be swapped for an
  * API call later without touching the pages that use it.
  * ==========================================================================*/

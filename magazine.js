@@ -1,5 +1,5 @@
 /* ==========================================================================
-   VERO — The Closet / The Gallery Magazine
+   moravchick — The Closet / The Gallery Magazine
    A mode-aware editorial, composed ONLY from items that exist on the site
    (featuredProducts + the category index). Minimalist black-and-white layout
    in the spirit of a print fashion/art magazine: big serif display type,
@@ -245,7 +245,7 @@
         return {
             isArt,
             masthead: isArt ? 'THE GALLERY' : 'THE CLOSET',
-            edition: isArt ? 'The VERO editorial on collectible art' : 'The VERO editorial on second-hand fashion',
+            edition: isArt ? 'The moravchick editorial on collectible art' : 'The moravchick editorial on second-hand fashion',
             statement: isArt
                 ? 'Every piece has a maker, a moment and a next home. This is where we write about the work and the hands behind it.'
                 : 'Clothes carry stories. We follow the pieces from one wardrobe to the next — and the people who choose to pass them on.',
@@ -319,12 +319,12 @@
             <div class="cov-left">
                 <div class="cov-topbar">
                     <span class="mag-kicker">Issue 01 · 2025</span>
-                    <span class="mag-kicker">VERO</span>
+                    <span class="mag-kicker">moravchick</span>
                 </div>
                 <h1 class="mag-serif">${esc(d.masthead)}<span class="sub">MAGAZINE</span></h1>
                 <div>
                     <div class="mag-rule" style="margin-bottom:16px"></div>
-                    <p class="mag-muted" style="max-width:34ch;font-size:11.67px;line-height:1.7;margin:0">${esc(d.edition)}. Composed entirely from pieces currently on VERO.</p>
+                    <p class="mag-muted" style="max-width:34ch;font-size:11.67px;line-height:1.7;margin:0">${esc(d.edition)}. Composed entirely from pieces currently on moravchick.</p>
                 </div>
             </div>
             <div class="cov-right">
@@ -417,7 +417,7 @@
         <section class="mag-page mag-pull">
             <div class="mark mag-serif">“</div>
             <p class="pq mag-serif">${esc(line)}</p>
-            <div class="by">${esc(it.brand || 'VERO')}</div>
+            <div class="by">${esc(it.brand || 'moravchick')}</div>
         </section>`;
     }
 
@@ -427,7 +427,7 @@
         <section class="mag-page mag-collection">
             <span class="mag-kicker">${d.isArt ? 'The Gallery' : 'The Closet'} · 2025</span>
             <h2 class="mag-serif">The Collection</h2>
-            <p class="mag-muted" style="max-width:44ch;font-size:11.67px;line-height:1.7">Every aisle on VERO, at a glance — the worlds these pieces come from.</p>
+            <p class="mag-muted" style="max-width:44ch;font-size:11.67px;line-height:1.7">Every aisle on moravchick, at a glance — the worlds these pieces come from.</p>
             <div class="col-grid">
                 ${cards.map(c => `
                     <div class="col-card">
@@ -443,7 +443,7 @@
         const items = d.catalog.slice(0, 24);
         return `
         <section class="mag-page mag-edit">
-            <span class="mag-kicker">${d.isArt ? 'Every work on VERO' : 'Every piece on VERO'}</span>
+            <span class="mag-kicker">${d.isArt ? 'Every work on moravchick' : 'Every piece on moravchick'}</span>
             <h2 class="mag-serif">The Edit</h2>
             <p class="mag-muted" style="max-width:46ch;font-size:11.67px;line-height:1.7">${items.length} pieces from the current catalogue — tap a seller to read about the house behind it.</p>
             <div class="edit-grid">
@@ -482,8 +482,8 @@
         return `
         <section class="mag-page mag-back">
             <span class="mag-kicker">${esc(d.masthead)} Magazine · Issue 01</span>
-            <div class="bk mag-serif">VERO</div>
-            <p class="mag-muted" style="font-size:10.83px;margin-top:14px">Every piece in this issue is available now on VERO.</p>
+            <div class="bk mag-serif">moravchick</div>
+            <p class="mag-muted" style="font-size:10.83px;margin-top:14px">Every piece in this issue is available now on moravchick.</p>
         </section>`;
     }
 
@@ -532,7 +532,7 @@
             if (parts.length >= n) break;
             if (it && it.desc && parts.indexOf(it.desc) === -1) parts.push(it.desc);
         }
-        if (!parts.length) parts.push(`${item.name || 'This piece'} — available now on VERO.`);
+        if (!parts.length) parts.push(`${item.name || 'This piece'} — available now on moravchick.`);
         return parts.slice(0, n).map(t => `<p class="mag-l-body">${esc(t)}</p>`).join('');
     }
     function lFoot(d, page) {
@@ -756,7 +756,7 @@
 
     // Popup with a fact about the clothing company (same B&W editorial line).
     function magBrandPopup(name) {
-        const fact = BRAND_FACTS[name] || `${name} is one of the houses whose pieces find a second life on VERO.`;
+        const fact = BRAND_FACTS[name] || `${name} is one of the houses whose pieces find a second life on moravchick.`;
         let pop = document.getElementById('magBrandPop');
         if (!pop) {
             pop = document.createElement('div');

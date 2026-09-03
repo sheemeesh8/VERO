@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   VERO — shared site footer.
+   moravchick — shared site footer.
    Vanilla-HTML/CSS adaptation of the shadcn "Footer7" block, styled to
    match the rest of the site. Single source of truth: edit this file to
    change the footer everywhere.
@@ -160,7 +160,7 @@
             <div class="foot-top">
                 <div class="foot-brand">
                     <div class="foot-logo">
-                        <span class="mark">VERO</span>
+                        <span class="mark">moravchick</span>
                     </div>
                     <ul class="foot-social">
                         ${social.map(s => `<li><a href="${s.href}" aria-label="${s.label}">${s.icon}</a></li>`).join('')}
@@ -175,7 +175,7 @@
                 </div>
             </div>
             <div class="foot-bottom">
-                <p>&copy; 2026 VERO. All rights reserved.</p>
+                <p>&copy; 2026 moravchick. All rights reserved.</p>
                 <ul class="foot-legal">
                     ${legal.map(l => `<li><a href="${l.href}">${l.name}</a></li>`).join('')}
                 </ul>

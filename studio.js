@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   VERO — Studio Background Engine (FEATURE 1, native / in-browser).
+   moravchick — Studio Background Engine (FEATURE 1, native / in-browser).
 
    Takes a seller's photo, lifts the subject off its background, and drops it
    onto a standardised editorial studio canvas: soft off-white ground, ~15%

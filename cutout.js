@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   VERO — the product cut-out.
+   moravchick — the product cut-out.
 
    A photographed piece arrives on whatever the seller had behind it: a bed, a
    floor, a room. The card is one object across the whole site, so the pieces

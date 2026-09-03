@@ -1,5 +1,5 @@
 /* ============================================================================
- * VERO · auth.js — Instagram-style session persistence + client-side auth guard
+ * moravchick · auth.js — Instagram-style session persistence + client-side auth guard
  * ----------------------------------------------------------------------------
  * Single source of truth for "who is signed in" on the personal (buyer) side of
  * the marketplace. Everything is client-only (the rest of the site is a

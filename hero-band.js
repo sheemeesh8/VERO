@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   VERO — the hero band's height, dialled in by hand.
+   moravchick — the hero band's height, dialled in by hand.
 
    Ctrl+Shift+H (or enableHeroBandEditing() in the console) turns the band on
    screen into a draggable object: grab the strip along its bottom edge and

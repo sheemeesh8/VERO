@@ -1,5 +1,5 @@
 /* ============================================================================
-   VERO — site-wide animations.
+   moravchick — site-wide animations.
 
    Adds two gentle, non-intrusive motions site-wide:
      • a soft page fade-in on load, and

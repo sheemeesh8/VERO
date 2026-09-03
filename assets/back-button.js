@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   VERO — one BACK button for the whole site.
+   moravchick — one BACK button for the whole site.
 
    Loaded on every page. It (1) injects a small stylesheet that gives every
    `.back` control the same shape (a pill with a curved arrow + the word

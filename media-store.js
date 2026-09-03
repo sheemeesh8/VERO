@@ -1,4 +1,4 @@
-/* VERO media store — keeps big binaries (hero image, hero video, avatar) in
+/* moravchick media store — keeps big binaries (hero image, hero video, avatar) in
  * IndexedDB instead of localStorage, whose ~5MB per-origin cap can't hold a
  * camera photo or a short clip. Values are stored as Blobs; callers get a
  * short-lived object URL to paint with.

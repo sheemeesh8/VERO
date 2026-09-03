@@ -1,5 +1,5 @@
 /* ============================================================================
-   VERO — site-wide manual editor.
+   moravchick — site-wide manual editor.
 
    A live visual overlay you can turn on over ANY page that loads this file.
    Turn it on, click any piece to select it, then:
@@ -307,7 +307,7 @@
             rules.push(`${selector} {\n    transform: ${tf.join(' ')};\n    transform-origin: top left;\n}`);
         }
         return rules.length
-            ? '/* VERO manual placement — from the site editor */\n' + rules.join('\n\n')
+            ? '/* moravchick manual placement — from the site editor */\n' + rules.join('\n\n')
             : '/* Nothing moved yet — select a piece, drag or grow it, then copy. */';
     }
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   VERO — Dynamic Category Photo Guide (FEATURE 2, native web component).
+   moravchick — Dynamic Category Photo Guide (FEATURE 2, native web component).
 
    A collapsible drawer that coaches the seller through photographing a piece.
    It shows three core tips (natural light, high-contrast background, safe 15%

@@ -1,5 +1,5 @@
 /* ============================================================================
-   VERO — shared site header.
+   moravchick — shared site header.
    Single source of truth for the header across every page. To change the
    header anywhere, edit this file: markup, styles and behaviour all live here.
 
@@ -1422,7 +1422,7 @@
                 <button class="vero-drawer-close" aria-label="Back" onclick="veroCloseDrawer()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"></polyline></svg>
                 </button>
-                <img class="vero-drawer-logo" src="peacock-logo.png?v=1" alt="VERO" />
+                <img class="vero-drawer-logo" src="peacock-logo.png?v=1" alt="moravchick" />
             </div>
             <nav class="vero-drawer-nav">
                 <a class="primary" onclick="veroCloseDrawer(); showMain()">Home</a>
@@ -2220,7 +2220,7 @@
         }
         // Same slide order as .promo-slide: company name (large, regular weight,
         // one word per line) → product name (bold) → description → price → buy.
-        const company = (p.brand || p.seller || 'VERO Select').trim();
+        const company = (p.brand || p.seller || 'moravchick Select').trim();
         const oneWord = company.split(/\s+/).length === 1;
         // Feed products carry a written description; ordinary listings do not, so
         // fall back to the category the piece is filed under.

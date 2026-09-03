@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   VERO — seller edits and sale prices.
+   moravchick — seller edits and sale prices.
 
    ONE store for every change a seller makes to a piece they listed: an
    edited field, or a discount. Every surface that draws a product reads
