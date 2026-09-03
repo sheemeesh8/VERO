@@ -875,9 +875,18 @@
             margin-top: auto; padding-top: 26px;
             display: flex; align-items: center; gap: 22px;
         }
-        .vero-drawer-social a { color: #b3ab9c; display: inline-flex; transition: color 0.25s ease; }
+        .vero-drawer-social a { position: relative; color: #6f675c; display: inline-flex; transition: color 0.25s ease; }
         .vero-drawer-social a:hover { color: #1b1916; }
-        .vero-drawer-social svg { width: 18px; height: 18px; }
+        .vero-drawer-social svg { width: 22px; height: 22px; }
+        .vero-drawer-social .badge {
+            position: absolute; top: -6px; right: -8px;
+            background: #EB2323; color: #fff; font-size: 9.17px; font-weight: 700;
+            min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; display: none;
+            align-items: center; justify-content: center; line-height: 1;
+            border: 2px solid #f7f4ee;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+        .vero-drawer-social .badge.show { display: flex; }
 
         @media (max-width: 768px) {
             #siteHeader .logo { font-size: 16.67px; letter-spacing: 3px; justify-self: center; }
@@ -1402,10 +1411,8 @@
 
     // ---- Slide-in side drawer (opened by the header hamburger) ----
     const DRAWER_ICONS = {
-        instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
-        facebook: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>',
-        twitter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>',
-        linkedin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>'
+        cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle><path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path></svg>',
+        wishlist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>'
     };
     const DRAWER_MARKUP = `
         <div class="vero-drawer-overlay" id="veroDrawerOverlay" onclick="veroCloseDrawer()"></div>
@@ -1430,10 +1437,8 @@
                 <a class="secondary" id="veroLogoutLink" onclick="veroCloseDrawer(); veroLogout()">Log out</a>
             </nav>
             <div class="vero-drawer-social">
-                <a href="#" aria-label="Instagram">${DRAWER_ICONS.instagram}</a>
-                <a href="#" aria-label="Facebook">${DRAWER_ICONS.facebook}</a>
-                <a href="#" aria-label="Twitter">${DRAWER_ICONS.twitter}</a>
-                <a href="#" aria-label="LinkedIn">${DRAWER_ICONS.linkedin}</a>
+                <a href="#" aria-label="Cart" onclick="event.preventDefault(); veroCloseDrawer(); openCart()">${DRAWER_ICONS.cart}<span class="badge" id="drawerCartBadge"></span></a>
+                <a href="wishlist.html" aria-label="Wishlist" onclick="veroCloseDrawer()">${DRAWER_ICONS.wishlist}<span class="badge" id="drawerWishBadge"></span></a>
             </div>
         </aside>
     `;
@@ -2687,6 +2692,8 @@
         set('wishlistBadge', count('vero_wishlist'));
         set('cartMenuBadge', count('vero_cart'));
         set('wishMenuBadge', count('vero_wishlist'));
+        set('drawerCartBadge', count('vero_cart'));
+        set('drawerWishBadge', count('vero_wishlist'));
     }
 
     // ---- Cart / Wishlist dropdown (opened by tapping the header cart icon) ----
