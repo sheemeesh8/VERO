@@ -1438,7 +1438,7 @@
                     Add Product
                 </a>
                 <a class="secondary" id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
-                <a class="secondary" id="veroChatsLink" onclick="veroCloseDrawer(); vchatOpenInbox()">Chats</a>
+                <a class="secondary" id="veroChatsLink" onclick="veroCloseDrawer(); location.href = (localStorage.getItem('vero_active_account')==='seller' ? 'chats.html?from=seller' : 'chats.html')">Chats</a>
                 <a class="secondary" id="veroLogoutLink" onclick="veroCloseDrawer(); veroLogout()">Log out</a>
             </nav>
             <div class="vero-drawer-social">
