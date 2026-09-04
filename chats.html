@@ -50,18 +50,20 @@
         /* ===== Top nav bar: site-standard back arrow + centered title ===== */
         .chat-topbar {
             position: sticky; top: 0; z-index: 40;
-            display: flex; align-items: center;
-            height: 56px; padding: 0 14px;
+            display: flex; align-items: center; min-height: 56px;
+            /* sit below the phone's camera / status-bar line */
+            padding: max(env(safe-area-inset-top), 34px) 14px 8px;
             background: var(--card); border-bottom: 1px solid var(--line);
         }
-        /* Neutralise the site's fixed back-pill positioning inside the bar; the
-           standard curved arrow is injected by back-button.js. */
-        .chat-topbar .back {
-            position: static; top: auto; right: auto;
-            padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px;
-            background: var(--card); font-size: 9px; letter-spacing: 1.5px; backdrop-filter: none;
+        /* Site-standard thin chevron used as the nav arrow (top corner). */
+        .nav-chev {
+            display: inline-grid; place-items: center; width: 40px; height: 40px;
+            padding: 0; border: none; background: none; color: var(--ink);
+            cursor: pointer; text-decoration: none; -webkit-tap-highlight-color: transparent;
         }
-        .chat-topbar .back:hover { background: var(--ink); color: #fff; }
+        .nav-chev svg { width: 24px; height: 24px; display: block; }
+        .nav-chev:hover { opacity: 0.55; }
+        .chat-topbar .nav-chev { margin-inline-start: auto; }   /* arrow on the right */
         /* Title styled like the buyer-area nav-bar heading, centered in the bar. */
         .chat-topbar .head-title {
             position: absolute; left: 50%; transform: translateX(-50%);
@@ -174,16 +176,25 @@
             transition: transform 0.45s cubic-bezier(0.65, 0.05, 0.1, 1);
         }
         .chat-panel.open { transform: translateX(0); }
+        /* Header: seller (name + avatar) on the leading side, chevron on the opposite side. */
         .cp-head {
-            display: flex; align-items: center; gap: 16px;
-            padding: 18px clamp(18px, 5vw, 56px); border-bottom: 1px solid var(--line); background: var(--card);
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            /* sit below the phone's camera / status-bar line */
+            padding: max(env(safe-area-inset-top), 34px) clamp(14px, 5vw, 56px) 10px;
+            border-bottom: 1px solid var(--line); background: var(--card);
         }
-        .cp-back {
-            border: 1.4px solid var(--ink); border-radius: 999px; background: var(--card); cursor: pointer;
-            font-family: inherit; font-size: 10px; letter-spacing: 1.5px; padding: 10px 18px; color: var(--ink);
-            transition: background 0.2s, color 0.2s;
+        .cp-whobox { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+        /* Quick-actions nav bar under the chat header. */
+        .cp-nav { display: flex; background: var(--card); border-bottom: 1px solid var(--line); }
+        .cp-navlink {
+            flex: 1; text-align: center; padding: 13px 8px; text-decoration: none;
+            font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--ink);
+            transition: background 0.15s;
         }
-        .cp-back:hover { background: var(--ink); color: #fff; }
+        .cp-navlink + .cp-navlink { border-inline-start: 1px solid var(--line); }
+        .cp-navlink:hover { background: var(--paper); }
+        .cp-navlink[hidden] { display: none; }
         .cp-avatar {
             width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper);
             display: flex; align-items: center; justify-content: center; font-size: 20px;
@@ -298,10 +309,12 @@
     <script>if (new URLSearchParams(location.search).get('embed')) document.documentElement.classList.add('embed');</script>
     <div class="page-cover"></div>
     <div class="side-image"></div>
-    <!-- Top nav bar: site-standard back arrow + centered title, at header height -->
+    <!-- Top nav bar: centered title + site-standard chevron arrow (top-right) -->
     <header class="chat-topbar">
-        <a class="back" href="profile.html">Back</a>
         <h1 class="head-title">My Chats</h1>
+        <a class="nav-chev" id="navBack" href="profile.html" aria-label="Back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+        </a>
     </header>
 
     <div class="wrap">
@@ -364,14 +377,23 @@
 
     <!-- Slide-in chat panel -->
     <div class="chat-panel" id="chatPanel">
-        <div class="cp-head">
-            <button class="cp-back" id="cpBack">&#8594; חזרה</button>
-            <div class="cp-avatar" id="cpAvatar">💬</div>
-            <div class="cp-who">
-                <div class="cp-name" id="cpName">Seller</div>
-                <div class="cp-status">Usually replies within a day</div>
+        <header class="cp-head">
+            <div class="cp-whobox">
+                <div class="cp-avatar" id="cpAvatar">💬</div>
+                <div class="cp-who">
+                    <div class="cp-name" id="cpName">Seller</div>
+                    <div class="cp-status">Usually replies within a day</div>
+                </div>
             </div>
-        </div>
+            <button class="nav-chev" id="cpBack" type="button" aria-label="Back">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+            </button>
+        </header>
+        <!-- Quick actions: open the seller's page / the item's product page -->
+        <nav class="cp-nav">
+            <a class="cp-navlink" id="cpSellerLink" href="#">פרופיל המוכר</a>
+            <a class="cp-navlink" id="cpItemLink" href="#">הצג פריט</a>
+        </nav>
         <div class="cp-deal" id="cpDeal" hidden></div>
         <div class="cp-feed" id="cpFeed"></div>
         <div class="cp-input-row">
@@ -385,7 +407,7 @@
         const VIEW_ROLE = new URLSearchParams(location.search).get('from') === 'seller' ? 'seller' : 'buyer';
         if (VIEW_ROLE === 'seller') {
             document.querySelector('.head-title').textContent = 'Buyer Chats';
-            const back = document.querySelector('.back');
+            const back = document.getElementById('navBack');
             if (back) back.setAttribute('href', 'index.html');
         }
 
@@ -600,6 +622,32 @@
             if (deal && deal.item) return deal.item;
             return '';
         }
+        // Full product object for the "show item" link (falls back to null).
+        function itemObjFor(seller) {
+            const o = offs.find(x => (x.seller || 'moravchick') === seller && x.name);
+            if (o) return o;
+            const c = items.find(x => (x.seller || 'moravchick') === seller && x.name);
+            if (c) return c;
+            const r = Array.isArray(recvOffers) && recvOffers.find(x => x.buyer === seller && x.name);
+            if (r) return r;
+            const deal = (readJSON('vero_deals', {}) || {})[seller];
+            if (deal && deal.item) return { name: deal.item, seller: seller };
+            return null;
+        }
+        // Wire the quick-actions bar to the seller's page + the item's product page.
+        function setChatLinks(seller) {
+            const sellerLink = document.getElementById('cpSellerLink');
+            sellerLink.href = 'index.html?seller=' + encodeURIComponent(seller);
+            const itemLink = document.getElementById('cpItemLink');
+            const obj = itemObjFor(seller);
+            if (obj) {
+                const prod = Object.assign({ seller: seller }, obj);
+                itemLink.href = 'product.html?product=' + encodeURIComponent(JSON.stringify(prod));
+                itemLink.hidden = false;
+            } else {
+                itemLink.hidden = true;
+            }
+        }
 
         function openChat(i) {
             const t = list[i];
@@ -608,6 +656,7 @@
             seedThread(t);
             document.getElementById('cpName').textContent = t.seller;
             document.getElementById('cpAvatar').textContent = t.icon || '💬';
+            setChatLinks(t.seller);
             renderFeed();
             renderDeal();
             panel.classList.add('open');
@@ -823,7 +872,7 @@
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel.classList.contains('open')) closeChat(); });
 
         // Exit animation mirrors the entry fade.
-        const back = document.querySelector('.back');
+        const back = document.getElementById('navBack');
         if (back) back.addEventListener('click', (e) => {
             e.preventDefault();
             const wrap = document.querySelector('.wrap');
