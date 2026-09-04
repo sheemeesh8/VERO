@@ -2715,11 +2715,12 @@
         const menu = document.getElementById('cartMenu');
         const btn = document.querySelector('.hdr-cart-btn');
         if (!menu) { window.veroSlideToCart && window.veroSlideToCart('cart-store.html'); return; }
+        // Second tap on the cart (while the wishlist pop is open) opens the cart.
+        if (menu.classList.contains('open')) { window.veroPickCart(e); return; }
         try { updateBadgesFromStorage(); } catch (_) {}
-        const willOpen = !menu.classList.contains('open');
-        menu.classList.toggle('open', willOpen);
-        menu.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
-        if (btn) btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        menu.classList.add('open');
+        menu.setAttribute('aria-hidden', 'false');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
     };
     window.veroPickCart = function (e) {
         if (e) e.preventDefault();
