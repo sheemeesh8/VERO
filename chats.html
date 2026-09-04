@@ -69,27 +69,34 @@
 
         .side-image { display: none; }
 
-        /* Minimal, WhatsApp-like: white sheet, a nav bar, a filter row, chats. */
+        /* Minimal, WhatsApp-like list under a cart-style header. */
         body { background: var(--card); }
 
-        /* ===== Top nav bar: site-standard back arrow + centered title ===== */
+        /* ===== Top bar — identical to the cart page: filter on one side, back
+           chevron on the other, plain icon buttons. ===== */
         .chat-topbar {
             position: sticky; top: 0; z-index: 40;
-            display: flex; align-items: center; min-height: 56px;
-            /* sit below the phone's camera / status-bar line */
-            padding: max(env(safe-area-inset-top), 34px) 14px 8px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: max(env(safe-area-inset-top), 34px) 4px 12px;
             background: var(--card); border-bottom: 1px solid var(--line);
         }
-        /* Site-standard thin chevron used as the nav arrow (top corner). */
+        .chat-topbar .tb-right { display: flex; align-items: center; gap: 4px; }
+        .tb-ico {
+            width: 42px; height: 42px; flex: none; border: none; background: none;
+            color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center;
+            text-decoration: none; transition: opacity 0.2s; -webkit-tap-highlight-color: transparent;
+        }
+        .tb-ico:active { opacity: 0.5; }
+        .tb-ico svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+        /* Chat-panel back chevron. */
         .nav-chev {
             display: inline-grid; place-items: center; width: 40px; height: 40px;
             padding: 0; border: none; background: none; color: var(--ink);
             cursor: pointer; text-decoration: none; -webkit-tap-highlight-color: transparent;
         }
         .nav-chev svg { width: 24px; height: 24px; display: block; }
-        .nav-chev:hover { opacity: 0.55; }
-        .chat-topbar .nav-chev { margin-inline-start: auto; }   /* arrow on the right */
-        /* Title styled like the buyer-area nav-bar heading, centered in the bar. */
+        .nav-chev:active { opacity: 0.55; }
+        /* Centered title, buyer-area nav style. */
         .chat-topbar .head-title {
             position: absolute; left: 50%; transform: translateX(-50%);
             font-family: 'Aharoni CLM', 'Segoe UI', sans-serif;
@@ -99,29 +106,16 @@
 
         .wrap {
             max-width: none; margin: 0;
-            padding: 14px 0 90px;
+            padding: 8px 0 90px;
             animation: fadeIn 0.5s var(--ease) 0.03s both;
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .head-sub { display: none; }
 
-        /* ===== Filter icon + search, side by side under the title ===== */
-        .chat-controls {
-            display: flex; align-items: center; gap: 10px;
-            padding: 6px 20px 0;
-        }
-        /* Funnel icon, no frame. */
-        .filter-toggle {
-            flex: 0 0 auto; width: 40px; height: 40px; padding: 0;
-            border: none; background: none; color: var(--muted);
-            display: grid; place-items: center; cursor: pointer;
-            transition: color 0.15s; -webkit-tap-highlight-color: transparent;
-        }
-        .filter-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; }
-        .filter-toggle:hover, .filter-toggle.on { color: var(--ink); }
-        /* Search field with no frame — plain, transparent. */
+        /* Search field under the bar — plain, transparent. */
+        .chat-controls { padding: 4px 20px 0; }
         .chat-search {
-            flex: 1; min-width: 0; display: block;
+            width: 100%; display: block;
             border: none; background: none; border-radius: 0;
             font-family: inherit; font-size: 14px; padding: 12px 4px;
             color: var(--ink);
@@ -129,24 +123,33 @@
         .chat-search::placeholder { color: var(--faint); }
         .chat-search:focus { outline: none; }
 
-        /* Summary strip removed entirely for a lighter page. */
         .summary { display: none; }
 
-        /* ===== Time-filter chips — revealed by the filter icon ===== */
-        .chat-filters {
-            display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto;
-            margin-top: 12px; padding: 0 20px 4px; -ms-overflow-style: none; scrollbar-width: none;
+        /* ===== Filters bottom-sheet — identical to the cart page. ===== */
+        .cart-sheet-overlay {
+            position: fixed; inset: 0; background: rgba(20,18,14,0.4);
+            display: none; align-items: flex-end; justify-content: center; z-index: 300;
         }
-        .chat-filters[hidden] { display: none; }
-        .chat-filters::-webkit-scrollbar { display: none; }
+        .cart-sheet-overlay.show { display: flex; }
+        .cart-sheet {
+            width: 100%; max-width: 560px; background: #fff;
+            border-radius: 20px 20px 0 0; padding: 22px 24px calc(28px + env(safe-area-inset-bottom,0px));
+            transform: translateY(100%); animation: cartSheetRise 0.34s cubic-bezier(0.2,0.8,0.2,1) forwards;
+        }
+        @keyframes cartSheetRise { to { transform: translateY(0); } }
+        .cart-sheet .sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: #e6e1d8; margin: 0 auto 18px; }
+        .cart-sheet h3 { font-size: 14px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
+
+        /* Time-filter chips, inside the sheet — same capsule style as the cart. */
+        .chat-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .chat-filter-ico { display: none; }
         .chat-chip {
-            padding: 7px 15px; border: none; border-radius: 999px;
-            font-family: inherit; font-size: 12px; letter-spacing: 0.2px; color: var(--muted);
-            background: var(--paper); cursor: pointer; white-space: nowrap; transition: all 0.15s ease;
+            padding: 10px 20px; border: 1px solid #d8d3ca; border-radius: 999px;
+            font-family: inherit; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #16150f;
+            background: transparent; cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
         }
-        .chat-chip:hover { color: var(--ink); }
-        .chat-chip.active { background: var(--ink); color: #fff; }
+        .chat-chip:hover { border-color: #16150f; }
+        .chat-chip.active { background: #16150f; color: #fff; border-color: #16150f; }
 
         /* ===== Conversation list — flat WhatsApp rows ===== */
         .section-cap { display: none; }
@@ -316,7 +319,10 @@
         }
 
         /* Embedded inside profile.html */
-        html.embed .chat-topbar, html.embed .back, html.embed .head-title, html.embed .head-sub { display: none !important; }
+        /* Embedded in profile: keep the filter bar but drop the redundant back
+           chevron + title (the profile shows its own header). */
+        html.embed #navBack, html.embed .head-title, html.embed .head-sub { display: none !important; }
+        html.embed .chat-topbar { position: static; padding-top: 8px; border-bottom: none; }
         html.embed .wrap { padding-top: 20px; }
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
@@ -327,22 +333,24 @@
     <script>if (new URLSearchParams(location.search).get('embed')) document.documentElement.classList.add('embed');</script>
     <div class="page-cover"></div>
     <div class="side-image"></div>
-    <!-- Top nav bar: centered title + site-standard chevron arrow (top-right) -->
+    <!-- Top bar — identical to the cart page: filter (left) + back chevron (right) -->
     <header class="chat-topbar">
+        <div class="tb-right">
+            <button class="tb-ico" onclick="openFilters()" aria-label="Filters" type="button">
+                <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
+            </button>
+        </div>
         <h1 class="head-title">My Chats</h1>
-        <a class="nav-chev" id="navBack" href="profile.html" aria-label="Back">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+        <a class="tb-ico" id="navBack" href="profile.html" aria-label="Back">
+            <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
         </a>
     </header>
 
     <div class="wrap">
         <p class="head-sub">Your conversations with sellers and buyers.</p>
 
-        <!-- Filter icon + search, side by side -->
+        <!-- Search under the bar -->
         <div class="chat-controls">
-            <button class="filter-toggle" id="filterToggle" type="button" aria-label="Filter" aria-expanded="false">
-                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-            </button>
             <input class="chat-search" id="chatSearch" type="text" placeholder="Search sellers…" autocomplete="off">
         </div>
 
@@ -367,17 +375,6 @@
             </div>
         </div>
 
-        <!-- Time filters — revealed by the filter icon -->
-        <div class="chat-filters" id="chatFilters" hidden>
-            <span class="chat-filter-ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            </span>
-            <button class="chat-chip active" data-range="all" type="button">All</button>
-            <button class="chat-chip" data-range="today" type="button">Today</button>
-            <button class="chat-chip" data-range="week" type="button">This week</button>
-            <button class="chat-chip" data-range="month" type="button">This month</button>
-        </div>
-
         <div class="section-cap">Conversations</div>
 
         <div class="grid">
@@ -389,6 +386,20 @@
                 <div class="card">
                     <div class="chat-list" id="chatList"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters bottom-sheet — identical to the cart page -->
+    <div class="cart-sheet-overlay" id="filterOverlay" onclick="if(event.target===this)closeFilters()">
+        <div class="cart-sheet">
+            <div class="sheet-grip"></div>
+            <h3>Filter</h3>
+            <div class="chat-filters" id="chatFilters">
+                <button class="chat-chip active" data-range="all" type="button">All</button>
+                <button class="chat-chip" data-range="today" type="button">Today</button>
+                <button class="chat-chip" data-range="week" type="button">This week</button>
+                <button class="chat-chip" data-range="month" type="button">This month</button>
             </div>
         </div>
     </div>
@@ -561,16 +572,12 @@
         }
         renderList();
 
-        // Filter icon toggles the time-filter chip row.
-        document.getElementById('filterToggle').addEventListener('click', function () {
-            const f = document.getElementById('chatFilters');
-            const opening = f.hasAttribute('hidden');
-            if (opening) f.removeAttribute('hidden'); else f.setAttribute('hidden', '');
-            this.classList.toggle('on', opening);
-            this.setAttribute('aria-expanded', opening ? 'true' : 'false');
-        });
+        // Filter bottom-sheet (same behaviour as the cart page).
+        window.openFilters  = function () { document.getElementById('filterOverlay').classList.add('show'); };
+        window.closeFilters = function () { document.getElementById('filterOverlay').classList.remove('show'); };
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.closeFilters(); });
 
-        // Time-filter chips.
+        // Time-filter chips (inside the sheet) — apply, then close the sheet.
         document.getElementById('chatFilters').addEventListener('click', (e) => {
             const chip = e.target.closest('.chat-chip');
             if (!chip) return;
@@ -578,6 +585,7 @@
             chip.classList.add('active');
             chatRange = chip.dataset.range;
             renderList();
+            window.closeFilters();
         });
         el.addEventListener('click', (e) => {
             const row = e.target.closest('.chat-row');
