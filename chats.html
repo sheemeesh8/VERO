@@ -128,6 +128,19 @@
             font-size: 11.5px; color: var(--muted); margin-top: 3px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
+        .chat-sub {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-top: 7px; font-size: 10px; color: var(--faint); letter-spacing: 0.2px;
+        }
+        .chat-item {
+            display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+            padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line);
+            background: var(--paper); color: var(--muted); white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+        .chat-item svg { width: 11px; height: 11px; flex: 0 0 auto; }
+        .chat-when { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+        .chat-when svg { width: 11px; height: 11px; flex: 0 0 auto; }
         .chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-left: auto; }
         .chat-time { font-size: 10px; color: var(--faint); white-space: nowrap; }
         .chat-chev { color: var(--faint); font-size: 15px; line-height: 1; opacity: 0; transition: opacity 0.2s, transform 0.2s; }
@@ -429,6 +442,28 @@
             return ` <span class="chat-deal">עסקה · ${DEAL_LBL[d.status]}</span>`;
         }
 
+        // Full date + time of the last message in a thread — e.g. "04.09.26, 14:32".
+        const fullWhen = ms => ms
+            ? new Date(ms).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+            : '';
+
+        // The product this conversation is about (self-contained; safe at first render).
+        function productName(seller) {
+            const o = offs.find(x => (x.seller || 'moravchick') === seller && x.name);
+            if (o) return o.name;
+            const c = items.find(x => (x.seller || 'moravchick') === seller && x.name);
+            if (c) return c.name;
+            const rv = readJSON('vero_received_offers', []);
+            const r = Array.isArray(rv) && rv.find(x => x.buyer === seller && x.name);
+            if (r) return r.name;
+            const deal = (readJSON('vero_deals', {}) || {})[seller];
+            if (deal && deal.item) return deal.item;
+            return '';
+        }
+        // Small inline icons for the row's sub-line.
+        const ICO_TAG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>';
+        const ICO_CLOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>';
+
         // Active time filter + current search query.
         let chatRange = 'all';
         let chatQuery = '';
@@ -458,18 +493,25 @@
                 el.innerHTML = `<div class="chat-empty">${why}</div>`;
                 return;
             }
-            el.innerHTML = '<div class="chat-track">' + rows.map(({ t, i }) => `
+            el.innerHTML = '<div class="chat-track">' + rows.map(({ t, i }) => {
+                const prod = productName(t.seller);
+                return `
                     <div class="chat-row" data-i="${i}">
                         <div class="chat-avatar">${t.icon}</div>
                         <div class="chat-body">
                             <div class="chat-name">${t.seller}${dealBadge(t.seller)}</div>
                             <div class="chat-preview">${t.preview}</div>
+                            <div class="chat-sub">
+                                ${prod ? `<span class="chat-item" title="${prod}">${ICO_TAG}${prod}</span>` : ''}
+                                <span class="chat-when">${ICO_CLOCK}${fullWhen(t.at)}</span>
+                            </div>
                         </div>
                         <div class="chat-meta">
                             <div class="chat-time">${timeAgo(t.at)}</div>
                             <div class="chat-chev">&#8250;</div>
                         </div>
-                    </div>`).join('') + '</div>';
+                    </div>`;
+            }).join('') + '</div>';
         }
         renderList();
 
