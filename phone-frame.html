@@ -157,24 +157,6 @@
             .pf-spin { animation-duration: 3s; }
         }
 
-        /* ---- Entrance: the cinematic peacock splash (splash.html), played once
-               per app open as a full-screen overlay inside the phone screen. The
-               splash renders its own dark→white background and dispatches
-               "vero:intro-complete" (relayed here via postMessage) when done. ---- */
-        .pf-intro {
-            position: absolute; inset: 0; z-index: 9;
-            background: #0A0D0B;                 /* matches the splash's opening frame */
-            opacity: 1;
-            transition: opacity 0.5s ease;
-        }
-        /* The splash itself fills the screen; it manages its own timeline. */
-        .pf-intro iframe {
-            width: 100%; height: 100%; border: 0; display: block; background: #0A0D0B;
-        }
-        /* Fade the whole overlay out once the intro completes, then it is removed. */
-        .pf-intro.done { opacity: 0; }
-        .pf-intro.hidden { display: none; }
-
         @media (prefers-reduced-motion: reduce) {
             .screen iframe.pf-enter { animation: none; }
         }
@@ -204,13 +186,6 @@
             </div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
-            <!-- Cinematic peacock splash (splash.html) played once per app open.
-                 It runs its own ~6s GSAP timeline and posts "vero:intro-complete"
-                 to this window when finished; the script below then dismisses it.
-                 title="" + aria-hidden keep it out of the a11y tree as pure chrome. -->
-            <div class="pf-intro" id="pfIntro" aria-hidden="true">
-                <iframe id="pfIntroFrame" title="" tabindex="-1" scrolling="no"></iframe>
-            </div>
         </div>
     </div>
     <script>
@@ -218,45 +193,6 @@
         // (file://) lets us inject a style into the framed document; re-runs on every
         // in-frame navigation because onload fires for each page load.
         var frame = document.getElementById('siteFrame');
-
-        // ---- Cinematic entrance (splash.html) ----
-        // Play the peacock splash once per browser session as a full-screen overlay,
-        // then remove it so it never intercepts taps. splash.html posts a
-        // {type:'vero:intro-complete'} message when its timeline finishes; we fade
-        // the overlay out on that message, with a failsafe timeout in case the
-        // splash (or its CDN GSAP) never signals.
-        (function playIntro() {
-            var intro = document.getElementById('pfIntro');
-            var iframe = document.getElementById('pfIntroFrame');
-            if (!intro || !iframe) return;
-
-            // Once per session: a full refresh within the same tab won't replay it,
-            // but a fresh app open (new session) will.
-            var seen = false;
-            try { seen = sessionStorage.getItem('vero_intro_seen') === '1'; } catch (e) {}
-            if (seen) { intro.classList.add('done', 'hidden'); return; }
-
-            var dismissed = false;
-            function dismiss() {
-                if (dismissed) return;
-                dismissed = true;
-                try { sessionStorage.setItem('vero_intro_seen', '1'); } catch (e) {}
-                intro.classList.add('done');                 // fade out (0.5s)
-                setTimeout(function () { intro.classList.add('hidden'); }, 550);
-                window.removeEventListener('message', onMsg);
-            }
-            function onMsg(e) {
-                if (e && e.data && e.data.type === 'vero:intro-complete') dismiss();
-            }
-            window.addEventListener('message', onMsg);
-
-            // Failsafe: never let the overlay trap the app if the splash stalls.
-            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            setTimeout(dismiss, reduce ? 1500 : 9000);
-
-            // Load the splash last so it never delays the app's first paint.
-            iframe.src = 'splash.html';
-        })();
 
         // ---- Straight-to-home entry ----
         // The feed is a "protected" view (auth.js bounces logged-out visitors to the
