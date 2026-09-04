@@ -1827,6 +1827,8 @@
         .area-tabs.revealed {
             transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto;
         }
+        /* Hidden while a chat conversation is open inside the chats iframe. */
+        .area-tabs.vero-chat-hidden, .pa-header.vero-chat-hidden { display: none !important; }
         .area-tab {
             position: relative; border: none; background: transparent; font-family: inherit;
             font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
@@ -4276,6 +4278,17 @@
         ind.className = 'area-ind';
         bar.insertBefore(ind, bar.firstChild);
         document.body.appendChild(bar);
+
+        // While a chat is open inside the chats iframe, hide the personal-area nav
+        // bars (tab bar + top header); restore them when the chat closes.
+        window.addEventListener('message', function (e) {
+            if (e.data !== 'vero-chat-open' && e.data !== 'vero-chat-close') return;
+            var hide = e.data === 'vero-chat-open';
+            document.querySelectorAll('.area-tabs, .pa-header').forEach(function (el) {
+                el.classList.toggle('vero-chat-hidden', hide);
+            });
+        });
+
         // Once the user starts switching tabs, pin the bar up so it never drops
         // back down (translateY 180%) when landing on the Statistics/Profile tabs.
         let barPinned = false;
