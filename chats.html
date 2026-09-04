@@ -10,408 +10,302 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { min-height: 100%; }
+        :root {
+            --ink: #171716;
+            --muted: #8a877f;
+            --faint: #b6b3ab;
+            --line: #ecebe6;
+            --line-soft: #f3f2ee;
+            --paper: #f7f6f2;
+            --card: #ffffff;
+            --accent: #171716;
+            --unread: #d99c2b;      /* warm dot for fresh threads */
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        }
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            color: #1c1c1c; background: #fff;
+            color: var(--ink); background: var(--paper);
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Entry: the image holds static on the left while the content slides in
-           from the left — nothing covers the image on load. */
         .page-cover { display: none; }
 
+        /* Back pill */
         .back {
-            position: fixed; top: 26px; right: 34px; z-index: 40;
+            position: fixed; top: 22px; right: 26px; z-index: 40;
             display: inline-flex; align-items: center; gap: 8px;
-            padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
-            font-size: 10.00px; letter-spacing: 1.5px; text-decoration: none; color: #1c1c1c;
-            background: #fff; transition: background 0.25s, color 0.25s;
+            padding: 10px 20px; border: 1.4px solid var(--ink); border-radius: 999px;
+            font-size: 10px; letter-spacing: 1.5px; text-decoration: none; color: var(--ink);
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(8px);
+            transition: background 0.25s, color 0.25s;
         }
-        .back:hover { background: #000; color: #fff; }
+        .back:hover { background: var(--ink); color: #fff; }
 
-        .wrap {
-            max-width: none; margin: 0;
-            padding: 120px 40px 80px;
-            /* The data slides in from the left, out from behind the static image. */
-            animation: slideInLeft 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
-        }
-        /* Fade in — no sideways slide. */
-        @keyframes slideInLeft {
-            from { opacity: 0; }
-            to   { opacity: 1; }
-        }
-
-        /* Image on the left, at one-rectangle width, matching My Profile. */
-        .side-image {
-            position: fixed; top: 0; left: 0; bottom: 0;
-            width: 20vw;
-            background: #2a2a28 url('assets/chats-hero.jpg') center / cover no-repeat;
-            filter: grayscale(1);
-            border-right: 1px solid #000;
-            /* Sits above the content so the data slides out from behind it. */
-            z-index: 5;
-        }
-        /* Left side image removed — content fills the full width. */
         .side-image { display: none; }
 
-        .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
-        .head-sub { margin-top: 16px; font-size: 12.50px; color: #6b6b66; letter-spacing: 0.5px; }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 340px 1fr;
-            gap: 24px;
-            margin-top: 52px;
+        .wrap {
+            max-width: 1080px; margin: 0 auto;
+            padding: 104px 32px 96px;
+            animation: fadeIn 0.7s var(--ease) 0.05s both;
         }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-        /* Thin black framed cards — same language as the rectangles. */
-        .card { border: none; padding: 34px 0; border-bottom: 1px solid #eeece7; }
-        .card:last-child { border-bottom: none; }
-        .card-label { font-size: 9.17px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
+        /* ===== Header ===== */
+        .head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+        .head-title { font-size: clamp(38px, 6vw, 68px); font-weight: 200; letter-spacing: -1px; line-height: 0.95; }
+        .head-sub { margin-top: 14px; font-size: 12.5px; color: var(--muted); letter-spacing: 0.3px; }
 
-        .total-num { font-size: 50.00px; font-weight: 200; line-height: 1; letter-spacing: -1px; }
-        .total-sub { margin-top: 6px; font-size: 10.00px; letter-spacing: 1px; color: #9a9a95; }
+        /* Search */
+        .chat-search {
+            border: 1px solid var(--line); background: var(--card); border-radius: 999px;
+            font-family: inherit; font-size: 12px; padding: 13px 22px; width: 300px; max-width: 100%;
+            color: var(--ink); transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .chat-search::placeholder { color: var(--faint); letter-spacing: 0.4px; }
+        .chat-search:focus { outline: none; border-color: var(--ink); box-shadow: 0 6px 24px rgba(0,0,0,0.05); }
 
-        .field { margin-bottom: 22px; }
-        .field:last-child { margin-bottom: 0; }
-        .field-val { font-size: 15.00px; font-weight: 400; }
+        /* ===== Summary stat strip ===== */
+        .summary {
+            display: flex; gap: 0; margin-top: 40px;
+            border: 1px solid var(--line); border-radius: 18px; background: var(--card);
+            overflow: hidden;
+        }
+        .sm-cell { flex: 1; padding: 22px 26px; position: relative; }
+        .sm-cell + .sm-cell::before {
+            content: ''; position: absolute; left: 0; top: 22px; bottom: 22px; width: 1px; background: var(--line-soft);
+        }
+        .sm-num { font-size: 34px; font-weight: 200; line-height: 1; letter-spacing: -1px; }
+        .sm-num.small { font-size: 20px; font-weight: 300; padding-top: 8px; }
+        .sm-label { margin-top: 10px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint); }
 
-        .divider { height: 1px; background: #eee; margin: 26px 0; }
-        .col-right { display: flex; flex-direction: column; }
+        /* ===== Filters ===== */
+        .chat-filters {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-top: 34px;
+        }
+        .chat-filter-ico { width: 18px; height: 18px; flex: 0 0 auto; color: var(--muted); margin-right: 4px; }
+        .chat-filter-ico svg { width: 100%; height: 100%; display: block; }
+        .chat-chip {
+            padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px;
+            font-family: inherit; font-size: 11px; letter-spacing: 0.4px; color: var(--muted);
+            background: var(--card); cursor: pointer; white-space: nowrap; transition: all 0.18s ease;
+        }
+        .chat-chip:hover { border-color: var(--faint); color: var(--ink); }
+        .chat-chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 
-        /* Conversation threads list. */
-        .chat-list { display: flex; flex-direction: column; }
+        /* ===== Conversation list ===== */
+        .section-cap {
+            display: flex; align-items: center; gap: 12px;
+            margin: 34px 2px 12px; font-size: 9px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--faint);
+        }
+        .section-cap::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+        .chat-list { display: flex; flex-direction: column; gap: 8px; }
+        .chat-track { display: flex; flex-direction: column; gap: 8px; }
+
         .chat-row {
             display: flex; align-items: center; gap: 16px;
-            padding: 18px 0; border-bottom: 1px solid #eee;
+            padding: 15px 18px; background: var(--card); border: 1px solid var(--line);
+            border-radius: 16px; cursor: pointer;
+            transition: transform 0.18s var(--ease), box-shadow 0.2s, border-color 0.2s;
         }
-        .chat-row:last-child { border-bottom: none; }
+        .chat-row:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(23,23,22,0.06); border-color: #e2e0d9; }
+        .chat-row:active { transform: translateY(0); }
         .chat-avatar {
-            width: 50px; height: 50px; flex: 0 0 auto; border-radius: 50%;
-            border: 1px solid #000; display: flex; align-items: center; justify-content: center;
-            font-size: 18.33px;
+            width: 52px; height: 52px; flex: 0 0 auto; border-radius: 50%;
+            border: 1px solid var(--line); background: var(--paper);
+            display: flex; align-items: center; justify-content: center; font-size: 22px;
         }
         .chat-body { min-width: 0; flex: 1; }
-        .chat-name { font-size: 12.50px; font-weight: 500; }
-        .chat-deal { display: inline-block; font-size: 7.5px; letter-spacing: 0.8px; text-transform: uppercase;
-            vertical-align: middle; margin-inline-start: 7px; padding: 2px 7px; border-radius: 999px;
-            background: #000; color: #fff; }
+        .chat-name { font-size: 13.5px; font-weight: 500; display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+        .chat-deal {
+            display: inline-block; font-size: 7.5px; letter-spacing: 0.8px; text-transform: uppercase;
+            margin-inline-start: 8px; padding: 3px 9px; border-radius: 999px;
+            background: var(--ink); color: #fff; font-weight: 500;
+        }
         .chat-preview {
-            font-size: 10.83px; color: #6b6b66; margin-top: 2px;
+            font-size: 11.5px; color: var(--muted); margin-top: 3px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .chat-time { margin-left: auto; font-size: 10.00px; color: #9a9a95; white-space: nowrap; align-self: flex-start; padding-top: 4px; }
-        .chat-empty { font-size: 11.67px; color: #9a9a95; padding: 8px 0; }
-
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px; }
-        .stat { border: none; padding: 6px 0; }
-        .stat-num { font-size: 33.33px; font-weight: 200; line-height: 1; }
-        .stat-name { margin-top: 12px; font-size: 10.00px; letter-spacing: 2px; text-transform: uppercase; }
-
-        .chat-row { cursor: pointer; transition: background 0.15s; }
-        .chat-row:hover { background: #fafafa; }
-
-        /* Search bar beside the My Chats title. */
-        .head-row { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
-        .chat-search {
-            border: 1.4px solid #000; background: #fff; border-radius: 999px;
-            font-family: inherit; font-size: 11.67px; padding: 12px 20px; min-width: 260px;
-            color: #1c1c1c;
+        .chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-left: auto; }
+        .chat-time { font-size: 10px; color: var(--faint); white-space: nowrap; }
+        .chat-chev { color: var(--faint); font-size: 15px; line-height: 1; opacity: 0; transition: opacity 0.2s, transform 0.2s; }
+        .chat-row:hover .chat-chev { opacity: 1; transform: translateX(2px); }
+        .chat-empty {
+            font-size: 12px; color: var(--muted); padding: 40px 24px; text-align: center;
+            background: var(--card); border: 1px dashed var(--line); border-radius: 16px;
         }
-        .chat-search::placeholder { color: #9a9a95; letter-spacing: 0.5px; }
-        .chat-search:focus { outline: none; }
 
-        /* Conversations as a horizontal slider — exactly 5 per slide. */
-        .chat-list { display: flex; overflow: hidden; }
-        .chat-track { display: flex; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); width: 100%; }
-        .chat-slide { flex: 0 0 100%; display: flex; flex-direction: column; }
-        .chat-list .chat-row { height: 88px; }
-        .chat-nav { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
-        .chat-arrow {
-            width: 34px; height: 34px; border: 1.4px solid #000; border-radius: 999px; background: #fff;
-            cursor: pointer; font-size: 12.50px; line-height: 1; color: #1c1c1c; transition: background 0.2s, color 0.2s;
-        }
-        .chat-arrow:hover:not(:disabled) { background: #000; color: #fff; }
-        .chat-arrow:disabled { opacity: 0.3; cursor: default; }
-        .chat-dots { display: flex; gap: 7px; margin-left: 4px; }
-        .chat-dots .d { width: 7px; height: 7px; border-radius: 50%; background: #ddd; border: none; cursor: pointer; padding: 0; transition: background 0.2s; }
-        .chat-dots .d.on { background: #111; }
+        /* Legacy nav / slider bits — no longer used */
+        .chat-nav, .grid > .card:first-child { display: none; }
+        .grid { display: block; }
 
-        /* ===== My offers — Depop-style cubes below the chats ===== */
-        /* Two columns below the chat list: offers you made | offers you received. */
-        .offers-split { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 44px; }
-        @media (max-width: 900px) { .offers-split { grid-template-columns: 1fr; gap: 30px; } }
-        .offers-split .offers-sec { margin-top: 0; }
-        .offers-split .offers-grid { grid-template-columns: 1fr; }
-        .offers-sec { margin-top: 44px; }
-        .offers-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 22px; }
-        /* Larger section titles for the two offers columns. */
-        .offers-head .card-label { font-size: 16.67px; letter-spacing: 3px; color: #1c1c1c; }
-        @media (max-width: 600px) { .offers-head .card-label { font-size: 13.33px; } }
-        .offers-note { font-size: 10.00px; letter-spacing: 0.5px; color: #9a9a95; }
-        .offers-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
-        }
-        .offer-cube { border: 1px solid #000; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
-        .oc-top { display: flex; gap: 16px; align-items: center; }
-        .oc-img {
-            width: 66px; height: 66px; flex: 0 0 auto; border: 1px solid #000;
-            display: flex; align-items: center; justify-content: center; font-size: 28.33px;
-            background: #f4f4f2; overflow: hidden;
-        }
-        .oc-img img { width: 100%; height: 100%; object-fit: cover; }
-        .oc-info { min-width: 0; flex: 1; }
-        .oc-name { font-size: 13.33px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .oc-seller { font-size: 10.00px; color: #9a9a95; letter-spacing: 0.5px; margin-top: 2px; }
-        .oc-prices { display: flex; gap: 16px; margin-top: 10px; }
-        .oc-ask { font-size: 10.83px; color: #6b6b66; }
-        .oc-your { font-size: 10.83px; font-weight: 600; color: #1c1c1c; }
-        .oc-your b { font-weight: 600; }
-
-        .oc-others { border-top: 1px solid #eee; padding-top: 12px; }
-        .oc-others-label { font-size: 8.33px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
-        .oc-other { display: flex; justify-content: space-between; font-size: 10.83px; color: #6b6b66; padding: 3px 0; }
-        .oc-other .amt { font-weight: 500; color: #1c1c1c; }
-        .oc-other.top .amt { color: #1f8f4e; }
-
-        .oc-edit {
-            align-self: flex-start; border: 1px solid #000; background: #fff; cursor: pointer;
-            font-family: inherit; font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase;
-            padding: 10px 20px; border-radius: 999px; transition: background 0.2s, color 0.2s;
-        }
-        .oc-edit:hover { background: #000; color: #fff; }
-        .oc-editbox { display: none; flex-direction: column; gap: 10px; }
-        .oc-editbox.open { display: flex; }
-        .oc-input {
-            border: none; border-bottom: 1.4px solid #000; background: transparent;
-            font-family: inherit; font-size: 15.00px; padding: 8px 2px; color: #1c1c1c;
-        }
-        .oc-input:focus { outline: none; }
-        .oc-submit {
-            align-self: flex-start; border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
-            font-family: inherit; font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase;
-            padding: 11px 22px; border-radius: 999px; transition: opacity 0.2s;
-        }
-        .oc-submit:hover { opacity: 0.8; }
-        .offers-empty { font-size: 11.67px; color: #9a9a95; padding: 8px 0; }
-
-        /* Received-offer actions: accept / decline + resolved state. */
-        .oc-actions { display: flex; gap: 10px; }
-        .oc-accept, .oc-decline {
-            border: 1px solid #000; cursor: pointer; font-family: inherit;
-            font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase;
-            padding: 10px 20px; border-radius: 999px; transition: background 0.2s, color 0.2s, opacity 0.2s;
-        }
-        .oc-accept { background: #000; color: #fff; }
-        .oc-accept:hover { opacity: 0.82; }
-        .oc-decline { background: #fff; color: #1c1c1c; }
-        .oc-decline:hover { background: #f0f0f0; }
-        .oc-resolved {
-            align-self: flex-start; font-size: 9.17px; letter-spacing: 1.5px; text-transform: uppercase;
-            padding: 10px 18px; border-radius: 999px;
-        }
-        .oc-resolved.accepted { background: #e8f5ec; color: #1f8f4e; border: 1px solid #bfe4cd; }
-        .oc-resolved.declined { background: #f4eaea; color: #b23b3b; border: 1px solid #e6cccc; }
-        .oc-buyer { font-size: 10.83px; color: #6b6b66; }
-        .oc-buyer b { font-weight: 600; color: #1c1c1c; }
-
-        /* ===== Slide-in chat panel — one conversation with a seller ===== */
+        /* ===== Slide-in chat panel ===== */
         .chat-panel {
             position: fixed; inset: 0; z-index: 70;
-            background: #fff; display: flex; flex-direction: column;
+            background: var(--paper); display: flex; flex-direction: column;
             transform: translateX(100%);
             transition: transform 0.45s cubic-bezier(0.65, 0.05, 0.1, 1);
         }
         .chat-panel.open { transform: translateX(0); }
         .cp-head {
             display: flex; align-items: center; gap: 16px;
-            padding: 20px clamp(20px, 5vw, 60px); border-bottom: 1px solid #000;
+            padding: 18px clamp(18px, 5vw, 56px); border-bottom: 1px solid var(--line); background: var(--card);
         }
         .cp-back {
-            border: 1.4px solid #000; border-radius: 999px; background: #fff; cursor: pointer;
-            font-family: inherit; font-size: 10.00px; letter-spacing: 1.5px; padding: 10px 18px;
+            border: 1.4px solid var(--ink); border-radius: 999px; background: var(--card); cursor: pointer;
+            font-family: inherit; font-size: 10px; letter-spacing: 1.5px; padding: 10px 18px; color: var(--ink);
             transition: background 0.2s, color 0.2s;
         }
-        .cp-back:hover { background: #000; color: #fff; }
+        .cp-back:hover { background: var(--ink); color: #fff; }
         .cp-avatar {
-            width: 46px; height: 46px; border-radius: 50%; border: 1px solid #000;
-            display: flex; align-items: center; justify-content: center; font-size: 18.33px;
+            width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper);
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
         }
-        .cp-who { line-height: 1.2; }
-        .cp-name { font-size: 14.17px; font-weight: 500; }
-        .cp-status { font-size: 10.00px; color: #9a9a95; letter-spacing: 0.3px; }
+        .cp-who { line-height: 1.25; }
+        .cp-name { font-size: 14.5px; font-weight: 500; }
+        .cp-status { font-size: 10px; color: var(--faint); letter-spacing: 0.3px; }
         .cp-feed {
-            flex: 1; overflow-y: auto; background: #fafafa;
-            padding: 30px clamp(20px, 5vw, 60px);
-            display: flex; flex-direction: column; gap: 12px;
+            flex: 1; overflow-y: auto; background: var(--paper);
+            padding: 28px clamp(18px, 5vw, 56px);
+            display: flex; flex-direction: column; gap: 10px;
         }
         .cp-bubble {
-            max-width: 68%; padding: 12px 16px; font-size: 11.67px; line-height: 1.5;
-            border: 1px solid #000; animation: bubbleIn 0.35s ease both;
+            max-width: 68%; padding: 12px 16px; font-size: 12px; line-height: 1.5;
+            border-radius: 18px; animation: bubbleIn 0.32s ease both; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
         }
         @keyframes bubbleIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-        .cp-bubble.seller { align-self: flex-start; background: #fff; color: #1c1c1c; }
-        .cp-bubble.buyer  { align-self: flex-end; background: #000; color: #fff; border-color: #000; }
-        .cp-time { display: block; margin-top: 6px; font-size: 8.33px; letter-spacing: 0.5px; opacity: 0.55; }
+        .cp-bubble.seller { align-self: flex-start; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
+        .cp-bubble.buyer  { align-self: flex-end; background: var(--ink); color: #fff; border-bottom-right-radius: 5px; }
+        .cp-time { display: block; margin-top: 6px; font-size: 8.5px; letter-spacing: 0.5px; opacity: 0.5; }
         .cp-input-row {
-            display: flex; gap: 12px; padding: 20px clamp(20px, 5vw, 60px);
-            border-top: 1px solid #000; background: #fff;
+            display: flex; gap: 12px; padding: 18px clamp(18px, 5vw, 56px);
+            border-top: 1px solid var(--line); background: var(--card);
         }
         .cp-input {
-            flex: 1; border: 1px solid #000; background: #fff; font-family: inherit;
-            font-size: 11.67px; padding: 13px 16px;
+            flex: 1; border: 1px solid var(--line); background: var(--paper); font-family: inherit;
+            font-size: 12px; padding: 13px 18px; border-radius: 999px; color: var(--ink);
+            transition: border-color 0.2s;
         }
-        .cp-input:focus { outline: none; }
+        .cp-input:focus { outline: none; border-color: var(--ink); }
         .cp-send {
-            border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
-            font-family: inherit; font-size: 10.00px; letter-spacing: 1.5px; padding: 0 26px;
+            border: none; background: var(--ink); color: #fff; cursor: pointer;
+            font-family: inherit; font-size: 10px; letter-spacing: 1.5px; padding: 0 28px; border-radius: 999px;
             transition: opacity 0.2s;
         }
-        .cp-send:hover { opacity: 0.75; }
+        .cp-send:hover { opacity: 0.82; }
 
-        /* ===== Deal room — coordinate a pickup, confirm the handoff ===== */
+        /* ===== Deal room ===== */
         .cp-deal {
-            border-bottom: 1px solid #000; background: #fff;
-            padding: 16px clamp(20px, 5vw, 60px); display: flex; flex-direction: column; gap: 14px;
+            border-bottom: 1px solid var(--line); background: var(--card);
+            padding: 16px clamp(18px, 5vw, 56px); display: flex; flex-direction: column; gap: 14px;
         }
         .cp-deal[hidden] { display: none; }
         .cpd-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .cpd-item { font-size: 11px; letter-spacing: 0.4px; color: #1c1c1c; min-width: 0;
+        .cpd-item { font-size: 11px; letter-spacing: 0.4px; color: var(--ink); min-width: 0;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .cpd-item b { font-weight: 600; }
         .cpd-chip {
             flex: none; font-size: 8.5px; letter-spacing: 1.4px; text-transform: uppercase;
-            padding: 5px 11px; border-radius: 999px; border: 1px solid #000; background: #fff; color: #000;
+            padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
         }
-        .cpd-chip.done { background: #000; color: #fff; }
-        .cpd-chip.progress { background: #f1efe9; }
-        /* Step tracker */
+        .cpd-chip.done { background: var(--ink); color: #fff; border-color: var(--ink); }
+        .cpd-chip.progress { background: var(--paper); }
         .cpd-steps { display: flex; gap: 6px; }
-        .cpd-step { flex: 1; height: 3px; background: #e3e0d8; border-radius: 2px; }
-        .cpd-step.on { background: #000; }
-        /* Action block */
+        .cpd-step { flex: 1; height: 3px; background: var(--line); border-radius: 2px; transition: background 0.3s; }
+        .cpd-step.on { background: var(--ink); }
         .cpd-title { font-size: 13px; font-weight: 500; letter-spacing: 0.3px; }
-        .cpd-sub { font-size: 10.5px; color: #7a766c; line-height: 1.5; margin-top: 3px; }
+        .cpd-sub { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin-top: 3px; }
         .cpd-fields { display: flex; flex-direction: column; gap: 8px; }
         .cpd-fields input {
-            border: 1px solid #000; background: #fff; font-family: inherit; font-size: 11.5px; padding: 11px 13px;
+            border: 1px solid var(--line); background: var(--paper); font-family: inherit; font-size: 11.5px;
+            padding: 12px 14px; border-radius: 12px; color: var(--ink);
         }
-        .cpd-fields input:focus { outline: none; border-color: #9a7d52; }
+        .cpd-fields input:focus { outline: none; border-color: var(--ink); }
         .cpd-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .cpd-btn {
-            flex: 1 1 auto; border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
+            flex: 1 1 auto; border: 1px solid var(--ink); background: var(--ink); color: #fff; cursor: pointer;
             font-family: inherit; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
-            padding: 12px 16px; transition: opacity 0.2s, background 0.2s;
+            padding: 13px 16px; border-radius: 999px; transition: opacity 0.2s, background 0.2s;
         }
-        .cpd-btn:hover { opacity: 0.82; }
-        .cpd-btn.ghost { background: #fff; color: #000; }
-        .cpd-btn.ghost:hover { background: #f0efec; opacity: 1; }
-        .cpd-meet { font-size: 11px; line-height: 1.7; color: #1c1c1c; }
-        .cpd-meet .k { color: #9a9a95; letter-spacing: 1px; text-transform: uppercase; font-size: 8.5px; margin-inline-end: 8px; }
-        .cpd-confirmrow { display: flex; gap: 12px; font-size: 9.5px; color: #7a766c; letter-spacing: 0.4px; }
+        .cpd-btn:hover { opacity: 0.85; }
+        .cpd-btn.ghost { background: var(--card); color: var(--ink); }
+        .cpd-btn.ghost:hover { background: var(--paper); opacity: 1; }
+        .cpd-meet { font-size: 11px; line-height: 1.7; color: var(--ink); }
+        .cpd-meet .k { color: var(--faint); letter-spacing: 1px; text-transform: uppercase; font-size: 8.5px; margin-inline-end: 8px; }
+        .cpd-confirmrow { display: flex; gap: 12px; font-size: 9.5px; color: var(--muted); letter-spacing: 0.4px; }
         .cpd-confirmrow .yes { color: #1f8f4e; }
-        /* System bubble in the feed (deal log). */
         .cp-bubble.system {
-            align-self: center; max-width: 90%; text-align: center; background: #f1efe9; color: #6b6b6b;
-            border: 1px dashed #cfcabf; font-size: 10px; letter-spacing: 0.4px;
+            align-self: center; max-width: 90%; text-align: center; background: var(--paper); color: var(--muted);
+            border: 1px dashed var(--line); font-size: 10px; letter-spacing: 0.4px; box-shadow: none;
         }
         .cp-bubble.system .cp-time { text-align: center; }
-        /* Star rating for the review card. */
         .cpd-stars { display: flex; gap: 6px; }
-        .cpd-stars button { border: none; background: none; cursor: pointer; font-size: 22px; line-height: 1; color: #d8d4c8; padding: 0; transition: color 0.15s; }
+        .cpd-stars button { border: none; background: none; cursor: pointer; font-size: 22px; line-height: 1; color: #ddd9cd; padding: 0; transition: color 0.15s; }
         .cpd-stars button.on { color: #d4a017; }
 
-        @media (max-width: 780px) {
-            .grid { grid-template-columns: 1fr; }
-            /* Let the single column shrink to the viewport instead of expanding to
-               its content's max width (grid items default to min-width:auto). */
-            .grid > *, .col-right { min-width: 0; }
-            .stats { grid-template-columns: 1fr; }
+        /* ===== Responsive ===== */
+        @media (max-width: 720px) {
+            .wrap { padding: 92px 18px 90px; }
+            .head-row { align-items: stretch; }
+            .chat-search { width: 100%; }
+            .summary { flex-wrap: wrap; }
+            .sm-cell { flex: 1 1 50%; }
+            .sm-cell + .sm-cell::before { display: none; }
+            .sm-cell:nth-child(2n)::after,
+            .sm-cell:nth-child(-n+2)::after { content: none; }
             .cp-bubble { max-width: 82%; }
         }
+        @media (max-width: 420px) {
+            .sm-cell { flex: 1 1 50%; }
+        }
+
+        /* Embedded inside profile.html */
+        html.embed .back, html.embed .head-title, html.embed .head-sub { display: none !important; }
+        html.embed .wrap { padding-top: 32px; }
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
 </head>
 <body>
-    <!-- Embedded inside profile.html (?embed=1): the page title + back button are
-         hidden — the title is shown in the profile hero instead. -->
     <script>if (new URLSearchParams(location.search).get('embed')) document.documentElement.classList.add('embed');</script>
-    <style>
-        html.embed .back, html.embed .head-title, html.embed .head-sub { display: none !important; }
-        html.embed .wrap { padding-top: 40px; }
-
-        /* ===== Minimal redesign — de-framed: no boxes, just hairline + whitespace ===== */
-        .card {
-            border: none; border-bottom: 1px solid #eeece7; border-radius: 0; padding: 34px 0;
-            background: transparent; box-shadow: none;
-        }
-        .card:last-child { border-bottom: none; }
-        .stat {
-            border: none; border-radius: 0; background: transparent; box-shadow: none;
-            padding: 6px 0;
-        }
-        .chat-row { border-bottom: 1px solid #f1f0ec; padding: 16px 6px; border-radius: 12px; }
-        .chat-row:hover { background: #f7f6f3; }
-        .chat-avatar { border-color: #ecebe7; }
-        .chat-search {
-            border: 1px solid #ecebe7; background: #f7f6f3; border-radius: 999px;
-        }
-        .chat-search:focus-within { border-color: #111; background: #fff; }
-
-        /* ===== More comfortable, mobile-first inbox ===== */
-        /* Single column: drop the desktop stats card, let the conversation list fill. */
-        .grid { display: block; margin-top: 26px; }
-        .grid > .card:first-child { display: none; }              /* hide the stats sidebar */
-        .col-right .card { padding: 0; border-bottom: none; }
-        .col-right .card > .card-label { display: none; }         /* the list needs no label */
-        .head-title { font-size: clamp(30px, 8vw, 46px); }
-        .wrap { padding: 96px 20px 90px; }
-        .chat-search { width: 100%; min-width: 0; flex: 1; }
-
-        /* Time filter chips, led by the existing calendar filter icon. */
-        .chat-filters {
-            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-            margin-top: 22px; padding-bottom: 4px;
-        }
-        .chat-filter-ico { width: 19px; height: 19px; flex: 0 0 auto; color: #6b6b66; margin-right: 2px; }
-        .chat-filter-ico svg { width: 100%; height: 100%; display: block; }
-        .chat-chip {
-            padding: 8px 15px; border: 1.4px solid #e4e2dc; border-radius: 999px;
-            font-family: inherit; font-size: 11px; letter-spacing: 0.4px; color: #6b6b66;
-            background: #fff; cursor: pointer; white-space: nowrap; transition: all 0.18s ease;
-        }
-        .chat-chip:hover { border-color: #cfccc4; }
-        .chat-chip.active { background: #111; color: #fff; border-color: #111; }
-
-        /* A calm, tappable conversation list — no horizontal slider. */
-        .chat-list { display: block !important; overflow: visible !important; margin-top: 8px; }
-        .chat-track { display: block !important; width: 100% !important; transform: none !important; }
-        .chat-slide { display: block !important; }
-        .chat-list .chat-row {
-            height: auto !important; padding: 15px 12px; gap: 14px; border-radius: 14px;
-            border-bottom: 1px solid #f1f0ec;
-        }
-        .chat-list .chat-row:active { background: #f2f0ec; }
-        .chat-avatar { width: 54px; height: 54px; font-size: 20px; border-color: #e6e4df; background: #faf9f6; }
-        .chat-name { font-size: 13.5px; }
-        .chat-preview { font-size: 11.5px; margin-top: 3px; }
-        .chat-time { font-size: 10px; }
-        .chat-nav { display: none !important; }                   /* slider nav no longer used */
-    </style>
     <div class="page-cover"></div>
     <div class="side-image"></div>
     <a class="back" href="profile.html">&#8592; חזרה</a>
 
     <div class="wrap">
         <div class="head-row">
-            <h1 class="head-title">My Chats</h1>
+            <div>
+                <h1 class="head-title">My Chats</h1>
+                <p class="head-sub">Your conversations with sellers and buyers.</p>
+            </div>
             <input class="chat-search" id="chatSearch" type="text" placeholder="Search sellers…" autocomplete="off">
         </div>
-        <p class="head-sub">Your conversations with sellers and buyers.</p>
 
-        <!-- Time filters, led by the existing "filter by date" calendar icon. -->
+        <!-- Summary strip -->
+        <div class="summary">
+            <div class="sm-cell">
+                <div class="sm-num" id="activeNum">0</div>
+                <div class="sm-label">Active chats</div>
+                <div id="activeSub" hidden></div>
+            </div>
+            <div class="sm-cell">
+                <div class="sm-num" id="threadCount">0</div>
+                <div class="sm-label">Threads</div>
+            </div>
+            <div class="sm-cell">
+                <div class="sm-num" id="sellerCount">0</div>
+                <div class="sm-label">Sellers</div>
+            </div>
+            <div class="sm-cell">
+                <div class="sm-num small" id="lastActive">—</div>
+                <div class="sm-label">Last active</div>
+            </div>
+        </div>
+
+        <!-- Time filters -->
         <div class="chat-filters" id="chatFilters">
             <span class="chat-filter-ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -422,41 +316,22 @@
             <button class="chat-chip" data-range="month" type="button">This month</button>
         </div>
 
+        <div class="section-cap">Conversations</div>
+
         <div class="grid">
-            <!-- Left: conversation overview -->
-            <div class="card">
-                <div class="card-label">Active chats</div>
-                <div class="total-num" id="activeNum">0</div>
-                <div class="total-sub" id="activeSub">with 0 sellers</div>
-
-                <div class="divider"></div>
-
-                <div class="field">
-                    <div class="card-label">Threads</div>
-                    <div class="field-val" id="threadCount">0</div>
-                </div>
-                <div class="field">
-                    <div class="card-label">Sellers</div>
-                    <div class="field-val" id="sellerCount">0</div>
-                </div>
-                <div class="field">
-                    <div class="card-label">Last active</div>
-                    <div class="field-val" id="lastActive">—</div>
-                </div>
+            <!-- kept for JS compatibility; hidden -->
+            <div class="card" hidden>
+                <div id="activeNumLegacy"></div>
             </div>
-
-            <!-- Right: thread list + stats -->
             <div class="col-right">
                 <div class="card">
-                    <div class="card-label">Conversations</div>
                     <div class="chat-list" id="chatList"></div>
                 </div>
             </div>
         </div>
-
     </div>
 
-    <!-- Slide-in chat panel — one conversation with a seller. -->
+    <!-- Slide-in chat panel -->
     <div class="chat-panel" id="chatPanel">
         <div class="cp-head">
             <button class="cp-back" id="cpBack">&#8594; חזרה</button>
@@ -466,7 +341,6 @@
                 <div class="cp-status">Usually replies within a day</div>
             </div>
         </div>
-        <!-- Deal room: coordinate a pickup and confirm the handoff. Rendered by JS. -->
         <div class="cp-deal" id="cpDeal" hidden></div>
         <div class="cp-feed" id="cpFeed"></div>
         <div class="cp-input-row">
@@ -477,8 +351,6 @@
 
     <script>
         // Route "back" to whichever area we arrived from — seller or buyer.
-        // VIEW_ROLE drives the deal room's wording: as a seller the counterpart is
-        // the buyer and "I" hand the item over; as a buyer it's the reverse.
         const VIEW_ROLE = new URLSearchParams(location.search).get('from') === 'seller' ? 'seller' : 'buyer';
         if (VIEW_ROLE === 'seller') {
             document.querySelector('.head-title').textContent = 'Buyer Chats';
@@ -493,8 +365,7 @@
         const offs   = Array.isArray(offers) ? offers : [];
         const nis = n => '₪' + Math.round(n).toLocaleString('en-US');
 
-        // Build one conversation thread per seller, drawn from offers first
-        // (they carry a real message + timestamp) then any cart items.
+        // Build one conversation thread per seller.
         const threads = new Map();
         const touch = (seller, name, icon, at, preview) => {
             const key = seller || 'moravchick';
@@ -521,8 +392,7 @@
         ];
         DEMO.forEach(d => touch(d.seller, d.seller, d.icon, d.at, d.preview));
 
-        // Conversations created elsewhere (e.g. checkout in the cart) live in
-        // vero_chats — surface each of those sellers with their latest message.
+        // Conversations created elsewhere live in vero_chats.
         const chatStore = readJSON('vero_chats', {});
         Object.entries(chatStore).forEach(([seller, msgs]) => {
             if (Array.isArray(msgs) && msgs.length) {
@@ -559,7 +429,7 @@
             return ` <span class="chat-deal">עסקה · ${DEAL_LBL[d.status]}</span>`;
         }
 
-        // Active time filter + current search query, applied together on every render.
+        // Active time filter + current search query.
         let chatRange = 'all';
         let chatQuery = '';
         const DAY = 86400000;
@@ -588,7 +458,6 @@
                 el.innerHTML = `<div class="chat-empty">${why}</div>`;
                 return;
             }
-            // A single, calm vertical list — comfortable to scan and tap.
             el.innerHTML = '<div class="chat-track">' + rows.map(({ t, i }) => `
                     <div class="chat-row" data-i="${i}">
                         <div class="chat-avatar">${t.icon}</div>
@@ -596,7 +465,10 @@
                             <div class="chat-name">${t.seller}${dealBadge(t.seller)}</div>
                             <div class="chat-preview">${t.preview}</div>
                         </div>
-                        <div class="chat-time">${timeAgo(t.at)}</div>
+                        <div class="chat-meta">
+                            <div class="chat-time">${timeAgo(t.at)}</div>
+                            <div class="chat-chev">&#8250;</div>
+                        </div>
                     </div>`).join('') + '</div>';
         }
         renderList();
@@ -614,11 +486,10 @@
             const row = e.target.closest('.chat-row');
             if (row) openChat(+row.dataset.i);
         });
-        // Search sellers — restricted to those already in the chat inbox.
         document.getElementById('chatSearch').addEventListener('input', (e) => { chatQuery = e.target.value; renderList(); });
 
-        // ===== Chat with a seller — persisted to vero_chats, works like the deal room =====
-        const CHATS = readJSON('vero_chats', {});   // { sellerName: [ {sender, content, at} ] }
+        // ===== Chat with a seller =====
+        const CHATS = readJSON('vero_chats', {});
         const saveChats = () => localStorage.setItem('vero_chats', JSON.stringify(CHATS));
         const panel = document.getElementById('chatPanel');
         const feedEl = document.getElementById('cpFeed');
@@ -626,7 +497,6 @@
         let openSeller = null;
         let openItem = '';
 
-        // Canned seller replies, cycled for a life-like conversation.
         const SELLER_LINES = [
             'Hi! Thanks for reaching out — how can I help?',
             'Yes, it\'s still available. Would you like to arrange a pickup?',
@@ -638,7 +508,6 @@
         const timeShort = ms => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
         function seedThread(t) {
-            // First time opening: seed with the thread's preview as a seller message.
             if (!CHATS[t.seller] || !CHATS[t.seller].length) {
                 CHATS[t.seller] = [{ sender: 'seller', content: t.preview || `Hi, this is ${t.seller}. How can I help?`, at: t.at || Date.now() }];
                 saveChats();
@@ -660,7 +529,6 @@
             if (o) return o.name;
             const c = items.find(x => (x.seller || 'moravchick') === seller && x.name);
             if (c) return c.name;
-            // Seller side: the counterpart is a buyer — look up their accepted offer.
             const r = Array.isArray(recvOffers) && recvOffers.find(x => x.buyer === seller && x.name);
             if (r) return r.name;
             const deal = (readJSON('vero_deals', {}) || {})[seller];
@@ -684,7 +552,6 @@
         function closeChat() {
             panel.classList.remove('open'); openSeller = null;
             document.getElementById('cpDeal').hidden = true;
-            // Refresh the inbox so deal tags reflect any progress made in the room.
             const sv = document.getElementById('chatSearch');
             chatQuery = sv ? sv.value : '';
             renderList();
@@ -697,7 +564,6 @@
             saveChats();
             inputEl.value = '';
             renderFeed();
-            // Seller auto-reply, so the conversation feels alive.
             const reply = SELLER_LINES[CHATS[openSeller].filter(m => m.sender === 'seller').length % SELLER_LINES.length];
             setTimeout(() => {
                 if (openSeller && CHATS[openSeller]) {
@@ -708,10 +574,7 @@
             }, 900);
         }
 
-        // ===== Deal room: pickup coordination + handoff (payment handled off-app) =====
-        // Per-seller deal record in vero_deals:
-        //   { item, status, place, time, buyerGot, sellerGave, paid, rating, updatedAt }
-        // status flow: coordinating → scheduled → handoff → paid → done
+        // ===== Deal room =====
         const DEALS = readJSON('vero_deals', {});
         const saveDeals = () => localStorage.setItem('vero_deals', JSON.stringify(DEALS));
         const dealEl = document.getElementById('cpDeal');
@@ -746,7 +609,6 @@
                 ? `<div class="cpd-item"><b>${esc(itemName)}</b></div>`
                 : `<div class="cpd-item">תיאום איסוף פריט</div>`;
 
-            // --- No deal yet: offer to start ---
             if (!d) {
                 dealEl.innerHTML = `
                     <div class="cpd-top">${itemLine}<span class="cpd-chip">לא התחיל</span></div>
@@ -764,7 +626,6 @@
                 return;
             }
 
-            // --- Step 1: coordinating — propose a place + time ---
             if (d.status === 'coordinating') {
                 dealEl.innerHTML = `
                     <div class="cpd-top">${itemLine}<span class="cpd-chip progress">מתאמים</span></div>
@@ -783,7 +644,6 @@
                     d.place = place; d.time = time; d.status = 'scheduled'; d.updatedAt = Date.now(); saveDeals();
                     pushSys(openSeller, `הצעת מפגש נשלחה — ${place}, ${time}`);
                     renderDeal();
-                    // Seller (simulated) confirms shortly.
                     setTimeout(() => {
                         if (!DEALS[openSeller]) return;
                         pushSeller(openSeller, `מעולה, נתראה ב${time} ב${place}. אביא את הפריט 🙌`);
@@ -793,7 +653,6 @@
                 return;
             }
 
-            // --- Step 2: scheduled — meet & confirm handoff (role-aware) ---
             if (d.status === 'scheduled') {
                 const seller = VIEW_ROLE === 'seller';
                 const mineFlag  = seller ? 'sellerGave' : 'buyerGot';
@@ -831,7 +690,6 @@
                     d[mineFlag] = true; d.updatedAt = Date.now(); saveDeals();
                     pushSys(openSeller, myConfirmSys);
                     renderDeal();
-                    // The counterpart confirms their side.
                     setTimeout(() => {
                         if (!DEALS[openSeller]) return;
                         d[theirFlag] = true; saveDeals();
@@ -844,7 +702,6 @@
                 return;
             }
 
-            // --- Step 3: handoff done — mark paid (off-app) ---
             if (d.status === 'handoff') {
                 dealEl.innerHTML = `
                     <div class="cpd-top">${itemLine}<span class="cpd-chip progress">תשלום</span></div>
@@ -860,7 +717,6 @@
                 return;
             }
 
-            // --- Step 4: paid — leave a review, then done ---
             if (d.status === 'paid') {
                 dealEl.innerHTML = `
                     <div class="cpd-top">${itemLine}<span class="cpd-chip done">הושלם</span></div>
@@ -886,7 +742,6 @@
                 return;
             }
 
-            // --- Done: summary ---
             dealEl.innerHTML = `
                 <div class="cpd-top">${itemLine}<span class="cpd-chip done">✓ הושלם</span></div>
                 ${steps('done')}
@@ -902,8 +757,7 @@
         inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel.classList.contains('open')) closeChat(); });
 
-        // Exit mirrors the entry: the image holds static while the data slides
-        // back out to the left, then the personal area loads.
+        // Exit animation mirrors the entry fade.
         const back = document.querySelector('.back');
         if (back) back.addEventListener('click', (e) => {
             e.preventDefault();
