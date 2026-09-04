@@ -2487,20 +2487,12 @@
     function wireAccountLongPress() {
         const btn = document.querySelector('#siteHeader .hdr-avatar-btn, #siteHeader .hdr-account-btn');
         if (!btn) return;
-        // Single click opens the personal area; DOUBLE click switches the profile
-        // (buyer ↔ seller) directly.
-        let clickTimer = null;
-        btn.addEventListener('dblclick', (e) => {
+        // A tap opens the personal area immediately (the old double-click detector
+        // deferred navigation 280ms and could be swallowed on touch, so the icon
+        // felt dead). Profile switching stays available via the header toggle.
+        btn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
-            window.veroSwitchAccount();
-        });
-        btn.addEventListener('click', () => {
-            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
-            clickTimer = setTimeout(() => {
-                clickTimer = null;
-                window.veroOpenArea();
-            }, 280);
+            window.veroOpenArea();
         });
     }
 
