@@ -11,7 +11,7 @@
  *
  * Bump CACHE_VERSION to force all clients onto a clean cache.
  */
-var CACHE_VERSION = 'vero-v42';
+var CACHE_VERSION = 'vero-v43';
 var ASSET_CACHE = CACHE_VERSION + '-assets';
 var HTML_CACHE = CACHE_VERSION + '-html';
 
