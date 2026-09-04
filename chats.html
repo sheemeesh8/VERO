@@ -4,6 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>moravchick — My Chats</title>
+    <script>
+      // One-time self-heal: purge any stale caches + force the newest service
+      // worker, so the chats page never gets stuck on an old cached build even
+      // when opened directly (not through phone-frame). Runs once per tab.
+      (function () {
+        var TAG = 'vero_selfheal_v37';
+        try {
+          if ('caches' in window && !sessionStorage.getItem(TAG)) {
+            sessionStorage.setItem(TAG, '1');
+            caches.keys().then(function (keys) {
+              return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            }).then(function () {
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function (regs) {
+                  regs.forEach(function (r) { r.update(); });
+                });
+              }
+              location.reload();
+            }).catch(function () {});
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
