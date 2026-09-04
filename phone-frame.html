@@ -142,60 +142,36 @@
             .pf-spin { animation-duration: 3s; }
         }
 
-        /* ---- Louis-Vuitton-style entrance: an elegant, once-per-open reveal ---- */
+        /* ---- Entrance: a black screen with the big peacock logo spinning once,
+               then the black window slides up and out to reveal the site. ---- */
         .pf-intro {
             position: absolute; inset: 0; z-index: 9;
-            background: var(--pf-paper);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 24px;
-            animation: pfiExit 0.8s ease 2.5s forwards;
+            background: #000;
+            display: flex; align-items: center; justify-content: center;
+            perspective: 900px;                 /* gives the logo's rotateY real depth */
+            /* Hold black + logo, then slide the whole black panel up and away. */
+            animation: pfiSlideOut 0.7s cubic-bezier(0.7, 0, 0.3, 1) 1.35s forwards;
         }
         .pf-intro.done { display: none; }
-        .pfi-mark { position: relative; width: 100px; height: auto; }
+        /* Big white peacock (the dark logo would vanish on black), centred, spins once. */
         .pfi-logo {
-            width: 100px; height: auto; display: block;
-            opacity: 0;
-            animation: pfiLogoIn 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
+            width: min(58vw, 230px); height: auto; display: block;
+            transform-style: preserve-3d; backface-visibility: visible;
+            animation: pfiSpinOnce 1.2s cubic-bezier(0.45, 0, 0.35, 1) 0.1s both;
         }
-        /* Gold light that sweeps across the logo, clipped to its shape via a mask. */
-        .pfi-shine {
-            position: absolute; inset: 0;
-            -webkit-mask: url('peacock-logo.png?v=1') center / contain no-repeat;
-                    mask: url('peacock-logo.png?v=1') center / contain no-repeat;
-            background: linear-gradient(115deg,
-                rgba(198,167,94,0) 42%, rgba(212,182,110,0.95) 50%, rgba(198,167,94,0) 58%);
-            background-size: 300% 100%;
-            background-position: 160% 0;
-            opacity: 0;
-            animation: pfiShine 1.3s ease 0.9s forwards;
+        @keyframes pfiSpinOnce {
+            from { transform: rotateY(0deg);   opacity: 0.15; }
+            15%  { opacity: 1; }
+            to   { transform: rotateY(360deg); opacity: 1; }
         }
-        .pfi-word {
-            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 15px; font-weight: 500; text-transform: uppercase; color: #1b1916;
-            letter-spacing: 8px; padding-left: 8px;
-            opacity: 0;
-            animation: pfiWordIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) 1.35s forwards;
-        }
-        @keyframes pfiLogoIn {
-            from { opacity: 0; transform: scale(1.18); filter: blur(7px); }
-            to   { opacity: 1; transform: scale(1);    filter: blur(0); }
-        }
-        @keyframes pfiShine {
-            0%   { opacity: 0; background-position: 160% 0; }
-            18%  { opacity: 1; }
-            82%  { opacity: 1; }
-            100% { opacity: 0; background-position: -160% 0; }
-        }
-        @keyframes pfiWordIn {
-            from { opacity: 0; letter-spacing: 22px; transform: translateY(7px); }
-            to   { opacity: 1; letter-spacing: 8px;  transform: translateY(0); }
-        }
-        @keyframes pfiExit {
-            from { opacity: 1; transform: scale(1); }
-            to   { opacity: 0; transform: scale(1.06); visibility: hidden; }
+        /* The black window slides up and off, uncovering the site painted behind it. */
+        @keyframes pfiSlideOut {
+            from { transform: translateY(0); }
+            to   { transform: translateY(-100%); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .pf-intro, .pfi-logo, .pfi-shine, .pfi-word { animation-duration: 0.6s; }
+            .pf-intro { animation: pfiSlideOut 0.4s ease 0.5s forwards; }
+            .pfi-logo { animation: none; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -236,13 +212,10 @@
             </div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
-            <!-- Louis-Vuitton-style entrance played once per app open. -->
+            <!-- Entrance played once per app open: black screen, big peacock spins
+                 once, then the black panel slides up to reveal the site. -->
             <div class="pf-intro" id="pfIntro">
-                <div class="pfi-mark">
-                    <img class="pfi-logo" src="peacock-logo.png?v=1" alt="moravchick" />
-                    <span class="pfi-shine" aria-hidden="true"></span>
-                </div>
-                <div class="pfi-word">moravchick</div>
+                <img class="pfi-logo" src="peacock-logo-white.png?v=1" alt="moravchick" />
             </div>
         </div>
     </div>
@@ -258,7 +231,9 @@
             var intro = document.getElementById('pfIntro');
             if (!intro) return;
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            var total = reduce ? 1200 : 3300;   // matches the CSS timeline + exit fade
+            // spin (0.1s delay + 1.2s) then slide-out (1.35s delay + 0.7s) ≈ 2.05s; give a
+            // little slack so the panel is fully off-screen before we remove it.
+            var total = reduce ? 950 : 2150;
             setTimeout(function () { intro.classList.add('done'); }, total);
         })();
 
