@@ -3021,6 +3021,74 @@
             .promo-title, .promo-desc, .promo-readmore, .promo-label { transform: none; }
         }
 
+        /* ==================== FEED PROMOTED CARD (editorial, per the reference) ====
+           A promoted product shown as: title + brand, a vertical spec list
+           (Condition / Size / Gender / Price), a Contact-seller pill + heart, and a
+           large product image on the right. Three of these page inside one slider at
+           the top of every feed block, with a "Slide for more" hint. ======= */
+        .promo-slider--feed .promo-slide {
+            grid-template-columns: 0.9fr 1fr !important;
+            justify-content: stretch !important;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 18px 8px;
+            text-align: left;
+        }
+        .promo-slider--feed .fp-text { direction: ltr; display: flex; flex-direction: column; min-width: 0; }
+        .fp-titlelink { display: block; }
+        .fp-title {
+            font-family: 'Oswald', 'Poppins', 'Segoe UI', sans-serif;
+            font-size: clamp(19px, 6.4vw, 30px); font-weight: 400; line-height: 1.02;
+            letter-spacing: 0.5px; text-transform: uppercase; color: #111;
+        }
+        .fp-brand {
+            font-family: 'Oswald', 'Poppins', 'Segoe UI', sans-serif;
+            font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: #111;
+            margin-top: 9px;
+        }
+        .fp-specs { margin-top: 18px; display: flex; flex-direction: column; gap: 13px; }
+        .fp-spec-label {
+            font-family: 'Oswald', 'Poppins', 'Segoe UI', sans-serif;
+            font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: #b7b1a7;
+        }
+        .fp-spec-value {
+            font-family: 'Oswald', 'Poppins', 'Segoe UI', sans-serif;
+            font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #111; margin-top: 3px;
+        }
+        .fp-spec-value.price { color: #1c6b45; font-weight: 600; font-size: 14px; }
+        .fp-spec-value .vprice, .fp-spec-value .vprice-sale { color: inherit; font-weight: inherit; }
+        .fp-actions { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+        .fp-contact {
+            border: 1.4px solid #111; background: #fff; color: #111; border-radius: 999px;
+            padding: 11px 15px; cursor: pointer; white-space: nowrap;
+            font-family: 'Oswald', 'Poppins', 'Segoe UI', sans-serif;
+            font-size: 8.5px; letter-spacing: 1.5px; text-transform: uppercase;
+            transition: background 0.2s, color 0.2s;
+        }
+        .fp-contact:active { background: #111; color: #fff; }
+        .fp-heart {
+            width: 36px; height: 36px; border: none; background: none; cursor: pointer; color: #111;
+            display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+        }
+        .fp-heart svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+        .fp-heart.saved svg { fill: #111; }
+        .fp-media {
+            width: 100%; aspect-ratio: 0.82; background: #efeeec; border-radius: 3px;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+            font-size: clamp(64px, 24vw, 120px); color: rgba(0,0,0,0.12); text-decoration: none;
+        }
+        .fp-media img { width: 100%; height: 100%; object-fit: cover; }
+        /* Gentle entrance for the slide coming into view. */
+        .promo-slide.is-current .fp-text { animation: promoTextIn 0.7s cubic-bezier(0.22,1,0.36,1) both; animation-delay: 0.08s; }
+        .promo-slide.is-current .fp-media { animation: promoImgIn 0.9s cubic-bezier(0.22,1,0.36,1) both; }
+        /* "Slide for more" hint in the feed slider footer. */
+        .promo-slider--feed .fp-hint {
+            display: flex; align-items: center; gap: 14px; cursor: default;
+            font-family: 'Oswald', 'Poppins', 'Segoe UI', sans-serif;
+            font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #111;
+        }
+        .promo-slider--feed .fp-hint .line { width: 70px; height: 1px; background: #111; display: inline-block; }
+
         /* Products Grid */
         .products-grid {
             display: grid;
@@ -8450,10 +8518,12 @@
 
                 // A promo slider precedes every grid (every 2 rows of products).
                 // When a filter is active, promote products from that segment.
-                const slides = currentSegment
+                // Exactly three promoted products lead each block, shown in the
+                // editorial feed card (title/brand/specs/contact + heart).
+                const slides = (currentSegment
                     ? segmentFeatured(currentCategory, currentSegment)
-                    : featuredProducts;
-                const slider = createPromoSlider(slides);
+                    : featuredProducts).slice(0, 3);
+                const slider = createPromoSlider(slides, 'feed');
                 // The very first slider mounts beside the filters in the lead row;
                 // every later slider precedes its grid in the feed as before.
                 if (feedBlocksCount === 0) {
@@ -8667,12 +8737,59 @@
             hpTimer = setInterval(() => hpGo(hpIndex + 1), HP_INTERVAL);
         }
 
-        function promoSliderInner(uid, slides) {
+        // Editorial promoted card for the feed — title + brand, a vertical spec list,
+        // a Contact-seller pill + heart, and a large image on the right.
+        const FP_HEART_SVG = '<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+        function feedPromoSlideHTML(s) {
+            const url = productPageUrl(s);
+            const brand = (s.brand || s.seller || 'moravchick').toString().toUpperCase();
+            const pid = `${s.name}|${s.price}`;
+            const saved = (typeof isWished === 'function' && isWished(pid)) ? ' saved' : '';
+            const productData = JSON.stringify({
+                name: s.name, price: s.price, icon: s.icon, category: s.category,
+                seller: s.seller, rating: s.rating, type: s.type || currentCategory
+            });
+            return `
+                <div class="promo-slide promo-slide--feedcard">
+                    <div class="fp-text">
+                        <a class="fp-titlelink" href="${url}" style="text-decoration:none;color:inherit">
+                            <div class="fp-title">${s.name || ''}</div>
+                            <div class="fp-brand">${brand}</div>
+                        </a>
+                        <div class="fp-specs">
+                            <div class="fp-spec"><div class="fp-spec-label">Condition</div><div class="fp-spec-value">${productCondition(s)}</div></div>
+                            <div class="fp-spec"><div class="fp-spec-label">Size</div><div class="fp-spec-value">${s.size || productSize(s)}</div></div>
+                            <div class="fp-spec"><div class="fp-spec-label">Gender</div><div class="fp-spec-value">${productGender(s)}</div></div>
+                            <div class="fp-spec"><div class="fp-spec-label">Price</div><div class="fp-spec-value price">${veroPriceHTML(s)}</div></div>
+                        </div>
+                        <div class="fp-actions">
+                            <button class="fp-contact" onclick="window.location.href='${url}'">Contact seller</button>
+                            <button class="fp-heart${saved}" aria-label="Save to wishlist" data-product='${productData}' onclick="event.preventDefault(); event.stopPropagation(); feedPromoHeart(this)">${FP_HEART_SVG}</button>
+                        </div>
+                    </div>
+                    <a class="fp-media" href="${url}">${s.icon || ''}</a>
+                </div>`;
+        }
+        function feedPromoHeart(btn) {
+            try {
+                const p = JSON.parse(btn.getAttribute('data-product'));
+                const item = { ...p, id: `${p.name}|${p.price}` };
+                toggleWishlist(item, null);
+                btn.classList.toggle('saved', isWished(item.id));
+            } catch (e) {}
+        }
+
+        function promoSliderInner(uid, slides, variant) {
+            const isFeed = variant === 'feed';
+            const slideFn = isFeed ? feedPromoSlideHTML : promoSlideHTML;
+            const footer = isFeed
+                ? `<div class="fp-hint"><span>Slide for more</span><span class="line"></span></div>`
+                : `<div class="promo-viewall" onclick="showToast('Featured products coming soon ✨')"><span class="line"></span> VIEW ALL</div>`;
             return `
                 <button class="promo-arrow prev" aria-label="Previous" onclick="promoGo('${uid}', promoState['${uid}'].index - 1)">${promoChevron('left')}</button>
                 <div class="promo-viewport">
                     <div class="promo-track" id="promoTrack-${uid}">
-                        ${slides.map(promoSlideHTML).join('')}
+                        ${slides.map(slideFn).join('')}
                     </div>
                 </div>
                 <button class="promo-arrow next" aria-label="Next" onclick="promoGo('${uid}', promoState['${uid}'].index + 1)">${promoChevron('right')}</button>
@@ -8680,18 +8797,18 @@
                     <div class="promo-dots" id="promoDots-${uid}">
                         ${slides.map((s, i) => `<button class="promo-dot" aria-label="Slide ${i + 1}" onclick="promoGo('${uid}', ${i})"></button>`).join('')}
                     </div>
-                    <div class="promo-viewall" onclick="showToast('Featured products coming soon ✨')"><span class="line"></span> VIEW ALL</div>
+                    ${footer}
                 </div>`;
         }
 
         // Build a fresh slider element (not yet mounted) and register its state.
         // Pass a custom slide list (e.g. per-category) or default to featuredProducts.
-        function createPromoSlider(slides = featuredProducts) {
+        function createPromoSlider(slides = featuredProducts, variant) {
             const seq = promoUidCounter++;
             const uid = 'p' + seq;
             const el = document.createElement('div');
-            el.className = 'promo-slider';
-            el.innerHTML = promoSliderInner(uid, slides);
+            el.className = 'promo-slider' + (variant === 'feed' ? ' promo-slider--feed' : '');
+            el.innerHTML = promoSliderInner(uid, slides, variant);
             // Alternate direction by build order: even sliders step forward, odd ones back.
             promoState[uid] = { index: 0, timer: null, slides, dir: seq % 2 === 0 ? 1 : -1 };
             el.dataset.uid = uid;
@@ -9030,6 +9147,10 @@
         // writes real fields.
         const FEED_STYLES  = ['Casual', 'Formal', 'Sport', 'Vintage', 'Streetwear', 'Elegant', 'Minimalist'];
         const FEED_GENDERS = ['Men', 'Women', 'Unisex'];
+        const FEED_CONDITIONS = ['Like New', 'Excellent', 'Very Good', 'Good'];
+        const FEED_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
+        function productCondition(p) { return p.condition || FEED_CONDITIONS[strHash(p.name + 'cond') % FEED_CONDITIONS.length]; }
+        function productSize(p) { return p.size || FEED_SIZES[strHash(p.name + 'sz') % FEED_SIZES.length]; }
         function productBrand(p)  { const b = catBrands[p.type || currentCategory] || catBrands.clothing; return b[strHash(p.name + 'b') % b.length]; }
         function productStyle(p)  { return FEED_STYLES[strHash(p.name + 's') % FEED_STYLES.length]; }
         function productGender(p) { return FEED_GENDERS[strHash(p.name + 'g') % FEED_GENDERS.length]; }
