@@ -19,9 +19,24 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
     <script>
+      // Keep an installed PWA on the freshest deploy. updateViaCache:'none' stops the
+      // browser HTTP-caching sw.js, so a new worker is always detected; we then force
+      // it active (skipWaiting) and reload once it takes control.
       if ('serviceWorker' in navigator) {
+        var pfReloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (pfReloaded) return;
+          pfReloaded = true;
+          location.reload();
+        });
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('sw.js').catch(function () {});
+          navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
+            reg.update();
+            // Re-check for a new version whenever the app is brought back to the front.
+            document.addEventListener('visibilitychange', function () {
+              if (document.visibilityState === 'visible') reg.update();
+            });
+          }).catch(function () {});
         });
       }
     </script>
