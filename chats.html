@@ -394,7 +394,6 @@
             <a class="cp-navlink" id="cpSellerLink" href="#">פרופיל המוכר</a>
             <a class="cp-navlink" id="cpItemLink" href="#">הצג פריט</a>
         </nav>
-        <div class="cp-deal" id="cpDeal" hidden></div>
         <div class="cp-feed" id="cpFeed"></div>
         <div class="cp-input-row">
             <input class="cp-input" id="cpInput" type="text" placeholder="Write a message…" autocomplete="off">
@@ -474,13 +473,6 @@
         document.getElementById('lastActive').textContent  = lastAt ? (timeAgo(lastAt) + ' ago') : '—';
 
         const el = document.getElementById('chatList');
-        // Small "active deal" tag on a chat row, with the current step.
-        const DEAL_LBL = { coordinating: 'מתאמים', scheduled: 'מפגש נקבע', handoff: 'תשלום', paid: 'הושלם' };
-        function dealBadge(seller) {
-            const d = (readJSON('vero_deals', {}) || {})[seller];
-            if (!d || d.status === 'done' || !DEAL_LBL[d.status]) return '';
-            return ` <span class="chat-deal">עסקה · ${DEAL_LBL[d.status]}</span>`;
-        }
 
         // Full date + time of the last message in a thread — e.g. "04.09.26, 14:32".
         const fullWhen = ms => ms
@@ -540,7 +532,7 @@
                         <div class="chat-avatar">${t.icon}</div>
                         <div class="chat-body">
                             <div class="chat-topline">
-                                <span class="chat-name">${t.seller}${dealBadge(t.seller)}</span>
+                                <span class="chat-name">${t.seller}</span>
                                 <span class="chat-time">${fullWhen(t.at)}</span>
                             </div>
                             <div class="chat-preview">${t.preview}</div>
@@ -658,14 +650,12 @@
             document.getElementById('cpAvatar').textContent = t.icon || '💬';
             setChatLinks(t.seller);
             renderFeed();
-            renderDeal();
             panel.classList.add('open');
             setTimeout(() => inputEl.focus(), 300);
         }
 
         function closeChat() {
             panel.classList.remove('open'); openSeller = null;
-            document.getElementById('cpDeal').hidden = true;
             const sv = document.getElementById('chatSearch');
             chatQuery = sv ? sv.value : '';
             renderList();
@@ -688,183 +678,6 @@
             }, 900);
         }
 
-        // ===== Deal room =====
-        const DEALS = readJSON('vero_deals', {});
-        const saveDeals = () => localStorage.setItem('vero_deals', JSON.stringify(DEALS));
-        const dealEl = document.getElementById('cpDeal');
-
-        function pushSys(seller, text) {
-            if (!CHATS[seller]) CHATS[seller] = [];
-            CHATS[seller].push({ sender: 'system', content: text, at: Date.now() });
-            saveChats();
-            if (openSeller === seller) renderFeed();
-        }
-        function pushSeller(seller, text) {
-            if (!CHATS[seller]) CHATS[seller] = [];
-            CHATS[seller].push({ sender: 'seller', content: text, at: Date.now() });
-            saveChats();
-            if (openSeller === seller) renderFeed();
-        }
-
-        const STEP_OF = { coordinating: 0, scheduled: 1, handoff: 2, paid: 3, done: 3 };
-        function steps(status) {
-            const on = STEP_OF[status] ?? 0;
-            return '<div class="cpd-steps">' + [0,1,2,3].map(i =>
-                `<span class="cpd-step${i <= on ? ' on' : ''}"></span>`).join('') + '</div>';
-        }
-        const esc = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
-
-        function renderDeal() {
-            if (!openSeller) { dealEl.hidden = true; return; }
-            const d = DEALS[openSeller];
-            dealEl.hidden = false;
-            const itemName = openItem || (d && d.item) || '';
-            const itemLine = itemName
-                ? `<div class="cpd-item"><b>${esc(itemName)}</b></div>`
-                : `<div class="cpd-item">תיאום איסוף פריט</div>`;
-
-            if (!d) {
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip">לא התחיל</span></div>
-                    <div>
-                        <div class="cpd-title">תיאום קבלת הפריט</div>
-                        <div class="cpd-sub">תאמו מקום ושעה למפגש. התשלום מתבצע ביניכם במפגש (מחוץ לאפליקציה).</div>
-                    </div>
-                    <div class="cpd-actions"><button class="cpd-btn" id="dStart">התחל תיאום איסוף</button></div>`;
-                dealEl.querySelector('#dStart').onclick = () => {
-                    DEALS[openSeller] = { item: itemName || '', status: 'coordinating', updatedAt: Date.now() };
-                    saveDeals();
-                    pushSys(openSeller, 'התחלתם לתאם איסוף של הפריט');
-                    renderDeal();
-                };
-                return;
-            }
-
-            if (d.status === 'coordinating') {
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip progress">מתאמים</span></div>
-                    ${steps(d.status)}
-                    <div><div class="cpd-title">הצע מקום ושעה למפגש</div>
-                        <div class="cpd-sub">איפה ומתי נוח לכם להיפגש לאיסוף?</div></div>
-                    <div class="cpd-fields">
-                        <input id="dPlace" type="text" placeholder="מקום — למשל: תחנת רכבת סבידור, ת״א" value="${esc(d.place||'')}">
-                        <input id="dTime"  type="text" placeholder="מועד — למשל: מחר ב-18:00" value="${esc(d.time||'')}">
-                    </div>
-                    <div class="cpd-actions"><button class="cpd-btn" id="dPropose">שלח הצעת מפגש</button></div>`;
-                dealEl.querySelector('#dPropose').onclick = () => {
-                    const place = dealEl.querySelector('#dPlace').value.trim();
-                    const time  = dealEl.querySelector('#dTime').value.trim();
-                    if (!place || !time) { alert('נא למלא מקום ומועד'); return; }
-                    d.place = place; d.time = time; d.status = 'scheduled'; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, `הצעת מפגש נשלחה — ${place}, ${time}`);
-                    renderDeal();
-                    setTimeout(() => {
-                        if (!DEALS[openSeller]) return;
-                        pushSeller(openSeller, `מעולה, נתראה ב${time} ב${place}. אביא את הפריט 🙌`);
-                        pushSys(openSeller, 'המוכר אישר את המפגש ✓');
-                    }, 1100);
-                };
-                return;
-            }
-
-            if (d.status === 'scheduled') {
-                const seller = VIEW_ROLE === 'seller';
-                const mineFlag  = seller ? 'sellerGave' : 'buyerGot';
-                const theirFlag = seller ? 'buyerGot'   : 'sellerGave';
-                const myBtn   = seller ? 'מסרתי את הפריט' : 'קיבלתי את הפריט';
-                const myLabel = seller ? 'אתה: מסרתי'     : 'אתה: קיבלתי';
-                const theirLabel = seller ? 'קונה: קיבל'  : 'מוכר: מסר';
-                const myConfirmSys = seller ? 'אישרת שמסרת את הפריט ✓' : 'אישרת שקיבלת את הפריט ✓';
-                const theirConfirmSys = seller ? 'הקונה אישר שקיבל את הפריט ✓' : 'המוכר אישר שמסר את הפריט ✓';
-                const theirReply = seller ? 'קיבלתי, תודה רבה! 🙏' : 'מוסר! תיהנה מהפריט 😊';
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip progress">מפגש נקבע</span></div>
-                    ${steps(d.status)}
-                    <div class="cpd-meet">
-                        <div><span class="k">מקום</span>${esc(d.place||'—')}</div>
-                        <div><span class="k">מועד</span>${esc(d.time||'—')}</div>
-                    </div>
-                    <div><div class="cpd-title">אישור מסירת הפריט</div>
-                        <div class="cpd-sub">אחרי המפגש — כל צד מאשר את המסירה מצדו.</div></div>
-                    <div class="cpd-confirmrow">
-                        <span class="${d[mineFlag]?'yes':''}">${d[mineFlag]?'✓ ':''}${myLabel}</span>
-                        <span class="${d[theirFlag]?'yes':''}">${d[theirFlag]?'✓ ':''}${theirLabel}</span>
-                    </div>
-                    <div class="cpd-actions">
-                        <button class="cpd-btn ghost" id="dReschedule">שנה תיאום</button>
-                        <button class="cpd-btn" id="dGot" ${d[mineFlag]?'disabled style="opacity:.5"':''}>${myBtn}</button>
-                    </div>`;
-                dealEl.querySelector('#dReschedule').onclick = () => {
-                    d.status = 'coordinating'; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, 'התיאום נפתח מחדש');
-                    renderDeal();
-                };
-                const gotBtn = dealEl.querySelector('#dGot');
-                if (gotBtn && !d[mineFlag]) gotBtn.onclick = () => {
-                    d[mineFlag] = true; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, myConfirmSys);
-                    renderDeal();
-                    setTimeout(() => {
-                        if (!DEALS[openSeller]) return;
-                        d[theirFlag] = true; saveDeals();
-                        pushSeller(openSeller, theirReply);
-                        pushSys(openSeller, theirConfirmSys);
-                        if (d.buyerGot && d.sellerGave) { d.status = 'handoff'; saveDeals(); }
-                        renderDeal();
-                    }, 1000);
-                };
-                return;
-            }
-
-            if (d.status === 'handoff') {
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip progress">תשלום</span></div>
-                    ${steps(d.status)}
-                    <div><div class="cpd-title">תשלום</div>
-                        <div class="cpd-sub">התשלום מתבצע ביניכם ישירות (מזומן / העברה / ביט). סמנו כאן כששולם.</div></div>
-                    <div class="cpd-actions"><button class="cpd-btn" id="dPaid">סמן ששולם</button></div>`;
-                dealEl.querySelector('#dPaid').onclick = () => {
-                    d.status = 'paid'; d.paid = true; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, 'סומן ששולם 💸 — העסקה הושלמה');
-                    renderDeal();
-                };
-                return;
-            }
-
-            if (d.status === 'paid') {
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip done">הושלם</span></div>
-                    ${steps('done')}
-                    <div><div class="cpd-title">איך היה? השאר ביקורת</div>
-                        <div class="cpd-sub">${VIEW_ROLE === 'seller'
-                            ? `דרג את הקונה ${esc(openSeller)} — עוזר למוכרים הבאים.`
-                            : `הדירוג עוזר לקונים הבאים לסמוך על ${esc(openSeller)}.`}</div></div>
-                    <div class="cpd-stars" id="dStars">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
-                    <div class="cpd-actions"><button class="cpd-btn" id="dReview">שלח ביקורת</button></div>`;
-                let picked = d.rating || 0;
-                const paint = () => dealEl.querySelectorAll('#dStars button').forEach(b =>
-                    b.classList.toggle('on', Number(b.dataset.n) <= picked));
-                dealEl.querySelectorAll('#dStars button').forEach(b =>
-                    b.onclick = () => { picked = Number(b.dataset.n); paint(); });
-                paint();
-                dealEl.querySelector('#dReview').onclick = () => {
-                    if (!picked) { alert('בחר דירוג בכוכבים'); return; }
-                    d.rating = picked; d.status = 'done'; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, `השארת ביקורת: ${'★'.repeat(picked)}${'☆'.repeat(5-picked)}`);
-                    renderDeal();
-                };
-                return;
-            }
-
-            dealEl.innerHTML = `
-                <div class="cpd-top">${itemLine}<span class="cpd-chip done">✓ הושלם</span></div>
-                ${steps('done')}
-                <div class="cpd-meet">
-                    <div><span class="k">נאסף</span>${esc(d.place||'—')} · ${esc(d.time||'—')}</div>
-                    ${d.rating?`<div><span class="k">דירוג</span>${'★'.repeat(d.rating)}${'☆'.repeat(5-d.rating)}</div>`:''}
-                </div>
-                <div class="cpd-sub">העסקה הושלמה. תודה שהשתמשת ב-moravchick 🤍</div>`;
-        }
 
         document.getElementById('cpBack').addEventListener('click', closeChat);
         document.getElementById('cpSend').addEventListener('click', sendMessage);
