@@ -790,9 +790,11 @@
         }
         #siteHeader .hwp-ico {
             position: relative; display: inline-flex; align-items: center; justify-content: center;
-            width: 38px; height: 38px; color: inherit; text-decoration: none;
+            width: 38px; height: 38px; color: #fff; text-decoration: none;
             transition: transform 0.18s ease;
         }
+        /* White wishlist heart, with a soft shadow so it reads over light backgrounds too. */
+        #siteHeader .hwp-ico svg { stroke: #fff; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.35)); }
         #siteHeader .hwp-ico:hover { transform: scale(1.12); }
         #siteHeader .hwp-ico:hover svg { fill: currentColor; }
         #siteHeader .hwp-ico svg { display: block; }
