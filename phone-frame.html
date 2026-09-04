@@ -157,69 +157,23 @@
             .pf-spin { animation-duration: 3s; }
         }
 
-        /* ---- Entrance: an illustrated peacock walks, then settles into the logo ---- */
+        /* ---- Entrance: the cinematic peacock splash (splash.html), played once
+               per app open as a full-screen overlay inside the phone screen. The
+               splash renders its own dark→white background and dispatches
+               "vero:intro-complete" (relayed here via postMessage) when done. ---- */
         .pf-intro {
             position: absolute; inset: 0; z-index: 9;
-            background: var(--pf-paper);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 22px;
-            animation: pfiExit 0.7s ease 3.5s forwards;
+            background: #0A0D0B;                 /* matches the splash's opening frame */
+            opacity: 1;
+            transition: opacity 0.5s ease;
         }
-        .pf-intro.done { display: none; }
-        .pfi-stage { position: relative; width: 150px; height: 150px; }
-        .pfi-stage > * { position: absolute; inset: 0; margin: auto; }
-
-        /* The illustrated, walking peacock (SVG). Fades out as the logo fades in. */
-        .pfi-peacock {
-            width: 150px; height: 150px;
-            opacity: 0;
-            animation:
-                pfiPeacockIn 0.7s ease 0.1s forwards,
-                pfiPeacockOut 0.6s ease 2.1s forwards;
+        /* The splash itself fills the screen; it manages its own timeline. */
+        .pf-intro iframe {
+            width: 100%; height: 100%; border: 0; display: block; background: #0A0D0B;
         }
-        /* Body bob of the walk — a gentle up/down + forward lean, in step with the legs. */
-        .pfi-walk { transform-box: fill-box; transform-origin: 50% 90%;
-            animation: pfiWalk 0.5s ease-in-out 0.2s 4 alternate; }
-        .pk-leg-a { transform-box: fill-box; transform-origin: 50% 12%;
-            animation: pfiLegA 0.5s ease-in-out 0.2s 4 alternate; }
-        .pk-leg-b { transform-box: fill-box; transform-origin: 50% 12%;
-            animation: pfiLegB 0.5s ease-in-out 0.2s 4 alternate; }
-        .pk-head { transform-box: fill-box; transform-origin: 60% 80%;
-            animation: pfiHead 0.5s ease-in-out 0.2s 4 alternate; }
-        .pk-tail { transform-box: fill-box; transform-origin: 22% 78%;
-            animation: pfiTail 2s ease-in-out 0.2s 1; }
-
-        /* The final flat logo the peacock resolves into. */
-        .pfi-logo {
-            width: 104px; height: auto;
-            opacity: 0;
-            animation: pfiLogoIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 2.15s forwards;
-        }
-        .pfi-word {
-            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            font-size: 15px; font-weight: 500; text-transform: uppercase; color: #1b1916;
-            letter-spacing: 8px; padding-left: 8px;
-            opacity: 0;
-            animation: pfiWordIn 1.1s cubic-bezier(0.22, 1, 0.36, 1) 2.55s forwards;
-        }
-
-        @keyframes pfiPeacockIn  { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: scale(1); } }
-        @keyframes pfiPeacockOut { from { opacity: 1; transform: scale(1); filter: blur(0); }
-                                   to   { opacity: 0; transform: scale(0.98); filter: blur(3px); } }
-        @keyframes pfiWalk { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(-4px) rotate(-1.2deg); } }
-        @keyframes pfiLegA { 0% { transform: rotate(-15deg); } 100% { transform: rotate(16deg); } }
-        @keyframes pfiLegB { 0% { transform: rotate(15deg);  } 100% { transform: rotate(-16deg); } }
-        @keyframes pfiHead { 0% { transform: translateX(2px); } 100% { transform: translateX(-3px) translateY(-1px); } }
-        @keyframes pfiTail { 0%,100% { transform: rotate(2.5deg); } 50% { transform: rotate(-2.5deg); } }
-        @keyframes pfiLogoIn { from { opacity: 0; transform: scale(1.08); } to { opacity: 1; transform: scale(1); } }
-        @keyframes pfiWordIn { from { opacity: 0; letter-spacing: 22px; transform: translateY(7px); }
-                               to   { opacity: 1; letter-spacing: 8px;  transform: translateY(0); } }
-        @keyframes pfiExit   { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.05); visibility: hidden; } }
-        @media (prefers-reduced-motion: reduce) {
-            .pfi-peacock, .pfi-walk, .pk-leg-a, .pk-leg-b, .pk-head, .pk-tail, .pfi-logo, .pfi-word, .pf-intro {
-                animation-duration: 0.5s;
-            }
-        }
+        /* Fade the whole overlay out once the intro completes, then it is removed. */
+        .pf-intro.done { opacity: 0; }
+        .pf-intro.hidden { display: none; }
 
         @media (prefers-reduced-motion: reduce) {
             .screen iframe.pf-enter { animation: none; }
@@ -250,62 +204,12 @@
             </div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
-            <!-- Louis-Vuitton-style entrance played once per app open. -->
-            <div class="pf-intro" id="pfIntro">
-                <div class="pfi-stage">
-                    <svg class="pfi-peacock" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <defs>
-                            <linearGradient id="pkBody" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0" stop-color="#0c3f49"/><stop offset="1" stop-color="#14606b"/>
-                            </linearGradient>
-                            <linearGradient id="pkNeck" x1="0" y1="1" x2="0" y2="0">
-                                <stop offset="0" stop-color="#0a4a86"/><stop offset="1" stop-color="#1c74c0"/>
-                            </linearGradient>
-                        </defs>
-                        <g class="pfi-walk">
-                            <!-- Tail fan (behind the body) -->
-                            <g class="pk-tail" stroke="#0e4a50" stroke-width="1.4" stroke-linecap="round">
-                                <path d="M94,96 Q104,74 108,54"/><path d="M96,94 Q114,72 120,50"/>
-                                <path d="M98,96 Q122,74 131,58"/><path d="M99,98 Q126,80 136,72"/>
-                                <path d="M99,100 Q124,92 133,88"/><path d="M97,102 Q114,100 123,98"/>
-                                <path d="M95,102 Q106,102 112,102"/>
-                                <g>
-                                    <g transform="translate(108,54)"><ellipse rx="5.4" ry="6.2" fill="#1c7d6f"/><ellipse rx="3.1" ry="3.6" fill="#d9bd76"/><ellipse rx="1.5" ry="2" fill="#12243f"/></g>
-                                    <g transform="translate(120,50)"><ellipse rx="5.4" ry="6.2" fill="#1c7d6f"/><ellipse rx="3.1" ry="3.6" fill="#d9bd76"/><ellipse rx="1.5" ry="2" fill="#12243f"/></g>
-                                    <g transform="translate(131,58)"><ellipse rx="5.4" ry="6.2" fill="#1c7d6f"/><ellipse rx="3.1" ry="3.6" fill="#d9bd76"/><ellipse rx="1.5" ry="2" fill="#12243f"/></g>
-                                    <g transform="translate(136,72)"><ellipse rx="5.4" ry="6.2" fill="#1c7d6f"/><ellipse rx="3.1" ry="3.6" fill="#d9bd76"/><ellipse rx="1.5" ry="2" fill="#12243f"/></g>
-                                    <g transform="translate(133,88)"><ellipse rx="5.4" ry="6.2" fill="#1c7d6f"/><ellipse rx="3.1" ry="3.6" fill="#d9bd76"/><ellipse rx="1.5" ry="2" fill="#12243f"/></g>
-                                    <g transform="translate(123,98)"><ellipse rx="5" ry="5.6" fill="#1c7d6f"/><ellipse rx="2.8" ry="3.2" fill="#d9bd76"/><ellipse rx="1.4" ry="1.8" fill="#12243f"/></g>
-                                    <g transform="translate(112,102)"><ellipse rx="4.6" ry="5.2" fill="#1c7d6f"/><ellipse rx="2.6" ry="3" fill="#d9bd76"/><ellipse rx="1.3" ry="1.7" fill="#12243f"/></g>
-                                </g>
-                            </g>
-                            <!-- Legs -->
-                            <g class="pk-leg-b" stroke="#2f2820" stroke-width="2.2" stroke-linecap="round">
-                                <path d="M70,110 L67,125 L63,132"/><path d="M63,132 l-4,3 M63,132 l4,2.5 M63,132 l0.5,4"/>
-                            </g>
-                            <g class="pk-leg-a" stroke="#2f2820" stroke-width="2.4" stroke-linecap="round">
-                                <path d="M82,110 L84,125 L80,133"/><path d="M80,133 l-4.5,3 M80,133 l4.5,2.5 M80,133 l0.5,4"/>
-                            </g>
-                            <!-- Body + wing -->
-                            <ellipse cx="80" cy="94" rx="26" ry="19" fill="url(#pkBody)"/>
-                            <path d="M62,88 Q80,80 100,90 Q92,106 74,106 Q64,100 62,88 Z" fill="#10555f"/>
-                            <path d="M70,92 q7,-3 15,0 M70,97 q8,-3 17,0 M72,102 q7,-2 14,0" stroke="#0b3b45" stroke-width="1" fill="none" opacity="0.8"/>
-                            <!-- Neck + head + crest -->
-                            <g class="pk-head">
-                                <path d="M66,90 C55,80 51,66 50,54 L57,52 C60,66 65,80 74,88 Z" fill="url(#pkNeck)"/>
-                                <circle cx="53" cy="51" r="7" fill="#12508f"/>
-                                <path d="M46,50 L36,52.5 L46,55 Z" fill="#2f2820"/>
-                                <circle cx="51" cy="49.5" r="1.5" fill="#eafcff"/>
-                                <g stroke="#123a6b" stroke-width="1.3" stroke-linecap="round">
-                                    <path d="M51,44 L48,34"/><path d="M53,43 L53,32"/><path d="M55,44 L58,35"/>
-                                </g>
-                                <circle cx="48" cy="33" r="1.9" fill="#d9bd76"/><circle cx="53" cy="31" r="1.9" fill="#d9bd76"/><circle cx="58" cy="34" r="1.9" fill="#d9bd76"/>
-                            </g>
-                        </g>
-                    </svg>
-                    <img class="pfi-logo" src="peacock-logo.png?v=1" alt="moravchick" />
-                </div>
-                <div class="pfi-word">moravchick</div>
+            <!-- Cinematic peacock splash (splash.html) played once per app open.
+                 It runs its own ~6s GSAP timeline and posts "vero:intro-complete"
+                 to this window when finished; the script below then dismisses it.
+                 title="" + aria-hidden keep it out of the a11y tree as pure chrome. -->
+            <div class="pf-intro" id="pfIntro" aria-hidden="true">
+                <iframe id="pfIntroFrame" title="" tabindex="-1" scrolling="no"></iframe>
             </div>
         </div>
     </div>
@@ -315,14 +219,43 @@
         // in-frame navigation because onload fires for each page load.
         var frame = document.getElementById('siteFrame');
 
-        // ---- Entrance animation: remove the intro overlay once it has played, so it
-        // never intercepts taps. Runs once per app open (phone-frame load). ----
+        // ---- Cinematic entrance (splash.html) ----
+        // Play the peacock splash once per browser session as a full-screen overlay,
+        // then remove it so it never intercepts taps. splash.html posts a
+        // {type:'vero:intro-complete'} message when its timeline finishes; we fade
+        // the overlay out on that message, with a failsafe timeout in case the
+        // splash (or its CDN GSAP) never signals.
         (function playIntro() {
             var intro = document.getElementById('pfIntro');
-            if (!intro) return;
+            var iframe = document.getElementById('pfIntroFrame');
+            if (!intro || !iframe) return;
+
+            // Once per session: a full refresh within the same tab won't replay it,
+            // but a fresh app open (new session) will.
+            var seen = false;
+            try { seen = sessionStorage.getItem('vero_intro_seen') === '1'; } catch (e) {}
+            if (seen) { intro.classList.add('done', 'hidden'); return; }
+
+            var dismissed = false;
+            function dismiss() {
+                if (dismissed) return;
+                dismissed = true;
+                try { sessionStorage.setItem('vero_intro_seen', '1'); } catch (e) {}
+                intro.classList.add('done');                 // fade out (0.5s)
+                setTimeout(function () { intro.classList.add('hidden'); }, 550);
+                window.removeEventListener('message', onMsg);
+            }
+            function onMsg(e) {
+                if (e && e.data && e.data.type === 'vero:intro-complete') dismiss();
+            }
+            window.addEventListener('message', onMsg);
+
+            // Failsafe: never let the overlay trap the app if the splash stalls.
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            var total = reduce ? 1400 : 4300;   // matches the CSS timeline + exit fade
-            setTimeout(function () { intro.classList.add('done'); }, total);
+            setTimeout(dismiss, reduce ? 1500 : 9000);
+
+            // Load the splash last so it never delays the app's first paint.
+            iframe.src = 'splash.html';
         })();
 
         // ---- Straight-to-home entry ----
