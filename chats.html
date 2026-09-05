@@ -229,13 +229,22 @@
         /* Actions + deal-outcome nav bar — dark rounded pill, like the profile's
            area tabs. Scrolls horizontally if the segments overflow. */
         .cp-nav {
-            display: flex; align-items: stretch; gap: 6px; margin: 12px clamp(14px, 5vw, 56px);
+            flex: 0 0 auto;
+            display: flex; align-items: stretch; gap: 6px; margin: 10px clamp(14px, 5vw, 56px);
             background: rgba(20,20,20,0.94); border: 1px solid rgba(255,255,255,0.18);
-            border-radius: 999px; padding: 5px; overflow-x: auto;
+            border-radius: 999px; padding: 5px; max-height: 64px;
+            overflow-x: auto; overflow-y: hidden;
             -ms-overflow-style: none; scrollbar-width: none;
             box-shadow: 0 6px 26px rgba(0,0,0,0.28);
+            transition: transform 0.32s cubic-bezier(0.22,1,0.36,1), opacity 0.25s ease,
+                        max-height 0.32s ease, margin 0.32s ease;
         }
         .cp-nav::-webkit-scrollbar { display: none; }
+        /* While the composer is focused, the bar drops away behind it. */
+        .chat-panel.typing .cp-nav {
+            transform: translateY(120%); opacity: 0; pointer-events: none;
+            max-height: 0; margin-top: 0; margin-bottom: 0;
+        }
         .cp-navlink {
             flex: 1 0 auto; text-align: center; text-decoration: none;
             border: none; background: transparent; cursor: pointer; font-family: inherit;
@@ -438,14 +447,15 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
             </button>
         </header>
-        <!-- One nav bar: seller page / item page / deal outcome. -->
+        <div class="cp-feed" id="cpFeed"></div>
+        <!-- One nav bar: seller page / item page / deal outcome. Sits just above
+             the composer; slides away while the message input is focused. -->
         <nav class="cp-nav" id="cpSold">
             <a class="cp-navlink" id="cpSellerLink" href="#">פרופיל המוכר</a>
             <a class="cp-navlink" id="cpItemLink" href="#">הצג פריט</a>
             <button class="cp-navlink" id="cpSoldYes" type="button">נמכר ✓</button>
             <button class="cp-navlink" id="cpSoldNo" type="button">לא נמכר</button>
         </nav>
-        <div class="cp-feed" id="cpFeed"></div>
         <div class="cp-input-row">
             <input class="cp-input" id="cpInput" type="text" placeholder="Write a message…" autocomplete="off">
             <button class="cp-send" id="cpSend">SEND</button>
@@ -706,13 +716,12 @@
             sellerLink.href = 'index.html?seller=' + encodeURIComponent(seller);
             const itemLink = document.getElementById('cpItemLink');
             const obj = itemObjFor(seller);
-            if (obj) {
-                const prod = Object.assign({ seller: seller }, obj);
-                itemLink.href = 'product.html?product=' + encodeURIComponent(JSON.stringify(prod));
-                itemLink.hidden = false;
-            } else {
-                itemLink.hidden = true;
-            }
+            // Always offer the product page; fall back to a name-only link so the
+            // button is present even for threads without a stored item object.
+            const prod = obj ? Object.assign({ seller: seller }, obj)
+                             : { seller: seller, name: openItem || itemFor(seller) || '' };
+            itemLink.href = 'product.html?product=' + encodeURIComponent(JSON.stringify(prod));
+            itemLink.hidden = false;
         }
 
         function openChat(i) {
@@ -766,6 +775,9 @@
         document.getElementById('cpSoldYes').addEventListener('click', () => markSold(true));
         document.getElementById('cpSoldNo').addEventListener('click', () => markSold(false));
         inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+        // While composing, drop the nav bar away behind the composer.
+        inputEl.addEventListener('focus', () => panel.classList.add('typing'));
+        inputEl.addEventListener('blur', () => panel.classList.remove('typing'));
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel.classList.contains('open')) closeChat(); });
 
         // Exit animation mirrors the entry fade.
