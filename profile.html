@@ -1830,6 +1830,8 @@
         .area-tabs.revealed {
             transform: translateY(0); opacity: 1; pointer-events: auto;
         }
+        /* Hidden while a chat conversation is open inside the chats iframe. */
+        .area-tabs.vero-chat-hidden, .pa-header.vero-chat-hidden { display: none !important; }
         .area-tab {
             position: relative; flex: 1 1 0; min-width: 0; border: none; background: transparent; font-family: inherit;
             font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
@@ -2467,25 +2469,10 @@
             </div>
         </section>
 
-        <!-- Slide 4 — My Chats -->
-        <section class="build-panel buyer-only" id="slideChats">
-            <div class="ch">
-                <h2 class="ps-title">My Chats</h2>
-                <p class="ps-sub">Manage your chats</p>
-                <div class="mp-filterbar">
-                    <span class="mp-filter-lbl">Filter by
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h18l-7 8v5l-4 2v-7z"/></svg>
-                    </span>
-                    <input type="text" id="chFilter" placeholder="">
-                </div>
-                <div class="ch-list" id="chList">
-                    <div class="ch-row"><span class="ch-avatar"></span><div class="ch-meta"><div class="ch-status online">Online</div><div class="ch-name">Name</div></div></div>
-                    <div class="ch-row"><span class="ch-avatar"></span><div class="ch-meta"><div class="ch-status online">Online</div><div class="ch-name">Name</div></div></div>
-                    <div class="ch-row"><span class="ch-avatar"></span><div class="ch-meta"><div class="ch-status offline">Offline</div><div class="ch-name">Name</div></div></div>
-                    <div class="ch-row"><span class="ch-avatar"></span><div class="ch-meta"><div class="ch-status online">Online</div><div class="ch-name">Name</div></div></div>
-                    <div class="ch-row"><span class="ch-avatar"></span><div class="ch-meta"><div class="ch-status offline">Offline</div><div class="ch-name">Name</div></div></div>
-                </div>
-            </div>
+        <!-- Slide 4 — My Chats: loads the real redesigned chats page. -->
+        <section class="build-panel buyer-only" id="slideChats" style="padding:0;">
+            <iframe src="chats.html?embed=1" title="My Chats"
+                    style="width:100%;height:100vh;height:100dvh;border:none;display:block;"></iframe>
         </section>
 
         <!-- Slide 5 — Negotiation (offers) -->
@@ -4295,6 +4282,17 @@
         ind.className = 'area-ind';
         bar.insertBefore(ind, bar.firstChild);
         document.body.appendChild(bar);
+
+        // While a chat is open inside the chats iframe, hide the personal-area nav
+        // bars (tab bar + top header); restore them when the chat closes.
+        window.addEventListener('message', function (e) {
+            if (e.data !== 'vero-chat-open' && e.data !== 'vero-chat-close') return;
+            var hide = e.data === 'vero-chat-open';
+            document.querySelectorAll('.area-tabs, .pa-header').forEach(function (el) {
+                el.classList.toggle('vero-chat-hidden', hide);
+            });
+        });
+
         // Once the user starts switching tabs, pin the bar up so it never drops
         // back down (translateY 180%) when landing on the Statistics/Profile tabs.
         let barPinned = false;
@@ -4456,6 +4454,14 @@
                 sections.forEach(function (s) {
                     s.classList.toggle('pa-current', s.id === area.section);
                 });
+                // Reset the My-Sizes slider to its menu view, so it never opens
+                // stuck on the (slid-aside) detail half from a previous visit.
+                if (area.section === 'slideSizes') {
+                    var szS = document.getElementById('szSlider');
+                    var szR = document.getElementById('szRoot');
+                    if (szS) szS.classList.remove('is-detail');
+                    if (szR) szR.classList.remove('sz--detail');
+                }
                 if (paHeader) paHeader.classList.add('revealed');
                 return;
             }

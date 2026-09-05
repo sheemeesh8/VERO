@@ -4,6 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>moravchick — My Chats</title>
+    <script>
+      // One-time self-heal: purge any stale caches + force the newest service
+      // worker, so the chats page never gets stuck on an old cached build even
+      // when opened directly (not through phone-frame). Runs once per tab.
+      (function () {
+        // Skip when embedded inside profile.html — the parent owns cache lifecycle.
+        if (new URLSearchParams(location.search).get('embed')) return;
+        var TAG = 'vero_selfheal_v37';
+        try {
+          if ('caches' in window && !sessionStorage.getItem(TAG)) {
+            sessionStorage.setItem(TAG, '1');
+            caches.keys().then(function (keys) {
+              return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            }).then(function () {
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function (regs) {
+                  regs.forEach(function (r) { r.update(); });
+                });
+              }
+              location.reload();
+            }).catch(function () {});
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
@@ -44,113 +69,144 @@
 
         .side-image { display: none; }
 
+        /* Minimal, WhatsApp-like list under a cart-style header. */
+        body { background: var(--card); }
+
+        /* ===== Top bar — identical to the cart page: filter on one side, back
+           chevron on the other, plain icon buttons. ===== */
+        .chat-topbar {
+            position: sticky; top: 0; z-index: 40;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: max(env(safe-area-inset-top), 34px) 4px 12px;
+            background: var(--card); border-bottom: 1px solid var(--line);
+        }
+        .chat-topbar .tb-right { display: flex; align-items: center; gap: 4px; }
+        .tb-ico {
+            width: 42px; height: 42px; flex: none; border: none; background: none;
+            color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center;
+            text-decoration: none; transition: opacity 0.2s; -webkit-tap-highlight-color: transparent;
+        }
+        .tb-ico:active { opacity: 0.5; }
+        .tb-ico svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+        .chat-topbar #navBack { margin-inline-start: auto; }   /* back chevron on the right */
+        /* Chat-panel back chevron. */
+        .nav-chev {
+            display: inline-grid; place-items: center; width: 40px; height: 40px;
+            padding: 0; border: none; background: none; color: var(--ink);
+            cursor: pointer; text-decoration: none; -webkit-tap-highlight-color: transparent;
+        }
+        .nav-chev svg { width: 24px; height: 24px; display: block; }
+        .nav-chev:active { opacity: 0.55; }
+        /* Centered title, buyer-area nav style. */
+        .chat-topbar .head-title {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            font-family: 'Aharoni CLM', 'Segoe UI', sans-serif;
+            font-size: 16px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
+            white-space: nowrap;
+        }
+
         .wrap {
-            max-width: 1080px; margin: 0 auto;
-            padding: 104px 32px 96px;
-            animation: fadeIn 0.7s var(--ease) 0.05s both;
+            max-width: none; margin: 0;
+            padding: 8px 0 90px;
+            animation: fadeIn 0.5s var(--ease) 0.03s both;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .head-sub { display: none; }
 
-        /* ===== Header ===== */
-        .head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-        .head-title { font-size: clamp(38px, 6vw, 68px); font-weight: 200; letter-spacing: -1px; line-height: 0.95; }
-        .head-sub { margin-top: 14px; font-size: 12.5px; color: var(--muted); letter-spacing: 0.3px; }
-
-        /* Search */
+        /* Search field with the time filter on its right — centered in its own
+           band between the header and the conversation list. */
+        .chat-controls { display: flex; align-items: center; gap: 8px; padding: 14px 20px; }
         .chat-search {
-            border: 1px solid var(--line); background: var(--card); border-radius: 999px;
-            font-family: inherit; font-size: 12px; padding: 13px 22px; width: 300px; max-width: 100%;
-            color: var(--ink); transition: border-color 0.2s, box-shadow 0.2s;
+            flex: 1; min-width: 0; display: block;
+            border: none; background: none; border-radius: 0;
+            font-family: inherit; font-size: 14px; padding: 12px 4px;
+            color: var(--ink);
         }
-        .chat-search::placeholder { color: var(--faint); letter-spacing: 0.4px; }
-        .chat-search:focus { outline: none; border-color: var(--ink); box-shadow: 0 6px 24px rgba(0,0,0,0.05); }
+        .chat-search::placeholder { color: var(--faint); }
+        .chat-search:focus { outline: none; }
+        /* Funnel filter button, to the right of the search. */
+        .ct-funnel {
+            flex: 0 0 auto; width: 40px; height: 40px; padding: 0;
+            border: none; background: none; color: var(--ink); cursor: pointer;
+            display: grid; place-items: center; -webkit-tap-highlight-color: transparent;
+            transition: opacity 0.2s;
+        }
+        .ct-funnel:active { opacity: 0.5; }
+        .ct-funnel svg { width: 21px; height: 21px; stroke: currentColor; stroke-width: 1.6; fill: none; }
 
-        /* ===== Summary stat strip ===== */
-        .summary {
-            display: flex; gap: 0; margin-top: 40px;
-            border: 1px solid var(--line); border-radius: 18px; background: var(--card);
-            overflow: hidden;
-        }
-        .sm-cell { flex: 1; padding: 22px 26px; position: relative; }
-        .sm-cell + .sm-cell::before {
-            content: ''; position: absolute; left: 0; top: 22px; bottom: 22px; width: 1px; background: var(--line-soft);
-        }
-        .sm-num { font-size: 34px; font-weight: 200; line-height: 1; letter-spacing: -1px; }
-        .sm-num.small { font-size: 20px; font-weight: 300; padding-top: 8px; }
-        .sm-label { margin-top: 10px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--faint); }
+        .summary { display: none; }
 
-        /* ===== Filters ===== */
-        .chat-filters {
-            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-            margin-top: 34px;
+        /* ===== Filters bottom-sheet — identical to the cart page. ===== */
+        .cart-sheet-overlay {
+            position: fixed; inset: 0; background: rgba(20,18,14,0.4);
+            display: none; align-items: flex-end; justify-content: center; z-index: 300;
         }
-        .chat-filter-ico { width: 18px; height: 18px; flex: 0 0 auto; color: var(--muted); margin-right: 4px; }
-        .chat-filter-ico svg { width: 100%; height: 100%; display: block; }
+        .cart-sheet-overlay.show { display: flex; }
+        .cart-sheet {
+            width: 100%; max-width: 560px; background: #fff;
+            border-radius: 20px 20px 0 0; padding: 22px 24px calc(28px + env(safe-area-inset-bottom,0px));
+            transform: translateY(100%); animation: cartSheetRise 0.34s cubic-bezier(0.2,0.8,0.2,1) forwards;
+        }
+        @keyframes cartSheetRise { to { transform: translateY(0); } }
+        .cart-sheet .sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: #e6e1d8; margin: 0 auto 18px; }
+        .cart-sheet h3 { font-size: 14px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
+
+        /* Time-filter chips, inside the sheet — same capsule style as the cart. */
+        .chat-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .chat-filter-ico { display: none; }
         .chat-chip {
-            padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px;
-            font-family: inherit; font-size: 11px; letter-spacing: 0.4px; color: var(--muted);
-            background: var(--card); cursor: pointer; white-space: nowrap; transition: all 0.18s ease;
+            padding: 10px 20px; border: 1px solid #d8d3ca; border-radius: 999px;
+            font-family: inherit; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #16150f;
+            background: transparent; cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
         }
-        .chat-chip:hover { border-color: var(--faint); color: var(--ink); }
-        .chat-chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+        .chat-chip:hover { border-color: #16150f; }
+        .chat-chip.active { background: #16150f; color: #fff; border-color: #16150f; }
 
-        /* ===== Conversation list ===== */
-        .section-cap {
-            display: flex; align-items: center; gap: 12px;
-            margin: 34px 2px 12px; font-size: 9px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--faint);
-        }
-        .section-cap::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-
-        .chat-list { display: flex; flex-direction: column; gap: 8px; }
-        .chat-track { display: flex; flex-direction: column; gap: 8px; }
+        /* ===== Conversation list — flat WhatsApp rows ===== */
+        .section-cap { display: none; }
+        .chat-list, .chat-track { display: flex; flex-direction: column; gap: 10px; margin-top: 0; }
 
         .chat-row {
-            display: flex; align-items: center; gap: 16px;
-            padding: 15px 18px; background: var(--card); border: 1px solid var(--line);
-            border-radius: 16px; cursor: pointer;
-            transition: transform 0.18s var(--ease), box-shadow 0.2s, border-color 0.2s;
+            display: flex; align-items: center; gap: 13px;
+            padding: 11px 20px; background: transparent; border: none; cursor: pointer;
+            transition: background 0.12s;
         }
-        .chat-row:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(23,23,22,0.06); border-color: #e2e0d9; }
-        .chat-row:active { transform: translateY(0); }
+        .chat-row:hover { background: var(--paper); }
+        .chat-row:active { background: #efeee8; }
         .chat-avatar {
-            width: 52px; height: 52px; flex: 0 0 auto; border-radius: 50%;
-            border: 1px solid var(--line); background: var(--paper);
-            display: flex; align-items: center; justify-content: center; font-size: 22px;
+            width: 50px; height: 50px; flex: 0 0 auto; border-radius: 50%;
+            border: none; background: var(--paper);
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
         }
-        .chat-body { min-width: 0; flex: 1; }
-        .chat-name { font-size: 13.5px; font-weight: 500; display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+        /* text column, with a hairline divider under it (indented past the avatar) */
+        .chat-body {
+            min-width: 0; flex: 1; align-self: stretch;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 6px 0;
+        }
+        .chat-topline { display: flex; align-items: baseline; gap: 8px; }
+        .chat-name { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .chat-deal {
-            display: inline-block; font-size: 7.5px; letter-spacing: 0.8px; text-transform: uppercase;
-            margin-inline-start: 8px; padding: 3px 9px; border-radius: 999px;
-            background: var(--ink); color: #fff; font-weight: 500;
+            display: inline-block; font-size: 8px; letter-spacing: 0.6px; text-transform: uppercase;
+            margin-inline-start: 6px; padding: 2px 8px; border-radius: 999px;
+            background: var(--ink); color: #fff; font-weight: 500; vertical-align: middle;
         }
+        .chat-time { margin-inline-start: auto; font-size: 11px; color: var(--faint); white-space: nowrap; flex: 0 0 auto; }
         .chat-preview {
-            font-size: 11.5px; color: var(--muted); margin-top: 3px;
+            font-size: 13px; color: var(--muted); margin-top: 3px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .chat-sub {
-            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-            margin-top: 7px; font-size: 10px; color: var(--faint); letter-spacing: 0.2px;
-        }
+        /* product name — subtle secondary line */
         .chat-item {
-            display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
-            padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line);
-            background: var(--paper); color: var(--muted); white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis;
+            font-size: 11.5px; color: var(--faint); margin-top: 2px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .chat-item svg { width: 11px; height: 11px; flex: 0 0 auto; }
-        .chat-when { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-        .chat-when svg { width: 11px; height: 11px; flex: 0 0 auto; }
-        .chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-left: auto; }
-        .chat-time { font-size: 10px; color: var(--faint); white-space: nowrap; }
-        .chat-chev { color: var(--faint); font-size: 15px; line-height: 1; opacity: 0; transition: opacity 0.2s, transform 0.2s; }
-        .chat-row:hover .chat-chev { opacity: 1; transform: translateX(2px); }
+        .chat-sub, .chat-when, .chat-meta, .chat-chev { display: none; }
         .chat-empty {
-            font-size: 12px; color: var(--muted); padding: 40px 24px; text-align: center;
-            background: var(--card); border: 1px dashed var(--line); border-radius: 16px;
+            font-size: 13px; color: var(--muted); padding: 60px 24px; text-align: center;
         }
 
-        /* Legacy nav / slider bits — no longer used */
+        /* Legacy bits — no longer used */
         .chat-nav, .grid > .card:first-child { display: none; }
         .grid { display: block; }
 
@@ -162,16 +218,47 @@
             transition: transform 0.45s cubic-bezier(0.65, 0.05, 0.1, 1);
         }
         .chat-panel.open { transform: translateX(0); }
+        /* Header: seller (name + avatar) on the leading side, chevron on the opposite side. */
         .cp-head {
-            display: flex; align-items: center; gap: 16px;
-            padding: 18px clamp(18px, 5vw, 56px); border-bottom: 1px solid var(--line); background: var(--card);
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            /* sit below the phone's camera / status-bar line */
+            padding: max(env(safe-area-inset-top), 34px) clamp(14px, 5vw, 56px) 10px;
+            border-bottom: 1px solid var(--line); background: var(--card);
         }
-        .cp-back {
-            border: 1.4px solid var(--ink); border-radius: 999px; background: var(--card); cursor: pointer;
-            font-family: inherit; font-size: 10px; letter-spacing: 1.5px; padding: 10px 18px; color: var(--ink);
+        .cp-whobox { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+        /* Actions + deal-outcome nav bar — dark rounded pill, like the profile's
+           area tabs. Scrolls horizontally if the segments overflow. */
+        .cp-nav {
+            flex: 0 0 auto;
+            display: flex; align-items: stretch; gap: 6px; margin: 10px clamp(14px, 5vw, 56px);
+            background: rgba(20,20,20,0.94); border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 999px; padding: 5px; max-height: 64px;
+            overflow-x: auto; overflow-y: hidden;
+            -ms-overflow-style: none; scrollbar-width: none;
+            box-shadow: 0 6px 26px rgba(0,0,0,0.28);
+            transition: transform 0.32s cubic-bezier(0.22,1,0.36,1), opacity 0.25s ease,
+                        max-height 0.32s ease, margin 0.32s ease;
+        }
+        .cp-nav::-webkit-scrollbar { display: none; }
+        /* While the composer is focused, the bar drops away behind it. */
+        .chat-panel.typing .cp-nav {
+            transform: translateY(120%); opacity: 0; pointer-events: none;
+            max-height: 0; margin-top: 0; margin-bottom: 0;
+        }
+        .cp-navlink {
+            flex: 1 0 auto; text-align: center; text-decoration: none;
+            border: none; background: transparent; cursor: pointer; font-family: inherit;
+            font-size: 10px; line-height: 1.4; letter-spacing: 1.2px; text-transform: uppercase; color: #b5b5b0;
+            padding: 9px 16px; border-radius: 999px; white-space: nowrap;
             transition: background 0.2s, color 0.2s;
         }
-        .cp-back:hover { background: var(--ink); color: #fff; }
+        .cp-navlink:hover { color: #fff; }
+        .cp-navlink:active { background: rgba(255,255,255,0.14); color: #fff; }
+        .cp-navlink[hidden] { display: none; }
+        /* Selected deal outcome = a white active pill (color-coded text). */
+        #cpSold.is-sold #cpSoldYes { background: #fff; color: #1f8f4e; }
+        #cpSold.is-notsold #cpSoldNo { background: #fff; color: #b23b3b; }
         .cp-avatar {
             width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper);
             display: flex; align-items: center; justify-content: center; font-size: 20px;
@@ -260,23 +347,15 @@
 
         /* ===== Responsive ===== */
         @media (max-width: 720px) {
-            .wrap { padding: 92px 18px 90px; }
-            .head-row { align-items: stretch; }
-            .chat-search { width: 100%; }
-            .summary { flex-wrap: wrap; }
-            .sm-cell { flex: 1 1 50%; }
-            .sm-cell + .sm-cell::before { display: none; }
-            .sm-cell:nth-child(2n)::after,
-            .sm-cell:nth-child(-n+2)::after { content: none; }
+            /* keep the list edge-to-edge — no side inset on the container */
             .cp-bubble { max-width: 82%; }
         }
-        @media (max-width: 420px) {
-            .sm-cell { flex: 1 1 50%; }
-        }
 
-        /* Embedded inside profile.html */
-        html.embed .back, html.embed .head-title, html.embed .head-sub { display: none !important; }
-        html.embed .wrap { padding-top: 32px; }
+        /* Embedded in profile: the profile shows its own fixed header (.pa-header),
+           so drop the chats top bar entirely and push the search + filter down
+           below that header instead of letting it cover them. */
+        html.embed .chat-topbar, html.embed .head-sub { display: none !important; }
+        html.embed .wrap { padding-top: 20px; }
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <script src="assets/back-button.js"></script>
@@ -286,15 +365,23 @@
     <script>if (new URLSearchParams(location.search).get('embed')) document.documentElement.classList.add('embed');</script>
     <div class="page-cover"></div>
     <div class="side-image"></div>
-    <a class="back" href="profile.html">&#8592; חזרה</a>
+    <!-- Top bar — identical to the cart page: filter (left) + back chevron (right) -->
+    <header class="chat-topbar">
+        <h1 class="head-title">My Chats</h1>
+        <a class="tb-ico" id="navBack" href="profile.html" aria-label="Back">
+            <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </header>
 
     <div class="wrap">
-        <div class="head-row">
-            <div>
-                <h1 class="head-title">My Chats</h1>
-                <p class="head-sub">Your conversations with sellers and buyers.</p>
-            </div>
+        <p class="head-sub">Your conversations with sellers and buyers.</p>
+
+        <!-- Search, with the time filter on its right -->
+        <div class="chat-controls">
             <input class="chat-search" id="chatSearch" type="text" placeholder="Search sellers…" autocomplete="off">
+            <button class="ct-funnel" onclick="openFilters()" aria-label="Filters" type="button">
+                <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
+            </button>
         </div>
 
         <!-- Summary strip -->
@@ -318,17 +405,6 @@
             </div>
         </div>
 
-        <!-- Time filters -->
-        <div class="chat-filters" id="chatFilters">
-            <span class="chat-filter-ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            </span>
-            <button class="chat-chip active" data-range="all" type="button">All</button>
-            <button class="chat-chip" data-range="today" type="button">Today</button>
-            <button class="chat-chip" data-range="week" type="button">This week</button>
-            <button class="chat-chip" data-range="month" type="button">This month</button>
-        </div>
-
         <div class="section-cap">Conversations</div>
 
         <div class="grid">
@@ -344,18 +420,43 @@
         </div>
     </div>
 
-    <!-- Slide-in chat panel -->
-    <div class="chat-panel" id="chatPanel">
-        <div class="cp-head">
-            <button class="cp-back" id="cpBack">&#8594; חזרה</button>
-            <div class="cp-avatar" id="cpAvatar">💬</div>
-            <div class="cp-who">
-                <div class="cp-name" id="cpName">Seller</div>
-                <div class="cp-status">Usually replies within a day</div>
+    <!-- Filters bottom-sheet — identical to the cart page -->
+    <div class="cart-sheet-overlay" id="filterOverlay" onclick="if(event.target===this)closeFilters()">
+        <div class="cart-sheet">
+            <div class="sheet-grip"></div>
+            <h3>Filter</h3>
+            <div class="chat-filters" id="chatFilters">
+                <button class="chat-chip active" data-range="all" type="button">All</button>
+                <button class="chat-chip" data-range="today" type="button">Today</button>
+                <button class="chat-chip" data-range="week" type="button">This week</button>
+                <button class="chat-chip" data-range="month" type="button">This month</button>
             </div>
         </div>
-        <div class="cp-deal" id="cpDeal" hidden></div>
+    </div>
+
+    <!-- Slide-in chat panel -->
+    <div class="chat-panel" id="chatPanel">
+        <header class="cp-head">
+            <div class="cp-whobox">
+                <div class="cp-avatar" id="cpAvatar">💬</div>
+                <div class="cp-who">
+                    <div class="cp-name" id="cpName">Seller</div>
+                    <div class="cp-status">Usually replies within a day</div>
+                </div>
+            </div>
+            <button class="nav-chev" id="cpBack" type="button" aria-label="Back">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+            </button>
+        </header>
         <div class="cp-feed" id="cpFeed"></div>
+        <!-- One nav bar: seller page / item page / deal outcome. Sits just above
+             the composer; slides away while the message input is focused. -->
+        <nav class="cp-nav" id="cpSold">
+            <a class="cp-navlink" id="cpSellerLink" href="#">פרופיל המוכר</a>
+            <a class="cp-navlink" id="cpItemLink" href="#">הצג פריט</a>
+            <button class="cp-navlink" id="cpSoldYes" type="button">נמכר ✓</button>
+            <button class="cp-navlink" id="cpSoldNo" type="button">לא נמכר</button>
+        </nav>
         <div class="cp-input-row">
             <input class="cp-input" id="cpInput" type="text" placeholder="Write a message…" autocomplete="off">
             <button class="cp-send" id="cpSend">SEND</button>
@@ -367,7 +468,7 @@
         const VIEW_ROLE = new URLSearchParams(location.search).get('from') === 'seller' ? 'seller' : 'buyer';
         if (VIEW_ROLE === 'seller') {
             document.querySelector('.head-title').textContent = 'Buyer Chats';
-            const back = document.querySelector('.back');
+            const back = document.getElementById('navBack');
             if (back) back.setAttribute('href', 'index.html');
         }
 
@@ -434,17 +535,10 @@
         document.getElementById('lastActive').textContent  = lastAt ? (timeAgo(lastAt) + ' ago') : '—';
 
         const el = document.getElementById('chatList');
-        // Small "active deal" tag on a chat row, with the current step.
-        const DEAL_LBL = { coordinating: 'מתאמים', scheduled: 'מפגש נקבע', handoff: 'תשלום', paid: 'הושלם' };
-        function dealBadge(seller) {
-            const d = (readJSON('vero_deals', {}) || {})[seller];
-            if (!d || d.status === 'done' || !DEAL_LBL[d.status]) return '';
-            return ` <span class="chat-deal">עסקה · ${DEAL_LBL[d.status]}</span>`;
-        }
 
         // Full date + time of the last message in a thread — e.g. "04.09.26, 14:32".
         const fullWhen = ms => ms
-            ? new Date(ms).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+            ? new Date(ms).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
             : '';
 
         // The product this conversation is about (self-contained; safe at first render).
@@ -499,23 +593,24 @@
                     <div class="chat-row" data-i="${i}">
                         <div class="chat-avatar">${t.icon}</div>
                         <div class="chat-body">
-                            <div class="chat-name">${t.seller}${dealBadge(t.seller)}</div>
-                            <div class="chat-preview">${t.preview}</div>
-                            <div class="chat-sub">
-                                ${prod ? `<span class="chat-item" title="${prod}">${ICO_TAG}${prod}</span>` : ''}
-                                <span class="chat-when">${ICO_CLOCK}${fullWhen(t.at)}</span>
+                            <div class="chat-topline">
+                                <span class="chat-name">${t.seller}</span>
+                                <span class="chat-time">${fullWhen(t.at)}</span>
                             </div>
-                        </div>
-                        <div class="chat-meta">
-                            <div class="chat-time">${timeAgo(t.at)}</div>
-                            <div class="chat-chev">&#8250;</div>
+                            <div class="chat-preview">${t.preview}</div>
+                            ${prod ? `<div class="chat-item">${prod}</div>` : ''}
                         </div>
                     </div>`;
             }).join('') + '</div>';
         }
         renderList();
 
-        // Time-filter chips.
+        // Filter bottom-sheet (same behaviour as the cart page).
+        window.openFilters  = function () { document.getElementById('filterOverlay').classList.add('show'); };
+        window.closeFilters = function () { document.getElementById('filterOverlay').classList.remove('show'); };
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.closeFilters(); });
+
+        // Time-filter chips (inside the sheet) — apply, then close the sheet.
         document.getElementById('chatFilters').addEventListener('click', (e) => {
             const chip = e.target.closest('.chat-chip');
             if (!chip) return;
@@ -523,6 +618,7 @@
             chip.classList.add('active');
             chatRange = chip.dataset.range;
             renderList();
+            window.closeFilters();
         });
         el.addEventListener('click', (e) => {
             const row = e.target.closest('.chat-row');
@@ -577,6 +673,57 @@
             if (deal && deal.item) return deal.item;
             return '';
         }
+        // Full product object for the "show item" link (falls back to null).
+        function itemObjFor(seller) {
+            const o = offs.find(x => (x.seller || 'moravchick') === seller && x.name);
+            if (o) return o;
+            const c = items.find(x => (x.seller || 'moravchick') === seller && x.name);
+            if (c) return c;
+            const r = Array.isArray(recvOffers) && recvOffers.find(x => x.buyer === seller && x.name);
+            if (r) return r;
+            const deal = (readJSON('vero_deals', {}) || {})[seller];
+            if (deal && deal.item) return { name: deal.item, seller: seller };
+            return null;
+        }
+        // ===== Deal outcome (sold / not sold) — shared with both dashboards =====
+        // vero_sales: { [seller]: { sold: true|false, item, at } }. The dashboard
+        // counts the sold entries as "closed deals".
+        const SALES = readJSON('vero_sales', {}) || {};
+        const saveSales = () => localStorage.setItem('vero_sales', JSON.stringify(SALES));
+        const soldBar = document.getElementById('cpSold');
+        function renderSold(seller) {
+            const rec = SALES[seller];
+            soldBar.classList.toggle('is-sold', !!(rec && rec.sold === true));
+            soldBar.classList.toggle('is-notsold', !!(rec && rec.sold === false));
+        }
+        function markSold(sold) {
+            if (!openSeller) return;
+            SALES[openSeller] = { sold: sold, item: openItem || (itemFor(openSeller) || ''), at: Date.now() };
+            saveSales();
+            renderSold(openSeller);
+            pushSysLine(openSeller, sold ? 'סומן: נמכר ✓ — העסקה נסגרה' : 'סומן: לא נמכר');
+        }
+        // Lightweight system line in the feed (no deal-room dependency).
+        function pushSysLine(seller, text) {
+            if (!CHATS[seller]) CHATS[seller] = [];
+            CHATS[seller].push({ sender: 'system', content: text, at: Date.now() });
+            saveChats();
+            if (openSeller === seller) renderFeed();
+        }
+
+        // Wire the quick-actions bar to the seller's page + the item's product page.
+        function setChatLinks(seller) {
+            const sellerLink = document.getElementById('cpSellerLink');
+            sellerLink.href = 'index.html?seller=' + encodeURIComponent(seller);
+            const itemLink = document.getElementById('cpItemLink');
+            const obj = itemObjFor(seller);
+            // Always offer the product page; fall back to a name-only link so the
+            // button is present even for threads without a stored item object.
+            const prod = obj ? Object.assign({ seller: seller }, obj)
+                             : { seller: seller, name: openItem || itemFor(seller) || '' };
+            itemLink.href = 'product.html?product=' + encodeURIComponent(JSON.stringify(prod));
+            itemLink.hidden = false;
+        }
 
         function openChat(i) {
             const t = list[i];
@@ -585,18 +732,26 @@
             seedThread(t);
             document.getElementById('cpName').textContent = t.seller;
             document.getElementById('cpAvatar').textContent = t.icon || '💬';
+            setChatLinks(t.seller);
+            renderSold(t.seller);
             renderFeed();
-            renderDeal();
             panel.classList.add('open');
-            setTimeout(() => inputEl.focus(), 300);
+            notifyParent('vero-chat-open');   // hide the profile nav bars while in a chat
+            // Don't auto-focus the composer — that would trigger the typing state
+            // and drop the nav bar the moment the chat opens.
         }
 
         function closeChat() {
             panel.classList.remove('open'); openSeller = null;
-            document.getElementById('cpDeal').hidden = true;
+            notifyParent('vero-chat-close');  // restore the profile nav bars
             const sv = document.getElementById('chatSearch');
             chatQuery = sv ? sv.value : '';
             renderList();
+        }
+
+        // When embedded in profile.html, tell the parent to hide/show its nav bars.
+        function notifyParent(msg) {
+            try { if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*'); } catch (e) {}
         }
 
         function sendMessage() {
@@ -616,191 +771,19 @@
             }, 900);
         }
 
-        // ===== Deal room =====
-        const DEALS = readJSON('vero_deals', {});
-        const saveDeals = () => localStorage.setItem('vero_deals', JSON.stringify(DEALS));
-        const dealEl = document.getElementById('cpDeal');
-
-        function pushSys(seller, text) {
-            if (!CHATS[seller]) CHATS[seller] = [];
-            CHATS[seller].push({ sender: 'system', content: text, at: Date.now() });
-            saveChats();
-            if (openSeller === seller) renderFeed();
-        }
-        function pushSeller(seller, text) {
-            if (!CHATS[seller]) CHATS[seller] = [];
-            CHATS[seller].push({ sender: 'seller', content: text, at: Date.now() });
-            saveChats();
-            if (openSeller === seller) renderFeed();
-        }
-
-        const STEP_OF = { coordinating: 0, scheduled: 1, handoff: 2, paid: 3, done: 3 };
-        function steps(status) {
-            const on = STEP_OF[status] ?? 0;
-            return '<div class="cpd-steps">' + [0,1,2,3].map(i =>
-                `<span class="cpd-step${i <= on ? ' on' : ''}"></span>`).join('') + '</div>';
-        }
-        const esc = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
-
-        function renderDeal() {
-            if (!openSeller) { dealEl.hidden = true; return; }
-            const d = DEALS[openSeller];
-            dealEl.hidden = false;
-            const itemName = openItem || (d && d.item) || '';
-            const itemLine = itemName
-                ? `<div class="cpd-item"><b>${esc(itemName)}</b></div>`
-                : `<div class="cpd-item">תיאום איסוף פריט</div>`;
-
-            if (!d) {
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip">לא התחיל</span></div>
-                    <div>
-                        <div class="cpd-title">תיאום קבלת הפריט</div>
-                        <div class="cpd-sub">תאמו מקום ושעה למפגש. התשלום מתבצע ביניכם במפגש (מחוץ לאפליקציה).</div>
-                    </div>
-                    <div class="cpd-actions"><button class="cpd-btn" id="dStart">התחל תיאום איסוף</button></div>`;
-                dealEl.querySelector('#dStart').onclick = () => {
-                    DEALS[openSeller] = { item: itemName || '', status: 'coordinating', updatedAt: Date.now() };
-                    saveDeals();
-                    pushSys(openSeller, 'התחלתם לתאם איסוף של הפריט');
-                    renderDeal();
-                };
-                return;
-            }
-
-            if (d.status === 'coordinating') {
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip progress">מתאמים</span></div>
-                    ${steps(d.status)}
-                    <div><div class="cpd-title">הצע מקום ושעה למפגש</div>
-                        <div class="cpd-sub">איפה ומתי נוח לכם להיפגש לאיסוף?</div></div>
-                    <div class="cpd-fields">
-                        <input id="dPlace" type="text" placeholder="מקום — למשל: תחנת רכבת סבידור, ת״א" value="${esc(d.place||'')}">
-                        <input id="dTime"  type="text" placeholder="מועד — למשל: מחר ב-18:00" value="${esc(d.time||'')}">
-                    </div>
-                    <div class="cpd-actions"><button class="cpd-btn" id="dPropose">שלח הצעת מפגש</button></div>`;
-                dealEl.querySelector('#dPropose').onclick = () => {
-                    const place = dealEl.querySelector('#dPlace').value.trim();
-                    const time  = dealEl.querySelector('#dTime').value.trim();
-                    if (!place || !time) { alert('נא למלא מקום ומועד'); return; }
-                    d.place = place; d.time = time; d.status = 'scheduled'; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, `הצעת מפגש נשלחה — ${place}, ${time}`);
-                    renderDeal();
-                    setTimeout(() => {
-                        if (!DEALS[openSeller]) return;
-                        pushSeller(openSeller, `מעולה, נתראה ב${time} ב${place}. אביא את הפריט 🙌`);
-                        pushSys(openSeller, 'המוכר אישר את המפגש ✓');
-                    }, 1100);
-                };
-                return;
-            }
-
-            if (d.status === 'scheduled') {
-                const seller = VIEW_ROLE === 'seller';
-                const mineFlag  = seller ? 'sellerGave' : 'buyerGot';
-                const theirFlag = seller ? 'buyerGot'   : 'sellerGave';
-                const myBtn   = seller ? 'מסרתי את הפריט' : 'קיבלתי את הפריט';
-                const myLabel = seller ? 'אתה: מסרתי'     : 'אתה: קיבלתי';
-                const theirLabel = seller ? 'קונה: קיבל'  : 'מוכר: מסר';
-                const myConfirmSys = seller ? 'אישרת שמסרת את הפריט ✓' : 'אישרת שקיבלת את הפריט ✓';
-                const theirConfirmSys = seller ? 'הקונה אישר שקיבל את הפריט ✓' : 'המוכר אישר שמסר את הפריט ✓';
-                const theirReply = seller ? 'קיבלתי, תודה רבה! 🙏' : 'מוסר! תיהנה מהפריט 😊';
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip progress">מפגש נקבע</span></div>
-                    ${steps(d.status)}
-                    <div class="cpd-meet">
-                        <div><span class="k">מקום</span>${esc(d.place||'—')}</div>
-                        <div><span class="k">מועד</span>${esc(d.time||'—')}</div>
-                    </div>
-                    <div><div class="cpd-title">אישור מסירת הפריט</div>
-                        <div class="cpd-sub">אחרי המפגש — כל צד מאשר את המסירה מצדו.</div></div>
-                    <div class="cpd-confirmrow">
-                        <span class="${d[mineFlag]?'yes':''}">${d[mineFlag]?'✓ ':''}${myLabel}</span>
-                        <span class="${d[theirFlag]?'yes':''}">${d[theirFlag]?'✓ ':''}${theirLabel}</span>
-                    </div>
-                    <div class="cpd-actions">
-                        <button class="cpd-btn ghost" id="dReschedule">שנה תיאום</button>
-                        <button class="cpd-btn" id="dGot" ${d[mineFlag]?'disabled style="opacity:.5"':''}>${myBtn}</button>
-                    </div>`;
-                dealEl.querySelector('#dReschedule').onclick = () => {
-                    d.status = 'coordinating'; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, 'התיאום נפתח מחדש');
-                    renderDeal();
-                };
-                const gotBtn = dealEl.querySelector('#dGot');
-                if (gotBtn && !d[mineFlag]) gotBtn.onclick = () => {
-                    d[mineFlag] = true; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, myConfirmSys);
-                    renderDeal();
-                    setTimeout(() => {
-                        if (!DEALS[openSeller]) return;
-                        d[theirFlag] = true; saveDeals();
-                        pushSeller(openSeller, theirReply);
-                        pushSys(openSeller, theirConfirmSys);
-                        if (d.buyerGot && d.sellerGave) { d.status = 'handoff'; saveDeals(); }
-                        renderDeal();
-                    }, 1000);
-                };
-                return;
-            }
-
-            if (d.status === 'handoff') {
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip progress">תשלום</span></div>
-                    ${steps(d.status)}
-                    <div><div class="cpd-title">תשלום</div>
-                        <div class="cpd-sub">התשלום מתבצע ביניכם ישירות (מזומן / העברה / ביט). סמנו כאן כששולם.</div></div>
-                    <div class="cpd-actions"><button class="cpd-btn" id="dPaid">סמן ששולם</button></div>`;
-                dealEl.querySelector('#dPaid').onclick = () => {
-                    d.status = 'paid'; d.paid = true; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, 'סומן ששולם 💸 — העסקה הושלמה');
-                    renderDeal();
-                };
-                return;
-            }
-
-            if (d.status === 'paid') {
-                dealEl.innerHTML = `
-                    <div class="cpd-top">${itemLine}<span class="cpd-chip done">הושלם</span></div>
-                    ${steps('done')}
-                    <div><div class="cpd-title">איך היה? השאר ביקורת</div>
-                        <div class="cpd-sub">${VIEW_ROLE === 'seller'
-                            ? `דרג את הקונה ${esc(openSeller)} — עוזר למוכרים הבאים.`
-                            : `הדירוג עוזר לקונים הבאים לסמוך על ${esc(openSeller)}.`}</div></div>
-                    <div class="cpd-stars" id="dStars">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
-                    <div class="cpd-actions"><button class="cpd-btn" id="dReview">שלח ביקורת</button></div>`;
-                let picked = d.rating || 0;
-                const paint = () => dealEl.querySelectorAll('#dStars button').forEach(b =>
-                    b.classList.toggle('on', Number(b.dataset.n) <= picked));
-                dealEl.querySelectorAll('#dStars button').forEach(b =>
-                    b.onclick = () => { picked = Number(b.dataset.n); paint(); });
-                paint();
-                dealEl.querySelector('#dReview').onclick = () => {
-                    if (!picked) { alert('בחר דירוג בכוכבים'); return; }
-                    d.rating = picked; d.status = 'done'; d.updatedAt = Date.now(); saveDeals();
-                    pushSys(openSeller, `השארת ביקורת: ${'★'.repeat(picked)}${'☆'.repeat(5-picked)}`);
-                    renderDeal();
-                };
-                return;
-            }
-
-            dealEl.innerHTML = `
-                <div class="cpd-top">${itemLine}<span class="cpd-chip done">✓ הושלם</span></div>
-                ${steps('done')}
-                <div class="cpd-meet">
-                    <div><span class="k">נאסף</span>${esc(d.place||'—')} · ${esc(d.time||'—')}</div>
-                    ${d.rating?`<div><span class="k">דירוג</span>${'★'.repeat(d.rating)}${'☆'.repeat(5-d.rating)}</div>`:''}
-                </div>
-                <div class="cpd-sub">העסקה הושלמה. תודה שהשתמשת ב-moravchick 🤍</div>`;
-        }
 
         document.getElementById('cpBack').addEventListener('click', closeChat);
         document.getElementById('cpSend').addEventListener('click', sendMessage);
+        document.getElementById('cpSoldYes').addEventListener('click', () => markSold(true));
+        document.getElementById('cpSoldNo').addEventListener('click', () => markSold(false));
         inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+        // While composing, drop the nav bar away behind the composer.
+        inputEl.addEventListener('focus', () => panel.classList.add('typing'));
+        inputEl.addEventListener('blur', () => panel.classList.remove('typing'));
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel.classList.contains('open')) closeChat(); });
 
         // Exit animation mirrors the entry fade.
-        const back = document.querySelector('.back');
+        const back = document.getElementById('navBack');
         if (back) back.addEventListener('click', (e) => {
             e.preventDefault();
             const wrap = document.querySelector('.wrap');
@@ -808,7 +791,12 @@
             void wrap.offsetWidth;
             wrap.style.transition = 'opacity 0.5s ease';
             wrap.style.opacity = '0';
-            setTimeout(() => { window.location.href = back.getAttribute('href'); }, 560);
+            setTimeout(() => {
+                // Return to the exact page we came from when there's in-app history;
+                // fall back to the fixed destination only on a cold/direct open.
+                if (window.history.length > 1 && document.referrer) history.back();
+                else window.location.href = back.getAttribute('href');
+            }, 560);
         });
     </script>
     <script src="vero-editor.js"></script>

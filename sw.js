@@ -1,8 +1,9 @@
 /* moravchick service worker — makes the installed app fast.
  *
  * Strategy:
- *  - HTML documents (navigations / *.html): NETWORK-FIRST, so the app always
- *    shows the freshest deploy; fall back to cache only when offline.
+ *  - HTML documents (navigations / *.html): NETWORK-ONLY with cache: 'no-store',
+ *    so the app ALWAYS loads the freshest deploy — bypassing even the browser's
+ *    HTTP cache — and falls back to the cached copy only when offline.
  *  - Static assets (images, css, js, fonts): STALE-WHILE-REVALIDATE — served
  *    instantly from the cache while a fresh copy is fetched in the background
  *    for next time. This is what removes the slow re-download of the heavy
@@ -10,7 +11,7 @@
  *
  * Bump CACHE_VERSION to force all clients onto a clean cache.
  */
-var CACHE_VERSION = 'vero-v30';
+var CACHE_VERSION = 'vero-v61';
 var ASSET_CACHE = CACHE_VERSION + '-assets';
 var HTML_CACHE = CACHE_VERSION + '-html';
 
@@ -43,10 +44,10 @@ self.addEventListener('fetch', function (event) {
   // Only handle our own origin; let cross-origin (fonts CDNs, etc.) pass through.
   if (url.origin !== self.location.origin) return;
 
-  // ---- HTML: network-first (fresh), cache fallback for offline ----
+  // ---- HTML: always fresh from network (no-store), cache only for offline ----
   if (isHTML(req, url)) {
     event.respondWith(
-      fetch(req).then(function (res) {
+      fetch(req, { cache: 'no-store' }).then(function (res) {
         var copy = res.clone();
         caches.open(HTML_CACHE).then(function (c) { c.put(req, copy); });
         return res;

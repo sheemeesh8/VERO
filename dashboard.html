@@ -553,7 +553,11 @@
             const saves = 86 + listings.length * 3;
             const inquiries = len(chats) || 12;
             const shelf = listings.reduce((s, p) => s + priceOf(p.price), 0);
+            // Closed deals — conversations marked "נמכר" in the chat (shared store).
+            const sales = readJSON('vero_sales', {}) || {};
+            const closedDeals = Object.keys(sales).filter(k => sales[k] && sales[k].sold === true).length;
             document.getElementById('insightKpis').innerHTML = [
+                [closedDeals, 'עסקאות שנסגרו'],
                 [views.toLocaleString('en-US'), 'צפיות בפריטים'],
                 [saves, 'שמירות ב-Wishlist'],
                 [inquiries, 'פניות שנפתחו'],
@@ -579,7 +583,10 @@
             fill('colNew', newMsgs); fill('colWait', waiting); fill('colDone', done);
             document.getElementById('cNew').textContent = newMsgs.length;
             document.getElementById('cWait').textContent = waiting.length;
-            document.getElementById('cDone').textContent = done.length;
+            // Include deals marked "נמכר" from chat conversations.
+            const sales = readJSON('vero_sales', {}) || {};
+            const closed = Object.keys(sales).filter(k => sales[k] && sales[k].sold === true).length;
+            document.getElementById('cDone').textContent = done.length + closed;
         })();
 
         // Let the embedding parent (profile Statistics slide) re-fit on section change.
