@@ -210,6 +210,19 @@
         }
         .old-price { text-decoration: line-through; color: #9a9a95; font-size: 0.78em; margin-left: 6px; }
 
+        /* Quick "assign to collection" picker on each live card. Sits over the
+           image so a seller can file an already-listed piece without opening the
+           editor. Its own click handling keeps the card's edit link from firing. */
+        .product-card .pe-collection {
+            position: absolute; right: 12px; bottom: 12px; z-index: 4;
+            max-width: calc(60% - 12px);
+            font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+            padding: 6px 10px; border: 1px solid #000; border-radius: 999px;
+            background: rgba(255,255,255,0.92); color: #1c1c1c; cursor: pointer;
+            -webkit-appearance: none; appearance: none;
+        }
+        .product-card .pe-collection:hover { background: #fff; }
+
         /* History controls: sort toggle + date-range trigger. */
         .hist-controls { display: flex; align-items: center; gap: 12px; }
         .hist-btn {
@@ -472,6 +485,25 @@
             };
         }
 
+        // Quick collection picker for a live card. Its clicks are kept from
+        // bubbling to the card's edit link so choosing a collection never
+        // navigates away; onchange files the piece into that collection.
+        const COLLECTION_OPTS = [['', 'קולקציה +'], ['spring', '🌸 אביב'], ['summer', '☀️ קיץ'], ['autumn', '🍂 סתיו'], ['winter', '❄️ חורף']];
+        function collectionSelect(p, idx) {
+            const opts = COLLECTION_OPTS.map(([v, l]) =>
+                `<option value="${v}" ${((p.collection || '') === v) ? 'selected' : ''}>${l}</option>`).join('');
+            return `<select class="pe-collection" title="שייך לקולקציה" aria-label="Assign collection"
+                        onmousedown="event.stopPropagation()"
+                        onclick="event.stopPropagation();event.preventDefault();"
+                        onchange="veroSetCardCollection(event, ${idx})">${opts}</select>`;
+        }
+        window.veroSetCardCollection = function (e, i) {
+            e.stopPropagation();
+            if (!listings[i]) return;
+            listings[i].collection = e.target.value;
+            save('vero_listings', listings);
+        };
+
         function card(p, idx, past) {
             const src = imgOf(p);
             const status = p.status || 'active';
@@ -502,6 +534,7 @@
                         <span class="status-badge ${status}">${badgeText}</span>
                         ${hasDisc ? `<span class="disc-badge">-${disc}%</span>` : ''}
                         ${past ? '' : `<span class="pe-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg></span>`}
+                        ${past ? '' : collectionSelect(p, idx)}
                     </div>
                     <div class="product-info">
                         <div class="pc-left">
