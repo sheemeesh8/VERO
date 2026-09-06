@@ -825,7 +825,7 @@
             background: #faf9f6; color: #1b1916; z-index: 201; transform: translateX(-100%);
             transition: transform 0.55s cubic-bezier(0.16,1,0.3,1);
             box-shadow: 30px 0 80px rgba(0,0,0,0.10);
-            border-radius: 22px; overflow: hidden;
+            border-radius: 0 22px 22px 22px; overflow: hidden;
             display: flex; flex-direction: column;
             padding: calc(30px + env(safe-area-inset-top,0px)) 34px calc(30px + env(safe-area-inset-bottom,0px));
             box-sizing: border-box; direction: ltr; text-align: left;
