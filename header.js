@@ -1443,6 +1443,8 @@
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('men')">Men</a>
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
+                <a class="primary" href="collections.html">Collections</a>
+                <a class="primary" href="sales.html">Sale</a>
                 <a class="primary" href="about.html">About</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
                 <a class="secondary action" id="veroAddProductLink" onclick="veroCloseDrawer(); openUploadProduct()">

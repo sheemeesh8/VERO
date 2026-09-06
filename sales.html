@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>moravchick — סייל</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #fff; color: #111; -webkit-font-smoothing: antialiased; }
+
+        .s-hero { text-align: center; padding: clamp(90px, 12vw, 130px) 20px clamp(24px, 4vw, 40px); }
+        .s-kicker { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: #EB2323; font-weight: 700; }
+        .s-title { font-size: clamp(40px, 8vw, 96px); font-weight: 800; letter-spacing: -2px; margin-top: 10px; }
+        .s-lead { margin: 16px auto 0; max-width: 40em; font-size: clamp(14px, 1.5vw, 17px); line-height: 1.7; color: #55514a; }
+
+        .s-controls { max-width: 1000px; margin: 0 auto clamp(26px, 4vw, 44px); padding: 0 clamp(20px, 5vw, 60px); display: flex; flex-direction: column; gap: 16px; }
+
+        /* Free-text product search — its own bar. */
+        .s-search { position: relative; }
+        .s-search input {
+            width: 100%; height: 52px; border: 1.5px solid #111; background: transparent;
+            padding: 0 52px 0 18px; font-size: 15px; color: #111; border-radius: 0;
+        }
+        .s-search input::placeholder { color: #9a9a95; }
+        .s-search svg { position: absolute; top: 50%; left: 18px; transform: translateY(-50%); width: 20px; height: 20px; stroke: #111; fill: none; stroke-width: 1.8; }
+
+        /* Discount-percent filter — built-in options. */
+        .s-disc { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .s-disc .lbl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; font-weight: 700; margin-inline-end: 4px; }
+        .s-disc button {
+            font-size: 12px; letter-spacing: 0.5px; font-weight: 700; cursor: pointer;
+            border: 1px solid #dcdcd7; background: #fff; color: #111; padding: 9px 16px; border-radius: 999px;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .s-disc button:hover { border-color: #111; }
+        .s-disc button.on { background: #EB2323; color: #fff; border-color: #EB2323; }
+
+        .s-wrap { max-width: 1280px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 60px) 80px; }
+        .s-meta { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 8px; }
+        .s-meta .count { font-size: 12px; color: #9a9a95; letter-spacing: 1px; }
+        .s-sort { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a9a95; font-weight: 600; }
+
+        .prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: clamp(14px, 2vw, 24px); }
+        .empty { text-align: center; color: #9a9a95; padding: 70px 0; font-size: 15px; }
+        @media (max-width: 600px) { .prod-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+    </style>
+    <link rel="stylesheet" href="product-card.css">
+    <link rel="stylesheet" href="assets/fonts/aharoni.css">
+    <script src="assets/back-button.js"></script>
+</head>
+<body>
+    <div id="siteHeader"></div>
+    <script src="header.js"></script>
+
+    <section class="s-hero">
+        <div class="s-kicker">moravchick · end of season</div>
+        <h1 class="s-title">סייל 🏷️</h1>
+        <p class="s-lead">כל הפריטים שבמבצע — מכל הקולקציות — במקום אחד, מסודרים מההנחה הגדולה
+            ביותר לקטנה. סננו לפי אחוז הנחה, או חפשו פריט מסוים.</p>
+    </section>
+
+    <div class="s-controls">
+        <div class="s-search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="search" id="q" placeholder="חיפוש חופשי — שם פריט, מותג או קטגוריה…" autocomplete="off">
+        </div>
+        <div class="s-disc" id="discFilter">
+            <span class="lbl">אחוז הנחה</span>
+            <button data-min="0" class="on">הכל</button>
+            <button data-min="10">10%+</button>
+            <button data-min="25">25%+</button>
+            <button data-min="40">40%+</button>
+            <button data-min="50">50%+</button>
+            <button data-min="70">70%+</button>
+        </div>
+    </div>
+
+    <div class="s-wrap">
+        <div class="s-meta">
+            <span class="count" id="count"></span>
+            <span class="s-sort">מסודר: מההנחה הגדולה לקטנה ↓</span>
+        </div>
+        <div class="prod-grid" id="grid"></div>
+    </div>
+
+    <script src="product-overrides.js"></script>
+    <script src="collections.js"></script>
+    <script>
+        (function () {
+            var VC = window.veroCollections;
+            var all = VC.onSale();               // already sorted deepest-cut first
+            var minPct = 0, term = '';
+
+            var grid = document.getElementById('grid');
+            var countEl = document.getElementById('count');
+            var qEl = document.getElementById('q');
+
+            function matches(p) {
+                if (p._d.percent < minPct) return false;
+                if (term) {
+                    var hay = (p.name + ' ' + p.seller + ' ' + p.category).toLowerCase();
+                    if (hay.indexOf(term) === -1) return false;
+                }
+                return true;
+            }
+
+            function render() {
+                var items = all.filter(matches);
+                countEl.textContent = items.length + ' פריטים במבצע';
+                grid.innerHTML = items.length
+                    ? items.map(function (p) { return VC.cardHTML(p); }).join('')
+                    : '<div class="empty" style="grid-column:1/-1">לא נמצאו פריטים תואמים.</div>';
+            }
+
+            // Discount-percent filter (built-in options).
+            document.getElementById('discFilter').addEventListener('click', function (e) {
+                var b = e.target.closest('button[data-min]');
+                if (!b) return;
+                minPct = parseInt(b.dataset.min, 10) || 0;
+                this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+                render();
+            });
+
+            // Free-text search (separate bar).
+            var t;
+            qEl.addEventListener('input', function () {
+                clearTimeout(t);
+                t = setTimeout(function () { term = qEl.value.trim().toLowerCase(); render(); }, 120);
+            });
+
+            render();
+        })();
+    </script>
+    <script src="footer.js"></script>
+</body>
+</html>

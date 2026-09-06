@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>moravchick — קולקציה</title>
+    <link rel="stylesheet" href="design-system.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #fff; color: #111; -webkit-font-smoothing: antialiased; }
+
+        .c-hero { position: relative; height: min(52vh, 460px); overflow: hidden; border-bottom: 1px solid #000; display: flex; align-items: flex-end; color: #fff; }
+        .c-hero .bg { position: absolute; inset: 0; background: #17170f center / cover no-repeat; filter: grayscale(0.3) contrast(1.04); transform: scale(1.06); }
+        .c-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.3)); }
+        .c-hero .inner { position: relative; z-index: 2; max-width: 1280px; width: 100%; margin: 0 auto; padding: 0 clamp(20px, 5vw, 60px) clamp(28px, 4vw, 48px); }
+        .c-emoji { font-size: clamp(34px, 5vw, 54px); }
+        .c-name { font-size: clamp(38px, 7vw, 84px); font-weight: 800; letter-spacing: -2px; line-height: 1; margin-top: 6px; }
+        .c-months { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.9; margin-top: 12px; font-weight: 600; }
+
+        .eos-banner {
+            background: #EB2323; color: #fff; text-align: center;
+            padding: 14px 20px; font-size: clamp(13px, 1.6vw, 16px); font-weight: 700; letter-spacing: 0.5px;
+        }
+        .eos-banner a { color: #fff; text-decoration: underline; }
+
+        .c-wrap { max-width: 1280px; margin: 0 auto; padding: clamp(28px, 4vw, 48px) clamp(20px, 5vw, 60px) 80px; }
+        .c-bar { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+        .c-bar h2 { font-size: clamp(18px, 2.2vw, 26px); font-weight: 700; letter-spacing: -0.5px; }
+        .c-bar .count { font-size: 12px; color: #9a9a95; letter-spacing: 1px; }
+        .c-links { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 26px; }
+        .c-links a { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; text-decoration: none; color: #111; border: 1px solid #dcdcd7; padding: 9px 16px; border-radius: 999px; transition: background 0.2s, color 0.2s; }
+        .c-links a:hover, .c-links a.on { background: #111; color: #fff; border-color: #111; }
+
+        .prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: clamp(14px, 2vw, 24px); }
+        .empty { text-align: center; color: #9a9a95; padding: 60px 0; font-size: 15px; }
+        @media (max-width: 600px) { .prod-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+    </style>
+    <link rel="stylesheet" href="product-card.css">
+    <link rel="stylesheet" href="assets/fonts/aharoni.css">
+    <script src="assets/back-button.js"></script>
+</head>
+<body>
+    <div id="siteHeader"></div>
+    <script src="header.js"></script>
+
+    <section class="c-hero">
+        <div class="bg" id="heroBg"></div>
+        <div class="inner">
+            <div class="c-emoji" id="cEmoji"></div>
+            <h1 class="c-name" id="cName"></h1>
+            <div class="c-months" id="cMonths"></div>
+        </div>
+    </section>
+    <div id="eosSlot"></div>
+
+    <div class="c-wrap">
+        <nav class="c-links" id="cLinks"></nav>
+        <div class="c-bar">
+            <h2 id="cBarTitle">הפריטים בקולקציה</h2>
+            <span class="count" id="cCount"></span>
+        </div>
+        <div class="prod-grid" id="grid"></div>
+    </div>
+
+    <script src="product-overrides.js"></script>
+    <script src="collections.js"></script>
+    <script>
+        (function () {
+            var VC = window.veroCollections;
+            var key = new URLSearchParams(location.search).get('c');
+            if (!VC.get(key)) key = VC.currentKey();
+            var c = VC.get(key);
+            var saleKey = VC.saleKey();
+
+            document.title = 'moravchick — קולקציית ' + c.he;
+            document.getElementById('heroBg').style.backgroundImage = "url('" + c.hero + "')";
+            document.getElementById('cEmoji').textContent = c.emoji;
+            document.getElementById('cName').textContent = 'קולקציית ' + c.he;
+            var monthsHe = c.months.map(function (m) { return ['','ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'][m]; }).join(' · ');
+            document.getElementById('cMonths').textContent = monthsHe;
+
+            // End-of-season sale banner (only when this collection's sale is on).
+            if (key === saleKey) {
+                document.getElementById('eosSlot').innerHTML =
+                    '<div class="eos-banner">🔥 מבצע סוף עונה — עד ' + c.eos + '%- על כל קולקציית ' + c.he +
+                    ' · <a href="sales.html">לכל הסיילים ←</a></div>';
+            }
+
+            // Sibling collection links.
+            document.getElementById('cLinks').innerHTML =
+                VC.list().map(function (x) {
+                    return '<a class="' + (x.key === key ? 'on' : '') + '" href="collection.html?c=' + x.key + '">' + x.emoji + ' ' + x.he + '</a>';
+                }).join('') + '<a href="sales.html">🏷️ סייל</a>';
+
+            // Products.
+            var items = VC.byCollection(key);
+            document.getElementById('cCount').textContent = items.length + ' פריטים';
+            var grid = document.getElementById('grid');
+            if (!items.length) grid.outerHTML = '<div class="empty">אין עדיין פריטים בקולקציה זו.</div>';
+            else grid.innerHTML = items.map(function (p) { return VC.cardHTML(p); }).join('');
+        })();
+    </script>
+    <script src="footer.js"></script>
+</body>
+</html>
