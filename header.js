@@ -95,6 +95,9 @@
         #siteHeader .toggle-category,
         #siteHeader .icon-btn { color: #fff; }
         #siteHeader .icon-btn svg { stroke: #fff !important; }
+        /* Wishlist heart + the little cart caret are white like the other header icons. */
+        #siteHeader .hwp-ico, #siteHeader .hdr-cart-caret { color: #fff; }
+        #siteHeader .hwp-ico svg, #siteHeader .hdr-cart-caret svg { stroke: #fff !important; }
         #siteHeader .toggle-category { border-color: rgba(255,255,255,0.7); }
         #siteHeader .toggle-category::before { background: #fff; }
         #siteHeader .toggle-category .seg { color: #ddd; }
