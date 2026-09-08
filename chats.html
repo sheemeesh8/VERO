@@ -797,8 +797,13 @@
 
         // Exit animation mirrors the entry fade.
         const back = document.getElementById('navBack');
+        let navigatingBack = false;   // guard: extra taps during the fade fired
+                                      // history.back() repeatedly and jumped past
+                                      // the origin page (blank / out of the app).
         if (back) back.addEventListener('click', (e) => {
             e.preventDefault();
+            if (navigatingBack) return;
+            navigatingBack = true;
             const wrap = document.querySelector('.wrap');
             wrap.style.animation = 'none';
             void wrap.offsetWidth;
@@ -812,6 +817,14 @@
                 if (window.history.length > 1) history.back();
                 else window.location.href = back.getAttribute('href');
             }, 560);
+        });
+        // If the page is shown again (e.g. restored from the back/forward cache),
+        // clear the exit fade and re-arm the button — otherwise it stays blank and
+        // the back control is dead.
+        window.addEventListener('pageshow', () => {
+            navigatingBack = false;
+            const wrap = document.querySelector('.wrap');
+            if (wrap) { wrap.style.transition = 'none'; wrap.style.opacity = ''; }
         });
     </script>
     <script src="vero-editor.js"></script>
