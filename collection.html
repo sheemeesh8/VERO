@@ -34,6 +34,19 @@
         .prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: clamp(14px, 2vw, 24px); }
         .empty { text-align: center; color: #9a9a95; padding: 60px 0; font-size: 15px; }
         @media (max-width: 600px) { .prod-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+
+        /* ===== Sale slider (end-of-season collection only) ===== */
+        .sale-slider-wrap { max-width: 1280px; margin: 0 auto; padding: clamp(26px, 4vw, 44px) clamp(20px, 5vw, 60px) 0; }
+        .sale-slider-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .sale-slider-head h2 { font-size: clamp(18px, 2.2vw, 26px); font-weight: 800; letter-spacing: -0.5px; color: #EB2323; display: flex; align-items: center; gap: 8px; }
+        .sale-slider-head .count { font-size: 12px; color: #9a9a95; letter-spacing: 1px; }
+        .sale-slider {
+            display: flex; gap: clamp(12px, 1.6vw, 18px);
+            overflow-x: auto; scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 6px;
+        }
+        .sale-slider::-webkit-scrollbar { display: none; }
+        .sale-slider > .product-card { flex: 0 0 clamp(200px, 62vw, 250px); scroll-snap-align: start; }
     </style>
     <link rel="stylesheet" href="product-card.css">
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
@@ -52,6 +65,7 @@
         </div>
     </section>
     <div id="eosSlot"></div>
+    <div id="saleSliderSlot"></div>
 
     <div class="c-wrap">
         <nav class="c-links" id="cLinks"></nav>
@@ -93,7 +107,37 @@
                 }).join('') + '<a href="sales.html">🏷️ סייל</a>';
 
             // Products.
-            var items = VC.byCollection(key);
+            var isSale = (key === saleKey);
+            var items;
+            if (isSale) {
+                // The season that just ended is a pure sale: show ONLY sale items,
+                // merging this collection's discounted pieces with every other piece
+                // on sale across the site (deduped, deepest cut first).
+                var seen = {};
+                function idOf(p) { return (p.seller || '') + '|' + (p.name || ''); }
+                items = [];
+                VC.onSale().concat(VC.byCollection(key)).forEach(function (p) {
+                    var d = p._d || VC.discountOf(p._raw);
+                    if (!d.onSale) return;                 // only sale pieces
+                    var id = idOf(p);
+                    if (seen[id]) return;
+                    seen[id] = 1; items.push(p);
+                });
+                // Sale slider up top (same products, promoted).
+                if (items.length) {
+                    document.getElementById('saleSliderSlot').innerHTML =
+                        '<div class="sale-slider-wrap">' +
+                            '<div class="sale-slider-head">' +
+                                '<h2>🔥 סייל סוף עונה</h2>' +
+                                '<span class="count">' + items.length + ' פריטים במבצע</span>' +
+                            '</div>' +
+                            '<div class="sale-slider">' + items.map(function (p) { return VC.cardHTML(p); }).join('') + '</div>' +
+                        '</div>';
+                }
+                document.getElementById('cBarTitle').textContent = 'כל פריטי קולקציית ' + c.he;
+            } else {
+                items = VC.byCollection(key);
+            }
             document.getElementById('cCount').textContent = items.length + ' פריטים';
             var grid = document.getElementById('grid');
             if (!items.length) grid.outerHTML = '<div class="empty">אין עדיין פריטים בקולקציה זו.</div>';
