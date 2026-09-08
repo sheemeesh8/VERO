@@ -938,6 +938,18 @@
             font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         .vero-drawer-social .badge.show { display: flex; }
+        /* Add-product: a plus inside a ring, sitting to the right of the wishlist. */
+        .vero-drawer-social .vero-drawer-add {
+            margin-left: auto;
+            width: 38px; height: 38px; border-radius: 50%;
+            align-items: center; justify-content: center;
+            border: 1.5px solid #c9c1b2; color: #1b1916;
+            transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+        }
+        .vero-drawer-social .vero-drawer-add:hover {
+            background: #1b1916; border-color: #1b1916; color: #faf9f6;
+        }
+        .vero-drawer-social .vero-drawer-add svg { width: 18px; height: 18px; }
 
         @media (max-width: 768px) {
             #siteHeader .logo { font-size: 16.67px; letter-spacing: 3px; justify-self: center; }
@@ -1466,7 +1478,8 @@
     // ---- Slide-in side drawer (opened by the header hamburger) ----
     const DRAWER_ICONS = {
         cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle><path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path></svg>',
-        wishlist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>'
+        wishlist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>',
+        plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
     };
     const DRAWER_MARKUP = `
         <div class="vero-drawer-overlay" id="veroDrawerOverlay" onclick="veroCloseDrawer()"></div>
@@ -1482,14 +1495,8 @@
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('men')">Men</a>
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
-                <a class="primary" href="collections.html">Collections</a>
-                <a class="primary" href="sales.html">Sale</a>
                 <a class="primary" href="about.html">About</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
-                <a class="secondary action" id="veroAddProductLink" onclick="veroCloseDrawer(); openUploadProduct()">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    Add Product
-                </a>
                 <a class="secondary" id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
                 <a class="secondary" id="veroChatsLink" onclick="veroCloseDrawer(); location.href = (localStorage.getItem('vero_active_account')==='seller' ? 'chats.html?from=seller' : 'chats.html')">Chats</a>
                 <a class="secondary" id="veroLogoutLink" onclick="veroCloseDrawer(); veroLogout()">Log out</a>
@@ -1497,6 +1504,7 @@
             <div class="vero-drawer-social">
                 <a href="#" aria-label="Cart" onclick="event.preventDefault(); veroCloseDrawer(); openCart()">${DRAWER_ICONS.cart}<span class="badge" id="drawerCartBadge"></span></a>
                 <a href="wishlist.html" aria-label="Wishlist" onclick="veroCloseDrawer()">${DRAWER_ICONS.wishlist}<span class="badge" id="drawerWishBadge"></span></a>
+                <a class="vero-drawer-add" id="veroAddProductLink" aria-label="Add Product" onclick="veroCloseDrawer(); openUploadProduct()">${DRAWER_ICONS.plus}</a>
             </div>
         </aside>
     `;
