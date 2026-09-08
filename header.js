@@ -862,7 +862,7 @@
         .vero-drawer-nav a {
             position: relative; display: flex; align-items: baseline; gap: 14px;
             font-family: 'Aharoni CLM', 'Aharoni', 'Assistant', sans-serif;
-            font-size: 15px; font-weight: 400; letter-spacing: 1.5px; color: #1b1916;
+            font-size: 17px; font-weight: 400; letter-spacing: 1.5px; color: #000;
             text-transform: uppercase;
             text-decoration: none; padding: 13px 0; cursor: pointer;
             transition: color 0.25s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);
@@ -876,11 +876,14 @@
             border-top: 1px solid #e7e2d8;
         }
         .vero-drawer-nav a.secondary {
-            font-size: 12px; font-weight: 400; letter-spacing: 1.5px; color: #57524a;
+            font-size: 13.5px; font-weight: 400; letter-spacing: 1.5px; color: #000;
             padding: 6px 0; text-transform: uppercase;
         }
-        .vero-drawer-nav a.secondary:hover { color: #1b1916; transform: translateX(6px); }
-        .vero-drawer-nav a.secondary.action { align-items: center; gap: 9px; color: #1b1916; }
+        .vero-drawer-nav a.secondary:hover { color: #000; transform: translateX(6px); }
+        .vero-drawer-nav a.secondary.action { align-items: center; gap: 9px; color: #000; }
+        /* My Profile (the personal-area link) stands out in red. */
+        .vero-drawer-nav a.secondary#veroAreaLink { color: #c8102e; }
+        .vero-drawer-nav a.secondary#veroAreaLink:hover { color: #9d0c24; }
         .vero-drawer-nav a.secondary.action svg { flex: none; }
 
         /* ===== Menu items — staggered entrance =====
