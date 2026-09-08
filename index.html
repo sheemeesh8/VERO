@@ -6344,16 +6344,16 @@
         <div class="hero-overlay hero-overlay--clothing">
             <div class="hero-overlay-inner">
                 <div class="hero-ov-top">
-                    <span class="hero-ov-eyebrow">Welcome to</span>
-                    <h1 class="hero-ov-title">VERO</h1>
+                    <span class="hero-ov-eyebrow" id="heroColKicker">Welcome to</span>
+                    <h1 class="hero-ov-title" id="heroColName">VERO</h1>
                 </div>
                 <div class="hero-ov-mid">
-                    <span class="hero-ov-heading">Now you are shopping boutique &amp; vintage pieces</span>
-                    <p class="hero-ov-text">Welcome to your high-fashion era. Discover exclusive pieces made to feel iconic.</p>
+                    <span class="hero-ov-heading" id="heroColHeading">Now you are shopping boutique &amp; vintage pieces</span>
+                    <p class="hero-ov-text" id="heroColText">Welcome to your high-fashion era. Discover exclusive pieces made to feel iconic.</p>
                     <div class="hero-ov-actions">
-                        <button class="hero-ov-mag" type="button" onclick="openMagazine()">Read the magazine <span class="hero-ov-arrow">&#8250;</span></button>
+                        <a class="hero-ov-mag" id="heroColCta" href="collections.html">Read the magazine <span class="hero-ov-arrow">&#8250;</span></a>
                     </div>
-                    <div class="hero-ov-meta">
+                    <div class="hero-ov-meta" id="heroColMeta">
                         <span>Authenticated</span><em>&middot;</em><span>Boutique &amp; vintage</span><em>&middot;</em><span>New drops weekly</span>
                     </div>
                 </div>
@@ -6363,6 +6363,33 @@
                 </div>
             </div>
         </div>
+        <!-- The clothing hero shows the current season's collection instead of the
+             generic welcome copy. -->
+        <script>
+            (function () {
+                var VC = window.veroCollections;
+                if (!VC) return;
+                var key = VC.currentKey();
+                var c = VC.get(key);
+                if (!c) return;
+                var saleKey = VC.saleKey();
+                var monthName = ['','ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+                var months = c.months.map(function (m) { return monthName[m]; }).join(' · ');
+                var isSale = (key === saleKey);
+                function set(id, txt) { var e = document.getElementById(id); if (e) e.textContent = txt; }
+                set('heroColKicker', isSale ? 'סוף עונה · ' + c.eos + '%-' : 'הקולקציה של העונה');
+                set('heroColName', 'קולקציית ' + c.he + ' ' + c.emoji);
+                set('heroColHeading', isSale ? 'מבצע סוף עונה על כל הקולקציה' : 'הפריטים שאצורים לעונה הזו');
+                set('heroColText', months);
+                var meta = document.getElementById('heroColMeta');
+                if (meta) meta.innerHTML = '<span>אצור לעונה</span><em>&middot;</em><span>' + VC.byCollection(key).length + ' פריטים</span><em>&middot;</em><span>מקוריות מאומתת</span>';
+                var cta = document.getElementById('heroColCta');
+                if (cta) { cta.setAttribute('href', 'collection.html?c=' + key); cta.innerHTML = 'צפו בקולקציה <span class="hero-ov-arrow">&#8250;</span>'; }
+                // Show the collection's own image behind the hero.
+                var hero = document.getElementById('heroImage');
+                if (hero && c.hero) hero.style.backgroundImage = "url('" + c.hero + "')";
+            })();
+        </script>
         <!-- Art-mode caption overlay — shown only in art mode via CSS. -->
         <div class="hero-overlay hero-overlay--art">
             <div class="hero-overlay-inner">
@@ -6883,37 +6910,7 @@
                 </button>
             </div>
 
-            <!-- 2c. The in-season collection itself — hero banner + product strip,
-                 built by the collection-feature script below. -->
-            <div class="vf-collection" id="vfCollection"></div>
-            <script>
-                (function () {
-                    var VC = window.veroCollections;
-                    var el = document.getElementById('vfCollection');
-                    if (!VC || !el) return;
-                    var key = VC.currentKey();
-                    var c = VC.get(key);
-                    if (!c) { el.remove(); return; }
-                    var saleKey = VC.saleKey();
-                    var monthName = ['','ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
-                    var months = c.months.map(function (m) { return monthName[m]; }).join(' · ');
-                    var items = VC.byCollection(key).slice(0, 12);
-                    var chip = (key === saleKey)
-                        ? '<span class="vf-col-chip sale">סוף עונה ' + c.eos + '%-</span>'
-                        : '<span class="vf-col-chip now">בעונה עכשיו</span>';
-                    el.innerHTML =
-                        '<a class="vf-col-hero" href="collection.html?c=' + key + '">' +
-                            '<div class="vf-col-bg" style="background-image:url(\'' + c.hero + '\')"></div>' +
-                            '<div class="vf-col-inner">' +
-                                '<div class="vf-col-kicker">moravchick · הקולקציה של העונה</div>' +
-                                '<div class="vf-col-name">' + c.emoji + ' קולקציית ' + c.he + '</div>' +
-                                '<div class="vf-col-meta">' + chip + '<span class="vf-col-months">' + months + '</span></div>' +
-                                '<span class="vf-col-cta">צפו בקולקציה</span>' +
-                            '</div>' +
-                        '</a>' +
-                        (items.length ? '<div class="vf-col-strip">' + items.map(function (p) { return VC.cardHTML(p); }).join('') + '</div>' : '');
-                })();
-            </script>
+            <!-- The in-season collection now leads the page from the hero above. -->
 
 
             <!-- 3. Section bar: segment · count · shop-all. -->
