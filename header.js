@@ -907,21 +907,23 @@
             40%  { opacity: 0.35; }
             100% { opacity: 1; transform: translateY(0);    filter: blur(0); }
         }
-        /* Stagger: a wide, unhurried gap between each item and the next. */
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(1)  { animation-delay: 0.06s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(2)  { animation-delay: 0.12s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(3)  { animation-delay: 0.18s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(4)  { animation-delay: 0.24s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(5)  { animation-delay: 0.30s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(6)  { animation-delay: 0.36s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(7)  { animation-delay: 0.42s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(8)  { animation-delay: 0.48s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(9)  { animation-delay: 0.54s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(10) { animation-delay: 0.60s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(11) { animation-delay: 0.66s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(12) { animation-delay: 0.72s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(n+13) { animation-delay: 0.78s; }
-        .vero-drawer.open .vero-drawer-social { animation-delay: 0.60s; }
+        /* Stagger: a wide, unhurried gap between each item and the next. The delays
+           are unconditional so they apply to both the opening and the closing
+           (reverse) animations. */
+        .vero-drawer .vero-drawer-nav > *:nth-child(1)  { animation-delay: 0.06s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(2)  { animation-delay: 0.12s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(3)  { animation-delay: 0.18s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(4)  { animation-delay: 0.24s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(5)  { animation-delay: 0.30s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(6)  { animation-delay: 0.36s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(7)  { animation-delay: 0.42s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(8)  { animation-delay: 0.48s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(9)  { animation-delay: 0.54s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(10) { animation-delay: 0.60s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(11) { animation-delay: 0.66s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(12) { animation-delay: 0.72s; }
+        .vero-drawer .vero-drawer-nav > *:nth-child(n+13) { animation-delay: 0.78s; }
+        .vero-drawer .vero-drawer-social { animation-delay: 0.60s; }
 
         /* The bottom part (Personal Area heading, its links, and the icon row)
            enters with a lighter, quicker motion — no blur and a smaller rise —
@@ -936,10 +938,42 @@
             from { opacity: 0; transform: translateY(9px); }
             to   { opacity: 1; transform: translateY(0); }
         }
-        /* Respect users who prefer less motion: reveal instantly, no slide. */
+
+        /* ===== Closing — the exit is the entrance played in reverse =====
+           Same keyframes, same per-item stagger delays, just 'reverse': each item
+           drifts back down and fades out, top to bottom, exactly mirroring the way
+           it came in. The panel's own slide-out waits (transition-delay) until the
+           items have left, so the reverse stagger is actually visible. */
+        .vero-drawer.closing .vero-drawer-nav > *,
+        .vero-drawer.closing .vero-drawer-social {
+            animation: veroDrawerItemOut 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .vero-drawer.closing .vero-drawer-nav .vero-drawer-heading,
+        .vero-drawer.closing .vero-drawer-nav a.secondary,
+        .vero-drawer.closing .vero-drawer-social {
+            animation-name: veroDrawerItemOutSoft;
+            animation-duration: 0.5s;
+        }
+        /* Exit = the entrance run backwards: each item eases back down and fades out,
+           holding visible through its stagger delay first. */
+        @keyframes veroDrawerItemOut {
+            0%   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+            60%  { opacity: 0.35; }
+            100% { opacity: 0; transform: translateY(22px); filter: blur(1.5px); }
+        }
+        @keyframes veroDrawerItemOutSoft {
+            from { opacity: 1; transform: translateY(0); }
+            to   { opacity: 0; transform: translateY(9px); }
+        }
+        .vero-drawer.closing { transition-delay: 0.86s; }
+
+        /* Respect users who prefer less motion: reveal/hide instantly, no slide. */
         @media (prefers-reduced-motion: reduce) {
             .vero-drawer.open .vero-drawer-nav > *,
-            .vero-drawer.open .vero-drawer-social { animation: none; }
+            .vero-drawer.open .vero-drawer-social,
+            .vero-drawer.closing .vero-drawer-nav > *,
+            .vero-drawer.closing .vero-drawer-social { animation: none; }
+            .vero-drawer.closing { transition-delay: 0s; }
         }
 
         /* Footer — socials */
@@ -1560,21 +1594,35 @@
 
     window.veroToggleDrawer = function () {
         mountDrawer();
-        veroRefreshAreaLink();
         const d = document.getElementById('veroDrawer');
+        // Open → close with the reverse-stagger exit animation.
+        if (d && d.classList.contains('open')) { window.veroCloseDrawer(); return; }
+        veroRefreshAreaLink();
         const o = document.getElementById('veroDrawerOverlay');
-        const open = d.classList.toggle('open');
-        o.classList.toggle('open', open);
-        d.setAttribute('aria-hidden', open ? 'false' : 'true');
-        document.body.style.overflow = open ? 'hidden' : '';
+        // Cancel any in-flight close so a quick re-open starts clean.
+        clearTimeout(d._closeTimer);
+        d.classList.remove('closing');
+        d.classList.add('open');
+        o.classList.add('open');
+        d.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
     };
     window.veroCloseDrawer = function () {
         const d = document.getElementById('veroDrawer');
         const o = document.getElementById('veroDrawerOverlay');
-        if (d) d.classList.remove('open');
-        if (o) o.classList.remove('open');
-        if (d) d.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        if (!d) { if (o) o.classList.remove('open'); return; }
+        if (!d.classList.contains('open')) return;   // already closed / closing
+        // Play the reverse-stagger exit: keep the items on screen (via .closing) and
+        // let them animate out before the panel and backdrop leave.
+        d.classList.add('closing');
+        d.classList.remove('open');
+        d.setAttribute('aria-hidden', 'true');
+        clearTimeout(d._closeTimer);
+        d._closeTimer = setTimeout(function () {
+            d.classList.remove('closing');
+            if (o) o.classList.remove('open');       // fade the backdrop out at the end
+        }, 1450);
     };
     document.addEventListener('keydown', e => { if (e.key === 'Escape') window.veroCloseDrawer(); });
 
