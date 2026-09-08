@@ -858,25 +858,25 @@
 
         /* Primary navigation — large, light (Aharoni CLM, smaller labels, no numbers).
            Grows to fill the drawer height so items spread down the full page. */
-        .vero-drawer-nav { display: flex; flex-direction: column; flex: 1 1 auto; justify-content: space-between; }
+        .vero-drawer-nav { display: flex; flex-direction: column; flex: 1 1 auto; justify-content: flex-start; }
         .vero-drawer-nav a {
             position: relative; display: flex; align-items: baseline; gap: 14px;
             font-family: 'Aharoni CLM', 'Aharoni', 'Assistant', sans-serif;
-            font-size: 20px; font-weight: 300; letter-spacing: 0.5px; color: #1b1916;
-            text-decoration: none; padding: 12px 0; cursor: pointer;
+            font-size: 16px; font-weight: 300; letter-spacing: 0.5px; color: #1b1916;
+            text-decoration: none; padding: 6px 0; cursor: pointer;
             transition: color 0.25s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);
         }
         .vero-drawer-nav a:hover { transform: translateX(8px); color: #6e5a3a; }
 
         /* Secondary section — personal area, quieter and smaller */
         .vero-drawer-nav .vero-drawer-heading {
-            font-size: 9px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
-            color: #b3ab9c; padding: 26px 0 6px; margin-top: 12px;
+            font-size: 8.5px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+            color: #b3ab9c; padding: 15px 0 5px; margin-top: 8px;
             border-top: 1px solid #e7e2d8;
         }
         .vero-drawer-nav a.secondary {
-            font-size: 14px; font-weight: 400; letter-spacing: 1.5px; color: #57524a;
-            padding: 11px 0; text-transform: uppercase;
+            font-size: 12px; font-weight: 400; letter-spacing: 1.5px; color: #57524a;
+            padding: 6px 0; text-transform: uppercase;
         }
         .vero-drawer-nav a.secondary:hover { color: #1b1916; transform: translateX(6px); }
         .vero-drawer-nav a.secondary.action { align-items: center; gap: 9px; color: #1b1916; }
