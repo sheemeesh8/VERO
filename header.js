@@ -82,9 +82,10 @@
            white background and every icon flips to black. */
         #siteHeader {
             top: 0;
-            /* Icons sit just below the phone's camera punch-hole (the frame's island is
-               at ~13px; on a real device the notch is covered by the safe-area inset). */
-            padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+            /* Icons sit clearly below the phone's camera punch-hole (the frame's island
+               spans ~13–26px; on a real device the notch is covered by the safe-area
+               inset). Extra top offset keeps every header clear of the camera line. */
+            padding-top: calc(env(safe-area-inset-top, 0px) + 38px);
             padding-bottom: 10px;
             background: transparent;
             border-bottom: none;
