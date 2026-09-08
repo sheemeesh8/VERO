@@ -892,29 +892,29 @@
             /* 'backwards' shows the hidden 'from' state during the stagger delay, then
                releases the item back to its natural styles once done — so the :hover
                translateX still works after the menu has finished opening. */
-            animation: veroDrawerItemIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+            animation: veroDrawerItemIn 1.1s cubic-bezier(0.19, 1, 0.22, 1) backwards;
         }
-        /* Like moné: each item fades in place with a soft rise, top to bottom — not
-           a sideways slide. */
+        /* Like moné, but slower and more stylised: each item drifts up from further
+           down and de-blurs into focus, top to bottom — a slow, editorial reveal. */
         @keyframes veroDrawerItemIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(26px); filter: blur(6px); }
+            to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
         }
-        /* Stagger: each item waits a touch longer than the one above it. */
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(1)  { animation-delay: 0.10s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(2)  { animation-delay: 0.15s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(3)  { animation-delay: 0.20s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(4)  { animation-delay: 0.25s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(5)  { animation-delay: 0.30s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(6)  { animation-delay: 0.35s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(7)  { animation-delay: 0.40s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(8)  { animation-delay: 0.45s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(9)  { animation-delay: 0.50s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(10) { animation-delay: 0.55s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(11) { animation-delay: 0.60s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(12) { animation-delay: 0.65s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(n+13) { animation-delay: 0.70s; }
-        .vero-drawer.open .vero-drawer-social { animation-delay: 0.74s; }
+        /* Stagger: a wide, unhurried gap between each item and the next. */
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(1)  { animation-delay: 0.14s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(2)  { animation-delay: 0.26s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(3)  { animation-delay: 0.38s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(4)  { animation-delay: 0.50s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(5)  { animation-delay: 0.62s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(6)  { animation-delay: 0.74s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(7)  { animation-delay: 0.86s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(8)  { animation-delay: 0.98s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(9)  { animation-delay: 1.10s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(10) { animation-delay: 1.22s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(11) { animation-delay: 1.34s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(12) { animation-delay: 1.46s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(n+13) { animation-delay: 1.58s; }
+        .vero-drawer.open .vero-drawer-social { animation-delay: 1.64s; }
         /* Respect users who prefer less motion: reveal instantly, no slide. */
         @media (prefers-reduced-motion: reduce) {
             .vero-drawer.open .vero-drawer-nav > *,
