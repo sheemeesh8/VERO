@@ -196,6 +196,31 @@
                   color: #b5b1a8 !important; transition: color 0.2s; }
       .mode-btn.active { color: #1c1c1c !important; font-weight: 700; }
     </style>
+    <style id="cart-header-match">
+      /* Header chrome copied from the cart so the wishlist reads identically. */
+      .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+      .head-sub { display: none !important; }
+      .head-row { gap: 20px; }
+      .cart-topbar { display: flex; align-items: center; justify-content: space-between;
+                     padding: max(8px, env(safe-area-inset-top,0px)) 4px 16px; }
+      .cart-topbar .tb-right { display: flex; align-items: center; gap: 4px; }
+      .tb-ico { width: 42px; height: 42px; flex: none; border: none; background: none;
+                color: #16150f; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                transition: opacity 0.2s; text-decoration: none; }
+      .tb-ico:active { opacity: 0.5; }
+      .tb-ico svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+      .head-total { margin-left: auto; font-size: 10.83px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a958c; }
+      .head-total b { font-size: 24.00px; font-weight: 300; letter-spacing: 0.5px; color: #16150f; margin-left: 10px; }
+      .cart-sheet-overlay { position: fixed; inset: 0; background: rgba(20,18,14,0.4);
+                            display: none; align-items: flex-end; justify-content: center; z-index: 300; }
+      .cart-sheet-overlay.show { display: flex; }
+      .cart-sheet { width: 100%; max-width: 560px; background: #fff; border-radius: 20px 20px 0 0;
+                    padding: 22px 24px calc(28px + env(safe-area-inset-bottom,0px));
+                    transform: translateY(100%); animation: cartSheetRise 0.34s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+      @keyframes cartSheetRise { to { transform: translateY(0); } }
+      .cart-sheet .sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: #e6e1d8; margin: 0 auto 18px; }
+      .cart-sheet h3 { font-size: 14px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
+    </style>
 </head>
 <body>
     <!-- Embedded inside profile.html (?embed=1): the page title + back button are
@@ -213,9 +238,23 @@
     </style>
     <div class="page-cover"></div>
     <div class="side-image"></div>
-    <a class="back" href="profile.html">&#8592; חזרה</a>
 
     <div class="wrap">
+        <!-- Clean top bar — identical to the cart. -->
+        <div class="cart-topbar">
+            <div class="tb-right">
+                <button class="tb-ico" onclick="openFilters()" aria-label="Filters">
+                    <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
+                </button>
+                <button class="tb-ico" onclick="shareCart()" aria-label="Share">
+                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                </button>
+            </div>
+            <a class="back-btn tb-ico" href="profile.html" aria-label="Back">
+                <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+
         <div class="head-row">
             <h1 class="head-title">My Wishlist</h1>
             <div class="mode-toggle">
@@ -234,7 +273,25 @@
         <div id="checkoutHost"></div>
     </div>
 
+    <!-- Filters bottom-sheet — same as the cart. -->
+    <div class="cart-sheet-overlay" id="filterOverlay" onclick="if(event.target===this)closeFilters()">
+        <div class="cart-sheet">
+            <div class="sheet-grip"></div>
+            <h3>Filters</h3>
+            <div id="toolbarHost"></div>
+        </div>
+    </div>
+
     <script>
+        // Top-bar controls — identical to the cart (filters sheet + share).
+        window.openFilters = function () { var o = document.getElementById('filterOverlay'); if (o) o.classList.add('show'); };
+        window.closeFilters = function () { var o = document.getElementById('filterOverlay'); if (o) o.classList.remove('show'); };
+        window.shareCart = function () {
+            var url = location.href;
+            if (navigator.share) { navigator.share({ title: 'moravchick', text: 'My moravchick wishlist', url: url }).catch(function(){}); return; }
+            if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function(){});
+        };
+
         const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
         let wishlist = readJSON('vero_wishlist', []);
         if (!Array.isArray(wishlist)) wishlist = [];
