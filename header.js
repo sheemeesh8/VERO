@@ -790,14 +790,23 @@
         }
         #siteHeader .hwp-ico {
             position: relative; display: inline-flex; align-items: center; justify-content: center;
-            width: 38px; height: 38px; color: #fff; text-decoration: none;
+            width: 38px; height: 38px; color: inherit; text-decoration: none;
             transition: transform 0.18s ease;
         }
-        /* White wishlist heart, with a soft shadow so it reads over light backgrounds too. */
-        #siteHeader .hwp-ico svg { stroke: #fff; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.35)); }
+        /* Wishlist heart inherits the header icon colour so the cart icon's colour
+           never appears to change when the heart drops out. */
+        #siteHeader .hwp-ico svg { stroke: currentColor; }
         #siteHeader .hwp-ico:hover { transform: scale(1.12); }
         #siteHeader .hwp-ico:hover svg { fill: currentColor; }
         #siteHeader .hwp-ico svg { display: block; }
+        /* Down caret beneath the cart icon (hidden once the wishlist pop opens). */
+        #siteHeader .hdr-cart-caret {
+            position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+            margin-top: 1px; display: inline-flex; color: inherit; opacity: 0.6;
+            pointer-events: none; transition: opacity 0.2s ease;
+        }
+        #siteHeader .hdr-cart-caret svg { display: block; }
+        #siteHeader .hdr-cart-btn[aria-expanded="true"] ~ .hdr-cart-caret { opacity: 0; }
         #siteHeader .hdr-wish-pop .badge { top: -1px; right: -1px; }
         /* Hamburger (replaces the old Social link) */
         #siteHeader .vero-hamburger {
@@ -825,7 +834,7 @@
             background: #faf9f6; color: #1b1916; z-index: 201; transform: translateX(-100%);
             transition: transform 0.55s cubic-bezier(0.16,1,0.3,1);
             box-shadow: 30px 0 80px rgba(0,0,0,0.10);
-            border-radius: 22px; overflow: hidden;
+            border-radius: 0 22px 22px 22px; overflow: hidden;
             display: flex; flex-direction: column;
             padding: calc(30px + env(safe-area-inset-top,0px)) 34px calc(30px + env(safe-area-inset-bottom,0px));
             box-sizing: border-box; direction: ltr; text-align: left;
@@ -1388,8 +1397,11 @@
                             <circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle>
                             <path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path>
                         </svg>
-                        <span class="badge" id="cartBadge"></span>
                     </button>
+                    <!-- Down caret hinting the cart icon expands to reveal wishlist. -->
+                    <span class="hdr-cart-caret" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
                     <!-- Bare wishlist heart that drops out beneath the cart on tap. -->
                     <div class="hdr-wish-pop" id="cartMenu" role="menu" aria-hidden="true">
                         <a class="hwp-ico" role="menuitem" href="wishlist.html" title="Wishlist" aria-label="Wishlist" onclick="veroPickWishlist(event)">
@@ -1431,6 +1443,8 @@
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('men')">Men</a>
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
+                <a class="primary" href="collections.html">Collections</a>
+                <a class="primary" href="sales.html">Sale</a>
                 <a class="primary" href="about.html">About</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
                 <a class="secondary action" id="veroAddProductLink" onclick="veroCloseDrawer(); openUploadProduct()">
