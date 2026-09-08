@@ -141,13 +141,15 @@
             var VC = window.veroCollections;
             var curr = VC.currentKey();
             var sale = VC.saleKey();
-            // Order the slides along the calendar and START on the collection that
-            // owns the current month, so a swipe moves forward through the months of
-            // the year; the season that just ended (on sale) sits at the far end.
-            var full = VC.list();
-            var startIdx = 0;
-            for (var si = 0; si < full.length; si++) { if (full[si].key === curr) { startIdx = si; break; } }
-            var list = full.slice(startIdx).concat(full.slice(0, startIdx));
+            // Only the collections that matter right now: the one in season, and the
+            // one that just ended and is on end-of-season sale. Upcoming seasons are
+            // hidden. The in-season collection comes first, so you land on it.
+            var list = [];
+            var seen = {};
+            [curr, sale].forEach(function (k) {
+                var c = VC.get(k);
+                if (c && !seen[k]) { seen[k] = 1; list.push(c); }
+            });
             var slider = document.getElementById('colSlider');
             var dotsWrap = document.getElementById('colDots');
             var counter = document.getElementById('colCounter');
