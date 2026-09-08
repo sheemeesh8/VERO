@@ -1895,6 +1895,22 @@
             background: #fff; padding-top: 92px; padding-bottom: 110px;
             scroll-snap-align: none;
         }
+        /* My Chats: the embedded chats page sits INSIDE the personal-area frame —
+           the top header on top and the tab-bar slider at the bottom stay visible —
+           so it reads as one section of the slider, not a separate full page. Only
+           the horizontal padding is dropped so the chat list keeps its own layout;
+           the iframe fills the space between the header and the tab bar. */
+        body:not(.is-seller) #slideChats.pa-current { padding-left: 0; padding-right: 0; overflow: hidden; }
+        body:not(.is-seller) #slideChats iframe {
+            width: 100%;
+            height: calc(100vh - 92px - 110px);
+            height: calc(100dvh - 92px - 110px);
+            border: none; display: block;
+        }
+        /* While a conversation is open, the parent header + tab bar hide themselves
+           (vero-chat-hidden), so let the chat expand to the full viewport. */
+        body:not(.is-seller) #slideChats.chat-fs.pa-current { padding-top: 0; padding-bottom: 0; }
+        body:not(.is-seller) #slideChats.chat-fs iframe { height: 100vh; height: 100dvh; }
 
         /* Thin divider between the areas and the Settings / Statistics buttons. */
         .area-sep { width: 1px; align-self: stretch; margin: 5px 4px; background: rgba(255,255,255,0.22); flex: none; }
@@ -2465,9 +2481,8 @@
         </section>
 
         <!-- Slide 4 — My Chats: loads the real redesigned chats page. -->
-        <section class="build-panel buyer-only" id="slideChats" style="padding:0;">
-            <iframe src="chats.html?embed=1" title="My Chats"
-                    style="width:100%;height:100vh;height:100dvh;border:none;display:block;"></iframe>
+        <section class="build-panel buyer-only" id="slideChats">
+            <iframe src="chats.html?embed=1" title="My Chats"></iframe>
         </section>
 
         <!-- Slide 5 — Negotiation (offers) -->
@@ -4220,6 +4235,10 @@
             document.querySelectorAll('.area-tabs, .pa-header').forEach(function (el) {
                 el.classList.toggle('vero-chat-hidden', hide);
             });
+            // With the frame's header + tab bar gone, let the chats section fill the
+            // full viewport for the open conversation; restore the framed height on close.
+            var chSec = document.getElementById('slideChats');
+            if (chSec) chSec.classList.toggle('chat-fs', hide);
         });
 
         // Once the user starts switching tabs, pin the bar up so it never drops
