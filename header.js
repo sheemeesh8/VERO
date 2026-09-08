@@ -872,7 +872,7 @@
         /* Secondary section — personal area, quieter and smaller */
         .vero-drawer-nav .vero-drawer-heading {
             font-size: 8.5px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
-            color: #b3ab9c; padding: 15px 0 5px; margin-top: 8px;
+            color: #000; padding: 15px 0 5px; margin-top: 8px;
             border-top: 1px solid #e7e2d8;
         }
         .vero-drawer-nav a.secondary {
@@ -908,19 +908,33 @@
         }
         /* Stagger: a wide, unhurried gap between each item and the next. */
         .vero-drawer.open .vero-drawer-nav > *:nth-child(1)  { animation-delay: 0.16s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(2)  { animation-delay: 0.32s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(3)  { animation-delay: 0.48s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(4)  { animation-delay: 0.64s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(5)  { animation-delay: 0.80s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(6)  { animation-delay: 0.96s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(7)  { animation-delay: 1.12s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(8)  { animation-delay: 1.28s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(9)  { animation-delay: 1.44s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(10) { animation-delay: 1.60s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(11) { animation-delay: 1.76s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(12) { animation-delay: 1.92s; }
-        .vero-drawer.open .vero-drawer-nav > *:nth-child(n+13) { animation-delay: 2.08s; }
-        .vero-drawer.open .vero-drawer-social { animation-delay: 2.16s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(2)  { animation-delay: 0.30s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(3)  { animation-delay: 0.44s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(4)  { animation-delay: 0.58s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(5)  { animation-delay: 0.72s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(6)  { animation-delay: 0.86s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(7)  { animation-delay: 0.98s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(8)  { animation-delay: 1.08s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(9)  { animation-delay: 1.18s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(10) { animation-delay: 1.28s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(11) { animation-delay: 1.38s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(12) { animation-delay: 1.48s; }
+        .vero-drawer.open .vero-drawer-nav > *:nth-child(n+13) { animation-delay: 1.58s; }
+        .vero-drawer.open .vero-drawer-social { animation-delay: 1.34s; }
+
+        /* The bottom part (Personal Area heading, its links, and the icon row)
+           enters with a lighter, quicker motion — no blur and a smaller rise —
+           so it reads crisp rather than drifting in slowly. */
+        .vero-drawer.open .vero-drawer-nav .vero-drawer-heading,
+        .vero-drawer.open .vero-drawer-nav a.secondary,
+        .vero-drawer.open .vero-drawer-social {
+            animation-name: veroDrawerItemInSoft;
+            animation-duration: 0.9s;
+        }
+        @keyframes veroDrawerItemInSoft {
+            from { opacity: 0; transform: translateY(9px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
         /* Respect users who prefer less motion: reveal instantly, no slide. */
         @media (prefers-reduced-motion: reduce) {
             .vero-drawer.open .vero-drawer-nav > *,
