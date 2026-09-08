@@ -894,9 +894,11 @@
                translateX still works after the menu has finished opening. */
             animation: veroDrawerItemIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) backwards;
         }
+        /* Like moné: each item fades in place with a soft rise, top to bottom — not
+           a sideways slide. */
         @keyframes veroDrawerItemIn {
-            from { opacity: 0; transform: translateX(-22px); }
-            to   { opacity: 1; transform: translateX(0); }
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
         /* Stagger: each item waits a touch longer than the one above it. */
         .vero-drawer.open .vero-drawer-nav > *:nth-child(1)  { animation-delay: 0.10s; }
