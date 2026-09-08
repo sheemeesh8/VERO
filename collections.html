@@ -66,6 +66,7 @@
         }
         .chip-now { background: #fff; color: #111; }
         .chip-sale { background: #EB2323; color: #fff; }
+        .chip-soon { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.55); }
         .col-cta {
             margin-top: 30px; display: inline-flex; align-items: center; gap: 10px;
             padding: 15px 34px; border: 1.5px solid #fff; border-radius: 999px;
@@ -140,7 +141,13 @@
             var VC = window.veroCollections;
             var curr = VC.currentKey();
             var sale = VC.saleKey();
-            var list = VC.list();
+            // Order the slides along the calendar and START on the collection that
+            // owns the current month, so a swipe moves forward through the months of
+            // the year; the season that just ended (on sale) sits at the far end.
+            var full = VC.list();
+            var startIdx = 0;
+            for (var si = 0; si < full.length; si++) { if (full[si].key === curr) { startIdx = si; break; } }
+            var list = full.slice(startIdx).concat(full.slice(0, startIdx));
             var slider = document.getElementById('colSlider');
             var dotsWrap = document.getElementById('colDots');
             var counter = document.getElementById('colCounter');
@@ -163,6 +170,7 @@
                             '<div class="chips">' +
                                 (c.key === curr ? '<span class="chip-now">בעונה עכשיו</span>' : '') +
                                 (c.key === sale ? '<span class="chip-sale">סוף עונה · ' + c.eos + '%-</span>' : '') +
+                                (c.key !== curr && c.key !== sale ? '<span class="chip-soon">בקרוב</span>' : '') +
                             '</div>' +
                             '<span class="col-cta">צפו בקולקציה</span>' +
                         '</div>' +
