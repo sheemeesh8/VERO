@@ -862,8 +862,9 @@
         .vero-drawer-nav a {
             position: relative; display: flex; align-items: baseline; gap: 14px;
             font-family: 'Aharoni CLM', 'Aharoni', 'Assistant', sans-serif;
-            font-size: 16px; font-weight: 300; letter-spacing: 0.5px; color: #1b1916;
-            text-decoration: none; padding: 6px 0; cursor: pointer;
+            font-size: 15px; font-weight: 400; letter-spacing: 1.5px; color: #1b1916;
+            text-transform: uppercase;
+            text-decoration: none; padding: 13px 0; cursor: pointer;
             transition: color 0.25s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);
         }
         .vero-drawer-nav a:hover { transform: translateX(8px); color: #6e5a3a; }
@@ -898,7 +899,7 @@
            focus, top to bottom. The blur is light and the opacity holds low early
            (a 3-stop curve) so the fade eases in gently rather than snapping on. */
         @keyframes veroDrawerItemIn {
-            0%   { opacity: 0; transform: translateY(22px); filter: blur(4px); }
+            0%   { opacity: 0; transform: translateY(22px); filter: blur(1.5px); }
             40%  { opacity: 0.35; }
             100% { opacity: 1; transform: translateY(0);    filter: blur(0); }
         }
