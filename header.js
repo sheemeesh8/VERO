@@ -877,7 +877,7 @@
         }
         .vero-drawer-nav a.secondary {
             font-size: 13.5px; font-weight: 400; letter-spacing: 1.5px; color: #000;
-            padding: 6px 0; text-transform: uppercase;
+            padding: 13px 0; text-transform: uppercase;
         }
         .vero-drawer-nav a.secondary:hover { color: #000; transform: translateX(6px); }
         .vero-drawer-nav a.secondary.action { align-items: center; gap: 9px; color: #000; }
