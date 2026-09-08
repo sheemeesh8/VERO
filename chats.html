@@ -810,12 +810,17 @@
             wrap.style.transition = 'opacity 0.5s ease';
             wrap.style.opacity = '0';
             setTimeout(() => {
-                // Return to the exact page we came from whenever there's browser
-                // history to step back to — don't gate on document.referrer, which
-                // is often empty on in-app navigations and forced us to the fixed
-                // fallback. Only a cold/direct open (no history) uses the fallback.
-                if (window.history.length > 1) history.back();
-                else window.location.href = back.getAttribute('href');
+                // Always try to step back through the real browser history so the
+                // user lands on the exact page they came from. history.length is
+                // unreliable (it can read 1 on in-app / iframed navigations, which
+                // used to force the fixed profile fallback). Instead, call
+                // history.back() and only use the fallback if nothing actually
+                // navigated — i.e. there genuinely is no previous entry.
+                const fallback = back.getAttribute('href');
+                let left = false;
+                window.addEventListener('pagehide', () => { left = true; }, { once: true });
+                history.back();
+                setTimeout(() => { if (!left) window.location.href = fallback; }, 400);
             }, 560);
         });
         // If the page is shown again (e.g. restored from the back/forward cache),
