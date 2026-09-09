@@ -3409,6 +3409,9 @@
             /* No right padding — the image's background panel sits flush against the
                right edge, exactly like the reference mock. */
             padding: 24px 0 28px clamp(16px, 4vw, 48px) !important; text-align: left;
+            /* One uniform background across BOTH halves — no colour break between the
+               data side and the image side. */
+            background: #efefed;
         }
         /* Left column split into THREE equal parts (see the reference): the title
            group in the top third, the specs + price group centred in the middle
@@ -3480,25 +3483,35 @@
         /* Large product image on the right; the hint anchors to its bottom-right. */
         .promo-slider--feed .fp-media {
             order: 0; width: 100%; aspect-ratio: 1; margin: 0;
-            background: #efefed; border-radius: 0;
+            background: transparent; border-radius: 0;
             font-size: clamp(80px, 20vw, 160px);
         }
 
-        /* ---- Mirrored (zigzag) slides ----
-           Every other promoted slide flips the structure: the image sits on the
-           LEFT (flush to the left edge) and the data column on the right, so paging
-           through the slider alternates left/right like a mirror. */
-        .promo-slider--feed .promo-slide:nth-of-type(even) {
+        /* ---- Mirrored (zigzag) slides + checkerboard across blocks ----
+           A slide is "mirrored" (image LEFT, data right) when it is an even slide in
+           a normal slider OR an odd slide in a flipped slider. Flipping alternate
+           sliders (.promo-slider--flip) makes consecutive feed blocks start on the
+           opposite side, so the whole feed reads as a checkerboard. */
+        .promo-slider--feed:not(.promo-slider--flip) .promo-slide:nth-of-type(even),
+        .promo-slider--feed.promo-slider--flip .promo-slide:nth-of-type(odd) {
             grid-template-columns: 1.1fr 0.9fr !important;
             /* Flush LEFT now — no left padding, normal right padding. */
             padding: 24px clamp(16px, 4vw, 48px) 28px 0 !important;
         }
-        .promo-slider--feed .promo-slide:nth-of-type(even) .fp-media { order: -1; }
-        .promo-slider--feed .promo-slide:nth-of-type(even) .fp-text  { order: 1; }
+        .promo-slider--feed:not(.promo-slider--flip) .promo-slide:nth-of-type(even) .fp-media,
+        .promo-slider--feed.promo-slider--flip .promo-slide:nth-of-type(odd) .fp-media { order: -1; }
+        .promo-slider--feed:not(.promo-slider--flip) .promo-slide:nth-of-type(even) .fp-text,
+        .promo-slider--feed.promo-slider--flip .promo-slide:nth-of-type(odd) .fp-text { order: 1; }
         /* Move the "Slide for more" hint to the bottom-LEFT while a mirrored slide
            is the current one, so it stays under the image. */
-        .promo-slider--feed:has(.promo-slide.is-current:nth-of-type(even)) .promo-footer {
+        .promo-slider--feed:not(.promo-slider--flip):has(.promo-slide.is-current:nth-of-type(even)) .promo-footer,
+        .promo-slider--feed.promo-slider--flip:has(.promo-slide.is-current:nth-of-type(odd)) .promo-footer {
             justify-content: flex-start; padding: 0 0 0 14px;
+        }
+        /* On a flip slider the odd (first) slide is mirrored, so its hint starts left;
+           reset the even slide's hint back to the right. */
+        .promo-slider--feed.promo-slider--flip:has(.promo-slide.is-current:nth-of-type(even)) .promo-footer {
+            justify-content: flex-end; padding: 0 14px 0 0;
         }
         /* Narrow screens (incl. the phone-frame app): keep the two-column layout —
            text on the left, image flush to the right — just tighter. */
@@ -3509,8 +3522,9 @@
                 padding: 16px 0 18px 14px !important;
             }
             .promo-slider--feed .fp-media { order: 0; aspect-ratio: 1; }
-            /* Mirror on mobile too: image column on the left for even slides. */
-            .promo-slider--feed .promo-slide:nth-of-type(even) {
+            /* Mirror on mobile too (with the same checkerboard flip). */
+            .promo-slider--feed:not(.promo-slider--flip) .promo-slide:nth-of-type(even),
+            .promo-slider--feed.promo-slider--flip .promo-slide:nth-of-type(odd) {
                 grid-template-columns: 1.08fr 0.92fr !important;
                 padding: 16px 14px 18px 0 !important;
             }
@@ -8976,6 +8990,7 @@
             const lead = document.getElementById('feedLeadSlider');
             if (lead) lead.innerHTML = '';
             feedBlocksCount = 0;
+            feedPromoFlip = 0;   // restart the checkerboard from the same side each render
             loadMoreFeedBlocks();
             if (!feedContainer.children.length) {
                 feedContainer.innerHTML = '<div class="feed-empty">No pieces match these filters.</div>';
@@ -9240,6 +9255,7 @@
         // Each slider instance keeps its own index + autoplay timer, keyed by a unique id.
         const promoState = {};
         let promoUidCounter = 0;
+        let feedPromoFlip = 0;   // alternates the checkerboard start side per feed slider
 
         function promoSlideHTML(s) {
             const url = productPageUrl(s);
@@ -9473,7 +9489,12 @@
             const seq = promoUidCounter++;
             const uid = 'p' + seq;
             const el = document.createElement('div');
-            el.className = 'promo-slider' + (variant === 'feed' ? ' promo-slider--feed' : '');
+            // Alternate feed sliders are "flipped" so consecutive blocks start on the
+            // opposite side — a checkerboard down the feed.
+            const flip = variant === 'feed' && feedPromoFlip++ % 2 === 1;
+            el.className = 'promo-slider'
+                + (variant === 'feed' ? ' promo-slider--feed' : '')
+                + (flip ? ' promo-slider--flip' : '');
             el.innerHTML = promoSliderInner(uid, slides, variant);
             // Alternate direction by build order: even sliders step forward, odd ones back.
             promoState[uid] = { index: 0, timer: null, slides, dir: seq % 2 === 0 ? 1 : -1 };
