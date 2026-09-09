@@ -943,30 +943,24 @@
         }
 
         /* ===== Closing — the exit is the entrance played in reverse =====
-           Same keyframes, same per-item stagger delays, just 'reverse': each item
-           drifts back down and fades out, top to bottom, exactly mirroring the way
-           it came in. The panel's own slide-out waits (transition-delay) until the
-           items have left, so the reverse stagger is actually visible. */
+           Instead of a separate, hand-authored exit curve, the close reuses the
+           *exact* entrance keyframes (veroDrawerItemIn / veroDrawerItemInSoft) with
+           'animation-direction: reverse'. Same keyframes, same duration, same
+           easing, same per-item stagger delays — so every item retraces its own
+           entrance path precisely backwards (drifts back down, re-blurs, fades out)
+           rather than following an approximate mirror. 'forwards' fill holds each
+           item in its hidden end-state until the panel itself slides away. The
+           panel's own slide-out waits (transition-delay) until the items have left,
+           so the reverse stagger is actually visible. */
         .vero-drawer.closing .vero-drawer-nav > *,
         .vero-drawer.closing .vero-drawer-social {
-            animation: veroDrawerItemOut 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: veroDrawerItemIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards;
         }
         .vero-drawer.closing .vero-drawer-nav .vero-drawer-heading,
         .vero-drawer.closing .vero-drawer-nav a.secondary,
         .vero-drawer.closing .vero-drawer-social {
-            animation-name: veroDrawerItemOutSoft;
+            animation-name: veroDrawerItemInSoft;
             animation-duration: 0.5s;
-        }
-        /* Exit = the entrance run backwards: each item eases back down and fades out,
-           holding visible through its stagger delay first. */
-        @keyframes veroDrawerItemOut {
-            0%   { opacity: 1; transform: translateY(0);    filter: blur(0); }
-            60%  { opacity: 0.35; }
-            100% { opacity: 0; transform: translateY(22px); filter: blur(1.5px); }
-        }
-        @keyframes veroDrawerItemOutSoft {
-            from { opacity: 1; transform: translateY(0); }
-            to   { opacity: 0; transform: translateY(9px); }
         }
         .vero-drawer.closing { transition-delay: 0.86s; }
 
