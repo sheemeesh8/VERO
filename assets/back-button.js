@@ -51,4 +51,66 @@
         }
         // else: fall through — the anchor's href / default action navigates.
     }, true);
+
+    /* ------------------------------------------------------------------
+       SPA (in-page) back controls — the search page ("Back to shop") and the
+       chat thread ("back to inbox") — switch views by toggling display, not by
+       navigating, so the browser / phone back button doesn't know about them.
+       This bridge makes them work through history without changing view logic:
+
+         • While such a control is visible, we "arm" one guard history entry.
+         • The on-screen control AND the hardware back button both pop that
+           entry; on the resulting popstate we run the control's own onclick
+           (showMain / vchatOpenInbox) — reusing the existing logic.
+
+       The control's original onclick is preserved and simply invoked, so
+       nothing about the view transitions themselves changes.
+    ------------------------------------------------------------------ */
+    var SPA_BACK_SEL = '.sp-back, .vchat-back';
+    var armed = false;
+
+    function spaVisibleBack() {
+        var els = document.querySelectorAll(SPA_BACK_SEL);
+        for (var i = 0; i < els.length; i++) {
+            // offsetParent is null for display:none (hidden) elements.
+            if (els[i].offsetParent !== null) return els[i];
+        }
+        return null;
+    }
+
+    // Run a control's native action (its inline onclick), falling back to href.
+    function spaRunNative(el) {
+        if (typeof el.onclick === 'function') { el.onclick.call(el); return; }
+        if (el.getAttribute && el.getAttribute('href')) location.href = el.getAttribute('href');
+    }
+
+    // Put one guard entry on the stack once a sub-view is showing, so the next
+    // "back" (button or hardware) is consumed by closing the sub-view.
+    function spaArm() {
+        if (!armed && spaVisibleBack()) {
+            armed = true;
+            try { window.history.pushState({ veroSpaBack: 1 }, ''); } catch (e) {}
+        }
+    }
+
+    // Any interaction can be what opened a sub-view; re-check just after it.
+    document.addEventListener('click', function () { setTimeout(spaArm, 50); }, true);
+
+    // Clicking the on-screen SPA back control steps back through history
+    // (which runs the native action via popstate) instead of firing inline.
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest && e.target.closest(SPA_BACK_SEL);
+        if (!el) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (armed) window.history.back();   // → popstate runs the view's back action
+        else spaRunNative(el);              // no guard armed → act directly
+    }, true);
+
+    // Hardware / browser back while a sub-view is open: close that sub-view.
+    window.addEventListener('popstate', function () {
+        var el = spaVisibleBack();
+        armed = false;
+        if (el) { spaRunNative(el); setTimeout(spaArm, 50); }
+    });
 })();
