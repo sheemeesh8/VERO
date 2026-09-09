@@ -3313,7 +3313,7 @@
         .fp-heart svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.6; }
         .fp-heart.saved svg { fill: #111; }
         .fp-media {
-            width: 100%; aspect-ratio: 0.82; background: #efeeec; border-radius: 3px;
+            width: 100%; aspect-ratio: 0.82; background: #f0efee; border-radius: 0;
             display: flex; align-items: center; justify-content: center; overflow: hidden;
             font-size: clamp(64px, 24vw, 120px); color: rgba(0,0,0,0.12); text-decoration: none;
         }
@@ -3321,13 +3321,26 @@
         /* Gentle entrance for the slide coming into view. */
         .promo-slide.is-current .fp-text { animation: promoTextIn 0.7s cubic-bezier(0.22,1,0.36,1) both; animation-delay: 0.08s; }
         .promo-slide.is-current .fp-media { animation: promoImgIn 0.9s cubic-bezier(0.22,1,0.36,1) both; }
-        /* "Slide for more" hint in the feed slider footer. */
+        /* Reference feed card: no prev/next arrows and no dots — the three slides
+           are swiped through — and a long "Slide for more" arrow line, centered. */
+        .promo-slider--feed .promo-arrow { display: none !important; }
+        .promo-slider--feed .promo-dots { display: none !important; }
+        .promo-slider--feed .promo-footer { justify-content: center; }
         .promo-slider--feed .fp-hint {
-            display: flex; align-items: center; gap: 14px; cursor: default;
-            font-family: 'Oswald', 'Poppins', 'Segoe UI', sans-serif;
-            font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #111;
+            display: flex; align-items: center; gap: 16px; cursor: default;
+            font-family: 'Arimo', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #111;
         }
-        .promo-slider--feed .fp-hint .line { width: 70px; height: 1px; background: #111; display: inline-block; }
+        .promo-slider--feed .fp-hint .line {
+            position: relative; width: clamp(120px, 34vw, 300px); height: 1px;
+            background: #111; display: inline-block;
+        }
+        /* Arrowhead at the end of the line. */
+        .promo-slider--feed .fp-hint .line::after {
+            content: ''; position: absolute; right: 0; top: 50%;
+            width: 7px; height: 7px; border-top: 1px solid #111; border-right: 1px solid #111;
+            transform: translate(1px, -50%) rotate(45deg);
+        }
 
         /* Products Grid */
         .products-grid {
@@ -5688,6 +5701,20 @@
            bar (segment · count) still gets its data from renderVeroBand(). */
         .feed-section .vf-band { display: none !important; }
         .feed-section .vf-empty-grid { display: none !important; }
+
+        /* Header sticky only from the feed: on the home page the bar rides with the
+           hero (absolute, so it scrolls away), and becomes fixed/pinned only once
+           header.js adds .scrolled — which now happens exactly when the feed
+           reaches the top (see veroHeaderScrolled). It drops in from the top. */
+        #siteHeader { position: absolute !important; }
+        #siteHeader.scrolled {
+            position: fixed !important; top: 0;
+            animation: veroHdrDrop 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes veroHdrDrop {
+            from { transform: translateY(-100%); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
+        }
         #feedContainer .ed-head { display: none !important; }
         /* Each feed block leads with its promoted-products slider (3 items in the
            editorial feed card), then its grid of products — so the feed reads as
@@ -6365,6 +6392,14 @@
     <style id="heading-font-override">
       /* All headings / titles use the hero collection title font. */
       h1:not(#zzzz):not(#zzzz):not(#zzzz), h2:not(#zzzz):not(#zzzz):not(#zzzz), h3:not(#zzzz):not(#zzzz):not(#zzzz), h4:not(#zzzz):not(#zzzz):not(#zzzz), h5:not(#zzzz):not(#zzzz):not(#zzzz), h6:not(#zzzz):not(#zzzz):not(#zzzz), [class*="title"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="Title"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="heading"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="Heading"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="headline"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="Headline"]:not(#zzzz):not(#zzzz):not(#zzzz) { font-family: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif !important; }
+      /* The feed promoted-product card keeps its clean sans title/brand (matches
+         the reference), so it opts out of the Didone heading override above. The
+         :not() chain matches that rule's specificity, and coming later it wins. */
+      .fp-title:not(#zzzz):not(#zzzz):not(#zzzz),
+      .fp-titlelink:not(#zzzz):not(#zzzz):not(#zzzz),
+      .fp-brand:not(#zzzz):not(#zzzz):not(#zzzz) {
+          font-family: 'Arimo', 'Helvetica Neue', Arial, sans-serif !important;
+      }
     </style>
 </head>
 <!-- data-back="none": this page opens on the home view, which carries no back
@@ -8978,25 +9013,17 @@
         // header. Read by header.js's scroll handler.
         window.veroHeaderScrolled = function (hdr) {
             const hdrH = (hdr && hdr.offsetHeight) || 0;
-            // Keep the header transparent through the hero, the Men/Women/Kids
-            // slider AND the full-screen category slider below it. The categories
-            // bar only comes in once that whole slider has scrolled under the
-            // header — not while the image is still on screen.
-            const cat = document.getElementById('catFull');
-            if (cat && cat.offsetParent !== null) {
-                let ctop = 0, cn = cat;
-                while (cn) { ctop += cn.offsetTop; cn = cn.offsetParent; }
-                return (window.scrollY + hdrH) >= ctop + cat.offsetHeight;
+            // The header rides with the hero and its editorial sections, then turns
+            // solid + sticky the moment the feed itself reaches the top of the
+            // viewport. Anchor on the feed section's document-space top (summed from
+            // offsetTop so it's immune to any sticky transforms above it).
+            const feed = document.querySelector('.feed-section');
+            if (feed) {
+                let top = 0, n = feed;
+                while (n) { top += n.offsetTop; n = n.offsetParent; }
+                return (window.scrollY + hdrH) >= top;
             }
-            const band = document.getElementById('vfBand');
-            if (!band || band.offsetParent === null) return window.scrollY > 80;
-            // Document-space bottom of the slider, summed from offsetTop so it is
-            // immune to the band's internal position:sticky transforms (a plain
-            // getBoundingClientRect().bottom can misread inside a sticky context).
-            let top = 0, n = band;
-            while (n) { top += n.offsetTop; n = n.offsetParent; }
-            const bandBottomDoc = top + band.offsetHeight;
-            return (window.scrollY + hdrH) >= bandBottomDoc;
+            return window.scrollY > 80;
         };
 
         // Infinite Scroll
@@ -9245,6 +9272,20 @@
             // Alternate direction by build order: even sliders step forward, odd ones back.
             promoState[uid] = { index: 0, timer: null, slides, dir: seq % 2 === 0 ? 1 : -1 };
             el.dataset.uid = uid;
+
+            // Swipe support — the reference feed card hides the arrows and dots, so
+            // a horizontal drag pages the three promoted slides.
+            let sx = null;
+            el.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+            el.addEventListener('touchend', e => {
+                if (sx == null) return;
+                const dx = e.changedTouches[0].clientX - sx;
+                sx = null;
+                if (Math.abs(dx) < 40) return;   // ignore taps / tiny drags
+                const st = promoState[uid];
+                if (st) promoGo(uid, st.index + (dx < 0 ? 1 : -1));
+            }, { passive: true });
+
             return el;
         }
 
