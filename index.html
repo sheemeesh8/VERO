@@ -5683,7 +5683,34 @@
         #filterGrid.hero-slider { display: none !important; }
         .feed-section .feed-lead { display: none !important; }
         #feedContainer .ed-head { display: none !important; }
-        #feedContainer > .promo-slider { display: none !important; }
+        /* Each feed block leads with its promoted-products slider (3 items in the
+           editorial feed card), then its grid of products — so the feed reads as
+           repeating [slider + products] blocks. */
+        #feedContainer > .promo-slider { display: block !important; }
+
+        /* ===== Monthly sale tile — square entry to the sale page ===== */
+        .sale-tile {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; gap: 10px;
+            width: clamp(260px, 72vw, 360px); aspect-ratio: 1 / 1;
+            margin: 44px auto 64px; padding: 28px;
+            background: #EB2323; color: #fff; text-decoration: none;
+            box-shadow: 0 20px 50px rgba(235,35,35,0.26);
+            transition: transform 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.45s ease;
+        }
+        .sale-tile:hover { transform: translateY(-4px); box-shadow: 0 28px 66px rgba(235,35,35,0.34); }
+        .sale-tile-kicker { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; font-weight: 700; opacity: 0.92; }
+        .sale-tile-title {
+            font-family: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif;
+            font-size: clamp(34px, 9vw, 54px); line-height: 1.0; font-weight: 600; letter-spacing: 0.5px;
+        }
+        .sale-tile-sub { font-size: 12px; letter-spacing: 1px; opacity: 0.92; }
+        .sale-tile-cta {
+            margin-top: 10px; display: inline-flex; align-items: center; gap: 8px;
+            font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,0.7); padding-bottom: 4px;
+        }
+        .sale-tile-cta svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.8; fill: none; }
 
         /* --- 1. Category slider (men / women / kids + Shop All) --- */
         /* Five products from the site — a clean row of the shared product card. */
@@ -6975,6 +7002,26 @@
                 <div class="feed-filters" id="feedFilters"><!-- built by renderFeedFilters --></div>
                 <div class="feed-lead-slider" id="feedLeadSlider"></div>
             </div>
+
+            <!-- Monthly sale tile: a square entry to the sale page, titled by the
+                 current month (e.g. "September Sale"). Sits at the head of the feed. -->
+            <a class="sale-tile" href="sales.html" aria-label="Shop the monthly sale">
+                <span class="sale-tile-kicker">End of Season</span>
+                <span class="sale-tile-title"><span id="saleTileMonth">September</span> Sale</span>
+                <span class="sale-tile-sub">Every reduced piece, in one place</span>
+                <span class="sale-tile-cta">Enter
+                    <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+                </span>
+            </a>
+            <script>
+                (function () {
+                    var months = ['January','February','March','April','May','June',
+                                  'July','August','September','October','November','December'];
+                    var el = document.getElementById('saleTileMonth');
+                    if (el) el.textContent = months[new Date().getMonth()];
+                })();
+            </script>
+
             <div id="feedContainer"></div>
             <div class="load-more">↓ Scroll down for more products ↓</div>
         </div>
@@ -8907,15 +8954,9 @@
                     ? segmentFeatured(currentCategory, currentSegment)
                     : featuredProducts).slice(0, 3);
                 const slider = createPromoSlider(slides, 'feed');
-                // The very first slider mounts beside the filters in the lead row;
-                // every later slider precedes its grid in the feed as before.
-                if (feedBlocksCount === 0) {
-                    const lead = document.getElementById('feedLeadSlider');
-                    if (lead) { lead.innerHTML = ''; lead.appendChild(slider); }
-                    else feedContainer.appendChild(slider);
-                } else {
-                    feedContainer.appendChild(slider);
-                }
+                // Every block leads with its promoted-products slider, then its grid,
+                // so the feed reads as repeating [slider + 10 products] blocks.
+                feedContainer.appendChild(slider);
                 promoGo(slider.dataset.uid, 0);
 
                 feedContainer.appendChild(block);
