@@ -228,6 +228,13 @@
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-search input::placeholder { color: #6e6e6e; }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-searchgo svg { stroke: #111; }
         #siteHeader.hero-left-box.sticky-look:not(.scrolled) .hdr-funnel svg { stroke: #fff; fill: #fff; }
+        /* Category toggle on the light sticky-look bar: it inherits the white
+           treatment made for the dark hero, which is invisible here — force it black
+           to match the search field and the rest of the sticky-look chrome. */
+        #siteHeader.sticky-look:not(.scrolled) .toggle-category { color: #111; border-color: rgba(0,0,0,0.22); }
+        #siteHeader.sticky-look:not(.scrolled) .toggle-category::before { background: #111; }
+        #siteHeader.sticky-look:not(.scrolled) .toggle-category .seg { color: #6b6b6b; }
+        #siteHeader.sticky-look:not(.scrolled) .toggle-category .seg.active { color: #fff; }
         /* Funnel: the bare glyph beside the field, matching the magnifier. */
         #siteHeader .hdr-funnel {
             width: 54px; height: 54px; border-radius: 50%;
