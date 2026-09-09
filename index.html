@@ -11775,15 +11775,19 @@
             }
             if (tAxis === 1) {
                 const y = window.scrollY || window.pageYOffset;
-                // Only page while in the hero / slider zone (at or above the feed top).
-                if (y <= feedTop() + 4 && !animating) e.preventDefault();
+                // Only page while strictly ABOVE the feed. At (or below) the feed top
+                // we must NOT preventDefault — otherwise, since the feed top is the
+                // last section stop, a downward swipe there glides nowhere while native
+                // scroll is blocked, trapping the page at the top of the feed.
+                if (y < feedTop() - 4 && !animating) e.preventDefault();
             }
         }, { passive: false });
         window.addEventListener('touchend', function (e) {
             if (tAxis !== 1 || !homeScrollActive()) { tAxis = 0; return; }
             tAxis = 0;
             const y = window.scrollY || window.pageYOffset;
-            if (y > feedTop() + 4 || animating) return;
+            // At/below the feed top the feed scrolls natively — don't page.
+            if (y >= feedTop() - 4 || animating) return;
             const endY = (e.changedTouches[0] || {}).clientY;
             const dy = tStartY - (endY == null ? tStartY : endY);   // >0 swipe up → go down
             if (dy > 12) glideStep(1);
