@@ -29,4 +29,26 @@
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
     else run();
+
+    /* ------------------------------------------------------------------
+       Every page-level BACK button goes back through the browser history,
+       so "back" always returns to wherever the user actually came from
+       instead of a hard-coded page. The element's href stays as a fallback:
+       if there's no history to go back to (the page was opened directly, in
+       a fresh tab, or from an external link), we let the normal navigation
+       happen. A capture-phase listener runs before any inline onclick, so
+       pages that already hard-code history.back() don't fire it twice.
+    ------------------------------------------------------------------ */
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest && e.target.closest('.back, .back-btn');
+        if (!el) return;
+        // Only hijack when there is real in-app history to return to.
+        // referrer check keeps us from stepping back out of the site entirely.
+        if (window.history.length > 1) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.history.back();
+        }
+        // else: fall through — the anchor's href / default action navigates.
+    }, true);
 })();
