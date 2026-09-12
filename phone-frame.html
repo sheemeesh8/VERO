@@ -157,36 +157,34 @@
             .pf-spin { animation-duration: 3s; }
         }
 
-        /* ---- Entrance: a black screen with the big peacock logo spinning once,
-               then the black window slides up and out to reveal the site. ---- */
+        /* ---- Entrance: a short zoom-OUT from the peacock over a black field.
+               The mark starts filling the screen, pulls back to rest, then the
+               whole black panel fades away to reveal the site behind it. ---- */
         .pf-intro {
-            position: absolute; inset: 0; z-index: 9;
+            position: absolute; inset: 0; z-index: 40;
             background: #000;
             display: flex; align-items: center; justify-content: center;
-            perspective: 900px;                 /* gives the logo's rotateY real depth */
-            /* Hold black + logo, then slide the whole black panel up and away. */
-            animation: pfiSlideOut 0.7s cubic-bezier(0.7, 0, 0.3, 1) 1.35s forwards;
+            overflow: hidden;
+            /* Fade the panel out once the zoom has settled (class added by JS). */
+            transition: opacity 0.55s ease, visibility 0.55s ease;
         }
-        .pf-intro.done { display: none; }
-        /* Big white peacock (the dark logo would vanish on black), centred, spins once. */
-        .pfi-logo {
+        .pf-intro.done { opacity: 0; visibility: hidden; pointer-events: none; }
+        /* White peacock (the dark logo would vanish on black), centred. Begins
+           zoomed right in, then eases back to its resting size. */
+        .pf-intro-peacock {
             width: min(58vw, 230px); height: auto; display: block;
-            transform-style: preserve-3d; backface-visibility: visible;
-            animation: pfiSpinOnce 1.2s cubic-bezier(0.45, 0, 0.35, 1) 0.1s both;
+            transform-origin: center center;
+            animation: pfiZoomOut 1.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+            will-change: transform, opacity;
         }
-        @keyframes pfiSpinOnce {
-            from { transform: rotateY(0deg);   opacity: 0.15; }
-            15%  { opacity: 1; }
-            to   { transform: rotateY(360deg); opacity: 1; }
+        @keyframes pfiZoomOut {
+            0%   { transform: scale(3.4); opacity: 0; }
+            20%  { opacity: 1; }
+            100% { transform: scale(1);   opacity: 1; }
         }
-        /* The black window slides up and off, uncovering the site painted behind it. */
-        @keyframes pfiSlideOut {
-            from { transform: translateY(0); }
-            to   { transform: translateY(-100%); }
-        }
+        @keyframes pfiFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @media (prefers-reduced-motion: reduce) {
-            .pf-intro { animation: pfiSlideOut 0.4s ease 0.5s forwards; }
-            .pfi-logo { animation: none; }
+            .pf-intro-peacock { animation: pfiFadeIn 0.5s ease both; transform: none; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -230,8 +228,12 @@
             <!-- The whole site lives in here. index.html detects it is framed and renders
                  the real homepage instead of bouncing back to this frame. -->
             <iframe title="moravchick" id="siteFrame"></iframe>
-            <!-- Loading cover and entrance intro removed on request — the site loads
-                 straight in with no spinner and no black intro screen. -->
+            <!-- Entrance intro: a short zoom-out from the peacock mark over a black
+                 field, played once each time the app is opened. It covers the iframe
+                 while the home feed loads, then fades away (see playIntro below). -->
+            <div id="pfIntro" class="pf-intro" aria-hidden="true">
+                <img class="pf-intro-peacock" src="peacock-logo-white.png?v=1" alt="" draggable="false" />
+            </div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
         </div>
@@ -248,9 +250,9 @@
             var intro = document.getElementById('pfIntro');
             if (!intro) return;
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            // spin (0.1s delay + 1.2s) then slide-out (1.35s delay + 0.7s) ≈ 2.05s; give a
-            // little slack so the panel is fully off-screen before we remove it.
-            var total = reduce ? 950 : 2150;
+            // zoom-out (0.12s delay + 1.7s ≈ 1.82s), then hold a beat before the panel
+            // fades away. Reduced motion just fades the mark in, then out sooner.
+            var total = reduce ? 700 : 1900;
             setTimeout(function () { intro.classList.add('done'); }, total);
         })();
 
