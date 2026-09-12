@@ -157,34 +157,37 @@
             .pf-spin { animation-duration: 3s; }
         }
 
-        /* ---- Entrance: a short, smooth zoom-OUT from the peacock over a white
-               field. The dark mark starts a little enlarged, eases back to its
-               small resting size, then the whole panel fades to transparent to
-               reveal the site behind it. ---- */
+        /* ---- Entrance: a black peacock on a white field settles small, then
+               grows back and fades to transparent while the white panel fades
+               with it — the mark "opens" like a window onto the app behind. ---- */
         .pf-intro {
             position: absolute; inset: 0; z-index: 40;
             background: #fff;
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
-            /* Fade the panel to transparent once the zoom has settled (JS adds .done). */
-            transition: opacity 0.45s ease, visibility 0.45s ease;
+            /* The white panel holds, then fades out in sync with the mark's grow. */
+            animation: pfiPanelFade 1.3s ease both;
         }
+        @keyframes pfiPanelFade { 0%, 52% { opacity: 1; } 100% { opacity: 0; } }
+        /* Once faded, drop it entirely so it never intercepts taps (JS adds .done). */
         .pf-intro.done { opacity: 0; visibility: hidden; pointer-events: none; }
-        /* Dark peacock on the white field, centred and small. Begins a touch
-           enlarged, then eases smoothly back to its resting size. */
+        /* Dark peacock, centred and small. Begins a touch enlarged, eases back to
+           rest, then grows large and fades — opening onto the app. */
         .pf-intro-peacock {
             width: min(34vw, 132px); height: auto; display: block;
             transform-origin: center center;
-            animation: pfiZoomOut 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both;
+            animation: pfiOpen 1.3s cubic-bezier(0.6, 0, 0.2, 1) both;
             will-change: transform, opacity;
         }
-        @keyframes pfiZoomOut {
+        @keyframes pfiOpen {
             0%   { transform: scale(2.1); opacity: 0; }
-            30%  { opacity: 1; }
-            100% { transform: scale(1);   opacity: 1; }
+            22%  { transform: scale(1);   opacity: 1; }
+            46%  { transform: scale(1);   opacity: 1; }
+            100% { transform: scale(7);   opacity: 0; }
         }
         @keyframes pfiFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @media (prefers-reduced-motion: reduce) {
+            .pf-intro { animation: none; }
             .pf-intro-peacock { animation: pfiFadeIn 0.5s ease both; transform: none; }
         }
 
@@ -251,9 +254,9 @@
             var intro = document.getElementById('pfIntro');
             if (!intro) return;
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            // zoom-out (0.04s delay + 0.9s ≈ 0.94s), then the panel fades to
-            // transparent. Reduced motion just fades the mark in, then out sooner.
-            var total = reduce ? 450 : 1000;
+            // settle + grow-and-fade open ≈ 1.3s; remove the panel just after so it
+            // never intercepts taps. Reduced motion just fades the mark in briefly.
+            var total = reduce ? 600 : 1350;
             setTimeout(function () { intro.classList.add('done'); }, total);
         })();
 
