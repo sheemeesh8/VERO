@@ -5220,6 +5220,65 @@
         .products-grid .product-name,
         .acat-grid .product-name { font-size: 11px; }
 
+        /* ---- Feed & category cards: hold-to-flip ----
+           The cart/wishlist icons are gone from the front; the card shows a
+           "hold to add to" hint instead. A 2s long-press (handled in JS by the
+           holdFlip module) adds .flipped, and the card turns to reveal the two
+           icons stacked in the centre of the back. Scoped to the two feed grids
+           so cart/wishlist pages (different renderers) are untouched. */
+        .products-grid .product-card,
+        .acat-grid .product-card {
+            perspective: 1000px;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .products-grid .pc-flip,
+        .acat-grid .pc-flip {
+            position: absolute; inset: 0;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .products-grid .product-card.flipped .pc-flip,
+        .acat-grid .product-card.flipped .pc-flip { transform: rotateY(180deg); }
+        .products-grid .pc-face,
+        .acat-grid .pc-face {
+            position: absolute; inset: 0;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        .products-grid .pc-back,
+        .acat-grid .pc-back {
+            transform: rotateY(180deg);
+            background: var(--card-ground);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 26px;
+        }
+        /* The two icons on the back — centred, stacked, large tap targets. */
+        .products-grid .pc-back .product-icon,
+        .acat-grid .pc-back .product-icon {
+            position: static; display: grid; place-items: center;
+            width: 58px; height: 58px; padding: 0;
+            border: none; background: none; cursor: pointer;
+        }
+        .products-grid .pc-back .product-icon svg,
+        .acat-grid .pc-back .product-icon svg {
+            width: 40px; height: 40px; fill: none;
+            stroke: var(--pc-icon-color, #004225);
+            stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .products-grid .pc-back .product-icon:active,
+        .acat-grid .pc-back .product-icon:active { transform: scale(0.9); }
+        /* The front hint that replaces the icons. */
+        .products-grid .pc-holdhint,
+        .acat-grid .pc-holdhint {
+            position: absolute; top: 12px; left: 0; right: 0;
+            text-align: center; z-index: 3; pointer-events: none;
+            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
+            font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+            color: #8a8a8a;
+        }
+
         /* ==================== SECURE CHAT — Quiet Luxury UI ==================== */
         .vchat {
             --c-bg: #F9F8F6;
@@ -8730,6 +8789,54 @@
             el.addEventListener('animationend', () => el.remove());
         }
 
+        // ==================== HOLD-TO-FLIP (feed & category cards) ====================
+        // The feed cards have no cart/wishlist icons on the front — just a "hold to
+        // add to" hint. Pressing and holding for 2s flips the card to reveal the two
+        // icons stacked on the back. A short tap still opens the product; a tap on the
+        // flipped back (off the icons) flips it back.
+        (function holdFlip() {
+            const LONG = 2000, MOVE_CANCEL = 12;
+            let timer = null, longFired = false, sx = 0, sy = 0;
+            const feedCard = (t) => t && t.closest && t.closest('.products-grid .product-card, .acat-grid .product-card');
+            document.addEventListener('pointerdown', (e) => {
+                const card = feedCard(e.target);
+                if (!card || card.classList.contains('flipped')) return;
+                longFired = false; sx = e.clientX; sy = e.clientY;
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    longFired = true;
+                    card.classList.add('flipped');
+                    if (navigator.vibrate) { try { navigator.vibrate(18); } catch (_) {} }
+                }, LONG);
+            }, true);
+            document.addEventListener('pointermove', (e) => {
+                if (timer == null) return;
+                if (Math.abs(e.clientX - sx) > MOVE_CANCEL || Math.abs(e.clientY - sy) > MOVE_CANCEL) {
+                    clearTimeout(timer); timer = null;   // moved = scrolling, cancel the hold
+                }
+            }, true);
+            const endPress = () => { clearTimeout(timer); timer = null; };
+            document.addEventListener('pointerup', endPress, true);
+            document.addEventListener('pointercancel', endPress, true);
+            // Stop the OS long-press callout/menu on the cards.
+            document.addEventListener('contextmenu', (e) => { if (feedCard(e.target)) e.preventDefault(); }, true);
+            // Intercept the click that a press produces.
+            document.addEventListener('click', (e) => {
+                if (longFired) {                       // the click right after a long press
+                    longFired = false;
+                    e.preventDefault(); e.stopImmediatePropagation();
+                    return;                            // swallow it — no navigation
+                }
+                const card = e.target.closest && e.target.closest('.product-card');
+                if (card && card.classList.contains('flipped') && !(e.target.closest && e.target.closest('[data-action]'))) {
+                    // Tap on the flipped back, off the icons → flip it back.
+                    e.preventDefault(); e.stopImmediatePropagation();
+                    card.classList.remove('flipped');
+                }
+                // A tap on a back icon falls through to the delegation handler below.
+            }, true);
+        })();
+
         // ==================== EVENT DELEGATION (product cards & buttons) ====================
         document.addEventListener('click', (e) => {
             // Check if click is on an action button (cart or wishlist)
@@ -8997,34 +9104,32 @@
             const productUrl = `product-showcase.html?product=${encodeURIComponent(productData)}`;
             return `
                 <a href="${productUrl}" style="text-decoration: none;" class="product-card${veroCardClass(prod)}" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
-                    <div class="product-image">${prod.icon}
-                        <button class="product-icon cart" data-action="cart" title="Add to Cart" onclick="event.preventDefault(); event.stopPropagation();">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/>
-                            </svg>
-                        </button>
-                        <button class="product-icon heart" data-action="wishlist" title="Add to Wishlist" onclick="event.preventDefault(); event.stopPropagation();">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="product-info">
-                        <div class="pc-left">
-                            <div class="product-price">${veroPriceHTML(prod)}</div>
-                            <div class="pc-actions">
-                                <button class="pc-action" data-action="cart" title="Add to Cart" onclick="event.preventDefault(); event.stopPropagation();">
-                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
-                                </button>
-                                <button class="pc-action" data-action="wishlist" title="Add to Wishlist" onclick="event.preventDefault(); event.stopPropagation();">
-                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                </button>
+                    <div class="pc-flip">
+                        <div class="pc-face pc-front">
+                            <div class="product-image">${prod.icon}</div>
+                            <div class="pc-holdhint">hold to add to</div>
+                            <div class="product-info">
+                                <div class="pc-left">
+                                    <div class="product-price">${veroPriceHTML(prod)}</div>
+                                </div>
+                                <div class="pc-right">
+                                    <div class="product-seller" onclick="event.preventDefault(); event.stopPropagation(); showSellerProfile('${prod.seller}');">${prod.seller}</div>
+                                    <div class="product-name">${prod.name}</div>
+                                    <div class="product-rating">${stars}</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="pc-right">
-                            <div class="product-seller" onclick="event.preventDefault(); event.stopPropagation(); showSellerProfile('${prod.seller}');">${prod.seller}</div>
-                            <div class="product-name">${prod.name}</div>
-                            <div class="product-rating">${stars}</div>
+                        <div class="pc-face pc-back">
+                            <button class="product-icon heart" data-action="wishlist" title="Add to Wishlist" onclick="event.preventDefault(); event.stopPropagation();">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </button>
+                            <button class="product-icon cart" data-action="cart" title="Add to Cart" onclick="event.preventDefault(); event.stopPropagation();">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </a>
