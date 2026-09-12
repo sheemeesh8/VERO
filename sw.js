@@ -1,79 +1,32 @@
-/* moravchick service worker — makes the installed app fast.
+/* moravchick service worker — CACHE DISABLED.
  *
- * Strategy:
- *  - HTML documents (navigations / *.html): NETWORK-ONLY with cache: 'no-store',
- *    so the app ALWAYS loads the freshest deploy — bypassing even the browser's
- *    HTTP cache — and falls back to the cached copy only when offline.
- *  - Static assets (images, css, js, fonts): STALE-WHILE-REVALIDATE — served
- *    instantly from the cache while a fresh copy is fetched in the background
- *    for next time. This is what removes the slow re-download of the heavy
- *    hero images on every open.
+ * This worker deletes every cache and does NOT cache anything: it registers no
+ * fetch handler, so every request goes straight to the network and the app is
+ * always the freshest deploy. It exists only to purge the caches that earlier
+ * versions of this worker created on clients, and to keep those clients from
+ * ever serving stale content again.
  *
- * Bump CACHE_VERSION to force all clients onto a clean cache.
+ * Bump CACHE_VERSION to push a fresh copy of this worker to all clients.
  */
-var CACHE_VERSION = 'vero-v147';
-var ASSET_CACHE = CACHE_VERSION + '-assets';
-var HTML_CACHE = CACHE_VERSION + '-html';
+var CACHE_VERSION = 'vero-v148-nocache';
 
 self.addEventListener('install', function () {
+  // Take over immediately, without waiting for old tabs to close.
   self.skipWaiting();
 });
 
 self.addEventListener('activate', function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
-      // Drop any cache that isn't from the current version.
-      return Promise.all(keys.map(function (k) {
-        if (k.indexOf(CACHE_VERSION) !== 0) return caches.delete(k);
-      }));
-    }).then(function () { return self.clients.claim(); })
-  );
-});
-
-function isHTML(req, url) {
-  return req.mode === 'navigate' ||
-         req.destination === 'document' ||
-         /\.html($|\?)/.test(url.pathname + url.search);
-}
-
-self.addEventListener('fetch', function (event) {
-  var req = event.request;
-  if (req.method !== 'GET') return;
-
-  var url = new URL(req.url);
-  // Only handle our own origin; let cross-origin (fonts CDNs, etc.) pass through.
-  if (url.origin !== self.location.origin) return;
-
-  // ---- HTML: always fresh from network (no-store), cache only for offline ----
-  if (isHTML(req, url)) {
-    event.respondWith(
-      fetch(req, { cache: 'no-store' }).then(function (res) {
-        var copy = res.clone();
-        caches.open(HTML_CACHE).then(function (c) { c.put(req, copy); });
-        return res;
-      }).catch(function () {
-        return caches.match(req).then(function (hit) {
-          return hit || caches.match('phone-frame.html') || caches.match('index.html');
-        });
-      })
-    );
-    return;
-  }
-
-  // ---- Static assets: stale-while-revalidate (instant, updates in bg) ----
-  event.respondWith(
-    caches.open(ASSET_CACHE).then(function (cache) {
-      return cache.match(req).then(function (hit) {
-        var network = fetch(req).then(function (res) {
-          // Only cache complete, successful, basic responses.
-          if (res && res.status === 200 && res.type === 'basic') {
-            cache.put(req, res.clone());
-          }
-          return res;
-        }).catch(function () { return hit; });
-        // Serve cached copy immediately if we have it; otherwise wait for network.
-        return hit || network;
-      });
+      // Delete EVERY cache, not just old versions — a full purge.
+      return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+    }).then(function () {
+      // Control all open pages so the next navigation is network-fresh.
+      return self.clients.claim();
     })
   );
 });
+
+/* No 'fetch' handler on purpose: the worker never intercepts requests, so
+   nothing is stored in the Cache Storage and the browser always fetches from
+   the network. */
