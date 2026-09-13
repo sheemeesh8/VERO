@@ -5232,6 +5232,10 @@
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
+            /* Let the feed scroll vertically, but keep the touch sequence alive for a
+               still press so the 2s hold registers (the browser won't hijack it). */
+            touch-action: pan-y;
+            -webkit-user-drag: none;
         }
         .products-grid .pc-flip,
         .acat-grid .pc-flip {
@@ -8795,29 +8799,44 @@
         // icons stacked on the back. A short tap still opens the product; a tap on the
         // flipped back (off the icons) flips it back.
         (function holdFlip() {
-            const LONG = 2000, MOVE_CANCEL = 12;
-            let timer = null, longFired = false, sx = 0, sy = 0;
+            const LONG = 2000, MOVE_CANCEL = 14;
+            let timer = null, longFired = false, sx = 0, sy = 0, pressedCard = null;
             const feedCard = (t) => t && t.closest && t.closest('.products-grid .product-card, .acat-grid .product-card');
-            document.addEventListener('pointerdown', (e) => {
-                const card = feedCard(e.target);
-                if (!card || card.classList.contains('flipped')) return;
-                longFired = false; sx = e.clientX; sy = e.clientY;
+            function start(x, y, card) {
+                longFired = false; pressedCard = card; sx = x; sy = y;
                 clearTimeout(timer);
                 timer = setTimeout(() => {
                     longFired = true;
                     card.classList.add('flipped');
                     if (navigator.vibrate) { try { navigator.vibrate(18); } catch (_) {} }
                 }, LONG);
-            }, true);
-            document.addEventListener('pointermove', (e) => {
+            }
+            function move(x, y) {
                 if (timer == null) return;
-                if (Math.abs(e.clientX - sx) > MOVE_CANCEL || Math.abs(e.clientY - sy) > MOVE_CANCEL) {
+                if (Math.abs(x - sx) > MOVE_CANCEL || Math.abs(y - sy) > MOVE_CANCEL) {
                     clearTimeout(timer); timer = null;   // moved = scrolling, cancel the hold
                 }
+            }
+            function end() { clearTimeout(timer); timer = null; }
+            // Touch (mobile) — passive so the page can still scroll; a still press holds.
+            document.addEventListener('touchstart', (e) => {
+                const card = feedCard(e.target);
+                if (!card || card.classList.contains('flipped')) return;
+                const t = e.touches[0]; if (t) start(t.clientX, t.clientY, card);
+            }, { capture: true, passive: true });
+            document.addEventListener('touchmove', (e) => {
+                const t = e.touches[0]; if (t) move(t.clientX, t.clientY);
+            }, { capture: true, passive: true });
+            document.addEventListener('touchend', end, true);
+            document.addEventListener('touchcancel', end, true);
+            // Mouse (desktop).
+            document.addEventListener('mousedown', (e) => {
+                const card = feedCard(e.target);
+                if (!card || card.classList.contains('flipped')) return;
+                start(e.clientX, e.clientY, card);
             }, true);
-            const endPress = () => { clearTimeout(timer); timer = null; };
-            document.addEventListener('pointerup', endPress, true);
-            document.addEventListener('pointercancel', endPress, true);
+            document.addEventListener('mousemove', (e) => move(e.clientX, e.clientY), true);
+            document.addEventListener('mouseup', end, true);
             // Stop the OS long-press callout/menu on the cards.
             document.addEventListener('contextmenu', (e) => { if (feedCard(e.target)) e.preventDefault(); }, true);
             // Intercept the click that a press produces.
