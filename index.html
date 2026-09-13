@@ -8793,64 +8793,53 @@
             el.addEventListener('animationend', () => el.remove());
         }
 
-        // ==================== HOLD-TO-FLIP (feed & category cards) ====================
-        // The feed cards have no cart/wishlist icons on the front — just a "hold to
-        // add to" hint. Pressing and holding for 2s flips the card to reveal the two
-        // icons stacked on the back. A short tap still opens the product; a tap on the
-        // flipped back (off the icons) flips it back.
-        (function holdFlip() {
-            const LONG = 2000, MOVE_CANCEL = 14;
-            let timer = null, longFired = false, sx = 0, sy = 0, pressedCard = null;
+        // ==================== SWIPE-TO-FLIP (feed & category cards) ====================
+        // The feed cards have no cart/wishlist icons on the front — just a "swipe to
+        // add to" hint. A sideways swipe flips the card to reveal the two icons
+        // stacked on the back (swipe again, or tap the back off the icons, to flip
+        // it back). A short tap still opens the product; vertical drags scroll.
+        (function swipeFlip() {
+            const SWIPE = 45, V_BAIL = 12;
+            let sx = 0, sy = 0, card = null, tracking = false, swiped = false;
             const feedCard = (t) => t && t.closest && t.closest('.products-grid .product-card, .acat-grid .product-card');
-            function start(x, y, card) {
-                longFired = false; pressedCard = card; sx = x; sy = y;
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    longFired = true;
-                    card.classList.add('flipped');
-                    if (navigator.vibrate) { try { navigator.vibrate(18); } catch (_) {} }
-                }, LONG);
-            }
+            function start(x, y, c) { sx = x; sy = y; card = c; tracking = true; swiped = false; }
             function move(x, y) {
-                if (timer == null) return;
-                if (Math.abs(x - sx) > MOVE_CANCEL || Math.abs(y - sy) > MOVE_CANCEL) {
-                    clearTimeout(timer); timer = null;   // moved = scrolling, cancel the hold
+                if (!tracking || !card) return;
+                const dx = x - sx, dy = y - sy;
+                if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > V_BAIL) { tracking = false; return; } // vertical = scroll
+                if (Math.abs(dx) >= SWIPE) {
+                    tracking = false; swiped = true;
+                    card.classList.toggle('flipped');
+                    if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
                 }
             }
-            function end() { clearTimeout(timer); timer = null; }
-            // Touch (mobile) — passive so the page can still scroll; a still press holds.
+            function end() { tracking = false; }
+            // Touch (mobile) — passive; touch-action:pan-y lets vertical scroll through.
             document.addEventListener('touchstart', (e) => {
-                const card = feedCard(e.target);
-                if (!card || card.classList.contains('flipped')) return;
-                const t = e.touches[0]; if (t) start(t.clientX, t.clientY, card);
+                const c = feedCard(e.target); if (!c) return;
+                const t = e.touches[0]; if (t) start(t.clientX, t.clientY, c);
             }, { capture: true, passive: true });
             document.addEventListener('touchmove', (e) => {
                 const t = e.touches[0]; if (t) move(t.clientX, t.clientY);
             }, { capture: true, passive: true });
             document.addEventListener('touchend', end, true);
             document.addEventListener('touchcancel', end, true);
-            // Mouse (desktop).
+            // Mouse (desktop drag).
+            let mdown = false;
             document.addEventListener('mousedown', (e) => {
-                const card = feedCard(e.target);
-                if (!card || card.classList.contains('flipped')) return;
-                start(e.clientX, e.clientY, card);
+                const c = feedCard(e.target); if (!c) return;
+                mdown = true; start(e.clientX, e.clientY, c);
             }, true);
-            document.addEventListener('mousemove', (e) => move(e.clientX, e.clientY), true);
-            document.addEventListener('mouseup', end, true);
-            // Stop the OS long-press callout/menu on the cards.
-            document.addEventListener('contextmenu', (e) => { if (feedCard(e.target)) e.preventDefault(); }, true);
-            // Intercept the click that a press produces.
+            document.addEventListener('mousemove', (e) => { if (mdown) move(e.clientX, e.clientY); }, true);
+            document.addEventListener('mouseup', () => { mdown = false; end(); }, true);
+            // A swipe shouldn't also open the product; swallow the click it produces.
             document.addEventListener('click', (e) => {
-                if (longFired) {                       // the click right after a long press
-                    longFired = false;
-                    e.preventDefault(); e.stopImmediatePropagation();
-                    return;                            // swallow it — no navigation
-                }
-                const card = e.target.closest && e.target.closest('.product-card');
-                if (card && card.classList.contains('flipped') && !(e.target.closest && e.target.closest('[data-action]'))) {
+                if (swiped) { swiped = false; e.preventDefault(); e.stopImmediatePropagation(); return; }
+                const c = e.target.closest && e.target.closest('.product-card');
+                if (c && c.classList.contains('flipped') && !(e.target.closest && e.target.closest('[data-action]'))) {
                     // Tap on the flipped back, off the icons → flip it back.
                     e.preventDefault(); e.stopImmediatePropagation();
-                    card.classList.remove('flipped');
+                    c.classList.remove('flipped');
                 }
                 // A tap on a back icon falls through to the delegation handler below.
             }, true);
@@ -9122,11 +9111,11 @@
             });
             const productUrl = `product-showcase.html?product=${encodeURIComponent(productData)}`;
             return `
-                <a href="${productUrl}" style="text-decoration: none;" class="product-card${veroCardClass(prod)}" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
+                <a href="${productUrl}" draggable="false" style="text-decoration: none;" class="product-card${veroCardClass(prod)}" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
                     <div class="pc-flip">
                         <div class="pc-face pc-front">
                             <div class="product-image">${prod.icon}</div>
-                            <div class="pc-holdhint">hold to add to</div>
+                            <div class="pc-holdhint">swipe to add to</div>
                             <div class="product-info">
                                 <div class="pc-left">
                                     <div class="product-price">${veroPriceHTML(prod)}</div>
