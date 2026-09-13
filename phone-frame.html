@@ -89,6 +89,19 @@
         /* Centred punch-hole camera (Samsung A56) — a small round dot at top centre
            that floats OVER the content, reserving no space, so the site fills the
            whole screen behind it. pointer-events:none so it never blocks taps. */
+        /* Tiny diagnostic build stamp — faint, non-interactive, bottom-centre. */
+        #pfBuild {
+            position: absolute;
+            left: 50%;
+            bottom: 4px;
+            transform: translateX(-50%);
+            z-index: 50;
+            font: 9px/1 -apple-system, 'Segoe UI', sans-serif;
+            letter-spacing: 0.5px;
+            color: rgba(0, 0, 0, 0.28);
+            pointer-events: none;
+            user-select: none;
+        }
         .island {
             position: absolute;
             top: 13px;
@@ -240,9 +253,34 @@
             </div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
+            <!-- Tiny build stamp (diagnostic): tells at a glance which deploy is live. -->
+            <div id="pfBuild">v162</div>
         </div>
     </div>
     <script>
+        // ---- Self-heal: force stale PWA/service-worker state to drop, once per session,
+        // so a fresh deploy always wins even on an installed app. ----
+        (function selfHeal() {
+            try {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function (regs) {
+                        regs.forEach(function (r) { try { r.update(); } catch (e) {} });
+                    }).catch(function () {});
+                }
+                if (!sessionStorage.getItem('vero_healed_162')) {
+                    sessionStorage.setItem('vero_healed_162', '1');
+                    if (window.caches && caches.keys) {
+                        caches.keys().then(function (keys) {
+                            if (keys && keys.length) {
+                                Promise.all(keys.map(function (k) { return caches.delete(k); }))
+                                    .then(function () { location.reload(); });
+                            }
+                        }).catch(function () {});
+                    }
+                }
+            } catch (e) { /* storage/caches blocked — ignore */ }
+        })();
+        try { document.body.dataset.build = '162'; console.log('moravchick build v162'); } catch (e) {}
         // Hide the content scrollbar inside the phone (scrolling still works). Same-origin
         // (file://) lets us inject a style into the framed document; re-runs on every
         // in-frame navigation because onload fires for each page load.
