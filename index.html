@@ -5237,23 +5237,28 @@
             touch-action: pan-y;
             -webkit-user-drag: none;
         }
+        /* The flip is a horizontal squish (scaleX) of the WHOLE card — grey ground
+           included — rather than a 3D rotate, so it renders identically on every
+           browser (3D + overflow:hidden was leaving the back blank on some). The JS
+           swaps front/back at the mid-point (see swipeFlip). */
         .products-grid .pc-flip,
         .acat-grid .pc-flip {
             position: absolute; inset: 0;
-            transform-style: preserve-3d;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--card-ground);
+            transform-origin: center;
+            transition: transform 0.16s ease;
         }
-        .products-grid .product-card.flipped .pc-flip,
-        .acat-grid .product-card.flipped .pc-flip { transform: rotateY(180deg); }
+        .products-grid .product-card.flipping .pc-flip,
+        .acat-grid .product-card.flipping .pc-flip { transform: scaleX(0); }
         .products-grid .pc-face,
-        .acat-grid .pc-face {
-            position: absolute; inset: 0;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-        }
+        .acat-grid .pc-face { position: absolute; inset: 0; }
+        /* Front shows by default; back is hidden until the card is flipped. */
         .products-grid .pc-back,
-        .acat-grid .pc-back {
-            transform: rotateY(180deg);
+        .acat-grid .pc-back { display: none; }
+        .products-grid .product-card.showback .pc-front,
+        .acat-grid .product-card.showback .pc-front { display: none; }
+        .products-grid .product-card.showback .pc-back,
+        .acat-grid .product-card.showback .pc-back {
             background: var(--card-ground);
             display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 26px;
@@ -8802,6 +8807,19 @@
             const SWIPE = 45, V_BAIL = 12;
             let sx = 0, sy = 0, card = null, tracking = false, swiped = false;
             const feedCard = (t) => t && t.closest && t.closest('.products-grid .product-card, .acat-grid .product-card');
+            // Squish the card to a vertical line, swap the face at the mid-point, then
+            // let it spring back open — a flip that works on every browser.
+            function flip(c) {
+                if (c.dataset.flipping === '1') return;
+                c.dataset.flipping = '1';
+                c.classList.add('flipping');
+                if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
+                setTimeout(() => {
+                    c.classList.toggle('showback');
+                    c.classList.remove('flipping');
+                    setTimeout(() => { c.dataset.flipping = ''; }, 170);
+                }, 160);
+            }
             function start(x, y, c) { sx = x; sy = y; card = c; tracking = true; swiped = false; }
             function move(x, y) {
                 if (!tracking || !card) return;
@@ -8809,8 +8827,7 @@
                 if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > V_BAIL) { tracking = false; return; } // vertical = scroll
                 if (Math.abs(dx) >= SWIPE) {
                     tracking = false; swiped = true;
-                    card.classList.toggle('flipped');
-                    if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
+                    flip(card);
                 }
             }
             function end() { tracking = false; }
@@ -8836,10 +8853,10 @@
             document.addEventListener('click', (e) => {
                 if (swiped) { swiped = false; e.preventDefault(); e.stopImmediatePropagation(); return; }
                 const c = e.target.closest && e.target.closest('.product-card');
-                if (c && c.classList.contains('flipped') && !(e.target.closest && e.target.closest('[data-action]'))) {
+                if (c && c.classList.contains('showback') && !(e.target.closest && e.target.closest('[data-action]'))) {
                     // Tap on the flipped back, off the icons → flip it back.
                     e.preventDefault(); e.stopImmediatePropagation();
-                    c.classList.remove('flipped');
+                    flip(c);
                 }
                 // A tap on a back icon falls through to the delegation handler below.
             }, true);
