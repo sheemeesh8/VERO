@@ -61,40 +61,40 @@
         .tb-group{display:flex;align-items:center;gap:2px;}
         .tb-ico.heart.active svg{fill:var(--ink);}
 
-        /* ---------- SECTION 1 — full-bleed image slider ---------- */
+        /* ---------- SECTION 1 — stacked image reveal ---------- */
         .hero{
             position:relative;background:var(--sand);overflow:hidden;
             height:100svh;height:100vh;
             scroll-snap-align:start;scroll-snap-stop:always;
         }
-        /* the slider fills the entire section */
-        .hero-slider{
-            position:absolute;inset:0;width:100%;height:100%;
-            display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
-            scrollbar-width:none;-webkit-overflow-scrolling:touch;
-            /* allow both axes: horizontal drags drive the slider, vertical drags
-               scroll the page down to section 2 */
-            touch-action:pan-x pan-y;overscroll-behavior-x:contain;
-        }
-        .hero-slider::-webkit-scrollbar{display:none;}
-        /* each slide pins at the left, so the next image scrolls up over the
-           previous one instead of sitting beside it (stacked reveal) */
-        .hero-slide{
-            flex:0 0 100%;scroll-snap-align:start;height:100%;background:var(--sand);
-            position:sticky;left:0;
+        /* the images are stacked absolutely; a transparent scroller on top drives
+           each one sliding over the previous (smooth, transform-based) */
+        .hero-stack{position:absolute;inset:0;z-index:1;}
+        .st-slide{
+            position:absolute;inset:0;background:var(--sand);
             display:flex;align-items:center;justify-content:center;
+            will-change:transform;
         }
-        /* each uploaded photo fills the whole section */
-        .hero-slide img{
+        .st-slide img{
             width:100%;height:100%;object-fit:cover;display:block;
             -webkit-user-drag:none;user-select:none;pointer-events:none;
         }
         /* slide 1: the product centered/pasted on the #F2F0EF ground */
-        .hero-slide.on-sand{padding:8%;}
-        .hero-slide.on-sand img{
+        .st-slide.on-sand{padding:8%;}
+        .st-slide.on-sand img{
             width:auto;height:auto;max-width:80%;max-height:56svh;max-height:56vh;
             object-fit:contain;filter:drop-shadow(0 22px 30px rgba(0,0,0,.12));
         }
+        /* transparent horizontal scroller that captures the swipe and provides the
+           snap points; it sits above the images (which show through) */
+        .hero-scroll{
+            position:absolute;inset:0;z-index:6;
+            display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
+            scrollbar-width:none;-webkit-overflow-scrolling:touch;
+            touch-action:pan-x pan-y;overscroll-behavior-x:contain;
+        }
+        .hero-scroll::-webkit-scrollbar{display:none;}
+        .snap-cell{flex:0 0 100%;height:100%;scroll-snap-align:start;}
 
         /* info overlay — over the first image; fades out on the other slides.
            pointer-events:none lets swipes pass through to the slider; only the
@@ -131,7 +131,7 @@
         /* slide-position dots — stay visible on every slide */
         .hero-dots{
             position:absolute;left:0;right:0;bottom:calc(86px + env(safe-area-inset-bottom,0px));
-            z-index:6;display:flex;justify-content:center;gap:7px;pointer-events:none;
+            z-index:7;display:flex;justify-content:center;gap:7px;pointer-events:none;
         }
         .hero-dots .dot{
             width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.6);
@@ -324,7 +324,7 @@
 
     <!-- ============ SECTION 1 — HERO (full-bleed image slider) ============ -->
     <section class="hero">
-        <div class="hero-slider" id="heroSlider"></div>
+        <div class="hero-stack" id="heroStack"></div>
 
         <!-- info overlaid on the first image; fades out on the other slides -->
         <div class="hero-overlay" id="heroOverlay">
@@ -343,6 +343,7 @@
         </div>
 
         <div class="hero-dots" id="heroDots"></div>
+        <div class="hero-scroll" id="heroScroll"></div>
     </section>
 
     <!-- ============ SECTION 2 — DETAILS ============ -->
@@ -516,26 +517,37 @@
     // ---- SECTION 1 ----
     document.getElementById('heroBrand').textContent = company;
     document.getElementById('heroName').textContent  = product.name;
-    // Section-1 image slider: swipe through every product photo.
-    const heroSlider  = document.getElementById('heroSlider');
+    // Section-1 stacked image reveal: a transparent scroller drives each image
+    // sliding over the previous one (smooth, transform-based).
+    const heroStack   = document.getElementById('heroStack');
+    const heroScroll  = document.getElementById('heroScroll');
     const heroDots    = document.getElementById('heroDots');
     const heroOverlay = document.getElementById('heroOverlay');
-    heroSlider.innerHTML = images.map((src,i)=>
-        `<div class="hero-slide${i===0?' on-sand':''}" style="z-index:${i}"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
+    heroStack.innerHTML = images.map((src,i)=>
+        `<div class="st-slide${i===0?' on-sand':''}" style="z-index:${i}"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
+    heroScroll.innerHTML = images.map(()=>`<div class="snap-cell"></div>`).join('');
     heroDots.innerHTML = images.length>1
         ? images.map((_,i)=>`<span class="dot${i===0?' on':''}"></span>`).join('') : '';
-    function setHero(i){
-        heroDots.querySelectorAll('.dot').forEach((d,k)=>d.classList.toggle('on',k===i));
-        // info shows on the first image only; fades out on the rest
-        heroOverlay.classList.toggle('faded', i!==0);
+    const stSlides = Array.prototype.slice.call(heroStack.children);
+    function renderStack(){
+        const w = heroScroll.clientWidth || 1;
+        const p = heroScroll.scrollLeft / w;      // 0 .. images.length-1
+        stSlides.forEach((el,i)=>{
+            if(i===0) return;                     // base slide stays put
+            const t = Math.min(1, Math.max(0, i - p));   // 1 = off right, 0 = covering
+            el.style.transform = 'translateX(' + (t*100) + '%)';
+        });
+        const idx = Math.round(p);
+        heroDots.querySelectorAll('.dot').forEach((d,k)=>d.classList.toggle('on',k===idx));
+        heroOverlay.classList.toggle('faded', idx!==0);
     }
-    setHero(0);
+    renderStack();
     let heroRaf=false;
-    heroSlider.addEventListener('scroll',()=>{
+    heroScroll.addEventListener('scroll',()=>{
         if(heroRaf) return; heroRaf=true;
-        requestAnimationFrame(()=>{ heroRaf=false;
-            setHero(Math.round(heroSlider.scrollLeft/heroSlider.clientWidth)); });
-    });
+        requestAnimationFrame(()=>{ heroRaf=false; renderStack(); });
+    },{passive:true});
+    window.addEventListener('resize', renderStack);
     document.getElementById('factSize').textContent      = sSize;
     document.getElementById('factCondition').textContent = sCondition;
     document.getElementById('factFabric').textContent    = sFabric;
