@@ -61,15 +61,46 @@
         .tb-group{display:flex;align-items:center;gap:2px;}
         .tb-ico.heart.active svg{fill:var(--ink);}
 
-        /* ---------- SECTION 1 — hero product ---------- */
+        /* ---------- SECTION 1 — full-bleed image slider ---------- */
         .hero{
-            background:var(--sand);
-            min-height:100svh;min-height:100vh;
-            display:flex;flex-direction:column;align-items:center;
-            text-align:center;
-            padding:calc(var(--hdr-h) + env(safe-area-inset-top,0px) + 6px) 26px 22px;
+            position:relative;background:var(--sand);overflow:hidden;
+            height:100svh;height:100vh;
             scroll-snap-align:start;scroll-snap-stop:always;
         }
+        /* the slider fills the entire section */
+        .hero-slider{
+            position:absolute;inset:0;width:100%;height:100%;
+            display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
+            scrollbar-width:none;-webkit-overflow-scrolling:touch;
+            touch-action:pan-x;overscroll-behavior-x:contain;
+        }
+        .hero-slider::-webkit-scrollbar{display:none;}
+        .hero-slide{
+            flex:0 0 100%;scroll-snap-align:center;height:100%;background:var(--sand);
+            display:flex;align-items:center;justify-content:center;
+        }
+        .hero-slide img{
+            width:100%;height:100%;object-fit:cover;display:block;
+            -webkit-user-drag:none;user-select:none;pointer-events:none;
+        }
+
+        /* info overlay — over the first image; fades out on the other slides.
+           pointer-events:none lets swipes pass through to the slider; only the
+           actual buttons re-enable pointer events. */
+        .hero-overlay{
+            position:absolute;inset:0;z-index:5;pointer-events:none;
+            display:flex;flex-direction:column;justify-content:space-between;text-align:center;
+            padding:calc(var(--hdr-h) + env(safe-area-inset-top,0px) + 10px) 26px
+                    calc(118px + env(safe-area-inset-bottom,0px));
+            transition:opacity .45s ease;
+            background:
+              linear-gradient(to bottom, rgba(242,240,239,.94), rgba(242,240,239,0) 28%),
+              linear-gradient(to top, rgba(242,240,239,.94), rgba(242,240,239,0) 32%);
+        }
+        .hero-overlay.faded{opacity:0;}
+        .hero-overlay .hp-offer,.hero-overlay .scroll-cue{pointer-events:auto;}
+        .hero-overlay.faded .hp-offer,.hero-overlay.faded .scroll-cue{pointer-events:none;}
+        .ov-bottom{display:flex;flex-direction:column;align-items:center;}
         .hero-pager{
             font-size:10px;letter-spacing:3px;color:var(--muted);
             margin-bottom:14px;font-weight:400;
@@ -82,31 +113,17 @@
             margin-top:12px;font-size:14px;font-weight:400;letter-spacing:5px;
             text-transform:uppercase;color:var(--ink);padding-left:5px;
         }
-        /* section-1 image slider — swipe through all product photos */
-        .hero-slider{
-            flex:1;width:100%;min-height:0;
-            display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
-            scrollbar-width:none;-webkit-overflow-scrolling:touch;
-            /* own horizontal gestures so the page's vertical snap doesn't steal them */
-            touch-action:pan-x;overscroll-behavior-x:contain;
+        /* slide-position dots — stay visible on every slide */
+        .hero-dots{
+            position:absolute;left:0;right:0;bottom:calc(86px + env(safe-area-inset-bottom,0px));
+            z-index:6;display:flex;justify-content:center;gap:7px;pointer-events:none;
         }
-        .hero-slider::-webkit-scrollbar{display:none;}
-        .hero-slide{
-            flex:0 0 100%;scroll-snap-align:center;
-            display:flex;align-items:center;justify-content:center;padding:14px 0;
-        }
-        .hero-slide img{
-            max-width:100%;max-height:46svh;max-height:46vh;object-fit:contain;display:block;
-            filter:drop-shadow(0 24px 34px rgba(0,0,0,.14));
-            -webkit-user-drag:none;user-select:none;pointer-events:none;
-        }
-        .hero-dots{display:flex;justify-content:center;gap:7px;margin-top:12px;min-height:6px;}
         .hero-dots .dot{
-            width:6px;height:6px;border-radius:50%;background:rgba(27,25,22,.18);
-            transition:background .25s,transform .25s;
+            width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.6);
+            box-shadow:0 0 3px rgba(0,0,0,.28);transition:background .25s,transform .25s;
         }
-        .hero-dots .dot.on{background:var(--ink);transform:scale(1.15);}
-        /* three quick facts, side by side, under the product */
+        .hero-dots .dot.on{background:#fff;transform:scale(1.3);}
+        /* three quick facts, side by side */
         .hero-facts{
             width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
             margin-top:6px;
@@ -276,30 +293,35 @@
         </button>
     </div>
 
-    <!-- ============ SECTION 1 — HERO ============ -->
+    <!-- ============ SECTION 1 — HERO (full-bleed image slider) ============ -->
     <section class="hero">
-        <div class="hero-pager" id="heroPager">1 / 1</div>
-        <h1 class="brand-name" id="heroBrand">Company</h1>
-        <div class="brand-sub" id="heroName">Product name</div>
-
         <div class="hero-slider" id="heroSlider"></div>
+
+        <!-- info overlaid on the first image; fades out on the other slides -->
+        <div class="hero-overlay" id="heroOverlay">
+            <div class="ov-top">
+                <div class="hero-pager" id="heroPager">1 / 1</div>
+                <h1 class="brand-name" id="heroBrand">Company</h1>
+                <div class="brand-sub" id="heroName">Product name</div>
+            </div>
+            <div class="ov-bottom">
+                <div class="hero-facts">
+                    <div class="fact"><span class="fact-val" id="factSize">—</span><span class="fact-key">Size</span></div>
+                    <div class="fact"><span class="fact-val" id="factCondition">—</span><span class="fact-key">Condition</span></div>
+                    <div class="fact"><span class="fact-val" id="factFabric">—</span><span class="fact-key">Fabric</span></div>
+                </div>
+                <div class="hero-price">
+                    <div class="hp-value" id="heroPrice">₪0.00</div>
+                    <button class="hp-offer" onclick="openSheet('offerSheet')">or make an offer</button>
+                </div>
+                <button class="scroll-cue" onclick="document.getElementById('details').scrollIntoView({behavior:'smooth'})">
+                    <span>Full details</span>
+                    <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+            </div>
+        </div>
+
         <div class="hero-dots" id="heroDots"></div>
-
-        <div class="hero-facts">
-            <div class="fact"><span class="fact-val" id="factSize">—</span><span class="fact-key">Size</span></div>
-            <div class="fact"><span class="fact-val" id="factCondition">—</span><span class="fact-key">Condition</span></div>
-            <div class="fact"><span class="fact-val" id="factFabric">—</span><span class="fact-key">Fabric</span></div>
-        </div>
-
-        <div class="hero-price">
-            <div class="hp-value" id="heroPrice">₪0.00</div>
-            <button class="hp-offer" onclick="openSheet('offerSheet')">or make an offer</button>
-        </div>
-
-        <button class="scroll-cue" onclick="document.getElementById('details').scrollIntoView({behavior:'smooth'})">
-            <span>Full details</span>
-            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
     </section>
 
     <!-- ============ SECTION 2 — DETAILS ============ -->
@@ -449,9 +471,10 @@
     document.getElementById('heroBrand').textContent = company;
     document.getElementById('heroName').textContent  = product.name;
     // Section-1 image slider: swipe through every product photo.
-    const heroSlider = document.getElementById('heroSlider');
-    const heroDots   = document.getElementById('heroDots');
-    const heroPager  = document.getElementById('heroPager');
+    const heroSlider  = document.getElementById('heroSlider');
+    const heroDots    = document.getElementById('heroDots');
+    const heroPager   = document.getElementById('heroPager');
+    const heroOverlay = document.getElementById('heroOverlay');
     heroSlider.innerHTML = images.map((src,i)=>
         `<div class="hero-slide"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
     heroDots.innerHTML = images.length>1
@@ -459,6 +482,8 @@
     function setHero(i){
         heroPager.textContent = `${i+1} / ${images.length}`;
         heroDots.querySelectorAll('.dot').forEach((d,k)=>d.classList.toggle('on',k===i));
+        // info shows on the first image only; fades out on the rest
+        heroOverlay.classList.toggle('faded', i!==0);
     }
     setHero(0);
     let heroRaf=false;
