@@ -751,6 +751,38 @@
         .hero-ov-meta em { font-style: normal; opacity: 0.5; }
         .hero-ov-meta:not(#z):not(#z):not(#z),
         .hero-ov-meta span:not(#z):not(#z):not(#z) { font-family: 'Poppins', 'Inter', sans-serif !important; }
+        /* Item-type slider under "Shop the Collection": a continuous marquee of the
+           season's item types — about three show at once with the neighbours peeking
+           in from each side, fading out at the edges. */
+        .hero-ov-types {
+            margin-top: 22px;
+            width: min(300px, 82vw);
+            overflow: hidden;
+            -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+        }
+        .hov-types-track {
+            display: flex;
+            width: max-content;
+            gap: 26px;
+            animation: hovTypesScroll 16s linear infinite;
+        }
+        .hov-type {
+            font-family: 'Poppins', 'Inter', sans-serif !important;
+            font-size: 9px;
+            font-weight: 400;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.82);
+            white-space: nowrap;
+        }
+        @keyframes hovTypesScroll {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }   /* the list is duplicated, so -50% loops seamlessly */
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hov-types-track { animation: none; justify-content: center; width: 100%; }
+        }
         /* Magazine call-to-action button. */
         /* Minimalist text CTA — a thin underline and an arrow, no pill. */
         .hero-ov-mag {
@@ -6813,12 +6845,34 @@
                 var range = monthName[c.months[0]] + ' – ' + monthName[c.months[c.months.length - 1]];
                 var isSale = (key === saleKey);
                 function set(id, txt) { var e = document.getElementById(id); if (e) e.textContent = txt; }
+                // A short slogan per season (replaces the "edit / months" lines).
+                var SLOGANS = {
+                    spring: 'Fresh starts, softer days',
+                    summer: 'Sun-washed, effortless days',
+                    autumn: 'Warm layers, golden light',
+                    winter: 'Cold outside, wrapped in warmth'
+                };
+                // The item types each season is built around — shown on a slider.
+                var TYPES = {
+                    spring: ['Trench Coats', 'Linen Shirts', 'Floral Dresses', 'Blouses', 'Skirts', 'Loafers', 'Light Knits'],
+                    summer: ['Linen Sets', 'Sandals', 'Sun Hats', 'Swimwear', 'Dresses', 'Shorts', 'Totes'],
+                    autumn: ['Coats', 'Knitwear', 'Boots', 'Scarves', 'Cardigans', 'Trousers', 'Leather Bags'],
+                    winter: ['Parkas', 'Cashmere', 'Sweaters', 'Boots', 'Gloves', 'Wool Coats', 'Beanies']
+                };
                 set('heroColKicker', isSale ? 'End of Season · Up to ' + c.eos + '% Off' : 'In Season');
                 set('heroColName', c.en + ' Collection');
-                set('heroColHeading', isSale ? 'The season’s edit, now on sale' : 'The edit, curated for the season');
-                set('heroColText', range);
+                // One slogan line; the old months line is removed.
+                set('heroColHeading', SLOGANS[key] || 'A season, curated');
+                var txt = document.getElementById('heroColText');
+                if (txt) txt.style.display = 'none';
+                // Item-type slider (a seamless marquee — list duplicated so it loops).
                 var meta = document.getElementById('heroColMeta');
-                if (meta) meta.innerHTML = '<span>Curated selection</span><em>&middot;</em><span>' + VC.byCollection(key).length + ' pieces</span><em>&middot;</em><span>Authenticated</span>';
+                if (meta) {
+                    var types = TYPES[key] || [];
+                    var one = types.map(function (t) { return '<span class="hov-type">' + t + '</span>'; }).join('');
+                    meta.className = 'hero-ov-types';
+                    meta.innerHTML = '<div class="hov-types-track">' + one + one + '</div>';
+                }
                 var cta = document.getElementById('heroColCta');
                 if (cta) { cta.setAttribute('href', 'collection.html?c=' + key); cta.innerHTML = 'Shop the Collection <span class="hero-ov-arrow">&#8250;</span>'; }
                 // Show the collection's own image behind the hero.
