@@ -77,8 +77,11 @@
             touch-action:pan-x pan-y;overscroll-behavior-x:contain;
         }
         .hero-slider::-webkit-scrollbar{display:none;}
+        /* each slide pins at the left, so the next image scrolls up over the
+           previous one instead of sitting beside it (stacked reveal) */
         .hero-slide{
-            flex:0 0 100%;scroll-snap-align:center;height:100%;background:var(--sand);
+            flex:0 0 100%;scroll-snap-align:start;height:100%;background:var(--sand);
+            position:sticky;left:0;
             display:flex;align-items:center;justify-content:center;
         }
         /* each uploaded photo fills the whole section */
@@ -174,9 +177,12 @@
         .details{
             background:var(--bg);
             min-height:100svh;min-height:100vh;
-            padding:calc(var(--hdr-h) + env(safe-area-inset-top,0px) + 40px) 26px 140px;
+            padding:calc(var(--hdr-h) + env(safe-area-inset-top,0px) + 40px) 26px 120px;
             text-align:left;
             scroll-snap-align:start;
+            /* three parts — header/description, specs, price+seller — spread down
+               the page; the lower parts shift with the description's length */
+            display:flex;flex-direction:column;justify-content:space-between;gap:24px;
         }
         .det-brand{
             font-family:'Bodoni Moda','Didot',Georgia,'Times New Roman',serif;
@@ -197,7 +203,7 @@
         .det-priceline .det-price{margin-top:0;}
 
         /* technical spec table — borderless, airy, value left / label right */
-        .spec-table{margin-top:34px;}
+        .spec-table{}
         .spec-row{
             display:flex;align-items:baseline;justify-content:space-between;gap:16px;
             padding:11px 0;
@@ -245,42 +251,55 @@
         .action-item.wish.active svg{fill:#fff;}
 
         /* ---------- overlays / popups (unchanged) ---------- */
-        .overlay{position:fixed;inset:0;z-index:200;display:none;align-items:flex-end;justify-content:center;background:rgba(17,16,16,.5);}
+        /* ---------- dark glass-morphism popups ---------- */
+        .overlay{position:fixed;inset:0;z-index:200;display:none;align-items:flex-end;justify-content:center;background:rgba(8,8,8,.5);}
         .overlay.show{display:flex;animation:fade .2s ease;}
         @keyframes fade{from{opacity:0}to{opacity:1}}
-        .sheet{width:100%;max-width:480px;background:var(--panel);border-radius:20px 20px 0 0;
+        .sheet{
+            width:100%;max-width:480px;color:#f2f0ee;
+            background:rgba(22,20,19,.66);
+            -webkit-backdrop-filter:saturate(160%) blur(26px);
+            backdrop-filter:saturate(160%) blur(26px);
+            border:1px solid rgba(255,255,255,.14);border-bottom:none;
+            border-radius:24px 24px 0 0;
+            box-shadow:0 -14px 44px rgba(0,0,0,.45);
             padding:26px 24px calc(26px + env(safe-area-inset-bottom));
             transform:translateY(100%);animation:rise .34s cubic-bezier(.2,.8,.2,1) forwards;}
         @keyframes rise{to{transform:translateY(0)}}
-        .sheet-grip{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 20px;}
-        .sheet h3{font-size:16px;font-weight:400;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;text-align:left;}
-        .sheet p.sub{font-size:12.5px;color:var(--muted);margin-bottom:20px;}
-        .confirm-icon{width:56px;height:56px;margin:0 auto 16px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--ink);color:#fff;}
+        .sheet-grip{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.3);margin:0 auto 20px;}
+        .sheet h3{font-size:16px;font-weight:400;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;text-align:left;color:#fff;}
+        .sheet p.sub{font-size:12.5px;color:rgba(255,255,255,.58);margin-bottom:20px;}
+        .confirm-icon{width:56px;height:56px;margin:0 auto 16px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;}
         .confirm-icon svg{width:26px;height:26px;stroke:#fff;stroke-width:1.6;fill:none;}
         .sheet.center{text-align:center;}
-        .mini-card{display:flex;align-items:center;gap:12px;text-align:start;padding:14px;border:1px solid var(--line);margin-bottom:20px;}
-        .mini-card .mc-img{width:52px;height:60px;object-fit:contain;flex:0 0 auto;background:var(--sand);}
-        .mini-card .mc-name{font-weight:700;font-size:14px;}
-        .mini-card .mc-price{font-size:13px;color:var(--muted);margin-top:3px;}
-        .field{display:flex;align-items:center;border:1px solid var(--line);padding:0 16px;height:54px;margin-bottom:14px;}
-        .field .cur{color:var(--muted);font-size:17px;margin-inline-end:8px;}
-        .field input{border:none;outline:none;background:transparent;font-family:inherit;font-size:17px;font-weight:700;width:100%;color:var(--ink);}
-        textarea.field{height:auto;min-height:96px;padding:14px 16px;resize:none;font-size:14.5px;font-weight:400;line-height:1.6;display:block;}
+        .mini-card{display:flex;align-items:center;gap:12px;text-align:start;padding:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);border-radius:12px;margin-bottom:20px;}
+        .mini-card .mc-img{width:52px;height:60px;object-fit:contain;flex:0 0 auto;background:rgba(255,255,255,.06);border-radius:6px;}
+        .mini-card .mc-name{font-weight:700;font-size:14px;color:#fff;}
+        .mini-card .mc-price{font-size:13px;color:rgba(255,255,255,.6);margin-top:3px;}
+        .field{display:flex;align-items:center;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);border-radius:12px;padding:0 16px;height:54px;margin-bottom:14px;}
+        .field .cur{color:rgba(255,255,255,.5);font-size:17px;margin-inline-end:8px;}
+        .field input{border:none;outline:none;background:transparent;font-family:inherit;font-size:17px;font-weight:700;width:100%;color:#fff;}
+        .field input::placeholder,.field textarea::placeholder{color:rgba(255,255,255,.4);}
+        textarea.field{height:auto;min-height:96px;padding:14px 16px;resize:none;font-size:14.5px;font-weight:400;line-height:1.6;display:block;color:#fff;}
         .offer-quick{display:flex;gap:8px;margin-bottom:18px;}
-        .offer-quick button{flex:1;height:40px;border:1px solid var(--line);background:transparent;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink);transition:background .2s,color .2s;}
-        .offer-quick button:active{background:var(--ink);color:#fff;}
+        .offer-quick button{flex:1;height:40px;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:transparent;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:#f2f0ee;transition:background .2s,color .2s;}
+        .offer-quick button:active{background:#fff;color:#141312;}
         .sheet-actions{display:flex;gap:11px;margin-top:4px;}
-        .btn{width:100%;height:52px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:0;cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:400;border:1.2px solid var(--ink);transition:background .2s,color .2s,opacity .2s;}
+        .btn{width:100%;height:52px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:12px;cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:400;border:1.2px solid rgba(255,255,255,.28);transition:background .2s,color .2s,opacity .2s;}
         .btn svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.5;fill:none;}
-        .btn-primary{background:var(--ink);color:#fff;}
+        .btn-primary{background:#fff;color:#141312;border-color:#fff;}
         .btn-primary:active{opacity:.8;}
-        .btn-outline{background:transparent;color:var(--ink);}
-        .btn-outline:active{background:var(--ink);color:#fff;}
+        .btn-outline{background:transparent;color:#fff;}
+        .btn-outline:active{background:rgba(255,255,255,.16);color:#fff;}
         .share-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 8px;margin-bottom:8px;}
-        .share-item{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--ink);}
-        .share-ic{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);}
+        .share-item{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:none;cursor:pointer;font-family:inherit;color:#f2f0ee;}
+        .share-ic{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);}
         .share-ic svg{width:24px;height:24px;}
-        .share-item span{font-size:11px;letter-spacing:.5px;color:#413b31;}
+        /* keep the near-black brand marks (X, copy) visible on the dark glass */
+        .share-ic svg [fill="#111010"]{fill:#f2f0ee;}
+        .share-ic svg [stroke="#111010"]{stroke:#f2f0ee;}
+        .share-item span{font-size:11px;letter-spacing:.5px;color:rgba(255,255,255,.72);}
         .toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:13px 22px;border-radius:999px;font-size:12px;letter-spacing:1px;z-index:400;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;}
         .toast.show{opacity:1;transform:translate(-50%,0);}
     </style>
@@ -328,12 +347,15 @@
 
     <!-- ============ SECTION 2 — DETAILS ============ -->
     <section class="details" id="details">
-        <h2 class="det-brand" id="detBrand">Company</h2>
-        <div class="det-sub" id="detName">Product name</div>
+        <!-- Part 1 — title + description -->
+        <div class="det-part det-head">
+            <h2 class="det-brand" id="detBrand">Company</h2>
+            <div class="det-sub" id="detName">Product name</div>
+            <p class="det-desc" id="detDesc">Product description appears here.</p>
+        </div>
 
-        <p class="det-desc" id="detDesc">Product description appears here.</p>
-
-        <div class="spec-table">
+        <!-- Part 2 — technical specs -->
+        <div class="det-part spec-table">
             <div class="spec-row"><span class="sv" id="tSize">—</span><span class="sk">Size</span></div>
             <div class="spec-row"><span class="sv" id="tFabric">—</span><span class="sk">Fabric</span></div>
             <div class="spec-row"><span class="sv" id="tCondition">—</span><span class="sk">Condition</span></div>
@@ -341,15 +363,17 @@
             <div class="spec-row"><span class="sv" id="tColor">—</span><span class="sk">Color</span></div>
         </div>
 
-        <div class="det-priceline">
-            <div class="det-price" id="detPrice">₪0.00</div>
-            <button class="hp-offer" onclick="openSheet('offerSheet')">Make an offer</button>
-        </div>
-
-        <div class="det-seller">
-            <span class="s-label">Seller:</span>
-            <a class="s-name" id="sellerName" href="#">moravchick</a>
-            <span class="s-rating" id="sellerRating"></span>
+        <!-- Part 3 — price + seller -->
+        <div class="det-part det-foot">
+            <div class="det-priceline">
+                <div class="det-price" id="detPrice">₪0.00</div>
+                <button class="hp-offer" onclick="openSheet('offerSheet')">Make an offer</button>
+            </div>
+            <div class="det-seller">
+                <span class="s-label">Seller:</span>
+                <a class="s-name" id="sellerName" href="#">moravchick</a>
+                <span class="s-rating" id="sellerRating"></span>
+            </div>
         </div>
     </section>
 
@@ -497,7 +521,7 @@
     const heroDots    = document.getElementById('heroDots');
     const heroOverlay = document.getElementById('heroOverlay');
     heroSlider.innerHTML = images.map((src,i)=>
-        `<div class="hero-slide${i===0?' on-sand':''}"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
+        `<div class="hero-slide${i===0?' on-sand':''}" style="z-index:${i}"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
     heroDots.innerHTML = images.length>1
         ? images.map((_,i)=>`<span class="dot${i===0?' on':''}"></span>`).join('') : '';
     function setHero(i){
