@@ -254,7 +254,7 @@
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
             <!-- Tiny build stamp (diagnostic): tells at a glance which deploy is live. -->
-            <div id="pfBuild">v176</div>
+            <div id="pfBuild">v177</div>
         </div>
     </div>
     <script>
@@ -267,8 +267,8 @@
                         regs.forEach(function (r) { try { r.update(); } catch (e) {} });
                     }).catch(function () {});
                 }
-                if (!sessionStorage.getItem('vero_healed_176')) {
-                    sessionStorage.setItem('vero_healed_176', '1');
+                if (!sessionStorage.getItem('vero_healed_177')) {
+                    sessionStorage.setItem('vero_healed_177', '1');
                     if (window.caches && caches.keys) {
                         caches.keys().then(function (keys) {
                             if (keys && keys.length) {
@@ -280,7 +280,32 @@
                 }
             } catch (e) { /* storage/caches blocked — ignore */ }
         })();
-        try { document.body.dataset.build = "176"; console.log('moravchick build v176'); } catch (e) {}
+
+        // ---- Shell freshness check ----
+        // The inner app (index.html) always loads network-fresh via its cache-bust
+        // param, but this shell — the PWA start_url — can sit in the browser/PWA HTTP
+        // cache and keep showing an old build. Once per session, re-fetch this very
+        // file from the network (bypassing cache) and, if the deployed build number is
+        // higher than the one running, hard-reload with a cache-bust so the shell
+        // catches up too.
+        var PF_BUILD = 177;
+        (function shellFreshness() {
+            try {
+                if (sessionStorage.getItem('vero_shellfresh')) return;
+                sessionStorage.setItem('vero_shellfresh', '1');
+                if (!window.fetch) return;
+                fetch('phone-frame.html?_sf=' + Date.now(), { cache: 'reload' })
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        var m = html.match(/var PF_BUILD = (\d+)/);
+                        var latest = m ? parseInt(m[1], 10) : 0;
+                        if (latest > PF_BUILD) {
+                            location.replace('phone-frame.html?_v=' + latest + location.hash);
+                        }
+                    }).catch(function () {});
+            } catch (e) { /* blocked — ignore */ }
+        })();
+        try { document.body.dataset.build = "177"; console.log('moravchick build v177'); } catch (e) {}
         // Hide the content scrollbar inside the phone (scrolling still works). Same-origin
         // (file://) lets us inject a style into the framed document; re-runs on every
         // in-frame navigation because onload fires for each page load.
