@@ -8804,8 +8804,8 @@
         // stacked on the back (swipe again, or tap the back off the icons, to flip
         // it back). A short tap still opens the product; vertical drags scroll.
         (function swipeFlip() {
-            const SWIPE = 45, V_BAIL = 12;
-            let sx = 0, sy = 0, card = null, tracking = false, swiped = false;
+            const SWIPE = 40, SWIPE_END = 30, AXIS = 8;
+            let sx = 0, sy = 0, lx = 0, card = null, tracking = false, swiped = false, axis = 0; // axis: 0 undecided, 1 horizontal, -1 vertical
             const feedCard = (t) => t && t.closest && t.closest('.products-grid .product-card, .acat-grid .product-card');
             // Squish the card to a vertical line, swap the face at the mid-point, then
             // let it spring back open — a flip that works on every browser.
@@ -8820,17 +8820,31 @@
                     setTimeout(() => { c.dataset.flipping = ''; }, 170);
                 }, 160);
             }
-            function start(x, y, c) { sx = x; sy = y; card = c; tracking = true; swiped = false; }
+            function start(x, y, c) { sx = x; sy = y; lx = x; card = c; tracking = true; swiped = false; axis = 0; }
             function move(x, y) {
                 if (!tracking || !card) return;
+                lx = x;
                 const dx = x - sx, dy = y - sy;
-                if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > V_BAIL) { tracking = false; return; } // vertical = scroll
-                if (Math.abs(dx) >= SWIPE) {
+                // Decide the axis once, on the first meaningful movement — a brief
+                // initial diagonal no longer kills the gesture.
+                if (axis === 0 && (Math.abs(dx) > AXIS || Math.abs(dy) > AXIS)) {
+                    // Bias toward horizontal (the intentional flip gesture); only a
+                    // clearly vertical drag locks to scroll.
+                    axis = Math.abs(dy) > Math.abs(dx) * 1.3 ? -1 : 1;
+                }
+                if (axis === -1) { tracking = false; return; }   // vertical → let the feed scroll
+                if (axis === 1 && Math.abs(dx) >= SWIPE) {
                     tracking = false; swiped = true;
                     flip(card);
                 }
             }
-            function end() { tracking = false; }
+            function end() {
+                // Short/fast horizontal flicks that never hit SWIPE mid-move still count.
+                if (tracking && card && axis !== -1 && Math.abs(lx - sx) >= SWIPE_END) {
+                    swiped = true; flip(card);
+                }
+                tracking = false;
+            }
             // Touch (mobile) — passive; touch-action:pan-y lets vertical scroll through.
             document.addEventListener('touchstart', (e) => {
                 const c = feedCard(e.target); if (!c) return;
@@ -8840,7 +8854,7 @@
                 const t = e.touches[0]; if (t) move(t.clientX, t.clientY);
             }, { capture: true, passive: true });
             document.addEventListener('touchend', end, true);
-            document.addEventListener('touchcancel', end, true);
+            document.addEventListener('touchcancel', () => { tracking = false; }, true);
             // Mouse (desktop drag).
             let mdown = false;
             document.addEventListener('mousedown', (e) => {
