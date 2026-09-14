@@ -57,6 +57,8 @@
         .tb-ico:active{opacity:.5;}
         .tb-ico svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.7;fill:none;
             stroke-linecap:round;stroke-linejoin:round;}
+        .tb-group{display:flex;align-items:center;gap:2px;}
+        .tb-ico.heart.active svg{fill:var(--ink);}
 
         /* ---------- SECTION 1 — hero product ---------- */
         .hero{
@@ -78,14 +80,27 @@
             margin-top:12px;font-size:14px;font-weight:400;letter-spacing:5px;
             text-transform:uppercase;color:var(--ink);padding-left:5px;
         }
-        .hero-media{
-            flex:1;width:100%;display:flex;align-items:center;justify-content:center;
-            min-height:0;padding:14px 0;
+        /* section-1 image slider — swipe through all product photos */
+        .hero-slider{
+            flex:1;width:100%;min-height:0;
+            display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+            scrollbar-width:none;-webkit-overflow-scrolling:touch;
         }
-        .hero-media img{
+        .hero-slider::-webkit-scrollbar{display:none;}
+        .hero-slide{
+            flex:0 0 100%;scroll-snap-align:center;
+            display:flex;align-items:center;justify-content:center;padding:14px 0;
+        }
+        .hero-slide img{
             max-width:100%;max-height:46svh;max-height:46vh;object-fit:contain;display:block;
             filter:drop-shadow(0 24px 34px rgba(0,0,0,.14));
         }
+        .hero-dots{display:flex;justify-content:center;gap:7px;margin-top:12px;min-height:6px;}
+        .hero-dots .dot{
+            width:6px;height:6px;border-radius:50%;background:rgba(27,25,22,.18);
+            transition:background .25s,transform .25s;
+        }
+        .hero-dots .dot.on{background:var(--ink);transform:scale(1.15);}
         /* three quick facts, side by side, under the product */
         .hero-facts{
             width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
@@ -236,14 +251,22 @@
 <body>
 <div class="page">
 
-    <!-- sticky header: back arrow + share -->
+    <!-- sticky header: back arrow + wishlist / cart / share -->
     <div class="topbar" id="topbar">
         <button class="tb-ico" onclick="goBack()" aria-label="Back">
             <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
         </button>
-        <button class="tb-ico" onclick="openSheet('shareSheet')" aria-label="Share">
-            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-        </button>
+        <div class="tb-group">
+            <button class="tb-ico heart" id="heartBtn" onclick="toggleWishlist()" aria-label="Add to wishlist">
+                <svg viewBox="0 0 24 24"><path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-8.3a5 5 0 0 0 0-7.1z"/></svg>
+            </button>
+            <button class="tb-ico" onclick="addToCart()" aria-label="Add to bag">
+                <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+            </button>
+            <button class="tb-ico" onclick="openSheet('shareSheet')" aria-label="Share">
+                <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+            </button>
+        </div>
     </div>
 
     <!-- ============ SECTION 1 — HERO ============ -->
@@ -252,9 +275,8 @@
         <h1 class="brand-name" id="heroBrand">Company</h1>
         <div class="brand-sub" id="heroName">Product name</div>
 
-        <div class="hero-media">
-            <img id="heroImg" src="" alt="">
-        </div>
+        <div class="hero-slider" id="heroSlider"></div>
+        <div class="hero-dots" id="heroDots"></div>
 
         <div class="hero-facts">
             <div class="fact"><span class="fact-val" id="factSize">—</span><span class="fact-key">Size</span></div>
@@ -419,9 +441,25 @@
     // ---- SECTION 1 ----
     document.getElementById('heroBrand').textContent = company;
     document.getElementById('heroName').textContent  = product.name;
-    document.getElementById('heroImg').src = images[0];
-    document.getElementById('heroImg').alt = product.name;
-    document.getElementById('heroPager').textContent = `1 / ${images.length}`;
+    // Section-1 image slider: swipe through every product photo.
+    const heroSlider = document.getElementById('heroSlider');
+    const heroDots   = document.getElementById('heroDots');
+    const heroPager  = document.getElementById('heroPager');
+    heroSlider.innerHTML = images.map((src,i)=>
+        `<div class="hero-slide"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
+    heroDots.innerHTML = images.length>1
+        ? images.map((_,i)=>`<span class="dot${i===0?' on':''}"></span>`).join('') : '';
+    function setHero(i){
+        heroPager.textContent = `${i+1} / ${images.length}`;
+        heroDots.querySelectorAll('.dot').forEach((d,k)=>d.classList.toggle('on',k===i));
+    }
+    setHero(0);
+    let heroRaf=false;
+    heroSlider.addEventListener('scroll',()=>{
+        if(heroRaf) return; heroRaf=true;
+        requestAnimationFrame(()=>{ heroRaf=false;
+            setHero(Math.round(heroSlider.scrollLeft/heroSlider.clientWidth)); });
+    });
     document.getElementById('factSize').textContent      = sSize;
     document.getElementById('factCondition').textContent = sCondition;
     document.getElementById('factFabric').textContent    = sFabric;
@@ -508,6 +546,38 @@
         openSheet('confirmSheet');
     }
     window.addToCart=addToCart;
+
+    // ---------- wishlist ----------
+    function isWished(){
+        const wl=JSON.parse(localStorage.getItem('vero_wishlist')||'[]');
+        return wl.some(i=>i.id===`${product.name}|${product.price}`);
+    }
+    function reflectWish(){
+        const b=document.getElementById('heartBtn');
+        if(b) b.classList.toggle('active', isWished());
+    }
+    function toggleWishlist(){
+        const wl=JSON.parse(localStorage.getItem('vero_wishlist')||'[]');
+        const id=`${product.name}|${product.price}`;
+        const idx=wl.findIndex(i=>i.id===id);
+        if(idx>=0){ wl.splice(idx,1); localStorage.setItem('vero_wishlist',JSON.stringify(wl));
+            reflectWish(); toast('Removed from wishlist'); return; }
+        wl.push({ id, name:product.name, price:product.price, seller:sellerName, icon:product.icon,
+            category:product.category, type:product.type, rating:product.rating, addedAt:Date.now() });
+        localStorage.setItem('vero_wishlist',JSON.stringify(wl));
+        reflectWish();
+        document.getElementById('confirmIcon').innerHTML='<svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+        document.getElementById('confirmTitle').textContent='Added to wishlist';
+        document.getElementById('confirmSub').textContent='Find it in your saved items';
+        document.getElementById('confirmImg').src=images[0];
+        document.getElementById('confirmName').textContent=product.name;
+        document.getElementById('confirmPrice').textContent=fmt(priceNum);
+        document.getElementById('confirmCta').textContent='View saved';
+        document.getElementById('confirmCta').onclick=()=>location.href='saved.html';
+        openSheet('confirmSheet');
+    }
+    window.toggleWishlist=toggleWishlist;
+    reflectWish();
 
     // ---------- offer ----------
     document.getElementById('offerSub').textContent = `Asking ${fmt(priceNum)} · send the seller an offer`;
