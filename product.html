@@ -94,6 +94,21 @@
         .fact{display:flex;flex-direction:column;gap:6px;}
         .fact-val{font-size:14px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink);}
         .fact-key{font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+        /* hero price + offer */
+        .hero-price{
+            margin-top:24px;padding-top:22px;border-top:1px solid rgba(27,25,22,.1);
+            width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;
+        }
+        .hp-value{font-size:26px;font-weight:300;letter-spacing:1px;color:var(--ink);}
+        .hp-value .was{font-size:15px;color:var(--muted);text-decoration:line-through;margin-inline-start:10px;}
+        .hp-value .off{font-size:11px;color:var(--sale);letter-spacing:1.5px;margin-inline-end:10px;}
+        .hp-offer{
+            background:none;border:none;cursor:pointer;font-family:inherit;color:var(--ink);
+            font-size:10px;letter-spacing:2.5px;text-transform:uppercase;
+            padding:2px 0;border-bottom:1px solid var(--ink);transition:opacity .2s;
+        }
+        .hp-offer:active{opacity:.5;}
+
         /* scroll-to-details button */
         .scroll-cue{
             margin-top:26px;display:inline-flex;flex-direction:column;align-items:center;gap:8px;
@@ -127,6 +142,8 @@
         }
         .det-price .was{font-size:14px;color:var(--muted);text-decoration:line-through;margin-inline-start:10px;}
         .det-price .off{font-size:11px;color:var(--sale);letter-spacing:1.5px;margin-inline-end:10px;}
+        .det-priceline{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+        .det-priceline .det-price{margin-top:0;}
 
         /* technical spec table — value on the left, label on the right */
         .spec-table{margin-top:38px;border-top:1px solid var(--line);}
@@ -245,6 +262,11 @@
             <div class="fact"><span class="fact-val" id="factFabric">—</span><span class="fact-key">Fabric</span></div>
         </div>
 
+        <div class="hero-price">
+            <div class="hp-value" id="heroPrice">₪0.00</div>
+            <button class="hp-offer" onclick="openSheet('offerSheet')">or make an offer</button>
+        </div>
+
         <button class="scroll-cue" onclick="document.getElementById('details').scrollIntoView({behavior:'smooth'})">
             <span>Full details</span>
             <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
@@ -257,7 +279,10 @@
         <div class="det-sub" id="detName">Product name</div>
 
         <p class="det-desc" id="detDesc">Product description appears here.</p>
-        <div class="det-price" id="detPrice">₪0.00</div>
+        <div class="det-priceline">
+            <div class="det-price" id="detPrice">₪0.00</div>
+            <button class="hp-offer" onclick="openSheet('offerSheet')">Make an offer</button>
+        </div>
 
         <div class="spec-table">
             <div class="spec-row"><span class="sv" id="tSize">—</span><span class="sk">Size</span></div>
@@ -405,15 +430,17 @@
     document.getElementById('detName').textContent  = product.name;
     document.getElementById('detDesc').textContent  = desc;
 
-    const priceEl = document.getElementById('detPrice');
+    let priceHTML;
     if(product.onSale && product.originalPrice){
         const was = toNum(product.originalPrice), now = priceNum;
         const off = was>0 ? Math.round((1-now/was)*100) : 0;
-        priceEl.innerHTML = (off>0?`<span class="off">-${off}%</span>`:'') +
+        priceHTML = (off>0?`<span class="off">-${off}%</span>`:'') +
             `${fmt(now)}<span class="was">${fmt(was)}</span>`;
     } else {
-        priceEl.textContent = fmt(priceNum);
+        priceHTML = fmt(priceNum);
     }
+    document.getElementById('detPrice').innerHTML  = priceHTML;
+    document.getElementById('heroPrice').innerHTML = priceHTML;
 
     document.getElementById('tSize').textContent      = sSize;
     document.getElementById('tFabric').textContent    = sFabric;
