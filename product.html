@@ -86,6 +86,12 @@
             width:100%;height:100%;object-fit:cover;display:block;
             -webkit-user-drag:none;user-select:none;pointer-events:none;
         }
+        /* slide 1: the product centered/pasted on the #F2F0EF ground */
+        .hero-slide.on-sand{padding:8%;}
+        .hero-slide.on-sand img{
+            width:auto;height:auto;max-width:80%;max-height:56svh;max-height:56vh;
+            object-fit:contain;filter:drop-shadow(0 22px 30px rgba(0,0,0,.12));
+        }
 
         /* info overlay — over the first image; fades out on the other slides.
            pointer-events:none lets swipes pass through to the slider; only the
@@ -446,24 +452,30 @@
     const audience = AUDIENCE[(product.audience||product.gender||'').toString().toLowerCase()]
                      || product.audience || 'Unisex';
 
-    // Every shot uploaded to the product feeds the section-1 slider: the
-    // upload flow stores them under product.photos {cover, detail, label, angle};
-    // legacy fields (cover/image/images[]) are folded in and de-duplicated.
+    // Temporary placeholder icon (a simple garment) shown centered on the sand
+    // ground when a product has no cover photo yet.
+    const TEMP_ICON = 'data:image/svg+xml,' + encodeURIComponent(
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>" +
+        "<path d='M23 7 L8 15 L13 26 L20 22 L20 57 L44 57 L44 22 L51 26 L56 15 L41 7 C41 13 23 13 23 7 Z' " +
+        "fill='none' stroke='#c7c0b5' stroke-width='2' stroke-linejoin='round'/></svg>");
     const seed = encodeURIComponent(product.name || 'vero');
     const photoObj = product.photos || {};
     const uploaded = ['cover', 'detail', 'label', 'angle'].map(k => photoObj[k]).filter(Boolean);
     const cover = product.processed_cover || product.image || product.cover
         || product.original_cover || product.img || product.imageUrl || product.photo || photoObj.cover || null;
     const extra = (product.images && product.images.length) ? product.images : [];
-    const realImages = [];
-    [cover, ...uploaded, ...extra].forEach(s => { if (s && !realImages.includes(s)) realImages.push(s); });
-    // Real uploaded photos when present; otherwise a few sample shots so the
-    // first section is always a swipeable slider.
-    const images = realImages.length ? realImages : [
-        `https://picsum.photos/seed/${seed}-1/900/1200`,
-        `https://picsum.photos/seed/${seed}-2/900/1200`,
-        `https://picsum.photos/seed/${seed}-3/900/1200`
-    ];
+    // Slide 1 = the product on the #F2F0EF ground (the cover cut-out, or the
+    // placeholder icon). The remaining slides are the other uploaded shots,
+    // shown full-bleed; sample shots stand in when a product has none.
+    const firstImg = cover || TEMP_ICON;
+    const rest = [];
+    [...uploaded, ...extra].forEach(s => { if (s && s !== cover && !rest.includes(s)) rest.push(s); });
+    if (!rest.length) {
+        rest.push(`https://picsum.photos/seed/${seed}-2/900/1200`,
+                  `https://picsum.photos/seed/${seed}-3/900/1200`);
+    }
+    const images = [firstImg, ...rest];
+    const firstIsProduct = true; // slide 0 always uses the on-sand product treatment
 
     // ---- Resolved spec values ----
     const sSize      = product.size || (isArt?'50×70 cm':'M');
@@ -479,7 +491,7 @@
     const heroDots    = document.getElementById('heroDots');
     const heroOverlay = document.getElementById('heroOverlay');
     heroSlider.innerHTML = images.map((src,i)=>
-        `<div class="hero-slide"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
+        `<div class="hero-slide${i===0?' on-sand':''}"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
     heroDots.innerHTML = images.length>1
         ? images.map((_,i)=>`<span class="dot${i===0?' on':''}"></span>`).join('') : '';
     function setHero(i){
