@@ -754,19 +754,26 @@
         /* Item-type slider under "Shop the Collection": a continuous marquee of the
            season's item types — about three show at once with the neighbours peeking
            in from each side, fading out at the edges. */
+        /* Item-type slider: each slide shows two item types side by side (two
+           columns) and slides crossfade in/out. Slides are stacked; only the
+           active one is visible. */
         .hero-ov-types {
-            margin-top: 22px;
+            position: relative;
             width: min(300px, 82vw);
-            overflow: hidden;
-            -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
-            mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+            height: 14px;
         }
-        .hov-types-track {
+        .hov-slide {
+            position: absolute;
+            inset: 0;
             display: flex;
-            width: max-content;
-            gap: 26px;
-            animation: hovTypesScroll 16s linear infinite;
+            justify-content: center;
+            align-items: center;
+            gap: 44px;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            pointer-events: none;
         }
+        .hov-slide.on { opacity: 1; }
         .hov-type {
             font-family: 'Poppins', 'Inter', sans-serif !important;
             font-size: 9px;
@@ -775,13 +782,6 @@
             text-transform: uppercase;
             color: rgba(255, 255, 255, 0.82);
             white-space: nowrap;
-        }
-        @keyframes hovTypesScroll {
-            from { transform: translateX(0); }
-            to   { transform: translateX(-50%); }   /* the list is duplicated, so -50% loops seamlessly */
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .hov-types-track { animation: none; justify-content: center; width: 100%; }
         }
         /* Magazine call-to-action button. */
         /* Minimalist text CTA — a thin underline and an arrow, no pill. */
@@ -811,6 +811,16 @@
         .hero-ov-mag--red { color: #fff; border-bottom-color: #fff; font-weight: 700; }
         .hero-ov-mag--red:hover { color: #fff; border-color: #fff; }
         .hero-ov-mag:not(#z):not(#z):not(#z) { font-family: 'Poppins', 'Inter', sans-serif !important; }
+        /* ---- Even vertical rhythm: one equal gap between every hero element
+               (eyebrow, title, slogan, shop CTA, type slider, magazine CTA). ---- */
+        .hero-ov-top { gap: 24px; }
+        .hero-ov-eyebrow { margin-bottom: 0; }
+        .hero-ov-title { margin: 0; }
+        .hero-ov-mid { margin-top: 24px; gap: 24px; }
+        .hero-ov-heading { margin: 0; }
+        .hero-ov-actions { margin-top: 0; }
+        .hero-ov-actions--mag { margin-top: 0; }
+        .hero-ov-meta { margin-top: 0; }
         /* Two caption overlays share the same three-part layout: the clothing one
            shows in fashion mode, the art one in art mode. */
         .hero-overlay--art { display: none; }
@@ -6865,13 +6875,32 @@
                 set('heroColHeading', SLOGANS[key] || 'A season, curated');
                 var txt = document.getElementById('heroColText');
                 if (txt) txt.style.display = 'none';
-                // Item-type slider (a seamless marquee — list duplicated so it loops).
+                // Item-type slider: each slide shows two types side by side (two
+                // columns); slides crossfade in and out on a timer.
                 var meta = document.getElementById('heroColMeta');
                 if (meta) {
                     var types = TYPES[key] || [];
-                    var one = types.map(function (t) { return '<span class="hov-type">' + t + '</span>'; }).join('');
+                    var slides = [];
+                    for (var i = 0; i < types.length; i += 2) {
+                        var pair = types.slice(i, i + 2);
+                        slides.push('<div class="hov-slide">' +
+                            pair.map(function (t) { return '<span class="hov-type">' + t + '</span>'; }).join('') +
+                            '</div>');
+                    }
                     meta.className = 'hero-ov-types';
-                    meta.innerHTML = '<div class="hov-types-track">' + one + one + '</div>';
+                    meta.innerHTML = slides.join('');
+                    var els = meta.querySelectorAll('.hov-slide');
+                    if (els.length) {
+                        var si = 0;
+                        els[0].classList.add('on');
+                        if (els.length > 1) {
+                            setInterval(function () {
+                                els[si].classList.remove('on');
+                                si = (si + 1) % els.length;
+                                els[si].classList.add('on');
+                            }, 2600);
+                        }
+                    }
                 }
                 var cta = document.getElementById('heroColCta');
                 if (cta) { cta.setAttribute('href', 'collection.html?c=' + key); cta.innerHTML = 'Shop the Collection <span class="hero-ov-arrow">&#8250;</span>'; }
