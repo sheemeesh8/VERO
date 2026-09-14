@@ -102,17 +102,24 @@
         #siteHeader .toggle-category::before { background: #fff; }
         #siteHeader .toggle-category .seg { color: #ddd; }
         #siteHeader .toggle-category .seg.active { color: #111; }
-        /* Sticky / scrolled state: white background, black icons. */
+        /* Sticky / scrolled state: light frosted "sticker" texture, matching the
+           product pages — translucent white + blur, a hairline and a soft shadow,
+           with every icon flipped to dark. */
         #siteHeader.scrolled {
-            background: rgba(20, 20, 20, 0.6);
-            -webkit-backdrop-filter: saturate(180%) blur(12px);
-            backdrop-filter: saturate(180%) blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.86);
+            -webkit-backdrop-filter: saturate(180%) blur(14px);
+            backdrop-filter: saturate(180%) blur(14px);
+            border-bottom: 1px solid #ece8e1;
+            box-shadow: 0 2px 14px rgba(0, 0, 0, 0.05);
         }
         #siteHeader.scrolled .header-left > a,
         #siteHeader.scrolled .toggle-category,
-        #siteHeader.scrolled .icon-btn { color: #fff; }
-        #siteHeader.scrolled .icon-btn svg { stroke: #fff !important; }
+        #siteHeader.scrolled .icon-btn { color: #1b1916; }
+        #siteHeader.scrolled .icon-btn svg { stroke: #1b1916 !important; }
+        #siteHeader.scrolled .hwp-ico,
+        #siteHeader.scrolled .hdr-cart-caret { color: #1b1916; }
+        #siteHeader.scrolled .hwp-ico svg,
+        #siteHeader.scrolled .hdr-cart-caret svg { stroke: #1b1916 !important; }
         #siteHeader.scrolled .toggle-category { border-color: rgba(0,0,0,0.18); }
         #siteHeader.scrolled .toggle-category::before { background: #111; }
         #siteHeader.scrolled .toggle-category .seg { color: #6b6b6b; }

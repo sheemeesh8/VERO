@@ -77,10 +77,12 @@
         .hero-slider::-webkit-scrollbar{display:none;}
         .hero-slide{
             flex:0 0 100%;scroll-snap-align:center;height:100%;background:var(--sand);
-            display:flex;align-items:center;justify-content:center;
+            display:flex;align-items:center;justify-content:center;padding:8%;
         }
+        /* product sits pasted/centered on the F2F0EF ground */
         .hero-slide img{
-            width:100%;height:100%;object-fit:cover;display:block;
+            max-width:80%;max-height:56svh;max-height:56vh;object-fit:contain;display:block;
+            filter:drop-shadow(0 22px 30px rgba(0,0,0,.12));
             -webkit-user-drag:none;user-select:none;pointer-events:none;
         }
 
@@ -91,7 +93,7 @@
             position:absolute;inset:0;z-index:5;pointer-events:none;
             display:flex;flex-direction:column;justify-content:space-between;text-align:center;
             padding:calc(var(--hdr-h) + env(safe-area-inset-top,0px) + 10px) 26px
-                    calc(118px + env(safe-area-inset-bottom,0px));
+                    calc(48px + env(safe-area-inset-bottom,0px));
             transition:opacity .45s ease;
             background:
               linear-gradient(to bottom, rgba(242,240,239,.94), rgba(242,240,239,0) 28%),
@@ -203,14 +205,18 @@
         .det-seller .s-rating{margin-inline-start:auto;letter-spacing:2px;color:var(--ink);}
         .det-seller .s-rating .num{color:var(--muted);letter-spacing:0;font-size:11px;margin-inline-start:3px;}
 
-        /* ---------- floating dark action pill ---------- */
+        /* ---------- floating dark action pill (only in section 2) ---------- */
         .action-bar{
             position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));
             max-width:452px;margin:0 auto;z-index:60;
             display:flex;align-items:stretch;direction:ltr;
             background:var(--ink);border-radius:999px;padding:4px;
             box-shadow:0 8px 24px rgba(0,0,0,.14);
+            /* hidden until the details section is in view */
+            opacity:0;transform:translateY(140%);pointer-events:none;
+            transition:opacity .3s ease, transform .4s cubic-bezier(.2,.8,.2,1);
         }
+        .action-bar.show{opacity:1;transform:none;pointer-events:auto;}
         .action-item{
             flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
             position:relative;background:none;border:none;color:#fff;cursor:pointer;
@@ -300,7 +306,6 @@
         <!-- info overlaid on the first image; fades out on the other slides -->
         <div class="hero-overlay" id="heroOverlay">
             <div class="ov-top">
-                <div class="hero-pager" id="heroPager">1 / 1</div>
                 <h1 class="brand-name" id="heroBrand">Company</h1>
                 <div class="brand-sub" id="heroName">Product name</div>
             </div>
@@ -310,14 +315,6 @@
                     <div class="fact"><span class="fact-val" id="factCondition">—</span><span class="fact-key">Condition</span></div>
                     <div class="fact"><span class="fact-val" id="factFabric">—</span><span class="fact-key">Fabric</span></div>
                 </div>
-                <div class="hero-price">
-                    <div class="hp-value" id="heroPrice">₪0.00</div>
-                    <button class="hp-offer" onclick="openSheet('offerSheet')">or make an offer</button>
-                </div>
-                <button class="scroll-cue" onclick="document.getElementById('details').scrollIntoView({behavior:'smooth'})">
-                    <span>Full details</span>
-                    <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
             </div>
         </div>
 
@@ -452,14 +449,19 @@
     const audience = AUDIENCE[(product.audience||product.gender||'').toString().toLowerCase()]
                      || product.audience || 'Unisex';
 
-    const seed = encodeURIComponent(product.name || 'vero');
+    // Temporary placeholder icon (a simple garment) shown centered on the sand
+    // ground when a product has no real photo yet.
+    const TEMP_ICON = 'data:image/svg+xml,' + encodeURIComponent(
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>" +
+        "<path d='M23 7 L8 15 L13 26 L20 22 L20 57 L44 57 L44 22 L51 26 L56 15 L41 7 C41 13 23 13 23 7 Z' " +
+        "fill='none' stroke='#c7c0b5' stroke-width='2' stroke-linejoin='round'/></svg>");
     const cover = product.processed_cover || product.image || product.cover
         || product.original_cover || product.img || product.imageUrl || product.photo || null;
     let extra = (product.images && product.images.length)
         ? product.images.filter(s => s && s !== cover)
         : [];
-    const images = cover ? [cover, ...extra]
-        : [ `https://picsum.photos/seed/${seed}-1/900/1100`, ...extra ];
+    const realImages = cover ? [cover, ...extra] : extra;
+    const images = realImages.length ? realImages : [TEMP_ICON];
 
     // ---- Resolved spec values ----
     const sSize      = product.size || (isArt?'50×70 cm':'M');
@@ -473,14 +475,12 @@
     // Section-1 image slider: swipe through every product photo.
     const heroSlider  = document.getElementById('heroSlider');
     const heroDots    = document.getElementById('heroDots');
-    const heroPager   = document.getElementById('heroPager');
     const heroOverlay = document.getElementById('heroOverlay');
     heroSlider.innerHTML = images.map((src,i)=>
         `<div class="hero-slide"><img src="${src}" alt="${i===0?product.name:''}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
     heroDots.innerHTML = images.length>1
         ? images.map((_,i)=>`<span class="dot${i===0?' on':''}"></span>`).join('') : '';
     function setHero(i){
-        heroPager.textContent = `${i+1} / ${images.length}`;
         heroDots.querySelectorAll('.dot').forEach((d,k)=>d.classList.toggle('on',k===i));
         // info shows on the first image only; fades out on the rest
         heroOverlay.classList.toggle('faded', i!==0);
@@ -511,7 +511,6 @@
         priceHTML = fmt(priceNum);
     }
     document.getElementById('detPrice').innerHTML  = priceHTML;
-    document.getElementById('heroPrice').innerHTML = priceHTML;
 
     document.getElementById('tSize').textContent      = sSize;
     document.getElementById('tFabric').textContent    = sFabric;
@@ -531,6 +530,22 @@
     function onScroll(){ topbar.classList.toggle('stuck', window.scrollY > 24); }
     window.addEventListener('scroll', onScroll, {passive:true});
     onScroll();
+
+    // ---- reveal the floating action bar only while section 2 is in view ----
+    (function(){
+        const bar = document.querySelector('.action-bar');
+        const details = document.getElementById('details');
+        if(!bar || !details) return;
+        if('IntersectionObserver' in window){
+            const io = new IntersectionObserver(es=>{
+                es.forEach(e=> bar.classList.toggle('show', e.isIntersecting && e.intersectionRatio >= 0.35));
+            }, {threshold:[0,0.35,0.6,1]});
+            io.observe(details);
+        } else {
+            const check=()=>bar.classList.toggle('show', details.getBoundingClientRect().top < window.innerHeight*0.6);
+            window.addEventListener('scroll', check, {passive:true}); check();
+        }
+    })();
 
     // ---------- sheets ----------
     function openSheet(id){
