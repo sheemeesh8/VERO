@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>moravchick — ניהול חנות</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --available: #1f8f4e;   /* זמין */
+            --reserved:  #c9922b;   /* מוזמן */
+            --sold:      #b23b3b;   /* נמכר */
+            --ink: #1c1c1c;
+            --muted: #7a7a75;
+            --line: #e9e9e6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fff; direction: rtl; color: var(--ink);
+            overflow-x: hidden; font-size: 14px; line-height: 1.5;
+        }
+        .side-image {
+            position: fixed; inset: 0; width: 100vw; height: 100vh;
+            background: #2a2a28 url('assets/products-hero.jpg') center / cover no-repeat;
+            filter: grayscale(1); z-index: 0;
+        }
+        .back {
+            position: fixed; top: 26px; left: 34px; z-index: 40;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border: 1.4px solid #000; border-radius: 999px;
+            font-size: 10px; letter-spacing: 1.5px; text-decoration: none; color: var(--ink);
+            background: #fff; transition: background 0.25s, color 0.25s;
+        }
+        .back:hover { background: #000; color: #fff; }
+        .wrap {
+            position: relative; z-index: 1;
+            padding: 110px 40px 90px; max-width: 1180px; margin: 0 auto;
+            animation: fadeIn 0.6s ease both;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (min-width: 1001px) { .wrap { padding-left: calc(20vw + 40px); } }
+
+        html.is-embed .side-image, html.is-embed .back { display: none !important; }
+        html.is-embed .wrap { padding: 0 0 40px; max-width: none; animation: none; }
+        html.is-embed .dash-head { display: none; }
+
+        .dash-title { font-size: clamp(30px, 4vw, 48px); font-weight: 200; letter-spacing: 0.5px; }
+        .dash-sub { margin-top: 10px; color: var(--muted); font-size: 12px; }
+
+        .grid { display: grid; gap: 18px; }
+        .g2 { grid-template-columns: 1fr 1fr; }
+        .g3 { grid-template-columns: repeat(3, 1fr); }
+        .g4 { grid-template-columns: repeat(4, 1fr); }
+        @media (max-width: 860px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } }
+        .card { border: 1px solid var(--line); border-radius: 16px; padding: 22px; background: #fff; }
+        .card.dark { background: #111; color: #fff; border-color: #111; }
+        .card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+        .card-t { font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+        .card-d { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
+        .card.dark .card-d { color: rgba(255,255,255,0.7); }
+        .sec-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 34px 0 14px; }
+        .sec-title:first-of-type { margin-top: 26px; }
+
+        .kpi-num { font-size: 34px; font-weight: 200; line-height: 1; margin-top: 10px; }
+        .kpi-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+        .card.dark .kpi-lbl { color: rgba(255,255,255,0.6); }
+        .kpi-trend { font-size: 10px; margin-top: 6px; letter-spacing: 0.3px; }
+        .up { color: var(--available); } .down { color: var(--sold); }
+
+        /* Status donut (inventory split) */
+        .stat-legend { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+        .leg { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+        .leg .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+        .leg .n { margin-inline-start: auto; font-weight: 600; }
+        .donut-wrap { display: flex; align-items: center; gap: 22px; margin-top: 14px; }
+        .donut { --a: 0; --b: 0; width: 120px; height: 120px; border-radius: 50%; flex: none;
+            background: conic-gradient(var(--available) 0 calc(var(--a) * 1%),
+                        var(--reserved) calc(var(--a) * 1%) calc(var(--b) * 1%),
+                        var(--sold) calc(var(--b) * 1%) 100%);
+            display: grid; place-items: center; }
+        .donut::after { content: ''; width: 74px; height: 74px; border-radius: 50%; background: #fff; }
+        .donut .mid { position: absolute; text-align: center; }
+        .donut-box { position: relative; display: grid; place-items: center; }
+        .donut-box .mid { position: absolute; text-align: center; }
+        .donut-box .mid b { font-size: 24px; font-weight: 300; display: block; }
+        .donut-box .mid span { font-size: 9px; letter-spacing: 1px; color: var(--muted); }
+
+        /* Bars */
+        .bars { display: flex; align-items: flex-end; gap: 8px; height: 130px; margin-top: 18px; }
+        .bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
+        .bar > i { width: 100%; max-width: 28px; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, #333, #111);
+            transition: height 0.7s cubic-bezier(0.22,1,0.36,1); }
+        .bar > small { font-size: 9px; color: var(--muted); }
+
+        /* Lists */
+        .list { display: flex; flex-direction: column; }
+        .row { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+        .row:last-child { border-bottom: none; }
+        .row .ic { width: 42px; height: 42px; border-radius: 10px; background: #f4f4f1 center/cover; display: grid; place-items: center; font-size: 18px; flex: none; }
+        .row .meta { flex: 1; min-width: 0; }
+        .row .meta b { display: block; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .row .meta span { font-size: 11px; color: var(--muted); }
+        .row .amt { font-size: 13px; font-weight: 500; white-space: nowrap; }
+        .pill { font-size: 9.5px; letter-spacing: 0.5px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+        .pill.ok { color: var(--available); border-color: rgba(31,143,78,0.3); }
+        .pill.wait { color: var(--reserved); border-color: rgba(201,146,43,0.3); }
+        .pill.low { color: var(--sold); border-color: rgba(178,59,59,0.3); }
+
+        .meter { height: 10px; border-radius: 999px; background: rgba(255,255,255,0.14); overflow: hidden; margin-top: 14px; }
+        .meter > span { display: block; height: 100%; border-radius: 999px; background: #fff; transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+        .meter-row { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 10px; }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+            padding: 11px 18px; border-radius: 999px; border: 1.4px solid #111; background: #fff;
+            color: #111; font-family: inherit; font-size: 11px; letter-spacing: 0.5px; font-weight: 500;
+            cursor: pointer; min-height: 42px; transition: background 0.2s, color 0.2s; text-decoration: none;
+        }
+        .btn:hover { background: #111; color: #fff; }
+        .btn.primary { background: #111; color: #fff; }
+        .btn.primary:hover { background: #000; }
+        .btn.block { width: 100%; }
+        .quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        @media (max-width: 860px) { .quick { grid-template-columns: 1fr 1fr; } }
+        .empty { font-size: 12px; color: var(--muted); padding: 20px 0; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="side-image" aria-hidden="true"></div>
+    <a class="back" href="seller-area.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+        לחנות
+    </a>
+
+    <main class="wrap">
+        <header class="dash-head">
+            <h1 class="dash-title">ניהול חנות</h1>
+            <p class="dash-sub" id="welcome">מרכז השליטה של החנות — מכירות, מלאי והזמנות במקום אחד</p>
+        </header>
+
+        <!-- ===== KPI ROW ===== -->
+        <div class="sec-title">ביצועים</div>
+        <div class="grid g4">
+            <div class="card dark">
+                <div class="card-t">הכנסות</div>
+                <div class="kpi-num" id="kRevenue">₪0</div>
+                <div class="kpi-lbl">סך מכירות</div>
+                <div class="kpi-trend up" id="kRevenueTrend"></div>
+            </div>
+            <div class="card">
+                <div class="card-t">מכירות</div>
+                <div class="kpi-num" id="kSold">0</div>
+                <div class="kpi-lbl">פריטים שנמכרו</div>
+            </div>
+            <div class="card">
+                <div class="card-t">צפיות בחנות</div>
+                <div class="kpi-num" id="kViews">0</div>
+                <div class="kpi-lbl">חשיפה כוללת</div>
+            </div>
+            <div class="card">
+                <div class="card-t">שיעור המרה</div>
+                <div class="kpi-num" id="kConv">0%</div>
+                <div class="kpi-lbl">צפייה → מכירה</div>
+            </div>
+        </div>
+
+        <!-- ===== REVENUE + GOAL ===== -->
+        <div class="sec-title">מכירות</div>
+        <div class="grid g2">
+            <div class="card">
+                <div class="card-h">
+                    <div class="card-t">הכנסה חודשית</div>
+                    <div class="card-d" id="revYear"></div>
+                </div>
+                <div class="bars" id="bars"></div>
+            </div>
+            <div class="card dark">
+                <div class="card-h">
+                    <div class="card-t">יעד הכנסה חודשי</div>
+                    <div class="card-d" id="goalPct"></div>
+                </div>
+                <div class="kpi-num" id="goalSpent">₪0</div>
+                <div class="kpi-lbl">החודש</div>
+                <div class="meter"><span id="goalBar"></span></div>
+                <div class="meter-row">
+                    <span id="goalLeft">נותר ₪0 ליעד</span>
+                    <span id="goalCap">יעד ₪0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== INVENTORY ===== -->
+        <div class="sec-title">מלאי</div>
+        <div class="grid g2">
+            <div class="card">
+                <div class="card-h"><div class="card-t">סטטוס מלאי</div></div>
+                <div class="donut-wrap">
+                    <div class="donut-box">
+                        <div class="donut" id="donut"></div>
+                        <div class="mid"><b id="donutTotal">0</b><span>פריטים</span></div>
+                    </div>
+                    <div class="stat-legend" style="flex:1">
+                        <div class="leg"><span class="dot" style="background:var(--available)"></span>זמין <span class="n" id="cntActive">0</span></div>
+                        <div class="leg"><span class="dot" style="background:var(--reserved)"></span>מוזמן <span class="n" id="cntReserved">0</span></div>
+                        <div class="leg"><span class="dot" style="background:var(--sold)"></span>נמכר <span class="n" id="cntSold">0</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-h">
+                    <div class="card-t">דורש תשומת לב</div>
+                    <span class="pill low" id="attnPill">0</span>
+                </div>
+                <div class="list" id="attnList"></div>
+            </div>
+        </div>
+
+        <!-- ===== TOP PRODUCTS + OFFERS ===== -->
+        <div class="sec-title">מוצרים והזמנות</div>
+        <div class="grid g2">
+            <div class="card">
+                <div class="card-h"><div class="card-t">המוצרים המובילים</div></div>
+                <div class="list" id="topList"></div>
+            </div>
+            <div class="card">
+                <div class="card-h">
+                    <div class="card-t">הצעות ממתינות</div>
+                    <span class="pill wait" id="offersPill">0</span>
+                </div>
+                <div class="list" id="offersList"></div>
+                <a class="btn block" href="offers-received.html?from=seller" style="margin-top:16px">לכל ההצעות</a>
+            </div>
+        </div>
+
+        <!-- ===== ENGAGEMENT ===== -->
+        <div class="sec-title">קהל</div>
+        <div class="grid g3">
+            <div class="card">
+                <div class="card-t">עוקבים</div>
+                <div class="kpi-num" id="kFollowers">0</div>
+                <div class="kpi-lbl">לחנות</div>
+            </div>
+            <div class="card">
+                <div class="card-t">שיחות פעילות</div>
+                <div class="kpi-num" id="kChats">0</div>
+                <div class="kpi-lbl">עם קונים</div>
+                <a class="btn block" href="chats.html?from=seller" style="margin-top:16px">לצ׳אטים</a>
+            </div>
+            <div class="card">
+                <div class="card-t">טיוטות</div>
+                <div class="kpi-num" id="kDrafts">0</div>
+                <div class="kpi-lbl">מוצרים לפרסום</div>
+                <a class="btn block" href="drafts.html" style="margin-top:16px">לטיוטות</a>
+            </div>
+        </div>
+
+        <!-- ===== QUICK ACTIONS ===== -->
+        <div class="sec-title">פעולות מהירות</div>
+        <div class="quick">
+            <a class="btn primary" href="product-upload.html">הוסף מוצר</a>
+            <a class="btn" href="products.html?from=seller">נהל מוצרים</a>
+            <a class="btn" href="seller-stats.html">סטטיסטיקות מלאות</a>
+            <a class="btn" href="seller-area.html">הגדרות חנות</a>
+        </div>
+    </main>
+
+    <script src="assets/footer.js"></script>
+    <script>
+    (function sellerDashboard() {
+        try { localStorage.setItem('vero_active_account', 'seller'); } catch (e) {}
+        if (new URLSearchParams(location.search).get('embed') === '1') {
+            document.documentElement.classList.add('is-embed');
+        }
+
+        const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
+        const readNum  = (k, fb) => { const v = parseFloat(localStorage.getItem(k)); return isNaN(v) ? fb : v; };
+        const arr = x => Array.isArray(x) ? x : [];
+        const nis = n => '₪' + Math.round(n).toLocaleString('en-US');
+        const priceOf = p => Number(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
+        const rnd = seed => { const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+
+        // Store name → welcome line.
+        const store = readJSON('vero_store_config', {});
+        const sprof = readJSON('vero_seller_profile', {});
+        const storeName = sprof.name || store.name || '';
+        if (storeName) document.getElementById('welcome').textContent = 'שלום ' + storeName + ' — הנה מצב החנות שלך';
+
+        // ---- Live data (seed a demo catalogue only when genuinely empty). ----
+        let listings = arr(readJSON('vero_listings', []));
+        if (!listings.length) {
+            const now = Date.now(), DAY = 864e5;
+            listings = [
+                { title: 'מעיל אוברסייז', brand: 'Studio Noir', price: 420, status: 'active', views: 312, stock: 3, createdAt: now - 4 * DAY },
+                { title: 'שמלת ערב',      brand: 'Atelier V',   price: 680, status: 'sold',   views: 540, stock: 0, createdAt: now - 9 * DAY },
+                { title: 'ג׳קט עור',      brand: 'Vintage Vault',price: 550, status: 'active', views: 288, stock: 1, createdAt: now - 14 * DAY },
+                { title: 'חצאית פליסה',   brand: 'Knit & Co',   price: 230, status: 'reserved',views: 176, stock: 2, createdAt: now - 20 * DAY },
+                { title: 'סוודר קשמיר',   brand: 'Knit & Co',   price: 390, status: 'sold',   views: 420, stock: 0, createdAt: now - 28 * DAY },
+                { title: 'מכנסי חליפה',   brand: 'Studio Noir', price: 310, status: 'active', views: 145, stock: 5, createdAt: now - 40 * DAY },
+                { title: 'תיק צד',        brand: 'Sole Society',price: 260, status: 'sold',   views: 380, stock: 0, createdAt: now - 60 * DAY },
+                { title: 'מגפי זמש',      brand: 'Sole Society',price: 470, status: 'active', views: 210, stock: 1, createdAt: now - 85 * DAY },
+            ];
+        }
+
+        const sold     = listings.filter(p => p.status === 'sold');
+        const active   = listings.filter(p => (p.status || 'active') === 'active');
+        const reserved = listings.filter(p => p.status === 'reserved');
+
+        const revenue = sold.reduce((s, p) => s + priceOf(p.price), 0);
+        const viewsOf = (p, i) => (p && p.views != null && !isNaN(Number(p.views))) ? Number(p.views)
+                                : Math.round(40 + rnd(i + 1) * 260 + priceOf(p.price) * 0.15);
+        let storeViews = readNum('vero_profile_views', 0) || readNum('vero_views', 0);
+        const productViews = listings.reduce((s, p, i) => s + viewsOf(p, i), 0);
+        const followers = readNum('vero_followers', 0);
+        if (!storeViews) storeViews = Math.round(productViews * 0.62) + followers * 3 + 120;
+        const conv = storeViews ? (sold.length / storeViews * 100) : 0;
+
+        document.getElementById('kRevenue').textContent = nis(revenue);
+        document.getElementById('kSold').textContent    = sold.length;
+        document.getElementById('kViews').textContent   = storeViews.toLocaleString('en-US');
+        document.getElementById('kConv').textContent    = conv.toFixed(1) + '%';
+        document.getElementById('kRevenueTrend').textContent = active.length + ' פריטים פעילים';
+
+        // ---- Monthly revenue bars (last 6 months). ----
+        const now = new Date();
+        const MONTHS = ['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
+        const buckets = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const start = d.getTime();
+            const end = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
+            let sum = sold.filter(p => { const t = Number(p.createdAt) || Date.now(); return t >= start && t < end; })
+                          .reduce((s, p) => s + priceOf(p.price), 0);
+            buckets.push({ label: MONTHS[d.getMonth()], sum });
+        }
+        // If no dated revenue at all, spread total deterministically so the chart reads.
+        if (buckets.every(b => b.sum === 0) && revenue > 0) {
+            let ws = [], wsum = 0;
+            for (let i = 0; i < 6; i++) { const w = 0.4 + rnd(i + 11) * 0.9 + i * 0.08; ws.push(w); wsum += w; }
+            buckets.forEach((b, i) => b.sum = Math.round(revenue * ws[i] / wsum));
+        }
+        const maxB = Math.max(1, ...buckets.map(b => b.sum));
+        document.getElementById('bars').innerHTML = buckets.map(b => {
+            const h = Math.max(3, Math.round((b.sum / maxB) * 100));
+            return `<div class="bar" title="${nis(b.sum)}"><i style="height:${h}%"></i><small>${b.label}</small></div>`;
+        }).join('');
+        const yearSum = buckets.reduce((s, b) => s + b.sum, 0);
+        document.getElementById('revYear').textContent = 'ב-6 חודשים אחרונים ' + nis(yearSum);
+
+        // ---- Monthly goal. ----
+        const thisMonth = buckets[buckets.length - 1].sum;
+        const goal = readNum('vero_revenue_goal', 0) || Math.max(1000, Math.ceil((thisMonth || 500) / 500) * 500 * 1.5);
+        const gpct = Math.min(100, Math.round((thisMonth / goal) * 100));
+        document.getElementById('goalSpent').textContent = nis(thisMonth);
+        document.getElementById('goalCap').textContent = 'יעד ' + nis(goal);
+        document.getElementById('goalLeft').textContent = 'נותר ' + nis(Math.max(0, goal - thisMonth)) + ' ליעד';
+        document.getElementById('goalPct').textContent = gpct + '%';
+        requestAnimationFrame(() => { document.getElementById('goalBar').style.width = gpct + '%'; });
+
+        // ---- Inventory donut. ----
+        const total = listings.length;
+        const a = active.length, r = reserved.length, s = sold.length;
+        document.getElementById('donutTotal').textContent = total;
+        document.getElementById('cntActive').textContent = a;
+        document.getElementById('cntReserved').textContent = r;
+        document.getElementById('cntSold').textContent = s;
+        const pA = total ? (a / total) * 100 : 0;
+        const pB = total ? ((a + r) / total) * 100 : 0;
+        const donut = document.getElementById('donut');
+        donut.style.setProperty('--a', pA.toFixed(1));
+        donut.style.setProperty('--b', pB.toFixed(1));
+
+        // ---- Needs attention: low stock among active items. ----
+        const stockOf = p => (p.stock != null && !isNaN(Number(p.stock))) ? Number(p.stock) : 1;
+        const lowStock = active.filter(p => stockOf(p) <= 1)
+                               .sort((x, y) => stockOf(x) - stockOf(y)).slice(0, 5);
+        document.getElementById('attnPill').textContent = lowStock.length;
+        document.getElementById('attnList').innerHTML = lowStock.length ? lowStock.map(p =>
+            `<div class="row">
+                <div class="ic">📦</div>
+                <div class="meta"><b>${p.title || 'פריט'}</b><span>${p.brand || 'ללא מותג'} · ${nis(priceOf(p.price))}</span></div>
+                <span class="pill low">${stockOf(p) === 0 ? 'אזל' : 'מלאי נמוך'}</span>
+            </div>`).join('') : '<div class="empty">המלאי במצב תקין 👍</div>';
+
+        // ---- Top products by views. ----
+        const top = [...listings].map((p, i) => ({ p, v: viewsOf(p, i) }))
+                                 .sort((x, y) => y.v - x.v).slice(0, 5);
+        document.getElementById('topList').innerHTML = top.map(({ p, v }) => {
+            const statusPill = p.status === 'sold' ? '<span class="pill">נמכר</span>'
+                             : p.status === 'reserved' ? '<span class="pill wait">מוזמן</span>'
+                             : '<span class="pill ok">זמין</span>';
+            return `<div class="row">
+                <div class="ic">🏷️</div>
+                <div class="meta"><b>${p.title || 'פריט'}</b><span>${v.toLocaleString('en-US')} צפיות · ${nis(priceOf(p.price))}</span></div>
+                ${statusPill}
+            </div>`;
+        }).join('');
+
+        // ---- Pending offers. ----
+        let offers = arr(readJSON('vero_received_offers', []));
+        const pending = offers.filter(o => (o.status || 'pending') === 'pending');
+        document.getElementById('offersPill').textContent = pending.length;
+        const offersToShow = (pending.length ? pending : offers).slice(0, 4);
+        document.getElementById('offersList').innerHTML = offersToShow.length ? offersToShow.map(o =>
+            `<div class="row">
+                <div class="ic">🤝</div>
+                <div class="meta"><b>${o.item || o.product || o.title || 'הצעה'}</b><span>${o.buyer || o.from || 'קונה'}</span></div>
+                <div class="amt">${o.amount || o.offer || o.price ? nis(priceOf(o.amount || o.offer || o.price)) : '—'}</div>
+            </div>`).join('') : '<div class="empty">אין הצעות ממתינות</div>';
+
+        // ---- Audience counters. ----
+        document.getElementById('kFollowers').textContent = followers.toLocaleString('en-US');
+        const chats = readJSON('vero_chats', {});
+        const chatCount = Array.isArray(chats) ? chats.length : (chats && typeof chats === 'object' ? Object.keys(chats).length : 0);
+        document.getElementById('kChats').textContent = chatCount;
+        document.getElementById('kDrafts').textContent = arr(readJSON('vero_drafts', [])).length;
+    })();
+    </script>
+</body>
+</html>
