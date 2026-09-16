@@ -2584,7 +2584,7 @@
     }
     function acctSwitcherOutside(e) {
         const p = document.getElementById('veroAcctSwitcher');
-        if (p && !p.contains(e.target) && !e.target.closest('.hdr-avatar-btn')) closeAccountSwitcher();
+        if (p && !p.contains(e.target) && !e.target.closest('.hdr-avatar-btn, .hdr-account-btn')) closeAccountSwitcher();
     }
     window.veroOpenAccountSwitcher = function (anchor) {
         closeAccountSwitcher();
@@ -2628,11 +2628,31 @@
     function wireAccountLongPress() {
         const btn = document.querySelector('#siteHeader .hdr-avatar-btn, #siteHeader .hdr-account-btn');
         if (!btn) return;
-        // A tap opens the personal area immediately (the old double-click detector
-        // deferred navigation 280ms and could be swallowed on touch, so the icon
-        // felt dead). Profile switching stays available via the header toggle.
+        // A normal tap opens the active account's area. A long press (hold ~500ms)
+        // on the header profile icon opens the Switch-profile card, so switching
+        // between the personal and business accounts lives on that hold gesture.
+        btn.style.touchAction = 'manipulation';
+        const HOLD = 500, MOVE_TOL = 10;
+        let timer = null, longPressed = false, startX = 0, startY = 0;
+        const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
+        const start = (x, y) => {
+            longPressed = false; startX = x; startY = y; clear();
+            timer = setTimeout(() => {
+                timer = null; longPressed = true;
+                try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+                window.veroOpenAccountSwitcher(btn);
+            }, HOLD);
+        };
+        btn.addEventListener('pointerdown', (e) => start(e.clientX, e.clientY));
+        btn.addEventListener('pointermove', (e) => {
+            if (timer && (Math.abs(e.clientX - startX) > MOVE_TOL || Math.abs(e.clientY - startY) > MOVE_TOL)) clear();
+        });
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => btn.addEventListener(ev, clear));
+        // Suppress the browser's own long-press menu on the icon.
+        btn.addEventListener('contextmenu', (e) => e.preventDefault());
         btn.addEventListener('click', (e) => {
             e.preventDefault();
+            if (longPressed) { longPressed = false; return; }   // the hold already opened the switcher
             window.veroOpenArea();
         });
     }
