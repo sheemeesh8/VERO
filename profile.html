@@ -2181,6 +2181,7 @@
         }
         /* Close the empty white gap below the stats graph. */
         body:not(.is-seller) .wrap:has(#slideStats) { padding-bottom: 24px !important; }
+        .stt-dash-embed { width: 100%; border: none; display: block; margin-top: 26px; min-height: 320px; background: #fff; }
         body:not(.is-seller) #slideStats { padding-bottom: 8px !important; }
         /* When the Statistics TAB is tapped, raise the stats as a full-screen overlay
            (like every other area) instead of leaving it relative below the hero —
@@ -2547,6 +2548,10 @@
                 <div class="stt-section-lbl">Views this month</div>
                 <div class="stt-chart" id="sttChart"></div>
                 <div class="stt-xaxis" id="sttXaxis"></div>
+
+                <!-- Buyer dashboard (expense tracking + activity), merged into the
+                     Statistics view. Auto-sized via a postMessage height handshake. -->
+                <iframe id="buyerDashEmbed" class="stt-dash-embed" src="buyer-dashboard.html?embed=1" title="לוח הקונה" scrolling="no"></iframe>
             </div>
         </section>
 
@@ -2556,6 +2561,13 @@
         <script>
         // ---- Statistics slide: pull followers / following + a few numbers from
         //      localStorage, and draw the simple monthly bar chart. ----
+        // Auto-size the embedded buyer dashboard to its content.
+        window.addEventListener('message', function (e) {
+            var d = e.data;
+            if (!d || d.type !== 'vero-embed-height' || d.page !== 'buyer-dashboard') return;
+            var f = document.getElementById('buyerDashEmbed');
+            if (f && d.h) f.style.height = d.h + 'px';
+        });
         (function statsSlide() {
             if (document.body.classList.contains('is-seller')) return;
             var num = function (k, d) { var v = localStorage.getItem(k); return (v == null || v === '') ? d : v; };
