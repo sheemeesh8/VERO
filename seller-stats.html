@@ -28,6 +28,8 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { min-height: 100%; }
+        /* Embedded store-management dashboard sitting at the top of the stats page. */
+        .dash-embed { width: 100%; border: none; display: block; margin: 0 0 26px; min-height: 320px; }
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #fff; direction: rtl; color: var(--ink);
@@ -171,6 +173,10 @@
             <p class="st-sub" id="stSub">מלאי, עוקבים, צפיות והכנסות — הכל במקום אחד.</p>
         </div>
 
+        <!-- Store-management dashboard, merged in as the overview at the top of the
+             Statistics view. Auto-sized via a postMessage height handshake. -->
+        <iframe id="dashEmbed" class="dash-embed" src="seller-dashboard.html?embed=1" title="לוח ניהול חנות" scrolling="no"></iframe>
+
         <!-- Period toggle -->
         <div class="seg" id="periodSeg">
             <button type="button" data-p="day">יומי</button>
@@ -236,6 +242,13 @@
     </div>
 
     <script>
+    // Auto-size the embedded store-management dashboard to its content.
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (!d || d.type !== 'vero-embed-height' || d.page !== 'seller-dashboard') return;
+        var f = document.getElementById('dashEmbed');
+        if (f && d.h) f.style.height = d.h + 'px';
+    });
     (function sellerStats() {
         var readJSON = function (k, fb) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
         var readNum = function (k, d) { var v = localStorage.getItem(k); var n = Number(v); return (v == null || v === '' || isNaN(n)) ? d : n; };

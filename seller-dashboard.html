@@ -272,8 +272,16 @@
     <script>
     (function sellerDashboard() {
         try { localStorage.setItem('vero_active_account', 'seller'); } catch (e) {}
+        // Embedded mode (?embed=1) strips the standalone chrome. When embedded inside
+        // the Statistics view, report our height up so the host iframe fits us with no
+        // inner scrollbar.
         if (new URLSearchParams(location.search).get('embed') === '1') {
             document.documentElement.classList.add('is-embed');
+            const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
+            window.addEventListener('load', postH);
+            window.addEventListener('resize', postH);
+            if (window.ResizeObserver) new ResizeObserver(postH).observe(document.body);
+            setTimeout(postH, 300); setTimeout(postH, 1200);
         }
 
         const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
