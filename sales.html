@@ -53,29 +53,36 @@
         .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
         .head-sub { margin-top: 4px; font-size: 12.5px; color: #6b6b66; letter-spacing: 0.5px; text-align: left; max-width: 40em; }
 
-        /* Full-width discount slider across the whole page. */
-        .disc-slider { margin: 30px 0 6px; direction: rtl; }
-        .disc-slider .ds-top {
-            display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px;
+        /* Full-width clothing-type filter across the whole page. */
+        .type-filter { margin: 30px 0 6px; }
+        .type-filter .tf-lbl {
+            display: block; font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+            color: #9a9a95; font-weight: 700; margin-bottom: 12px;
         }
-        .disc-slider .ds-lbl { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: #9a9a95; font-weight: 700; }
-        .disc-slider .ds-val { font-size: 22px; font-weight: 300; color: #EB2323; letter-spacing: 1px; }
-        .disc-slider input[type="range"] {
-            -webkit-appearance: none; appearance: none; width: 100%; height: 2px; margin: 0;
-            background: #e6e1d8; outline: none; cursor: pointer;
+        .type-chips {
+            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+            scrollbar-width: none; -ms-overflow-style: none;
         }
-        .disc-slider input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%;
-            background: #EB2323; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.25); cursor: pointer;
+        .type-chips::-webkit-scrollbar { display: none; }
+        .type-chips button {
+            flex: 0 0 auto; font-size: 12px; letter-spacing: 0.5px; font-weight: 600; cursor: pointer; font-family: inherit;
+            border: 1px solid #dcdcd7; background: #fff; color: #111; padding: 9px 18px; border-radius: 999px;
+            transition: background 0.2s, color 0.2s, border-color 0.2s; white-space: nowrap;
         }
-        .disc-slider input[type="range"]::-moz-range-thumb {
-            width: 22px; height: 22px; border: 3px solid #fff; border-radius: 50%;
-            background: #EB2323; box-shadow: 0 1px 4px rgba(0,0,0,0.25); cursor: pointer;
+        .type-chips button:hover { border-color: #111; }
+        .type-chips button.on { background: #111; color: #fff; border-color: #111; }
+
+        /* Sort control (in the sheet). */
+        .s-sort { display: flex; flex-direction: column; gap: 8px; }
+        .s-sort button {
+            font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-align: right;
+            border: 1px solid #dcdcd7; background: #fff; color: #111; padding: 13px 16px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s, background 0.2s;
         }
-        .disc-slider .ds-ticks {
-            display: flex; justify-content: space-between; margin-top: 10px;
-            font-size: 10px; color: #b5b0a6; letter-spacing: 0.5px;
-        }
+        .s-sort button:hover { border-color: #111; }
+        .s-sort button.on { border-color: #EB2323; background: #fff5f5; }
+        .s-sort button .chk { color: #EB2323; font-weight: 700; opacity: 0; }
+        .s-sort button.on .chk { opacity: 1; }
 
         /* Summary ticker — one stat at a time, fading (same as the cart / wishlist). */
         .cart-ticker {
@@ -183,16 +190,10 @@
             <p class="head-sub" id="headSub">כל הפריטים שבמבצע, מכל הקולקציות, מסודרים מההנחה הגדולה ביותר.</p>
         </div>
 
-        <!-- Full-width discount slider. -->
-        <div class="disc-slider">
-            <div class="ds-top">
-                <span class="ds-lbl">סנן לפי אחוז הנחה</span>
-                <span class="ds-val" id="dsVal">הכל</span>
-            </div>
-            <input type="range" id="discRange" min="0" max="70" step="5" value="0">
-            <div class="ds-ticks">
-                <span>0%</span><span>25%</span><span>40%</span><span>50%</span><span>70%+</span>
-            </div>
+        <!-- Full-width clothing-type filter. -->
+        <div class="type-filter">
+            <span class="tf-lbl">סנן לפי סוג פריט</span>
+            <div class="type-chips" id="typeChips"></div>
         </div>
 
         <div id="tickerHost"></div>
@@ -208,14 +209,10 @@
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 <input type="search" id="q" placeholder="חיפוש — שם פריט, מותג או קטגוריה…" autocomplete="off">
             </div>
-            <span class="s-filter-lbl">סנן לפי אחוז הנחה</span>
-            <div class="s-disc" id="discFilter">
-                <button data-min="0" class="on">הכל</button>
-                <button data-min="10">10%+</button>
-                <button data-min="25">25%+</button>
-                <button data-min="40">40%+</button>
-                <button data-min="50">50%+</button>
-                <button data-min="70">70%+</button>
+            <span class="s-filter-lbl">מיון לפי הנחה</span>
+            <div class="s-sort" id="sortFilter">
+                <button data-sort="desc" class="on">מההנחה הגבוהה לנמוכה <span class="chk">✓</span></button>
+                <button data-sort="asc">מההנחה הנמוכה לגבוהה <span class="chk">✓</span></button>
             </div>
         </div>
     </div>
@@ -237,29 +234,50 @@
         (function () {
             var VC = window.veroCollections;
             var all = VC.onSale();               // already sorted deepest-cut first
-            var minPct = 0, term = '';
+            var cat = 'all', sortDir = 'desc', term = '';
 
             var body = document.getElementById('cartBody');
             var tickerHost = document.getElementById('tickerHost');
             var sub = document.getElementById('headSub');
             var qEl = document.getElementById('q');
-            var rangeEl = document.getElementById('discRange');
-            var dsVal = document.getElementById('dsVal');
-            var discFilter = document.getElementById('discFilter');
+            var typeChips = document.getElementById('typeChips');
+            var sortFilter = document.getElementById('sortFilter');
 
-            // Push a chosen minimum discount to every control (slider, buttons, label).
-            function setMinPct(v) {
-                minPct = parseInt(v, 10) || 0;
-                if (rangeEl) rangeEl.value = minPct;
-                if (dsVal) dsVal.textContent = minPct === 0 ? 'הכל' : minPct + '%+';
-                discFilter.querySelectorAll('button').forEach(function (x) {
-                    x.classList.toggle('on', (parseInt(x.dataset.min, 10) || 0) === minPct);
-                });
+            // Hebrew labels for the English category keys coming from collections.js.
+            var CAT_HE = {
+                'Shirts': 'חולצות', 'Dresses': 'שמלות', 'Outerwear': 'מעילים',
+                'Knitwear': 'סריגים', 'Accessories': 'אביזרים', 'Shoes': 'נעליים',
+                'Sets': 'סטים', 'Tops': 'טופים', 'Bottoms': 'תחתונים', 'Bags': 'תיקים'
+            };
+
+            // Build the clothing-type chips from the categories actually on sale.
+            var cats = [];
+            all.forEach(function (p) { if (p.category && cats.indexOf(p.category) === -1) cats.push(p.category); });
+            typeChips.innerHTML =
+                '<button data-cat="all" class="on">הכל</button>' +
+                cats.map(function (c) {
+                    return '<button data-cat="' + c.replace(/"/g, '') + '">' + (CAT_HE[c] || c) + '</button>';
+                }).join('');
+
+            typeChips.addEventListener('click', function (e) {
+                var b = e.target.closest('button[data-cat]');
+                if (!b) return;
+                cat = b.dataset.cat;
+                typeChips.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
                 render();
-            }
+            });
+
+            // Sort direction — highest → lowest discount, or the reverse.
+            sortFilter.addEventListener('click', function (e) {
+                var b = e.target.closest('button[data-sort]');
+                if (!b) return;
+                sortDir = b.dataset.sort;
+                sortFilter.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+                render();
+            });
 
             function matches(p) {
-                if (p._d.percent < minPct) return false;
+                if (cat !== 'all' && p.category !== cat) return false;
                 if (term) {
                     var hay = (p.name + ' ' + p.seller + ' ' + p.category).toLowerCase();
                     if (hay.indexOf(term) === -1) return false;
@@ -268,7 +286,11 @@
             }
 
             function render() {
-                var items = all.filter(matches);
+                var items = all.filter(matches).slice().sort(function (a, b) {
+                    return sortDir === 'asc'
+                        ? a._d.percent - b._d.percent
+                        : b._d.percent - a._d.percent;
+                });
 
                 if (!items.length) {
                     body.innerHTML = '<div class="cart-empty">לא נמצאו פריטים תואמים — נסו לשחרר את הסינון.</div>';
@@ -289,16 +311,6 @@
                         '<div class="cart-stat"><span class="cs-num">' + maxPct + '%</span><span class="cs-lbl">ההנחה הגדולה ביותר</span></div>' +
                     '</div>';
             }
-
-            // Discount-percent filter (button options in the sheet).
-            discFilter.addEventListener('click', function (e) {
-                var b = e.target.closest('button[data-min]');
-                if (!b) return;
-                setMinPct(b.dataset.min);
-            });
-
-            // Full-width slider — drives the same filter.
-            if (rangeEl) rangeEl.addEventListener('input', function () { setMinPct(rangeEl.value); });
 
             // Free-text search (inside the sheet).
             var t;
