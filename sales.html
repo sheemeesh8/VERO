@@ -104,6 +104,25 @@
         .cart-stat .cs-num { font-size: 18px; font-weight: 300; letter-spacing: 2px; line-height: 1; color: #16150f; }
         .cart-stat .cs-lbl { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: #a8a399; }
 
+        /* The thin black line, reborn as a 0–100 discount slider. */
+        .disc-line { margin: 30px 0 16px; }
+        .disc-line-top {
+            display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px;
+        }
+        .disc-line .dl-lbl { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: #9a9a95; font-weight: 700; }
+        .disc-line .dl-val { font-size: 20px; font-weight: 300; color: #16150f; letter-spacing: 1px; }
+        .disc-line input[type="range"] {
+            -webkit-appearance: none; appearance: none; width: 100%; height: 1px; margin: 0;
+            background: #16150f; outline: none; cursor: pointer;
+        }
+        .disc-line input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
+            background: #16150f; cursor: pointer; margin-top: 0;
+        }
+        .disc-line input[type="range"]::-moz-range-thumb {
+            width: 16px; height: 16px; border: none; border-radius: 50%; background: #16150f; cursor: pointer;
+        }
+
         /* Product grid — same object as the feed / wishlist. */
         .cart-grid {
             display: grid;
@@ -189,11 +208,19 @@
 
         <div class="head-row">
             <h1 class="head-title">/Sales</h1>
-            <div class="head-kicker">The Best Sales · moravchick</div>
+            <div class="head-kicker">The Best Sales</div>
             <p class="head-sub" id="headSub">כל הפריטים שבמבצע, מכל הקולקציות, מסודרים מההנחה הגדולה ביותר.</p>
         </div>
 
-        <div id="tickerHost"></div>
+        <!-- The thin black line is a 0–100 discount slider: pick a minimum
+             discount and the grid shows only items at or above it. -->
+        <div class="disc-line">
+            <div class="disc-line-top">
+                <span class="dl-lbl">אחוז הנחה מבוקש</span>
+                <span class="dl-val" id="dlVal">הכל</span>
+            </div>
+            <input type="range" id="discRange" min="0" max="100" step="1" value="0" aria-label="אחוז הנחה מבוקש">
+        </div>
         <div id="cartBody"></div>
     </div>
 
@@ -233,14 +260,15 @@
         (function () {
             var VC = window.veroCollections;
             var all = VC.onSale();               // already sorted deepest-cut first
-            var cat = 'all', sortDir = 'desc', term = '';
+            var cat = 'all', sortDir = 'desc', term = '', minPct = 0;
 
             var body = document.getElementById('cartBody');
-            var tickerHost = document.getElementById('tickerHost');
             var sub = document.getElementById('headSub');
             var qEl = document.getElementById('q');
             var typeChips = document.getElementById('typeChips');
             var sortFilter = document.getElementById('sortFilter');
+            var rangeEl = document.getElementById('discRange');
+            var dlVal = document.getElementById('dlVal');
 
             // Hebrew labels for the English category keys coming from collections.js.
             var CAT_HE = {
@@ -276,6 +304,7 @@
             });
 
             function matches(p) {
+                if ((p._d.percent || 0) < minPct) return false;
                 if (cat !== 'all' && p.category !== cat) return false;
                 if (term) {
                     var hay = (p.name + ' ' + p.seller + ' ' + p.category).toLowerCase();
@@ -292,9 +321,8 @@
                 });
 
                 if (!items.length) {
-                    body.innerHTML = '<div class="cart-empty">לא נמצאו פריטים תואמים — נסו לשחרר את הסינון.</div>';
-                    tickerHost.innerHTML = '';
-                    sub.textContent = 'כל הפריטים שבמבצע, מכל הקולקציות, מסודרים מההנחה הגדולה ביותר.';
+                    body.innerHTML = '<div class="cart-empty">לא נמצאו פריטים בהנחה של ' + minPct + '% ומעלה — נסו להוריד את הסליידר.</div>';
+                    sub.textContent = 'אין פריטים בהנחה המבוקשת.';
                     return;
                 }
 
@@ -302,14 +330,17 @@
                     '<div class="cart-grid">' + items.map(function (p) { return VC.cardHTML(p); }).join('') + '</div>';
 
                 var count = items.length;
-                var maxPct = items.reduce(function (m, p) { return Math.max(m, p._d.percent || 0); }, 0);
-                sub.textContent = count + ' פריטים במבצע.';
-                tickerHost.innerHTML =
-                    '<div class="cart-ticker" id="cartTicker">' +
-                        '<div class="cart-stat is-active"><span class="cs-num">' + count + '</span><span class="cs-lbl">פריטים במבצע</span></div>' +
-                        '<div class="cart-stat"><span class="cs-num">' + maxPct + '%</span><span class="cs-lbl">ההנחה הגדולה ביותר</span></div>' +
-                    '</div>';
+                sub.textContent = minPct === 0
+                    ? count + ' פריטים במבצע.'
+                    : count + ' פריטים בהנחה של ' + minPct + '% ומעלה.';
             }
+
+            // The thin black line = a 0–100 discount slider driving the grid.
+            if (rangeEl) rangeEl.addEventListener('input', function () {
+                minPct = parseInt(rangeEl.value, 10) || 0;
+                dlVal.textContent = minPct === 0 ? 'הכל' : minPct + '%+';
+                render();
+            });
 
             // Free-text search (inside the sheet).
             var t;
@@ -319,16 +350,6 @@
             });
 
             render();
-
-            // Rotate the summary stat every 4s (same as the cart / wishlist).
-            setInterval(function () {
-                var slides = document.querySelectorAll('#cartTicker .cart-stat');
-                if (slides.length < 2) return;
-                var cur = [].slice.call(slides).findIndex(function (s) { return s.classList.contains('is-active'); });
-                if (cur < 0) cur = 0;
-                slides[cur].classList.remove('is-active');
-                slides[(cur + 1) % slides.length].classList.add('is-active');
-            }, 4000);
         })();
     </script>
     <script src="footer.js"></script>
