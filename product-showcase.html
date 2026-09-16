@@ -206,6 +206,19 @@
             /* Rounded bottom corners on the black title panel. */
             border-radius:0 0 22px 22px;
         }
+        /* Slide-in-down entrance: the panel starts tucked up behind the header and
+           slides down into place when the details section scrolls into view. JS arms
+           it (hidden) and adds .anim-in to play it, so it stays visible if JS is off. */
+        .det-titlebar.anim-armed{ transform:translateY(-100%); }
+        .det-titlebar.anim-in{ animation:detTitleSlideIn .6s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes detTitleSlideIn{
+            from{ transform:translateY(-100%); }
+            to{ transform:translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce){
+            .det-titlebar.anim-armed{ transform:none; }
+            .det-titlebar.anim-in{ animation:none; }
+        }
         .det-brand{
             font-family:'Bodoni Moda','Didot',Georgia,'Times New Roman',serif;
             font-size:34px;font-weight:400;letter-spacing:1px;text-transform:uppercase;line-height:0.95;
@@ -637,6 +650,27 @@
             io.observe(details);
         } else {
             const check=()=>bar.classList.toggle('show', details.getBoundingClientRect().top < window.innerHeight*0.6);
+            window.addEventListener('scroll', check, {passive:true}); check();
+        }
+    })();
+
+    // ---- slide the black title banner in (down, from under the header) when the
+    //      details section first comes into view ----
+    (function(){
+        const bar = document.querySelector('.det-titlebar');
+        const details = document.getElementById('details');
+        if(!bar || !details) return;
+        bar.classList.add('anim-armed');   // hidden above until revealed
+        let played = false;
+        const play = ()=>{ if(played) return; played = true;
+            bar.classList.remove('anim-armed'); bar.classList.add('anim-in'); };
+        if('IntersectionObserver' in window){
+            const io = new IntersectionObserver(es=>{
+                es.forEach(e=>{ if(e.isIntersecting && e.intersectionRatio >= 0.2){ play(); io.disconnect(); } });
+            }, {threshold:[0,0.2,0.5]});
+            io.observe(details);
+        } else {
+            const check=()=>{ if(details.getBoundingClientRect().top < window.innerHeight*0.8){ play(); window.removeEventListener('scroll', check); } };
             window.addEventListener('scroll', check, {passive:true}); check();
         }
     })();
