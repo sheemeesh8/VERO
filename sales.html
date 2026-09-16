@@ -36,9 +36,6 @@
         }
         .sale-hero > * { position: relative; z-index: 2; }
         /* Top bar over the hero — icons in white. */
-        .sale-hero .cart-topbar { padding: max(10px, env(safe-area-inset-top,0px)) clamp(16px,5vw,34px) 0; }
-        .sale-hero .tb-ico { color: #fff; }
-        .sale-hero .tb-ico svg { filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
 
         /* Centred editorial layout — identical to the home page hero overlay. */
         .sh-inner {
@@ -137,17 +134,28 @@
             .page-body { padding-left: 14px; padding-right: 14px; }
         }
 
-        /* ---- Clean top bar — identical language to the cart / wishlist ---- */
+        /* ---- Sticky top bar — transparent over the hero, solid once scrolled ---- */
         .cart-topbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 90;
             display: flex; align-items: center; justify-content: space-between;
-            padding: max(8px, env(safe-area-inset-top,0px)) 4px 16px;
+            padding: max(10px, env(safe-area-inset-top,0px)) clamp(16px,5vw,34px) 12px;
+            background: transparent; border-bottom: 1px solid transparent;
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .cart-topbar.scrolled {
+            background: rgba(255,255,255,0.94);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+            border-bottom-color: rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05);
         }
         .cart-topbar .tb-right { display: flex; align-items: center; gap: 4px; }
         .tb-ico {
             width: 42px; height: 42px; flex: none; border: none; background: none;
-            color: #16150f; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: opacity 0.2s; text-decoration: none;
+            color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.2s, color 0.3s ease; text-decoration: none;
         }
+        .tb-ico svg { filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
+        .cart-topbar.scrolled .tb-ico { color: #16150f; }
+        .cart-topbar.scrolled .tb-ico svg { filter: none; }
         .tb-ico:active { opacity: 0.5; }
         .tb-ico svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.6; fill: none; }
 
@@ -304,19 +312,19 @@
     </style>
 </head>
 <body>
+    <!-- Sticky header: just the filter and the back arrow. -->
+    <div class="cart-topbar" id="saleTopbar">
+        <a class="back-btn tb-ico" href="index.html" aria-label="Back">
+            <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+        </a>
+        <button class="tb-ico" onclick="openFilters()" aria-label="Filters">
+            <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
+        </button>
+    </div>
+
     <div class="wrap">
         <!-- ===== HERO SECTION — image band with the texts over it ===== -->
         <section class="sale-hero">
-            <!-- Header: just the filter and the back arrow. -->
-            <div class="cart-topbar">
-                <a class="back-btn tb-ico" href="index.html" aria-label="Back">
-                    <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <button class="tb-ico" onclick="openFilters()" aria-label="Filters">
-                    <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
-                </button>
-            </div>
-
             <div class="sh-inner">
                 <div class="sh-top">
                     <span class="sh-eyebrow">End of Season</span>
@@ -469,6 +477,20 @@
             });
 
             render();
+        })();
+    </script>
+    <script>
+        // Sticky header: transparent over the hero, solid once scrolled past it.
+        (function () {
+            var bar = document.getElementById('saleTopbar');
+            var hero = document.querySelector('.sale-hero');
+            function onScroll() {
+                var trigger = hero ? hero.offsetHeight - 80 : 80;
+                bar.classList.toggle('scrolled', window.scrollY > trigger);
+            }
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', onScroll);
+            onScroll();
         })();
     </script>
     <script src="footer.js"></script>
