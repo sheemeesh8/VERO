@@ -11839,11 +11839,36 @@
                     transform: translateX(-50%) translateY(26px);
                     opacity: 0;
                     transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22,1,0.36,1);
-                    z-index: 900; display: flex; align-items: stretch; gap: 6px;
-                    max-width: 92vw; overflow-x: auto;
+                    z-index: 900; display: flex; align-items: stretch; gap: 4px;
+                    /* Forced LTR so the ⋯ is pinned on the left and the category slide
+                       scrolls in from the right and vanishes behind it, regardless of
+                       the page's RTL. */
+                    direction: ltr;
+                    width: 92vw; max-width: 460px; overflow: hidden;
                     background: rgba(20,20,20,0.94); backdrop-filter: blur(6px);
                     border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 5px;
                     box-shadow: 0 6px 26px rgba(0,0,0,0.28); font-family: inherit;
+                }
+                /* The moving slide: a clipped viewport with a track that scrolls itself
+                   leftward, fading out behind the ⋯ button on the left. */
+                .feed-nav-view {
+                    flex: 1 1 auto; min-width: 0; overflow: hidden; position: relative;
+                    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 100%);
+                    mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 100%);
+                }
+                .feed-nav-track {
+                    display: flex; width: max-content; gap: 6px;
+                    animation: feedNavScroll 26s linear infinite;
+                }
+                /* Pause while the person is interacting, so a chip can be tapped. */
+                .feed-nav:hover .feed-nav-track,
+                .feed-nav-view:active .feed-nav-track { animation-play-state: paused; }
+                @keyframes feedNavScroll {
+                    from { transform: translateX(0); }
+                    to   { transform: translateX(-50%); }
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .feed-nav-track { animation: none; }
                 }
                 .feed-nav.in { opacity: 1; transform: translateX(-50%) translateY(0); }
                 @media (prefers-reduced-motion: reduce) {
@@ -11857,7 +11882,9 @@
                     white-space: nowrap; transition: background 0.2s, color 0.2s;
                 }
                 .feed-nav-tab:hover { color: #fff; }
-                .feed-nav-tab.is-active { color: #111; }
+                /* Active category = a solid white pill (the sliding indicator can't
+                   track a moving marquee, so the state lives on the tab itself). */
+                .feed-nav-tab.is-active { color: #111; background: #fff; }
                 .feed-nav-ind {
                     position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; z-index: 0;
                     background: #fff; border-radius: 999px; pointer-events: none;
@@ -11930,55 +11957,46 @@
                 }
                 return pick;
             }
-            function moveInd(animate) {
-                const t = bar.querySelector('.feed-nav-tab.is-active'); if (!t) return;
-                if (!animate) ind.style.transition = 'none';
-                ind.style.width = t.offsetWidth + 'px';
-                ind.style.transform = 'translateX(' + t.offsetLeft + 'px)';
-                if (!animate) { void ind.offsetWidth; ind.style.transition = ''; }
-            }
             function select(type) {
                 feedFilters.type = type;
                 if (typeof renderFeedFilters === 'function') renderFeedFilters();
                 if (typeof renderFeed === 'function') renderFeed();
-                syncActive(true);
+                syncActive();
             }
-            function syncActive(animate) {
-                const tabs = [...bar.querySelectorAll('.feed-nav-tab')];
+            // Light up whichever category is active; both marquee copies of that tab
+            // get the class, so the state is visible wherever the slide happens to be.
+            function syncActive() {
                 const type = activeType();
-                let any = false;
-                tabs.forEach(t => {
-                    // The ALL tab (empty type) is active when no category filter is set;
-                    // the category tabs match their own type.
-                    const on = t.dataset.type === type;
-                    t.classList.toggle('is-active', on);
-                    if (on) any = true;
+                bar.querySelectorAll('.feed-nav-tab').forEach(t => {
+                    t.classList.toggle('is-active', t.dataset.type === type);
                 });
-                // Glide the pill to whichever tab is active (ALL or one of the five);
-                // a category chosen from the ⋯ popup has no tab, so hide it.
-                if (any) moveInd(animate !== false);
-                else ind.style.width = '0';
             }
             function build() {
                 bar.innerHTML = '';
-                bar.appendChild(ind);
+                // The ⋯ chooser is pinned on the left; the category slide scrolls in
+                // from the right and disappears behind it.
+                const more = document.createElement('button');
+                more.type = 'button'; more.className = 'feed-nav-more';
+                more.textContent = '⋯'; more.setAttribute('aria-label', 'כל הקטגוריות');
+                more.addEventListener('click', e => { e.stopPropagation(); togglePop(more); });
+                bar.appendChild(more);
+                const sep = document.createElement('span'); sep.className = 'feed-nav-sep';
+                bar.appendChild(sep);
+                // The moving slide: a clipped viewport with a self-scrolling track.
+                const view = document.createElement('div'); view.className = 'feed-nav-view';
+                const track = document.createElement('div'); track.className = 'feed-nav-track';
+                view.appendChild(track); bar.appendChild(view);
                 const mk = (label, type) => {
                     const b = document.createElement('button');
                     b.type = 'button'; b.className = 'feed-nav-tab'; b.dataset.type = type;
                     b.textContent = label;
                     b.addEventListener('click', () => select(type));
-                    bar.appendChild(b);
+                    return b;
                 };
-                mk('ALL', '');                                    // default: everything, no filter
-                featuredCats().forEach(c => mk(c, c));            // two featured, rotated each build
-                const sep = document.createElement('span'); sep.className = 'feed-nav-sep';
-                bar.appendChild(sep);
-                const more = document.createElement('button');   // the ⋯ chooser
-                more.type = 'button'; more.className = 'feed-nav-more';
-                more.textContent = '⋯'; more.setAttribute('aria-label', 'כל הקטגוריות');
-                more.addEventListener('click', e => { e.stopPropagation(); togglePop(more); });
-                bar.appendChild(more);
-                syncActive(false);
+                const set = [['ALL', '']].concat(cats().map(c => [c, c]));
+                // Duplicate the set so the marquee loops seamlessly at translateX(-50%).
+                set.concat(set).forEach(([label, type]) => track.appendChild(mk(label, type)));
+                syncActive();
             }
 
             // ---- Full category chooser popup (opened by the ⋯ button) ----
@@ -12052,11 +12070,10 @@
             }
             if (typeof window.renderFeed === 'function') {
                 const _rf = window.renderFeed;
-                window.renderFeed = function () { _rf.apply(this, arguments); syncActive(true); };
+                window.renderFeed = function () { _rf.apply(this, arguments); syncActive(); };
             }
 
-            window.addEventListener('resize', () => moveInd(false));
-            if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(false));
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => syncActive());
             window.addEventListener('load', () => setTimeout(build, 300));
 
             // Reveal on scroll: the bar stays hidden through the hero, the Men/Women/Kids
