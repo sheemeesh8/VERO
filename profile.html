@@ -2538,18 +2538,7 @@
                 <a class="stt-storefront" id="sttStorefront" href="#"
                    onclick="event.preventDefault(); window.scrollBy({ top: (window.innerHeight || 600) * 0.92, behavior: 'smooth' });">Slide down for more settings ▾</a>
 
-                <div class="stt-grid">
-                    <div class="stt-tile"><div class="stt-num" id="sttItems">0</div><div class="stt-lbl">Items live</div></div>
-                    <div class="stt-tile"><div class="stt-num" id="sttViews">0</div><div class="stt-lbl">Profile views</div></div>
-                    <div class="stt-tile"><div class="stt-num" id="sttSales">0</div><div class="stt-lbl">Total sales</div></div>
-                    <div class="stt-tile"><div class="stt-num" id="sttRating">—</div><div class="stt-lbl">Rating</div></div>
-                </div>
-
-                <div class="stt-section-lbl">Views this month</div>
-                <div class="stt-chart" id="sttChart"></div>
-                <div class="stt-xaxis" id="sttXaxis"></div>
-
-                <!-- Buyer dashboard (expense tracking + activity), merged into the
+                <!-- Buyer dashboard (expense tracking + activity + time trends) is the
                      Statistics view. Auto-sized via a postMessage height handshake. -->
                 <iframe id="buyerDashEmbed" class="stt-dash-embed" src="buyer-dashboard.html?embed=1" title="לוח הקונה" scrolling="no"></iframe>
             </div>
@@ -2573,28 +2562,9 @@
             var num = function (k, d) { var v = localStorage.getItem(k); return (v == null || v === '') ? d : v; };
             var countJSON = function (k) { try { var v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v.length : (v && typeof v === 'object' ? Object.keys(v).length : 0); } catch (e) { return 0; } };
             var set = function (id, val) { var el = document.getElementById(id); if (el) el.textContent = val; };
+            // Header counters that live outside the removed tiles (guarded — no-op if absent).
             set('sttFollowers', num('vero_followers', 0));
             set('sttFollowing', num('vero_following', 0));
-            set('sttItems', countJSON('vero_listings'));
-            set('sttViews', num('vero_profile_views', 0));
-            set('sttSales', num('vero_total_sales', 0));
-            set('sttRating', num('vero_rating', '—'));
-
-            // Monthly bar chart — real data if present (vero_views_monthly = [..]),
-            // otherwise a light placeholder set so the chart reads.
-            var chart = document.getElementById('sttChart'), xaxis = document.getElementById('sttXaxis');
-            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            var now = new Date().getMonth();
-            var last6 = []; for (var i = 5; i >= 0; i--) last6.push(months[(now - i + 12) % 12]);
-            var data;
-            try { data = JSON.parse(localStorage.getItem('vero_views_monthly')); } catch (e) { data = null; }
-            if (!Array.isArray(data) || data.length < 6) data = [12, 20, 16, 28, 24, 34];
-            data = data.slice(-6);
-            var max = Math.max.apply(null, data) || 1;
-            if (chart) chart.innerHTML = data.map(function (v) {
-                return '<div class="stt-bar" style="height:' + Math.round((v / max) * 100) + '%"></div>';
-            }).join('');
-            if (xaxis) xaxis.innerHTML = last6.map(function (m) { return '<span>' + m + '</span>'; }).join('');
         })();
         </script>
 
