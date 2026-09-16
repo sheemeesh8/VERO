@@ -11908,19 +11908,22 @@
                 try { return uniqueSorted(feedBaseProducts().map(p => p.category).filter(Boolean)); }
                 catch (e) { return []; }
             }
-            // The five categories the recommendation reads as your favourites: ranked
-            // by how often the category shows up in your saved (wishlist) items, then
-            // falling back to the mode's own order. Recomputed per mode.
-            function topCats() {
-                const all = cats();
-                let wl = [];
-                try { wl = JSON.parse(localStorage.getItem('vero_wishlist')) || []; } catch (e) {}
-                const freq = {};
-                (Array.isArray(wl) ? wl : []).forEach(it => {
-                    const c = it && it.category;
-                    if (c && all.includes(c)) freq[c] = (freq[c] || 0) + 1;
-                });
-                return all.slice().sort((a, b) => (freq[b] || 0) - (freq[a] || 0)).slice(0, 5);
+            // Four categories to feature in the bar — a DIFFERENT four each time the bar
+            // is built (every load / mode change). The rest live in the ⋯ chooser. The
+            // active category, if any, is always kept in the four so its tab stays lit.
+            function featuredCats() {
+                const all = cats().slice();
+                // Fisher–Yates shuffle for a fresh pick each time.
+                for (let i = all.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    const tmp = all[i]; all[i] = all[j]; all[j] = tmp;
+                }
+                let pick = all.slice(0, 4);
+                const act = activeType();
+                if (act && all.includes(act) && !pick.includes(act)) {
+                    pick[pick.length - 1] = act;   // keep the current category visible
+                }
+                return pick;
             }
             function moveInd(animate) {
                 const t = bar.querySelector('.feed-nav-tab.is-active'); if (!t) return;
@@ -11962,7 +11965,7 @@
                     bar.appendChild(b);
                 };
                 mk('ALL', '');                                    // default: everything, no filter
-                topCats().forEach(c => mk(c, c));                 // the five favourites
+                featuredCats().forEach(c => mk(c, c));            // four featured, rotated each build
                 const sep = document.createElement('span'); sep.className = 'feed-nav-sep';
                 bar.appendChild(sep);
                 const more = document.createElement('button');   // the ⋯ chooser
