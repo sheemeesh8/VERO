@@ -137,6 +137,19 @@
         .quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
         @media (max-width: 860px) { .quick { grid-template-columns: 1fr 1fr; } }
         .empty { font-size: 12px; color: var(--muted); padding: 20px 0; text-align: center; }
+
+        /* View toggle (Business ↔ Growth). */
+        .dash-toggle {
+            display: inline-flex; gap: 4px; padding: 5px; margin: 22px 0 4px;
+            background: rgba(20,20,20,0.96); border-radius: 999px; max-width: 100%;
+        }
+        .dash-toggle button {
+            border: none; background: transparent; color: #b5b5b0; font-family: inherit;
+            font-size: 12px; font-weight: 600; letter-spacing: 0.3px; padding: 11px 22px;
+            border-radius: 999px; cursor: pointer; white-space: nowrap; transition: color 0.2s, background 0.25s;
+        }
+        .dash-toggle button.on { background: #fff; color: #111; }
+        .view[hidden] { display: none; }
     </style>
 </head>
 <body>
@@ -152,6 +165,14 @@
             <p class="dash-sub" id="welcome">מרכז השליטה של החנות — מכירות, מלאי והזמנות במקום אחד</p>
         </header>
 
+        <!-- ===== VIEW TOGGLE ===== -->
+        <div class="dash-toggle" id="dashToggle">
+            <button type="button" data-view="business" class="on">התנהלות עסקית</button>
+            <button type="button" data-view="growth">צמיחה</button>
+        </div>
+
+      <!-- ============================ BUSINESS ============================ -->
+      <div class="view" data-view="business">
         <!-- ===== KPI ROW ===== -->
         <div class="sec-title">ביצועים</div>
         <div class="grid g4">
@@ -203,40 +224,8 @@
             </div>
         </div>
 
-        <!-- ===== TIME TRENDS: VIEWS + STORE PROGRESS (seller only) ===== -->
-        <div class="sec-title">מגמות לאורך זמן</div>
-        <div class="grid g2">
-            <div class="card">
-                <div class="card-h">
-                    <div class="card-t">התקדמות צפיות</div>
-                    <span class="trend-pill" id="viewsTrend"></span>
-                </div>
-                <div class="card-d">צפיות בחנות ב-6 החודשים האחרונים</div>
-                <div id="viewsChart"></div>
-                <div class="lc-x" id="viewsX"></div>
-                <div class="meter" style="background:#f1f1ee"><span id="viewsGoalBar" style="background:var(--ink)"></span></div>
-                <div class="meter-row" style="color:var(--muted)">
-                    <span id="viewsGoalLeft"></span>
-                    <span id="viewsGoalCap"></span>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-h">
-                    <div class="card-t">צמיחת החנות</div>
-                    <span class="trend-pill" id="storeTrend"></span>
-                </div>
-                <div class="card-d">עוקבים לאורך זמן והתקדמות ליעד הבא</div>
-                <div id="storeChart"></div>
-                <div class="lc-x" id="storeX"></div>
-                <div class="meter" style="background:#f1f1ee"><span id="storeGoalBar" style="background:var(--ink)"></span></div>
-                <div class="meter-row" style="color:var(--muted)">
-                    <span id="storeGoalLeft"></span>
-                    <span id="storeGoalCap"></span>
-                </div>
-            </div>
-        </div>
-
         <!-- ===== SALES OVER TIME ===== -->
+        <div class="sec-title">מגמות מכירה</div>
         <div class="grid g2">
             <div class="card">
                 <div class="card-h">
@@ -302,13 +291,8 @@
         </div>
 
         <!-- ===== ENGAGEMENT ===== -->
-        <div class="sec-title">קהל</div>
-        <div class="grid g3">
-            <div class="card">
-                <div class="card-t">עוקבים</div>
-                <div class="kpi-num" id="kFollowers">0</div>
-                <div class="kpi-lbl">לחנות</div>
-            </div>
+        <div class="sec-title">פעילות</div>
+        <div class="grid g2">
             <div class="card">
                 <div class="card-t">שיחות פעילות</div>
                 <div class="kpi-num" id="kChats">0</div>
@@ -331,6 +315,77 @@
             <a class="btn" href="seller-stats.html">סטטיסטיקות מלאות</a>
             <a class="btn" href="seller-area.html">הגדרות חנות</a>
         </div>
+      </div><!-- /business -->
+
+      <!-- ============================= GROWTH ============================= -->
+      <div class="view" data-view="growth" hidden>
+        <!-- Follower + views KPIs (Instagram-style). -->
+        <div class="sec-title">עוקבים וחשיפה</div>
+        <div class="grid g3">
+            <div class="card dark">
+                <div class="card-t">עוקבים</div>
+                <div class="kpi-num" id="gFollowers">0</div>
+                <div class="kpi-lbl">לחנות</div>
+                <div class="kpi-trend up" id="gFollowersTrend"></div>
+            </div>
+            <div class="card">
+                <div class="card-t">צפיות בפרופיל</div>
+                <div class="kpi-num" id="gProfileViews">0</div>
+                <div class="kpi-lbl">חשיפת החנות</div>
+            </div>
+            <div class="card">
+                <div class="card-t">צפיות במוצרים</div>
+                <div class="kpi-num" id="gProductViews">0</div>
+                <div class="kpi-lbl">סך צפיות בפריטים</div>
+            </div>
+        </div>
+
+        <!-- Follower growth + profile-view growth over time. -->
+        <div class="sec-title">צמיחה לאורך זמן</div>
+        <div class="grid g2">
+            <div class="card">
+                <div class="card-h">
+                    <div class="card-t">צמיחת עוקבים</div>
+                    <span class="trend-pill" id="storeTrend"></span>
+                </div>
+                <div class="card-d">עוקבים לאורך זמן והתקדמות ליעד הבא</div>
+                <div id="storeChart"></div>
+                <div class="lc-x" id="storeX"></div>
+                <div class="meter" style="background:#f1f1ee"><span id="storeGoalBar" style="background:var(--ink)"></span></div>
+                <div class="meter-row" style="color:var(--muted)">
+                    <span id="storeGoalLeft"></span>
+                    <span id="storeGoalCap"></span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-h">
+                    <div class="card-t">צפיות בפרופיל</div>
+                    <span class="trend-pill" id="viewsTrend"></span>
+                </div>
+                <div class="card-d">צפיות בחנות ב-6 החודשים האחרונים</div>
+                <div id="viewsChart"></div>
+                <div class="lc-x" id="viewsX"></div>
+                <div class="meter" style="background:#f1f1ee"><span id="viewsGoalBar" style="background:var(--ink)"></span></div>
+                <div class="meter-row" style="color:var(--muted)">
+                    <span id="viewsGoalLeft"></span>
+                    <span id="viewsGoalCap"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product views ranking + reach. -->
+        <div class="sec-title">צפיות במוצרים</div>
+        <div class="grid g2">
+            <div class="card">
+                <div class="card-h"><div class="card-t">המוצרים הנצפים ביותר</div></div>
+                <div class="list" id="gTopViewed"></div>
+            </div>
+            <div class="card">
+                <div class="card-h"><div class="card-t">מדדי מעורבות</div></div>
+                <div class="list" id="gEngage"></div>
+            </div>
+        </div>
+      </div><!-- /growth -->
     </main>
 
     <script src="assets/footer.js"></script>
@@ -575,12 +630,50 @@
                 <div class="amt">${o.amount || o.offer || o.price ? nis(priceOf(o.amount || o.offer || o.price)) : '—'}</div>
             </div>`).join('') : '<div class="empty">אין הצעות ממתינות</div>';
 
-        // ---- Audience counters. ----
-        document.getElementById('kFollowers').textContent = followers.toLocaleString('en-US');
+        // ---- Business activity counters. ----
         const chats = readJSON('vero_chats', {});
         const chatCount = Array.isArray(chats) ? chats.length : (chats && typeof chats === 'object' ? Object.keys(chats).length : 0);
         document.getElementById('kChats').textContent = chatCount;
         document.getElementById('kDrafts').textContent = arr(readJSON('vero_drafts', [])).length;
+
+        // ---- Growth view: followers + profile/product views (Instagram-style). ----
+        document.getElementById('gFollowers').textContent = followers.toLocaleString('en-US');
+        trendPill(document.getElementById('gFollowersTrend'), followerSeries[5], followerSeries[4]);
+        document.getElementById('gProfileViews').textContent = storeViews.toLocaleString('en-US');
+        document.getElementById('gProductViews').textContent = productViews.toLocaleString('en-US');
+
+        // Most-viewed products (ranking by views).
+        document.getElementById('gTopViewed').innerHTML = top.length ? top.map(({ p, v }, i) =>
+            `<div class="row">
+                <div class="ic">${i === 0 ? '👁️' : '🏷️'}</div>
+                <div class="meta"><b>${p.title || 'פריט'}</b><span>${p.brand || 'ללא מותג'}</span></div>
+                <div class="amt">${v.toLocaleString('en-US')} צפיות</div>
+            </div>`).join('') : '<div class="empty">אין נתונים עדיין</div>';
+
+        // Engagement metrics: reach, avg views/product, follow-through.
+        const avgViews = listings.length ? Math.round(productViews / listings.length) : 0;
+        const followRate = storeViews ? (followers / storeViews * 100) : 0;
+        const reach = storeViews + productViews;
+        document.getElementById('gEngage').innerHTML =
+            `<div class="row"><div class="ic">📣</div><div class="meta"><b>חשיפה כוללת</b><span>פרופיל + מוצרים</span></div><div class="amt">${reach.toLocaleString('en-US')}</div></div>` +
+            `<div class="row"><div class="ic">👁️</div><div class="meta"><b>צפיות ממוצעות למוצר</b><span>לאורך הקטלוג</span></div><div class="amt">${avgViews.toLocaleString('en-US')}</div></div>` +
+            `<div class="row"><div class="ic">➕</div><div class="meta"><b>שיעור עוקבים</b><span>צפייה → עוקב</span></div><div class="amt">${followRate.toFixed(1)}%</div></div>` +
+            `<div class="row"><div class="ic">💬</div><div class="meta"><b>שיחות פעילות</b><span>עם קונים</span></div><div class="amt">${chatCount}</div></div>`;
+
+        // ---- View toggle (Business ↔ Growth). ----
+        (function viewToggle() {
+            const toggle = document.getElementById('dashToggle');
+            const views = document.querySelectorAll('.view');
+            const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
+            toggle.addEventListener('click', function (e) {
+                const btn = e.target.closest('button[data-view]');
+                if (!btn) return;
+                toggle.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === btn));
+                views.forEach(v => { v.hidden = v.dataset.view !== btn.dataset.view; });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                requestAnimationFrame(postH);
+            });
+        })();
     })();
     </script>
 </body>

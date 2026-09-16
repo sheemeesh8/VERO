@@ -86,15 +86,18 @@
         var t = (label || '').toLowerCase().trim();
         if (!t) return null;
         for (var i = 0; i < RULES.length; i++) if (RULES[i][0].test(t)) return I[RULES[i][1]];
-        return I.grid;   // sensible generic fallback so no tab is left bare
+        return null;   // no match → leave the tab as plain text (no generic icon)
     }
 
-    // Item-level tab selectors across the site's many navigation bars.
+    // Item-level tab selectors for the app's SECTION navigation bars only.
+    // Category pickers (the feed's T-SHIRTS / SWIMWEAR / … strip, storefront and
+    // topbar category rows) are intentionally excluded: their items are open-ended
+    // product categories, so a per-item icon would just repeat or mislead.
     var SELECTORS = [
-        '.area-tab', '.sa-tab', '.sec-tab', '.pf-tab', '.feed-nav-tab',
+        '.area-tab', '.sa-tab', '.sec-tab', '.pf-tab',
         '.cart-tab', '.vinbox-tab', '.stats-subtab', '.stf-tab',
-        '.set-nav-btn', '.cp-navlink', '.chat-nav a', '.category-nav a',
-        '.cat-topbar a', '.spend-nav button', '.vf-navbox-item', '.clo-nav a'
+        '.set-nav-btn', '.cp-navlink', '.chat-nav a',
+        '.spend-nav button', '.vf-navbox-item'
     ].join(',');
 
     var STYLE_ID = 'vero-nav-icons-style';
