@@ -6160,6 +6160,9 @@
            editorial feed card), then its grid of products — so the feed reads as
            repeating [slider + products] blocks. */
         #feedContainer > .promo-slider { display: block !important; }
+        /* Tighten the gap between the promoted slider and the product cards below. */
+        #feedContainer > .promo-slider--feed { margin-bottom: 8px; }
+        #feedContainer > .feed-block { padding-top: 8px; }
 
         /* ===== Monthly sale tile — square entry to the sale page ===== */
         .sale-tile {
@@ -11909,23 +11912,19 @@
                 /* The moving slide: a clipped viewport with a track that scrolls itself
                    leftward, fading out behind the ⋯ button on the left. */
                 .feed-nav-view {
-                    flex: 1 1 auto; min-width: 0; overflow: hidden; position: relative;
+                    flex: 1 1 auto; min-width: 0; position: relative;
+                    /* Manually swipeable — no auto motion. Hidden scrollbar. */
+                    overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none; -ms-overflow-style: none;
                     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 100%);
                     mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 100%);
                 }
+                .feed-nav-view::-webkit-scrollbar { width: 0; height: 0; display: none; }
                 .feed-nav-track {
                     display: flex; width: max-content; gap: 6px;
-                    animation: feedNavScroll 26s linear infinite;
-                }
-                /* Pause while the person is interacting, so a chip can be tapped. */
-                .feed-nav:hover .feed-nav-track,
-                .feed-nav-view:active .feed-nav-track { animation-play-state: paused; }
-                @keyframes feedNavScroll {
-                    from { transform: translateX(0); }
-                    to   { transform: translateX(-50%); }
-                }
-                @media (prefers-reduced-motion: reduce) {
-                    .feed-nav-track { animation: none; }
+                    /* RTL so the slide begins at ALL on the right and is scrolled
+                       leftward by hand, the chips passing behind the ⋯ on the left. */
+                    direction: rtl;
                 }
                 .feed-nav.in { opacity: 1; transform: translateX(-50%) translateY(0); }
                 @media (prefers-reduced-motion: reduce) {
@@ -12050,9 +12049,12 @@
                     b.addEventListener('click', () => select(type));
                     return b;
                 };
+                // ALL first, so with the RTL track it sits at the right where the
+                // hand-scroll begins; the rest follow, scrolling left behind the ⋯.
                 const set = [['ALL', '']].concat(cats().map(c => [c, c]));
-                // Duplicate the set so the marquee loops seamlessly at translateX(-50%).
-                set.concat(set).forEach(([label, type]) => track.appendChild(mk(label, type)));
+                set.forEach(([label, type]) => track.appendChild(mk(label, type)));
+                // Start the scroll at the beginning (ALL, on the right in RTL).
+                requestAnimationFrame(() => { view.scrollLeft = 0; });
                 syncActive();
             }
 
