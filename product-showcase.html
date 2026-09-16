@@ -201,11 +201,18 @@
                hero above it, and break out of the 26px side padding to span
                edge-to-edge. */
             margin:calc(-1 * (var(--hdr-h) + env(safe-area-inset-top,0px) + 40px)) -26px 0;
-            /* Keep the copy clear of the (floating) header. */
-            padding:calc(var(--hdr-h) + env(safe-area-inset-top,0px) + 26px) 26px 26px;
+            /* The banner is now the section-2 header, so it only needs the notch /
+               status-bar clearance plus room for its own controls row. */
+            padding:calc(env(safe-area-inset-top,0px) + 14px) 26px 26px;
             /* Rounded bottom corners on the black title panel. */
             border-radius:0 0 22px 22px;
         }
+        /* The banner's own header row: share (left) + back (right), white on black. */
+        .det-titlebar .det-topbar{
+            display:flex;align-items:center;justify-content:space-between;
+            margin:0 -12px 18px;
+        }
+        .det-titlebar .tb-ico{ color:#fff; }
         /* Slide-in-down entrance: the panel starts tucked up behind the header and
            slides down into place when the details section scrolls into view. JS arms
            it (hidden) and adds .anim-in to play it, so it stays visible if JS is off. */
@@ -350,15 +357,6 @@
 <div class="page">
 
     <!-- sticky header: back arrow + wishlist / cart / share -->
-    <div class="topbar" id="topbar">
-        <button class="tb-ico" onclick="openSheet('shareSheet')" aria-label="Share">
-            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-        </button>
-        <button class="tb-ico" onclick="goBack()" aria-label="Back">
-            <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
-        </button>
-    </div>
-
     <!-- ============ SECTION 1 — HERO (full-bleed image slider) ============ -->
     <section class="hero">
         <div class="hero-stack" id="heroStack"></div>
@@ -389,6 +387,15 @@
         <!-- Part 1 — title + description -->
         <div class="det-part det-head">
             <div class="det-titlebar">
+                <!-- The black banner is the section-2 header: share on the left, back on the right. -->
+                <div class="det-topbar">
+                    <button class="tb-ico" onclick="openSheet('shareSheet')" aria-label="Share">
+                        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                    </button>
+                    <button class="tb-ico" onclick="goBack()" aria-label="Back">
+                        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+                    </button>
+                </div>
                 <h2 class="det-brand" id="detBrand">Company</h2>
                 <div class="det-sub" id="detName">Product name</div>
             </div>
@@ -632,11 +639,13 @@
     const stars = '★'.repeat(Math.floor(rating)) + (rating%1>=0.5?'☆':'');
     document.getElementById('sellerRating').innerHTML = `${stars} <span class="num">${rating.toFixed(1)}</span>`;
 
-    // ---- sticky header state ----
+    // ---- sticky header state (the global topbar is gone; guard if absent) ----
     const topbar = document.getElementById('topbar');
-    function onScroll(){ topbar.classList.toggle('stuck', window.scrollY > 24); }
-    window.addEventListener('scroll', onScroll, {passive:true});
-    onScroll();
+    if(topbar){
+        const onScroll=()=>topbar.classList.toggle('stuck', window.scrollY > 24);
+        window.addEventListener('scroll', onScroll, {passive:true});
+        onScroll();
+    }
 
     // ---- reveal the floating action bar only while section 2 is in view ----
     (function(){
