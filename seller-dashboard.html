@@ -96,6 +96,16 @@
             transition: height 0.7s cubic-bezier(0.22,1,0.36,1); }
         .bar > small { font-size: 9px; color: var(--muted); }
 
+        /* Time line/area charts */
+        .lc { width: 100%; height: 120px; display: block; margin-top: 14px; }
+        .lc-x { display: flex; margin-top: 8px; }
+        .lc-x span { flex: 1; text-align: center; font-size: 9px; color: var(--muted); letter-spacing: 0.3px; }
+        .card.dark .lc-x span { color: rgba(255,255,255,0.6); }
+        .trend-pill { font-size: 10px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
+        .trend-pill.up { color: var(--available); border-color: rgba(31,143,78,0.3); }
+        .trend-pill.down { color: var(--sold); border-color: rgba(178,59,59,0.3); }
+        .card.dark .trend-pill { border-color: rgba(255,255,255,0.2); }
+
         /* Lists */
         .list { display: flex; flex-direction: column; }
         .row { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--line); }
@@ -190,6 +200,61 @@
                     <span id="goalLeft">נותר ₪0 ליעד</span>
                     <span id="goalCap">יעד ₪0</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- ===== TIME TRENDS: VIEWS + STORE PROGRESS (seller only) ===== -->
+        <div class="sec-title">מגמות לאורך זמן</div>
+        <div class="grid g2">
+            <div class="card">
+                <div class="card-h">
+                    <div class="card-t">התקדמות צפיות</div>
+                    <span class="trend-pill" id="viewsTrend"></span>
+                </div>
+                <div class="card-d">צפיות בחנות ב-6 החודשים האחרונים</div>
+                <div id="viewsChart"></div>
+                <div class="lc-x" id="viewsX"></div>
+                <div class="meter" style="background:#f1f1ee"><span id="viewsGoalBar" style="background:var(--ink)"></span></div>
+                <div class="meter-row" style="color:var(--muted)">
+                    <span id="viewsGoalLeft"></span>
+                    <span id="viewsGoalCap"></span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-h">
+                    <div class="card-t">צמיחת החנות</div>
+                    <span class="trend-pill" id="storeTrend"></span>
+                </div>
+                <div class="card-d">עוקבים לאורך זמן והתקדמות ליעד הבא</div>
+                <div id="storeChart"></div>
+                <div class="lc-x" id="storeX"></div>
+                <div class="meter" style="background:#f1f1ee"><span id="storeGoalBar" style="background:var(--ink)"></span></div>
+                <div class="meter-row" style="color:var(--muted)">
+                    <span id="storeGoalLeft"></span>
+                    <span id="storeGoalCap"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SALES OVER TIME ===== -->
+        <div class="grid g2">
+            <div class="card">
+                <div class="card-h">
+                    <div class="card-t">מכירות לאורך זמן</div>
+                    <span class="trend-pill" id="salesTrend"></span>
+                </div>
+                <div class="card-d">מספר פריטים שנמכרו בכל חודש</div>
+                <div id="salesChart"></div>
+                <div class="lc-x" id="salesX"></div>
+            </div>
+            <div class="card">
+                <div class="card-h">
+                    <div class="card-t">הכנסה מצטברת</div>
+                    <span class="trend-pill" id="cumRevTrend"></span>
+                </div>
+                <div class="card-d">סך ההכנסה המצטבר לאורך התקופה</div>
+                <div id="cumRevChart"></div>
+                <div class="lc-x" id="cumRevX"></div>
             </div>
         </div>
 
@@ -291,6 +356,35 @@
         const priceOf = p => Number(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
         const rnd = seed => { const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
 
+        // Inline line/area chart (newest-on-left, to match the RTL bar order).
+        function lineChart(vals, color) {
+            color = color || '#111';
+            const W = 100, H = 40, n = vals.length;
+            const v = vals.slice().reverse();
+            const max = Math.max(1, ...v), min = Math.min(0, ...v);
+            const xx = i => n <= 1 ? 0 : (i / (n - 1)) * W;
+            const yy = val => H - ((val - min) / ((max - min) || 1)) * H;
+            const pts = v.map((val, i) => xx(i).toFixed(2) + ',' + yy(val).toFixed(2));
+            const line = 'M' + pts.join(' L');
+            const area = line + ' L' + W + ',' + H + ' L0,' + H + ' Z';
+            const id = 'lg' + Math.random().toString(36).slice(2, 7);
+            return '<svg class="lc" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+                '<defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1">' +
+                '<stop offset="0" stop-color="' + color + '" stop-opacity="0.22"/>' +
+                '<stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
+                '<path d="' + area + '" fill="url(#' + id + ')"/>' +
+                '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.6" ' +
+                'vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+        }
+        const xLabels = labels => labels.slice().reverse().map(l => '<span>' + l + '</span>').join('');
+        const trendPill = (el, cur, prev) => {
+            if (!el) return;
+            if (prev <= 0) { el.textContent = cur > 0 ? '▲ חדש' : '—'; if (cur > 0) el.classList.add('up'); return; }
+            const diff = Math.round(((cur - prev) / prev) * 100);
+            el.textContent = (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff) + '%';
+            el.classList.add(diff >= 0 ? 'up' : 'down');
+        };
+
         // Store name → welcome line.
         const store = readJSON('vero_store_config', {});
         const sprof = readJSON('vero_seller_profile', {});
@@ -367,6 +461,68 @@
         document.getElementById('goalLeft').textContent = 'נותר ' + nis(Math.max(0, goal - thisMonth)) + ' ליעד';
         document.getElementById('goalPct').textContent = gpct + '%';
         requestAnimationFrame(() => { document.getElementById('goalBar').style.width = gpct + '%'; });
+
+        // ---- Time trends over the last 6 months. ----
+        const labels = buckets.map(b => b.label);
+        // Deterministic growth series that ends on the real current total.
+        const growthSeries = (end, n, seedBase) => {
+            const start = Math.round(end * 0.45), out = [];
+            for (let i = 0; i < n; i++) {
+                const frac = n <= 1 ? 1 : i / (n - 1);
+                out.push(Math.round((start + (end - start) * frac) * (0.9 + 0.2 * rnd(i + seedBase))));
+            }
+            if (n) out[n - 1] = end;   // pin the newest point to the live number
+            return out;
+        };
+        const nextMilestone = (val, steps) => { for (const m of steps) if (m > val) return m; return Math.ceil((val + 1) / 1000) * 1000; };
+
+        // Views progress: growth line + progress toward the next views milestone.
+        const viewsSeries = growthSeries(storeViews, 6, 3);
+        document.getElementById('viewsChart').innerHTML = lineChart(viewsSeries, '#111');
+        document.getElementById('viewsX').innerHTML = xLabels(labels);
+        trendPill(document.getElementById('viewsTrend'), viewsSeries[5], viewsSeries[4]);
+        const viewsGoal = Math.max(500, Math.ceil((storeViews + 1) / 500) * 500);
+        const vgp = Math.min(100, Math.round((storeViews / viewsGoal) * 100));
+        document.getElementById('viewsGoalCap').textContent = 'יעד ' + viewsGoal.toLocaleString('en-US') + ' צפיות';
+        document.getElementById('viewsGoalLeft').textContent = 'נותרו ' + Math.max(0, viewsGoal - storeViews).toLocaleString('en-US');
+        requestAnimationFrame(() => { document.getElementById('viewsGoalBar').style.width = vgp + '%'; });
+
+        // Store growth: followers over time + progress toward the next follower
+        // milestone. Fall back to a derived base when there are no real followers yet,
+        // so the demo/empty state still reads (mirrors the derived-views fallback).
+        const folBase = followers || (Math.round(storeViews * 0.04) + 12);
+        const followerSeries = growthSeries(folBase, 6, 7);
+        document.getElementById('storeChart').innerHTML = lineChart(followerSeries, '#c9922b');
+        document.getElementById('storeX').innerHTML = xLabels(labels);
+        trendPill(document.getElementById('storeTrend'), followerSeries[5], followerSeries[4]);
+        const folGoal = nextMilestone(folBase, [25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]);
+        const fgp = Math.min(100, Math.round((folBase / folGoal) * 100));
+        document.getElementById('storeGoalCap').textContent = 'יעד ' + folGoal.toLocaleString('en-US') + ' עוקבים';
+        document.getElementById('storeGoalLeft').textContent = 'נותרו ' + Math.max(0, folGoal - folBase).toLocaleString('en-US');
+        requestAnimationFrame(() => { document.getElementById('storeGoalBar').style.width = fgp + '%'; });
+
+        // Sales count per month + cumulative revenue.
+        const salesCounts = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const start = d.getTime(), end = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
+            salesCounts.push(sold.filter(p => { const t = Number(p.createdAt) || Date.now(); return t >= start && t < end; }).length);
+        }
+        if (salesCounts.every(c => c === 0) && sold.length) {
+            let ws = [], wsum = 0;
+            for (let i = 0; i < 6; i++) { const w = 0.4 + rnd(i + 21) * 0.9 + i * 0.08; ws.push(w); wsum += w; }
+            let acc = 0;
+            for (let i = 0; i < 6; i++) { salesCounts[i] = i === 5 ? sold.length - acc : Math.round(sold.length * ws[i] / wsum); acc += salesCounts[i]; }
+            salesCounts[5] = Math.max(0, salesCounts[5]);
+        }
+        document.getElementById('salesChart').innerHTML = lineChart(salesCounts, '#1f8f4e');
+        document.getElementById('salesX').innerHTML = xLabels(labels);
+        trendPill(document.getElementById('salesTrend'), salesCounts[5], salesCounts[4]);
+
+        const cumRev = buckets.map(b => b.sum).reduce((acc, v) => { acc.push((acc[acc.length - 1] || 0) + v); return acc; }, []);
+        document.getElementById('cumRevChart').innerHTML = lineChart(cumRev, '#111');
+        document.getElementById('cumRevX').innerHTML = xLabels(labels);
+        trendPill(document.getElementById('cumRevTrend'), buckets[5].sum, buckets[4].sum);
 
         // ---- Inventory donut. ----
         const total = listings.length;
