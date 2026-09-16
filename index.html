@@ -12223,12 +12223,15 @@
                 }
                 /* Divider + "more" (⋯) button that opens the full category chooser. */
                 .feed-nav-sep { width: 1px; align-self: stretch; margin: 5px 3px; background: rgba(255,255,255,0.22); flex: none; }
+                /* The pinned "ALL" button — same look as a category tab. */
                 .feed-nav-more {
                     position: relative; z-index: 1; flex: none; border: none; background: transparent;
-                    color: #b5b5b0; font-size: 17px; line-height: 1; letter-spacing: 2px;
-                    padding: 0 15px; border-radius: 999px; cursor: pointer; transition: color 0.2s;
+                    font-family: inherit; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+                    color: #b5b5b0; padding: 9px 16px; border-radius: 999px; cursor: pointer;
+                    white-space: nowrap; transition: background 0.2s, color 0.2s;
                 }
                 .feed-nav-more:hover, .feed-nav-more.open { color: #fff; }
+                .feed-nav-more.is-active { color: #111; background: #fff; }
                 .feed-nav-pop {
                     position: fixed; z-index: 901; display: none;
                     background: #fff; border: 1px solid rgba(0,0,0,0.12); border-radius: 18px; padding: 12px;
@@ -12300,15 +12303,17 @@
                 bar.querySelectorAll('.feed-nav-tab').forEach(t => {
                     t.classList.toggle('is-active', t.dataset.type === type);
                 });
+                const m = bar.querySelector('.feed-nav-more');
+                if (m) m.classList.toggle('is-active', (type || '') === '');
             }
             function build() {
                 bar.innerHTML = '';
                 // The ⋯ chooser is pinned on the left; the category slide scrolls in
                 // from the right and disappears behind it.
                 const more = document.createElement('button');
-                more.type = 'button'; more.className = 'feed-nav-more';
-                more.textContent = '⋯'; more.setAttribute('aria-label', 'כל הקטגוריות');
-                more.addEventListener('click', e => { e.stopPropagation(); togglePop(more); });
+                more.type = 'button'; more.className = 'feed-nav-more'; more.dataset.type = '';
+                more.textContent = 'ALL'; more.setAttribute('aria-label', 'כל הפריטים');
+                more.addEventListener('click', e => { e.stopPropagation(); select(''); });
                 bar.appendChild(more);
                 const sep = document.createElement('span'); sep.className = 'feed-nav-sep';
                 bar.appendChild(sep);
@@ -12323,11 +12328,11 @@
                     b.addEventListener('click', () => select(type));
                     return b;
                 };
-                // ALL first, so with the RTL track it sits at the right where the
-                // hand-scroll begins; the rest follow, scrolling left behind the ⋯.
-                const set = [['ALL', '']].concat(cats().map(c => [c, c]));
+                // ALL is now the pinned left button; the track holds the categories,
+                // scrolling left behind it.
+                const set = cats().map(c => [c, c]);
                 set.forEach(([label, type]) => track.appendChild(mk(label, type)));
-                // Start the scroll at the beginning (ALL, on the right in RTL).
+                // Start the scroll at the beginning (right side in RTL).
                 requestAnimationFrame(() => { view.scrollLeft = 0; });
                 syncActive();
             }
