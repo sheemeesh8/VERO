@@ -664,15 +664,16 @@
         let played = false;
         const play = ()=>{ if(played) return; played = true;
             bar.classList.remove('anim-armed'); bar.classList.add('anim-in'); };
-        if('IntersectionObserver' in window){
-            const io = new IntersectionObserver(es=>{
-                es.forEach(e=>{ if(e.isIntersecting && e.intersectionRatio >= 0.2){ play(); io.disconnect(); } });
-            }, {threshold:[0,0.2,0.5]});
-            io.observe(details);
-        } else {
-            const check=()=>{ if(details.getBoundingClientRect().top < window.innerHeight*0.8){ play(); window.removeEventListener('scroll', check); } };
-            window.addEventListener('scroll', check, {passive:true}); check();
-        }
+        // Only play once we've actually scrolled DOWN into the second section — i.e.
+        // its top has risen near the top of the viewport (not while it merely peeks
+        // in from the bottom).
+        const check=()=>{
+            if(details.getBoundingClientRect().top <= window.innerHeight*0.35){
+                play(); window.removeEventListener('scroll', check);
+            }
+        };
+        window.addEventListener('scroll', check, {passive:true});
+        check();
     })();
 
     // ---------- sheets ----------
