@@ -178,7 +178,11 @@
             width: 50px; height: 50px; flex: 0 0 auto; border-radius: 50%;
             border: none; background: var(--paper);
             display: flex; align-items: center; justify-content: center; font-size: 24px;
+            overflow: hidden; cursor: pointer; transition: transform 0.2s ease;
         }
+        .chat-avatar:hover { transform: scale(1.05); }
+        /* A real product photo fills the circle; the emoji stand-in stays centred. */
+        .chat-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
         /* text column, with a hairline divider under it (indented past the avatar) */
         .chat-body {
             min-width: 0; flex: 1; align-self: stretch;
@@ -263,7 +267,14 @@
         .cp-avatar {
             width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper);
             display: flex; align-items: center; justify-content: center; font-size: 20px;
+            overflow: hidden; cursor: pointer; flex: none;
+            transition: transform 0.2s ease;
         }
+        .cp-avatar:hover { transform: scale(1.05); }
+        /* A real product photo fills the circle; the emoji stand-in stays centred. */
+        .cp-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        /* Both the photo and the title lead to the product page. */
+        .cp-name { cursor: pointer; }
         .cp-who { line-height: 1.25; }
         .cp-name { font-size: 14.5px; font-weight: 500; }
         .cp-status { font-size: 10px; color: var(--faint); letter-spacing: 0.3px; }
@@ -454,7 +465,7 @@
                 <div class="cp-avatar" id="cpAvatar">💬</div>
                 <div class="cp-who">
                     <div class="cp-name" id="cpName">Seller</div>
-                    <div class="cp-status">Usually replies within a day</div>
+                    <div class="cp-status" id="cpStatus">Usually replies within a day</div>
                 </div>
             </div>
             <button class="nav-chev" id="cpBack" type="button" aria-label="Back">
@@ -586,6 +597,19 @@
             if (chatRange === 'month') return at >= Date.now() - 30 * DAY;
             return true;
         }
+        // The product page URL for a seller's thread (same object the "show item"
+        // link uses), plus the product's photo for the avatar circle.
+        function productHref(seller) {
+            const obj = itemObjFor(seller);
+            const prod = obj ? Object.assign({ seller: seller }, obj)
+                             : { seller: seller, name: itemFor(seller) || '' };
+            return 'product.html?product=' + encodeURIComponent(JSON.stringify(prod));
+        }
+        function productPhoto(seller) {
+            const obj = itemObjFor(seller) || {};
+            return obj.processed_cover || obj.image || obj.cover || obj.img
+                || obj.imageUrl || obj.photo || (obj.photos && obj.photos.cover) || null;
+        }
         function renderList() {
             const q = chatQuery.trim().toLowerCase();
             const rows = list
@@ -602,16 +626,21 @@
             }
             el.innerHTML = '<div class="chat-track">' + rows.map(({ t, i }) => {
                 const prod = productName(t.seller);
+                const title = prod || t.seller;          // product leads; seller sits under it
+                const photo = productPhoto(t.seller);
+                const avatarInner = photo
+                    ? `<img src="${photo}" alt="${title}">`
+                    : t.icon;
                 return `
                     <div class="chat-row" data-i="${i}">
-                        <div class="chat-avatar">${t.icon}</div>
+                        <div class="chat-avatar" data-avatar>${avatarInner}</div>
                         <div class="chat-body">
                             <div class="chat-topline">
-                                <span class="chat-name">${t.seller}</span>
+                                <span class="chat-name">${title}</span>
                                 <span class="chat-time">${fullWhen(t.at)}</span>
                             </div>
                             <div class="chat-preview">${t.preview}</div>
-                            ${prod ? `<div class="chat-item">${prod}</div>` : ''}
+                            <div class="chat-item">${t.seller}</div>
                         </div>
                     </div>`;
             }).join('') + '</div>';
@@ -635,7 +664,12 @@
         });
         el.addEventListener('click', (e) => {
             const row = e.target.closest('.chat-row');
-            if (row) openChat(+row.dataset.i);
+            if (!row) return;
+            const t = list[+row.dataset.i];
+            // Tapping the product photo opens the product page directly; anywhere
+            // else on the row opens the conversation.
+            if (e.target.closest('[data-avatar]')) { location.href = productHref(t.seller); return; }
+            openChat(+row.dataset.i);
         });
         document.getElementById('chatSearch').addEventListener('input', (e) => { chatQuery = e.target.value; renderList(); });
 
@@ -743,9 +777,24 @@
             openSeller = t.seller;
             openItem = itemFor(t.seller);
             seedThread(t);
-            document.getElementById('cpName').textContent = t.seller;
-            document.getElementById('cpAvatar').textContent = t.icon || '💬';
+            // Title = the product; the seller's name sits underneath it.
+            const prodName = openItem || itemFor(t.seller) || t.seller;
+            document.getElementById('cpName').textContent = prodName;
+            document.getElementById('cpStatus').textContent = t.seller;
+            // Avatar shows the product photo when there is one, otherwise the emoji.
+            const avatar = document.getElementById('cpAvatar');
+            const obj = itemObjFor(t.seller) || {};
+            const photo = obj.processed_cover || obj.image || obj.cover || obj.img
+                || obj.imageUrl || obj.photo || (obj.photos && obj.photos.cover) || null;
+            avatar.innerHTML = '';
+            if (photo) { const im = document.createElement('img'); im.src = photo; im.alt = prodName; avatar.appendChild(im); }
+            else { avatar.textContent = t.icon || '💬'; }
             setChatLinks(t.seller);
+            // The photo and the title both open the product page directly.
+            const prodHref = document.getElementById('cpItemLink').href;
+            const goProduct = () => { location.href = prodHref; };
+            avatar.onclick = goProduct;
+            document.getElementById('cpName').onclick = goProduct;
             renderSold(t.seller);
             renderFeed();
             panel.classList.add('open');
