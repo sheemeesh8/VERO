@@ -44,7 +44,20 @@
         shirt:   '<path d="M8 3l4 2 4-2 4 4-3 2v10H7V9L4 7z"/>',
         plus:    '<path d="M12 5v14M5 12h14"/>',
         bell:    '<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
-        camera:  '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>'
+        camera:  '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+        /* Product-category icons */
+        sweater: '<path d="M7 4l5 2 5-2 3 4-2 2v10H6V10L4 8z"/><path d="M9 12h6"/>',
+        swim:    '<path d="M2 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 14c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',
+        glasses: '<circle cx="7" cy="13" r="3.4"/><circle cx="17" cy="13" r="3.4"/><path d="M10.4 13h3.2"/><path d="M3.6 11l2-2M20.4 11l-2-2"/>',
+        shoe:    '<path d="M2 16v-4l4-1 3 3 9 1 3 1v3H2z"/><path d="M2 16h20"/>',
+        dress:   '<path d="M9 3l3 2 3-2 1 4-2 2 3 10H7l3-10-2-2z"/>',
+        coat:    '<path d="M8 3l4 3 4-3 3 3-2 2v11h-4V13h-2v9H7V8L5 6z"/>',
+        hat:     '<path d="M4 16c0-1 3-2 8-2s8 1 8 2-3 2-8 2-8-1-8-2z"/><path d="M8 15V8a4 4 0 0 1 8 0v7"/>',
+        pants:   '<path d="M7 3h10l-1 18h-3l-1-11-1 11H8z"/>',
+        skirt:   '<path d="M7 4h10l3 7H4z"/><path d="M6 11l1 9M18 11l-1 9M12 11v9"/>',
+        gem:     '<path d="M6 3h12l3 5-9 13L3 8z"/><path d="M3 8h18M9 3l-2 5 5 13 5-13-2-5"/>',
+        watch:   '<circle cx="12" cy="13" r="5"/><path d="M12 10v3l2 1"/><path d="M9 3h6l-1 4M9 22h6l-1-4"/>',
+        hanger:  '<path d="M10.6 6a1.5 1.5 0 1 1 1.4 2v2"/><path d="M12 10L3 16h18z"/>'
     };
 
     // ---- Label → icon rules (checked in order; first match wins) --------------
@@ -74,6 +87,20 @@
         [/trend|popular|hot|new|טרנד|חדש|פופול/, 'flame'],
         [/home|feed|explore|בית|פיד|גלה/, 'home'],
         [/profile|about\s*me|פרופיל|אודות/, 'user'],
+        // Product categories (feed / storefront category strips).
+        [/sweater|knit|pullover|hoodie|jumper|cardigan|סוודר|סריג|קפוצ|אפוד/, 'sweater'],
+        [/swim|bikini|beach|swimwear|בגד\s*ים|ביקיני|חוף|ים/, 'swim'],
+        [/sunglass|glasses|eyewear|משקפ/, 'glasses'],
+        [/shoe|sneaker|boot|heel|sandal|footwear|trainer|נעל|מגף|סניקר|סנדל|עקב/, 'shoe'],
+        [/hand\s*bag|handbag|purse|tote|clutch|backpack|תיק|ארנק|קלאץ/, 'bag'],
+        [/dress|gown|שמלה|שמלת/, 'dress'],
+        [/jacket|coat|outerwear|blazer|parka|מעיל|ז׳קט|ז'קט|ג׳קט|ג'קט|בלייזר/, 'coat'],
+        [/\bhats?\b|\bcaps?\b|beanie|כובע/, 'hat'],
+        [/pants|trouser|jean|denim|chino|legging|shorts|מכנס|ג׳ינס|ג'ינס|טייץ|שורט/, 'pants'],
+        [/skirt|חצאית/, 'skirt'],
+        [/jewel|ring|necklace|bracelet|earring|תכשיט|טבעת|שרשר|צמיד|עגיל/, 'gem'],
+        [/watch|שעון/, 'watch'],
+        [/t-?shirt|tee|top\b|טי-?שירט|חולצת\s*טי|חולצה|חולצות|טופ/, 'shirt'],
         [/men|man|גבר/, 'shirt'],
         [/women|woman|נשים|אישה/, 'shirt'],
         [/kids|child|ילד/, 'shirt'],
@@ -89,16 +116,20 @@
         return null;   // no match → leave the tab as plain text (no generic icon)
     }
 
-    // Item-level tab selectors for the app's SECTION navigation bars only.
-    // Category pickers (the feed's T-SHIRTS / SWIMWEAR / … strip, storefront and
-    // topbar category rows) are intentionally excluded: their items are open-ended
-    // product categories, so a per-item icon would just repeat or mislead.
-    var SELECTORS = [
+    // Item-level tab selectors for the app's SECTION navigation bars. Unmatched
+    // labels here stay plain text (no icon).
+    var SECTION_SEL = [
         '.area-tab', '.sa-tab', '.sec-tab', '.pf-tab',
         '.cart-tab', '.vinbox-tab', '.stats-subtab', '.stf-tab',
         '.set-nav-btn', '.cp-navlink', '.chat-nav a',
         '.spend-nav button', '.vf-navbox-item'
     ].join(',');
+
+    // Category-picker bars (the home feed's T-SHIRTS / SWIMWEAR / … strip and the
+    // storefront / topbar category rows). Each item is a product category, so it
+    // gets a category-specific icon, falling back to a clothes-hanger so every
+    // category shows an icon (never the same generic tile for all of them).
+    var CATEGORY_SEL = ['.feed-nav-tab', '.category-nav a', '.cat-topbar a'].join(',');
 
     var STYLE_ID = 'vero-nav-icons-style';
     function ensureStyle() {
@@ -122,15 +153,15 @@
         return (clone.textContent || '').replace(/\s+/g, ' ').trim();
     }
 
-    function decorate(root) {
+    function decorate(root, selectors, fallback) {
         var scope = root && root.querySelectorAll ? root : document;
         var tabs;
-        try { tabs = scope.querySelectorAll(SELECTORS); } catch (e) { return; }
+        try { tabs = scope.querySelectorAll(selectors); } catch (e) { return; }
         var touched = false;
         tabs.forEach(function (el) {
             if (el.dataset.vniDone) return;
             if (el.querySelector('svg')) { el.dataset.vniDone = '1'; return; }   // already has its own icon
-            var svg = iconFor(labelOf(el));
+            var svg = iconFor(labelOf(el)) || fallback;
             if (!svg) { el.dataset.vniDone = '1'; return; }
             var ic = document.createElement('span');
             ic.className = 'vni-ic';
@@ -147,14 +178,19 @@
         }
     }
 
+    function decorateAll() {
+        decorate(document, SECTION_SEL, null);
+        decorate(document, CATEGORY_SEL, I.hanger);   // category bars: hanger fallback
+    }
+
     function boot() {
         ensureStyle();
-        decorate(document);
+        decorateAll();
         // Re-decorate when bars mount or re-render (debounced).
         var pending = null;
         var obs = new MutationObserver(function () {
             if (pending) return;
-            pending = setTimeout(function () { pending = null; decorate(document); }, 120);
+            pending = setTimeout(function () { pending = null; decorateAll(); }, 120);
         });
         try { obs.observe(document.body, { childList: true, subtree: true }); } catch (e) {}
     }
