@@ -192,51 +192,15 @@
                the page; the lower parts shift with the description's length */
             display:flex;flex-direction:column;justify-content:space-between;gap:24px;
         }
-        /* Wide black title banner that sits directly under the header, full-bleed
-           across the section's side padding, carrying the company + product name. */
-        .det-titlebar{
-            background:#000;color:#fff;
-            /* Reach the very top of the details section (cancels the whole top
-               padding) so the black also fills the gap between this section and the
-               hero above it, and break out of the 26px side padding to span
-               edge-to-edge. */
-            margin:calc(-1 * (var(--hdr-h) + env(safe-area-inset-top,0px) + 40px)) -26px 0;
-            /* The banner is now the section-2 header, so it only needs the notch /
-               status-bar clearance plus room for its own controls row. */
-            padding:calc(env(safe-area-inset-top,0px) + 14px) 26px 26px;
-            /* Rounded bottom corners on the black title panel. */
-            border-radius:0 0 22px 22px;
-        }
-        /* The banner's own header row: share (left) + back (right), white on black. */
-        .det-titlebar .det-topbar{
-            display:flex;align-items:center;justify-content:space-between;
-            margin:0 -12px 18px;
-        }
-        .det-titlebar .tb-ico{ color:#fff; }
-        /* Slide-in-down entrance: the panel starts tucked up behind the header and
-           slides down into place when the details section scrolls into view. JS arms
-           it (hidden) and adds .anim-in to play it, so it stays visible if JS is off. */
-        .det-titlebar.anim-armed{ transform:translateY(-100%); }
-        .det-titlebar.anim-in{ animation:detTitleSlideIn .6s cubic-bezier(0.22,1,0.36,1) both; }
-        @keyframes detTitleSlideIn{
-            from{ transform:translateY(-100%); }
-            to{ transform:translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce){
-            .det-titlebar.anim-armed{ transform:none; }
-            .det-titlebar.anim-in{ animation:none; }
-        }
         .det-brand{
             font-family:'Bodoni Moda','Didot',Georgia,'Times New Roman',serif;
             font-size:34px;font-weight:400;letter-spacing:1px;text-transform:uppercase;line-height:0.95;
-            color:#fff;
         }
-        .det-titlebar .det-brand{color:#fff;}
         .det-sub{
-            margin-top:10px;font-size:13px;letter-spacing:4px;text-transform:uppercase;color:#fff;
+            margin-top:10px;font-size:13px;letter-spacing:4px;text-transform:uppercase;color:var(--ink);
         }
         .det-desc{
-            margin-top:26px;font-size:13.5px;line-height:1.9;letter-spacing:.3px;color:#6b665c;font-weight:300;
+            margin-top:28px;font-size:13.5px;line-height:1.9;letter-spacing:.3px;color:#6b665c;font-weight:300;
         }
         .det-price{
             margin-top:26px;font-size:22px;font-weight:300;letter-spacing:.5px;
@@ -357,6 +321,15 @@
 <div class="page">
 
     <!-- sticky header: back arrow + wishlist / cart / share -->
+    <div class="topbar" id="topbar">
+        <button class="tb-ico" onclick="openSheet('shareSheet')" aria-label="Share">
+            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        </button>
+        <button class="tb-ico" onclick="goBack()" aria-label="Back">
+            <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+    </div>
+
     <!-- ============ SECTION 1 — HERO (full-bleed image slider) ============ -->
     <section class="hero">
         <div class="hero-stack" id="heroStack"></div>
@@ -386,19 +359,8 @@
     <section class="details" id="details">
         <!-- Part 1 — title + description -->
         <div class="det-part det-head">
-            <div class="det-titlebar">
-                <!-- The black banner is the section-2 header: share on the left, back on the right. -->
-                <div class="det-topbar">
-                    <button class="tb-ico" onclick="openSheet('shareSheet')" aria-label="Share">
-                        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-                    </button>
-                    <button class="tb-ico" onclick="goBack()" aria-label="Back">
-                        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
-                    </button>
-                </div>
-                <h2 class="det-brand" id="detBrand">Company</h2>
-                <div class="det-sub" id="detName">Product name</div>
-            </div>
+            <h2 class="det-brand" id="detBrand">Company</h2>
+            <div class="det-sub" id="detName">Product name</div>
             <p class="det-desc" id="detDesc">Product description appears here.</p>
         </div>
 
@@ -639,13 +601,11 @@
     const stars = '★'.repeat(Math.floor(rating)) + (rating%1>=0.5?'☆':'');
     document.getElementById('sellerRating').innerHTML = `${stars} <span class="num">${rating.toFixed(1)}</span>`;
 
-    // ---- sticky header state (the global topbar is gone; guard if absent) ----
+    // ---- sticky header state ----
     const topbar = document.getElementById('topbar');
-    if(topbar){
-        const onScroll=()=>topbar.classList.toggle('stuck', window.scrollY > 24);
-        window.addEventListener('scroll', onScroll, {passive:true});
-        onScroll();
-    }
+    function onScroll(){ topbar.classList.toggle('stuck', window.scrollY > 24); }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    onScroll();
 
     // ---- reveal the floating action bar only while section 2 is in view ----
     (function(){
@@ -661,28 +621,6 @@
             const check=()=>bar.classList.toggle('show', details.getBoundingClientRect().top < window.innerHeight*0.6);
             window.addEventListener('scroll', check, {passive:true}); check();
         }
-    })();
-
-    // ---- slide the black title banner in (down, from under the header) when the
-    //      details section first comes into view ----
-    (function(){
-        const bar = document.querySelector('.det-titlebar');
-        const details = document.getElementById('details');
-        if(!bar || !details) return;
-        bar.classList.add('anim-armed');   // hidden above until revealed
-        let played = false;
-        const play = ()=>{ if(played) return; played = true;
-            bar.classList.remove('anim-armed'); bar.classList.add('anim-in'); };
-        // Only play once we've actually scrolled DOWN into the second section — i.e.
-        // its top has risen near the top of the viewport (not while it merely peeks
-        // in from the bottom).
-        const check=()=>{
-            if(details.getBoundingClientRect().top <= window.innerHeight*0.35){
-                play(); window.removeEventListener('scroll', check);
-            }
-        };
-        window.addEventListener('scroll', check, {passive:true});
-        check();
     })();
 
     // ---------- sheets ----------
