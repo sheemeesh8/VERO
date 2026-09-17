@@ -140,7 +140,7 @@
             '.vni{display:inline-flex!important;flex-direction:column!important;' +
             'align-items:center!important;justify-content:center!important;gap:3px!important;}' +
             '.vni-ic{display:block;width:17px;height:17px;line-height:0;flex:none;pointer-events:none;}' +
-            '.vni-ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.6;' +
+            '.vni-ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.25;' +
             'stroke-linecap:round;stroke-linejoin:round;display:block;}';
         (document.head || document.documentElement).appendChild(s);
     }

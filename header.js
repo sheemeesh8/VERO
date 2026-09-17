@@ -222,7 +222,7 @@
         #siteHeader .hdr-searchgo svg {
             width: 18px; height: 18px;
             stroke: #111; fill: none;
-            stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+            stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round;
         }
         /* This block used to invert the field over the hero's dark box. No dark box
            is left, so it keeps the same black treatment as everywhere else. */
@@ -253,7 +253,7 @@
         #siteHeader .hdr-funnel:hover, #siteHeader .hdr-funnel.on { opacity: 0.6; filter: none; }
         #siteHeader .hdr-funnel svg {
             width: 27px; height: 27px;
-            stroke: #fff; fill: #fff; stroke-width: 1.6;
+            stroke: #fff; fill: #fff; stroke-width: 1.25;
         }
         /* The connector line has no area to fill — keep it a white stroke. */
         #siteHeader .hdr-funnel svg line { stroke: #fff; }
@@ -275,7 +275,7 @@
         #siteHeader .hdr-searchtoggle:hover { transform: scale(1.06); }
         #siteHeader .hdr-searchtoggle svg {
             width: 18px; height: 18px; stroke: currentColor; fill: none;
-            stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+            stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round;
         }
         /* Open: the trigger fills in as a solid black circle. */
         #siteHeader .hdr-searchdock.open .hdr-searchtoggle { background: #111; border-color: #111; color: #fff; }
@@ -1169,7 +1169,7 @@
             background: none; border: none; cursor: pointer; padding: 4px;
             display: flex; align-items: center; justify-content: center;
         }
-        .vsp-searchfield button svg { width: 20px; height: 20px; stroke: #111; fill: none; stroke-width: 1.8; }
+        .vsp-searchfield button svg { width: 20px; height: 20px; stroke: #111; fill: none; stroke-width: 1.25; }
         .vsp-searchfield button:hover { opacity: 0.6; }
 
         /* The filter split into two halves of the page. Fades out once the buyer
@@ -1273,7 +1273,7 @@
             font-family: inherit; font-size: 15.00px; font-weight: 500; color: #111;
         }
         .vsp-user-search input::placeholder { color: #9a9a9a; letter-spacing: 0.4px; }
-        .vsp-user-search svg { width: 20px; height: 20px; stroke: #111; stroke-width: 1.8; fill: none; }
+        .vsp-user-search svg { width: 20px; height: 20px; stroke: #111; stroke-width: 1.25; fill: none; }
         .vsp-user-results {
             display: grid; grid-template-columns: repeat(4, 1fr);
             gap: 38px 12px; justify-items: center; margin-top: 22px;
@@ -1489,7 +1489,7 @@
         <div class="header-container">
             <div class="header-left">
                 <a class="icon-btn" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu" title="Menu">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round">
                         <line x1="3" y1="7" x2="21" y2="7"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="17" x2="21" y2="17"></line>
@@ -1504,25 +1504,25 @@
             </div>
             <div class="header-right">
                 <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </a>
                 <span class="hdr-cart" data-icon="cart">
                     <button class="icon-btn icon-wrap hdr-cart-btn" title="Cart" aria-label="Cart" aria-expanded="false" onclick="veroToggleCartMenu(event)">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle>
                             <path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path>
                         </svg>
                     </button>
                     <!-- Down caret hinting the cart icon expands to reveal wishlist. -->
                     <span class="hdr-cart-caret" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
                     </span>
                     <!-- Bare wishlist heart that drops out beneath the cart on tap. -->
                     <div class="hdr-wish-pop" id="cartMenu" role="menu" aria-hidden="true">
                         <a class="hwp-ico" role="menuitem" href="wishlist.html" title="Wishlist" aria-label="Wishlist" onclick="veroPickWishlist(event)">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
                             </svg>
                             <span class="badge" id="wishMenuBadge"></span>
@@ -1531,7 +1531,7 @@
                 </span>
                 <span class="hdr-account" data-icon="account">
                     <button class="icon-btn hdr-account-btn" title="My Account (hold to switch profile)" aria-label="My Account">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="8" r="4"></circle>
                             <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
                         </svg>
@@ -1543,16 +1543,16 @@
 
     // ---- Slide-in side drawer (opened by the header hamburger) ----
     const DRAWER_ICONS = {
-        cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle><path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path></svg>',
-        wishlist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>',
-        plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
+        cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle><path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path></svg>',
+        wishlist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>',
+        plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
     };
     const DRAWER_MARKUP = `
         <div class="vero-drawer-overlay" id="veroDrawerOverlay" onclick="veroCloseDrawer()"></div>
         <aside class="vero-drawer" id="veroDrawer" aria-hidden="true">
             <div class="vero-drawer-head">
                 <button class="vero-drawer-close" aria-label="Back" onclick="veroCloseDrawer()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"></polyline></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"></polyline></svg>
                 </button>
                 <img class="vero-drawer-logo" src="peacock-logo.png?v=1" alt="moravchick" />
             </div>

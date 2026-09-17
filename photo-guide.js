@@ -194,7 +194,7 @@
             color: #fff;
         }
         .pg-slot .dot svg { width: 13px; height: 13px; fill: none; stroke: #fff;
-            stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+            stroke-width: 1.25.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
         .pg-slot .lbl { flex: 1; min-width: 0; }
         .pg-slot .lbl b { display: block; font-size: 11.25px; font-weight: 700; line-height: 1.35; }
         .pg-slot .lbl .hint { display: block; font-size: 10.00px; color: var(--pg-muted); line-height: 1.5; margin-top: 3px; }
@@ -269,7 +269,7 @@
                             <span>How to photograph this item right</span>
                         </span>
                         <span class="count">${doneCount}/${slots.length}</span>
-                        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </button>
                     <div class="pg-body"><div class="inner"><div class="pg-pad">
                         <div class="pg-hero">
