@@ -133,13 +133,14 @@
         ]},
         { title: 'Company', links: [
             { name: 'About Us', href: 'about.html' },
-            { name: 'Careers', href: '#' },
+            { name: 'How It Works', href: 'how-it-works.html' },
+            { name: 'Trust & Safety', href: 'safety.html' },
         ]},
         { title: 'Support', links: [
-            { name: 'Help Center', href: '#' },
-            { name: 'Shipping', href: '#' },
-            { name: 'Returns', href: '#' },
-            { name: 'Contact', href: '#' },
+            { name: 'Help Center', href: 'faq.html' },
+            { name: 'Pickup & Delivery', href: 'shipping.html' },
+            { name: 'Returns', href: 'returns.html' },
+            { name: 'Contact', href: 'contact.html' },
         ]},
     ];
 
@@ -151,8 +152,9 @@
     ];
 
     const legal = [
-        { name: 'Terms and Conditions', href: '#' },
-        { name: 'Privacy Policy', href: '#' },
+        { name: 'Terms and Conditions', href: 'terms.html' },
+        { name: 'Privacy Policy', href: 'privacy.html' },
+        { name: 'Cookies', href: 'cookies.html' },
     ];
 
     const MARKUP = `
@@ -199,6 +201,38 @@
         document.body.appendChild(footer);
     }
 
+    // ---- Cookie-consent banner (site-wide, dismissible, remembered locally) ----
+    function mountCookieBanner() {
+        try { if (localStorage.getItem('vero_cookie_ok')) return; } catch (e) {}
+        if (document.getElementById('veroCookie')) return;
+        if (!document.getElementById('vero-cookie-styles')) {
+            const st = document.createElement('style');
+            st.id = 'vero-cookie-styles';
+            st.textContent = `
+                #veroCookie { position:fixed; left:50%; transform:translateX(-50%);
+                    bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:400;
+                    width:min(92vw,560px); display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+                    background:#111; color:#fff; border-radius:16px; padding:16px 18px;
+                    box-shadow:0 14px 40px rgba(0,0,0,0.32); font-family:'Poppins','Segoe UI',sans-serif; }
+                #veroCookie p { flex:1 1 240px; margin:0; font-size:12.5px; line-height:1.5; color:rgba(255,255,255,0.82); }
+                #veroCookie a { color:#fff; text-decoration:underline; }
+                #veroCookie button { flex:none; border:none; cursor:pointer; border-radius:999px;
+                    padding:10px 20px; font-family:inherit; font-size:11px; letter-spacing:1px; text-transform:uppercase;
+                    font-weight:600; background:#fff; color:#111; transition:opacity 0.2s; }
+                #veroCookie button:hover { opacity:0.85; }`;
+            document.head.appendChild(st);
+        }
+        const bar = document.createElement('div');
+        bar.id = 'veroCookie';
+        bar.innerHTML = '<p>We use essential and preference cookies to run moravchick. See our <a href="cookies.html">Cookie policy</a>.</p>' +
+            '<button type="button">Got it</button>';
+        bar.querySelector('button').onclick = function () {
+            try { localStorage.setItem('vero_cookie_ok', '1'); } catch (e) {}
+            bar.remove();
+        };
+        document.body.appendChild(bar);
+    }
+
     // Toggles for pages that own multiple views (index.html).
     window.showSiteFooter = function () {
         const f = document.getElementById('siteFooter');
@@ -209,9 +243,10 @@
         if (f) f.style.display = 'none';
     };
 
+    function init() { mount(); mountCookieBanner(); }
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', mount);
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        mount();
+        init();
     }
 })();
