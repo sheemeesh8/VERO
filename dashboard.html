@@ -256,10 +256,49 @@
                 <div class="card-d">Set fixed hours for meetings and pickup. The buyer picks a free window from your calendar.</div>
                 <div class="week" id="weekGrid"></div>
                 <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
-                    <button class="btn"><span>🗓️</span> Sync Google Calendar</button>
-                    <button class="btn"><span></span> Sync Apple Calendar</button>
+                    <button class="btn" id="syncGoogle"><span>🗓️</span> Sync Google Calendar</button>
+                    <button class="btn" id="syncApple"><span>📅</span> Sync Apple Calendar</button>
                 </div>
             </div>
+            <script>
+                // Client-side calendar export for the weekly pickup window (no backend):
+                // Google opens a prefilled recurring event; Apple downloads an .ics.
+                (function () {
+                    // Next Sunday 10:00–19:00, repeating weekly.
+                    function nextSunday(h) {
+                        var d = new Date(); d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
+                        d.setHours(h, 0, 0, 0); return d;
+                    }
+                    function z(n) { return String(n).padStart(2, '0'); }
+                    function stamp(d) {
+                        return d.getUTCFullYear() + z(d.getUTCMonth() + 1) + z(d.getUTCDate()) +
+                            'T' + z(d.getUTCHours()) + z(d.getUTCMinutes()) + '00Z';
+                    }
+                    var start = nextSunday(10), end = nextSunday(19);
+                    var title = 'moravchick — Pickup window', details = 'Weekly pickup & meeting hours for your moravchick store.';
+                    var g = document.getElementById('syncGoogle'), a = document.getElementById('syncApple');
+                    if (g) g.onclick = function () {
+                        var url = 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+                            '&text=' + encodeURIComponent(title) +
+                            '&dates=' + stamp(start) + '/' + stamp(end) +
+                            '&details=' + encodeURIComponent(details) +
+                            '&recur=' + encodeURIComponent('RRULE:FREQ=WEEKLY');
+                        window.open(url, '_blank', 'noopener');
+                    };
+                    if (a) a.onclick = function () {
+                        var ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//moravchick//pickup//EN',
+                            'BEGIN:VEVENT', 'UID:' + Date.now() + '@moravchick',
+                            'DTSTART:' + stamp(start), 'DTEND:' + stamp(end),
+                            'RRULE:FREQ=WEEKLY', 'SUMMARY:' + title, 'DESCRIPTION:' + details,
+                            'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+                        var url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+                        var link = document.createElement('a');
+                        link.href = url; link.download = 'moravchick-pickup.ics';
+                        document.body.appendChild(link); link.click();
+                        document.body.removeChild(link); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+                    };
+                })();
+            </script>
             <div class="grid g2" style="margin-top:18px;">
                 <div class="card">
                     <div class="card-h"><div class="card-t">Check-in and handover confirmation</div></div>
