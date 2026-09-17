@@ -89,9 +89,9 @@ function enableHeroBandEditing(on = true) {
     panel.className = 'hero-band-panel';
     panel.innerHTML = `
         <span class="hbp-name">BAND</span>
-        <button type="button" data-step="-10" title="נמוך יותר">&minus;</button>
+        <button type="button" data-step="-10" title="Lower">&minus;</button>
         <span class="hbp-val">—</span>
-        <button type="button" data-step="10" title="גבוה יותר">+</button>
+        <button type="button" data-step="10" title="Higher">+</button>
         <button type="button" class="hbp-reset">RESET</button>
         <button type="button" class="hbp-close">&times;</button>`;
     document.body.appendChild(panel);

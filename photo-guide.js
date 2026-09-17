@@ -26,82 +26,82 @@
     // ---- Category schema (single source of truth for the native component) ----
     const VERO_PHOTO_GUIDE = {
         shoes: {
-            title: 'נעליים',
-            heroAngle: 'שתי הנעליים יחד, מזווית 45° מלמעלה',
-            tip: 'הנח נעל אחת מעט קדימה מהשנייה — כך מקבלים נפח ולא תמונה "שטוחה".',
-            slots: ['תמונה ראשית (זווית 45°)', 'צד מלא', 'סוליה תחתית', 'תווית מידה'],
+            title: 'Shoes',
+            heroAngle: 'Both shoes together, from an angle 45° from above',
+            tip: 'Place one shoe slightly ahead of the other — this gives depth, not a flat image "Flat".',
+            slots: ['Main photo (angle 45°)', 'Full side', 'Bottom sole', 'Size label'],
             help: [
-                'שתי הנעליים יחד, מלמעלה בזווית 45°. זו התמונה שרואים ראשונה, אז שתהיה חדה ומוארת.',
-                'נעל אחת מהצד, כל האורך בתוך הפריים — מראה את הגזרה ואת מצב הפריט.',
-                'הפוך נעל אחת וצלם את הסוליה — כך הקונה רואה כמה היא שחוקה.',
-                'תקריב לתווית שבתוך הנעל, שבה מופיעה המידה, שתהיה קריאה.',
+                'Both shoes together, from above at an angle 45°. This is the first photo people see, so it\'s sharp and well lit.',
+                'One shoe from the side, Full length within the frame — shows the cut and the item\'s condition.',
+                'Flip one shoe and photograph the sole — so the buyer sees how worn it is.',
+                'Close-up of the label inside the shoe, where the size appears, so it\'s legible.',
             ],
         },
         tops: {
-            title: 'חולצות שטוחות / טופים',
-            heroAngle: 'פרוסה שטוח על משטח, או תלויה על קולב עץ',
-            tip: 'מתח את השרוולים בצורה סימטרית וּודא שאין קמטים בולטים.',
-            slots: ['חזית מלאה', 'גב החולצה', 'תווית מותג ומידה', 'תקריב בד'],
+            title: 'Flat shirts / tops',
+            heroAngle: 'Laid flat on a surface, or hung on a wooden hanger',
+            tip: 'Stretch the sleeves symmetrically and make sure there are no visible wrinkles.',
+            slots: ['Full front', 'Shirt back', 'Brand and size label', 'Fabric close-up'],
             help: [
-                'החולצה פרוסה שטוח, כל החזית בפריים ומיושרת. זו התמונה הראשית.',
-                'הפוך את החולצה וצלם את הגב באותה צורה בדיוק.',
-                'תקריב לתווית שבצווארון — שם המותג והמידה צריכים להיות קריאים.',
-                'התקרב לאריג כדי להראות את המרקם ואת המצב (בלי כתמים או בלאי).',
+                'The shirt laid flat, The whole front in frame and aligned. This is the main photo.',
+                'Flip the shirt and photograph the back the exact same way.',
+                'Close-up of the collar label — the brand and size should be legible.',
+                'Get close to the fabric to show the texture and condition (no stains or wear).',
             ],
         },
         outerwear: {
-            title: "מעילים וז'קטים",
-            heroAngle: 'רכוס ומלא, תלוי על קולב איכותי',
-            tip: 'צלם את התמונה הראשית רכוס, ובתמונה נוספת פתוח — כדי להראות את הבטנה.',
-            slots: ['חזית רכוסה', 'בטנה פנימית', 'רוכסן / כפתורים', 'תווית הרכב בד'],
+            title: "Coats and jackets",
+            heroAngle: 'Buttoned and full, Hanging on a quality hanger',
+            tip: 'Photograph the main image buttoned up, and open in another photo — to show the lining.',
+            slots: ['Buttoned front', 'Inner lining', 'Zipper / buttons', 'Fabric composition label'],
             help: [
-                'המעיל רכוס ומלא על קולב, כל החזית בפריים. זו התמונה הראשית.',
-                'פתח את המעיל וצלם את הבטנה מבפנים.',
-                'תקריב לרוכסן או לכפתורים כדי להראות שהם שלמים ותקינים.',
-                'תקריב לתווית עם הרכב הבד והוראות הכביסה.',
+                'The coat buttoned and full on a hanger, The whole front in frame. This is the main photo.',
+                'Open the coat and photograph the lining inside.',
+                'Close-up of the zipper or buttons to show they are intact and working.',
+                'Close-up of the label with the fabric composition and washing instructions.',
             ],
         },
         bags: {
-            title: 'תיקים ואביזרי עור',
-            heroAngle: 'חזית ישרה, בגובה העיניים',
-            tip: 'מלא את התיק בנייר או בד כדי שישמור על צורתו ולא ייראה מעוך.',
-            slots: ['חזית התיק', 'גב ותחתית', 'פנים התיק ותאים', 'מספר סידורי / אבזם'],
+            title: 'Bags and leather accessories',
+            heroAngle: 'Straight front, at eye level',
+            tip: 'Fill the bag with paper or cloth so it holds its shape and doesn\'t look crumpled.',
+            slots: ['Bag front', 'Back and bottom', 'The bag\'s interior and compartments', 'Serial number / clasp'],
             help: [
-                'התיק עומד מלא (מרופד מבפנים) לשמירת צורה, חזית מלאה. זו התמונה הראשית.',
-                'צלם את הגב ואת התחתית — שם בדרך כלל נראה הבלאי.',
-                'פתח את התיק וצלם את הפנים ואת התאים.',
-                'תקריב למספר הסידורי או לאבזם/לוגו — עוזר לאמת מקוריות.',
+                'The bag standing full (padded inside) to hold its shape, Full front. This is the main photo.',
+                'Photograph the back and the bottom — that\'s usually where wear shows.',
+                'Open the bag and photograph the inside and the compartments.',
+                'Close-up of the serial number or clasp/logo — helps verify authenticity.',
             ],
         },
         bottoms: {
-            title: "מכנסיים וג'ינסים",
-            heroAngle: 'פרוסים שטוח וישר על משטח',
-            tip: 'ישר את הרגליים במקביל וצלם תקריב של הכפתור/רוכסן הראשי.',
-            slots: ['חזית מלאה', 'גב וכיסים', 'תווית מידה במותן'],
+            title: "Trousers and jeans",
+            heroAngle: 'laid flat and straight on a surface',
+            tip: 'Align the legs parallel and take a close-up of the main button/zipper.',
+            slots: ['Full front', 'Back and pockets', 'Size label at the waist'],
             help: [
-                'המכנס פרוס שטוח וישר, כל האורך בפריים. זו התמונה הראשית.',
-                'הפוך וצלם את הגב ואת הכיסים.',
-                'תקריב לתווית המידה שבתוך המותן.',
+                'The trousers laid flat and straight, Full length in frame. This is the main photo.',
+                'Flip and photograph the back and the pockets.',
+                'Close-up of the size label inside the waist.',
             ],
         },
         accessories: {
-            title: 'משקפיים ושעונים',
-            heroAngle: 'תקריב חד מהחזית (מאקרו)',
-            tip: 'הימנע מהשתקפות של אור או פלאש על הזכוכית/מתכת — הטה מעט את הפריט.',
-            slots: ['תקריב חזיתי', 'חריטת מותג / גב', 'אריזה / קופסה מקורית'],
+            title: 'Eyewear and watches',
+            heroAngle: 'A sharp close-up of the front (macro)',
+            tip: 'Avoid glare from light or flash on glass/metal — tilt the item slightly.',
+            slots: ['Front close-up', 'Brand engraving / back', 'Original packaging / box'],
             help: [
-                'תקריב חד מהחזית, בלי השתקפות אור על הזכוכית או המתכת. זו התמונה הראשית.',
-                'צלם את החריטה או הסימון שבגב — הם מאמתים את המותג.',
-                'צלם את הקופסה/האריזה המקורית אם יש — מעלה ערך ואמון.',
+                'A sharp close-up of the front, No light reflection on the glass or metal. This is the main photo.',
+                'Photograph the engraving or marking on the back — they verify the brand.',
+                'Photograph the original box/packaging if any — it adds value and trust.',
             ],
         },
     };
 
     // The three core tips shown for every category.
     const VERO_CORE_TIPS = [
-        { icon: '☀', title: 'אור יום, בלי פלאש', text: 'צלם ליד חלון באור טבעי. כבה את הפלאש — הוא משטח את הפריט ומשנה צבע.' },
-        { icon: '◐', title: 'רקע נקי ואחיד', text: 'הנח על קיר או סדין חלק בצבע אחיד, בלי חפצים מסביב שמסיחים את העין.' },
-        { icon: '⧉', title: 'השאר אוויר (15%)', text: 'אל תמלא את כל הפריים בפריט — השאר מעט שוליים ואל תחתוך קצוות.' },
+        { icon: '☀', title: 'Daylight, No flash', text: 'Shoot by a window in natural light. Turn off the flash — it flattens the item and shifts color.' },
+        { icon: '◐', title: 'A clean, even background', text: 'Place it on a wall or a smooth sheet in a solid color, No objects around that distract the eye.' },
+        { icon: '⧉', title: 'Leave air (15%)', text: 'Don\'t fill the whole frame with the item — leave some margin and don\'t crop the edges.' },
     ];
 
     // Expose the schema so the rest of the site (and tests) can read it.
@@ -112,7 +112,7 @@
     const STYLE = `
         :host {
             display: block;
-            direction: rtl;
+            direction: ltr;
             font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             color: #1a1a1a;
             --pg-accent: #1c1c1c;
@@ -265,20 +265,20 @@
                     <button class="pg-head" type="button" part="head">
                         <span class="ic">📸</span>
                         <span class="tt">
-                            <b>מדריך צילום — ${data.title}</b>
-                            <span>איך לצלם את הפריט הזה נכון</span>
+                            <b>Photo guide — ${data.title}</b>
+                            <span>How to photograph this item right</span>
                         </span>
                         <span class="count">${doneCount}/${slots.length}</span>
                         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </button>
                     <div class="pg-body"><div class="inner"><div class="pg-pad">
                         <div class="pg-hero">
-                            <b>התמונה הראשית:</b> ${data.heroAngle}
+                            <b>The main photo:</b> ${data.heroAngle}
                             <span class="tip">💡 ${data.tip}</span>
                         </div>
                         <div class="pg-core">${core}</div>
-                        <div class="pg-slots-h">תמונות נדרשות · ${slots.length}</div>
-                        <div class="pg-slots-sub">צלמו את כל התמונות הבאות. כל אחת מסומנת ב-✓ אוטומטית כשמעלים אותה למעלה.</div>
+                        <div class="pg-slots-h">Required photos · ${slots.length}</div>
+                        <div class="pg-slots-sub">Take all the following photos. Each is marked with-✓ automatically when you move it up.</div>
                         <div class="pg-slots">${slotRows}</div>
                     </div></div></div>
                 </div>
