@@ -210,7 +210,7 @@
             st.id = 'vero-cookie-styles';
             st.textContent = `
                 #veroCookie { position:fixed; left:50%; transform:translateX(-50%);
-                    bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:400;
+                    bottom:calc(16px + var(--vero-cookie-inset, 0px) + env(safe-area-inset-bottom,0px)); z-index:950;
                     width:min(92vw,560px); display:flex; align-items:center; gap:14px; flex-wrap:wrap;
                     background:#111; color:#fff; border-radius:16px; padding:16px 18px;
                     box-shadow:0 14px 40px rgba(0,0,0,0.32); font-family:'Poppins','Segoe UI',sans-serif; }
@@ -228,9 +228,43 @@
             '<button type="button">Got it</button>';
         bar.querySelector('button').onclick = function () {
             try { localStorage.setItem('vero_cookie_ok', '1'); } catch (e) {}
+            window.removeEventListener('resize', reflow);
             bar.remove();
         };
         document.body.appendChild(bar);
+
+        // Sit ABOVE any fixed bottom bar (feed nav, sale nav, cart/product action
+        // bars…) instead of overlapping it. Some bars render asynchronously, so
+        // recompute a few times and on resize.
+        function bottomBarInset() {
+            var max = 0;
+            var nodes = document.body.querySelectorAll('*');
+            for (var i = 0; i < nodes.length; i++) {
+                var el = nodes[i];
+                if (el === bar || el.id === 'veroCookie' || el.id === 'siteFooter') continue;
+                var s = getComputedStyle(el);
+                if (s.position !== 'fixed' && s.position !== 'sticky') continue;
+                if (s.display === 'none' || s.visibility === 'hidden' || parseFloat(s.opacity) === 0) continue;
+                var r = el.getBoundingClientRect();
+                // a real bottom bar: anchored near the viewport bottom, bar-shaped,
+                // living in the lower half (skip full-screen overlays/sheets).
+                if (r.height >= 30 && r.height <= 150 && r.width >= 150 &&
+                    r.bottom > window.innerHeight - 90 && r.top > window.innerHeight * 0.55) {
+                    if (r.height > max) max = r.height;
+                }
+            }
+            return max ? Math.ceil(max) + 12 : 0;
+        }
+        function reflow() {
+            if (!document.getElementById('veroCookie')) { clearInterval(poll); return; }
+            bar.style.setProperty('--vero-cookie-inset', bottomBarInset() + 'px');
+        }
+        // Poll for ~6s so async-rendered bottom bars (feed nav, etc.) are caught.
+        var ticks = 0;
+        var poll = setInterval(function () { reflow(); if (++ticks > 12) clearInterval(poll); }, 500);
+        reflow();
+        window.addEventListener('resize', reflow);
+        window.addEventListener('scroll', reflow, { passive: true });
     }
 
     // Toggles for pages that own multiple views (index.html).
