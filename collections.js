@@ -225,9 +225,19 @@
             ? '<img class="pc-photo" src="' + esc(p.cover) + '" alt="' + esc(p.name) + '">'
             : esc(p.icon);
         var priceNum = toNum(d.onSale ? d.price : d.original);
+        // Carry the product itself in the link so the product page renders it,
+        // rather than falling back to its "Product name" placeholder. Same
+        // target and payload shape the home feed uses (product-showcase.html).
+        var productData = JSON.stringify({
+            name: p.name, price: priceNum, icon: p.icon, cover: p.cover || '',
+            category: p.category || '', seller: p.seller, rating: p.rating || 4.5,
+            type: p.type || 'clothing'
+        });
+        var href = 'product-showcase.html?product=' + encodeURIComponent(productData);
         var data = ' data-name="' + esc(p.name) + '" data-seller="' + esc(p.seller) + '"' +
-                   ' data-price="' + priceNum + '" data-icon="' + esc(p.icon) + '" data-cover="' + esc(p.cover || '') + '"';
-        return '<a class="product-card' + (d.onSale ? ' is-sale' : '') + '" href="product.html" title="' + esc(p.name) + '"' + data + '>' +
+                   ' data-price="' + priceNum + '" data-icon="' + esc(p.icon) + '" data-cover="' + esc(p.cover || '') + '"' +
+                   " data-product='" + esc(productData) + "'";
+        return '<a class="product-card' + (d.onSale ? ' is-sale' : '') + '" href="' + esc(href) + '" title="' + esc(p.name) + '"' + data + '>' +
                     '<div class="pc-flip">' +
                         '<div class="pc-face pc-front">' +
                             '<div class="product-image">' + media + '</div>' +
