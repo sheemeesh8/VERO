@@ -112,7 +112,7 @@
     const STYLE = `
         :host {
             display: block;
-            direction: rtl;
+            direction: ltr;
             font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             color: #1a1a1a;
             --pg-accent: #1c1c1c;

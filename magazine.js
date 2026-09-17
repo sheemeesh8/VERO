@@ -77,7 +77,7 @@
 
     /* --- Feature spread --- */
     .mag-feature .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px,5vw,64px); align-items: center; }
-    .mag-feature.flip .feat-grid { direction: rtl; }
+    .mag-feature.flip .feat-grid { direction: ltr; }
     .mag-feature.flip .feat-grid > * { direction: ltr; }
     .feat-num { font-size: clamp(64px,9vw,132px); line-height: .8; font-weight: 500; color: #111; margin-bottom: 8px; }
     .feat-title { font-size: clamp(30px,4.4vw,58px); line-height: 1.02; margin: 10px 0 16px; font-weight: 500; }

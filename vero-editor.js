@@ -179,7 +179,7 @@
                 position: fixed; left: 18px; bottom: 76px; z-index: 100000;
                 width: 300px; background: #fff; color: #111; border: 1px solid #e6e4de;
                 border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,0.18);
-                padding: 16px; display: none; direction: rtl;
+                padding: 16px; display: none; direction: ltr;
                 font-family: 'Segoe UI', sans-serif; font-size: 10.83px;
             }
             #vero-ed-panel.open { display: block; }
