@@ -115,9 +115,9 @@ async function veroCutout(src, opts = {}) {
     const say = opts.onStatus || (() => {});
     const original = src instanceof Blob ? await veroCutoutBlobToDataUrl(src) : src;
     try {
-        say('טוען מנוע…');
+        say('Loading engine…');
         const lib = await veroCutoutDeadline(veroCutoutLoad());
-        say('מסיר רקע…');
+        say('Removing background…');
         const blob = await veroCutoutToBlob(src);
         const cut = await veroCutoutDeadline(lib.removeBackground(blob));
         const img = await veroCutoutLoadImage(cut);

@@ -29,10 +29,10 @@
     // months: 1-12 that belong to the season. eos: end-of-season discount (%)
     // applied to the whole collection while it is the season that just ended.
     var COLLECTIONS = {
-        spring: { key: 'spring', he: 'אביב',  en: 'Spring', emoji: '🌸', months: [3, 4, 5],    hero: 'women-hero.jpg',    accent: '#6f8f6a', eos: 40 },
-        summer: { key: 'summer', he: 'קיץ',   en: 'Summer', emoji: '☀️', months: [6, 7, 8],    hero: 'hero-beach.jpg',    accent: '#c99a3a', eos: 50 },
-        autumn: { key: 'autumn', he: 'סתיו',  en: 'Autumn', emoji: '🍂', months: [9, 10, 11],  hero: 'clothing-hero.jpg', accent: '#a5622e', eos: 40 },
-        winter: { key: 'winter', he: 'חורף',  en: 'Winter', emoji: '❄️', months: [12, 1, 2],   hero: 'men-hero.jpg',      accent: '#4a6c8f', eos: 45 }
+        spring: { key: 'spring', he: 'Spring',  en: 'Spring', emoji: '🌸', months: [3, 4, 5],    hero: 'women-hero.jpg',    accent: '#6f8f6a', eos: 40 },
+        summer: { key: 'summer', he: 'Summer',   en: 'Summer', emoji: '☀️', months: [6, 7, 8],    hero: 'hero-beach.jpg',    accent: '#c99a3a', eos: 50 },
+        autumn: { key: 'autumn', he: 'Autumn',  en: 'Autumn', emoji: '🍂', months: [9, 10, 11],  hero: 'clothing-hero.jpg', accent: '#a5622e', eos: 40 },
+        winter: { key: 'winter', he: 'Winter',  en: 'Winter', emoji: '❄️', months: [12, 1, 2],   hero: 'men-hero.jpg',      accent: '#4a6c8f', eos: 45 }
     };
     var ORDER = ['spring', 'summer', 'autumn', 'winter'];
 

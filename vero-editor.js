@@ -126,7 +126,7 @@
         positionFrame();
     }
     function updateReadout() {
-        if (!sel) { ui.readout.textContent = 'בחר פריט — לחיצה בוחרת, גרירה מזיזה'; return; }
+        if (!sel) { ui.readout.textContent = 'Choose an item — click to select, Drag to move'; return; }
         const s = stateOf(sel.__veroKey);
         ui.readout.innerHTML =
             `translate(<b>${s.dx}px</b>, <b>${s.dy}px</b>) · scale(<b>${s.sx.toFixed(2)}</b>, <b>${s.sy.toFixed(2)}</b>)`;
@@ -209,7 +209,7 @@
 
         const toggle = document.createElement('button');
         toggle.id = 'vero-ed-toggle';
-        toggle.title = 'עריכה ידנית (Ctrl+Shift+K)';
+        toggle.title = 'Manual editing (Ctrl+Shift+K)';
         toggle.textContent = '✎';
         toggle.onclick = () => setEditing(!editing);
         // The on-screen ✎ button is hidden — editing is toggled only with Ctrl+Shift+K.
@@ -219,19 +219,19 @@
         const panel = document.createElement('div');
         panel.id = 'vero-ed-panel';
         panel.innerHTML = `
-            <h4>עריכה ידנית</h4>
+            <h4>Manual editing</h4>
             <div class="vero-ed-sel" id="vero-ed-name">—</div>
-            <div class="vero-ed-read" id="vero-ed-read">בחר פריט — לחיצה בוחרת, גרירה מזיזה</div>
-            <label>הגדלה
+            <div class="vero-ed-read" id="vero-ed-read">Choose an item — click to select, Drag to move</div>
+            <label>Enlarge
                 <input type="range" id="vero-ed-scale" min="0.3" max="3" step="0.05" value="1" disabled>
                 <span id="vero-ed-scaleout">×1.00</span>
             </label>
             <div class="vero-ed-btns">
-                <button class="b" id="vero-ed-reset">אפס פריט</button>
-                <button class="b" id="vero-ed-resetall">אפס הכל</button>
-                <button class="b dark" id="vero-ed-copy">העתק CSS</button>
+                <button class="b" id="vero-ed-reset">Reset item</button>
+                <button class="b" id="vero-ed-resetall">Reset all</button>
+                <button class="b dark" id="vero-ed-copy">Copy CSS</button>
             </div>
-            <div class="vero-ed-hint">גרירה מזיזה · הידיות הירוקות מותחות (רוחב/גובה) · חיצים 1px (Shift 10px) · הסליידר או [ ] מגדילים אחיד</div>
+            <div class="vero-ed-hint">Drag to move · the green handles stretch (width/height) · arrows 1px (Shift 10px) · The slider or [ ] Uniform enlarge</div>
         `;
         document.body.appendChild(panel);
 
@@ -290,7 +290,7 @@
             const out = cssOut();
             try { await navigator.clipboard.writeText(out); } catch (e) {}
             const b = panel.querySelector('#vero-ed-copy');
-            const t = b.textContent; b.textContent = 'הועתק ✓';
+            const t = b.textContent; b.textContent = 'Copied ✓';
             setTimeout(() => b.textContent = t, 1200);
         };
     }

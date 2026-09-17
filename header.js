@@ -2532,7 +2532,7 @@
     // rebuilt, so the search seller-card + "show storefront" buttons route here.
     window.veroSellerGone = function () {
         try { veroCloseDrawer(); } catch (e) {}
-        alert('החנות הציבורית בבנייה מחדש');
+        alert('The public store is being rebuilt');
     };
 
     // Open the "rectangles" hub that matches the active account — seller-area for

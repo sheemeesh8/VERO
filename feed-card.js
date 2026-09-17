@@ -30,7 +30,7 @@
 
     function itemFrom(card) {
         return {
-            name: card.dataset.name || card.getAttribute('title') || 'פריט',
+            name: card.dataset.name || card.getAttribute('title') || 'Item',
             seller: card.dataset.seller || '',
             icon: card.dataset.icon || '🛍️',
             cover: card.dataset.cover || '',
@@ -45,15 +45,15 @@
         if (!Array.isArray(cart)) cart = [];
         cart.push(itemFrom(card));
         writeJSON('vero_cart', cart);
-        toast('נוסף לעגלה');
+        toast('Added to cart');
     }
     function toggleWishlist(card, btn) {
         var wish = readJSON('vero_wishlist', []);
         if (!Array.isArray(wish)) wish = [];
         var it = itemFrom(card);
         var idx = wish.findIndex(function (w) { return w && w.name === it.name && w.seller === it.seller; });
-        if (idx === -1) { wish.push(it); btn.classList.add('wish-on'); toast('נוסף לרשימת המשאלות'); }
-        else { wish.splice(idx, 1); btn.classList.remove('wish-on'); toast('הוסר מרשימת המשאלות'); }
+        if (idx === -1) { wish.push(it); btn.classList.add('wish-on'); toast('Added to wishlist'); }
+        else { wish.splice(idx, 1); btn.classList.remove('wish-on'); toast('Removed from wishlist'); }
         writeJSON('vero_wishlist', wish);
     }
 

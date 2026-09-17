@@ -8,7 +8,7 @@
  *
  * Bump CACHE_VERSION to push a fresh copy of this worker to all clients.
  */
-var CACHE_VERSION = 'vero-v216';
+var CACHE_VERSION = 'vero-v217';
 
 self.addEventListener('install', function () {
   // Take over immediately, without waiting for old tabs to close.

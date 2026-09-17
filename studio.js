@@ -148,12 +148,12 @@ async function veroStudioCover(src, opts = {}) {
     const ratio = opts.ratio || '4:5';
     const original_cover = src instanceof Blob ? await veroStudioBlobToDataUrl(src) : src;
     try {
-        say('טוען מנוע…');
+        say('Loading engine…');
         const lib = await veroStudioDeadline(veroStudioLoadLib());
-        say('מסיר רקע…');
+        say('Removing background…');
         const blob = await veroStudioToBlob(src);
         const cut = await veroStudioDeadline(lib.removeBackground(blob));
-        say('מרכיב סטודיו…');
+        say('Studio component…');
         const cutImg = await veroStudioLoadImage(cut);
         const processed_cover = veroStudioCompose(cutImg, ratio);
         if (!processed_cover) throw new Error('empty studio render');

@@ -41,13 +41,13 @@
     // Validate a FINAL handle. Returns { ok:true } or { ok:false, msg:'…' }.
     function validate(s) {
         s = String(s == null ? '' : s).toLowerCase();
-        if (!s) return { ok: false, msg: 'יש לבחור שם משתמש' };
-        if (s.length < MIN) return { ok: false, msg: 'שם המשתמש קצר מדי (לפחות ' + MIN + ' תווים)' };
-        if (s.length > MAX) return { ok: false, msg: 'שם המשתמש ארוך מדי (עד ' + MAX + ' תווים)' };
-        if (!/^[a-z0-9._]+$/.test(s)) return { ok: false, msg: 'רק אותיות באנגלית, מספרים, נקודה וקו תחתון' };
-        if (/^[._]|[._]$/.test(s)) return { ok: false, msg: 'לא יכול להתחיל או להסתיים בנקודה/קו תחתון' };
-        if (/[._]{2,}/.test(s)) return { ok: false, msg: 'לא ניתן להשתמש בשתי נקודות/קווים ברצף' };
-        if (RESERVED.indexOf(s) !== -1) return { ok: false, msg: 'שם המשתמש הזה שמור' };
+        if (!s) return { ok: false, msg: 'A username must be chosen' };
+        if (s.length < MIN) return { ok: false, msg: 'Username too short (at least ' + MIN + ' characters)' };
+        if (s.length > MAX) return { ok: false, msg: 'Username too long (up to ' + MAX + ' characters)' };
+        if (!/^[a-z0-9._]+$/.test(s)) return { ok: false, msg: 'English letters only, Numbers, Dot and underscore' };
+        if (/^[._]|[._]$/.test(s)) return { ok: false, msg: 'Can\'t start or end with a dot/underscore' };
+        if (/[._]{2,}/.test(s)) return { ok: false, msg: 'You can\'t use two dots/underscores in a row' };
+        if (RESERVED.indexOf(s) !== -1) return { ok: false, msg: 'This username is reserved' };
         return { ok: true };
     }
 
@@ -80,8 +80,8 @@
     function check(name, exceptId) {
         var v = validate(name);
         if (!v.ok) return { state: 'invalid', msg: v.msg };
-        if (isTaken(name, exceptId)) return { state: 'taken', msg: 'שם המשתמש כבר תפוס' };
-        return { state: 'ok', msg: 'פנוי' };
+        if (isTaken(name, exceptId)) return { state: 'taken', msg: 'This username is already taken' };
+        return { state: 'ok', msg: 'Free' };
     }
 
     // Build up to `n` AVAILABLE suggestions from one or more seed strings
