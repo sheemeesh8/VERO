@@ -108,37 +108,49 @@
             border: 1px solid rgba(255,255,255,0.16); border-radius: 22px;
             padding: 12px 8px; box-shadow: 0 10px 34px rgba(0,0,0,0.32); color: #fff;
         }
-        .cb-part { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 9px; padding: 0 12px; }
+        /* Each half is a button that opens its own popup. */
+        .cb-part {
+            flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 5px;
+            padding: 2px 14px; border: none; background: none; cursor: pointer; text-align: left;
+            transition: opacity 0.2s;
+        }
+        .cb-part:active { opacity: 0.6; }
         .cb-sep { width: 1px; background: rgba(255,255,255,0.18); flex: none; align-self: stretch; margin: 2px 0; }
         .cb-title {
             font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
-            font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase;
-            color: rgba(255,255,255,0.66); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase;
+            color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        /* Categories — a horizontal slide showing ~4 at a time. */
-        .catbar-chips { display: flex; align-items: center; gap: 3px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
-        .catbar-chips::-webkit-scrollbar { display: none; }
-        .catbar-chips button {
-            flex: 0 0 auto; border: none; background: transparent; color: #b5b5b0; cursor: pointer;
+        .cb-value {
             font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
-            font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
-            padding: 6px 12px; border-radius: 999px; white-space: nowrap; transition: background 0.2s, color 0.2s;
+            font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase; color: #fff;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .catbar-chips button.on { background: #fff; color: #111; }
-        /* Discount slider, right half. */
-        .cb-disc-row { display: flex; align-items: center; gap: 12px; }
-        .cb-disc-row input[type="range"] {
-            -webkit-appearance: none; appearance: none; flex: 1 1 auto; min-width: 0;
-            height: 2px; background: rgba(255,255,255,0.4); border-radius: 2px; outline: none; cursor: pointer; margin: 0;
+
+        /* ===== Popups that open above each half of the nav bar ===== */
+        .cb-pop {
+            position: fixed; z-index: 85; display: none;
+            bottom: calc(16px + env(safe-area-inset-bottom, 0px) + 78px);
+            width: min(86vw, 320px); max-height: 46vh; overflow-y: auto;
+            background: rgba(18,18,18,0.97);
+            -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.16); border-radius: 18px;
+            padding: 14px; box-shadow: 0 14px 44px rgba(0,0,0,0.42);
+            animation: cbPopIn 0.2s cubic-bezier(0.22,1,0.36,1) both;
         }
-        .cb-disc-row input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff; cursor: pointer;
+        .cb-pop.open { display: block; }
+        @keyframes cbPopIn { from { opacity: 0; transform: translate(var(--cb-tx, -50%), 8px); } to { opacity: 1; transform: translate(var(--cb-tx, -50%), 0); } }
+        .cb-pop-title { font-size: 9.5px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 12px; font-family: 'Bodoni Moda', Georgia, serif; }
+        /* Option chips (categories + discount steps) — a wrapping grid. */
+        .catbar-chips, .cb-disc-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .catbar-chips button, .cb-disc-opts button {
+            flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.22); background: transparent; color: #d9d9d4; cursor: pointer;
+            font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
+            font-size: 12.5px; letter-spacing: 1px; text-transform: uppercase;
+            padding: 9px 16px; border-radius: 999px; white-space: nowrap; transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
-        .cb-disc-row input[type="range"]::-moz-range-thumb { width: 15px; height: 15px; border: none; border-radius: 50%; background: #fff; cursor: pointer; }
-        .cb-disc-val {
-            font-family: 'Bodoni Moda', 'Didot', Georgia, serif; font-size: 13px; color: #fff;
-            min-width: 38px; text-align: right; white-space: nowrap;
-        }
+        .catbar-chips button:hover, .cb-disc-opts button:hover { border-color: #fff; color: #fff; }
+        .catbar-chips button.on, .cb-disc-opts button.on { background: #fff; color: #111; border-color: #fff; }
 
         /* ===== BODY (cards) ===== */
         .page-body { padding: 30px clamp(20px,5vw,40px) 140px; }
@@ -364,21 +376,27 @@
         </div>
     </div>
 
-    <!-- ===== STICKY NAV BAR — two titled halves: categories | discount ===== -->
+    <!-- ===== STICKY NAV BAR — two halves that each open a popup ===== -->
     <nav class="sale-catbar">
-        <div class="cb-part">
-            <div class="cb-title">Choose my categories</div>
-            <div class="catbar-chips" id="typeChips"></div>
-        </div>
+        <button type="button" class="cb-part" id="cbCatsBtn" aria-haspopup="true">
+            <span class="cb-title">Choose my categories</span>
+            <span class="cb-value" id="cbCatsVal">All</span>
+        </button>
         <div class="cb-sep"></div>
-        <div class="cb-part cb-part--disc">
-            <div class="cb-title">Choose my discount</div>
-            <div class="cb-disc-row">
-                <input type="range" id="catbarDisc" min="0" max="100" step="1" value="0" aria-label="Minimum discount">
-                <span class="cb-disc-val" id="catbarDiscVal">All</span>
-            </div>
-        </div>
+        <button type="button" class="cb-part cb-part--disc" id="cbDiscBtn" aria-haspopup="true">
+            <span class="cb-title">Choose my discount</span>
+            <span class="cb-value" id="cbDiscVal">All</span>
+        </button>
     </nav>
+    <!-- Popups (open above each half). -->
+    <div class="cb-pop cb-pop--cats" id="cbCatsPop">
+        <div class="cb-pop-title">Categories</div>
+        <div class="catbar-chips" id="typeChips"></div>
+    </div>
+    <div class="cb-pop cb-pop--disc" id="cbDiscPop">
+        <div class="cb-pop-title">Minimum discount</div>
+        <div class="cb-disc-opts" id="discOpts"></div>
+    </div>
 
     <!-- Filters bottom-sheet — same as the cart / wishlist. -->
     <div class="cart-sheet-overlay" id="filterOverlay" onclick="if(event.target===this)closeFilters()">
@@ -421,8 +439,9 @@
             var qEl = document.getElementById('q');
             var typeChips = document.getElementById('typeChips');
             var sortFilter = document.getElementById('sortFilter');
-            var rangeEl = document.getElementById('catbarDisc');
-            var dlVal = document.getElementById('catbarDiscVal');
+            var discOpts = document.getElementById('discOpts');
+            var cbCatsVal = document.getElementById('cbCatsVal');
+            var cbDiscVal = document.getElementById('cbDiscVal');
 
             // Build the category chips from the categories actually on sale
             // (labels stay in the collections' own English names).
@@ -439,6 +458,8 @@
                 if (!b) return;
                 cat = b.dataset.cat;
                 typeChips.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+                cbCatsVal.textContent = (cat === 'all') ? 'All' : b.textContent;
+                closePops();
                 render();
             });
 
@@ -469,7 +490,7 @@
                 });
 
                 if (!items.length) {
-                    body.innerHTML = '<div class="cart-empty">No items at ' + minPct + '% off or more — try lowering the slider.</div>';
+                    body.innerHTML = '<div class="cart-empty">No items at ' + minPct + '% off or more — try a lower discount.</div>';
                     return;
                 }
 
@@ -477,12 +498,45 @@
                     '<div class="prod-grid">' + items.map(function (p) { return VC.cardHTML(p); }).join('') + '</div>';
             }
 
-            // 0–100 discount slider (in the filter sheet) driving the grid.
-            if (rangeEl) rangeEl.addEventListener('input', function () {
-                minPct = parseInt(rangeEl.value, 10) || 0;
-                dlVal.textContent = minPct === 0 ? 'All' : minPct + '%+';
+            // Discount chosen in jumps of 10, from the popup.
+            var discSteps = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90];
+            discOpts.innerHTML = discSteps.map(function (n) {
+                return '<button data-pct="' + n + '"' + (n === 0 ? ' class="on"' : '') + '>' +
+                    (n === 0 ? 'All' : n + '%+') + '</button>';
+            }).join('');
+            discOpts.addEventListener('click', function (e) {
+                var b = e.target.closest('button[data-pct]');
+                if (!b) return;
+                minPct = parseInt(b.dataset.pct, 10) || 0;
+                discOpts.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+                cbDiscVal.textContent = minPct === 0 ? 'All' : minPct + '%+';
+                closePops();
                 render();
             });
+
+            // ---- The two nav-bar halves each open their own popup. ----
+            var catsBtn = document.getElementById('cbCatsBtn');
+            var discBtn = document.getElementById('cbDiscBtn');
+            var catsPop = document.getElementById('cbCatsPop');
+            var discPop = document.getElementById('cbDiscPop');
+            function positionPop(pop, btn) {
+                var r = btn.getBoundingClientRect();
+                var half = pop.offsetWidth / 2 || 160;
+                var cx = Math.min(Math.max(r.left + r.width / 2, half + 10), window.innerWidth - half - 10);
+                pop.style.left = cx + 'px';
+            }
+            function closePops() { catsPop.classList.remove('open'); discPop.classList.remove('open'); }
+            function togglePop(pop, btn) {
+                var isOpen = pop.classList.contains('open');
+                closePops();
+                if (!isOpen) { pop.classList.add('open'); positionPop(pop, btn); }
+            }
+            catsBtn.addEventListener('click', function (e) { e.stopPropagation(); togglePop(catsPop, catsBtn); });
+            discBtn.addEventListener('click', function (e) { e.stopPropagation(); togglePop(discPop, discBtn); });
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.cb-pop') && !e.target.closest('.cb-part')) closePops();
+            });
+            window.addEventListener('resize', closePops);
 
             // Free-text search (inside the sheet).
             var t;
