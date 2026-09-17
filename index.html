@@ -967,10 +967,11 @@
                scroll-snapping on sticky elements makes scrolling catch and land
                imprecisely. The OMEGA cover reveal works on free scroll, so snapping is
                left off for smooth, accurate scrolling through all three stages. */
-            /* CSS snap left OFF on purpose — it lands imprecisely on the sticky hero.
-               The JS glide (wheel/touch) pages precisely to each section stop, the last
-               being the white separator line (feed top). */
-            html { scroll-snap-type: none; }
+            /* Sticky snap points: the relative panels below the hero and the feed top
+               carry the snap-align, so scrolling "catches" from the hero onto each
+               panel and onto the cards. proximity (not mandatory) so it never traps,
+               and the sticky hero has no snap-align so the back-scroll never catches. */
+            html { scroll-snap-type: y proximity; }
 
             /* The hero image pins to the top; everything after it (the second image and
                the feed) scrolls up and covers it — the OMEGA-style reveal. */
@@ -12413,23 +12414,15 @@
             // slider AND the category-picker panel — it slides up only once you scroll
             // past that panel into the feed itself. Slides back down when you scroll
             // above it again. The CSS transition on .feed-nav (.in) gives the motion.
-            const gate = () => {
-                // The last full-screen panel before the feed: the category picker if it's
-                // on screen, else the Men/Women/Kids slider.
-                const cat = document.getElementById('catFull');
-                if (cat && cat.offsetParent !== null) return cat;
-                const blank = document.querySelector('.blank-fullscreen');
-                if (blank && blank.offsetParent !== null) return blank;
-                const el = document.getElementById('heroMobile2');
-                return el && el.offsetParent !== null ? el : null;
-            };
             function updateBar() {
-                const g = gate();
-                if (!g) { bar.classList.add('in'); return; }
-                const r = g.getBoundingClientRect();
-                // Show once that panel's bottom has scrolled up past the viewport top —
-                // i.e. the feed is now the thing on screen.
-                bar.classList.toggle('in', r.bottom <= 0);
+                // Reveal the bar only once we've crossed the hero — i.e. scrolled
+                // roughly a full hero-height down. It hides again when we scroll back
+                // up into the hero.
+                const hero = document.getElementById('heroImage');
+                if (!hero) { bar.classList.add('in'); return; }
+                const y = window.scrollY || window.pageYOffset || 0;
+                const crossed = y >= hero.offsetHeight * 0.85;
+                bar.classList.toggle('in', crossed);
             }
             window.addEventListener('scroll', updateBar, { passive: true });
             window.addEventListener('resize', updateBar);
