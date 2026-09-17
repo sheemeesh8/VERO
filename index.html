@@ -12431,19 +12431,6 @@
             }
             function build() {
                 bar.innerHTML = '';
-                // The ⋯ chooser is pinned on the left; the category slide scrolls in
-                // from the right and disappears behind it.
-                const more = document.createElement('button');
-                more.type = 'button'; more.className = 'feed-nav-more';
-                more.textContent = '⋯'; more.setAttribute('aria-label', 'All categories');
-                more.addEventListener('click', e => { e.stopPropagation(); togglePop(more); });
-                bar.appendChild(more);
-                const sep = document.createElement('span'); sep.className = 'feed-nav-sep';
-                bar.appendChild(sep);
-                // The moving slide: a clipped viewport with a self-scrolling track.
-                const view = document.createElement('div'); view.className = 'feed-nav-view';
-                const track = document.createElement('div'); track.className = 'feed-nav-track';
-                view.appendChild(track); bar.appendChild(view);
                 const mk = (label, type) => {
                     const b = document.createElement('button');
                     b.type = 'button'; b.className = 'feed-nav-tab'; b.dataset.type = type;
@@ -12451,11 +12438,25 @@
                     b.addEventListener('click', () => select(type));
                     return b;
                 };
-                // ALL first, so with the RTL track it sits at the right where the
-                // hand-scroll begins; the rest follow, scrolling left behind the ⋯.
-                const set = [['ALL', '']].concat(cats().map(c => [c, c]));
-                set.forEach(([label, type]) => track.appendChild(mk(label, type)));
-                // Start the scroll at the beginning (ALL, on the right in RTL).
+                // ALL is pinned on the left (a quick "reset to all" tab); the category
+                // slide scrolls in from the right and disappears behind it.
+                const allBtn = mk('ALL', '');
+                bar.appendChild(allBtn);
+                const sep = document.createElement('span'); sep.className = 'feed-nav-sep';
+                bar.appendChild(sep);
+                // The moving slide: a clipped viewport with a self-scrolling track.
+                const view = document.createElement('div'); view.className = 'feed-nav-view';
+                const track = document.createElement('div'); track.className = 'feed-nav-track';
+                view.appendChild(track); bar.appendChild(view);
+                // The ⋯ chooser now rides at the start of the track (right in RTL,
+                // where ALL used to sit), then the category tabs follow.
+                const more = document.createElement('button');
+                more.type = 'button'; more.className = 'feed-nav-more';
+                more.textContent = '⋯'; more.setAttribute('aria-label', 'All categories');
+                more.addEventListener('click', e => { e.stopPropagation(); togglePop(more); });
+                track.appendChild(more);
+                cats().forEach(c => track.appendChild(mk(c, c)));
+                // Start the scroll at the beginning (⋯, on the right in RTL).
                 requestAnimationFrame(() => { view.scrollLeft = 0; });
                 syncActive();
             }
