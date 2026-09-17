@@ -491,6 +491,22 @@
         "<path d='M23 7 L8 15 L13 26 L20 22 L20 57 L44 57 L44 22 L51 26 L56 15 L41 7 C41 13 23 13 23 7 Z' " +
         "fill='none' stroke='#c7c0b5' stroke-width='2' stroke-linejoin='round'/></svg>");
     const seed = encodeURIComponent(product.name || 'vero');
+    // On-brand, deterministic placeholder slide (no network, no layout jump) used
+    // when a listing has no extra photos — replaces the old random stock images.
+    function placeholderSlide(label, tone) {
+        var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 1200'>" +
+            "<defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'>" +
+            "<stop offset='0' stop-color='" + (tone === 1 ? '#f4f2ee' : '#eceae4') + "'/>" +
+            "<stop offset='1' stop-color='" + (tone === 1 ? '#e7e4dd' : '#dedbd3') + "'/>" +
+            "</linearGradient></defs>" +
+            "<rect width='900' height='1200' fill='url(#g)'/>" +
+            "<path d='M340 300 L210 405 L275 520 L360 470 L360 940 L540 940 L540 470 L625 520 L690 405 L560 300 " +
+            "C560 355 340 355 340 300 Z' fill='none' stroke='#c7c0b5' stroke-width='6' stroke-linejoin='round'/>" +
+            "<text x='450' y='1050' text-anchor='middle' font-family='Poppins,Arial,sans-serif' " +
+            "font-size='30' letter-spacing='6' fill='#b3ac9f'>" +
+            String(label || 'MORAVCHICK').toUpperCase().replace(/[<>&]/g, '') + "</text></svg>";
+        return 'data:image/svg+xml,' + encodeURIComponent(svg);
+    }
     const photoObj = product.photos || {};
     const uploaded = ['cover', 'detail', 'label', 'angle'].map(k => photoObj[k]).filter(Boolean);
     const cover = product.processed_cover || product.image || product.cover
@@ -503,8 +519,8 @@
     const rest = [];
     [...uploaded, ...extra].forEach(s => { if (s && s !== cover && !rest.includes(s)) rest.push(s); });
     if (!rest.length) {
-        rest.push(`https://picsum.photos/seed/${seed}-2/900/1200`,
-                  `https://picsum.photos/seed/${seed}-3/900/1200`);
+        rest.push(placeholderSlide(product.seller || 'moravchick', 1),
+                  placeholderSlide(product.category || 'Detail', 2));
     }
     const images = [firstImg, ...rest];
     const firstIsProduct = true; // slide 0 always uses the on-sand product treatment
