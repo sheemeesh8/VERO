@@ -6466,6 +6466,72 @@
         }
         .sale-tile-cta svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.8; fill: none; }
 
+        /* ===== Sale preview slider — 6 products, 2 per slide, sitting just
+           above the monthly-sale square. Product-card sized, white ground,
+           and only the company · name · price. ===== */
+        .disc-preview {
+            width: clamp(300px, 94vw, 460px);
+            margin: 56px auto 0;
+        }
+        .disc-preview-title {
+            font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+            font-weight: 700; color: #EB2323; text-align: center; margin-bottom: 18px;
+        }
+        .disc-preview-track {
+            display: flex; overflow-x: auto; gap: 14px;
+            scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .disc-preview-track::-webkit-scrollbar { display: none; }
+        .disc-slide {
+            flex: 0 0 100%; scroll-snap-align: center;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+        }
+        /* One card — the product-card silhouette (0.7 w/h), but a plain white
+           field with only the three lines of copy. */
+        .disc-card {
+            display: flex; flex-direction: column;
+            background: #fff; border: none;
+            text-decoration: none; color: #111;
+            transition: box-shadow 0.35s ease, transform 0.35s ease;
+        }
+        .disc-card:hover { box-shadow: 0 14px 34px rgba(0,0,0,0.08); transform: translateY(-3px); }
+        .disc-card-img {
+            aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
+            background: #fff; overflow: hidden; font-size: clamp(38px, 13vw, 60px);
+        }
+        .disc-card-img img { width: 82%; height: 82%; object-fit: contain; }
+        .disc-card-info {
+            padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 3px;
+            align-items: center; text-align: center;
+        }
+        .disc-card-seller {
+            font-size: 13px; font-weight: 500; color: #111; letter-spacing: 0.3px;
+            max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .disc-card-name {
+            font-size: 11px; color: #6b6b66;
+            max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .disc-card-price { font-size: 13px; font-weight: 600; color: #111; margin-top: 4px; }
+        /* "Swipe for more" hint, replacing the dots. */
+        .disc-preview-more {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-top: 18px;
+            font-size: 10px; letter-spacing: 6px; text-transform: uppercase;
+            font-weight: 700; color: rgba(0,0,0,0.35);
+        }
+        /* The trailing letter's spacing pushes the word off-centre; pull it back. */
+        .disc-preview-more span { margin-inline-end: -6px; }
+        .disc-preview-more svg {
+            width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none;
+            animation: discNudge 1.6s ease-in-out infinite;
+        }
+        @keyframes discNudge {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-5px); }
+        }
+
         /* --- 1. Category slider (men / women / kids + Shop All) --- */
         /* Five products from the site — a clean row of the shared product card. */
         .vf-picks {
@@ -7833,6 +7899,60 @@
                 <div class="feed-filters" id="feedFilters"><!-- built by renderFeedFilters --></div>
                 <div class="feed-lead-slider" id="feedLeadSlider"></div>
             </div>
+
+            <!-- Sale preview slider: six discounted pieces, two to a slide,
+                 sitting just above the monthly-sale square. -->
+            <div class="disc-preview" id="discPreview" hidden>
+                <div class="disc-preview-title">On Sale Now</div>
+                <div class="disc-preview-track" id="discPreviewTrack"></div>
+                <div class="disc-preview-more">
+                    <span>Swipe for more</span>
+                    <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+                </div>
+            </div>
+            <script>
+                (function () {
+                    var VC = window.veroCollections;
+                    if (!VC) return;
+                    var items = VC.onSale().slice(0, 6);
+                    if (!items.length) return;
+
+                    var wrap  = document.getElementById('discPreview');
+                    var track = document.getElementById('discPreviewTrack');
+
+                    function esc(s) {
+                        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
+                        });
+                    }
+                    function card(p) {
+                        var d = p._d || VC.discountOf(p._raw);
+                        var priceNum = d.onSale ? d.price : d.original;
+                        var media = p.cover
+                            ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '">'
+                            : esc(p.icon || '🛍️');
+                        return '<a class="disc-card" href="product.html" title="' + esc(p.name) + '">' +
+                                   '<div class="disc-card-img">' + media + '</div>' +
+                                   '<div class="disc-card-info">' +
+                                       '<div class="disc-card-seller">' + esc(p.seller) + '</div>' +
+                                       '<div class="disc-card-name">' + esc(p.name) + '</div>' +
+                                       '<div class="disc-card-price">' + VC.money(priceNum) + '</div>' +
+                                   '</div>' +
+                               '</a>';
+                    }
+
+                    // Two cards per slide.
+                    var slides = '';
+                    for (var i = 0; i < items.length; i += 2) {
+                        slides += '<div class="disc-slide">' +
+                                      card(items[i]) +
+                                      (items[i + 1] ? card(items[i + 1]) : '') +
+                                  '</div>';
+                    }
+                    track.innerHTML = slides;
+                    wrap.hidden = false;
+                })();
+            </script>
 
             <!-- Monthly sale tile: a square entry to the sale page, titled by the
                  current month (e.g. "September Sale"). Sits at the head of the feed. -->
