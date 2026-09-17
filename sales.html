@@ -97,33 +97,48 @@
         }
         @keyframes shScrollDot { 0% { top: -16px; opacity: 0; } 25% { opacity: 1; } 100% { top: 40px; opacity: 0; } }
 
-        /* ===== STICKY NAV BAR — floating dark pill of category filters ===== */
+        /* ===== STICKY NAV BAR — two titled halves: categories | discount ===== */
         .sale-catbar {
             position: fixed; left: 50%; transform: translateX(-50%);
-            bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 80;
-            display: flex; align-items: center; gap: 4px;
-            max-width: 92vw;
+            bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 80;
+            display: flex; align-items: stretch; gap: 0;
+            width: min(94vw, 620px);
             background: rgba(18,18,18,0.94);
             -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.16); border-radius: 999px;
-            padding: 6px; box-shadow: 0 10px 34px rgba(0,0,0,0.32);
+            border: 1px solid rgba(255,255,255,0.16); border-radius: 22px;
+            padding: 12px 8px; box-shadow: 0 10px 34px rgba(0,0,0,0.32); color: #fff;
         }
-        .catbar-funnel {
-            width: 40px; height: 40px; flex: none; border: none; background: transparent; padding: 0;
-            color: #cfcfca; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            border-radius: 999px; transition: background 0.2s, color 0.2s;
+        .cb-part { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 9px; padding: 0 12px; }
+        .cb-sep { width: 1px; background: rgba(255,255,255,0.18); flex: none; align-self: stretch; margin: 2px 0; }
+        .cb-title {
+            font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
+            font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase;
+            color: rgba(255,255,255,0.66); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .catbar-funnel:hover { background: rgba(255,255,255,0.12); color: #fff; }
-        .catbar-funnel svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.6; fill: none; }
-        .catbar-chips { display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        /* Categories — a horizontal slide showing ~4 at a time. */
+        .catbar-chips { display: flex; align-items: center; gap: 3px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
         .catbar-chips::-webkit-scrollbar { display: none; }
         .catbar-chips button {
             flex: 0 0 auto; border: none; background: transparent; color: #b5b5b0; cursor: pointer;
             font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
-            font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
-            padding: 10px 20px; border-radius: 999px; white-space: nowrap; transition: background 0.2s, color 0.2s;
+            font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+            padding: 6px 12px; border-radius: 999px; white-space: nowrap; transition: background 0.2s, color 0.2s;
         }
         .catbar-chips button.on { background: #fff; color: #111; }
+        /* Discount slider, right half. */
+        .cb-disc-row { display: flex; align-items: center; gap: 12px; }
+        .cb-disc-row input[type="range"] {
+            -webkit-appearance: none; appearance: none; flex: 1 1 auto; min-width: 0;
+            height: 2px; background: rgba(255,255,255,0.4); border-radius: 2px; outline: none; cursor: pointer; margin: 0;
+        }
+        .cb-disc-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff; cursor: pointer;
+        }
+        .cb-disc-row input[type="range"]::-moz-range-thumb { width: 15px; height: 15px; border: none; border-radius: 50%; background: #fff; cursor: pointer; }
+        .cb-disc-val {
+            font-family: 'Bodoni Moda', 'Didot', Georgia, serif; font-size: 13px; color: #fff;
+            min-width: 38px; text-align: right; white-space: nowrap;
+        }
 
         /* ===== BODY (cards) ===== */
         .page-body { padding: 30px clamp(20px,5vw,40px) 140px; }
@@ -314,8 +329,8 @@
         <a class="back-btn tb-ico" href="index.html" aria-label="Back">
             <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
         </a>
-        <button class="tb-ico" onclick="openFilters()" aria-label="Filters">
-            <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
+        <button class="tb-ico" onclick="openFilters()" aria-label="Search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         </button>
     </div>
 
@@ -349,27 +364,30 @@
         </div>
     </div>
 
-    <!-- ===== STICKY NAV BAR — floating dark pill of category filters ===== -->
+    <!-- ===== STICKY NAV BAR — two titled halves: categories | discount ===== -->
     <nav class="sale-catbar">
-        <div class="catbar-chips" id="typeChips"></div>
+        <div class="cb-part">
+            <div class="cb-title">Choose my categories</div>
+            <div class="catbar-chips" id="typeChips"></div>
+        </div>
+        <div class="cb-sep"></div>
+        <div class="cb-part cb-part--disc">
+            <div class="cb-title">Choose my discount</div>
+            <div class="cb-disc-row">
+                <input type="range" id="catbarDisc" min="0" max="100" step="1" value="0" aria-label="Minimum discount">
+                <span class="cb-disc-val" id="catbarDiscVal">All</span>
+            </div>
+        </div>
     </nav>
 
     <!-- Filters bottom-sheet — same as the cart / wishlist. -->
     <div class="cart-sheet-overlay" id="filterOverlay" onclick="if(event.target===this)closeFilters()">
         <div class="cart-sheet">
             <div class="sheet-grip"></div>
-            <h3>Filters</h3>
+            <h3>Search</h3>
             <div class="s-search">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 <input type="search" id="q" placeholder="Search — item, brand or category…" autocomplete="off">
-            </div>
-            <span class="s-filter-lbl">Minimum discount</span>
-            <div class="disc-line" style="margin:0 0 22px;">
-                <div class="disc-line-top">
-                    <span class="dl-lbl">Discount</span>
-                    <span class="dl-val" id="dlVal">All</span>
-                </div>
-                <input type="range" id="discRange" min="0" max="100" step="1" value="0" aria-label="Minimum discount">
             </div>
             <span class="s-filter-lbl">Sort by discount</span>
             <div class="s-sort" id="sortFilter">
@@ -381,7 +399,7 @@
 
     <script>
         // Top-bar controls — filters sheet + share (same pattern as the wishlist).
-        window.openFilters = function () { var o = document.getElementById('filterOverlay'); if (o) o.classList.add('show'); };
+        window.openFilters = function () { var o = document.getElementById('filterOverlay'); if (o) { o.classList.add('show'); var q = document.getElementById('q'); if (q) setTimeout(function () { q.focus(); }, 250); } };
         window.closeFilters = function () { var o = document.getElementById('filterOverlay'); if (o) o.classList.remove('show'); };
         window.shareSale = function () {
             var url = location.href;
@@ -403,8 +421,8 @@
             var qEl = document.getElementById('q');
             var typeChips = document.getElementById('typeChips');
             var sortFilter = document.getElementById('sortFilter');
-            var rangeEl = document.getElementById('discRange');
-            var dlVal = document.getElementById('dlVal');
+            var rangeEl = document.getElementById('catbarDisc');
+            var dlVal = document.getElementById('catbarDiscVal');
 
             // Build the category chips from the categories actually on sale
             // (labels stay in the collections' own English names).
