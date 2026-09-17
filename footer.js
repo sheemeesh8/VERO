@@ -126,10 +126,10 @@
 
     const sections = [
         { title: 'Shop', links: [
-            { name: 'Women', href: '#' },
-            { name: 'Men', href: '#' },
-            { name: 'Kids', href: '#' },
-            { name: 'Art', href: '#' },
+            { name: 'Women', href: 'index.html?seg=women' },
+            { name: 'Men', href: 'index.html?seg=men' },
+            { name: 'Kids', href: 'index.html?seg=kids' },
+            { name: 'Art', href: 'collections.html' },
         ]},
         { title: 'Company', links: [
             { name: 'About Us', href: 'about.html' },
