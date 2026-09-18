@@ -2702,6 +2702,34 @@
         .ed-num { font-family: 'Bodoni Moda', 'Didot', Georgia, 'Times New Roman', serif; font-size: clamp(27px, 4vw, 56px); font-weight: 500; line-height: .95; margin: 8px 0 2px; color: #111; }
         .ed-title { font-family: 'Bodoni Moda', 'Didot', Georgia, serif; font-size: clamp(13px, 1.6vw, 23px); font-weight: 500; margin: 0 0 16px; color: #111; }
         .ed-rule { height: 1px; background: #e2e2e2; }
+
+        /* ---- Fine-line editorial calendar (end of the first feed block) ---- */
+        .vcal { max-width: 460px; margin: 40px auto 10px; padding: 26px 8px 8px;
+            border-top: 1px solid #111; direction: ltr; }
+        .vcal-head { display: flex; align-items: baseline; justify-content: space-between;
+            margin-bottom: 18px; }
+        .vcal-month { font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
+            font-size: clamp(22px, 3.4vw, 32px); font-weight: 500; color: #111;
+            letter-spacing: .01em; line-height: 1; }
+        .vcal-year { font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 11px;
+            letter-spacing: 3.2px; color: #9a958c; font-weight: 600; }
+        .vcal-grid { display: grid; grid-template-columns: repeat(7, 1fr); direction: ltr; }
+        .vcal-dow { font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 9px;
+            letter-spacing: 1.4px; color: #b3ada3; text-transform: uppercase; text-align: center;
+            padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid #e2e2e2;
+            font-weight: 600; }
+        .vcal-day { font-family: 'Bodoni Moda', Georgia, serif; font-size: 14px; color: #444;
+            text-align: center; aspect-ratio: 1 / 1; display: flex; align-items: center;
+            justify-content: center; position: relative; }
+        .vcal-day.is-empty { color: transparent; }
+        .vcal-day.is-today { color: #111; font-weight: 600; }
+        .vcal-day.is-today::after { content: ''; position: absolute; width: 30px; height: 30px;
+            border: 1px solid #111; border-radius: 50%; pointer-events: none; }
+        @media (max-width: 768px) {
+            .vcal { max-width: 340px; margin: 30px auto 6px; }
+            .vcal-day { font-size: 13px; }
+            .vcal-day.is-today::after { width: 26px; height: 26px; }
+        }
         @media (max-width: 768px) { .ed-head { margin: 32px 20px 16px; } }
 
         /* ==================== CATEGORY SLIDER (3 cards per slide, image-right) ==================== */
@@ -9976,9 +10004,53 @@
                 feedContainer.appendChild(slider);
                 promoGo(slider.dataset.uid, 0);
 
+                // The fine-line month calendar rides at the END of the FIRST block only.
+                if (feedBlocksCount === 0) block.appendChild(buildFeedCalendar());
+
                 feedContainer.appendChild(block);
                 feedBlocksCount++;
             }
+        }
+
+        // Fine-line editorial calendar for the current month, with today ringed.
+        // Rebuilt on every feed render, so it always reflects the live date.
+        function buildFeedCalendar() {
+            const now = new Date();
+            const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
+            const months = ['January','February','March','April','May','June','July',
+                'August','September','October','November','December'];
+            const dows = ['S','M','T','W','T','F','S'];        // Sunday-first
+            const firstDow = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const cal = document.createElement('section');
+            cal.className = 'vcal';
+            cal.setAttribute('aria-label', months[month] + ' ' + year + ' calendar');
+
+            const head = document.createElement('div'); head.className = 'vcal-head';
+            head.innerHTML = '<span class="vcal-month">' + months[month] + '</span>' +
+                             '<span class="vcal-year">' + year + '</span>';
+            cal.appendChild(head);
+
+            const grid = document.createElement('div'); grid.className = 'vcal-grid';
+            dows.forEach(d => {
+                const c = document.createElement('div'); c.className = 'vcal-dow';
+                c.textContent = d; grid.appendChild(c);
+            });
+            for (let i = 0; i < firstDow; i++) {
+                const c = document.createElement('div');
+                c.className = 'vcal-day is-empty'; c.textContent = '·';
+                grid.appendChild(c);
+            }
+            for (let d = 1; d <= daysInMonth; d++) {
+                const c = document.createElement('div');
+                c.className = 'vcal-day' + (d === today ? ' is-today' : '');
+                c.textContent = d;
+                if (d === today) c.setAttribute('aria-current', 'date');
+                grid.appendChild(c);
+            }
+            cal.appendChild(grid);
+            return cal;
         }
 
         // Header stays transparent through the hero + Men/Women/Kids slider (#vfBand);
@@ -12448,15 +12520,9 @@
                 const view = document.createElement('div'); view.className = 'feed-nav-view';
                 const track = document.createElement('div'); track.className = 'feed-nav-track';
                 view.appendChild(track); bar.appendChild(view);
-                // The ⋯ chooser now rides at the start of the track (right in RTL,
-                // where ALL used to sit), then the category tabs follow.
-                const more = document.createElement('button');
-                more.type = 'button'; more.className = 'feed-nav-more';
-                more.textContent = '⋯'; more.setAttribute('aria-label', 'All categories');
-                more.addEventListener('click', e => { e.stopPropagation(); togglePop(more); });
-                track.appendChild(more);
+                // The category tabs follow directly (the ⋯ chooser was removed).
                 cats().forEach(c => track.appendChild(mk(c, c)));
-                // Start the scroll at the beginning (⋯, on the right in RTL).
+                // Start the scroll at the beginning (on the right in RTL).
                 requestAnimationFrame(() => { view.scrollLeft = 0; });
                 syncActive();
             }
