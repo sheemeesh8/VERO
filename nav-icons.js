@@ -57,7 +57,7 @@
         skirt:   '<path d="M7 4h10l3 7H4z"/><path d="M6 11l1 9M18 11l-1 9M12 11v9"/>',
         gem:     '<path d="M6 3h12l3 5-9 13L3 8z"/><path d="M3 8h18M9 3l-2 5 5 13 5-13-2-5"/>',
         watch:   '<circle cx="12" cy="13" r="5"/><path d="M12 10v3l2 1"/><path d="M9 3h6l-1 4M9 22h6l-1-4"/>',
-        hanger:  '<path d="M10.6 6a1.5 1.5 0 1 1 1.4 2v2"/><path d="M12 10L3 16h18z"/>'
+        hanger:  '<path d="M12 10V8.4a2.2 2.2 0 1 1 2.2 2.2"/><path d="M12 10L3.6 16a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8L12 10z"/>'
     };
 
     // ---- Label → icon rules (checked in order; first match wins) --------------
