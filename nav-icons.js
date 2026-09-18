@@ -57,7 +57,21 @@
         skirt:   '<path d="M7 4h10l3 7H4z"/><path d="M6 11l1 9M18 11l-1 9M12 11v9"/>',
         gem:     '<path d="M6 3h12l3 5-9 13L3 8z"/><path d="M3 8h18M9 3l-2 5 5 13 5-13-2-5"/>',
         watch:   '<circle cx="12" cy="13" r="5"/><path d="M12 10v3l2 1"/><path d="M9 3h6l-1 4M9 22h6l-1-4"/>',
-        hanger:  '<path d="M12 10V8.4a2.2 2.2 0 1 1 2.2 2.2"/><path d="M12 10L3.6 16a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8L12 10z"/>'
+        hanger:  '<path d="M12 10V8.4a2.2 2.2 0 1 1 2.2 2.2"/><path d="M12 10L3.6 16a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8L12 10z"/>',
+        /* Fashion-style + art-media category icons (home feed strip) */
+        cassette:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="12" r="1.6"/><circle cx="15.5" cy="12" r="1.6"/><path d="M7 17h10"/>',
+        crown:   '<path d="M4 18h16M4 18l1-9 4 4 3-6 3 6 4-4 1 9z"/>',
+        moon:    '<path d="M20 13.5A7.5 7.5 0 1 1 10.5 4a6 6 0 0 0 9.5 9.5z"/>',
+        flower:  '<circle cx="12" cy="12" r="2.4"/><path d="M12 9.6V4M12 14.4V20M9.6 12H4M14.4 12H20"/>',
+        circle:  '<circle cx="12" cy="12" r="8"/>',
+        book:    '<path d="M5 4h11a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5z"/><path d="M5 4v14"/>',
+        palette: '<path d="M12 3a9 9 0 1 0 0 18 2 2 0 0 0 2-2 2 2 0 0 1 2-2h1a4 4 0 0 0 4-4A9 9 0 0 0 12 3z"/><circle cx="8" cy="10" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16" cy="10" r="1"/>',
+        monitor: '<rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M9 21h6M12 17v4"/>',
+        shapes:  '<circle cx="8" cy="8" r="4.5"/><rect x="12.5" y="12.5" width="7.5" height="7.5" rx="1"/>',
+        frame:   '<rect x="4" y="4" width="16" height="16" rx="1"/><path d="M7 15l3.5-4.5 2.5 3 3-4 2 5.5"/>',
+        vase:    '<path d="M8 3h8M9.5 3c0 2.5-3 3.5-3 7a5.5 5.5 0 0 0 11 0c0-3.5-3-4.5-3-7"/>',
+        droplet: '<path d="M12 3.5s6 6.2 6 11a6 6 0 0 1-12 0c0-4.8 6-11 6-11z"/>',
+        chisel:  '<path d="M14.5 3.5l6 6-3 3-6-6z"/><path d="M11.5 6.5L4 14v6h6l7.5-7.5"/>'
     };
 
     // ---- Label → icon rules (checked in order; first match wins) --------------
@@ -105,6 +119,31 @@
         [/women|woman|נשים|אישה/, 'shirt'],
         [/kids|child|ילד/, 'shirt'],
         [/upload|add|photo|העל|הוסף|צילום|תמונה/, 'camera'],
+        // Fashion-style categories (home feed strip)
+        [/smart\s*casual/, 'coat'],
+        [/basic|casual/, 'shirt'],
+        [/athleisure|athletic|sport/, 'shoe'],
+        [/lounge/, 'sweater'],
+        [/street/, 'hat'],
+        [/tech\s*wear|techwear/, 'gear'],
+        [/y2k/, 'spark'],
+        [/old\s*money|luxe|luxury/, 'crown'],
+        [/grunge/, 'flame'],
+        [/goth/, 'moon'],
+        [/boho|chic/, 'flower'],
+        [/minimal/, 'circle'],
+        [/dark\s*academia|academia/, 'book'],
+        [/vintage|retro|90s/, 'cassette'],
+        [/design/, 'sliders'],
+        // Art-media categories
+        [/acryl|oil|watercolor|gouache|pastel|mixed\s*media|paint/, 'palette'],
+        [/digital/, 'monitor'],
+        [/abstract/, 'shapes'],
+        [/art\s*deco/, 'gem'],
+        [/modern|prints?|gallery|canvas/, 'frame'],
+        [/ceramic|pottery/, 'vase'],
+        [/epoxy|resin/, 'droplet'],
+        [/sculpt|metal|stone|statue|marble/, 'chisel'],
         [/all|הכל|כל/, 'grid'],
         [/notif|alert|התרא|התראות/, 'bell']
     ];
