@@ -181,6 +181,13 @@
             overflow: hidden; cursor: pointer; transition: transform 0.2s ease;
         }
         .chat-avatar:hover { transform: scale(1.05); }
+        /* Availability dot for sellers we just messaged at checkout. */
+        .chat-av { position: relative; flex: 0 0 auto; }
+        .chat-online {
+            position: absolute; right: 1px; bottom: 1px; width: 12px; height: 12px;
+            border-radius: 50%; background: #2fbf5e; border: 2px solid #fff;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.05); pointer-events: none;
+        }
         /* A real product photo fills the circle; the emoji stand-in stays centred. */
         .chat-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
         /* text column, with a hairline divider under it (indented past the avatar) */
@@ -543,7 +550,14 @@
             }
         });
 
-        const list = [...threads.values()].sort((a, b) => b.at - a.at);
+        // Sellers we messaged in the last checkout are surfaced first and shown
+        // as available (green dot). Written by the cart's checkout flow.
+        const recentInfo = readJSON('vero_checkout_recent', null);
+        const recentSellers = new Set(
+            recentInfo && Array.isArray(recentInfo.sellers) ? recentInfo.sellers : []);
+        const list = [...threads.values()]
+            .map(t => { t.available = recentSellers.has(t.seller); return t; })
+            .sort((a, b) => (b.available - a.available) || (b.at - a.at));
         const sellers = list.length;
 
         const timeAgo = ms => {
@@ -637,7 +651,10 @@
                     : t.icon;
                 return `
                     <div class="chat-row" data-i="${i}">
-                        <div class="chat-avatar" data-avatar>${avatarInner}</div>
+                        <div class="chat-av">
+                            <div class="chat-avatar" data-avatar>${avatarInner}</div>
+                            ${t.available ? '<span class="chat-online" title="Available now"></span>' : ''}
+                        </div>
                         <div class="chat-body">
                             <div class="chat-topline">
                                 <span class="chat-name">${title}</span>
