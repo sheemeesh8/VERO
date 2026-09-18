@@ -2707,8 +2707,12 @@
         /* Full-screen solid white background; the calendar itself keeps its size,
            centered within the full-height band. */
         .vcal { width: 100%; min-height: 100vh; background: #fff; margin: 40px 0 10px;
-            padding: 33vh 0 34px; display: flex; flex-direction: column; justify-content: flex-start;
+            padding: 8vh 0 40px; display: flex; flex-direction: column; justify-content: center;
             direction: ltr; }
+        /* Events board kicker above the month title. */
+        .vcal-kicker { font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 9px;
+            letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; font-weight: 700;
+            display: block; margin-bottom: 6px; }
         .vcal-inner { max-width: 460px; width: 100%; margin: 0 auto; padding: 26px 8px 8px;
             border-top: 1px solid #111; }
         .vcal-head { display: flex; align-items: baseline; justify-content: space-between;
@@ -2730,8 +2734,34 @@
         .vcal-day.is-today { color: #111; font-weight: 600; }
         .vcal-day.is-today::after { content: ''; position: absolute; width: 30px; height: 30px;
             border: 1px solid #111; border-radius: 50%; pointer-events: none; }
+        /* Event markers under a day number: gold = art, green = second-hand. */
+        .vcal-dots { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 3px; pointer-events: none; }
+        .vcal-dot { width: 4px; height: 4px; border-radius: 50%; }
+        .vcal-dot.art { background: #b5892f; }
+        .vcal-dot.sh  { background: #4a7a63; }
+        /* Upcoming-events list beneath the grid. */
+        .vcal-events { margin-top: 24px; }
+        .vce-title { font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 9px;
+            letter-spacing: 2.4px; text-transform: uppercase; color: #9a958c; font-weight: 700;
+            padding-bottom: 8px; border-bottom: 1px solid #111; margin-bottom: 4px; }
+        .vce-row { display: flex; align-items: center; gap: 14px; padding: 12px 2px;
+            border-bottom: 1px solid #ededea; }
+        .vce-date { flex: 0 0 auto; width: 34px; text-align: center;
+            font-family: 'Bodoni Moda', Georgia, serif; font-size: 20px; color: #111; line-height: 1; }
+        .vce-date .vce-dow { display: block; font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 8px; letter-spacing: 1px; color: #b3ada3; margin-top: 3px; }
+        .vce-main { flex: 1; min-width: 0; }
+        .vce-name { display: block; font-family: 'Bodoni Moda', Georgia, serif; font-size: 15px;
+            color: #1c1c1c; line-height: 1.2; }
+        .vce-venue { display: block; font-size: 11px; color: #9a958c; margin-top: 2px; }
+        .vce-tag { flex: 0 0 auto; font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 8px;
+            letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; padding: 3px 8px;
+            border-radius: 999px; border: 1px solid; white-space: nowrap; }
+        .vce-tag.art { color: #8a6a24; border-color: #e3d3ad; background: #faf5e9; }
+        .vce-tag.sh  { color: #38624e; border-color: #cfe0d7; background: #eef4f0; }
         @media (max-width: 768px) {
-            .vcal { margin: 30px 0 6px; padding: 26px 0; }
+            .vcal { margin: 30px 0 6px; padding: 6vh 0 32px; }
             .vcal-inner { max-width: 340px; }
             .vcal-day { font-size: 13px; }
             .vcal-day.is-today::after { width: 26px; height: 26px; }
@@ -10018,7 +10048,8 @@
             }
         }
 
-        // Fine-line editorial calendar for the current month, with today ringed.
+        // Events board: an editorial month calendar of Art & Second-hand events,
+        // with each event day marked and an upcoming-events list beneath it.
         // Rebuilt on every feed render, so it always reflects the live date.
         function buildFeedCalendar() {
             const now = new Date();
@@ -10029,17 +10060,35 @@
             const firstDow = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+            // Demo events for the current month (art = gallery/studio, sh = second-hand
+            // markets & resale pop-ups). Days are clamped to the month length.
+            const clamp = d => Math.min(Math.max(1, d), daysInMonth);
+            const events = [
+                { d: 3,  type: 'art', name: 'Contemporary Gallery Night', venue: 'Tel Aviv Museum' },
+                { d: 7,  type: 'sh',  name: 'Vintage Flea Market',         venue: 'Tel Aviv Port' },
+                { d: 12, type: 'art', name: 'Ceramics Studio Open House',  venue: 'Jaffa' },
+                { d: 16, type: 'sh',  name: 'Designer Resale Pop-up',      venue: 'Rothschild Blvd' },
+                { d: 21, type: 'art', name: 'Street Art Walk',             venue: 'Florentin' },
+                { d: 25, type: 'sh',  name: 'Preloved Denim Drop',         venue: 'Dizengoff' },
+                { d: 28, type: 'art', name: 'Print & Poster Fair',         venue: 'Herzliya' }
+            ].map(e => ({ ...e, d: clamp(e.d) }));
+            const byDay = {};
+            events.forEach(e => { (byDay[e.d] = byDay[e.d] || new Set()).add(e.type); });
+
             const cal = document.createElement('section');
             cal.className = 'vcal';
-            cal.setAttribute('aria-label', months[month] + ' ' + year + ' calendar');
+            cal.setAttribute('aria-label', months[month] + ' ' + year + ' — Art & Second-hand events');
             // Inner wrapper keeps the calendar at its size while .vcal is the
-            // full-width white background band behind it.
+            // full-screen white background band behind it.
             const inner = document.createElement('div'); inner.className = 'vcal-inner';
             cal.appendChild(inner);
 
             const head = document.createElement('div'); head.className = 'vcal-head';
-            head.innerHTML = '<span class="vcal-month">' + months[month] + '</span>' +
-                             '<span class="vcal-year">' + year + '</span>';
+            head.innerHTML = '<span>' +
+                    '<span class="vcal-kicker">Art &amp; Second-hand · What’s on</span>' +
+                    '<span class="vcal-month">' + months[month] + '</span>' +
+                '</span>' +
+                '<span class="vcal-year">' + year + '</span>';
             inner.appendChild(head);
 
             const grid = document.createElement('div'); grid.className = 'vcal-grid';
@@ -10057,9 +10106,43 @@
                 c.className = 'vcal-day' + (d === today ? ' is-today' : '');
                 c.textContent = d;
                 if (d === today) c.setAttribute('aria-current', 'date');
+                if (byDay[d]) {
+                    const dots = document.createElement('span'); dots.className = 'vcal-dots';
+                    ['art', 'sh'].forEach(tp => {
+                        if (byDay[d].has(tp)) {
+                            const dot = document.createElement('span');
+                            dot.className = 'vcal-dot ' + tp; dots.appendChild(dot);
+                        }
+                    });
+                    c.appendChild(dots);
+                }
                 grid.appendChild(c);
             }
             inner.appendChild(grid);
+
+            // Upcoming events list (this month, from today onward; falls back to the
+            // full month if nothing is left).
+            const dowShort = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+            const typeLabel = { art: 'Art', sh: 'Second-hand' };
+            let upcoming = events.filter(e => e.d >= today);
+            if (!upcoming.length) upcoming = events.slice();
+            upcoming.sort((a, b) => a.d - b.d);
+
+            const list = document.createElement('div'); list.className = 'vcal-events';
+            const lt = document.createElement('div'); lt.className = 'vce-title';
+            lt.textContent = 'Upcoming'; list.appendChild(lt);
+            upcoming.forEach(e => {
+                const wd = dowShort[new Date(year, month, e.d).getDay()];
+                const row = document.createElement('div'); row.className = 'vce-row';
+                row.innerHTML =
+                    '<span class="vce-date">' + e.d + '<span class="vce-dow">' + wd + '</span></span>' +
+                    '<span class="vce-main"><span class="vce-name">' + e.name + '</span>' +
+                        '<span class="vce-venue">' + e.venue + '</span></span>' +
+                    '<span class="vce-tag ' + e.type + '">' + typeLabel[e.type] + '</span>';
+                list.appendChild(row);
+            });
+            inner.appendChild(list);
+
             return cal;
         }
 
