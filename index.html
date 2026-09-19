@@ -6660,8 +6660,14 @@
             margin: 0 0 14px;
         }
         .disc-preview-rule {
-            display: block; width: 56px; height: 2px; border-radius: 2px;
-            background: rgba(0,0,0,0.22);
+            display: block; position: relative; width: 120px; height: 2px;
+            border-radius: 2px; background: rgba(0,0,0,0.14); overflow: hidden;
+        }
+        .disc-preview-rule-fill {
+            position: absolute; left: 0; top: 0; height: 100%; width: 40%;
+            border-radius: 2px; background: rgba(0,0,0,0.5);
+            transform: translateX(0);
+            transition: transform 0.18s ease, width 0.18s ease;
         }
         @keyframes discNudge {
             0%, 100% { transform: translateX(0); }
@@ -8113,11 +8119,34 @@
                     }
                     track.innerHTML = slides;
                     wrap.hidden = false;
+
+                    // The guide-line fill tracks how far the slider is scrolled.
+                    function wireRule() {
+                        var fill = document.getElementById('discRuleFill');
+                        if (!fill) return;
+                        var sync = function () {
+                            var frac = track.clientWidth / track.scrollWidth; // visible share
+                            if (!isFinite(frac) || frac > 1) frac = 1;
+                            fill.style.width = (frac * 100) + '%';
+                            var max = track.scrollWidth - track.clientWidth;
+                            var pos = max > 0 ? track.scrollLeft / max : 0;
+                            fill.style.transform = 'translateX(' + (pos * (100 / frac - 100)) + '%)';
+                        };
+                        track.addEventListener('scroll', sync, { passive: true });
+                        window.addEventListener('resize', sync);
+                        sync();
+                    }
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', wireRule);
+                    } else {
+                        wireRule();
+                    }
                 })();
             </script>
 
-            <!-- Guide line sitting just above the sale image. -->
-            <div class="disc-preview-more"><span class="disc-preview-rule"></span></div>
+            <!-- Guide line sitting just above the sale image — the fill tracks
+                 the slider's scroll position. -->
+            <div class="disc-preview-more"><span class="disc-preview-rule"><span class="disc-preview-rule-fill" id="discRuleFill"></span></span></div>
             <!-- Monthly sale tile: a square entry to the sale page, titled by the
                  current month (e.g. "September Sale"). Sits at the head of the feed. -->
             <a class="sale-tile" href="sales.html" aria-label="Shop the monthly sale">
