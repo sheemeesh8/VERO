@@ -1107,9 +1107,7 @@
                carry a solid background so they cover it as they scroll up over it. */
             .hero-mobile-2 {
                 display: block;
-                /* One full-screen stage; the Men / Women / Kids panels are stacked on
-                   top of each other and auto-crossfade (OMEGA-style), each with a slow
-                   Ken Burns zoom while it is showing. */
+                /* One full-screen stage holding the Men / Women / Kids swipe slider. */
                 position: relative;
                 z-index: 1;
                 width: 100%;
@@ -1118,35 +1116,34 @@
                 background: #000;
                 overflow: hidden;
             }
+            /* Horizontal swipe slider: one full-screen panel per gender. */
             .hm2-slider {
-                position: relative;
+                display: flex;
                 width: 100%;
                 height: 100%;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
                 direction: ltr;
             }
             .hm2-slider::-webkit-scrollbar { width: 0; height: 0; display: none; }
-            /* Each panel is layered full-screen; only the active one is visible, and it
-               crossfades to the next on a slow ease. */
             .hm2-slide {
-                position: absolute;
-                inset: 0;
+                flex: 0 0 100%;
                 width: 100%;
                 height: 100%;
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
                 background-color: #8a8a8a;
                 background-size: cover;
                 background-position: center center;
+                position: relative;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 text-decoration: none;
-                opacity: 0;
-                visibility: hidden;
-                transition: opacity 1.2s ease, visibility 1.2s ease;
-            }
-            .hm2-slide.hm2-active {
-                opacity: 1;
-                visibility: visible;
-                z-index: 1;
             }
             /* Full-bleed category video, cropped to fill the phone slide via cover.
                Sits behind the caption and the gradient overlay. */
@@ -1157,19 +1154,6 @@
                 height: 100%;
                 object-fit: cover;
                 z-index: 0;
-                transform: scale(1.001);
-            }
-            /* Ken Burns: the active panel's media slowly zooms in while it shows. */
-            .hm2-slide.hm2-active .hm2-video {
-                animation: hm2KenBurns 7s ease-out forwards;
-            }
-            @keyframes hm2KenBurns {
-                from { transform: scale(1.001); }
-                to   { transform: scale(1.09); }
-            }
-            @media (prefers-reduced-motion: reduce) {
-                .hm2-slide { transition: opacity 0.3s ease; }
-                .hm2-slide.hm2-active .hm2-video { animation: none; }
             }
             .hm2-slide::after {
                 content: '';
@@ -1420,8 +1404,7 @@
                continuous translucent track split into equal segments, with the active
                segment lit white as an inner guiding line that slides as you swipe. */
             .hm2-dots {
-                /* Vertical stacking hero — no horizontal pager needed. */
-                display: none !important;
+                /* Guiding-line pager for the Men/Women/Kids swipe slider. */
                 position: absolute;
                 /* Anchored to the viewport bottom like the caption's "Slide for more"
                    hint, sitting just BELOW that text. */
@@ -7584,7 +7567,7 @@ h3, h4, h5, h6, p,
          PLACEHOLDER images (kids reuses clothing-hero) — swap the three URLs. -->
     <div class="hero-mobile-2" id="heroMobile2">
         <div class="hm2-slider" id="hm2Slider">
-            <a class="hm2-slide hm2-active">
+            <a class="hm2-slide">
                 <video class="hm2-video" src="assets/hero/men.mp4" poster="men-hero.jpg"
                        autoplay muted loop playsinline preload="metadata"></video>
                 <div class="hm2-cap">
@@ -7697,29 +7680,27 @@ h3, h4, h5, h6, p,
                 }
             }
 
-            // OMEGA-style auto-crossfade: only one panel is active at a time; every
-            // few seconds the next one fades in over the current (each with its own
-            // Ken Burns zoom via CSS). Restarting the zoom means re-adding the class.
-            var cur = 0;
-            var HOLD = 6000; // ms each panel stays before crossfading
-            function show(i) {
-                cur = (i + slides.length) % slides.length;
-                for (var n = 0; n < slides.length; n++) {
-                    slides[n].classList.toggle('hm2-active', n === cur);
-                }
-                syncGender(cur);
+            // Horizontal swipe slider: the active panel is whichever is scrolled into
+            // view. Keep the dots and the category slider below in sync.
+            var dots = document.getElementById('hm2Dots');
+            var dotEls = dots ? dots.querySelectorAll('.hm2-dot') : [];
+            function current() {
+                var w = slider.clientWidth || 1;
+                var i = Math.round(slider.scrollLeft / w);
+                return Math.max(0, Math.min(slides.length - 1, i));
             }
-            show(0);
-            var timer = setInterval(function () { show(cur + 1); }, HOLD);
-            // Pause the rotation while the panel is off-screen to save work.
-            if ('IntersectionObserver' in window) {
-                new IntersectionObserver(function (entries) {
-                    entries.forEach(function (e) {
-                        clearInterval(timer);
-                        if (e.isIntersecting) timer = setInterval(function () { show(cur + 1); }, HOLD);
-                    });
-                }, { threshold: 0.15 }).observe(slider);
-            }
+            var ticking = false;
+            slider.addEventListener('scroll', function () {
+                if (ticking) return;
+                ticking = true;
+                requestAnimationFrame(function () {
+                    var i = current();
+                    for (var n = 0; n < dotEls.length; n++) dotEls[n].classList.toggle('active', n === i);
+                    syncGender(i);
+                    ticking = false;
+                });
+            }, { passive: true });
+            syncGender(current());
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initHm2);
