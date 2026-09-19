@@ -2703,26 +2703,20 @@
         .ed-title { font-family: 'Bodoni Moda', 'Didot', Georgia, serif; font-size: clamp(13px, 1.6vw, 23px); font-weight: 500; margin: 0 0 16px; color: #111; }
         .ed-rule { height: 1px; background: #e2e2e2; }
 
-        /* ---- Fine-line editorial calendar (end of the first feed block) ---- */
-        /* Hero-sized sticky panel: one screen tall, pins to the top on entry and
-           the next feed content scrolls up over it on exit — the same OMEGA-style
-           cover reveal as the hero. */
+        /* ---- Fine-line editorial events board (end of the first feed block) ---- */
+        /* In-flow full-screen section: it scrolls with the feed (no sticky overlay),
+           so the content after it simply continues below as normal feed. */
         .vcal { width: 100%; height: 100svh; max-height: 100vh; overflow: hidden;
-            background: #fff; margin: 0; padding: calc(92px + env(safe-area-inset-top, 0px)) 0 0;
-            position: sticky; top: 0; z-index: 0; display: flex; flex-direction: column;
-            justify-content: flex-start; direction: ltr;
-            scroll-snap-align: start; scroll-snap-stop: always; }
-        /* Calendar sits at the top (little dead space above); the week rows spread to
-           fill the panel and the events list fills the lower part. */
-        /* Feed content after the board is solid + above it, so it covers the pinned
-           panel (like .hero-mid over the sticky hero). */
-        #feedContainer > .promo-slider, #feedContainer > .feed-block {
-            position: relative; z-index: 1; background: #fff; }
+            background: #fff; margin: 0;
+            padding: calc(40px + env(safe-area-inset-top, 0px)) 0 calc(104px + env(safe-area-inset-bottom, 0px));
+            position: relative; display: flex; flex-direction: column;
+            justify-content: flex-start; direction: ltr; }
+        /* Calendar rows spread to fill; the detail panel fills the lower part. */
         /* Events board kicker above the month title. */
         .vcal-kicker { font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 9px;
             letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; font-weight: 700;
             display: block; margin-bottom: 6px; }
-        .vcal-inner { max-width: 460px; width: 100%; margin: 0 auto; padding: 26px 8px 4vh;
+        .vcal-inner { max-width: 460px; width: 100%; margin: 0 auto; padding: 20px 8px 0;
             border-top: 1px solid #111; flex: 1 1 auto; display: flex; flex-direction: column; }
         .vcal-head { display: flex; align-items: baseline; justify-content: space-between;
             margin-bottom: 18px; }
@@ -2738,12 +2732,18 @@
             padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid #e2e2e2;
             font-weight: 600; }
         .vcal-day { font-family: 'Bodoni Moda', Georgia, serif; font-size: 14px; color: #444;
-            text-align: center; aspect-ratio: 1 / 1; display: flex; align-items: center;
-            justify-content: center; position: relative; }
-        .vcal-day.is-empty { color: transparent; }
+            text-align: center; min-height: 40px; display: flex; align-items: center;
+            justify-content: center; position: relative; cursor: pointer; isolation: isolate;
+            -webkit-tap-highlight-color: transparent; }
+        .vcal-day.is-empty { color: transparent; cursor: default; }
         .vcal-day.is-today { color: #111; font-weight: 600; }
         .vcal-day.is-today::after { content: ''; position: absolute; width: 30px; height: 30px;
             border: 1px solid #111; border-radius: 50%; pointer-events: none; }
+        /* Selected day: a soft filled disc behind the number. */
+        .vcal-day.is-selected { color: #111; font-weight: 600; }
+        .vcal-day.is-selected::before { content: ''; position: absolute; left: 50%; top: 50%;
+            width: 34px; height: 34px; transform: translate(-50%, -50%); border-radius: 50%;
+            background: #f0eee7; z-index: -1; pointer-events: none; }
         /* Event markers under a day number: gold = art, green = second-hand. */
         .vcal-dots { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
             display: flex; gap: 3px; pointer-events: none; }
@@ -2751,7 +2751,7 @@
         .vcal-dot.art { background: #b5892f; }
         .vcal-dot.sh  { background: #4a7a63; }
         /* Upcoming-events list beneath the grid. */
-        .vcal-events { margin-top: 16px; }
+        .vcal-events { margin-top: 14px; }
         .vce-title { font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 9px;
             letter-spacing: 2.4px; text-transform: uppercase; color: #9a958c; font-weight: 700;
             padding-bottom: 8px; border-bottom: 1px solid #111; margin-bottom: 4px; }
@@ -2770,8 +2770,26 @@
             border-radius: 999px; border: 1px solid; white-space: nowrap; }
         .vce-tag.art { color: #8a6a24; border-color: #e3d3ad; background: #faf5e9; }
         .vce-tag.sh  { color: #38624e; border-color: #cfe0d7; background: #eef4f0; }
+        /* Detail panel below the grid — shows the selected day's event (or that
+           there is none). Updated on every day tap. */
+        .vcal-detail { margin-top: 16px; border-top: 1px solid #111; padding-top: 12px; }
+        .vcd-date { font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 9px;
+            letter-spacing: 2.4px; text-transform: uppercase; color: #9a958c; font-weight: 700;
+            margin-bottom: 10px; }
+        .vcd-name { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            font-family: 'Bodoni Moda', Georgia, serif; font-size: 20px; color: #1c1c1c;
+            line-height: 1.15; }
+        .vcd-desc { font-size: 12px; line-height: 1.55; color: #57544d; margin-top: 8px; }
+        .vcd-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; }
+        .vcd-meta div { display: flex; align-items: center; gap: 7px; font-size: 11px;
+            letter-spacing: 0.4px; color: #1c1c1c; }
+        .vcd-meta .vcd-ico { width: 14px; height: 14px; flex: none; stroke: #9a958c;
+            stroke-width: 1.4; fill: none; }
+        .vcd-none { font-family: 'Bodoni Moda', Georgia, serif; font-size: 16px; color: #9a958c;
+            font-style: italic; padding: 6px 0; }
         @media (max-width: 768px) {
-            .vcal { height: 100svh; margin: 0; padding: calc(90px + env(safe-area-inset-top, 0px)) 0 0; }
+            .vcal { height: 100svh; margin: 0;
+                padding: calc(38px + env(safe-area-inset-top, 0px)) 0 calc(104px + env(safe-area-inset-bottom, 0px)); }
             .vcal-inner { max-width: 340px; }
             .vcal-day { font-size: 13px; }
             .vcal-day.is-today::after { width: 26px; height: 26px; }
@@ -10074,16 +10092,16 @@
             // markets & resale pop-ups). Days are clamped to the month length.
             const clamp = d => Math.min(Math.max(1, d), daysInMonth);
             const events = [
-                { d: 3,  type: 'art', name: 'Contemporary Gallery Night', venue: 'Tel Aviv Museum' },
-                { d: 7,  type: 'sh',  name: 'Vintage Flea Market',         venue: 'Tel Aviv Port' },
-                { d: 12, type: 'art', name: 'Ceramics Studio Open House',  venue: 'Jaffa' },
-                { d: 16, type: 'sh',  name: 'Designer Resale Pop-up',      venue: 'Rothschild Blvd' },
-                { d: 21, type: 'art', name: 'Street Art Walk',             venue: 'Florentin' },
-                { d: 25, type: 'sh',  name: 'Preloved Denim Drop',         venue: 'Dizengoff' },
-                { d: 28, type: 'art', name: 'Print & Poster Fair',         venue: 'Herzliya' }
+                { d: 3,  type: 'art', name: 'Contemporary Gallery Night', place: 'Tel Aviv Museum of Art', time: '20:00', desc: 'An after-hours viewing of the new contemporary wing, with the curators on the floor.' },
+                { d: 7,  type: 'sh',  name: 'Vintage Flea Market',         place: 'Tel Aviv Port (Namal)', time: '10:00–17:00', desc: 'Dozens of stalls of pre-loved fashion, denim and accessories by the water.' },
+                { d: 12, type: 'art', name: 'Ceramics Studio Open House',  place: 'Jaffa Flea District',    time: '11:00–18:00', desc: 'Local ceramicists open their studios — watch the wheel and shop one-off pieces.' },
+                { d: 16, type: 'sh',  name: 'Designer Resale Pop-up',      place: 'Rothschild Blvd 45',     time: '12:00–20:00', desc: 'Curated second-hand designer pieces, authenticated on site.' },
+                { d: 21, type: 'art', name: 'Street Art Walk',             place: 'Florentin',              time: '18:00', desc: 'A guided evening walk through Florentin’s murals, ending at a print studio.' },
+                { d: 25, type: 'sh',  name: 'Preloved Denim Drop',         place: 'Dizengoff 120',          time: '11:00', desc: 'A one-day drop of restored vintage denim, sized and steamed.' },
+                { d: 28, type: 'art', name: 'Print & Poster Fair',         place: 'Herzliya Arts Center',   time: '10:00–16:00', desc: 'Independent illustrators and print-makers selling signed editions.' }
             ].map(e => ({ ...e, d: clamp(e.d) }));
             const byDay = {};
-            events.forEach(e => { (byDay[e.d] = byDay[e.d] || new Set()).add(e.type); });
+            events.forEach(e => { (byDay[e.d] = byDay[e.d] || []).push(e); });
 
             const cal = document.createElement('section');
             cal.className = 'vcal';
@@ -10115,44 +10133,60 @@
                 const c = document.createElement('div');
                 c.className = 'vcal-day' + (d === today ? ' is-today' : '');
                 c.textContent = d;
+                c.dataset.day = d;
                 if (d === today) c.setAttribute('aria-current', 'date');
                 if (byDay[d]) {
+                    const types = new Set(byDay[d].map(e => e.type));
                     const dots = document.createElement('span'); dots.className = 'vcal-dots';
                     ['art', 'sh'].forEach(tp => {
-                        if (byDay[d].has(tp)) {
+                        if (types.has(tp)) {
                             const dot = document.createElement('span');
                             dot.className = 'vcal-dot ' + tp; dots.appendChild(dot);
                         }
                     });
                     c.appendChild(dots);
                 }
+                c.addEventListener('click', () => selectDay(d));
                 grid.appendChild(c);
             }
             inner.appendChild(grid);
 
-            // Upcoming events list (this month, from today onward; falls back to the
-            // full month if nothing is left).
-            const dowShort = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+            // Detail panel — tapping any day shows its event (spec, date, time,
+            // place) or that there is no event. Defaults to today.
             const typeLabel = { art: 'Art', sh: 'Second-hand' };
-            let upcoming = events.filter(e => e.d >= today);
-            if (!upcoming.length) upcoming = events.slice();
-            upcoming.sort((a, b) => a.d - b.d);
-            upcoming = upcoming.slice(0, 3);   // fills the lower part of the panel
+            const dowLong = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const icoClock = '<svg class="vcd-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+            const icoPin = '<svg class="vcd-ico" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+            const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-            const list = document.createElement('div'); list.className = 'vcal-events';
-            const lt = document.createElement('div'); lt.className = 'vce-title';
-            lt.textContent = 'Upcoming'; list.appendChild(lt);
-            upcoming.forEach(e => {
-                const wd = dowShort[new Date(year, month, e.d).getDay()];
-                const row = document.createElement('div'); row.className = 'vce-row';
-                row.innerHTML =
-                    '<span class="vce-date">' + e.d + '<span class="vce-dow">' + wd + '</span></span>' +
-                    '<span class="vce-main"><span class="vce-name">' + e.name + '</span>' +
-                        '<span class="vce-venue">' + e.venue + '</span></span>' +
-                    '<span class="vce-tag ' + e.type + '">' + typeLabel[e.type] + '</span>';
-                list.appendChild(row);
-            });
-            inner.appendChild(list);
+            const detail = document.createElement('div'); detail.className = 'vcal-detail';
+            inner.appendChild(detail);
+
+            function selectDay(d) {
+                grid.querySelectorAll('.vcal-day.is-selected')
+                    .forEach(n => n.classList.remove('is-selected'));
+                const cell = grid.querySelector('.vcal-day[data-day="' + d + '"]');
+                if (cell) cell.classList.add('is-selected');
+                const dateStr = dowLong[new Date(year, month, d).getDay()] +
+                    ' · ' + d + ' ' + months[month] + ' ' + year;
+                const evs = byDay[d];
+                if (evs && evs.length) {
+                    detail.innerHTML = '<div class="vcd-date">' + dateStr + '</div>' +
+                        evs.map(e =>
+                            '<div class="vcd-name">' + esc(e.name) +
+                                '<span class="vce-tag ' + e.type + '">' + typeLabel[e.type] + '</span></div>' +
+                            '<div class="vcd-desc">' + esc(e.desc) + '</div>' +
+                            '<div class="vcd-meta">' +
+                                '<div>' + icoClock + '<span>' + esc(e.time) + '</span></div>' +
+                                '<div>' + icoPin + '<span>' + esc(e.place) + '</span></div>' +
+                            '</div>'
+                        ).join('');
+                } else {
+                    detail.innerHTML = '<div class="vcd-date">' + dateStr + '</div>' +
+                        '<div class="vcd-none">No event on this date</div>';
+                }
+            }
+            selectDay(today);
 
             return cal;
         }
