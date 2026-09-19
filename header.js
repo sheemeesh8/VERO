@@ -1495,12 +1495,6 @@
                         <line x1="3" y1="17" x2="21" y2="17"></line>
                     </svg>
                 </a>
-                <span class="hdr-mode-pair" data-icon="mode">
-                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
-                        <span class="seg active" id="segArt">Art</span>
-                        <span class="seg" id="segFashion">Fashion</span>
-                    </div>
-                </span>
             </div>
             <div class="header-right">
                 <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
