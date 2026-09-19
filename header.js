@@ -808,8 +808,11 @@
         }
         #siteHeader .hwp-ico {
             position: relative; display: inline-flex; align-items: center; justify-content: center;
-            width: 38px; height: 38px; color: inherit; text-decoration: none;
-            transition: transform 0.18s ease;
+            width: 40px; height: 40px; color: inherit; text-decoration: none;
+            /* The heart sits inside a circle. */
+            border: 1px solid currentColor; border-radius: 50%;
+            background: rgba(0,0,0,0.04);
+            transition: transform 0.18s ease, background 0.18s ease;
         }
         /* Wishlist heart inherits the header icon colour so the cart icon's colour
            never appears to change when the heart drops out. */
