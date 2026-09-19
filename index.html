@@ -12865,13 +12865,16 @@
             // past that panel into the feed itself. Slides back down when you scroll
             // above it again. The CSS transition on .feed-nav (.in) gives the motion.
             function updateBar() {
-                // Reveal the bar only once we've crossed the hero — i.e. scrolled
-                // roughly a full hero-height down. It hides again when we scroll back
-                // up into the hero.
-                const hero = document.getElementById('heroImage');
-                if (!hero) { bar.classList.add('in'); return; }
-                const y = window.scrollY || window.pageYOffset || 0;
-                const crossed = y >= hero.offsetHeight * 0.85;
+                // Reveal the bar only once we've scrolled past the full-screen sale
+                // image (the .sale-showcase). It hides again when we scroll back up
+                // above it. Falls back to the hero if the showcase isn't present.
+                const marker = document.querySelector('.sale-showcase')
+                    || document.getElementById('heroImage');
+                if (!marker) { bar.classList.add('in'); return; }
+                const bottom = marker.getBoundingClientRect().bottom;
+                // "crossed" once the image's bottom has scrolled up into the top
+                // third of the screen — i.e. the image is essentially behind us.
+                const crossed = bottom <= window.innerHeight * 0.35;
                 bar.classList.toggle('in', crossed);
             }
             window.addEventListener('scroll', updateBar, { passive: true });
