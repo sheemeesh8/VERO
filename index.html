@@ -1107,31 +1107,31 @@
                carry a solid background so they cover it as they scroll up over it. */
             .hero-mobile-2 {
                 display: block;
-                /* Holds the vertical stack of Men / Women / Kids panels. Each panel
-                   pins to the top and the next one rises over it (OMEGA cover reveal),
-                   so the whole hero sequence transitions as stacking layers. */
+                /* One full-screen stage; the Men / Women / Kids panels are stacked on
+                   top of each other and auto-crossfade (OMEGA-style), each with a slow
+                   Ken Burns zoom while it is showing. */
                 position: relative;
                 z-index: 1;
                 width: 100%;
+                height: 100vh;
+                min-height: 100vh;
                 background: #000;
-                overflow: visible;
+                overflow: hidden;
             }
-            /* The slider is now just a vertical container; its slides stack via sticky. */
             .hm2-slider {
-                display: block;
+                position: relative;
                 width: 100%;
-                height: auto;
-                overflow: visible;
+                height: 100%;
                 direction: ltr;
             }
             .hm2-slider::-webkit-scrollbar { width: 0; height: 0; display: none; }
-            /* Each panel pins full-screen and the next rises over it. Increasing
-               z-index makes every later panel cover the previous one. */
+            /* Each panel is layered full-screen; only the active one is visible, and it
+               crossfades to the next on a slow ease. */
             .hm2-slide {
-                position: sticky;
-                top: 0;
+                position: absolute;
+                inset: 0;
                 width: 100%;
-                height: 100vh;
+                height: 100%;
                 background-color: #8a8a8a;
                 background-size: cover;
                 background-position: center center;
@@ -1139,13 +1139,17 @@
                 align-items: center;
                 justify-content: center;
                 text-decoration: none;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 1.2s ease, visibility 1.2s ease;
             }
-            .hm2-slide:nth-of-type(1) { z-index: 1; }
-            .hm2-slide:nth-of-type(2) { z-index: 2; }
-            .hm2-slide:nth-of-type(3) { z-index: 3; }
-            .hm2-slide:nth-of-type(4) { z-index: 4; }
-            /* Full-bleed category video (e.g. Women), cropped to fill the phone
-               slide via cover. Sits behind the caption and the gradient overlay. */
+            .hm2-slide.hm2-active {
+                opacity: 1;
+                visibility: visible;
+                z-index: 1;
+            }
+            /* Full-bleed category video, cropped to fill the phone slide via cover.
+               Sits behind the caption and the gradient overlay. */
             .hm2-video {
                 position: absolute;
                 inset: 0;
@@ -1153,6 +1157,19 @@
                 height: 100%;
                 object-fit: cover;
                 z-index: 0;
+                transform: scale(1.001);
+            }
+            /* Ken Burns: the active panel's media slowly zooms in while it shows. */
+            .hm2-slide.hm2-active .hm2-video {
+                animation: hm2KenBurns 7s ease-out forwards;
+            }
+            @keyframes hm2KenBurns {
+                from { transform: scale(1.001); }
+                to   { transform: scale(1.09); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .hm2-slide { transition: opacity 0.3s ease; }
+                .hm2-slide.hm2-active .hm2-video { animation: none; }
             }
             .hm2-slide::after {
                 content: '';
@@ -7537,7 +7554,7 @@ h3, h4, h5, h6, p,
          PLACEHOLDER images (kids reuses clothing-hero) — swap the three URLs. -->
     <div class="hero-mobile-2" id="heroMobile2">
         <div class="hm2-slider" id="hm2Slider">
-            <a class="hm2-slide">
+            <a class="hm2-slide hm2-active">
                 <video class="hm2-video" src="assets/hero/men.mp4" poster="men-hero.jpg"
                        autoplay muted loop playsinline preload="metadata"></video>
                 <div class="hm2-cap">
@@ -7650,23 +7667,29 @@ h3, h4, h5, h6, p,
                 }
             }
 
-            // Vertical stacking hero: the active panel is the sticky slide currently
-            // filling the viewport. Pick the last slide whose top has reached the top.
-            function current() {
-                var idx = 0;
-                for (var i = 0; i < slides.length; i++) {
-                    if (slides[i].getBoundingClientRect().top <= 1) idx = i;
+            // OMEGA-style auto-crossfade: only one panel is active at a time; every
+            // few seconds the next one fades in over the current (each with its own
+            // Ken Burns zoom via CSS). Restarting the zoom means re-adding the class.
+            var cur = 0;
+            var HOLD = 6000; // ms each panel stays before crossfading
+            function show(i) {
+                cur = (i + slides.length) % slides.length;
+                for (var n = 0; n < slides.length; n++) {
+                    slides[n].classList.toggle('hm2-active', n === cur);
                 }
-                return idx;
+                syncGender(cur);
             }
-            var ticking = false;
-            function onScroll() {
-                if (ticking) return;
-                ticking = true;
-                requestAnimationFrame(function () { syncGender(current()); ticking = false; });
+            show(0);
+            var timer = setInterval(function () { show(cur + 1); }, HOLD);
+            // Pause the rotation while the panel is off-screen to save work.
+            if ('IntersectionObserver' in window) {
+                new IntersectionObserver(function (entries) {
+                    entries.forEach(function (e) {
+                        clearInterval(timer);
+                        if (e.isIntersecting) timer = setInterval(function () { show(cur + 1); }, HOLD);
+                    });
+                }, { threshold: 0.15 }).observe(slider);
             }
-            window.addEventListener('scroll', onScroll, { passive: true });
-            syncGender(current());   // set the category slider to the opening slide
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initHm2);
