@@ -141,16 +141,25 @@
         .row .lbl b { display: block; font-size: 12.5px; font-weight: 600; }
         .row .lbl span { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-        /* Weekly availability grid */
-        .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-top: 16px; }
-        .day { text-align: center; }
-        .day-name { font-size: 10px; color: var(--muted); margin-bottom: 12px; letter-spacing: 0.5px; }
-        .slot {
-            border: 1px solid #ececea; border-radius: 999px; padding: 10px 4px; font-size: 10px;
-            cursor: pointer; margin-bottom: 9px; transition: 0.15s; color: #b8b3aa;
-        }
-        /* Airy selected state — a thin outline, not a heavy black fill. */
-        .slot.on { background: transparent; color: #111; border-color: #111; font-weight: 400; }
+        /* Upcoming pickups / meetings — a content agenda in place of the slot grid. */
+        .agenda { margin-top: 16px; }
+        .appt { display: flex; align-items: center; gap: 16px; padding: 14px 2px;
+            border-bottom: 1px solid #ececea; }
+        .appt:last-child { border-bottom: none; }
+        .appt-when { flex: 0 0 auto; width: 60px; }
+        .appt-day { font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 9px;
+            letter-spacing: 1.4px; color: #b3ada3; text-transform: uppercase; }
+        .appt-time { font-family: 'Bodoni Moda', Georgia, serif; font-size: 18px; color: #111;
+            margin-top: 2px; line-height: 1; }
+        .appt-main { flex: 1; min-width: 0; }
+        .appt-buyer { font-size: 13px; color: #1c1c1c; }
+        .appt-item { font-size: 11px; color: #9a958c; margin-top: 3px; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; }
+        .appt-tag { flex: 0 0 auto; font-family: 'Oswald', 'Segoe UI', sans-serif; font-size: 8px;
+            letter-spacing: 1.2px; text-transform: uppercase; border-radius: 999px;
+            padding: 3px 9px; border: 1px solid; white-space: nowrap; }
+        .appt-tag.pickup { color: #38624e; border-color: #cfe0d7; background: #eef4f0; }
+        .appt-tag.meeting { color: #8a6a24; border-color: #e3d3ad; background: #faf5e9; }
 
         /* QR / check-in */
         .qr {
@@ -274,9 +283,9 @@
         <section class="panel" data-sec="time">
             <!-- Pickup windows taken out of the card frame — sits open on the page. -->
             <div class="card" style="border:none; background:transparent; box-shadow:none; padding:0;">
-                <div class="card-h"><div class="card-t">Weekly pickup windows</div><span class="chip"><span class="dot green"></span>Active</span></div>
-                <div class="card-d">Set fixed hours for meetings and pickup. The buyer picks a free window from your calendar.</div>
-                <div class="week" id="weekGrid"></div>
+                <div class="card-h"><div class="card-t">Upcoming pickups &amp; meetings</div><span class="chip"><span class="dot green"></span>Active</span></div>
+                <div class="card-d">Your next scheduled handovers and try-ons — buyer, item and time.</div>
+                <div class="agenda" id="weekGrid"></div>
                 <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
                     <button class="btn" id="syncGoogle"><span>🗓️</span> Sync Google Calendar</button>
                     <button class="btn" id="syncApple"><span>📅</span> Sync Apple Calendar</button>
@@ -552,14 +561,19 @@
 
         // ===== 1. Weekly windows + QR + vacation =====
         (function () {
-            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-            const slots = ['10:00', '13:00', '17:00'];
-            const preset = { 0:[0,2], 1:[1], 2:[], 3:[0,1], 4:[2], 5:[0], 6:[] };
-            document.getElementById('weekGrid').innerHTML = days.map((d, di) =>
-                `<div class="day"><div class="day-name">${d}</div>` +
-                slots.map((s, si) => `<div class="slot${(preset[di]||[]).includes(si) ? ' on' : ''}">${s}</div>`).join('') +
+            const appts = [
+                { day: 'SUN', time: '10:00', buyer: 'Maya L.',  item: 'Wool Coat · handover',    tag: 'pickup',  label: 'Pickup' },
+                { day: 'MON', time: '13:00', buyer: 'Omer T.',  item: 'Vintage Denim · try-on',  tag: 'meeting', label: 'Meeting' },
+                { day: 'WED', time: '10:00', buyer: 'Dana R.',  item: 'Ceramic Vase · handover', tag: 'pickup',  label: 'Pickup' },
+                { day: 'THU', time: '17:00', buyer: 'Noa B.',   item: 'Silk Dress · try-on',     tag: 'meeting', label: 'Meeting' },
+                { day: 'FRI', time: '10:00', buyer: 'Lior K.',  item: 'Leather Bag · handover',  tag: 'pickup',  label: 'Pickup' }
+            ];
+            document.getElementById('weekGrid').innerHTML = appts.map(a =>
+                `<div class="appt">` +
+                    `<div class="appt-when"><div class="appt-day">${a.day}</div><div class="appt-time">${a.time}</div></div>` +
+                    `<div class="appt-main"><div class="appt-buyer">${a.buyer}</div><div class="appt-item">${a.item}</div></div>` +
+                    `<span class="appt-tag ${a.tag}">${a.label}</span>` +
                 `</div>`).join('');
-            document.querySelectorAll('.slot').forEach(s => s.addEventListener('click', () => s.classList.toggle('on')));
 
             // Faux QR from a fixed pattern.
             const pat = [1,0,1,1,0,0,1,1, 0,1,0,1,1,0,1,0, 1,0,1,0,0,1,0,1, 1,1,0,1,0,1,1,0,
