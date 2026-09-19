@@ -1107,31 +1107,37 @@
                carry a solid background so they cover it as they scroll up over it. */
             .hero-mobile-2 {
                 display: block;
-                /* Holds the vertical stack of Men / Women / Kids panels. Each panel
-                   pins to the top and the next one rises over it (OMEGA cover reveal),
-                   so the whole hero sequence transitions as stacking layers. */
+                /* Holds the Men / Women / Kids panels as a single-viewport horizontal
+                   pager. Each slide sits stacked in place; the incoming one slides in
+                   from the right and rises over the current one (cover reveal). */
                 position: relative;
                 z-index: 1;
                 width: 100%;
+                height: 100vh;
+                height: 100dvh;
                 background: #000;
-                overflow: visible;
+                overflow: hidden;
             }
-            /* The slider is now just a vertical container; its slides stack via sticky. */
+            /* Single-viewport stage; slides are layered inside it and paged sideways. */
             .hm2-slider {
+                position: relative;
                 display: block;
                 width: 100%;
-                height: auto;
-                overflow: visible;
+                height: 100%;
+                overflow: hidden;
                 direction: ltr;
+                touch-action: pan-y;
             }
             .hm2-slider::-webkit-scrollbar { width: 0; height: 0; display: none; }
-            /* Each panel pins full-screen and the next rises over it. Increasing
-               z-index makes every later panel cover the previous one. */
+            /* Every slide fills the stage. It waits off to the right (translateX(100%))
+               until it becomes active, then slides in over the lower layers. A later
+               slide has a higher z-index, so it covers the earlier ones as it arrives. */
             .hm2-slide {
-                position: sticky;
+                position: absolute;
                 top: 0;
+                left: 0;
                 width: 100%;
-                height: 100vh;
+                height: 100%;
                 background-color: #8a8a8a;
                 background-size: cover;
                 background-position: center center;
@@ -1139,7 +1145,13 @@
                 align-items: center;
                 justify-content: center;
                 text-decoration: none;
+                transform: translateX(100%);
+                transition: transform 0.6s cubic-bezier(0.7, 0, 0.2, 1);
+                will-change: transform;
             }
+            /* Slides at or before the active index are pulled into view; the active one
+               (and any earlier, still-covered layers) rest at translateX(0). */
+            .hm2-slide.is-shown { transform: translateX(0); }
             .hm2-slide:nth-of-type(1) { z-index: 1; }
             .hm2-slide:nth-of-type(2) { z-index: 2; }
             .hm2-slide:nth-of-type(3) { z-index: 3; }
@@ -1403,8 +1415,7 @@
                continuous translucent track split into equal segments, with the active
                segment lit white as an inner guiding line that slides as you swipe. */
             .hm2-dots {
-                /* Vertical stacking hero — no horizontal pager needed. */
-                display: none !important;
+                /* Horizontal pager guiding line — split track, active segment lit. */
                 position: absolute;
                 /* Anchored to the viewport bottom like the caption's "Slide for more"
                    hint, sitting just BELOW that text. */
@@ -1419,14 +1430,15 @@
                 display: flex;
                 gap: 0;
                 background: rgba(255,255,255,0.34);   /* the continuous track line */
-                z-index: 4;
-                pointer-events: none;
+                z-index: 6;
+                pointer-events: auto;
             }
             .hm2-dot {
                 flex: 1 1 0;
                 height: 100%;
                 background: transparent;               /* inactive thirds show the track */
                 border-radius: 0;
+                cursor: pointer;
                 transition: background 0.25s ease;
             }
             .hm2-dot.active {
@@ -7626,11 +7638,23 @@ h3, h4, h5, h6, p,
         function initHm2() {
             var slider = document.getElementById('hm2Slider');
             if (!slider) return;
-            var slides = slider.querySelectorAll('.hm2-slide');
-            if (!slides.length) return;
+            var allSlides = Array.prototype.slice.call(slider.querySelectorAll('.hm2-slide'));
+            if (!allSlides.length) return;
+            var dotWrap = document.getElementById('hm2Dots');
+            var allDots = dotWrap ? Array.prototype.slice.call(dotWrap.querySelectorAll('.hm2-dot')) : [];
             // Slide order → the gender the category slider below should show.
             var GENDERS = ['men', 'women', 'kids', 'unisex'];
             var lastGender = null;
+            var active = 0;
+
+            // Only the slides visible in the current mode take part (art mode hides the
+            // Unisex slide/dot) — recomputed on each move so the pager stays in range.
+            function visibleSlides() {
+                return allSlides.filter(function (s) { return s.offsetParent !== null; });
+            }
+            function visibleDots() {
+                return allDots.filter(function (d) { return d.offsetParent !== null; });
+            }
 
             function syncGender(i) {
                 var g = GENDERS[i] || 'men';
@@ -7640,23 +7664,57 @@ h3, h4, h5, h6, p,
                 }
             }
 
-            // Vertical stacking hero: the active panel is the sticky slide currently
-            // filling the viewport. Pick the last slide whose top has reached the top.
-            function current() {
-                var idx = 0;
-                for (var i = 0; i < slides.length; i++) {
-                    if (slides[i].getBoundingClientRect().top <= 1) idx = i;
-                }
-                return idx;
+            function render() {
+                var slides = visibleSlides();
+                var dots = visibleDots();
+                if (active > slides.length - 1) active = slides.length - 1;
+                if (active < 0) active = 0;
+                // Slides at or before the active index rest in view; later ones wait
+                // off to the right and slide over as they become active (cover reveal).
+                slides.forEach(function (s, i) { s.classList.toggle('is-shown', i <= active); });
+                dots.forEach(function (d, i) { d.classList.toggle('active', i === active); });
+                syncGender(active);
             }
-            var ticking = false;
-            function onScroll() {
-                if (ticking) return;
-                ticking = true;
-                requestAnimationFrame(function () { syncGender(current()); ticking = false; });
+
+            function go(i) {
+                var slides = visibleSlides();
+                active = Math.max(0, Math.min(slides.length - 1, i));
+                render();
             }
-            window.addEventListener('scroll', onScroll, { passive: true });
-            syncGender(current());   // set the category slider to the opening slide
+
+            // Tap a segment of the guiding line to jump straight to that slide.
+            allDots.forEach(function (d, i) {
+                d.addEventListener('click', function () { go(visibleDots().indexOf(d)); });
+            });
+
+            // Horizontal swipe pages the slider; a mostly-vertical drag is left to scroll.
+            var startX = 0, startY = 0, tracking = false;
+            slider.addEventListener('touchstart', function (e) {
+                var t = e.touches[0]; startX = t.clientX; startY = t.clientY; tracking = true;
+            }, { passive: true });
+            slider.addEventListener('touchend', function (e) {
+                if (!tracking) return;
+                tracking = false;
+                var t = e.changedTouches[0];
+                var dx = t.clientX - startX, dy = t.clientY - startY;
+                if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+                go(active + (dx < 0 ? 1 : -1));   // swipe left → next, right → previous
+            }, { passive: true });
+
+            // Mouse drag (desktop preview) pages it too.
+            var mDown = false, mx = 0;
+            slider.addEventListener('mousedown', function (e) { mDown = true; mx = e.clientX; });
+            window.addEventListener('mouseup', function (e) {
+                if (!mDown) return;
+                mDown = false;
+                var dx = e.clientX - mx;
+                if (Math.abs(dx) < 40) return;
+                go(active + (dx < 0 ? 1 : -1));
+            });
+
+            render();   // set the opening slide + sync the category slider below
+            // Re-render on mode change so a hidden Unisex slide can't strand the pager.
+            window.hm2Repage = render;
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initHm2);
@@ -11453,6 +11511,8 @@ h3, h4, h5, h6, p,
                         `url('https://loremflickr.com/800/1200/${encodeURIComponent(seg.img)}?lock=${i + 11}')`;
                 }
             });
+            // Slide visibility may have changed (Unisex is clothing-only) — re-page.
+            if (window.hm2Repage) window.hm2Repage();
         }
 
         function renderHeroInstance(inst) {
