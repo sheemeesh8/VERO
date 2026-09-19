@@ -1264,11 +1264,11 @@
                 font-weight: 700;
                 letter-spacing: 2.5px;
                 text-transform: uppercase;
-                color: #fff;
+                color: #EB2323;
                 padding: 4px 1px;
                 background: none;
                 border: none;
-                border-bottom: 1px solid rgba(255,255,255,0.75);
+                border-bottom: 1px solid #EB2323;
                 border-radius: 0;
                 transition: gap 0.25s ease, opacity 0.25s ease, border-color 0.25s ease;
             }
@@ -6574,34 +6574,60 @@
            counter in the bottom-right corner. ===== */
         .sale-showcase {
             position: relative;
-            width: 100vw; max-width: 100vw;
+            width: 100vw; max-width: 100vw; box-sizing: border-box;
             margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
-            padding: 12px 0 48px;
+            /* Breathing room from the page edges. */
+            padding: 12px clamp(16px, 5vw, 40px) 48px;
             background: #fff;
         }
-        .omega-slider { position: relative; overflow: hidden; }
-        /* The track holds all slides in a row; render() shifts it by -N*100%. */
+        .omega-slider { position: relative; }
+        /* The track holds all slides in a row; the user swipes it horizontally. */
         .omega-track {
             display: flex;
-            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow-x: auto; scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
         }
+        .omega-track::-webkit-scrollbar { display: none; }
         .omega-slide {
             flex: 0 0 100%; min-width: 100%;
+            scroll-snap-align: center; scroll-snap-stop: always;
             display: flex; flex-direction: column;
         }
-        /* Large hero image on top — the wide rectangle. */
-        .omega-hero {
-            width: 100%; aspect-ratio: 4 / 3;
-            display: flex; align-items: center; justify-content: center;
-            background: #f2f1ee; overflow: hidden;
+        /* Sale tile below the slider: a looping video with a "sale" caption,
+           the whole square linking to the sales page. */
+        .omega-sale {
+            position: relative; display: block;
+            width: 100%; aspect-ratio: 4 / 3; margin-top: 24px;
+            overflow: hidden; background: #000; text-decoration: none;
         }
-        .omega-hero img { width: 100%; height: 100%; object-fit: cover; }
-        .omega-hero .omega-emoji { font-size: clamp(90px, 34vw, 220px); }
+        .omega-sale-video {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .omega-sale::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.4));
+        }
+        .omega-sale-cap {
+            position: absolute; inset: 0; z-index: 2;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #fff; text-align: center;
+        }
+        .omega-sale-word {
+            font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
+            font-size: clamp(64px, 22vw, 140px); font-weight: 700;
+            text-transform: lowercase; letter-spacing: 1px; line-height: 1;
+        }
+        .omega-sale-cta {
+            margin-top: 16px; font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
+            font-weight: 700; display: inline-flex; align-items: center; gap: 8px;
+            border-bottom: 1px solid #fff; padding-bottom: 5px;
+        }
         /* Product row beneath the hero: image on the left, copy on the right. */
         .omega-product {
             display: grid; grid-template-columns: 40% 1fr;
             align-items: center; gap: 18px;
-            padding: 34px 22px 10px;
+            padding: 10px 22px 26px;
         }
         .omega-product-img {
             aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
@@ -6640,23 +6666,14 @@
         }
         .omega-product-details:hover { color: #EB2323; border-color: #EB2323; }
         .omega-product-details:hover svg { transform: translateX(4px); }
-        /* Bottom-right navigation: "1 / N" counter and the two arrows. */
+        /* Bottom-right "1 / N" counter (arrows removed — swipe to navigate). */
         .omega-nav {
-            display: flex; align-items: center; justify-content: flex-end; gap: 6px;
-            padding: 6px 22px 0;
+            display: flex; align-items: center; justify-content: flex-end;
+            padding: 12px 22px 0;
         }
         .omega-count {
-            font-size: 17px; color: #2b2b2b; letter-spacing: 1px; margin-right: 20px;
+            font-size: 17px; color: #2b2b2b; letter-spacing: 1px;
         }
-        .omega-arrow {
-            width: 52px; height: 52px; flex: 0 0 auto;
-            display: flex; align-items: center; justify-content: center;
-            background: #f2f1ee; border: none; cursor: pointer;
-            transition: background 0.25s ease;
-        }
-        .omega-arrow:hover:not(:disabled) { background: #e6e4df; }
-        .omega-arrow:disabled { opacity: 0.4; cursor: default; }
-        .omega-arrow svg { width: 22px; height: 22px; stroke: #2b2b2b; stroke-width: 1.6; fill: none; }
 
         /* --- 1. Category slider (men / women / kids + Shop All) --- */
         /* Five products from the site — a clean row of the shared product card. */
@@ -8059,23 +8076,28 @@ h3, h4, h5, h6, p,
                 <div class="feed-lead-slider" id="feedLeadSlider"></div>
             </div>
 
-            <!-- OMEGA-style showcase: a slider of sale pieces. Each slide shows a
-                 large hero image on top, and the product beneath it — image on the
-                 left, name / spec / Details on the right. Paged by the arrows and a
-                 "1 / N" counter in the bottom-right corner. -->
+            <!-- OMEGA-style showcase: a swipeable slider of sale pieces. Each slide
+                 shows the product on top — image left, name / spec / Details right —
+                 with a large hero image beneath it. A "1 / N" counter sits in the
+                 bottom-right; swipe to move between slides. -->
             <div class="sale-showcase">
               <div class="omega-slider" id="omegaSlider" hidden>
                 <div class="omega-track" id="omegaTrack"></div>
                 <div class="omega-nav">
                     <span class="omega-count"><span id="omegaCur">1</span> / <span id="omegaTot">3</span></span>
-                    <button type="button" class="omega-arrow" id="omegaPrev" aria-label="Previous" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
-                    </button>
-                    <button type="button" class="omega-arrow" id="omegaNext" aria-label="Next">
-                        <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-                    </button>
                 </div>
               </div>
+              <!-- Square entry to the sale page: a looping video with a "sale"
+                   caption, the whole tile linking through to sales.html. -->
+              <a class="omega-sale" href="sales.html" aria-label="Shop the sale">
+                  <video class="omega-sale-video" src="assets/hero/clothing-section.mp4"
+                         autoplay muted loop playsinline preload="metadata"
+                         poster="assets/sale-tile-bg.jpg"></video>
+                  <span class="omega-sale-cap">
+                      <span class="omega-sale-word">sale</span>
+                      <span class="omega-sale-cta">Shop the sale <span aria-hidden="true">&#8250;</span></span>
+                  </span>
+              </a>
             </div><!-- /.sale-showcase -->
             <script>
                 (function () {
@@ -8108,7 +8130,6 @@ h3, h4, h5, h6, p,
                         });
                         var href = 'product-showcase.html?product=' + encodeURIComponent(productData);
                         return '<div class="omega-slide">' +
-                                   '<div class="omega-hero">' + media + '</div>' +
                                    '<div class="omega-product">' +
                                        '<div class="omega-product-img">' + media + '</div>' +
                                        '<div class="omega-product-info">' +
@@ -8128,23 +8149,21 @@ h3, h4, h5, h6, p,
                     wrap.hidden = false;
 
                     var total = items.length;
-                    var cur = 0;
-                    var curEl  = document.getElementById('omegaCur');
-                    var totEl  = document.getElementById('omegaTot');
-                    var prevBt = document.getElementById('omegaPrev');
-                    var nextBt = document.getElementById('omegaNext');
+                    var curEl = document.getElementById('omegaCur');
+                    var totEl = document.getElementById('omegaTot');
                     if (totEl) totEl.textContent = total;
 
-                    function render() {
-                        track.style.transform = 'translateX(' + (-cur * 100) + '%)';
-                        if (curEl) curEl.textContent = cur + 1;
-                        if (prevBt) prevBt.disabled = cur === 0;
-                        if (nextBt) nextBt.disabled = cur === total - 1;
+                    // Counter follows the swipe position.
+                    function sync() {
+                        var w = track.clientWidth || 1;
+                        var idx = Math.round(track.scrollLeft / w);
+                        if (idx < 0) idx = 0;
+                        if (idx > total - 1) idx = total - 1;
+                        if (curEl) curEl.textContent = idx + 1;
                     }
-                    function go(n) { cur = Math.max(0, Math.min(total - 1, n)); render(); }
-                    if (prevBt) prevBt.addEventListener('click', function () { go(cur - 1); });
-                    if (nextBt) nextBt.addEventListener('click', function () { go(cur + 1); });
-                    render();
+                    track.addEventListener('scroll', sync, { passive: true });
+                    window.addEventListener('resize', sync);
+                    sync();
                 })();
             </script>
 
