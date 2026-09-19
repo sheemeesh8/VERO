@@ -1107,54 +1107,43 @@
                carry a solid background so they cover it as they scroll up over it. */
             .hero-mobile-2 {
                 display: block;
-                /* Rises over the sticky hero to cover it, then continues scrolling up
-                   in normal flow — the categories section follows it in one continuous
-                   scroll (no second cover / overlap). */
+                /* Holds the vertical stack of Men / Women / Kids panels. Each panel
+                   pins to the top and the next one rises over it (OMEGA cover reveal),
+                   so the whole hero sequence transitions as stacking layers. */
                 position: relative;
                 z-index: 1;
-                scroll-snap-align: start;
-                /* One-gesture section paging: a swipe is caught and lands on this panel
-                   (can't be skipped in a single flick to the feed). */
-                scroll-snap-stop: always;
                 width: 100%;
-                /* Full-screen Men / Women / Kids slider — one screen exactly. */
-                height: 100vh;
-                min-height: 100vh;
                 background: #000;
-                overflow: hidden;
+                overflow: visible;
             }
-            /* Full-screen swipe slider inside the second panel: Men / Women / Kids. */
+            /* The slider is now just a vertical container; its slides stack via sticky. */
             .hm2-slider {
-                display: flex;
+                display: block;
                 width: 100%;
-                height: 100%;
-                overflow-x: auto;
-                overflow-y: hidden;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;          /* Firefox: no horizontal scrollbar */
-                -ms-overflow-style: none;
-                /* Force LTR so scrollLeft stays 0..N and the arrow / dot math is simple,
-                   even though the page itself is RTL. */
+                height: auto;
+                overflow: visible;
                 direction: ltr;
             }
             .hm2-slider::-webkit-scrollbar { width: 0; height: 0; display: none; }
+            /* Each panel pins full-screen and the next rises over it. Increasing
+               z-index makes every later panel cover the previous one. */
             .hm2-slide {
-                flex: 0 0 100%;
+                position: sticky;
+                top: 0;
                 width: 100%;
-                height: 100%;
-                scroll-snap-align: start;
-                /* One slide per swipe — the snap point can't be skipped past. */
-                scroll-snap-stop: always;
+                height: 100vh;
                 background-color: #8a8a8a;
                 background-size: cover;
                 background-position: center center;
-                position: relative;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 text-decoration: none;
             }
+            .hm2-slide:nth-of-type(1) { z-index: 1; }
+            .hm2-slide:nth-of-type(2) { z-index: 2; }
+            .hm2-slide:nth-of-type(3) { z-index: 3; }
+            .hm2-slide:nth-of-type(4) { z-index: 4; }
             /* Full-bleed category video (e.g. Women), cropped to fill the phone
                slide via cover. Sits behind the caption and the gradient overlay. */
             .hm2-video {
@@ -1414,6 +1403,8 @@
                continuous translucent track split into equal segments, with the active
                segment lit white as an inner guiding line that slides as you swipe. */
             .hm2-dots {
+                /* Vertical stacking hero — no horizontal pager needed. */
+                display: none !important;
                 position: absolute;
                 /* Anchored to the viewport bottom like the caption's "Slide for more"
                    hint, sitting just BELOW that text. */
@@ -1443,6 +1434,7 @@
             }
             /* Prev / next buttons for the Men / Women / Kids slider. */
             .hm2-arrow {
+                display: none !important;
                 position: absolute;
                 top: 50vh;
                 transform: translateY(-50%);
@@ -6576,8 +6568,8 @@
             position: relative;
             width: 100vw; max-width: 100vw; box-sizing: border-box;
             margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
-            /* Breathing room from the page edges. */
-            padding: 12px clamp(16px, 5vw, 40px) 48px;
+            /* Small edge margin only — the tile runs close to the page edges. */
+            padding: 12px clamp(6px, 2vw, 12px) 48px;
             background: #fff;
         }
         .omega-slider { position: relative; }
@@ -6593,11 +6585,19 @@
             scroll-snap-align: center; scroll-snap-stop: always;
             display: flex; flex-direction: column;
         }
-        /* Sale tile below the slider: a looping video with a "sale" caption,
-           the whole square linking to the sales page. */
+        /* "sales" title above the tile. */
+        .omega-sale-title {
+            margin: 4px 0 14px; text-align: center;
+            font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
+            font-size: clamp(40px, 13vw, 84px); font-weight: 700;
+            text-transform: lowercase; letter-spacing: 1px; line-height: 1; color: #111;
+        }
+        /* Full-screen sale tile: a looping video, edge to edge, linking to the
+           sales page. Breaks out of the section padding to span the viewport. */
         .omega-sale {
             position: relative; display: block;
-            width: 100%; aspect-ratio: 4 / 3; margin-top: 24px;
+            width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
+            height: 100vh; min-height: 100vh;
             overflow: hidden; background: #000; text-decoration: none;
         }
         .omega-sale-video {
@@ -6627,7 +6627,7 @@
         .omega-product {
             display: grid; grid-template-columns: 40% 1fr;
             align-items: center; gap: 18px;
-            padding: 10px 22px 26px;
+            padding: 10px 22px 4px;
         }
         .omega-product-img {
             aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
@@ -6669,7 +6669,7 @@
         /* Bottom-right "1 / N" counter (arrows removed — swipe to navigate). */
         .omega-nav {
             display: flex; align-items: center; justify-content: flex-end;
-            padding: 12px 22px 0;
+            padding: 4px 22px 0;
         }
         .omega-count {
             font-size: 17px; color: #2b2b2b; letter-spacing: 1px;
@@ -7625,12 +7625,9 @@ h3, h4, h5, h6, p,
     (function () {
         function initHm2() {
             var slider = document.getElementById('hm2Slider');
-            var dots = document.getElementById('hm2Dots');
-            if (!slider || !dots) return;
-            var dotEls = dots.querySelectorAll('.hm2-dot');
-            var prev = document.getElementById('hm2Prev');
-            var next = document.getElementById('hm2Next');
-            var count = slider.querySelectorAll('.hm2-slide').length;
+            if (!slider) return;
+            var slides = slider.querySelectorAll('.hm2-slide');
+            if (!slides.length) return;
             // Slide order → the gender the category slider below should show.
             var GENDERS = ['men', 'women', 'kids', 'unisex'];
             var lastGender = null;
@@ -7643,19 +7640,23 @@ h3, h4, h5, h6, p,
                 }
             }
 
-            function current() { return Math.round(slider.scrollLeft / slider.clientWidth); }
-            function go(i) {
-                i = Math.max(0, Math.min(count - 1, i));
-                slider.scrollTo({ left: i * slider.clientWidth, behavior: 'smooth' });
+            // Vertical stacking hero: the active panel is the sticky slide currently
+            // filling the viewport. Pick the last slide whose top has reached the top.
+            function current() {
+                var idx = 0;
+                for (var i = 0; i < slides.length; i++) {
+                    if (slides[i].getBoundingClientRect().top <= 1) idx = i;
+                }
+                return idx;
             }
-            slider.addEventListener('scroll', function () {
-                var i = current();
-                dotEls.forEach(function (d, n) { d.classList.toggle('active', n === i); });
-                syncGender(i);
-            }, { passive: true });
+            var ticking = false;
+            function onScroll() {
+                if (ticking) return;
+                ticking = true;
+                requestAnimationFrame(function () { syncGender(current()); ticking = false; });
+            }
+            window.addEventListener('scroll', onScroll, { passive: true });
             syncGender(current());   // set the category slider to the opening slide
-            if (prev) prev.addEventListener('click', function () { go(current() - 1); });
-            if (next) next.addEventListener('click', function () { go(current() + 1); });
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initHm2);
@@ -8081,23 +8082,22 @@ h3, h4, h5, h6, p,
                  with a large hero image beneath it. A "1 / N" counter sits in the
                  bottom-right; swipe to move between slides. -->
             <div class="sale-showcase">
-              <div class="omega-slider" id="omegaSlider" hidden>
-                <div class="omega-track" id="omegaTrack"></div>
-                <div class="omega-nav">
-                    <span class="omega-count"><span id="omegaCur">1</span> / <span id="omegaTot">3</span></span>
-                </div>
-              </div>
-              <!-- Square entry to the sale page: a looping video with a "sale"
-                   caption, the whole tile linking through to sales.html. -->
+              <!-- Sales title above the full-screen sale tile. -->
+              <h2 class="omega-sale-title">sales</h2>
+              <!-- Full-screen entry to the sale page: a looping video, the whole
+                   tile linking through to sales.html. -->
               <a class="omega-sale" href="sales.html" aria-label="Shop the sale">
                   <video class="omega-sale-video" src="assets/hero/clothing-section.mp4"
                          autoplay muted loop playsinline preload="metadata"
                          poster="assets/sale-tile-bg.jpg"></video>
                   <span class="omega-sale-cap">
-                      <span class="omega-sale-word">sale</span>
                       <span class="omega-sale-cta">Shop the sale <span aria-hidden="true">&#8250;</span></span>
                   </span>
               </a>
+              <!-- Products slider (unchanged), below the tile. -->
+              <div class="omega-slider" id="omegaSlider" hidden>
+                <div class="omega-track" id="omegaTrack"></div>
+              </div>
             </div><!-- /.sale-showcase -->
             <script>
                 (function () {
@@ -8147,23 +8147,6 @@ h3, h4, h5, h6, p,
 
                     track.innerHTML = items.map(slide).join('');
                     wrap.hidden = false;
-
-                    var total = items.length;
-                    var curEl = document.getElementById('omegaCur');
-                    var totEl = document.getElementById('omegaTot');
-                    if (totEl) totEl.textContent = total;
-
-                    // Counter follows the swipe position.
-                    function sync() {
-                        var w = track.clientWidth || 1;
-                        var idx = Math.round(track.scrollLeft / w);
-                        if (idx < 0) idx = 0;
-                        if (idx > total - 1) idx = total - 1;
-                        if (curEl) curEl.textContent = idx + 1;
-                    }
-                    track.addEventListener('scroll', sync, { passive: true });
-                    window.addEventListener('resize', sync);
-                    sync();
                 })();
             </script>
 
