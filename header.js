@@ -1473,15 +1473,18 @@
         #siteHeader.force-light .icon-btn svg { stroke: #fff !important; }
         #siteHeader .icon-btn svg[data-fill],
         #siteHeader.scrolled .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
-        /* Art/Fashion switch: white track + white knob in every state. */
+        /* Art/Fashion switch: white track + knob over a dark header, dark on a
+           light (scrolled / force-light) header so it stays visible. */
         #siteHeader .hdr-mode-pair .toggle-category,
-        #siteHeader.scrolled .hdr-mode-pair .toggle-category,
         #siteHeader.force-dark .hdr-mode-pair .toggle-category,
-        #siteHeader.force-light .hdr-mode-pair .toggle-category { border-color: #fff !important; }
+        #siteHeader.scrolled.over-dark .hdr-mode-pair .toggle-category { border-color: #fff !important; }
         #siteHeader .hdr-mode-pair .toggle-category::before,
-        #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
         #siteHeader.force-dark .hdr-mode-pair .toggle-category::before,
-        #siteHeader.force-light .hdr-mode-pair .toggle-category::before { background: #fff !important; }
+        #siteHeader.scrolled.over-dark .hdr-mode-pair .toggle-category::before { background: #fff !important; }
+        #siteHeader.scrolled .hdr-mode-pair .toggle-category,
+        #siteHeader.force-light .hdr-mode-pair .toggle-category { border-color: rgba(0,0,0,0.55) !important; }
+        #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
+        #siteHeader.force-light .hdr-mode-pair .toggle-category::before { background: #111 !important; }
 `;
 
     // ---- Markup (identical everywhere) ----
@@ -1495,6 +1498,12 @@
                         <line x1="3" y1="17" x2="21" y2="17"></line>
                     </svg>
                 </a>
+                <span class="hdr-mode-pair" data-icon="mode">
+                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
+                        <span class="seg active" id="segArt">Art</span>
+                        <span class="seg" id="segFashion">Fashion</span>
+                    </div>
+                </span>
             </div>
             <div class="header-right">
                 <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
