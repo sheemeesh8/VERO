@@ -87,6 +87,13 @@
     .cta.ready { background: #fff; color: #000; }
     .cta.ready:hover { opacity: 0.86; }
     .cta:disabled { cursor: default; }
+    /* Secondary (outline) action for the create-or-sign-in choice. */
+    .cta.outline { background: transparent; color: #fff; border: 1px solid var(--line); margin-top: 14px; }
+    .cta.outline:hover { background: rgba(255,255,255,0.08); }
+    /* Choice screen intro. */
+    .choice-title { font-family: var(--f-serif); font-size: clamp(24px, 7vw, 30px); font-weight: 500; text-align: center; margin: 0 0 6px; }
+    .choice-sub { text-align: center; font-weight: 300; font-size: 12.5px; color: var(--muted); margin: 0 0 34px; }
+    .choice-sub span { color: #fff; }
 
     /* ---- Form panel ---- */
     .form-title {
@@ -152,6 +159,16 @@
         <button type="button" class="cta anim d3" id="continueBtn" disabled>Continue</button>
     </section>
 
+    <!-- ============ Create-or-sign-in choice ============ -->
+    <section class="panel is-waiting" id="choicePanel" aria-hidden="true">
+        <button type="button" class="back" id="choiceBack" aria-label="Back">&#8249;</button>
+        <div class="welcome-gap"></div>
+        <h2 class="choice-title">Join moravchick</h2>
+        <p class="choice-sub">Shopping in <span id="choiceCountry">—</span></p>
+        <button type="button" class="cta ready" id="createBtn">Create a profile</button>
+        <button type="button" class="cta outline" id="signinBtn">Sign in to your profile</button>
+    </section>
+
     <!-- ============ Account form ============ -->
     <section class="panel is-waiting" id="formPanel" aria-hidden="true">
         <button type="button" class="back" id="backBtn" aria-label="Back">&#8249;</button>
@@ -208,26 +225,45 @@
         sel.addEventListener('change', refreshCta);
 
         var welcome = document.getElementById('welcomePanel');
+        var choiceP = document.getElementById('choicePanel');
         var formP = document.getElementById('formPanel');
 
-        function showForm() {
+        // Welcome → the create-or-sign-in choice (region is locked in here).
+        function showChoice() {
             if (!sel.value) return;
             try { localStorage.setItem('vero_country', sel.value); } catch (e) {}
+            document.getElementById('choiceCountry').textContent = sel.value;
             document.getElementById('formCountry').textContent = sel.value;
             welcome.classList.add('is-hidden');
-            formP.classList.remove('is-waiting');
-            formP.setAttribute('aria-hidden', 'false');
+            formP.classList.add('is-waiting'); formP.setAttribute('aria-hidden', 'true');
+            choiceP.classList.remove('is-waiting'); choiceP.setAttribute('aria-hidden', 'false');
+        }
+        function showWelcome() {
+            choiceP.classList.add('is-waiting'); choiceP.setAttribute('aria-hidden', 'true');
+            formP.classList.add('is-waiting'); formP.setAttribute('aria-hidden', 'true');
+            welcome.classList.remove('is-hidden');
+        }
+        // Choice → the account form (create a profile).
+        function showForm() {
+            choiceP.classList.add('is-waiting'); choiceP.setAttribute('aria-hidden', 'true');
+            welcome.classList.add('is-hidden');
+            formP.classList.remove('is-waiting'); formP.setAttribute('aria-hidden', 'false');
             setTimeout(function () {
                 var n = document.getElementById('name'); if (n) n.focus();
             }, 620);
         }
-        function showWelcome() {
-            formP.classList.add('is-waiting');
-            formP.setAttribute('aria-hidden', 'true');
-            welcome.classList.remove('is-hidden');
+        function showChoiceFromForm() {
+            formP.classList.add('is-waiting'); formP.setAttribute('aria-hidden', 'true');
+            choiceP.classList.remove('is-waiting'); choiceP.setAttribute('aria-hidden', 'false');
         }
-        cta.addEventListener('click', showForm);
-        document.getElementById('backBtn').addEventListener('click', showWelcome);
+
+        cta.addEventListener('click', showChoice);
+        document.getElementById('choiceBack').addEventListener('click', showWelcome);
+        document.getElementById('createBtn').addEventListener('click', showForm);
+        document.getElementById('signinBtn').addEventListener('click', function () {
+            location.href = 'login.html';   // sign in to an existing profile
+        });
+        document.getElementById('backBtn').addEventListener('click', showChoiceFromForm);
 
         // ---- Account creation (unchanged auth flow) ----
         if (VeroAuth.guard('auth')) {
