@@ -6597,44 +6597,73 @@
             scroll-snap-align: center; scroll-snap-stop: always;
             display: flex; flex-direction: column;
         }
-        /* "sales" title above the tile. */
-        .omega-sale-title {
-            margin: 4px 0 14px; text-align: center;
-            font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
-            font-size: clamp(40px, 13vw, 84px); font-weight: 700;
-            text-transform: lowercase; letter-spacing: 1px; line-height: 1; color: #111;
-        }
-        /* Full-screen sale tile: a looping video, edge to edge, linking to the
-           sales page. Breaks out of the section padding to span the viewport. */
+        /* The external "sales" title is retired — the wording now lives inside the
+           tile as an editorial stack. Kept hidden so old markup can't reappear. */
+        .omega-sale-title { display: none; }
+        /* Editorial sale entry: a looping video, edge to edge, with a bottom-anchored
+           copy stack (kicker · big serif word · subline · pill CTA). A measured
+           height keeps it from swallowing the whole viewport. */
         .omega-sale {
             position: relative; display: block;
             width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
-            height: 100vh; min-height: 100vh;
+            height: clamp(520px, 76vh, 780px);
             overflow: hidden; background: #000; text-decoration: none;
         }
         .omega-sale-video {
             position: absolute; inset: 0;
             width: 100%; height: 100%; object-fit: cover;
+            transition: transform 6s ease;
         }
+        .omega-sale:hover .omega-sale-video { transform: scale(1.05); }
+        /* A deep scrim pooled at the bottom so the copy always reads. */
         .omega-sale::after {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.4));
+            content: ''; position: absolute; inset: 0; z-index: 1;
+            background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.30) 42%, rgba(0,0,0,0) 70%);
         }
         .omega-sale-cap {
             position: absolute; inset: 0; z-index: 2;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #fff; text-align: center;
+            display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end;
+            color: #fff; text-align: left;
+            padding: 0 clamp(22px, 6vw, 40px) clamp(30px, 7vw, 46px);
+        }
+        .omega-sale-kicker {
+            display: inline-flex; align-items: center; gap: 9px;
+            font-family: 'Poppins', 'Inter', sans-serif;
+            font-size: 10.5px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+            color: rgba(255,255,255,0.9); margin-bottom: 12px;
+        }
+        .omega-sale-kicker::before {
+            content: ''; width: 6px; height: 6px; border-radius: 50%; background: #EB2323;
+            box-shadow: 0 0 0 0 rgba(235,35,35,0.6); animation: saleDot 2s infinite;
+        }
+        @keyframes saleDot {
+            0% { box-shadow: 0 0 0 0 rgba(235,35,35,0.55); }
+            70% { box-shadow: 0 0 0 7px rgba(235,35,35,0); }
+            100% { box-shadow: 0 0 0 0 rgba(235,35,35,0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .omega-sale-kicker::before { animation: none; }
+            .omega-sale:hover .omega-sale-video { transform: none; }
         }
         .omega-sale-word {
             font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
-            font-size: clamp(64px, 22vw, 140px); font-weight: 700;
-            text-transform: lowercase; letter-spacing: 1px; line-height: 1;
+            font-size: clamp(56px, 19vw, 120px); font-weight: 500;
+            text-transform: none; letter-spacing: 0.5px; line-height: 0.95; margin: 0;
+        }
+        .omega-sale-sub {
+            font-family: 'Arimo', 'Segoe UI', sans-serif;
+            font-size: clamp(13px, 3.4vw, 15px); font-weight: 400; letter-spacing: 0.2px;
+            color: rgba(255,255,255,0.88); margin: 12px 0 22px; max-width: 22em;
         }
         .omega-sale-cta {
-            margin-top: 16px; font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
-            font-weight: 700; display: inline-flex; align-items: center; gap: 8px;
-            border-bottom: 1px solid #fff; padding-bottom: 5px;
+            display: inline-flex; align-items: center; gap: 10px;
+            background: #fff; color: #111; border-radius: 999px;
+            padding: 14px 26px; font-family: 'Poppins', 'Inter', sans-serif;
+            font-size: 11.5px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+            transition: gap 0.25s ease, transform 0.25s ease;
         }
+        .omega-sale:hover .omega-sale-cta { gap: 15px; transform: translateY(-1px); }
+        .omega-sale-cta span { font-size: 16px; line-height: 1; }
         /* Product row beneath the hero: image on the left, copy on the right. */
         .omega-product {
             display: grid; grid-template-columns: 40% 1fr;
@@ -8141,15 +8170,16 @@ h3, h4, h5, h6, p,
                  with a large hero image beneath it. A "1 / N" counter sits in the
                  bottom-right; swipe to move between slides. -->
             <div class="sale-showcase">
-              <!-- Sales title above the full-screen sale tile. -->
-              <h2 class="omega-sale-title">sales</h2>
-              <!-- Full-screen entry to the sale page: a looping video, the whole
-                   tile linking through to sales.html. -->
+              <!-- Editorial entry to the sale page: a looping video with a
+                   bottom-anchored copy stack, the whole tile linking to sales.html. -->
               <a class="omega-sale" href="sales.html" aria-label="Shop the sale">
                   <video class="omega-sale-video" src="assets/hero/clothing-section.mp4"
                          autoplay muted loop playsinline preload="metadata"
                          poster="assets/sale-tile-bg.jpg"></video>
                   <span class="omega-sale-cap">
+                      <span class="omega-sale-kicker">End of season</span>
+                      <span class="omega-sale-word">The Sale</span>
+                      <span class="omega-sale-sub">Up to 50% off selected pieces — while they last.</span>
                       <span class="omega-sale-cta">Shop the sale <span aria-hidden="true">&#8250;</span></span>
                   </span>
               </a>
