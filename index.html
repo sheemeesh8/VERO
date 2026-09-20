@@ -6675,27 +6675,19 @@
         .omega-product-img img { width: 100%; height: 100%; object-fit: contain; }
         .omega-product-img .omega-emoji { font-size: clamp(56px, 18vw, 96px); }
         .omega-product-info { display: flex; flex-direction: column; align-items: flex-start; text-decoration: none; color: inherit; }
-        /* Line 2: product name and price side by side. */
-        .omega-product-line { display: flex; align-items: baseline; gap: 12px; margin-top: 8px; }
-        /* Red brand eyebrow above the name — OMEGA's signature red. */
-        /* Minimalist Aharoni copy to match the sale tile: a small eyebrow, a bold
-           name (heading), then same-size regular spec/price. */
-        .omega-product-brand {
-            font-size: 12px; letter-spacing: 0.4em; text-transform: uppercase;
-            font-weight: 500; color: #9a9a95; margin-bottom: 8px;
-        }
-        .omega-product-name {
+        /* Minimalist Aharoni stack: brand + name (bold), faded meta line, then price. */
+        .omega-product-head {
             margin: 0; font-weight: 700; letter-spacing: 0.12em; text-transform: none;
             font-size: 14px; color: #111; line-height: 1.5;
         }
-        .omega-product-name:not(#z):not(#z):not(#z) {
+        .omega-product-head:not(#z):not(#z):not(#z) {
             font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important;
         }
-        .omega-product-spec {
-            margin-top: 4px; font-size: 14px; color: #6b6b66; letter-spacing: 0.12em;
+        .omega-product-meta {
+            margin-top: 5px; font-size: 13px; color: #a3a39d; letter-spacing: 0.12em;
         }
         .omega-product-price {
-            margin: 0; font-size: 14px; font-weight: 400; color: #111; letter-spacing: 0.12em;
+            margin-top: 6px; font-size: 14px; font-weight: 400; color: #111; letter-spacing: 0.12em;
         }
         .omega-product-details {
             margin-top: 14px; text-decoration: none; color: #111;
@@ -8216,6 +8208,19 @@ h3, h4, h5, h6, p,
                             : '<span class="omega-emoji">' + esc(p.icon || '🛍️') + '</span>';
                         var brand = p.seller || '';
                         var spec = p.category || '';
+                        // The seed data has no size/gender/condition, so derive stable,
+                        // varied values per item for the faded meta line.
+                        var key = String(p.id || p.name || '');
+                        var h = 0; for (var _i = 0; _i < key.length; _i++) h = (h * 31 + key.charCodeAt(_i)) >>> 0;
+                        var blob = (spec + ' ' + (p.name || '')).toLowerCase();
+                        var isShoe = /shoe|sandal|boot|sneaker|heel|loafer/.test(blob);
+                        var isAcc  = /accessor|hat|bag|belt|scarf|glove|jewel|watch|sunglass/.test(blob);
+                        var size = isAcc ? 'One size'
+                                 : isShoe ? 'EU ' + (39 + (h % 7))
+                                 : ['XS', 'S', 'M', 'L', 'XL'][h % 5];
+                        var gender = ['Men', 'Women', 'Unisex'][(h >> 3) % 3];
+                        var condition = ['Excellent', 'Like new', 'Very good', 'Good'][(h >> 5) % 4];
+                        var meta = size + ' · ' + gender + ' · ' + condition;
                         var productData = JSON.stringify({
                             name: p.name, price: priceNum, icon: p.icon, cover: p.cover || '',
                             category: p.category || '', seller: p.seller, rating: p.rating || 4.5,
@@ -8226,11 +8231,9 @@ h3, h4, h5, h6, p,
                                    '<div class="omega-product">' +
                                        '<div class="omega-product-img">' + media + '</div>' +
                                        '<a class="omega-product-info" href="' + esc(href) + '">' +
-                                           '<div class="omega-product-brand">' + esc(brand) + '</div>' +
-                                           '<div class="omega-product-line">' +
-                                               '<span class="omega-product-name">' + esc(p.name) + '</span>' +
-                                               '<span class="omega-product-price">' + VC.money(priceNum) + '</span>' +
-                                           '</div>' +
+                                           '<div class="omega-product-head">' + esc((brand ? brand + ' ' : '') + p.name) + '</div>' +
+                                           '<div class="omega-product-meta">' + esc(meta) + '</div>' +
+                                           '<div class="omega-product-price">' + VC.money(priceNum) + '</div>' +
                                        '</a>' +
                                    '</div>' +
                                '</div>';
