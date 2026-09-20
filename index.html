@@ -6587,18 +6587,18 @@
             background: #fff;
         }
         .omega-slider { position: relative; }
-        /* The track holds all slides in a row; the user swipes it horizontally. */
-        .omega-track {
-            display: flex;
-            overflow-x: auto; scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch; scrollbar-width: none;
-        }
+        /* The slides are stacked in one grid cell and cross-fade between products
+           (no horizontal scroll) — the container sizes to the tallest slide. */
+        .omega-track { display: grid; }
         .omega-track::-webkit-scrollbar { display: none; }
         .omega-slide {
-            flex: 0 0 100%; min-width: 100%;
-            scroll-snap-align: center; scroll-snap-stop: always;
+            grid-area: 1 / 1;
             display: flex; flex-direction: column;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.6s ease;
         }
+        .omega-slide.is-active { opacity: 1; pointer-events: auto; }
+        @media (prefers-reduced-motion: reduce) { .omega-slide { transition: none; } }
         .omega-sale-title { display: none; }
         /* Small "sales" eyebrow above the tile — Aharoni CLM (the site default),
            letter-spaced, uppercase. Class avoids "title" so the Bodoni heading
@@ -8243,6 +8243,28 @@ h3, h4, h5, h6, p,
 
                     track.innerHTML = items.map(slide).join('');
                     wrap.hidden = false;
+
+                    // Cross-fade between products (no slide): auto-rotate + swipe.
+                    var slides = track.querySelectorAll('.omega-slide');
+                    if (slides.length) {
+                        var idx = 0;
+                        slides[0].classList.add('is-active');
+                        function goTo(n) {
+                            slides[idx].classList.remove('is-active');
+                            idx = (n + slides.length) % slides.length;
+                            slides[idx].classList.add('is-active');
+                        }
+                        var timer = setInterval(function () { goTo(idx + 1); }, 4500);
+                        var sx = 0, tracking = false;
+                        track.addEventListener('touchstart', function (e) {
+                            sx = e.touches[0].clientX; tracking = true; clearInterval(timer);
+                        }, { passive: true });
+                        track.addEventListener('touchend', function (e) {
+                            if (!tracking) return; tracking = false;
+                            var dx = e.changedTouches[0].clientX - sx;
+                            if (Math.abs(dx) > 40) goTo(idx + (dx < 0 ? 1 : -1));
+                        });
+                    }
                 })();
             </script>
 
