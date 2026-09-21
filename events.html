@@ -122,6 +122,18 @@
   .bbtn.remove { border: none; color: var(--muted); }
   .bbtn.remove:hover { color: var(--popup); }
   .cal-cell.booth-day::after { content: ''; position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--meetup); }
+
+  /* Public attendee list — which sellers have a booth + what they sell. */
+  .ev-attend { grid-column: 1 / -1; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .ev-attend-h { font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; }
+  .ev-sellers { display: flex; flex-wrap: wrap; gap: 7px; }
+  .seller { font-size: 11.5px; padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; display: inline-flex; align-items: baseline; gap: 6px; }
+  .seller b { font-weight: 500; }
+  .seller .cat { color: var(--muted); font-size: 10.5px; }
+  .seller.you { border-color: var(--ink); }
+  .ev-more { font-size: 11px; color: var(--muted); align-self: center; }
+  /* Category selector in the booth panel. */
+  .cat-sel { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
   .ev-empty { color: var(--muted); font-size: 13px; padding: 40px 0; text-align: center; font-weight: 300; }
 
   .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 22px; font-size: 10.5px; color: var(--muted); }
@@ -274,6 +286,29 @@
     }
     var productNames = listings.map(function (p) { return p.title || p.name || 'Item'; }).filter(Boolean);
 
+    // What a seller sells — a mixed market has several of these side by side.
+    var CATEGORIES = ['Fashion boutique', 'Clothing', 'Vintage', 'Accessories', 'Footwear', 'Art & home'];
+    // Demo sellers whose booths appear publicly on each event (so buyers see who's coming).
+    var SELLERS = [
+      { name: 'Studio Noir',  cat: 'Fashion boutique' },
+      { name: 'Vintage Vault', cat: 'Vintage' },
+      { name: 'Knit & Co',    cat: 'Clothing' },
+      { name: 'Sole Society',  cat: 'Footwear' },
+      { name: 'Atelier V',    cat: 'Fashion boutique' },
+      { name: 'Bloom & Co',   cat: 'Accessories' },
+      { name: 'Canvas Home',   cat: 'Art & home' }
+    ];
+    function hashStr(s) { var h = 0; s = String(s); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+    var myShop = readJSON('vero_store_config', {}) || {};
+    var myShopName = myShop.name || 'Your shop';
+    function attendeesFor(e) {
+      var h = hashStr(e.id || e.title), n = 2 + (h % 3), out = [];
+      for (var i = 0; i < n; i++) out.push(SELLERS[(h + i * 3) % SELLERS.length]);
+      var b = booths[e.id];
+      if (b) out.unshift({ name: myShopName, cat: b.category || 'Fashion boutique', you: true, items: (b.products || []).length });
+      return out;
+    }
+
     var isSeller = false;
     try { isSeller = localStorage.getItem('vero_active_account') === 'seller'; } catch (e) {}
     if (/[?&]seller=1/.test(location.search)) isSeller = true;
@@ -333,16 +368,29 @@
         join = '<div class="ev-join">' + plusBtn + delBtn + '</div>';
       }
       var panel = isSeller ? boothPanel(e) : '';
+      // Public attendee list: which sellers have a booth + what they sell.
+      var att = attendeesFor(e);
+      var cats = []; att.forEach(function (s) { if (cats.indexOf(s.cat) < 0) cats.push(s.cat); });
+      var mix = cats.length > 1 ? 'Mixed market · ' : '';
+      var sellers = att.slice(0, 5).map(function (s) {
+        return '<span class="seller' + (s.you ? ' you' : '') + '"><b>' + esc(s.you ? 'You' : s.name) + '</b><span class="cat">' + esc(s.cat) + '</span></span>';
+      }).join('') + (att.length > 5 ? '<span class="ev-more">+' + (att.length - 5) + '</span>' : '');
+      var attend = '<div class="ev-attend"><div class="ev-attend-h">' + mix + att.length + ' sellers attending</div><div class="ev-sellers">' + sellers + '</div></div>';
       return '<div class="ev' + (isPast ? ' past' : '') + '" data-ev="' + e.id + '">' +
         '<div class="ev-date"><div class="ev-day">' + dd + '</div><div class="ev-mon">' + MON[mm] + '</div></div>' +
         '<div><div class="ev-title">' + esc(e.title) + '</div><div class="ev-meta">' + meta + '</div></div>' +
         '<div class="ev-time">' + esc(e.time) + join + '</div>' +
+        attend +
         panel +
       '</div>';
     }
 
     function boothPanel(e) {
       var booth = booths[e.id], sel = (booth && booth.products) || [];
+      var curCat = (booth && booth.category) || CATEGORIES[0];
+      var catSel = '<div class="cat-sel">' + CATEGORIES.map(function (c) {
+        return '<button class="chip' + (c === curCat ? ' on' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
+      }).join('') + '</div>';
       var chips = productNames.length
         ? '<div class="chips">' + productNames.map(function (n) {
             var on = sel.indexOf(n) > -1;
@@ -351,7 +399,9 @@
         : '<div class="booth-empty">No products yet — add items to your shop first.</div>';
       return '<div class="booth" data-panel="' + e.id + '"><div class="booth-inner">' +
         '<div class="booth-t">Your booth · ' + esc(e.title) + '</div>' +
-        '<div class="booth-lede">Pick the pieces you\'ll bring to sell at this event.</div>' +
+        '<div class="booth-lede">What you sell (shown to buyers on this event):</div>' +
+        catSel +
+        '<div class="booth-lede">Pick the pieces you\'ll bring:</div>' +
         chips +
         '<div class="booth-actions">' +
           (booth ? '<button class="bbtn remove" data-remove="' + e.id + '">Remove booth</button>' : '') +
@@ -440,13 +490,20 @@
           var panel = detail.querySelector('[data-panel="' + plus.getAttribute('data-booth') + '"]');
           if (panel) panel.classList.toggle('open');
         } else if (chip) {
-          chip.classList.toggle('on');
+          if (chip.hasAttribute('data-cat')) {
+            // Category is single-select.
+            var sel = chip.closest('.cat-sel');
+            if (sel) sel.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('on', c === chip); });
+          } else {
+            chip.classList.toggle('on');
+          }
         } else if (saveB) {
           var id = saveB.getAttribute('data-save');
           var panelEl = detail.querySelector('[data-panel="' + id + '"]');
-          var chosen = panelEl ? Array.prototype.map.call(panelEl.querySelectorAll('.chip.on'), function (c) { return c.getAttribute('data-prod'); }) : [];
+          var chosen = panelEl ? Array.prototype.map.call(panelEl.querySelectorAll('.chips .chip.on'), function (c) { return c.getAttribute('data-prod'); }) : [];
+          var catOn = panelEl ? panelEl.querySelector('.cat-sel .chip.on') : null;
           var ev = eventById(id) || {};
-          booths[id] = { title: ev.title, date: ev.date, place: ev.place, type: ev.type, time: ev.time, products: chosen };
+          booths[id] = { title: ev.title, date: ev.date, place: ev.place, type: ev.type, time: ev.time, products: chosen, category: catOn ? catOn.getAttribute('data-cat') : undefined };
           saveBooths(); refresh();
         } else if (rem) {
           var rid = rem.getAttribute('data-remove');
