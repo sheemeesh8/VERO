@@ -1565,6 +1565,8 @@
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
                 <a class="primary" href="about.html">About</a>
+                <span class="vero-drawer-heading">Events</span>
+                <a class="secondary" href="events.html" onclick="veroCloseDrawer()">Calendar &amp; happenings</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>
                 <a class="secondary" id="veroAreaLink" onclick="veroCloseDrawer(); veroGoAccount('buyer','profile.html')">My Profile</a>
                 <a class="secondary" id="veroChatsLink" onclick="veroCloseDrawer(); location.href = (localStorage.getItem('vero_active_account')==='seller' ? 'chats.html?from=seller' : 'chats.html')">Chats</a>
