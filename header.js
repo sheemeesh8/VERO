@@ -531,15 +531,15 @@
         #siteHeader .toggle-category {
             position: relative; display: inline-block; box-sizing: border-box;
             width: 40px; height: 21px; flex: 0 0 auto;
-            background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
+            background: transparent; padding: 0; border-radius: 5px; cursor: pointer;
             /* Not "all": border-color is mode-driven and must switch immediately when
                the mode flips — transitioning it left the switch showing the old
                mode's colour. */
             transition: background 0.3s ease; border: 1px solid rgba(0, 0, 0, 0.18);
         }
         #siteHeader .toggle-category::before {
-            content: ''; position: absolute; top: 3px; left: 3px;
-            width: 15px; height: 15px; border-radius: 50%; background: #111; z-index: 0;
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 17px; height: 17px; border-radius: 3px; background: #111; z-index: 0;
             /* Only the slide animates. The knob's colour is mode-driven, same as the
                track's border, and must switch instantly rather than fade. */
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
