@@ -98,7 +98,7 @@
         /* Wishlist heart + the little cart caret are white like the other header icons. */
         #siteHeader .hwp-ico, #siteHeader .hdr-cart-caret { color: #fff; }
         #siteHeader .hwp-ico svg, #siteHeader .hdr-cart-caret svg { stroke: #fff !important; }
-        #siteHeader .toggle-category { border-color: rgba(255,255,255,0.7); }
+        #siteHeader .toggle-category { border-color: rgba(255,255,255,0.95); }
         #siteHeader .toggle-category::before { background: #fff; }
         #siteHeader .toggle-category .seg { color: #ddd; }
         #siteHeader .toggle-category .seg.active { color: #111; }
@@ -120,7 +120,7 @@
         #siteHeader.scrolled .hdr-cart-caret { color: #1b1916; }
         #siteHeader.scrolled .hwp-ico svg,
         #siteHeader.scrolled .hdr-cart-caret svg { stroke: #1b1916 !important; }
-        #siteHeader.scrolled .toggle-category { border-color: rgba(0,0,0,0.18); }
+        #siteHeader.scrolled .toggle-category { border-color: rgba(0,0,0,0.55); }
         #siteHeader.scrolled .toggle-category::before { background: #111; }
         #siteHeader.scrolled .toggle-category .seg { color: #6b6b6b; }
         #siteHeader.scrolled .toggle-category .seg.active { color: #fff; }
@@ -238,7 +238,7 @@
         /* Category toggle on the light sticky-look bar: it inherits the white
            treatment made for the dark hero, which is invisible here — force it black
            to match the search field and the rest of the sticky-look chrome. */
-        #siteHeader.sticky-look:not(.scrolled) .toggle-category { color: #111; border-color: rgba(0,0,0,0.22); }
+        #siteHeader.sticky-look:not(.scrolled) .toggle-category { color: #111; border-color: rgba(0,0,0,0.55); }
         #siteHeader.sticky-look:not(.scrolled) .toggle-category::before { background: #111; }
         #siteHeader.sticky-look:not(.scrolled) .toggle-category .seg { color: #6b6b6b; }
         #siteHeader.sticky-look:not(.scrolled) .toggle-category .seg.active { color: #fff; }
@@ -535,7 +535,7 @@
             /* Not "all": border-color is mode-driven and must switch immediately when
                the mode flips — transitioning it left the switch showing the old
                mode's colour. */
-            transition: background 0.3s ease; border: 1px solid rgba(0, 0, 0, 0.18);
+            transition: background 0.3s ease; border: 1.5px solid rgba(0, 0, 0, 0.55);
         }
         #siteHeader .toggle-category::before {
             content: ''; position: absolute; top: 2px; left: 2px;
@@ -550,7 +550,7 @@
             position: absolute; width: 1px; height: 1px; overflow: hidden;
             clip: rect(0 0 0 0); white-space: nowrap;
         }
-        #siteHeader .toggle-category:hover { border-color: rgba(0, 0, 0, 0.45); }
+        #siteHeader .toggle-category:hover { border-color: rgba(0, 0, 0, 0.75); }
         #siteHeader .icon-btn {
             background: none; border: none; cursor: pointer; font-size: 26.67px;
             transition: transform 0.2s; color: #111; width: 38px; height: 38px;
@@ -655,7 +655,7 @@
         #siteHeader.sticky-look.scrolled { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); }
         /* Home header floating over the hero — the category switch reads white (track
            border + knob) so it stands out on the dark image, matching the white logo. */
-        #siteHeader.sticky-look:not(.scrolled) .toggle-category { border-color: rgba(255,255,255,0.6); }
+        #siteHeader.sticky-look:not(.scrolled) .toggle-category { border-color: rgba(255,255,255,0.95); }
         #siteHeader.sticky-look:not(.scrolled) .toggle-category::before { background: #fff; }
         #siteHeader.sticky-look:not(.scrolled) .toggle-category:hover { border-color: #fff; }
         /* The header sits 18px down from the top edge; this fills that strip with
@@ -672,7 +672,7 @@
         #siteHeader.scrolled .header-left > a,
         #siteHeader.scrolled .logo,
         #siteHeader.scrolled .toggle-category { color: #111; }
-        #siteHeader.scrolled .toggle-category { border-color: rgba(0,0,0,0.18); }
+        #siteHeader.scrolled .toggle-category { border-color: rgba(0,0,0,0.55); }
         #siteHeader.scrolled .toggle-category::before { background: #111; }
         #siteHeader.scrolled .toggle-category .seg { color: #6b6b6b; }
         #siteHeader.scrolled .toggle-category .seg.active { color: #fff; }
@@ -695,7 +695,7 @@
         /* mix-blend-mode already inverts the logo against the dark header — no filter. */
         #siteHeader.scrolled.over-dark .logo-img { filter: none; }
         #siteHeader.scrolled.over-dark .header-left > a:hover { color: rgba(255,255,255,0.6); }
-        #siteHeader.scrolled.over-dark .toggle-category { border-color: rgba(255,255,255,0.28); }
+        #siteHeader.scrolled.over-dark .toggle-category { border-color: rgba(255,255,255,0.6); }
         #siteHeader.scrolled.over-dark .toggle-category::before { background: #fff; }
         #siteHeader.scrolled.over-dark .toggle-category .seg { color: #b8b8b8; }
         #siteHeader.scrolled.over-dark .toggle-category .seg.active { color: #111; }
@@ -755,7 +755,7 @@
         #siteHeader.force-dark .logo,
         #siteHeader.force-dark .toggle-category { color: #111; }
         #siteHeader.force-dark .header-left > a:hover { color: rgba(0,0,0,0.55); }
-        #siteHeader.force-dark .toggle-category { border-color: rgba(0,0,0,0.18); }
+        #siteHeader.force-dark .toggle-category { border-color: rgba(0,0,0,0.55); }
         #siteHeader.force-dark .toggle-category::before { background: #111; }
         #siteHeader.force-dark .toggle-category .seg { color: #6b6b6b; }
         #siteHeader.force-dark .toggle-category .seg.active { color: #fff; }
@@ -772,7 +772,7 @@
         #siteHeader.force-light .logo,
         #siteHeader.force-light .toggle-category { color: #111; }
         #siteHeader.force-light .header-left > a:hover { color: rgba(0,0,0,0.55); }
-        #siteHeader.force-light .toggle-category { border-color: rgba(0,0,0,0.18); }
+        #siteHeader.force-light .toggle-category { border-color: rgba(0,0,0,0.55); }
         #siteHeader.force-light .toggle-category::before { background: #111; }
         #siteHeader.force-light .toggle-category .seg { color: #6b6b6b; }
         #siteHeader.force-light .toggle-category .seg.active { color: #fff; }
