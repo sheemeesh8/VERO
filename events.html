@@ -92,6 +92,32 @@
   .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 22px; font-size: 10.5px; color: var(--muted); }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  /* ---- Seller: add-event control + form ---- */
+  .add-btn {
+    font: inherit; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; cursor: pointer;
+    border: 1px solid var(--ink); border-radius: 999px; background: none; color: var(--ink); transition: all 0.2s;
+  }
+  .add-btn:hover { background: var(--ink); color: #fff; }
+  .add-btn svg { width: 13px; height: 13px; }
+  .add-form { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; border-bottom: 1px solid var(--line); }
+  .add-form.open { max-height: 460px; }
+  .add-inner { padding: 20px 2px 26px; display: grid; gap: 14px; }
+  .fld { display: grid; gap: 6px; }
+  .fld label { font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+  .fld input, .fld select {
+    font: inherit; font-size: 14px; color: var(--ink); background: none;
+    border: none; border-bottom: 1px solid var(--line-strong); padding: 8px 2px; outline: none; width: 100%;
+  }
+  .fld input:focus, .fld select:focus { border-bottom-color: var(--ink); }
+  .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .add-actions { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
+  .add-actions .spacer { flex: 1; }
+  .fbtn { font: inherit; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 11px 18px; border-radius: 999px; cursor: pointer; border: 1px solid var(--line-strong); background: none; color: var(--ink); transition: all 0.2s; }
+  .fbtn:hover { border-color: var(--ink); }
+  .fbtn.save { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .fbtn.cancel { border: none; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -104,6 +130,33 @@
     <div class="eyebrow">What's on</div>
     <h1>Events</h1>
     <p class="lede">Drops, sales and live sessions. Browse the months to see what's coming — and what already happened.</p>
+
+    <div id="sellerAdd" style="display:none; margin-top:22px;">
+      <button class="add-btn" id="addToggle" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Add event
+      </button>
+      <div class="add-form" id="addForm">
+        <div class="add-inner">
+          <div class="fld"><label for="fTitle">Title</label><input id="fTitle" type="text" placeholder="e.g. Winter Capsule Drop"></div>
+          <div class="fld-row">
+            <div class="fld"><label for="fDate">Date</label><input id="fDate" type="date"></div>
+            <div class="fld"><label for="fTime">Time</label><input id="fTime" type="text" placeholder="18:00 / All day"></div>
+          </div>
+          <div class="fld-row">
+            <div class="fld"><label for="fType">Type</label>
+              <select id="fType"><option value="drop">Drop</option><option value="sale">Sale</option><option value="live">Live</option><option value="meetup">Meetup</option></select>
+            </div>
+            <div class="fld"><label for="fPlace">Place (optional)</label><input id="fPlace" type="text" placeholder="Online / Tel Aviv"></div>
+          </div>
+          <div class="add-actions">
+            <button class="fbtn cancel" id="fCancel" type="button">Cancel</button>
+            <div class="spacer"></div>
+            <button class="fbtn save" id="fSave" type="button">Save event</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="cal-nav">
       <button class="cal-arrow" id="prev" aria-label="Previous month"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
@@ -143,8 +196,11 @@
     function iso(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
     function shift(days) { var x = new Date(base); x.setDate(x.getDate()+days); return iso(x); }
 
-    // Demo events spread around today so both past and upcoming months are populated.
-    var EVENTS = [
+    var readJSON = function (k, fb) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
+    var EKEY = 'vero_events';
+
+    // Live demo events (always current, relative to today) …
+    var DEMO = [
       { title: 'End of Season Sale',   date: shift(-46), type: 'sale',   time: 'All day' },
       { title: 'Vintage Vault Drop',   date: shift(-31), type: 'drop',   time: '18:00' },
       { title: 'Styling Live',         date: shift(-12), type: 'live',   time: '20:00' },
@@ -155,9 +211,17 @@
       { title: 'Designer Q&A',         date: shift(23),  type: 'live',   time: '20:30' },
       { title: 'Winter Capsule Drop',  date: shift(38),  type: 'drop',   time: '10:00' }
     ];
-
-    var byDate = {};
-    EVENTS.forEach(function (e) { (byDate[e.date] = byDate[e.date] || []).push(e); });
+    // … merged with the seller's own saved events (persisted in localStorage).
+    var userEvents = readJSON(EKEY, []);
+    if (!Array.isArray(userEvents)) userEvents = [];
+    var EVENTS = [], byDate = {};
+    function rebuild() {
+      EVENTS = DEMO.concat(userEvents);
+      byDate = {};
+      EVENTS.forEach(function (e) { (byDate[e.date] = byDate[e.date] || []).push(e); });
+    }
+    function saveUser() { try { localStorage.setItem(EKEY, JSON.stringify(userEvents)); } catch (e) {} }
+    rebuild();
 
     var view = new Date(base.getFullYear(), base.getMonth(), 1);
     var selected = null;
@@ -242,6 +306,41 @@
     document.getElementById('prev').addEventListener('click', function () { view.setMonth(view.getMonth()-1); selected = null; refresh(); });
     document.getElementById('next').addEventListener('click', function () { view.setMonth(view.getMonth()+1); selected = null; refresh(); });
     document.getElementById('todayBtn').addEventListener('click', function () { view = new Date(base.getFullYear(), base.getMonth(), 1); selected = null; refresh(); });
+
+    // ---- Seller: add-event form (only shown in the seller account). ----
+    var isSeller = false;
+    try { isSeller = localStorage.getItem('vero_active_account') === 'seller'; } catch (e) {}
+    if (isSeller || /[?&]seller=1/.test(location.search)) {
+      var sellerAdd = document.getElementById('sellerAdd');
+      var addForm = document.getElementById('addForm');
+      sellerAdd.style.display = 'block';
+      function openForm() {
+        document.getElementById('fDate').value = selected || iso(base);
+        addForm.classList.add('open');
+      }
+      function closeForm() { addForm.classList.remove('open'); }
+      document.getElementById('addToggle').addEventListener('click', function () {
+        addForm.classList.contains('open') ? closeForm() : openForm();
+      });
+      document.getElementById('fCancel').addEventListener('click', closeForm);
+      document.getElementById('fSave').addEventListener('click', function () {
+        var title = document.getElementById('fTitle').value.trim();
+        var date = document.getElementById('fDate').value;
+        if (!title || !date) { alert('Add a title and a date.'); return; }
+        userEvents.push({
+          title: title, date: date, type: document.getElementById('fType').value,
+          time: document.getElementById('fTime').value.trim() || 'All day',
+          place: document.getElementById('fPlace').value.trim() || undefined,
+          own: true
+        });
+        saveUser(); rebuild();
+        document.getElementById('fTitle').value = ''; document.getElementById('fTime').value = ''; document.getElementById('fPlace').value = '';
+        closeForm();
+        view = new Date(+date.slice(0,4), +date.slice(5,7)-1, 1);
+        selected = date;
+        refresh();
+      });
+    }
 
     refresh();
   })();
