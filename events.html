@@ -164,7 +164,34 @@
   <main class="wrap">
     <div class="eyebrow">What's on</div>
     <h1>Events</h1>
-    <p class="lede" id="lede">Markets, fairs and meetups near you. Sellers — tap <b>+</b> on any event to book a booth and pick the pieces you'll bring.</p>
+    <p class="lede" id="lede">Markets, fairs and meetups near you. Tap <b>+</b> on any event to book a booth and pick the pieces you'll bring — or host your own market below.</p>
+
+    <div id="sellerAdd" style="display:none; margin-top:22px;">
+      <button class="add-btn" id="addToggle" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Host an event
+      </button>
+      <div class="add-form" id="addForm">
+        <div class="add-inner">
+          <div class="fld"><label for="fTitle">Event name</label><input id="fTitle" type="text" placeholder="e.g. Neighbourhood Flea Market"></div>
+          <div class="fld-row">
+            <div class="fld"><label for="fDate">Date</label><input id="fDate" type="date"></div>
+            <div class="fld"><label for="fTime">Time</label><input id="fTime" type="text" placeholder="10:00–18:00"></div>
+          </div>
+          <div class="fld-row">
+            <div class="fld"><label for="fType">Type</label>
+              <select id="fType"><option value="market">Market</option><option value="fair">Fair</option><option value="meetup">Meetup</option><option value="popup">Pop-up</option></select>
+            </div>
+            <div class="fld"><label for="fPlace">Location</label><input id="fPlace" type="text" placeholder="e.g. Dizengoff Sq, Tel Aviv"></div>
+          </div>
+          <div class="add-actions">
+            <button class="fbtn cancel" id="fCancel" type="button">Cancel</button>
+            <div class="spacer"></div>
+            <button class="fbtn save" id="fSave" type="button">Create event</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="cal-nav">
       <button class="cal-arrow" id="prev" aria-label="Previous month"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
@@ -218,8 +245,18 @@
       { id: 'e7', title: 'Artisans Fair',       date: shift(26),  type: 'fair',   time: '10:00–17:00', place: 'Ramat Gan Park' },
       { id: 'e8', title: 'Vintage Flea Market', date: shift(40),  type: 'market', time: '10:00–18:00', place: 'Dizengoff Sq, Tel Aviv' }
     ];
+    var CURATED = EVENTS;
+    // Community-hosted events (created via "Host an event"), persisted locally.
+    var userEvents = readJSON('vero_events', []);
+    if (!Array.isArray(userEvents)) userEvents = [];
     var byDate = {};
-    EVENTS.forEach(function (e) { (byDate[e.date] = byDate[e.date] || []).push(e); });
+    function rebuild() {
+      EVENTS = CURATED.concat(userEvents);
+      byDate = {};
+      EVENTS.forEach(function (e) { (byDate[e.date] = byDate[e.date] || []).push(e); });
+    }
+    function saveUser() { try { localStorage.setItem('vero_events', JSON.stringify(userEvents)); } catch (e) {} }
+    rebuild();
     function eventById(id) { for (var i = 0; i < EVENTS.length; i++) if (EVENTS[i].id === id) return EVENTS[i]; return null; }
 
     // The seller's booth reservations: { eventId: { products: [names] } }.
@@ -283,14 +320,17 @@
       var parts = e.date.split('-'), dd = +parts[2], mm = +parts[1]-1;
       var meta = '<span class="ev-type">' + dot(e.type) + (TYPEN[e.type] || e.type) + '</span>';
       if (e.place) meta += '<span>· ' + esc(e.place) + '</span>';
+      if (e.own) meta += '<span>· Hosted by you</span>';
       var booth = booths[e.id];
       // Seller: a + to book a booth, or a "booked" badge that re-opens the panel.
       var join = '';
       if (isSeller && !isPast) {
-        join = booth
-          ? '<div class="ev-join"><span class="ev-booked"><span class="chk"></span>Booth · ' + (booth.products ? booth.products.length : 0) + ' items</span>' +
-              '<button class="ev-plus" data-booth="' + e.id + '" aria-label="Edit booth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></div>'
-          : '<div class="ev-join"><button class="ev-plus" data-booth="' + e.id + '" aria-label="Book a booth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>';
+        var plusBtn = booth
+          ? '<span class="ev-booked"><span class="chk"></span>Booth · ' + (booth.products ? booth.products.length : 0) + ' items</span>' +
+              '<button class="ev-plus" data-booth="' + e.id + '" aria-label="Edit booth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>'
+          : '<button class="ev-plus" data-booth="' + e.id + '" aria-label="Book a booth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>';
+        var delBtn = e.own ? '<button class="ev-plus" data-delevent="' + e.id + '" aria-label="Cancel event"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>' : '';
+        join = '<div class="ev-join">' + plusBtn + delBtn + '</div>';
       }
       var panel = isSeller ? boothPanel(e) : '';
       return '<div class="ev' + (isPast ? ' past' : '') + '" data-ev="' + e.id + '">' +
@@ -360,14 +400,43 @@
     document.getElementById('next').addEventListener('click', function () { view.setMonth(view.getMonth()+1); selected = null; refresh(); });
     document.getElementById('todayBtn').addEventListener('click', function () { view = new Date(base.getFullYear(), base.getMonth(), 1); selected = null; refresh(); });
 
-    // ---- Seller: book a booth at an event + pick which products to bring. ----
+    // ---- Seller: host an event, book a booth, and pick which products to bring. ----
     if (isSeller) {
+      // Host-an-event form.
+      var addForm = document.getElementById('addForm');
+      var fTitle = document.getElementById('fTitle'), fDate = document.getElementById('fDate'),
+          fTime = document.getElementById('fTime'), fType = document.getElementById('fType'),
+          fPlace = document.getElementById('fPlace'), addToggle = document.getElementById('addToggle');
+      document.getElementById('sellerAdd').style.display = 'block';
+      function openForm() { fDate.value = selected || iso(base); addForm.classList.add('open'); }
+      function closeForm() { addForm.classList.remove('open'); }
+      addToggle.addEventListener('click', function () { addForm.classList.contains('open') ? closeForm() : openForm(); });
+      document.getElementById('fCancel').addEventListener('click', closeForm);
+      document.getElementById('fSave').addEventListener('click', function () {
+        var title = fTitle.value.trim(), date = fDate.value;
+        if (!title || !date) { alert('Add a name and a date.'); return; }
+        userEvents.push({ id: 'u' + Date.now(), title: title, date: date, type: fType.value,
+          time: fTime.value.trim() || 'All day', place: fPlace.value.trim() || undefined, own: true });
+        saveUser(); rebuild(); closeForm();
+        fTitle.value = ''; fTime.value = ''; fPlace.value = '';
+        view = new Date(+date.slice(0,4), +date.slice(5,7)-1, 1); selected = date; refresh();
+      });
+
+      // Booth booking + product picking, and cancelling your own hosted event.
       detail.addEventListener('click', function (e) {
         var plus = e.target.closest('[data-booth]');
         var chip = e.target.closest('.chip');
         var saveB = e.target.closest('[data-save]');
         var rem = e.target.closest('[data-remove]');
-        if (plus) {
+        var delEv = e.target.closest('[data-delevent]');
+        if (delEv) {
+          var eid = delEv.getAttribute('data-delevent');
+          if (confirm('Cancel this event?')) {
+            userEvents = userEvents.filter(function (u) { return u.id !== eid; });
+            if (booths[eid]) { delete booths[eid]; saveBooths(); }
+            saveUser(); rebuild(); refresh();
+          }
+        } else if (plus) {
           var panel = detail.querySelector('[data-panel="' + plus.getAttribute('data-booth') + '"]');
           if (panel) panel.classList.toggle('open');
         } else if (chip) {
@@ -377,7 +446,6 @@
           var panelEl = detail.querySelector('[data-panel="' + id + '"]');
           var chosen = panelEl ? Array.prototype.map.call(panelEl.querySelectorAll('.chip.on'), function (c) { return c.getAttribute('data-prod'); }) : [];
           var ev = eventById(id) || {};
-          // Store the event details with the booth so the storefront can show it.
           booths[id] = { title: ev.title, date: ev.date, place: ev.place, type: ev.type, time: ev.time, products: chosen };
           saveBooths(); refresh();
         } else if (rem) {
