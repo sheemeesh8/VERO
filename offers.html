@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Phone-only presentation: opened as a top-level window this page hands off to
+     phone-frame.html. Inside a frame (window.top !== self) the check is skipped. -->
+<script>
+  if (window.self === window.top && !/[?&]embed=1/.test(location.search)) {
+    var pf = location.pathname.split('/').pop() || 'index';
+    if (!/\.html$/.test(pf)) pf += '.html';
+    location.replace('phone-frame.html#page=' + encodeURIComponent(pf + location.search));
+  }
+</script>
+<title>Offers &amp; Negotiation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Poppins:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #16150f;
+    --muted: #8f8d86;
+    --line: #e6e4de;
+    --line-strong: #cfccc4;
+    --accent: #b23b3b;
+    --ok: #1f8f4e;
+    --bg: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--ink);
+    font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ---- Standalone chrome (hidden when embedded) ---- */
+  .back {
+    position: fixed; top: 20px; left: 20px; z-index: 40;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border: 1px solid var(--ink); border-radius: 999px;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    text-decoration: none; color: var(--ink); background: var(--bg);
+    transition: background 0.2s, color 0.2s;
+  }
+  .back:hover { background: var(--ink); color: #fff; }
+  html.is-embed .back { display: none !important; }
+
+  .wrap { max-width: 640px; margin: 0 auto; padding: 84px 24px 80px; }
+  html.is-embed .wrap { padding: 20px 18px 120px; }
+
+  /* ---- Header ---- */
+  .eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); }
+  h1 {
+    font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
+    font-weight: 500; font-size: clamp(30px, 8vw, 42px); line-height: 1.05;
+    margin: 12px 0 14px; letter-spacing: 0.5px;
+  }
+  .lede { color: var(--muted); font-size: 13px; font-weight: 300; max-width: 42ch; }
+
+  /* ---- Summary strip: three fine columns divided by hairlines ---- */
+  .summary {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    margin: 30px 0 6px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .sm { padding: 16px 6px; text-align: center; position: relative; }
+  .sm + .sm::before { content: ''; position: absolute; left: 0; top: 18px; bottom: 18px; width: 1px; background: var(--line); }
+  .sm-num { font-family: 'Bodoni Moda', serif; font-weight: 500; font-size: 26px; line-height: 1; }
+  .sm-lbl { font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+
+  /* ---- Filter tabs — text with a thin active underline ---- */
+  .tabs { display: flex; gap: 22px; margin: 26px 0 6px; border-bottom: 1px solid var(--line); }
+  .tab {
+    background: none; border: none; cursor: pointer; font-family: inherit;
+    font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted);
+    padding: 0 0 12px; position: relative; transition: color 0.2s;
+  }
+  .tab.on { color: var(--ink); }
+  .tab.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--ink); }
+
+  /* ---- Offer list — hairline rows ---- */
+  .list { margin-top: 4px; }
+  .offer { border-bottom: 1px solid var(--line); }
+  .offer-head {
+    display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 14px;
+    padding: 20px 2px; cursor: pointer;
+  }
+  .thumb {
+    width: 40px; height: 40px; border: 1px solid var(--line-strong); border-radius: 50%;
+    display: grid; place-items: center; font-size: 19px;
+  }
+  .o-name { font-size: 14px; font-weight: 400; }
+  .o-buyer { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 0.2px; }
+  .o-right { text-align: right; }
+  .o-offer { font-family: 'Bodoni Moda', serif; font-weight: 500; font-size: 19px; line-height: 1; }
+  .o-was { font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .o-was s { text-decoration-thickness: 1px; }
+  .o-delta { color: var(--accent); }
+
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-top: 7px; }
+  .status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); display: inline-block; }
+  .status.pending .dot { background: #c9922b; }
+  .status.accepted { color: var(--ok); } .status.accepted .dot { background: var(--ok); }
+  .status.declined { color: var(--accent); } .status.declined .dot { background: var(--accent); }
+  .status.countered .dot { background: var(--ink); }
+
+  /* ---- Expanded negotiation panel ---- */
+  .panel { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+  .offer.open .panel { max-height: 620px; }
+  .panel-inner { padding: 4px 2px 24px; }
+  .thread { display: flex; flex-direction: column; gap: 10px; padding: 6px 0 16px; }
+  .msg { max-width: 78%; font-size: 12.5px; line-height: 1.5; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; }
+  .msg .who { display: block; font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .msg.them { align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msg.me { align-self: flex-end; border-color: var(--ink); border-bottom-right-radius: 4px; }
+  .msg .amt { font-family: 'Bodoni Moda', serif; font-weight: 500; }
+
+  .actions { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .btn {
+    font-family: inherit; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 11px 16px; border-radius: 999px; cursor: pointer; background: none;
+    border: 1px solid var(--line-strong); color: var(--ink); transition: all 0.2s; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--ink); }
+  .btn.accept { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .btn.accept:hover { opacity: 0.85; }
+  .btn.decline { border: none; color: var(--muted); padding-left: 4px; }
+  .btn.decline:hover { color: var(--accent); }
+  .counter { display: none; align-items: center; gap: 8px; margin-left: auto; }
+  .counter.show { display: flex; }
+  .counter input {
+    width: 96px; font-family: inherit; font-size: 14px; color: var(--ink);
+    border: none; border-bottom: 1px solid var(--line-strong); padding: 6px 4px; outline: none; background: none;
+  }
+  .counter input:focus { border-bottom-color: var(--ink); }
+  .spacer { flex: 1; }
+
+  .resolved { padding: 14px 2px 0; font-size: 12px; color: var(--muted); }
+  .resolved b { color: var(--ink); font-weight: 500; }
+
+  .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 60px 0; font-weight: 300; }
+
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .offer { animation: fade 0.4s ease both; }
+</style>
+</head>
+<body>
+  <a class="back" href="seller-area.html">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    Back
+  </a>
+
+  <main class="wrap">
+    <div class="eyebrow">Seller · Deals</div>
+    <h1>Offers &amp; Negotiation</h1>
+    <p class="lede">Every buyer offer on your pieces, with the back-and-forth in one calm thread. Accept, counter, or decline.</p>
+
+    <div class="summary">
+      <div class="sm"><div class="sm-num" id="sPending">0</div><div class="sm-lbl">Pending</div></div>
+      <div class="sm"><div class="sm-num" id="sAccepted">0</div><div class="sm-lbl">Accepted</div></div>
+      <div class="sm"><div class="sm-num" id="sValue">₪0</div><div class="sm-lbl">Open value</div></div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-f="all">All</button>
+      <button class="tab" data-f="pending">Pending</button>
+      <button class="tab" data-f="accepted">Accepted</button>
+      <button class="tab" data-f="declined">Declined</button>
+    </div>
+
+    <div class="list" id="list"></div>
+  </main>
+
+  <script>
+  (function offersPage() {
+    if (/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('is-embed');
+    var KEY = 'vero_received_offers';
+    var readJSON = function (k, fb) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
+    var save = function () { try { localStorage.setItem(KEY, JSON.stringify(offers)); } catch (e) {} };
+    var nis = function (n) { return '₪' + Math.round(n).toLocaleString('en-US'); };
+    var H = 36e5, D = 864e5;
+
+    var offers = readJSON(KEY, null);
+    if (!Array.isArray(offers) || !offers.length) {
+      offers = [
+        { name: 'Wool coat',    icon: '🧥', buyer: 'Maya L.',   askPrice: 269, offer: 230, at: Date.now() - 4 * H, status: 'pending' },
+        { name: 'Raw denim',    icon: '👖', buyer: 'Omer T.',   askPrice: 129, offer: 100, at: Date.now() - 9 * H, status: 'pending' },
+        { name: 'Silk scarf',   icon: '🧣', buyer: 'Noa B.',    askPrice: 210, offer: 175, at: Date.now() - 1 * D, status: 'countered', counter: 195 },
+        { name: 'Leather tote',  icon: '👜', buyer: 'Daniel K.', askPrice: 540, offer: 480, at: Date.now() - 2 * D, status: 'accepted' },
+        { name: 'Linen shirt',  icon: '👔', buyer: 'Tal R.',    askPrice: 95,  offer: 60,  at: Date.now() - 3 * D, status: 'declined' }
+      ];
+      save();
+    }
+
+    var filter = 'all';
+    var list = document.getElementById('list');
+
+    function pct(o) { return Math.round((1 - o.offer / o.askPrice) * 100); }
+    function when(ts) {
+      var s = (Date.now() - ts) / 1000;
+      if (s < 3600) return Math.max(1, Math.round(s / 60)) + 'm ago';
+      if (s < 86400) return Math.round(s / 3600) + 'h ago';
+      return Math.round(s / 86400) + 'd ago';
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+
+    function thread(o) {
+      // Build the negotiation thread from the offer's numbers + any counter.
+      var t = '<div class="thread">';
+      t += '<div class="msg them"><span class="who">' + esc(o.buyer) + '</span>Would you take <span class="amt">' + nis(o.offer) + '</span> for the ' + esc(o.name.toLowerCase()) + '?</div>';
+      if (o.status === 'countered' && o.counter) {
+        t += '<div class="msg me"><span class="who">You</span>Thanks! I can meet you at <span class="amt">' + nis(o.counter) + '</span>.</div>';
+      } else if (o.status === 'accepted') {
+        t += '<div class="msg me"><span class="who">You</span>Deal — <span class="amt">' + nis(o.offer) + '</span> it is. I\'ll get it shipped.</div>';
+      } else if (o.status === 'declined') {
+        t += '<div class="msg me"><span class="who">You</span>Sorry, I can\'t go that low on this one.</div>';
+      }
+      t += '</div>';
+      return t;
+    }
+
+    function actionsFor(o, i) {
+      if (o.status === 'accepted') return '<div class="resolved">Accepted at <b>' + nis(o.offer) + '</b> — moved to your chats.</div>';
+      if (o.status === 'declined') return '<div class="resolved">Declined. The buyer has been notified.</div>';
+      var counterLine = o.status === 'countered' ? '<div class="resolved">Countered at <b>' + nis(o.counter) + '</b> — waiting on the buyer.</div>' : '';
+      return counterLine +
+        '<div class="actions">' +
+          '<button class="btn decline" data-act="decline" data-i="' + i + '">Decline</button>' +
+          '<div class="spacer"></div>' +
+          '<button class="btn" data-act="counter-open" data-i="' + i + '">Counter</button>' +
+          '<button class="btn accept" data-act="accept" data-i="' + i + '">Accept ' + nis(o.offer) + '</button>' +
+          '<div class="counter" data-counter="' + i + '">' +
+            '<input type="number" inputmode="numeric" placeholder="' + Math.round((o.offer + o.askPrice) / 2) + '" data-cin="' + i + '">' +
+            '<button class="btn" data-act="counter-send" data-i="' + i + '">Send</button>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function render() {
+      var rows = offers.map(function (o, i) { return { o: o, i: i }; })
+        .filter(function (r) { return filter === 'all' || r.o.status === filter || (filter === 'pending' && r.o.status === 'countered'); });
+
+      var pend = offers.filter(function (o) { return o.status === 'pending' || o.status === 'countered'; });
+      document.getElementById('sPending').textContent = pend.length;
+      document.getElementById('sAccepted').textContent = offers.filter(function (o) { return o.status === 'accepted'; }).length;
+      document.getElementById('sValue').textContent = nis(pend.reduce(function (s, o) { return s + (o.counter || o.offer); }, 0));
+
+      if (!rows.length) { list.innerHTML = '<div class="empty">Nothing here yet.</div>'; return; }
+      list.innerHTML = rows.map(function (r) {
+        var o = r.o, i = r.i, label = o.status === 'countered' ? 'Countered' : o.status;
+        return '<div class="offer" data-row="' + i + '">' +
+          '<div class="offer-head" data-toggle="' + i + '">' +
+            '<div class="thumb">' + esc(o.icon || '🛍️') + '</div>' +
+            '<div><div class="o-name">' + esc(o.name) + '</div>' +
+              '<div class="o-buyer">' + esc(o.buyer) + ' · ' + when(o.at) + '</div>' +
+              '<div class="status ' + o.status + '"><span class="dot"></span>' + esc(label) + '</div></div>' +
+            '<div class="o-right">' +
+              '<div class="o-offer">' + nis(o.offer) + '</div>' +
+              '<div class="o-was"><s>' + nis(o.askPrice) + '</s> · <span class="o-delta">−' + pct(o) + '%</span></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="panel"><div class="panel-inner">' + thread(o) + actionsFor(o, i) + '</div></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // Expand / collapse.
+    list.addEventListener('click', function (e) {
+      var head = e.target.closest('[data-toggle]');
+      if (head && !e.target.closest('.actions') && !e.target.closest('.counter')) {
+        head.parentElement.classList.toggle('open');
+        return;
+      }
+      var btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      var i = +btn.getAttribute('data-i'), act = btn.getAttribute('data-act'), o = offers[i];
+      if (!o) return;
+      if (act === 'accept') { o.status = 'accepted'; save(); render(); reopen(i); }
+      else if (act === 'decline') { o.status = 'declined'; save(); render(); reopen(i); }
+      else if (act === 'counter-open') {
+        var c = list.querySelector('[data-counter="' + i + '"]');
+        if (c) { c.classList.toggle('show'); var inp = c.querySelector('input'); if (inp) inp.focus(); }
+      }
+      else if (act === 'counter-send') {
+        var val = parseFloat((list.querySelector('[data-cin="' + i + '"]') || {}).value);
+        if (!val || val <= 0) { val = Math.round((o.offer + o.askPrice) / 2); }
+        o.status = 'countered'; o.counter = Math.round(val); save(); render(); reopen(i);
+      }
+    });
+
+    function reopen(i) {
+      var row = list.querySelector('[data-row="' + i + '"]');
+      if (row) row.classList.add('open');
+    }
+
+    document.getElementById('tabs').addEventListener('click', function (e) {
+      var t = e.target.closest('.tab'); if (!t) return;
+      filter = t.getAttribute('data-f');
+      this.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('on', x === t); });
+      render();
+    });
+
+    render();
+  })();
+  </script>
+</body>
+</html>

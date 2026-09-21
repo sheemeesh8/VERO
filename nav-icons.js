@@ -78,7 +78,7 @@
     // Each entry: [RegExp over the lowercased label, icon key]. Hebrew + English.
     var RULES = [
         [/dashboard|לוח\s*בקרה|לוח/, 'layout'],
-        [/statist|analyt|סטטיסט|נתונים/, 'chart'],
+        [/statist|analyt|stats?\b|סטטיסט|נתונים/, 'chart'],
         [/my\s*shop|storefront|shop|store|חנות/, 'store'],
         [/product|item|מוצר|פריט/, 'tag'],
         [/negoti|offer|deal|מו״מ|מו"מ|משא|הצע|עסק/, 'offer'],

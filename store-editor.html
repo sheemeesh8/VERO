@@ -54,6 +54,28 @@
         .swatch:hover { transform: scale(1.12); }
         .swatch.on { box-shadow: 0 0 0 2px #111; }
 
+        /* Layout selector — arrangement presets for the storefront. */
+        .layout-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        @media (max-width: 560px) { .layout-row { grid-template-columns: 1fr 1fr; } }
+        .lay {
+            border: 1.5px solid var(--line); border-radius: 16px; background: #fff; cursor: pointer;
+            padding: 14px; text-align: left; transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+        .lay:hover { border-color: #bdbdb8; transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,0.07); }
+        .lay.on { border-color: #111; box-shadow: 0 0 0 1.5px #111; }
+        .lay-mock { height: 62px; border-radius: 8px; background: #f2f0ef; margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; padding: 9px; overflow: hidden; }
+        .lay-mock i { display: block; background: #cfcbc4; border-radius: 3px; height: 7px; }
+        .lay-mock .m-tiles { display: grid; gap: 4px; margin-top: auto; }
+        .lay-mock .m-tiles i { height: 16px; }
+        .lay[data-lay="l1"] .lay-mock i.m-name { width: 55%; align-self: center; }
+        .lay[data-lay="l1"] .lay-mock .m-tiles { grid-template-columns: 1fr 1fr 1fr; }
+        .lay[data-lay="l2"] .lay-mock i.m-name { width: 45%; }
+        .lay[data-lay="l2"] .lay-mock .m-tiles { grid-template-columns: 1fr 1fr; }
+        .lay[data-lay="l3"] .lay-mock i.m-name { width: 70%; align-self: center; }
+        .lay[data-lay="l3"] .lay-mock .m-tiles { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        .lay-name { font-size: 13px; font-weight: 600; }
+        .lay-desc { font-size: 11px; color: var(--muted, #7a7a75); margin-top: 3px; line-height: 1.5; }
+
         /* Template grid */
         .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
         @media (max-width: 560px) { .tpl-grid { grid-template-columns: 1fr 1fr; gap: 12px; } }
@@ -126,11 +148,14 @@ h3, h4, h5, h6, p,
 
         <div class="sec-title">Choose a template</div>
         <div class="tpl-grid" id="tplGrid"></div>
+
+        <div class="sec-title">Layout</div>
+        <div class="layout-row" id="layoutRow"></div>
     </main>
 
     <div class="actionbar">
         <span class="saved-note" id="savedNote">Saved ✓</span>
-        <button class="btn" id="viewStore">View store</button>
+        <button class="btn" id="viewStore">Preview storefront</button>
         <button class="btn primary" id="applyBtn">Save design</button>
     </div>
 
@@ -165,8 +190,16 @@ h3, h4, h5, h6, p,
         // Accent colours the seller can override on top of a template.
         const ACCENTS = ['#EB2323', '#9a7d52', '#d46a7e', '#ff5a1f', '#c8a24a', '#7b5cd6', '#1f3a5f', '#1f9c8f', '#111111'];
 
+        // Storefront layout presets (arrangement / positions), stored as cfg.layout.
+        const LAYOUTS = [
+            { id: 'l1', name: 'Editorial', desc: 'Centered name, 3-up grid' },
+            { id: 'l2', name: 'Boutique',  desc: 'Left-aligned, roomy 2-up' },
+            { id: 'l3', name: 'Gallery',   desc: 'Centered, dense 4-up grid' }
+        ];
+
         let selected = cfg.template || 't1';
         let accent = cfg.accent || '';
+        let layout = cfg.layout || 'l1';
 
         // ---- Build the template preview grid. ----
         const grid = document.getElementById('tplGrid');
@@ -210,10 +243,26 @@ h3, h4, h5, h6, p,
             save();
         });
 
+        // ---- Layout presets. ----
+        const layoutRow = document.getElementById('layoutRow');
+        layoutRow.innerHTML = LAYOUTS.map(l => `
+            <button type="button" class="lay${l.id === layout ? ' on' : ''}" data-lay="${l.id}">
+                <span class="lay-mock"><i class="m-name"></i><span class="m-tiles"><i></i><i></i><i></i><i></i></span></span>
+                <span class="lay-name">${l.name}</span>
+                <span class="lay-desc">${l.desc}</span>
+            </button>`).join('');
+        layoutRow.addEventListener('click', (e) => {
+            const b = e.target.closest('.lay'); if (!b) return;
+            layout = b.dataset.lay;
+            layoutRow.querySelectorAll('.lay').forEach(x => x.classList.toggle('on', x === b));
+            save();
+        });
+
         // ---- Save + preview. ----
         function save() {
             cfg = read();
             cfg.template = selected;
+            cfg.layout = layout;
             if (accent) cfg.accent = accent; else delete cfg.accent;
             write(cfg);
             const note = document.getElementById('savedNote');
