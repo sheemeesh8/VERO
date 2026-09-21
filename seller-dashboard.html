@@ -160,6 +160,9 @@
         .hc-dots span { width: 6px; height: 6px; border-radius: 999px; background: #d8d5cf; transition: width 0.3s ease, background 0.3s ease; cursor: pointer; }
         .hc-dots span.on { width: 18px; background: #111; }
         .hc-hint { text-align: center; font-size: 10px; color: var(--muted); margin-top: 8px; letter-spacing: 0.3px; }
+        .hc-styles { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+        .hc-styles button { font: inherit; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; padding: 5px 11px; border-radius: 999px; border: 1px solid rgba(0,0,0,0.14); background: transparent; color: var(--muted); cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; }
+        .hc-styles button.on { background: #111; color: #fff; border-color: #111; }
         .trend-pill { font-size: 10px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
         .trend-pill.up { color: var(--available); border-color: rgba(31,143,78,0.3); }
         .trend-pill.down { color: var(--sold); border-color: rgba(178,59,59,0.3); }
@@ -244,6 +247,12 @@ h3, h4, h5, h6, p,
             </div>
             <div class="kpi-num" id="hcTotal">₪0</div>
             <div class="kpi-lbl" id="hcSub">Total revenue</div>
+            <div class="hc-styles" id="hcStyles">
+                <button type="button" data-style="area" class="on">Area</button>
+                <button type="button" data-style="line">Line</button>
+                <button type="button" data-style="dots">Dots</button>
+                <button type="button" data-style="bars">Bars</button>
+            </div>
             <div class="hc-plot" id="hcPlot"></div>
             <div class="lc-x" id="hcX"></div>
             <div class="hc-dots" id="hcDots"><span class="on"></span><span></span><span></span></div>
@@ -818,6 +827,33 @@ h3, h4, h5, h6, p,
             var DAY = 864e5, now = new Date();
             var sod = function (d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
             var tsOf = function (p) { return p.soldAt || p.createdAt || Date.now(); };
+            // Draw the series in the chosen style (area / line / dots / bars).
+            function plotSVG(vals, color, style) {
+                var W = 100, H = 40, n = vals.length, v = vals.slice().reverse();
+                var max = Math.max.apply(null, [1].concat(v)), min = Math.min.apply(null, [0].concat(v));
+                var xx = function (i) { return n <= 1 ? 0 : (i / (n - 1)) * W; };
+                var yy = function (val) { return H - ((val - min) / ((max - min) || 1)) * H; };
+                var pts = v.map(function (val, i) { return xx(i).toFixed(2) + ',' + yy(val).toFixed(2); });
+                var line = 'M' + pts.join(' L'), body;
+                if (style === 'bars') {
+                    var bw = n > 0 ? (W / n) * 0.6 : W;
+                    body = v.map(function (val, i) {
+                        var x = Math.max(0, xx(i) - bw / 2), y = yy(val);
+                        return '<rect x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + bw.toFixed(2) + '" height="' + Math.max(0.5, H - y).toFixed(2) + '" rx="0.8" fill="' + color + '"/>';
+                    }).join('');
+                } else if (style === 'dots') {
+                    body = '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-opacity="0.25" stroke-width="1" vector-effect="non-scaling-stroke"/>' +
+                        v.map(function (val, i) { return '<path d="M' + xx(i).toFixed(2) + ',' + yy(val).toFixed(2) + ' l0 0" stroke="' + color + '" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'; }).join('');
+                } else if (style === 'line') {
+                    body = '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>';
+                } else {
+                    var id = 'lg' + Math.random().toString(36).slice(2, 7), area = line + ' L' + W + ',' + H + ' L0,' + H + ' Z';
+                    body = '<defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="' + color + '" stop-opacity="0.22"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
+                        '<path d="' + area + '" fill="url(#' + id + ')"/>' +
+                        '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.25" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>';
+                }
+                return '<svg class="lc" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' + body + '</svg>';
+            }
             function build(kind) {
                 var vals = [], labels = [], i;
                 if (kind === 'Daily') {
@@ -841,13 +877,14 @@ h3, h4, h5, h6, p,
                 }
                 return { vals: vals, labels: labels };
             }
-            var kinds = ['Daily', 'Monthly', 'Yearly'], idx = 1;
+            var kinds = ['Daily', 'Monthly', 'Yearly'], idx = 1, style = 'area';
             var plot = document.getElementById('hcPlot'), xEl = document.getElementById('hcX');
             var rangeEl = document.getElementById('hcRange'), totalEl = document.getElementById('hcTotal'), subEl = document.getElementById('hcSub');
             var dots = host.querySelectorAll('#hcDots span');
+            var styleBtns = host.querySelectorAll('#hcStyles button');
             function render() {
                 var kind = kinds[idx], data = build(kind);
-                plot.innerHTML = lineChart(data.vals, '#111');
+                plot.innerHTML = plotSVG(data.vals, '#111', style);
                 xEl.innerHTML = xLabels(data.labels);
                 rangeEl.textContent = kind;
                 totalEl.textContent = nis(data.vals.reduce(function (s, v) { return s + v; }, 0));
@@ -868,6 +905,11 @@ h3, h4, h5, h6, p,
                 if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
             });
             for (var j = 0; j < dots.length; j++) (function (k) { dots[k].addEventListener('click', function () { idx = k; render(); }); })(j);
+            for (var s = 0; s < styleBtns.length; s++) styleBtns[s].addEventListener('click', function () {
+                style = this.getAttribute('data-style');
+                for (var i = 0; i < styleBtns.length; i++) styleBtns[i].classList.toggle('on', styleBtns[i] === this);
+                render();
+            });
             render();
         })();
     })();
