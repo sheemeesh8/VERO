@@ -127,10 +127,11 @@
   .ev-attend { grid-column: 1 / -1; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
   .ev-attend-h { font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; }
   .ev-sellers { display: flex; flex-wrap: wrap; gap: 7px; }
-  .seller { font-size: 11.5px; padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; display: inline-flex; align-items: baseline; gap: 6px; }
+  .seller { font-size: 11.5px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; display: inline-flex; align-items: center; text-decoration: none; color: inherit; transition: border-color 0.2s, background 0.2s; }
   .seller b { font-weight: 500; }
-  .seller .cat { color: var(--muted); font-size: 10.5px; }
+  .seller:hover { border-color: var(--ink); }
   .seller.you { border-color: var(--ink); }
+  .seller.you:hover { background: var(--ink); color: #fff; }
   .ev-more { font-size: 11px; color: var(--muted); align-self: center; }
   /* Category selector in the booth panel. */
   .cat-sel { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -368,14 +369,12 @@
         join = '<div class="ev-join">' + plusBtn + delBtn + '</div>';
       }
       var panel = isSeller ? boothPanel(e) : '';
-      // Public attendee list: which sellers have a booth + what they sell.
+      // Public attendee list: which sellers have a booth (clickable → storefront).
       var att = attendeesFor(e);
-      var cats = []; att.forEach(function (s) { if (cats.indexOf(s.cat) < 0) cats.push(s.cat); });
-      var mix = cats.length > 1 ? 'Mixed market · ' : '';
-      var sellers = att.slice(0, 5).map(function (s) {
-        return '<span class="seller' + (s.you ? ' you' : '') + '"><b>' + esc(s.you ? 'You' : s.name) + '</b><span class="cat">' + esc(s.cat) + '</span></span>';
-      }).join('') + (att.length > 5 ? '<span class="ev-more">+' + (att.length - 5) + '</span>' : '');
-      var attend = '<div class="ev-attend"><div class="ev-attend-h">' + mix + att.length + ' sellers attending</div><div class="ev-sellers">' + sellers + '</div></div>';
+      var sellers = att.slice(0, 6).map(function (s) {
+        return '<a class="seller' + (s.you ? ' you' : '') + '" href="buyer-profile.html"><b>' + esc(s.you ? 'You' : s.name) + '</b></a>';
+      }).join('') + (att.length > 6 ? '<span class="ev-more">+' + (att.length - 6) + '</span>' : '');
+      var attend = '<div class="ev-attend"><div class="ev-attend-h">' + att.length + ' sellers attending</div><div class="ev-sellers">' + sellers + '</div></div>';
       return '<div class="ev' + (isPast ? ' past' : '') + '" data-ev="' + e.id + '">' +
         '<div class="ev-date"><div class="ev-day">' + dd + '</div><div class="ev-mon">' + MON[mm] + '</div></div>' +
         '<div><div class="ev-title">' + esc(e.title) + '</div><div class="ev-meta">' + meta + '</div></div>' +
@@ -387,10 +386,6 @@
 
     function boothPanel(e) {
       var booth = booths[e.id], sel = (booth && booth.products) || [];
-      var curCat = (booth && booth.category) || CATEGORIES[0];
-      var catSel = '<div class="cat-sel">' + CATEGORIES.map(function (c) {
-        return '<button class="chip' + (c === curCat ? ' on' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
-      }).join('') + '</div>';
       var chips = productNames.length
         ? '<div class="chips">' + productNames.map(function (n) {
             var on = sel.indexOf(n) > -1;
@@ -399,9 +394,7 @@
         : '<div class="booth-empty">No products yet — add items to your shop first.</div>';
       return '<div class="booth" data-panel="' + e.id + '"><div class="booth-inner">' +
         '<div class="booth-t">Your booth · ' + esc(e.title) + '</div>' +
-        '<div class="booth-lede">What you sell (shown to buyers on this event):</div>' +
-        catSel +
-        '<div class="booth-lede">Pick the pieces you\'ll bring:</div>' +
+        '<div class="booth-lede">Pick the pieces you\'ll bring to sell at this event.</div>' +
         chips +
         '<div class="booth-actions">' +
           (booth ? '<button class="bbtn remove" data-remove="' + e.id + '">Remove booth</button>' : '') +
@@ -490,20 +483,13 @@
           var panel = detail.querySelector('[data-panel="' + plus.getAttribute('data-booth') + '"]');
           if (panel) panel.classList.toggle('open');
         } else if (chip) {
-          if (chip.hasAttribute('data-cat')) {
-            // Category is single-select.
-            var sel = chip.closest('.cat-sel');
-            if (sel) sel.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('on', c === chip); });
-          } else {
-            chip.classList.toggle('on');
-          }
+          chip.classList.toggle('on');
         } else if (saveB) {
           var id = saveB.getAttribute('data-save');
           var panelEl = detail.querySelector('[data-panel="' + id + '"]');
           var chosen = panelEl ? Array.prototype.map.call(panelEl.querySelectorAll('.chips .chip.on'), function (c) { return c.getAttribute('data-prod'); }) : [];
-          var catOn = panelEl ? panelEl.querySelector('.cat-sel .chip.on') : null;
           var ev = eventById(id) || {};
-          booths[id] = { title: ev.title, date: ev.date, place: ev.place, type: ev.type, time: ev.time, products: chosen, category: catOn ? catOn.getAttribute('data-cat') : undefined };
+          booths[id] = { title: ev.title, date: ev.date, place: ev.place, type: ev.type, time: ev.time, products: chosen };
           saveBooths(); refresh();
         } else if (rem) {
           var rid = rem.getAttribute('data-remove');
