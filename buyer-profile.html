@@ -454,6 +454,20 @@
         }
         .feed-title { font-size: 10.83px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; }
         .feed-note  { font-size: 10.00px; letter-spacing: 0.5px; color: #9a9a95; }
+        /* Storefront events — the seller's upcoming events. Theme-adaptive (uses
+           currentColor so it reads on both light and dark templates). */
+        .sf-events { margin: 44px 40px 0; }
+        .sf-events .feed-head { margin: 0; }
+        .sf-ev-list { display: flex; flex-direction: column; margin-top: 6px; }
+        .sf-ev { display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 14px; padding: 15px 0; border-top: 1px solid; border-color: rgba(127,127,127,0.2); }
+        .sf-ev:last-child { border-bottom: 1px solid rgba(127,127,127,0.2); }
+        .sf-ev-date { text-align: center; }
+        .sf-ev-day { font-family: 'Bodoni Moda', serif; font-weight: 500; font-size: 20px; line-height: 1; }
+        .sf-ev-mon { font-size: 8.5px; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.55; margin-top: 4px; }
+        .sf-ev-title { font-size: 14px; }
+        .sf-ev-meta { font-size: 11px; opacity: 0.6; margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+        .sf-ev-meta .d { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        .sf-ev-time { font-family: 'Bodoni Moda', serif; font-size: 14px; white-space: nowrap; }
         .feed {
             display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;
             padding: 26px 40px 70px;
@@ -898,6 +912,12 @@ h3, h4, h5, h6, p,
             <button class="follow-btn" id="followBtn">Follow</button>
         </div>
 
+        <!-- Storefront events — the seller's upcoming events (from vero_events). -->
+        <section class="sf-events" id="sfEvents" hidden>
+            <div class="feed-head"><div class="feed-title">Upcoming events</div></div>
+            <div class="sf-ev-list" id="sfEvList"></div>
+        </section>
+
         <!-- FEED — just the products the buyer has uploaded. No categories or
              audiences; a promo banner drops in every five items if one is set. -->
         <div class="feed-head">
@@ -1286,5 +1306,34 @@ h3, h4, h5, h6, p,
     <script src="vero-editor.js"></script>
     <script src="assets/didone-hairline.js"></script>
     <script src="nav-icons.js" defer></script>
+    <!-- Storefront events: show the seller's upcoming events (from vero_events). -->
+    <script>
+    (function storefrontEvents() {
+        var host = document.getElementById('sfEvents'), listEl = document.getElementById('sfEvList');
+        if (!host || !listEl) return;
+        var COLOR = { drop: '#16150f', sale: '#b23b3b', live: '#b28a3b', meetup: '#1f8f4e' };
+        var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var evs;
+        try { evs = JSON.parse(localStorage.getItem('vero_events')); } catch (e) { evs = null; }
+        if (!Array.isArray(evs) || !evs.length) return;
+        var today = new Date(); today.setHours(0,0,0,0);
+        var iso = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+        var up = evs.filter(function (e) { return e && e.date && e.date >= iso; })
+                    .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; })
+                    .slice(0, 4);
+        if (!up.length) return;
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+        listEl.innerHTML = up.map(function (e) {
+            var p = e.date.split('-'), meta = '<span class="d" style="background:' + (COLOR[e.type] || '#888') + '"></span>' + esc((e.type || '').charAt(0).toUpperCase() + (e.type || '').slice(1));
+            if (e.place) meta += ' · ' + esc(e.place);
+            return '<div class="sf-ev">' +
+                '<div class="sf-ev-date"><div class="sf-ev-day">' + (+p[2]) + '</div><div class="sf-ev-mon">' + MON[+p[1]-1] + '</div></div>' +
+                '<div><div class="sf-ev-title">' + esc(e.title) + '</div><div class="sf-ev-meta">' + meta + '</div></div>' +
+                '<div class="sf-ev-time">' + esc(e.time || '') + '</div>' +
+            '</div>';
+        }).join('');
+        host.hidden = false;
+    })();
+    </script>
 </body>
 </html>
