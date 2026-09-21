@@ -123,8 +123,21 @@
         .lm-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
         .lm-x { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #fff; cursor: pointer; display: grid; place-items: center; color: #111; }
         .lm-x:hover { background: #111; color: #fff; }
-        .lm-preview { background: #f4f2f0; border-radius: 16px; padding: 14px; margin-bottom: 18px; }
-        .lm-preview .sfp { max-width: 300px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+        .lm-preview { background: #f4f2f0; border-radius: 16px; padding: 14px; margin-bottom: 18px; max-height: 62vh; overflow-y: auto; }
+        .lm-preview .sfp { max-width: 320px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+        /* Full-layout preview parts (rendered only inside the modal). */
+        .lm-preview .sfp .sfp-nav { display: flex; align-items: center; gap: 6px; padding: 10px 12px; background: var(--sf-surface); }
+        .lm-preview .sfp .sfp-nav i { height: 4px; width: 22px; border-radius: 2px; background: var(--sf-ink); opacity: 0.35; }
+        .lm-preview .sfp .sfp-nav i.sp { margin-inline-start: auto; }
+        .lm-preview .sfp .sfp-split { display: grid !important; grid-template-columns: 1fr 1fr; gap: 2px; padding: 0; }
+        .lm-preview .sfp .sfp-split > span { background: var(--sf-hero); background-size: cover; }
+        .lm-preview .sfp .sfp-name-abs { position: absolute; z-index: 2; inset-inline: 0; bottom: 14px; padding: 0 14px; color: #fff; font-size: 22px; line-height: 1; font-family: var(--sf-name-font); font-weight: var(--sf-name-weight); letter-spacing: var(--sf-name-spacing); text-transform: var(--sf-name-transform); }
+        .lm-preview .sfp .sfp-tall { height: 168px; }
+        .lm-preview .sfp .sfp-center { flex-direction: column; align-items: center; justify-content: center; gap: 9px; }
+        .lm-preview .sfp .sfp-cta { position: relative; z-index: 2; background: var(--sf-accent); color: #fff; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; padding: 6px 15px; border-radius: 999px; }
+        .lm-preview .sfp .sfp-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 13px; text-align: center; }
+        .lm-preview .sfp .sfp-stats span { display: flex; flex-direction: column; gap: 2px; font-size: 7.5px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--sf-ink); opacity: 0.7; }
+        .lm-preview .sfp .sfp-stats b { font-size: 15px; font-weight: 600; opacity: 1; }
         .lm-field { margin-bottom: 16px; }
         .lm-field > .lm-lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 9px; }
         .lm-swatches { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -430,16 +443,40 @@ h3, h4, h5, h6, p,
             `<button class="swatch" data-accent="" title="Template default" style="background:conic-gradient(#EB2323,#c8a24a,#1f9c8f,#7b5cd6,#EB2323)"></button>` +
             ACCENTS.map(c => `<button class="swatch" data-accent="${c}" style="background:${c}"></button>`).join('');
 
+        // Build the FULL storefront preview for the open layout — hero variant,
+        // optional nav / stats / call-to-action, and a full multi-row product grid.
+        function previewHTML() {
+            const tiles = `<div class="sfp-tiles" style="grid-template-columns:repeat(${dGrid},1fr)">${'<i class="sfp-tile"></i>'.repeat(dGrid * 2)}</div>`;
+            const name  = `<div class="sfp-name" style="width:100%;text-align:${dNamePos}">My Store</div>`;
+            const cat   = `<div class="sfp-row"><span class="sfp-cat">Items for sale</span><span class="sfp-btn">Follow</span></div>`;
+            const nav   = `<div class="sfp-nav"><i></i><i></i><i class="sp"></i><i></i></div>`;
+            let inner;
+            switch (dLayout) {
+                case 'l1': // Editorial — split hero, name overlay
+                    inner = `<div class="sfp-hero sfp-split"><span></span><span></span><div class="sfp-name-abs" style="text-align:${dNamePos}">My Store</div></div>
+                             <div class="sfp-body">${cat}${tiles}</div>`;
+                    break;
+                case 'l4': // Story — tall hero + stats
+                    inner = `<div class="sfp-hero sfp-tall">${name}</div>
+                             <div class="sfp-body"><div class="sfp-stats"><span><b>52</b>sold</span><span><b>120</b>items</span><span><b>4.9</b>rating</span></div>${cat}${tiles}</div>`;
+                    break;
+                case 'l5': // Landing — nav bar + hero + grid
+                    inner = `${nav}<div class="sfp-hero">${name}</div>
+                             <div class="sfp-body">${cat}${tiles}</div>`;
+                    break;
+                case 'l6': // Classic — nav bar + centered hero with CTA
+                    inner = `${nav}<div class="sfp-hero sfp-center"><div class="sfp-name" style="width:100%;text-align:center">My Store</div><span class="sfp-cta">Shop now</span></div>
+                             <div class="sfp-body">${cat}${tiles}</div>`;
+                    break;
+                default: // Boutique / Gallery — single hero
+                    inner = `<div class="sfp-hero">${name}</div>
+                             <div class="sfp-body">${cat}${tiles}</div>`;
+            }
+            return `<div class="sfp" data-store-template="${selected}"${dAccent ? ` style="--sf-accent:${dAccent}"` : ''}>${inner}</div>`;
+        }
+
         function paintPreview() {
-            const tileCount = dGrid; // one row is enough to read the density
-            mPreview.innerHTML = `
-                <div class="sfp" data-store-template="${selected}"${dAccent ? ` style="--sf-accent:${dAccent}"` : ''}>
-                    <div class="sfp-hero"><div class="sfp-name" style="width:100%;text-align:${dNamePos}">My Store</div></div>
-                    <div class="sfp-body">
-                        <div class="sfp-row"><span class="sfp-cat">Items for sale</span><span class="sfp-btn">Follow</span></div>
-                        <div class="sfp-tiles" style="grid-template-columns:repeat(${dGrid},1fr)">${'<i class="sfp-tile"></i>'.repeat(tileCount)}</div>
-                    </div>
-                </div>`;
+            mPreview.innerHTML = previewHTML();
             mAccent.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', (s.dataset.accent || '') === dAccent));
             mNamePos.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.pos === dNamePos));
             mGrid.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(b.dataset.grid) === String(dGrid)));
