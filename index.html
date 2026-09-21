@@ -1007,7 +1007,7 @@
                 height: 100vh;
                 min-height: 100vh;
                 max-height: none;
-                background-image: url('https://loremflickr.com/800/1300/fashion,editorial,model?lock=88') !important; /* colour portrait hero */
+                background-image: url('./clothing-hero.jpg') !important; /* portrait hero (local) */
                 background-position: center center;
             }
 
@@ -7431,6 +7431,17 @@ h3, h4, h5, h6, p,
 <!-- data-back="none": this page opens on the home view, which carries no back
      control. hideAllViews() clears it for every other view. -->
 <body data-footer="manual" data-back="none">
+<script>
+/* Local, self-hosted imagery for the hero, categories and feed — replaces the
+   external loremflickr placeholders (which the CDN/proxy blocks in production).
+   Picks one of the repo's real photos deterministically from a keyword/index. */
+window.veroLocalImg = function (key) {
+    var imgs = ['men-hero.jpg','women-hero.jpg','clothing-hero.jpg','art-hero.jpg','gallery-hero.jpg','hero-beach.jpg','magazine-hero.jpg','sale-hero.jpg'];
+    var s = String(key == null ? '' : key), h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return './' + imgs[h % imgs.length];
+};
+</script>
     <!-- ==================== HEADER ==================== -->
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
@@ -9998,7 +10009,7 @@ h3, h4, h5, h6, p,
             const cardHTML = (c, i) => `
                 <div class="category-card" onclick="openCategory('${type}', ${i})">
                     <img class="category-image" loading="lazy" alt="${c.name}"
-                         src="https://loremflickr.com/600/600/${encodeURIComponent(c.img || c.name)}?lock=${i}"
+                         src="${veroLocalImg(c.img || c.name || i)}"
                          onerror="this.remove()">
                     <div class="category-icon">${c.icon}</div>
                     <div class="category-text"><h3>${c.name}</h3></div>
@@ -10154,7 +10165,7 @@ h3, h4, h5, h6, p,
                     accent: s.accent || '',
                     sub: s.sub || '',
                     count,
-                    img: `https://loremflickr.com/1600/900/${encodeURIComponent(s.img)}?lock=${i + 1}`
+                    img: veroLocalImg(s.img || s.key || i)
                 };
             });
 
@@ -11591,7 +11602,7 @@ h3, h4, h5, h6, p,
                 } else if (video) {
                     video.style.display = 'none';
                     slide.style.backgroundImage =
-                        `url('https://loremflickr.com/800/1200/${encodeURIComponent(seg.img)}?lock=${i + 11}')`;
+                        `url('${veroLocalImg(seg.img || seg.key || i)}')`;
                 }
             });
             // Slide visibility may have changed (Unisex is clothing-only) — re-page.
@@ -11864,7 +11875,7 @@ h3, h4, h5, h6, p,
                     img.className = 'pc-photo';
                     img.loading = 'lazy';
                     img.alt = '';
-                    img.src = 'https://loremflickr.com/500/300/' + encodeURIComponent(kw) + '?lock=' + (b * 10 + k);
+                    img.src = veroLocalImg(kw + '-' + (b * 10 + k));
                     box.insertBefore(img, box.firstChild);
                 });
                 content.appendChild(grid);
