@@ -4355,23 +4355,33 @@
         .feed-filters {
             position: static;
             transform: none;
+            /* One horizontal row — scrolls sideways if it doesn't fit. */
             display: flex;
-            flex-flow: row wrap;
+            flex-flow: row nowrap;
             align-items: center;
-            gap: 14px 30px;
+            gap: 20px;
             direction: ltr;
-            padding: 26px 65px 24px;
-            /* Full-bleed black band, wall to wall across the screen. */
+            padding: 16px 20px;
+            overflow-x: auto;
+            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+            /* Full-bleed white band, wall to wall across the screen. */
             width: 100vw;
             margin-left: calc(50% - 50vw);
             margin-right: calc(50% - 50vw);
             background: #ffffff;
-            border: none;   /* no frame / hairline under the filter bar */
+            border: none;
             box-shadow: none;
             z-index: auto;
         }
-        /* Manual placement from the site editor, baked in (stable id). */
-        #feedFilters { transform: translate(3px, -48px); }
+        .feed-filters::-webkit-scrollbar { display: none; }
+        #feedFilters { transform: none; }
+        /* The funnel + "Filters" tag that opens the row. */
+        .ff-funnel {
+            display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
+            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; color: #111;
+        }
+        .ff-funnel svg { width: 15px; height: 15px; }
+        .feed-filters .ff-field { flex: 0 0 auto; white-space: nowrap; }
         /* Filter controls recoloured for the white band. */
         .feed-filters .ff-label { color: #777; }
         .feed-filters .ff-label b { color: #111; }
@@ -11000,8 +11010,10 @@ window.veroLocalImg = function (key) {
         }
         // Generated pieces carry a real fabric/colour; the hand-written ones still
         // fall back to the deterministic name hash.
+        const FEED_MATERIALS = ['Natural', 'Synthetic', 'Recycled', 'Blend', 'Vegan'];
         function productFabric(p) { return p.fabric || FEED_FABRICS[strHash(p.name) % FEED_FABRICS.length]; }
         function productColor(p)  { return p.color  || FEED_COLORS[strHash(p.name + 'c') % FEED_COLORS.length]; }
+        function productMaterial(p) { return p.material || FEED_MATERIALS[strHash(p.name + 'm') % FEED_MATERIALS.length]; }
 
         // Run the fill once both lists and the helpers exist.
         clothingProducts = fillCatalogue(clothingProducts, 79, 15);
@@ -11380,6 +11392,7 @@ window.veroLocalImg = function (key) {
             if (f.type)   list = list.filter(p => (p.category || '') === f.type);
             if (f.fabric) list = list.filter(p => productFabric(p) === f.fabric);
             if (f.color)  list = list.filter(p => productColor(p) === f.color);
+            if (f.material) list = list.filter(p => productMaterial(p) === f.material);
             if (f.maxPrice != null) list = list.filter(p => priceToNum(p.price) <= f.maxPrice);
 
             // ---- the shared header's search box + funnel panel ----
@@ -11456,20 +11469,21 @@ window.veroLocalImg = function (key) {
                         ${values.map(v => opt(v, cur)).join('')}
                     </select>
                 </label>`;
-            wrap.innerHTML = `
-                ${sel('seller', 'Seller', uniqueSorted(base.map(p => p.seller)), feedFilters.seller)}
-                ${sel('type', 'Type', uniqueSorted(base.map(p => p.category)), feedFilters.type)}
-                ${sel('fabric', 'Fabric', uniqueSorted(base.map(productFabric)), feedFilters.fabric)}
-                ${sel('color', 'Colour', uniqueSorted(base.map(productColor)), feedFilters.color)}
+            // A single row: a funnel "Filters" tag, then Price (high→low), Fabric,
+            // Colour and Material.
+            const funnel = '<span class="ff-funnel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>Filters</span>';
+            wrap.innerHTML = funnel + `
                 <label class="ff-field">
                     <span class="ff-label">Price</span>
                     <select class="ff-select" id="sort" onchange="setFeedFilter('sort', this.value)">
                         <option value=""${!feedFilters.sort ? ' selected' : ''}>Default</option>
-                        <option value="asc"${feedFilters.sort === 'asc' ? ' selected' : ''}>Low to high</option>
                         <option value="desc"${feedFilters.sort === 'desc' ? ' selected' : ''}>High to low</option>
+                        <option value="asc"${feedFilters.sort === 'asc' ? ' selected' : ''}>Low to high</option>
                     </select>
                 </label>
-                <button class="ff-clear" onclick="clearFeedFilters()">Clear</button>`;
+                ${sel('fabric', 'Fabric', uniqueSorted(base.map(productFabric)), feedFilters.fabric)}
+                ${sel('color', 'Colour', uniqueSorted(base.map(productColor)), feedFilters.color)}
+                ${sel('material', 'Material', uniqueSorted(base.map(productMaterial)), feedFilters.material)}`;
         }
 
         function setFeedFilter(key, value) {
