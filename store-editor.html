@@ -261,11 +261,6 @@ h3, h4, h5, h6, p,
             <div class="lm-preview" id="lmPreview"></div>
 
             <div class="lm-field">
-                <div class="lm-lbl">Accent color</div>
-                <div class="lm-swatches" id="lmAccent"></div>
-            </div>
-
-            <div class="lm-field">
                 <div class="lm-lbl">Store name position</div>
                 <div class="lm-seg" id="lmNamePos">
                     <button type="button" data-pos="left">Left</button>
@@ -433,15 +428,11 @@ h3, h4, h5, h6, p,
         // ---- Layout preview modal: color + positions + apply. ----
         const modal   = document.getElementById('layModal');
         const mPreview = document.getElementById('lmPreview');
-        const mAccent = document.getElementById('lmAccent');
         const mNamePos = document.getElementById('lmNamePos');
         const mGrid   = document.getElementById('lmGrid');
         // Draft state while the modal is open — only committed on Apply.
+        // dAccent mirrors the accent chosen above (the modal no longer sets colour).
         let dLayout = layout, dAccent = accent, dNamePos = namePos, dGrid = gridN;
-
-        mAccent.innerHTML =
-            `<button class="swatch" data-accent="" title="Template default" style="background:conic-gradient(#EB2323,#c8a24a,#1f9c8f,#7b5cd6,#EB2323)"></button>` +
-            ACCENTS.map(c => `<button class="swatch" data-accent="${c}" style="background:${c}"></button>`).join('');
 
         // Build the FULL storefront preview for the open layout — hero variant,
         // optional nav / stats / call-to-action, and a full multi-row product grid.
@@ -477,7 +468,6 @@ h3, h4, h5, h6, p,
 
         function paintPreview() {
             mPreview.innerHTML = previewHTML();
-            mAccent.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', (s.dataset.accent || '') === dAccent));
             mNamePos.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.pos === dNamePos));
             mGrid.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(b.dataset.grid) === String(dGrid)));
         }
@@ -497,7 +487,6 @@ h3, h4, h5, h6, p,
         }
         function closeModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
 
-        mAccent.addEventListener('click', (e) => { const s = e.target.closest('.swatch'); if (!s) return; dAccent = s.dataset.accent || ''; paintPreview(); });
         mNamePos.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; dNamePos = b.dataset.pos; paintPreview(); });
         mGrid.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; dGrid = +b.dataset.grid; paintPreview(); });
 
@@ -507,13 +496,9 @@ h3, h4, h5, h6, p,
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
 
         document.getElementById('lmApply').addEventListener('click', () => {
-            layout = dLayout; accent = dAccent; namePos = dNamePos; gridN = dGrid;
+            // Colour is chosen above, not here — only layout + positions are applied.
+            layout = dLayout; namePos = dNamePos; gridN = dGrid;
             renderLayouts();
-            // Reflect the applied accent in the template previews above too.
-            document.getElementById('tplGrid').querySelectorAll('.sfp').forEach(el => {
-                if (accent) el.style.setProperty('--sf-accent', accent); else el.style.removeProperty('--sf-accent');
-            });
-            document.querySelectorAll('#accentRow .swatch').forEach(s => s.classList.toggle('on', (s.dataset.accent || '') === accent));
             save();
             closeModal();
         });
