@@ -96,6 +96,16 @@
         .lc { width: 100%; height: 120px; display: block; margin-top: 14px; }
         .lc-x { display: flex; margin-top: 8px; }
         .lc-x span { flex: 1; text-align: center; font-size: 9px; color: var(--muted); letter-spacing: 0.3px; }
+        /* Hero range chart — the top graph; swipe to change the time range. */
+        .hero-chart { touch-action: pan-y; -webkit-user-select: none; user-select: none; cursor: grab; }
+        .hero-chart:active { cursor: grabbing; }
+        .hc-range { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+        .hc-plot { margin-top: 6px; }
+        .hc-plot .lc { height: 150px; }
+        .hc-dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
+        .hc-dots span { width: 6px; height: 6px; border-radius: 999px; background: #d8d5cf; transition: width 0.3s ease, background 0.3s ease; cursor: pointer; }
+        .hc-dots span.on { width: 18px; background: #111; }
+        .hc-hint { text-align: center; font-size: 10px; color: var(--muted); margin-top: 8px; letter-spacing: 0.3px; }
         .card.dark .lc-x span { color: rgba(255,255,255,0.6); }
         .trend-pill { font-size: 10px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
         .trend-pill.up { color: var(--good); border-color: rgba(31,143,78,0.3); }
@@ -152,6 +162,20 @@ h3, h4, h5, h6, p,
             <h1 class="dash-title">Buyer dashboard</h1>
             <p class="dash-sub" id="welcome">A quick look at spending, Your orders and lists</p>
         </header>
+
+        <!-- ===== HERO RANGE CHART — swipe to switch daily / monthly / yearly ===== -->
+        <div class="card hero-chart" id="heroChart">
+            <div class="card-h">
+                <div class="card-t">Spending</div>
+                <div class="hc-range" id="hcRange">Monthly</div>
+            </div>
+            <div class="kpi-num" id="hcTotal">₪0</div>
+            <div class="kpi-lbl" id="hcSub">Total spend</div>
+            <div class="hc-plot" id="hcPlot"></div>
+            <div class="lc-x" id="hcX"></div>
+            <div class="hc-dots" id="hcDots"><span class="on"></span><span></span><span></span></div>
+            <div class="hc-hint">Swipe to switch · daily · monthly · yearly</div>
+        </div>
 
         <!-- ===== KPI ROW ===== -->
         <div class="sec-title">Overview</div>
@@ -458,6 +482,65 @@ h3, h4, h5, h6, p,
         document.getElementById('kWish').textContent   = Array.isArray(wish) ? wish.length : 0;
         document.getElementById('kOffers').textContent = Array.isArray(offers) ? offers.length : 0;
         document.getElementById('kFollow').textContent = Array.isArray(follows) ? follows.length : (Array.isArray(readJSON('vero_follows', [])) ? readJSON('vero_follows', []).length : 0);
+
+        // ---- Hero range chart: swipe to switch daily / monthly / yearly. ----
+        (function heroRangeChart() {
+            var host = document.getElementById('heroChart');
+            if (!host) return;
+            var DAY = 864e5, now = new Date();
+            var sod = function (d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+            function build(kind) {
+                var vals = [], labels = [], i;
+                if (kind === 'Daily') {
+                    for (i = 13; i >= 0; i--) {
+                        var day = sod(new Date(now.getTime() - i * DAY));
+                        vals.push(items.reduce(function (s, it) { return sod(new Date(tsOf(it))) === day ? s + priceOf(it) : s; }, 0));
+                        labels.push(new Date(day).toLocaleDateString('en-US', { day: 'numeric' }));
+                    }
+                } else if (kind === 'Yearly') {
+                    for (i = 4; i >= 0; i--) {
+                        var yr = now.getFullYear() - i;
+                        vals.push(items.reduce(function (s, it) { return new Date(tsOf(it)).getFullYear() === yr ? s + priceOf(it) : s; }, 0));
+                        labels.push(String(yr));
+                    }
+                } else { // Monthly
+                    for (i = 5; i >= 0; i--) {
+                        var d = new Date(now.getFullYear(), now.getMonth() - i, 1), y = d.getFullYear(), m = d.getMonth();
+                        vals.push(items.reduce(function (s, it) { var t = new Date(tsOf(it)); return (t.getFullYear() === y && t.getMonth() === m) ? s + priceOf(it) : s; }, 0));
+                        labels.push(d.toLocaleDateString('en-US', { month: 'short' }));
+                    }
+                }
+                return { vals: vals, labels: labels };
+            }
+            var kinds = ['Daily', 'Monthly', 'Yearly'], idx = 1;
+            var plot = document.getElementById('hcPlot'), xEl = document.getElementById('hcX');
+            var rangeEl = document.getElementById('hcRange'), totalEl = document.getElementById('hcTotal'), subEl = document.getElementById('hcSub');
+            var dots = host.querySelectorAll('#hcDots span');
+            function render() {
+                var kind = kinds[idx], data = build(kind);
+                plot.innerHTML = lineChart(data.vals, '#111');
+                xEl.innerHTML = xLabels(data.labels);
+                rangeEl.textContent = kind;
+                totalEl.textContent = nis(data.vals.reduce(function (s, v) { return s + v; }, 0));
+                subEl.textContent = 'Total spend · ' + kind.toLowerCase();
+                for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('on', i === idx);
+            }
+            function go(dir) { idx = (idx + dir + kinds.length) % kinds.length; render(); }
+            var x0 = null;
+            host.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+            host.addEventListener('touchend', function (e) {
+                if (x0 === null) return; var dx = e.changedTouches[0].clientX - x0; x0 = null;
+                if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+            }, { passive: true });
+            var mx0 = null;
+            host.addEventListener('mousedown', function (e) { mx0 = e.clientX; });
+            window.addEventListener('mouseup', function (e) {
+                if (mx0 === null) return; var dx = e.clientX - mx0; mx0 = null;
+                if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+            });
+            for (var j = 0; j < dots.length; j++) (function (k) { dots[k].addEventListener('click', function () { idx = k; render(); }); })(j);
+            render();
+        })();
     })();
     </script>
     <script src="reveal.js" defer></script>
