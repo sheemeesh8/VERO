@@ -4509,6 +4509,23 @@
         .cat-cap-row {
             display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
         }
+        /* One SLIDE per category — a full-width horizontal slider. */
+        .cat-slider {
+            display: flex; flex: 1 1 auto; width: 100%; overflow-x: auto;
+            scroll-snap-type: x mandatory; scroll-behavior: smooth;
+            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+        }
+        .cat-slider::-webkit-scrollbar { display: none; }
+        .cat-slide {
+            flex: 0 0 100%; scroll-snap-align: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+            padding: 8px 10px;
+        }
+        .cat-slide-index { font-size: 9px; letter-spacing: 3px; color: rgba(255,255,255,0.6); }
+        .cat-slide-title { font-size: 30px; letter-spacing: 3px; text-transform: uppercase; color: #fff; line-height: 1; }
+        .cat-slide-dots { display: flex; gap: 7px; justify-content: center; margin-top: 14px; flex: 0 0 auto; }
+        .cat-slide-dots span { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.35); transition: width 0.3s ease, background 0.3s ease; }
+        .cat-slide-dots span.on { width: 20px; background: #fff; }
         .cat-capsules-cloud::-webkit-scrollbar { width: 0; height: 0; display: none; }
         .cat-cap {
             display: inline-flex; align-items: center; gap: 7px;
@@ -8144,10 +8161,10 @@ window.veroLocalImg = function (key) {
                autoplay muted loop playsinline preload="metadata"></video>
         <!-- Capsule chooser overlay, filled by renderCatCapsules(). -->
         <div class="cat-capsules" id="catCapsules">
-            <span class="cat-capsules-kicker">Choose your feed</span>
-            <h2 class="cat-capsules-title">Pick your categories</h2>
-            <p class="cat-capsules-hint" id="catCapsulesHint">Select up to 5 — the feed updates to match.</p>
-            <div class="cat-capsules-cloud" id="catCapsulesCloud"><!-- chips --></div>
+            <span class="cat-capsules-kicker">Browse the feed</span>
+            <h2 class="cat-capsules-title">Shop by category</h2>
+            <p class="cat-capsules-hint" id="catCapsulesHint">Swipe through the categories — tap a type to filter the feed.</p>
+            <div class="cat-capsules-cloud" id="catCapsulesCloud"><!-- slider --></div>
         </div>
     </section>
     </div><!-- /.feed-retired : hero-slider + category picker stay hidden -->
@@ -9947,15 +9964,32 @@ window.veroLocalImg = function (key) {
                     class="cat-cap${active ? ' active' : ''}${disabled ? ' disabled' : ''}"
                     onclick="toggleCatCapsule('${name.replace(/'/g, "\\'")}')">${name}</button>`;
             };
-            cloud.innerHTML = groups.map(g => `
-                <div class="cat-cap-group">
-                    <span class="cat-cap-group-label">${g.label}</span>
-                    <div class="cat-cap-row">${g.members.map(chip).join('')}</div>
-                </div>`).join('');
+            // One SLIDE per category — a horizontal, swipeable slider.
+            cloud.innerHTML =
+                '<div class="cat-slider" id="catSlider">' +
+                    groups.map((g, i) => `
+                        <div class="cat-slide" data-i="${i}">
+                            <span class="cat-slide-index">${String(i + 1).padStart(2, '0')} / ${String(groups.length).padStart(2, '0')}</span>
+                            <span class="cat-slide-title">${g.label}</span>
+                            <div class="cat-cap-row">${g.members.map(chip).join('')}</div>
+                        </div>`).join('') +
+                '</div>' +
+                '<div class="cat-slide-dots" id="catSlideDots">' +
+                    groups.map((g, i) => `<span${i === 0 ? ' class="on"' : ''}></span>`).join('') +
+                '</div>';
+            // Keep the dots in sync with the active slide.
+            const slider = document.getElementById('catSlider');
+            const dots = document.getElementById('catSlideDots');
+            if (slider && dots) {
+                slider.addEventListener('scroll', function () {
+                    const idx = Math.round(slider.scrollLeft / slider.clientWidth);
+                    Array.prototype.forEach.call(dots.children, function (d, i) { d.classList.toggle('on', i === idx); });
+                }, { passive: true });
+            }
             const hint = document.getElementById('catCapsulesHint');
             if (hint) hint.textContent = chosen.length
-                ? `${chosen.length} of ${CAT_CAPSULE_MAX} selected — the feed shows these.`
-                : `Select up to ${CAT_CAPSULE_MAX} — the feed updates to match.`;
+                ? `${chosen.length} selected — the feed shows these.`
+                : `Swipe through the categories — tap a type to filter the feed.`;
         }
         window.toggleCatCapsule = function (name) {
             const chosen = feedFilters.categories || (feedFilters.categories = []);
