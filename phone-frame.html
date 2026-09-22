@@ -178,7 +178,7 @@
                and fades) while the white panel fades with it to reveal the app. ---- */
         .pf-intro {
             position: absolute; inset: 0; z-index: 40;
-            background: #fff;
+            background: #000;
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
             /* Panel stays opaque through the hold, then fades out during the exit. */
@@ -187,13 +187,22 @@
         @keyframes pfiPanelFade { 0%, 73% { opacity: 1; } 100% { opacity: 0; } }
         /* Once faded, drop it entirely so it never intercepts taps (JS adds .done). */
         .pf-intro.done { opacity: 0; visibility: hidden; pointer-events: none; }
-        /* Dark peacock: zooms in to rest, holds ~1s in place, then mirrors the
-           entrance to leave — zooms back out and fades. */
-        .pf-intro-peacock {
-            width: min(34vw, 132px); height: auto; display: block;
+        /* The moravchick wordmark: zooms in to rest, holds ~1s in place, then mirrors
+           the entrance to leave. The mark wraps the logo so it scales as one. */
+        .pf-intro-mark {
+            position: relative; display: block; line-height: 0;
             transform-origin: center center;
             animation: pfiInHoldOut 2.6s cubic-bezier(0.5, 0, 0.5, 1) both;
             will-change: transform, opacity;
+        }
+        /* Source art is black-on-white; invert it to a white wordmark on the black
+           field (colours reversed, as requested). */
+        .pf-intro-logo {
+            width: min(84vw, 460px); height: auto; display: block;
+            /* Invert to a white wordmark, and crush the (near-white) source
+               background to true black so no rectangle shows on the black field. */
+            filter: invert(1) brightness(1.06) contrast(1.35);
+            mix-blend-mode: screen;
         }
         @keyframes pfiInHoldOut {
             0%   { transform: scale(2.1); opacity: 0; }   /* enter */
@@ -201,10 +210,45 @@
             73%  { transform: scale(1);   opacity: 1; }   /* hold ~1s in place */
             100% { transform: scale(2.1); opacity: 0; }   /* leave as it entered */
         }
+        /* ---- Lightning: a bright blue-white streak sweeps diagonally across the
+               logo while it holds, with a quick double flash as it crosses. ---- */
+        .pf-bolt {
+            position: absolute; top: -25%; bottom: -25%; left: -35%; width: 24%;
+            background: linear-gradient(90deg,
+                rgba(200,230,255,0) 0%,
+                rgba(210,235,255,0.15) 38%,
+                rgba(255,255,255,0.95) 50%,
+                rgba(210,235,255,0.15) 62%,
+                rgba(200,230,255,0) 100%);
+            filter: blur(2px);
+            transform: rotate(14deg);
+            mix-blend-mode: screen; pointer-events: none; opacity: 0;
+            animation: pfBolt 2.6s ease-in-out both;
+        }
+        @keyframes pfBolt {
+            0%, 30% { left: -35%; opacity: 0; }
+            37%     { opacity: 1; }
+            55%     { left: 120%; opacity: 1; }
+            60%, 100% { left: 120%; opacity: 0; }
+        }
+        .pf-flash {
+            position: absolute; inset: 0; background: #eaf3ff;
+            mix-blend-mode: screen; pointer-events: none; opacity: 0;
+            animation: pfFlash 2.6s ease-in-out both;
+        }
+        @keyframes pfFlash {
+            0%, 43% { opacity: 0; }
+            46%     { opacity: 0.55; }
+            49%     { opacity: 0; }
+            52%     { opacity: 0.3; }
+            55%     { opacity: 0; }
+            100%    { opacity: 0; }
+        }
         @keyframes pfiFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @media (prefers-reduced-motion: reduce) {
             .pf-intro { animation: none; }
-            .pf-intro-peacock { animation: pfiFadeIn 0.5s ease both; transform: none; }
+            .pf-intro-mark { animation: pfiFadeIn 0.5s ease both; transform: none; }
+            .pf-bolt, .pf-flash { display: none; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -266,7 +310,11 @@ h3, h4, h5, h6, p,
                  field, played once each time the app is opened. It covers the iframe
                  while the home feed loads, then fades away (see playIntro below). -->
             <div id="pfIntro" class="pf-intro" aria-hidden="true">
-                <img class="pf-intro-peacock" src="peacock-logo.png?v=1" alt="" draggable="false" />
+                <div class="pf-intro-mark">
+                    <img class="pf-intro-logo" src="moravchick-intro.png?v=1" alt="moravchick" draggable="false" />
+                </div>
+                <span class="pf-bolt" aria-hidden="true"></span>
+                <span class="pf-flash" aria-hidden="true"></span>
             </div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
