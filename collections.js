@@ -182,7 +182,11 @@
                     category: p.category || p.itemType || '',
                     price: toNum(p.price),
                     icon: p.icon || p.emoji || '🛍️',
-                    cover: p.cover || (p.photos && (p.photos.cover || p.photos.detail)) || '',
+                    // Prefer the background-removed cut-out (processed_cover) so a
+                    // product card shows only the piece on the card ground — the same
+                    // treatment as the product page's first image. Fall back to the
+                    // plain photo when no cut-out was produced.
+                    cover: p.processed_cover || p.cover || (p.photos && (p.photos.cover || p.photos.detail)) || '',
                     collection: collectionOf(p),
                     season: p.season || '',
                     createdAt: p.createdAt || p.listedAt || 0,
