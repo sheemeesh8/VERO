@@ -13089,10 +13089,8 @@ window.veroLocalImg = function (key) {
         // True only while the home view owns the scroll — the section glide must not
         // touch the category / cart / other full-page views.
         function homeScrollActive() {
-            // Section-snap glide disabled — with the retired panels gone it skipped
-            // past the tall SALES section and felt jumpy. The home view now scrolls
-            // natively (the wheel/touch glide handlers below bail on this).
-            return false;
+            const mv = document.getElementById('mainView');
+            return mv && mv.style.display !== 'none';
         }
         function feedTop() {
             const f = document.querySelector('.feed-section');
@@ -13107,6 +13105,13 @@ window.veroLocalImg = function (key) {
         }
         function sectionStops() {
             const stops = [0];
+            // SALES banner directly under the hero — its own landing point, so one
+            // gesture glides hero → SALES the same way it used to glide hero →
+            // categories (and the feed is the next stop after it, never skipped).
+            const sale = document.querySelector('.sale-showcase');
+            if (sale && sale.offsetParent !== null) {
+                stops.push(sale.getBoundingClientRect().top + (window.scrollY || 0));
+            }
             // Full-screen image panel between the hero and the M/W/K slider.
             const mid = document.getElementById('heroMid');
             if (mid && mid.offsetParent !== null) {
