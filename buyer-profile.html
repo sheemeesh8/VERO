@@ -1005,6 +1005,26 @@ h3, h4, h5, h6, p,
             }
         })();
 
+        // Surface the seller's uploaded items. The upload flow saves pieces to
+        // vero_listings, but the store only read vero_buyer_config.products (which
+        // nothing populates) — so the store looked empty after uploading. Pull the
+        // active listings in so they show here too.
+        (function includeUploadedListings() {
+            let listings; try { listings = JSON.parse(localStorage.getItem('vero_listings')); } catch (e) { listings = null; }
+            if (!Array.isArray(listings)) return;
+            const active = listings.filter(p => p && (p.status === 'active' || p.status == null));
+            if (!active.length) return;
+            const mapped = active.map((p, i) => ({
+                id: 'L' + i,
+                name: p.name || p.title || 'Item',
+                icon: p.icon || p.emoji || '🛍️',
+                price: p.price != null ? p.price : 0,
+                rating: p.rating != null ? p.rating : '—',
+                cover: p.processed_cover || p.cover || (p.photos && (p.photos.cover || p.photos.detail)) || ''
+            }));
+            PRODUCTS = mapped.concat(PRODUCTS);
+        })();
+
         // ===================== SYNC WITH MY PROFILE SETTINGS =====================
         // The public front mirrors exactly what was set on the profile-settings page
         // (profile.html buyer mode): identity + About + avatar live on vero_profile,
@@ -1169,7 +1189,7 @@ h3, h4, h5, h6, p,
         function card(p) {
             return `
                 <a class="product-card" href="#" title="${p.name}">
-                    <div class="product-image">${p.icon}</div>
+                    <div class="product-image">${p.cover ? `<img class="pc-photo" src="${p.cover}" alt="${p.name}" draggable="false">` : p.icon}</div>
                     <div class="product-info">
                         <div class="pc-left">
                             <div class="product-price"><span class="vprice">${nis(p.price)}</span></div>
