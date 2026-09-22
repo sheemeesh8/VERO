@@ -531,7 +531,7 @@
         #siteHeader .toggle-category {
             position: relative; display: inline-block; box-sizing: border-box;
             width: 40px; height: 21px; flex: 0 0 auto;
-            background: transparent; padding: 0; border-radius: 5px; cursor: pointer;
+            background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
             /* Not "all": border-color is mode-driven and must switch immediately when
                the mode flips — transitioning it left the switch showing the old
                mode's colour. */
@@ -539,7 +539,7 @@
         }
         #siteHeader .toggle-category::before {
             content: ''; position: absolute; top: 2px; left: 2px;
-            width: 17px; height: 17px; border-radius: 3px; background: #111; z-index: 0;
+            width: 17px; height: 17px; border-radius: 50%; background: #111; z-index: 0;
             /* Only the slide animates. The knob's colour is mode-driven, same as the
                track's border, and must switch instantly rather than fade. */
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1485,6 +1485,11 @@
         #siteHeader.force-light .hdr-mode-pair .toggle-category { border-color: rgba(0,0,0,0.55) !important; }
         #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
         #siteHeader.force-light .hdr-mode-pair .toggle-category::before { background: #111 !important; }
+        /* Mode-coloured circular knob: red for Art, black for Fashion (clothing).
+           The extra id (#segArt / #segFashion) makes these the most specific knob
+           rules, so the colour follows the mode in every header appearance state. */
+        #siteHeader .hdr-mode-pair .toggle-category:has(#segArt.active)::before { background: #EB2323 !important; }
+        #siteHeader .hdr-mode-pair .toggle-category:has(#segFashion.active)::before { background: #111 !important; }
 `;
 
     // ---- Markup (identical everywhere) ----

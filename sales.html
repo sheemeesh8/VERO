@@ -157,6 +157,16 @@
         .catbar-chips button:hover, .cb-disc-opts button:hover { border-color: #fff; color: #fff; }
         .catbar-chips button.on, .cb-disc-opts button.on { background: #fff; color: #111; border-color: #fff; }
 
+        /* ===== Shared header over the dark sale hero =====
+           header.js already makes the toggle white here; the logo + icons need the
+           same white treatment while the header floats over the hero image. Once
+           scrolled past the hero, header.js flips everything back to dark. */
+        #siteHeader.sticky-look:not(.scrolled) .header-left > a,
+        #siteHeader.sticky-look:not(.scrolled) .logo { color: #fff; }
+        #siteHeader.sticky-look:not(.scrolled) .icon-btn { color: #fff; }
+        #siteHeader.sticky-look:not(.scrolled) .icon-btn svg { stroke: #fff !important; }
+        #siteHeader.sticky-look:not(.scrolled) .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
+
         /* ===== BODY (cards) ===== */
         .page-body { padding: 30px clamp(20px,5vw,40px) 140px; }
         @media (max-width: 768px) {
@@ -354,15 +364,24 @@ h3, h4, h5, h6, p,
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Aharoni CLM','Segoe UI',sans-serif !important;}</style>
 </head>
 <body>
-    <!-- Sticky header: just the filter and the back arrow. -->
-    <div class="cart-topbar" id="saleTopbar">
-        <a class="back-btn tb-ico" href="index.html" aria-label="Back">
-            <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-        </a>
-        <button class="tb-ico" onclick="openFilters()" aria-label="Search">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        </button>
-    </div>
+    <!-- Shared site header (single source: header.js) — the same header the home
+         page wears over its hero: white content floating over the dark sale hero,
+         turning solid once you scroll past it. -->
+    <div id="siteHeader"></div>
+    <script>
+        // Float transparent over the sale hero, turn solid the moment the hero
+        // scrolls under the header (read by header.js's scroll handler).
+        window.veroHeaderScrolled = function (hdr) {
+            var hero = document.querySelector('.sale-hero');
+            var hdrH = (hdr && hdr.offsetHeight) || 0;
+            return hero ? (window.scrollY + hdrH) >= hero.offsetHeight : window.scrollY > 80;
+        };
+    </script>
+    <script src="header.js"></script>
+    <script>
+        // Wear the sticky (over-hero) look from the very top, like the home page.
+        (function () { var h = document.getElementById('siteHeader'); if (h) h.classList.add('sticky-look'); })();
+    </script>
 
     <div class="wrap">
         <!-- ===== HERO SECTION — image band with the texts over it ===== -->
@@ -564,20 +583,6 @@ h3, h4, h5, h6, p,
             });
 
             render();
-        })();
-    </script>
-    <script>
-        // Sticky header: transparent over the hero, solid once scrolled past it.
-        (function () {
-            var bar = document.getElementById('saleTopbar');
-            var hero = document.querySelector('.sale-hero');
-            function onScroll() {
-                var trigger = hero ? hero.offsetHeight - 80 : 80;
-                bar.classList.toggle('scrolled', window.scrollY > trigger);
-            }
-            window.addEventListener('scroll', onScroll, { passive: true });
-            window.addEventListener('resize', onScroll);
-            onScroll();
         })();
     </script>
     <script src="footer.js"></script>
