@@ -13,6 +13,22 @@
    toggles it with showSiteFooter() / hideSiteFooter().
 ------------------------------------------------------------------ */
 (function () {
+    // Footer removed site-wide by request — this file is now a no-op. It also
+    // strips any footer that may already have been injected, and neutralises the
+    // show/hide helpers other pages call. Restore by deleting this block.
+    (function removeFooter() {
+        var kill = function () {
+            ['#siteFooter', '.vero-footer'].forEach(function (sel) {
+                var el = document.querySelector(sel); if (el) el.remove();
+            });
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kill);
+        else kill();
+        window.showSiteFooter = function () {};
+        window.hideSiteFooter = function () {};
+    })();
+    return;
+    /* eslint-disable no-unreachable */
     const STYLES = `
         #siteFooter {
             width: 100%;

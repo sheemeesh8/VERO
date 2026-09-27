@@ -294,6 +294,23 @@
         @media (max-width: 768px) {
             .prod-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
         }
+        /* ===== Sale cards laid out one-to-one like the feed cards: brand + price
+           on the top row (hairline beneath), the product name below, and no sale
+           frame. ===== */
+        .prod-grid .product-card.is-sale::before { display: none !important; }   /* drop the red frame */
+        .prod-grid .product-seller { grid-column: 1 / 2 !important; grid-row: 1 !important; align-self: baseline !important; }
+        .prod-grid .product-price,
+        .prod-grid .product-card.is-sale .product-price {
+            grid-column: 2 / 3 !important; grid-row: 1 !important;
+            justify-self: end !important; align-self: baseline !important; height: auto !important;
+        }
+        .prod-grid .product-name { grid-column: 1 / -1 !important; grid-row: 3 !important; }
+        /* Sale price on one line: current price with the old one struck beside it. */
+        .prod-grid .product-card.is-sale .vprice-wrap {
+            flex-direction: row !important; align-items: baseline !important; gap: 6px !important; height: auto !important;
+        }
+        .prod-grid .product-card.is-sale .vprice-sale { height: auto !important; }
+        .prod-grid .product-card.is-sale .vprice-was { height: auto !important; order: 2; }
         .cart-empty {
             margin-top: 52px; border: 1px solid #ecebe7; border-radius: 18px; background: #fff;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 10px 34px rgba(0,0,0,0.045);
@@ -333,6 +350,109 @@
         }
         .s-disc button:hover { border-color: #111; }
         .s-disc button.on { background: #EB2323; color: #fff; border-color: #EB2323; }
+        /* Header removed from the sales page by request. */
+        #siteHeader { display: none !important; }
+
+        /* ===== Feed-style floating nav bar (ALL + categories + Filters) ===== */
+        .sale-catbar, .cb-pop { display: none !important; }   /* retire the old catbar */
+        .feed-nav {
+            position: fixed; bottom: 20px; left: 50%;
+            /* Hidden (slid down) over the hero; rises up once .in is added on scroll. */
+            transform: translateX(-50%) translateY(26px); opacity: 0;
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22,1,0.36,1);
+            z-index: 900; display: flex; align-items: stretch; gap: 4px; direction: ltr;
+            width: 92vw; max-width: 460px; overflow: hidden;
+            background: rgba(20,20,20,0.94); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 5px;
+            box-shadow: 0 6px 26px rgba(0,0,0,0.28);
+        }
+        .feed-nav.in { opacity: 1; transform: translateX(-50%) translateY(0); }
+        @media (prefers-reduced-motion: reduce) {
+            .feed-nav { transition: none; opacity: 1; transform: translateX(-50%); }
+        }
+        .feed-nav-tab {
+            position: relative; z-index: 1; flex: none; border: none; background: transparent;
+            font-family: inherit; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+            color: #b5b5b0; padding: 9px 16px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+            transition: background 0.2s, color 0.2s;
+        }
+        .feed-nav-tab.is-active { color: #EB2323; background: #fff; }
+        .feed-nav-filter {
+            position: relative; flex: none; border: none; background: transparent; color: #b5b5b0;
+            padding: 0 12px; border-radius: 999px; cursor: pointer; display: flex; align-items: center;
+        }
+        .feed-nav-filter svg { width: 17px; height: 17px; }
+        .feed-nav-filter.has::after {
+            content: ''; position: absolute; top: 5px; right: 7px; width: 6px; height: 6px;
+            border-radius: 50%; background: #EB2323;
+        }
+        .feed-nav-sep { width: 1px; align-self: stretch; margin: 5px 3px; background: rgba(255,255,255,0.22); flex: none; }
+        .feed-nav-view {
+            flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 100%);
+                    mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 100%);
+        }
+        .feed-nav-view::-webkit-scrollbar { display: none; }
+        .feed-nav-track { display: flex; width: max-content; gap: 6px; }
+        /* Match the feed bar's typeface (Arimo, uppercase) — beats aharoni.css. */
+        .feed-nav:not(#zzzz):not(#zzzz):not(#zzzz),
+        .feed-nav-tab:not(#zzzz):not(#zzzz):not(#zzzz),
+        .feed-nav *:not(#zzzz):not(#zzzz):not(#zzzz) {
+            font-family: 'Arimo', 'Segoe UI', Arial, sans-serif !important;
+            text-transform: uppercase !important;
+        }
+
+        /* ===== Discount-slider sheet (black Gucci style, like the feed) ===== */
+        .sl-scrim {
+            position: fixed; inset: 0; z-index: 100000; background: rgba(20,20,20,0.28);
+            -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); touch-action: none;
+            opacity: 0; visibility: hidden; pointer-events: none;
+            /* Close: quick, smooth fade. */
+            transition: opacity 0.24s ease, visibility 0s linear 0.24s;
+        }
+        .sl-scrim.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.4s ease; }
+        .sl-sheet {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 100001; width: 100%;
+            height: 42vh; height: 42svh; box-sizing: border-box; color: #fff;
+            background: #000; border-top: 1px solid rgba(255,255,255,0.14); border-radius: 26px 26px 0 0;
+            display: flex; flex-direction: column;
+            opacity: 1; visibility: hidden; pointer-events: none; transform: translateY(100%);
+            /* Close: quick slide-out with a smooth ease. */
+            transition: transform 0.26s cubic-bezier(0.4,0,0.2,1), visibility 0s linear 0.26s;
+        }
+        .sl-sheet.open { visibility: visible; pointer-events: auto; transform: translateY(0);
+            transition: transform 0.42s cubic-bezier(0.22,1,0.36,1); }
+        @media (prefers-reduced-motion: reduce) {
+            .sl-sheet, .sl-sheet.open, .sl-scrim, .sl-scrim.open { transition: none; }
+        }
+        .sl-sheet-body { flex: 1 1 auto; min-height: 0; padding: 26px 26px 10px; display: flex; flex-direction: column; }
+        .sl-step { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 16px; }
+        .sl-step[hidden] { display: none; }
+        .sl-step-label { flex: none; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+        /* Step 1: a scrollable list of product-type options. */
+        .sl-cats { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+        .sl-cat {
+            display: block; width: 100%; border: none; background: transparent; text-align: left;
+            cursor: pointer; padding: 12px 2px; font-family: inherit;
+            font-size: 17px; color: rgba(255,255,255,0.62);
+        }
+        .sl-cat.on { color: #fff; font-weight: 700; }
+        /* Step 2: the discount slider. */
+        .sl-disc-top { display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px; }
+        .sl-disc-lbl { font-size: 15px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+        .sl-disc-val { font-size: 48px; font-weight: 700; letter-spacing: 0.5px; }
+        input.sl-range { width: 100%; -webkit-appearance: none; appearance: none; height: 2px; background: rgba(255,255,255,0.28); outline: none; border-radius: 2px; }
+        input.sl-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #fff; cursor: pointer; }
+        input.sl-range::-moz-range-thumb { width: 24px; height: 24px; border: none; border-radius: 50%; background: #fff; cursor: pointer; }
+        .sl-scale { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 1px; color: rgba(255,255,255,0.4); }
+        /* Full-width wizard buttons with small side gutters. */
+        .sl-actions { flex: none; display: flex; align-items: center; gap: 10px; padding: 12px 14px calc(20px + env(safe-area-inset-bottom, 0px)); }
+        .sl-next, .sl-back, .sl-done { flex: 1; font-size: 14px; letter-spacing: 1px; padding: 16px 0; text-align: center; border: 1px solid rgba(255,255,255,0.4); border-radius: 12px; cursor: pointer; background: transparent; color: #fff; }
+        .sl-next, .sl-done { background: #fff; color: #000; border-color: #fff; }
+        /* Close chevron floats in the sheet's top-right corner. */
+        .sl-close { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border: none; background: transparent; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2; }
+        .sl-close svg { width: 22px; height: 22px; }
     </style>
     <!-- The product card, shared by every page (single source: product-card.css). -->
     <link rel="stylesheet" href="product-card.css">
@@ -413,27 +533,41 @@ h3, h4, h5, h6, p,
         </div>
     </div>
 
-    <!-- ===== STICKY NAV BAR — two halves that each open a popup ===== -->
-    <nav class="sale-catbar">
-        <button type="button" class="cb-part" id="cbCatsBtn" aria-haspopup="true">
-            <span class="cb-title">Choose my categories</span>
-            <span class="cb-value" id="cbCatsVal">All</span>
+    <!-- ===== Feed-style floating nav bar: ALL + Filters + category tabs ===== -->
+    <nav class="feed-nav" id="slNav">
+        <button type="button" class="feed-nav-tab is-active" data-cat="all" data-vni-done="1">ALL</button>
+        <button type="button" class="feed-nav-filter" id="slFilterBtn" aria-label="Filters">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
         </button>
-        <div class="cb-sep"></div>
-        <button type="button" class="cb-part cb-part--disc" id="cbDiscBtn" aria-haspopup="true">
-            <span class="cb-title">Choose my discount</span>
-            <span class="cb-value" id="cbDiscVal">All</span>
-        </button>
+        <span class="feed-nav-sep"></span>
+        <div class="feed-nav-view"><div class="feed-nav-track" id="slTrack"></div></div>
     </nav>
-    <!-- Popups (open above each half). -->
-    <div class="cb-pop cb-pop--cats" id="cbCatsPop">
-        <div class="cb-pop-title">Categories</div>
-        <div class="catbar-chips" id="typeChips"></div>
+    <!-- Discount-slider sheet (0–100%), opened by the Filters button. -->
+    <div class="sl-scrim" id="slScrim"></div>
+    <div class="sl-sheet" id="slSheet">
+        <div class="sl-sheet-body">
+            <!-- Step 1 — product type (like the feed's category filter). -->
+            <div class="sl-step" id="slStep1">
+                <span class="sl-step-label">Step 1 · Product type</span>
+                <div class="sl-cats" id="slSheetCats"></div>
+            </div>
+            <!-- Step 2 — minimum discount slider (0–100%). -->
+            <div class="sl-step" id="slStep2" hidden>
+                <span class="sl-step-label">Step 2 · Minimum discount</span>
+                <div class="sl-disc-top"><span class="sl-disc-lbl">At least</span><span class="sl-disc-val" id="slDiscVal">0%</span></div>
+                <input type="range" class="sl-range" id="slRange" min="0" max="100" step="5" value="0" aria-label="Minimum discount">
+                <div class="sl-scale"><span>0%</span><span>50%</span><span>100%</span></div>
+            </div>
+        </div>
+        <div class="sl-actions">
+            <button type="button" class="sl-back" id="slBack" hidden>Back</button>
+            <button type="button" class="sl-next" id="slNext">Next</button>
+            <button type="button" class="sl-done" id="slDone" hidden>Done</button>
+            <button type="button" class="sl-close" id="slClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+        </div>
     </div>
-    <div class="cb-pop cb-pop--disc" id="cbDiscPop">
-        <div class="cb-pop-title">Minimum discount</div>
-        <div class="cb-disc-opts" id="discOpts"></div>
-    </div>
+    <!-- Legacy popup containers kept (hidden) so old references stay null-safe. -->
+    <div id="typeChips" hidden></div><div id="discOpts" hidden></div>
 
     <!-- Filters bottom-sheet — same as the cart / wishlist. -->
     <div class="cart-sheet-overlay" id="filterOverlay" onclick="if(event.target===this)closeFilters()">
@@ -472,32 +606,25 @@ h3, h4, h5, h6, p,
             var cat = 'all', sortDir = 'desc', term = '', minPct = 0;
 
             var body = document.getElementById('cartBody');
-            var sub = document.getElementById('headSub');
             var qEl = document.getElementById('q');
-            var typeChips = document.getElementById('typeChips');
             var sortFilter = document.getElementById('sortFilter');
-            var discOpts = document.getElementById('discOpts');
-            var cbCatsVal = document.getElementById('cbCatsVal');
-            var cbDiscVal = document.getElementById('cbDiscVal');
 
-            // Build the category chips from the categories actually on sale
-            // (labels stay in the collections' own English names).
+            // ---- Feed-style nav bar: ALL + a scrolling row of category tabs. ----
+            var track = document.getElementById('slTrack');
+            var allTab = document.querySelector('.feed-nav-tab[data-cat="all"]');
             var cats = [];
             all.forEach(function (p) { if (p.category && cats.indexOf(p.category) === -1) cats.push(p.category); });
-            typeChips.innerHTML =
-                '<button data-cat="all" class="on">All</button>' +
-                cats.map(function (c) {
-                    return '<button data-cat="' + c.replace(/"/g, '') + '">' + c + '</button>';
-                }).join('');
-
-            typeChips.addEventListener('click', function (e) {
-                var b = e.target.closest('button[data-cat]');
-                if (!b) return;
-                cat = b.dataset.cat;
-                typeChips.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
-                cbCatsVal.textContent = (cat === 'all') ? 'All' : b.textContent;
-                closePops();
-                render();
+            track.innerHTML = cats.map(function (c) {
+                return '<button type="button" class="feed-nav-tab" data-cat="' + c.replace(/"/g, '') + '">' + c + '</button>';
+            }).join('');
+            // Keep the nav-bar tab and the sheet's step-1 list in sync on the value.
+            function syncCat() {
+                document.querySelectorAll('.feed-nav-tab').forEach(function (x) { x.classList.toggle('is-active', x.dataset.cat === cat); });
+                document.querySelectorAll('.sl-cat').forEach(function (x) { x.classList.toggle('on', x.dataset.cat === cat); });
+            }
+            function setCat(v) { cat = v; syncCat(); render(); }
+            document.getElementById('slNav').addEventListener('click', function (e) {
+                var b = e.target.closest('.feed-nav-tab'); if (b) setCat(b.dataset.cat);
             });
 
             // Sort direction — highest → lowest discount, or the reverse.
@@ -535,58 +662,95 @@ h3, h4, h5, h6, p,
                     '<div class="prod-grid">' + items.map(function (p) { return VC.cardHTML(p); }).join('') + '</div>';
             }
 
-            // Discount chosen in jumps of 10, from the popup.
-            var discSteps = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90];
-            discOpts.innerHTML = discSteps.map(function (n) {
-                return '<button data-pct="' + n + '"' + (n === 0 ? ' class="on"' : '') + '>' +
-                    (n === 0 ? 'All' : n + '%+') + '</button>';
-            }).join('');
-            discOpts.addEventListener('click', function (e) {
-                var b = e.target.closest('button[data-pct]');
-                if (!b) return;
-                minPct = parseInt(b.dataset.pct, 10) || 0;
-                discOpts.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
-                cbDiscVal.textContent = minPct === 0 ? 'All' : minPct + '%+';
-                closePops();
+            // ---- Two-step filter sheet: 1) product type, 2) discount slider. ----
+            var scrim = document.getElementById('slScrim');
+            var sheet = document.getElementById('slSheet');
+            var range = document.getElementById('slRange');
+            var discVal = document.getElementById('slDiscVal');
+            var filterBtn = document.getElementById('slFilterBtn');
+            var step1 = document.getElementById('slStep1');
+            var step2 = document.getElementById('slStep2');
+            var backBtn = document.getElementById('slBack');
+            var nextBtn = document.getElementById('slNext');
+            var doneBtn = document.getElementById('slDone');
+
+            // Step 1 list: All + each product type on sale.
+            var sheetCats = document.getElementById('slSheetCats');
+            sheetCats.innerHTML =
+                '<button type="button" class="sl-cat on" data-cat="all">All</button>' +
+                cats.map(function (c) {
+                    return '<button type="button" class="sl-cat" data-cat="' + c.replace(/"/g, '') + '">' + c + '</button>';
+                }).join('');
+            sheetCats.addEventListener('click', function (e) {
+                var b = e.target.closest('.sl-cat'); if (b) setCat(b.dataset.cat);
+            });
+
+            function setDisc(v) {
+                minPct = parseInt(v, 10) || 0;
+                discVal.textContent = minPct + '%';
+                filterBtn.classList.toggle('has', minPct > 0 || cat !== 'all');
                 render();
-            });
-
-            // ---- The two nav-bar halves each open their own popup. ----
-            var catsBtn = document.getElementById('cbCatsBtn');
-            var discBtn = document.getElementById('cbDiscBtn');
-            var catsPop = document.getElementById('cbCatsPop');
-            var discPop = document.getElementById('cbDiscPop');
-            function positionPop(pop, btn) {
-                var r = btn.getBoundingClientRect();
-                var half = pop.offsetWidth / 2 || 160;
-                var cx = Math.min(Math.max(r.left + r.width / 2, half + 10), window.innerWidth - half - 10);
-                pop.style.left = cx + 'px';
             }
-            function closePops() { catsPop.classList.remove('open'); discPop.classList.remove('open'); }
-            function togglePop(pop, btn) {
-                var isOpen = pop.classList.contains('open');
-                closePops();
-                if (!isOpen) { pop.classList.add('open'); positionPop(pop, btn); }
+            // Show a given step (1 or 2) and swap the footer buttons.
+            var step = 1;
+            function showStep(n) {
+                step = n;
+                step1.hidden = n !== 1;
+                step2.hidden = n !== 2;
+                backBtn.hidden = n === 1;
+                nextBtn.hidden = n === 2;
+                doneBtn.hidden = n === 1;
             }
-            catsBtn.addEventListener('click', function (e) { e.stopPropagation(); togglePop(catsPop, catsBtn); });
-            discBtn.addEventListener('click', function (e) { e.stopPropagation(); togglePop(discPop, discBtn); });
-            document.addEventListener('click', function (e) {
-                if (!e.target.closest('.cb-pop') && !e.target.closest('.cb-part')) closePops();
-            });
-            window.addEventListener('resize', closePops);
+            var sheetOpen = false;
+            function openSheet() {
+                range.value = minPct;
+                discVal.textContent = minPct + '%';
+                syncCat();
+                showStep(1);
+                requestAnimationFrame(function () { scrim.classList.add('open'); sheet.classList.add('open'); });
+                sheetOpen = true;
+            }
+            function closeSheet() {
+                scrim.classList.remove('open'); sheet.classList.remove('open'); sheetOpen = false;
+            }
+            filterBtn.addEventListener('click', function (e) { e.stopPropagation(); sheetOpen ? closeSheet() : openSheet(); });
+            scrim.addEventListener('click', closeSheet);
+            scrim.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+            range.addEventListener('input', function () { setDisc(range.value); });
+            nextBtn.addEventListener('click', function () { showStep(2); });
+            backBtn.addEventListener('click', function () { showStep(1); });
+            doneBtn.addEventListener('click', closeSheet);
+            document.getElementById('slClose').addEventListener('click', closeSheet);
 
-            // Free-text search (inside the sheet).
+            // Free-text search (inside the top-bar sheet).
             var t;
-            qEl.addEventListener('input', function () {
+            if (qEl) qEl.addEventListener('input', function () {
                 clearTimeout(t);
                 t = setTimeout(function () { term = qEl.value.trim().toLowerCase(); render(); }, 120);
             });
 
             render();
         })();
+
+        // Reveal the nav bar on scroll: hidden over the full-screen sale hero, it
+        // slides up the moment you scroll down past the hero into the products.
+        (function () {
+            var bar = document.querySelector('.feed-nav');
+            var hero = document.querySelector('.sale-hero');
+            if (!bar) return;
+            function updateBar() {
+                if (!hero) { bar.classList.add('in'); return; }
+                var bottom = hero.getBoundingClientRect().bottom;
+                bar.classList.toggle('in', bottom <= window.innerHeight * 0.35);
+            }
+            window.addEventListener('scroll', updateBar, { passive: true });
+            window.addEventListener('resize', updateBar);
+            updateBar();
+        })();
     </script>
     <script src="footer.js"></script>
     <script src="assets/didone-hairline.js"></script>
+    <script src="nav-unify.js" defer></script>
     <script src="nav-icons.js" defer></script>
     <script src="feed-card.js" defer></script>
 </body>

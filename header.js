@@ -582,22 +582,26 @@
            personal + business accounts; tap one to switch to it. */
         .vero-acct-switcher {
             position: fixed; z-index: 100001; width: 240px;
-            background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 16px;
-            box-shadow: 0 16px 46px rgba(0,0,0,0.22); padding: 8px;
+            /* Frameless: no card background, border or shadow — just the rows. */
+            background: none; border: none; border-radius: 0; box-shadow: none; padding: 0;
             opacity: 0; transform: translateY(-6px) scale(0.98); transform-origin: top right;
             transition: opacity 0.18s ease, transform 0.18s ease;
         }
         .vero-acct-switcher.open { opacity: 1; transform: translateY(0) scale(1); }
-        .vero-acct-switcher .vas-title {
-            font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-            color: #9a9a95; padding: 8px 10px 6px;
-        }
+        /* Right-aligned: the avatar circle sits flush right (under the header icon),
+           the name snug to its left. */
         .vero-acct-switcher .vas-row {
-            display: flex; align-items: center; gap: 12px; width: 100%;
-            border: none; background: none; cursor: pointer; padding: 10px; border-radius: 12px;
-            text-align: left; font-family: inherit;
+            display: flex; align-items: center; justify-content: flex-end; gap: 10px; width: 100%;
+            border: none; background: none; cursor: pointer; padding: 7px 12px; border-radius: 12px;
+            text-align: right; font-family: inherit;
         }
-        .vero-acct-switcher .vas-row:hover { background: #f4f3f0; }
+        .vero-acct-switcher .vas-name {
+            flex: none; font-size: 14px; font-weight: 600; color: #111;
+            white-space: nowrap; text-shadow: 0 1px 6px rgba(0,0,0,0.28);
+        }
+        /* White names over the hero / gender slider, black in the feed (set by JS). */
+        .vero-acct-switcher.vas-on-hero .vas-name { color: #fff; }
+        .vero-acct-switcher:not(.vas-on-hero) .vas-name { color: #111; text-shadow: none; }
         .vero-acct-switcher .vas-av {
             width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto;
             background: #e6e4df center / cover no-repeat; display: grid; place-items: center;
@@ -607,34 +611,47 @@
         .vero-acct-switcher .vas-row.on .vas-av {
             border-color: #1DA65A; box-shadow: 0 0 0 2px rgba(29,166,90,0.25);
         }
-        .vero-acct-switcher .vas-meta { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; flex: 1; }
-        .vero-acct-switcher .vas-name {
-            font-size: 13px; font-weight: 600; color: #111;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;
-        }
-        .vero-acct-switcher .vas-sub { font-size: 10px; color: #8a8a85; letter-spacing: 0.3px; }
-        .vero-acct-switcher .vas-check { color: #1DA65A; font-weight: 700; margin-left: auto; }
-        /* Profile-switch splash: a short WELCOME screen shown between areas. */
+        /* Profile-switch splash: a Gucci-style WELCOME screen shown between areas —
+           black field, an editorial serif name, a thin rule and a spaced overline. */
         .vero-switch-splash {
-            position: fixed; inset: 0; z-index: 99999; background: #fff; color: #111;
-            display: grid; place-items: center; opacity: 0; transition: opacity 0.25s ease;
+            position: fixed; inset: 0; z-index: 99999; background: #000; color: #fff;
+            display: grid; place-items: center; opacity: 0; transition: opacity 0.4s ease;
         }
         .vero-switch-splash.show { opacity: 1; }
         .vero-switch-splash .vss-inner {
-            text-align: center; transform: translateY(12px); opacity: 0;
-            transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease;
+            text-align: center; transform: translateY(16px); opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.22,1,0.36,1), opacity 0.6s ease;
         }
         .vero-switch-splash.show .vss-inner { transform: translateY(0); opacity: 1; }
         .vero-switch-splash .vss-welcome {
-            font-size: 21.67px; letter-spacing: 12px; text-transform: uppercase;
-            color: rgba(0,0,0,0.5); margin-bottom: 28px;
+            font-family: 'Inter', 'Poppins', 'Segoe UI', sans-serif !important;
+            font-size: 12px; font-weight: 300; letter-spacing: 9px; text-transform: uppercase;
+            color: rgba(255,255,255,0.55); margin-bottom: 24px;
+        }
+        /* A hairline rule under the overline, like the sign-up screen. */
+        .vero-switch-splash .vss-welcome::after {
+            content: ''; display: block; width: 40px; height: 1px;
+            background: rgba(255,255,255,0.4); margin: 20px auto 0;
         }
         .vero-switch-splash .vss-name {
-            font-size: clamp(76px, 14vw, 152px); font-weight: 200; letter-spacing: 1px; line-height: 1;
+            font-family: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif !important;
+            font-size: clamp(52px, 13vw, 116px); font-weight: 400; letter-spacing: 1.5px;
+            line-height: 1.02; color: #fff;
+            font-optical-sizing: none; font-variation-settings: 'opsz' 48;
         }
         .vero-switch-splash .vss-caption {
-            margin-top: 20px; font-size: 12.50px; font-weight: 300; letter-spacing: 0.4px;
-            color: rgba(255,255,255,0.85);
+            margin-top: 20px; font-family: 'Inter', 'Poppins', sans-serif !important;
+            font-size: 12.5px; font-weight: 300; letter-spacing: 0.4px;
+            color: rgba(255,255,255,0.7);
+        }
+        /* Beat aharoni.css's universal 3-id !important font rule so the splash keeps
+           its Bodoni name and Inter overline. */
+        .vero-switch-splash .vss-name:not(#zz):not(#zz):not(#zz) {
+            font-family: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif !important;
+        }
+        .vero-switch-splash .vss-welcome:not(#zz):not(#zz):not(#zz),
+        .vero-switch-splash .vss-caption:not(#zz):not(#zz):not(#zz) {
+            font-family: 'Inter', 'Poppins', 'Segoe UI', sans-serif !important;
         }
         #siteHeader .upload-plus {
             color: #111 !important; border: 2px solid #111 !important;
@@ -1485,11 +1502,8 @@
         #siteHeader.force-light .hdr-mode-pair .toggle-category { border-color: rgba(0,0,0,0.55) !important; }
         #siteHeader.scrolled .hdr-mode-pair .toggle-category::before,
         #siteHeader.force-light .hdr-mode-pair .toggle-category::before { background: #111 !important; }
-        /* Mode-coloured circular knob: red for Art, black for Fashion (clothing).
-           The extra id (#segArt / #segFashion) makes these the most specific knob
-           rules, so the colour follows the mode in every header appearance state. */
-        #siteHeader .hdr-mode-pair .toggle-category:has(#segArt.active)::before { background: #EB2323 !important; }
-        #siteHeader .hdr-mode-pair .toggle-category:has(#segFashion.active)::before { background: #111 !important; }
+        /* (The mode-coloured red/black knob was reverted — the knob now uses the
+           normal state colours: white over the hero, dark when the header is solid.) */
 `;
 
     // ---- Markup (identical everywhere) ----
@@ -2610,25 +2624,39 @@
         const pop = document.createElement('div');
         pop.className = 'vero-acct-switcher';
         pop.id = 'veroAcctSwitcher';
-        pop.innerHTML = '<div class="vas-title">Switch profile</div>' + rows.map(r => {
+        // Simple stacked list: each row is just the name (left) and the avatar (right).
+        pop.innerHTML = rows.map(r => {
             const initial = ((r.name || 'V').trim()[0] || 'V');
             const av = r.img ? `style="background-image:url('${r.img}')"` : '';
             return `<button class="vas-row${r.key === cur ? ' on' : ''}" data-acct="${r.key}">
+                        <span class="vas-name">${r.name}</span>
                         <span class="vas-av" ${av}>${r.img ? '' : initial}</span>
-                        <span class="vas-meta"><span class="vas-name">${r.name}</span><span class="vas-sub">${r.sub}</span></span>
-                        ${r.key === cur ? '<span class="vas-check">✓</span>' : ''}
                     </button>`;
         }).join('');
         document.body.appendChild(pop);
-        const box = (anchor || document.querySelector('#siteHeader .hdr-avatar-btn')).getBoundingClientRect();
+        // White names while the header is transparent over the hero / gender slider;
+        // black once it turns solid over the feed (mirrors the header's .scrolled).
+        var hdrEl = document.getElementById('siteHeader');
+        if (!hdrEl || !hdrEl.classList.contains('scrolled')) pop.classList.add('vas-on-hero');
+        // Drop the avatar circles directly under the header profile icon, on the same
+        // vertical line: the circle sits flush-right in the row (12px padding + 20px
+        // radius), so align the row's right edge to centre the circle under the icon.
+        var anchorEl = anchor || document.querySelector('#siteHeader .hdr-avatar-btn, #siteHeader .hdr-account-btn');
+        const box = anchorEl.getBoundingClientRect();
         const W = 240;
-        pop.style.left = Math.min(Math.max(8, box.right - W), window.innerWidth - W - 8) + 'px';
-        pop.style.top = (box.bottom + 8) + 'px';
+        const cx = box.left + box.width / 2;      // header icon centre
+        // Circle sits 32px in from the popup's right edge (12px pad + 20px radius);
+        // place the popup so that point lands under the icon centre. The popup is
+        // frameless, so its empty left area can run to the screen edge.
+        let left = Math.max(8, (cx + 32) - W);
+        pop.style.left = left + 'px';
+        pop.style.top = (box.bottom + 6) + 'px';
         pop.querySelectorAll('.vas-row').forEach(row => {
             row.addEventListener('click', () => {
                 const acct = row.dataset.acct;
                 closeAccountSwitcher();
-                if (acct !== cur) window.veroGoAccount(acct);
+                // Switching a profile lands on the home feed, not the personal area.
+                if (acct !== cur) window.veroGoAccount(acct, 'index.html');
             });
         });
         requestAnimationFrame(() => pop.classList.add('open'));
@@ -2693,7 +2721,7 @@
         ov.querySelector('.vss-name').textContent = name;
         document.body.appendChild(ov);
         requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('show')));
-        setTimeout(go, 850);
+        setTimeout(go, 1250);
     };
 
     // ---- Fallback handlers ----
