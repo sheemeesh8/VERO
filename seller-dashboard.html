@@ -255,6 +255,14 @@
         .scd-badge.weak   { color: #6f2020; border-color: rgba(178,59,59,0.4); background: rgba(178,59,59,0.10); }
         .scd-item { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: #1c1c1c; }
         .scd-item .scd-ic { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+        .scal-nav { display: inline-flex; align-items: center; gap: 10px; }
+        .scal-arrow { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: #111; font-size: 15px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+        .scal-arrow:active { background: #f0eee7; }
+        .scal-summary { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: -4px 0 16px; font-size: 11px; color: var(--muted); }
+        .scal-summary b { color: #111; font-weight: 600; }
+        .scd-evlink { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: #1c1c1c; text-decoration: none; }
+        .scd-evlink .scd-ic { width: 8px; height: 8px; border-radius: 50%; background: #111; flex: none; }
+        .scd-evlink .arr { color: var(--muted); margin-left: 2px; }
 
         .btn {
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
@@ -794,28 +802,19 @@ h3, h4, h5, h6, p,
         (function salesCalendar() {
             const host = document.getElementById('salesCal');
             if (!host) return;
-            const Y = now.getFullYear(), M = now.getMonth(), TODAY = now.getDate();
             const monthsF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const monShort = m => monthsF[m].slice(0, 3);
             const dows = ['S','M','T','W','T','F','S'];
             const dowLong = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-            const firstDow = new Date(Y, M, 1).getDay();
-            const dim = new Date(Y, M + 1, 0).getDate();
             const iso = (y, m, d) => y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
             const tsOf = p => Number(p.soldAt || p.createdAt) || 0;
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
-            // Actual revenue per day this month.
-            const dayRev = new Array(dim + 1).fill(0);
-            sold.forEach(p => { const t = tsOf(p); if (!t) return; const dt = new Date(t); if (dt.getFullYear() === Y && dt.getMonth() === M) dayRev[dt.getDate()] += priceOf(p.price); });
-            // Weekday averages across all history → a simple forecast for future days.
+            // Weekday averages across all history → a simple forecast for any future day.
             const wdSum = new Array(7).fill(0), wdDays = new Array(7).fill(0), seen = {};
             sold.forEach(p => { const t = tsOf(p); if (!t) return; const dt = new Date(t); wdSum[dt.getDay()] += priceOf(p.price); const k = iso(dt.getFullYear(), dt.getMonth(), dt.getDate()); if (!seen[k]) { seen[k] = 1; wdDays[dt.getDay()]++; } });
             const wdAvg = wdSum.map((s, i) => wdDays[i] ? s / wdDays[i] : 0);
-            const forecast = d => wdAvg[new Date(Y, M, d).getDay()];
-            const valueOf = d => d > TODAY ? forecast(d) : dayRev[d];
 
-            let maxV = 1;
-            for (let d = 1; d <= dim; d++) maxV = Math.max(maxV, valueOf(d));
-            const strengthClass = v => v <= 0 ? 's-none' : (v / maxV >= 0.66 ? 's-strong' : v / maxV >= 0.33 ? 's-mid' : 's-weak');
             const strengthLabel = c => ({ 's-strong': 'Strong', 's-mid': 'Medium', 's-weak': 'Weak' })[c] || 'No sales';
             const badgeClass = c => ({ 's-strong': 'strong', 's-mid': 'mid', 's-weak': 'weak' })[c] || '';
 
@@ -837,47 +836,89 @@ h3, h4, h5, h6, p,
                 { id: 'e7', title: 'Artisans Fair', date: sh(26) }, { id: 'e8', title: 'Vintage Flea Market', date: sh(40) }
             ];
             let userEv = []; try { userEv = JSON.parse(localStorage.getItem('vero_events')) || []; } catch (e) {}
-            const myEvByDate = {};
-            CURATED.concat(Array.isArray(userEv) ? userEv : []).forEach(e => { if (booths[e.id]) (myEvByDate[e.date] = myEvByDate[e.date] || []).push(e); });
+            const evByDate = {};
+            CURATED.concat(Array.isArray(userEv) ? userEv : []).forEach(e => { if (booths[e.id]) (evByDate[e.date] = evByDate[e.date] || []).push(e); });
+            const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-            let html = '<div class="scal">';
-            html += '<div class="scal-head"><span><span class="scal-kick">Sales forecast · What’s on</span>' +
-                    '<span class="scal-month">' + monthsF[M] + '</span></span><span class="scal-year">' + Y + '</span></div>';
-            html += '<div class="scal-grid">';
-            dows.forEach(d => html += '<div class="scal-dow">' + d + '</div>');
-            for (let i = 0; i < firstDow; i++) html += '<div class="scal-day empty"></div>';
-            for (let d = 1; d <= dim; d++) {
-                const cls = strengthClass(valueOf(d)), key = iso(Y, M, d);
-                const mk = (HOL[key] || myEvByDate[key])
-                    ? '<span class="scal-mk">' + (HOL[key] ? '<i class="hol"></i>' : '') + (myEvByDate[key] ? '<i class="evt"></i>' : '') + '</span>' : '';
-                html += '<div class="scal-day ' + cls + (d > TODAY ? ' future' : '') + (d === TODAY ? ' today' : '') + '" data-d="' + d + '">' + mk + d + '</div>';
-            }
-            html += '</div>';
-            html += '<div class="scal-legend">' +
+            // Static shell — the month arrows, summary, grid and detail are refilled
+            // by render() whenever you page to another month.
+            host.innerHTML = '<div class="scal">' +
+                '<div class="scal-head"><span><span class="scal-kick">Sales forecast · What’s on</span>' +
+                '<span class="scal-month" id="scalMonth"></span></span>' +
+                '<span class="scal-nav"><button type="button" class="scal-arrow" data-nav="-1" aria-label="Previous month">‹</button>' +
+                '<span class="scal-year" id="scalYear"></span>' +
+                '<button type="button" class="scal-arrow" data-nav="1" aria-label="Next month">›</button></span></div>' +
+                '<div class="scal-summary" id="scalSummary"></div>' +
+                '<div class="scal-grid" id="scalGrid"></div>' +
+                '<div class="scal-legend">' +
                 '<span><i style="background:rgba(31,143,78,0.55)"></i>Strong</span>' +
                 '<span><i style="background:rgba(201,146,43,0.6)"></i>Medium</span>' +
                 '<span><i style="background:rgba(178,59,59,0.5)"></i>Weak</span>' +
                 '<span><i style="background:#7c3aed"></i>Holiday</span>' +
                 '<span><i style="background:#111"></i>Your event</span>' +
-                '<span>◌ dashed = forecast</span></div>';
-            html += '<div class="scal-detail" id="scalDetail"></div></div>';
-            host.innerHTML = html;
+                '<span>◌ dashed = forecast</span></div>' +
+                '<div class="scal-detail" id="scalDetail"></div></div>';
 
+            const grid = document.getElementById('scalGrid');
+            const summary = document.getElementById('scalSummary');
             const detail = document.getElementById('scalDetail');
-            function select(d) {
-                host.querySelectorAll('.scal-day.sel').forEach(n => n.classList.remove('sel'));
-                const cell = host.querySelector('.scal-day[data-d="' + d + '"]'); if (cell) cell.classList.add('sel');
-                const cls = strengthClass(valueOf(d)), key = iso(Y, M, d), future = d > TODAY;
-                let h = '<div class="scd-date">' + dowLong[new Date(Y, M, d).getDay()] + ' · ' + d + ' ' + monthsF[M] + ' ' + Y + '</div>';
-                h += '<div class="scd-row"><span class="scd-lbl">' + (future ? 'Forecast revenue' : 'Revenue') + '</span><span class="scd-val">' + nis(valueOf(d)) + '</span></div>';
-                h += '<div class="scd-row"><span class="scd-lbl">Sales strength</span><span class="scd-badge ' + badgeClass(cls) + '">' + strengthLabel(cls) + '</span></div>';
-                if (HOL[key]) h += '<div class="scd-item"><span class="scd-ic" style="background:#7c3aed"></span>Holiday · ' + HOL[key] + '</div>';
-                (myEvByDate[key] || []).forEach(e => h += '<div class="scd-item"><span class="scd-ic" style="background:#111"></span>Your event · ' + String(e.title || 'Event') + '</div>');
-                detail.innerHTML = h;
+            const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
+            let offset = 0;
+
+            function render() {
+                const view = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+                const Y = view.getFullYear(), M = view.getMonth();
+                const dim = new Date(Y, M + 1, 0).getDate(), firstDow = new Date(Y, M, 1).getDay();
+                const dayRev = new Array(dim + 1).fill(0);
+                sold.forEach(p => { const t = tsOf(p); if (!t) return; const dt = new Date(t); if (dt.getFullYear() === Y && dt.getMonth() === M) dayRev[dt.getDate()] += priceOf(p.price); });
+                const dayStart = d => new Date(Y, M, d).getTime();
+                const isFuture = d => dayStart(d) > startOfToday;
+                const isToday = d => dayStart(d) === startOfToday;
+                const forecast = d => wdAvg[new Date(Y, M, d).getDay()];
+                const valueOf = d => isFuture(d) ? forecast(d) : dayRev[d];
+                const scls = v => v <= 0 ? 's-none' : (v / maxV >= 0.66 ? 's-strong' : v / maxV >= 0.33 ? 's-mid' : 's-weak');
+
+                let maxV = 1, total = 0, peakD = 1, peakV = -1, anyFuture = false, anyActual = false;
+                for (let d = 1; d <= dim; d++) { const v = valueOf(d); if (v > maxV) maxV = v; total += v; if (v > peakV) { peakV = v; peakD = d; } if (isFuture(d)) anyFuture = true; else anyActual = true; }
+
+                document.getElementById('scalMonth').textContent = monthsF[M];
+                document.getElementById('scalYear').textContent = Y;
+                const totalWord = anyFuture ? (anyActual ? 'Expected this month' : 'Forecast this month') : 'Total this month';
+                summary.innerHTML = '<span>' + totalWord + ' <b>' + nis(total) + '</b></span>' +
+                    '<span>Peak day <b>' + peakD + ' ' + monShort(M) + '</b> (' + dowLong[new Date(Y, M, peakD).getDay()].slice(0, 3) + ')</span>';
+
+                let g = '';
+                dows.forEach(d => g += '<div class="scal-dow">' + d + '</div>');
+                for (let i = 0; i < firstDow; i++) g += '<div class="scal-day empty"></div>';
+                for (let d = 1; d <= dim; d++) {
+                    const cls = scls(valueOf(d)), key = iso(Y, M, d);
+                    const mk = (HOL[key] || evByDate[key])
+                        ? '<span class="scal-mk">' + (HOL[key] ? '<i class="hol"></i>' : '') + (evByDate[key] ? '<i class="evt"></i>' : '') + '</span>' : '';
+                    g += '<div class="scal-day ' + cls + (isFuture(d) ? ' future' : '') + (isToday(d) ? ' today' : '') + '" data-d="' + d + '">' + mk + d + '</div>';
+                }
+                grid.innerHTML = g;
+
+                function select(d) {
+                    grid.querySelectorAll('.scal-day.sel').forEach(n => n.classList.remove('sel'));
+                    const cell = grid.querySelector('.scal-day[data-d="' + d + '"]'); if (cell) cell.classList.add('sel');
+                    const cls = scls(valueOf(d)), key = iso(Y, M, d), future = isFuture(d);
+                    let h = '<div class="scd-date">' + dowLong[new Date(Y, M, d).getDay()] + ' · ' + d + ' ' + monthsF[M] + ' ' + Y + '</div>';
+                    h += '<div class="scd-row"><span class="scd-lbl">' + (future ? 'Forecast revenue' : 'Revenue') + '</span><span class="scd-val">' + nis(valueOf(d)) + '</span></div>';
+                    h += '<div class="scd-row"><span class="scd-lbl">Sales strength</span><span class="scd-badge ' + badgeClass(cls) + '">' + strengthLabel(cls) + '</span></div>';
+                    if (HOL[key]) h += '<div class="scd-item"><span class="scd-ic" style="background:#7c3aed"></span>Holiday · ' + esc(HOL[key]) + '</div>';
+                    (evByDate[key] || []).forEach(e => h += '<a class="scd-evlink" href="events.html?seller=1" target="_top"><span class="scd-ic"></span>Your event · ' + esc(e.title || 'Event') + '<span class="arr">›</span></a>');
+                    detail.innerHTML = h;
+                }
+                grid.querySelectorAll('.scal-day:not(.empty)').forEach(c => c.addEventListener('click', () => select(Number(c.dataset.d))));
+                select(offset === 0 && now.getDate() <= dim ? now.getDate() : 1);
+                postH();
             }
-            host.querySelectorAll('.scal-day:not(.empty)').forEach(c => c.addEventListener('click', () => select(Number(c.dataset.d))));
-            select(TODAY);
-            try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {}
+
+            host.querySelectorAll('.scal-arrow').forEach(b => b.addEventListener('click', () => {
+                offset = Math.max(-36, Math.min(12, offset + Number(b.dataset.nav)));
+                render();
+            }));
+            render();
         })();
 
         // ---- Time trends over the last 6 months. ----
