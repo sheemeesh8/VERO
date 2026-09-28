@@ -28,6 +28,7 @@
         ruler:   '<path d="M3 8l5-5 13 13-5 5z"/><path d="M8 6l2 2M11 9l2 2M14 12l2 2"/>',
         gear:    '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 6 8.3l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 11 4.6V4.5a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.4 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/>',
         spark:   '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+        trendup: '<path d="M3 17l6-6 4 4 7-7"/><path d="M17 7h4v4"/>',
         layout:  '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
         heart:   '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>',
         bag:     '<path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
@@ -78,6 +79,7 @@
     // Each entry: [RegExp over the lowercased label, icon key]. Hebrew + English.
     var RULES = [
         [/dashboard|לוח\s*בקרה|לוח/, 'layout'],
+        [/growth|צמיחה/, 'trendup'],
         [/statist|analyt|stats?\b|סטטיסט|נתונים/, 'chart'],
         [/my\s*shop|storefront|shop|store|חנות/, 'store'],
         [/product|item|מוצר|פריט/, 'tag'],

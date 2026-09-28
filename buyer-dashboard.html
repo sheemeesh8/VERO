@@ -59,7 +59,8 @@
         .g2 { grid-template-columns: 1fr 1fr; }
         .g3 { grid-template-columns: repeat(3, 1fr); }
         .g4 { grid-template-columns: repeat(4, 1fr); }
-        @media (max-width: 860px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } }
+        /* On phones keep the numeric KPI tiles two-per-row; chart cards (g2) go full width. */
+        @media (max-width: 860px) { .g3, .g4 { grid-template-columns: 1fr 1fr; } .g2 { grid-template-columns: 1fr; } }
         .card {
             border: none; border-radius: 16px; padding: 22px; background: #fff;
         }
@@ -89,7 +90,7 @@
         /* Bar chart (monthly spend) */
         .bars { display: flex; align-items: flex-end; gap: 8px; height: 130px; margin-top: 18px; }
         .bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
-        .bar > i { width: 100%; max-width: 26px; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, #333, #111);
+        .bar > i { width: 100%; max-width: 8px; min-height: 2px; border-radius: 999px 999px 2px 2px; background: #111;
             transition: height 0.7s cubic-bezier(0.22,1,0.36,1); }
         .bar > small { font-size: 9px; color: var(--muted); letter-spacing: 0.3px; }
 
@@ -107,9 +108,15 @@
         .hc-dots span { width: 6px; height: 6px; border-radius: 999px; background: #d8d5cf; transition: width 0.3s ease, background 0.3s ease; cursor: pointer; }
         .hc-dots span.on { width: 18px; background: #111; }
         .hc-hint { text-align: center; font-size: 10px; color: var(--muted); margin-top: 8px; letter-spacing: 0.3px; }
-        .hc-styles { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
-        .hc-styles button { font: inherit; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; padding: 5px 11px; border-radius: 999px; border: 1px solid rgba(0,0,0,0.14); background: transparent; color: var(--muted); cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; }
-        .hc-styles button.on { background: #111; color: #fff; border-color: #111; }
+        /* Fine-line column chart — one hairline per day/bucket in the range
+           (week = 7, month = 30/31, year = 365). Heights set inline. */
+        .fl-row { display: flex; align-items: flex-end; height: 150px; margin-top: 14px; }
+        .fl-row .col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+        .fl-row .ln {
+            width: 100%; max-width: 8px; min-height: 2px; background: #111;
+            border-radius: 999px 999px 2px 2px;
+            transition: height 0.55s cubic-bezier(0.22,1,0.36,1);
+        }
         .card.dark .lc-x span { color: rgba(255,255,255,0.6); }
         .trend-pill { font-size: 10px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
         .trend-pill.up { color: var(--good); border-color: rgba(31,143,78,0.3); }
@@ -192,16 +199,10 @@ h3, h4, h5, h6, p,
             </div>
             <div class="kpi-num" id="hcTotal">₪0</div>
             <div class="kpi-lbl" id="hcSub">Total spend</div>
-            <div class="hc-styles" id="hcStyles">
-                <button type="button" data-style="area" class="on">Area</button>
-                <button type="button" data-style="line">Line</button>
-                <button type="button" data-style="dots">Dots</button>
-                <button type="button" data-style="bars">Bars</button>
-            </div>
             <div class="hc-plot" id="hcPlot"></div>
             <div class="lc-x" id="hcX"></div>
             <div class="hc-dots" id="hcDots"><span class="on"></span><span></span><span></span></div>
-            <div class="hc-hint">Swipe to switch · daily · monthly · yearly</div>
+            <div class="hc-hint">Swipe to switch · week · month · year</div>
         </div>
 
         <!-- ===== KPI ROW ===== -->
@@ -366,6 +367,14 @@ h3, h4, h5, h6, p,
         }
         // X-axis labels rendered newest-on-left to match the chart order.
         const xLabels = labels => labels.slice().reverse().map(l => '<span>' + l + '</span>').join('');
+        // Fine-line column chart (newest-on-left, matching xLabels) for monthly series.
+        const fineCols = (vals, color) => {
+            const v = vals.slice().reverse(), max = Math.max(1, ...v);
+            const gap = v.length <= 7 ? 7 : v.length <= 31 ? 3 : v.length <= 90 ? 1 : 0;
+            return '<div class="fl-row" style="height:130px;gap:' + gap + 'px">' +
+                v.map(val => '<span class="col"><i class="ln" style="height:' + Math.max(2, Math.round(val / max * 100)) +
+                    '%;background:' + color + '" title="' + val + '"></i></span>').join('') + '</div>';
+        };
         const trendPill = (el, cur, prev, goodDown) => {
             if (prev <= 0) { el.textContent = '—'; return; }
             const diff = Math.round(((cur - prev) / prev) * 100);
@@ -458,9 +467,9 @@ h3, h4, h5, h6, p,
         const monthSums = buckets.map(b => b.sum);
         const cumulative = monthSums.reduce((acc, v) => { acc.push((acc[acc.length - 1] || 0) + v); return acc; }, []);
         const labels = buckets.map(b => b.label);
-        document.getElementById('cumChart').innerHTML   = lineChart(cumulative, '#111');
+        document.getElementById('cumChart').innerHTML   = fineCols(cumulative, '#111');
         document.getElementById('cumX').innerHTML       = xLabels(labels);
-        document.getElementById('itemsChart').innerHTML = lineChart(monthCounts, '#1f8f4e');
+        document.getElementById('itemsChart').innerHTML = fineCols(monthCounts, '#1f8f4e');
         document.getElementById('itemsX').innerHTML     = xLabels(labels);
         trendPill(document.getElementById('cumTrend'),   monthSums[5],   monthSums[4], false);
         trendPill(document.getElementById('itemsTrend'), monthCounts[5], monthCounts[4], false);
@@ -516,73 +525,56 @@ h3, h4, h5, h6, p,
             if (!host) return;
             var DAY = 864e5, now = new Date();
             var sod = function (d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
-            // Draw the series in the chosen style (area / line / dots / bars).
-            function plotSVG(vals, color, style) {
-                var W = 100, H = 40, n = vals.length, v = vals.slice().reverse();
-                var max = Math.max.apply(null, [1].concat(v)), min = Math.min.apply(null, [0].concat(v));
-                var xx = function (i) { return n <= 1 ? 0 : (i / (n - 1)) * W; };
-                var yy = function (val) { return H - ((val - min) / ((max - min) || 1)) * H; };
-                var pts = v.map(function (val, i) { return xx(i).toFixed(2) + ',' + yy(val).toFixed(2); });
-                var line = 'M' + pts.join(' L'), body;
-                if (style === 'bars') {
-                    // One band per value so every bar sits fully inside the plot.
-                    var band = n > 0 ? W / n : W, bw = band * 0.6;
-                    body = v.map(function (val, i) {
-                        var x = i * band + (band - bw) / 2, y = yy(val);
-                        return '<rect x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + bw.toFixed(2) + '" height="' + Math.max(0.5, H - y).toFixed(2) + '" rx="0.8" fill="' + color + '"/>';
-                    }).join('');
-                } else if (style === 'dots') {
-                    body = '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-opacity="0.25" stroke-width="1" vector-effect="non-scaling-stroke"/>' +
-                        v.map(function (val, i) { return '<path d="M' + xx(i).toFixed(2) + ',' + yy(val).toFixed(2) + ' l0 0" stroke="' + color + '" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'; }).join('');
-                } else if (style === 'line') {
-                    body = '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>';
-                } else {
-                    var id = 'lg' + Math.random().toString(36).slice(2, 7), area = line + ' L' + W + ',' + H + ' L0,' + H + ' Z';
-                    body = '<defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="' + color + '" stop-opacity="0.22"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
-                        '<path d="' + area + '" fill="url(#' + id + ')"/>' +
-                        '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.25" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>';
-                }
-                return '<svg class="lc" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' + body + '</svg>';
+            var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var WD = ['S','M','T','W','T','F','S'];
+            var seedf = function (i) { var x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+
+            // Fine-line chart: one hairline column per day, plus a sparse axis row.
+            function fineLine(vals) {
+                var max = Math.max.apply(null, [1].concat(vals)), n = vals.length;
+                var gap = n <= 7 ? 7 : n <= 31 ? 3 : n <= 90 ? 1 : 0;
+                var lns = vals.map(function (val) {
+                    var h = Math.max(2, Math.round(val / max * 100));
+                    return '<span class="col"><i class="ln" style="height:' + h + '%" title="' + nis(val) + '"></i></span>';
+                }).join('');
+                return '<div class="fl-row" style="gap:' + gap + 'px">' + lns + '</div>';
             }
+
+            // Build one daily bucket per day in the range (oldest → newest, today last).
+            // Week = 7 columns, Month = the current month's length, Year = 365.
             function build(kind) {
-                var vals = [], labels = [], i;
-                if (kind === 'Daily') {
-                    for (i = 13; i >= 0; i--) {
-                        var day = sod(new Date(now.getTime() - i * DAY));
-                        vals.push(items.reduce(function (s, it) { return sod(new Date(tsOf(it))) === day ? s + priceOf(it) : s; }, 0));
-                        labels.push(new Date(day).toLocaleDateString('en-US', { day: 'numeric' }));
-                    }
-                } else if (kind === 'Yearly') {
-                    for (i = 4; i >= 0; i--) {
-                        var yr = now.getFullYear() - i;
-                        vals.push(items.reduce(function (s, it) { return new Date(tsOf(it)).getFullYear() === yr ? s + priceOf(it) : s; }, 0));
-                        labels.push(String(yr));
-                    }
-                } else { // Monthly
-                    for (i = 5; i >= 0; i--) {
-                        var d = new Date(now.getFullYear(), now.getMonth() - i, 1), y = d.getFullYear(), m = d.getMonth();
-                        vals.push(items.reduce(function (s, it) { var t = new Date(tsOf(it)); return (t.getFullYear() === y && t.getMonth() === m) ? s + priceOf(it) : s; }, 0));
-                        labels.push(d.toLocaleDateString('en-US', { month: 'short' }));
-                    }
+                var N = kind === 'Week' ? 7 : kind === 'Year' ? 365
+                        : new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                var vals = [], i;
+                for (i = N - 1; i >= 0; i--) {
+                    var day = sod(new Date(now.getTime() - i * DAY));
+                    vals.push(items.reduce(function (s, it) { return sod(new Date(tsOf(it))) === day ? s + priceOf(it) : s; }, 0));
                 }
-                return { vals: vals, labels: labels };
+                var dateAt = function (k) { return new Date(now.getTime() - (N - 1 - k) * DAY); };
+                var labels = [];
+                if (kind === 'Week') {
+                    for (i = 0; i < N; i++) labels.push(WD[dateAt(i).getDay()]);
+                } else if (kind === 'Month') {
+                    [0, 0.25, 0.5, 0.75, 1].forEach(function (f) { labels.push(String(dateAt(Math.round((N - 1) * f)).getDate())); });
+                } else {
+                    for (i = 0; i <= 6; i++) labels.push(MON[dateAt(Math.round((N - 1) * i / 6)).getMonth()]);
+                }
+                return { vals: vals, labels: labels, n: N };
             }
-            var kinds = ['Daily', 'Monthly', 'Yearly'], idx = 1, style = 'area';
+            var kinds = ['Week', 'Month', 'Year'], idx = 0;
             var plot = document.getElementById('hcPlot'), xEl = document.getElementById('hcX');
             var rangeEl = document.getElementById('hcRange'), totalEl = document.getElementById('hcTotal'), subEl = document.getElementById('hcSub');
             var dots = host.querySelectorAll('#hcDots span');
-            var styleBtns = host.querySelectorAll('#hcStyles button');
-            // Demo series so the graph always reads, even with no purchases yet.
-            var DEMO = {
-                Daily:   [40, 90, 60, 120, 80, 140, 110, 170, 95, 150, 130, 190, 160, 210],
-                Monthly: [820, 1180, 640, 1460, 1020, 1330],
-                Yearly:  [3200, 5400, 4100, 7800, 9200]
-            };
             function render() {
                 var kind = kinds[idx], data = build(kind);
-                if (data.vals.every(function (v) { return v === 0; })) data.vals = DEMO[kind].slice();
-                plot.innerHTML = plotSVG(data.vals, '#111', style);
-                xEl.innerHTML = xLabels(data.labels);
+                if (data.vals.every(function (v) { return v === 0; })) {
+                    data.vals = data.vals.map(function (_, i) {
+                        var t = i / (data.n - 1 || 1);
+                        return Math.round(60 + 120 * Math.abs(Math.sin(t * Math.PI * 3)) + 90 * seedf(i + 1) + t * 70);
+                    });
+                }
+                plot.innerHTML = fineLine(data.vals);
+                xEl.innerHTML = data.labels.map(function (l) { return '<span>' + l + '</span>'; }).join('');
                 rangeEl.textContent = kind;
                 totalEl.textContent = nis(data.vals.reduce(function (s, v) { return s + v; }, 0));
                 subEl.textContent = 'Total spend · ' + kind.toLowerCase();
@@ -602,11 +594,6 @@ h3, h4, h5, h6, p,
                 if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
             });
             for (var j = 0; j < dots.length; j++) (function (k) { dots[k].addEventListener('click', function () { idx = k; render(); }); })(j);
-            for (var s = 0; s < styleBtns.length; s++) styleBtns[s].addEventListener('click', function () {
-                style = this.getAttribute('data-style');
-                for (var i = 0; i < styleBtns.length; i++) styleBtns[i].classList.toggle('on', styleBtns[i] === this);
-                render();
-            });
             render();
         })();
     })();
