@@ -218,6 +218,44 @@
         .goal-save { width: 100%; margin-top: 12px; padding: 11px; border-radius: 999px; border: none; background: #111; color: #fff; font: inherit; font-size: 11px; letter-spacing: 0.5px; cursor: pointer; }
         .goal-save:active { opacity: 0.85; }
 
+        /* ===== Sales calendar — styled like the feed calendar, colour-coded by the
+           strength of each day's sales (green strong · yellow medium · red weak),
+           with holiday + registered-event markers and a forecast for future days. */
+        .scal { direction: ltr; }
+        .scal-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+        .scal-kick { font-size: 9px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--muted); font-weight: 700; display: block; margin-bottom: 5px; }
+        .scal-month { font-family: 'Bodoni Moda', 'Didot', Georgia, serif; font-size: clamp(22px, 6vw, 30px); font-weight: 500; color: #111; line-height: 1; }
+        .scal-year { font-size: 11px; letter-spacing: 3px; color: var(--muted); font-weight: 600; }
+        .scal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .scal-dow { font-size: 9px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; text-align: center; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line); font-weight: 600; }
+        .scal-day { position: relative; aspect-ratio: 1 / 1; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-family: 'Bodoni Moda', Georgia, serif; font-size: 14px; color: #333; cursor: pointer; border: 1px solid transparent; -webkit-tap-highlight-color: transparent; }
+        .scal-day.empty { visibility: hidden; cursor: default; }
+        .scal-day.s-strong { background: rgba(31,143,78,0.20); color: #14512c; }
+        .scal-day.s-mid    { background: rgba(201,146,43,0.22); color: #6d4b12; }
+        .scal-day.s-weak   { background: rgba(178,59,59,0.16); color: #6f2020; }
+        .scal-day.s-none   { background: #f4f3f0; color: #9a958c; }
+        .scal-day.future   { border-style: dashed; border-color: rgba(0,0,0,0.14); }
+        .scal-day.today    { outline: 2px solid #111; outline-offset: -2px; font-weight: 700; }
+        .scal-day.sel      { box-shadow: 0 0 0 2px #111 inset; }
+        .scal-mk { position: absolute; top: 3px; right: 4px; display: flex; gap: 2px; }
+        .scal-mk i { width: 5px; height: 5px; border-radius: 50%; display: block; }
+        .scal-mk i.hol { background: #7c3aed; }
+        .scal-mk i.evt { background: #111; }
+        .scal-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 16px; font-size: 10px; color: var(--muted); }
+        .scal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .scal-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+        .scal-detail { margin-top: 16px; border-top: 1px solid #111; padding-top: 12px; }
+        .scd-date { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+        .scd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 8px; }
+        .scd-lbl { font-size: 12px; color: #57544d; }
+        .scd-val { font-family: 'Bodoni Moda', Georgia, serif; font-size: 18px; color: #111; }
+        .scd-badge { display: inline-block; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; padding: 3px 9px; border-radius: 999px; border: 1px solid; }
+        .scd-badge.strong { color: #14512c; border-color: rgba(31,143,78,0.4); background: rgba(31,143,78,0.10); }
+        .scd-badge.mid    { color: #6d4b12; border-color: rgba(201,146,43,0.4); background: rgba(201,146,43,0.12); }
+        .scd-badge.weak   { color: #6f2020; border-color: rgba(178,59,59,0.4); background: rgba(178,59,59,0.10); }
+        .scd-item { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: #1c1c1c; }
+        .scd-item .scd-ic { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
         .btn {
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
             padding: 11px 18px; border-radius: 999px; border: 1.4px solid #111; background: #fff;
@@ -369,6 +407,12 @@ h3, h4, h5, h6, p,
                     <button type="button" class="goal-save" id="goalSave">Save goal</button>
                 </div>
             </div>
+        </div>
+
+        <!-- ===== SALES CALENDAR ===== -->
+        <div class="sec-title">Sales calendar</div>
+        <div class="card">
+            <div id="salesCal"></div>
         </div>
 
         <!-- ===== SALES OVER TIME ===== -->
@@ -743,6 +787,97 @@ h3, h4, h5, h6, p,
                 card.classList.remove('open');
                 requestAnimationFrame(postHeight); setTimeout(postHeight, 400);
             });
+        })();
+
+        // ---- Sales calendar: each day coloured by how strong it was (or is
+        //      forecast to be), plus holidays and events the seller signed up for. ----
+        (function salesCalendar() {
+            const host = document.getElementById('salesCal');
+            if (!host) return;
+            const Y = now.getFullYear(), M = now.getMonth(), TODAY = now.getDate();
+            const monthsF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const dows = ['S','M','T','W','T','F','S'];
+            const dowLong = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const firstDow = new Date(Y, M, 1).getDay();
+            const dim = new Date(Y, M + 1, 0).getDate();
+            const iso = (y, m, d) => y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            const tsOf = p => Number(p.soldAt || p.createdAt) || 0;
+
+            // Actual revenue per day this month.
+            const dayRev = new Array(dim + 1).fill(0);
+            sold.forEach(p => { const t = tsOf(p); if (!t) return; const dt = new Date(t); if (dt.getFullYear() === Y && dt.getMonth() === M) dayRev[dt.getDate()] += priceOf(p.price); });
+            // Weekday averages across all history → a simple forecast for future days.
+            const wdSum = new Array(7).fill(0), wdDays = new Array(7).fill(0), seen = {};
+            sold.forEach(p => { const t = tsOf(p); if (!t) return; const dt = new Date(t); wdSum[dt.getDay()] += priceOf(p.price); const k = iso(dt.getFullYear(), dt.getMonth(), dt.getDate()); if (!seen[k]) { seen[k] = 1; wdDays[dt.getDay()]++; } });
+            const wdAvg = wdSum.map((s, i) => wdDays[i] ? s / wdDays[i] : 0);
+            const forecast = d => wdAvg[new Date(Y, M, d).getDay()];
+            const valueOf = d => d > TODAY ? forecast(d) : dayRev[d];
+
+            let maxV = 1;
+            for (let d = 1; d <= dim; d++) maxV = Math.max(maxV, valueOf(d));
+            const strengthClass = v => v <= 0 ? 's-none' : (v / maxV >= 0.66 ? 's-strong' : v / maxV >= 0.33 ? 's-mid' : 's-weak');
+            const strengthLabel = c => ({ 's-strong': 'Strong', 's-mid': 'Medium', 's-weak': 'Weak' })[c] || 'No sales';
+            const badgeClass = c => ({ 's-strong': 'strong', 's-mid': 'mid', 's-weak': 'weak' })[c] || '';
+
+            // Holidays (Israeli high-holiday season + a few shopping dates).
+            const HOL = {};
+            [['2026-09-12', 'Rosh Hashanah'], ['2026-09-21', 'Yom Kippur'], ['2026-09-26', 'Sukkot'],
+             ['2026-10-03', 'Simchat Torah'], ['2026-11-27', 'Black Friday'], ['2026-11-30', 'Cyber Monday'],
+             ['2026-12-25', 'Christmas'], ['2026-01-01', "New Year's Day"], ['2026-02-14', "Valentine's Day"]
+            ].forEach(([k, n]) => HOL[k] = n);
+
+            // Events the seller registered to (booth reservations) + community events.
+            let booths = {}; try { booths = JSON.parse(localStorage.getItem('vero_event_booths')) || {}; } catch (e) {}
+            const base = new Date(); base.setHours(0, 0, 0, 0);
+            const sh = n => { const x = new Date(base); x.setDate(x.getDate() + n); return iso(x.getFullYear(), x.getMonth(), x.getDate()); };
+            const CURATED = [
+                { id: 'e1', title: 'Vintage Flea Market', date: sh(-40) }, { id: 'e2', title: 'Makers Meetup', date: sh(-19) },
+                { id: 'e3', title: 'Sunday Craft Fair', date: sh(-5) }, { id: 'e4', title: 'Rooftop Pop-up', date: sh(3) },
+                { id: 'e5', title: 'Winter Design Market', date: sh(8) }, { id: 'e6', title: 'Designers Meetup', date: sh(15) },
+                { id: 'e7', title: 'Artisans Fair', date: sh(26) }, { id: 'e8', title: 'Vintage Flea Market', date: sh(40) }
+            ];
+            let userEv = []; try { userEv = JSON.parse(localStorage.getItem('vero_events')) || []; } catch (e) {}
+            const myEvByDate = {};
+            CURATED.concat(Array.isArray(userEv) ? userEv : []).forEach(e => { if (booths[e.id]) (myEvByDate[e.date] = myEvByDate[e.date] || []).push(e); });
+
+            let html = '<div class="scal">';
+            html += '<div class="scal-head"><span><span class="scal-kick">Sales forecast · What’s on</span>' +
+                    '<span class="scal-month">' + monthsF[M] + '</span></span><span class="scal-year">' + Y + '</span></div>';
+            html += '<div class="scal-grid">';
+            dows.forEach(d => html += '<div class="scal-dow">' + d + '</div>');
+            for (let i = 0; i < firstDow; i++) html += '<div class="scal-day empty"></div>';
+            for (let d = 1; d <= dim; d++) {
+                const cls = strengthClass(valueOf(d)), key = iso(Y, M, d);
+                const mk = (HOL[key] || myEvByDate[key])
+                    ? '<span class="scal-mk">' + (HOL[key] ? '<i class="hol"></i>' : '') + (myEvByDate[key] ? '<i class="evt"></i>' : '') + '</span>' : '';
+                html += '<div class="scal-day ' + cls + (d > TODAY ? ' future' : '') + (d === TODAY ? ' today' : '') + '" data-d="' + d + '">' + mk + d + '</div>';
+            }
+            html += '</div>';
+            html += '<div class="scal-legend">' +
+                '<span><i style="background:rgba(31,143,78,0.55)"></i>Strong</span>' +
+                '<span><i style="background:rgba(201,146,43,0.6)"></i>Medium</span>' +
+                '<span><i style="background:rgba(178,59,59,0.5)"></i>Weak</span>' +
+                '<span><i style="background:#7c3aed"></i>Holiday</span>' +
+                '<span><i style="background:#111"></i>Your event</span>' +
+                '<span>◌ dashed = forecast</span></div>';
+            html += '<div class="scal-detail" id="scalDetail"></div></div>';
+            host.innerHTML = html;
+
+            const detail = document.getElementById('scalDetail');
+            function select(d) {
+                host.querySelectorAll('.scal-day.sel').forEach(n => n.classList.remove('sel'));
+                const cell = host.querySelector('.scal-day[data-d="' + d + '"]'); if (cell) cell.classList.add('sel');
+                const cls = strengthClass(valueOf(d)), key = iso(Y, M, d), future = d > TODAY;
+                let h = '<div class="scd-date">' + dowLong[new Date(Y, M, d).getDay()] + ' · ' + d + ' ' + monthsF[M] + ' ' + Y + '</div>';
+                h += '<div class="scd-row"><span class="scd-lbl">' + (future ? 'Forecast revenue' : 'Revenue') + '</span><span class="scd-val">' + nis(valueOf(d)) + '</span></div>';
+                h += '<div class="scd-row"><span class="scd-lbl">Sales strength</span><span class="scd-badge ' + badgeClass(cls) + '">' + strengthLabel(cls) + '</span></div>';
+                if (HOL[key]) h += '<div class="scd-item"><span class="scd-ic" style="background:#7c3aed"></span>Holiday · ' + HOL[key] + '</div>';
+                (myEvByDate[key] || []).forEach(e => h += '<div class="scd-item"><span class="scd-ic" style="background:#111"></span>Your event · ' + String(e.title || 'Event') + '</div>');
+                detail.innerHTML = h;
+            }
+            host.querySelectorAll('.scal-day:not(.empty)').forEach(c => c.addEventListener('click', () => select(Number(c.dataset.d))));
+            select(TODAY);
+            try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {}
         })();
 
         // ---- Time trends over the last 6 months. ----
