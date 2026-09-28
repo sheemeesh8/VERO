@@ -105,22 +105,25 @@
         .delta.down { color: var(--sold); }
         .delta.flat { color: var(--muted); }
 
-        /* Bar chart (heights set inline). */
-        .bars { display: flex; align-items: flex-end; gap: 8px; height: 128px; margin-top: 18px; }
-        .bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; justify-content: flex-end; height: 100%; }
-        .bar .fill { width: 100%; max-width: 30px; background: #111; border-radius: 6px 6px 0 0; min-height: 4px; transition: height 0.5s cubic-bezier(0.22,1,0.36,1); }
-        .bar .fill.gold { background: var(--gold); }
-        .bar .cap { font-size: 9px; color: var(--muted); white-space: nowrap; }
-        .bar .val { font-size: 9.5px; font-weight: 600; }
-
-        /* Grouped bars (store vs product views). */
-        .gbars { display: flex; align-items: flex-end; gap: 12px; height: 128px; margin-top: 16px; }
-        .gcol { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 5px; height: 100%; position: relative; }
-        .gcol .pair { display: flex; align-items: flex-end; gap: 5px; height: 100%; width: 100%; justify-content: center; }
-        .gcol .fill { width: 14px; border-radius: 5px 5px 0 0; min-height: 4px; transition: height 0.5s; }
-        .gcol .fill.store { background: #111; }
-        .gcol .fill.prod  { background: var(--gold); }
-        .gcol .cap { position: absolute; bottom: -20px; font-size: 9px; color: var(--muted); }
+        /* Fine-line chart — one hairline column per day in the range
+           (week = 7, month = 30/31, year = 365). Heights set inline. */
+        .bars, .gbars { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+        .line-row { display: flex; align-items: flex-end; height: 128px; }
+        .col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+        .ln {
+            width: 100%; max-width: 8px; min-height: 2px; background: #111;
+            border-radius: 999px 999px 2px 2px;
+            transition: height 0.55s cubic-bezier(0.22,1,0.36,1);
+        }
+        .ln.gold { background: var(--gold); }
+        /* Stacked column (store + products) for the views comparison. */
+        .ln.stack { display: flex; flex-direction: column; overflow: hidden; background: transparent; }
+        .ln.stack .seg { width: 100%; display: block; }
+        .ln.stack .seg.store { background: #111; }
+        .ln.stack .seg.prod  { background: var(--gold); }
+        /* Sparse axis under the chart. */
+        .axis { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: 0.6px; color: var(--muted); }
+        .axis span { flex: 0 0 auto; }
         .legend { display: flex; gap: 16px; margin-top: 30px; font-size: 10.5px; color: var(--muted); }
         .legend span { display: inline-flex; align-items: center; gap: 6px; }
         .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
@@ -217,9 +220,9 @@ h3, h4, h5, h6, p,
 
         <!-- Period toggle -->
         <div class="seg" id="periodSeg">
-            <button type="button" data-p="day">Daily</button>
-            <button type="button" data-p="week" class="on">Weekly</button>
-            <button type="button" data-p="month">Monthly</button>
+            <button type="button" data-p="week" class="on">Week</button>
+            <button type="button" data-p="month">Month</button>
+            <button type="button" data-p="year">Year</button>
         </div>
 
         <!-- 1. KPI row -->
@@ -318,12 +321,36 @@ h3, h4, h5, h6, p,
         if (!storeViews) storeViews = Math.round(productViews * 0.62) + followers * 3 + 120;
 
         // ---- Period config ----
+        // Every chart is a fine line of daily columns: one column per day in the
+        // selected range — Week = 7, Month = the current month's length (30/31),
+        // Year = 365. All buckets are a single day (ms = one day).
+        var DAY = 864e5;
+        var daysInMonth = (function () { var d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); })();
         var PERIODS = {
-            day:   { n: 7,  label: 'Daily',  lbl2: 'Daily', ms: 864e5,      cap: function (i, n) { var d = ['S','M','T','W','T','F','S']; var dt = new Date(Date.now() - (n - 1 - i) * 864e5); return d[dt.getDay()]; } },
-            week:  { n: 8,  label: 'Weekly', lbl2: 'Weekly', ms: 7 * 864e5,  cap: function (i, n) { return 'S' + (i + 1); } },
-            month: { n: 6,  label: 'Monthly', lbl2: 'Monthly', ms: 30 * 864e5, cap: function (i, n) { var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; var dt = new Date(); return m[(dt.getMonth() - (n - 1 - i) + 12) % 12]; } }
+            week:  { n: 7,           label: 'Week',  lbl2: 'Weekly',  ms: DAY },
+            month: { n: daysInMonth, label: 'Month', lbl2: 'Monthly', ms: DAY },
+            year:  { n: 365,         label: 'Year',  lbl2: 'Yearly',  ms: DAY }
         };
         var period = 'week';
+
+        // Sparse axis labels for the current range — a few evenly spaced ticks so
+        // the chart stays legible even at 365 columns.
+        var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        function axisLabels(p) {
+            var cfg = PERIODS[p], n = cfg.n, now = Date.now();
+            var dateAt = function (i) { return new Date(now - (n - 1 - i) * DAY); };
+            var out = [];
+            if (p === 'week') {
+                var wd = ['S','M','T','W','T','F','S'];
+                for (var i = 0; i < n; i++) out.push(wd[dateAt(i).getDay()]);
+            } else if (p === 'month') {
+                [0, 0.25, 0.5, 0.75, 1].forEach(function (f) { out.push(String(dateAt(Math.round((n - 1) * f)).getDate())); });
+            } else {
+                for (var k = 0; k <= 6; k++) out.push(MON[dateAt(Math.round((n - 1) * k / 6)).getMonth()]);
+            }
+            return out;
+        }
+        function barGap(n) { return n <= 7 ? 8 : n <= 31 ? 3 : 1; }
 
         // Bucket sold items into the last n windows of the given period; returns amounts array.
         function revenueSeries(p) {
@@ -372,13 +399,18 @@ h3, h4, h5, h6, p,
         }
 
         // ---- Renderers ----
-        function renderBars(el, data, capFn, gold) {
+        // Fine-line chart: one hairline column per day, plus a sparse axis row.
+        function renderBars(el, data, labels, gold) {
             var max = Math.max.apply(null, data.concat([1]));
-            el.innerHTML = data.map(function (v, i) {
-                return '<div class="bar"><div class="val">' + (v >= 1000 ? Math.round(v / 100) / 10 + 'k' : v) + '</div>' +
-                    '<div class="fill' + (gold ? ' gold' : '') + '" style="height:' + Math.round((v / max) * 100) + '%"></div>' +
-                    '<div class="cap">' + capFn(i, data.length) + '</div></div>';
+            var n = data.length;
+            var lines = data.map(function (v) {
+                var h = Math.max(2, Math.round((v / max) * 100));
+                var tip = v >= 1000 ? (Math.round(v / 100) / 10 + 'k') : Math.round(v);
+                return '<span class="col"><i class="ln' + (gold ? ' gold' : '') + '" style="height:' + h + '%" title="' + tip + '"></i></span>';
             }).join('');
+            var axis = labels.map(function (l) { return '<span>' + l + '</span>'; }).join('');
+            el.innerHTML = '<div class="line-row" style="gap:' + barGap(n) + 'px">' + lines + '</div>' +
+                '<div class="axis">' + axis + '</div>';
         }
 
         function renderKpis() {
@@ -403,7 +435,7 @@ h3, h4, h5, h6, p,
 
         function renderFollowers() {
             var fol = followerSeries(period), cfg = PERIODS[period];
-            renderBars(document.getElementById('folBars'), fol, cfg.cap, false);
+            renderBars(document.getElementById('folBars'), fol, axisLabels(period), false);
             document.getElementById('folTotal').textContent = followers.toLocaleString('en-US');
             // Next milestone (next round hundred/thousand step).
             var steps = [50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000];
@@ -413,16 +445,22 @@ h3, h4, h5, h6, p,
         }
 
         function renderViews() {
-            var vw = viewSeries(period), cfg = PERIODS[period];
-            var all = vw.store.concat(vw.prod), max = Math.max.apply(null, all.concat([1]));
-            var el = document.getElementById('viewBars');
-            el.innerHTML = vw.store.map(function (sv, i) {
-                var pv = vw.prod[i];
-                return '<div class="gcol"><div class="pair">' +
-                    '<div class="fill store" style="height:' + Math.round(sv / max * 100) + '%"></div>' +
-                    '<div class="fill prod" style="height:' + Math.round(pv / max * 100) + '%"></div>' +
-                    '</div><div class="cap">' + cfg.cap(i, vw.store.length) + '</div></div>';
+            var vw = viewSeries(period);
+            var totals = vw.store.map(function (s, i) { return s + vw.prod[i]; });
+            var max = Math.max.apply(null, totals.concat([1]));
+            var n = vw.store.length;
+            var lines = vw.store.map(function (sv, i) {
+                var pv = vw.prod[i], tot = sv + pv;
+                var h = Math.max(2, Math.round(tot / max * 100));
+                var pf = tot > 0 ? Math.round(pv / tot * 100) : 0;
+                return '<span class="col"><i class="ln stack" style="height:' + h + '%" title="Store ' + sv + ' · Products ' + pv + '">' +
+                    '<b class="seg prod" style="height:' + pf + '%"></b>' +
+                    '<b class="seg store" style="height:' + (100 - pf) + '%"></b></i></span>';
             }).join('');
+            var axis = axisLabels(period).map(function (l) { return '<span>' + l + '</span>'; }).join('');
+            document.getElementById('viewBars').innerHTML =
+                '<div class="line-row" style="gap:' + barGap(n) + 'px">' + lines + '</div>' +
+                '<div class="axis">' + axis + '</div>';
 
             // Top viewed products.
             var ranked = listings.map(function (p, i) { return { p: p, v: viewsOf(p, i) }; })
@@ -441,7 +479,7 @@ h3, h4, h5, h6, p,
 
         function renderRevenue() {
             var rev = revenueSeries(period), cfg = PERIODS[period];
-            renderBars(document.getElementById('revBars'), rev, cfg.cap, true);
+            renderBars(document.getElementById('revBars'), rev, axisLabels(period), true);
             var total = rev.reduce(function (a, b) { return a + b; }, 0);
             document.getElementById('revTotal').textContent = nis(total);
             document.getElementById('revPeriodLbl').textContent = cfg.lbl2;
@@ -484,7 +522,7 @@ h3, h4, h5, h6, p,
         function renderGoals() {
             // Monthly revenue goal.
             var monthRev = revenueSeries('month');
-            var thisMonth = monthRev[monthRev.length - 1] || 0;
+            var thisMonth = monthRev.reduce(function (a, b) { return a + b; }, 0);
             var revGoal = readNum('vero_revenue_goal', 0) || Math.max(1000, Math.ceil((thisMonth || 500) / 500) * 500 * 1.5);
             // Follower goal (reuse milestone logic).
             var steps = [50, 100, 250, 500, 1000, 2500, 5000, 10000];
