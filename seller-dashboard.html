@@ -172,6 +172,8 @@
             border-radius: 999px 999px 2px 2px;
             transition: height 0.55s cubic-bezier(0.22,1,0.36,1);
         }
+        /* Days with no activity — visible light-grey baseline ticks. */
+        .fl-row .ln.empty { background: #cbc8c1; }
         .trend-pill { font-size: 10px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
         .trend-pill.up { color: var(--available); border-color: rgba(31,143,78,0.3); }
         .trend-pill.down { color: var(--sold); border-color: rgba(178,59,59,0.3); }
@@ -551,7 +553,9 @@ h3, h4, h5, h6, p,
             const v = vals.slice().reverse(), max = Math.max(1, ...v);
             const gap = v.length <= 7 ? 7 : v.length <= 31 ? 3 : v.length <= 90 ? 1 : 0;
             return '<div class="fl-row" style="height:130px;gap:' + gap + 'px">' +
-                v.map(val => '<span class="col"><i class="ln" style="height:' + Math.max(2, Math.round(val / max * 100)) +
+                v.map(val => val <= 0
+                    ? '<span class="col"><i class="ln empty" style="height:14px" title="0"></i></span>'
+                    : '<span class="col"><i class="ln" style="height:' + Math.max(8, Math.round(val / max * 100)) +
                     '%;background:' + color + '" title="' + val + '"></i></span>').join('') + '</div>';
         };
         const trendPill = (el, cur, prev) => {
@@ -831,7 +835,8 @@ h3, h4, h5, h6, p,
                 var max = Math.max.apply(null, [1].concat(vals)), n = vals.length;
                 var gap = n <= 7 ? 7 : n <= 31 ? 3 : n <= 90 ? 1 : 0;
                 var lns = vals.map(function (val) {
-                    var h = Math.max(2, Math.round(val / max * 100));
+                    if (val <= 0) return '<span class="col"><i class="ln empty" style="height:14px" title="₪0"></i></span>';
+                    var h = Math.max(8, Math.round(val / max * 100));
                     return '<span class="col"><i class="ln" style="height:' + h + '%" title="' + nis(val) + '"></i></span>';
                 }).join('');
                 return '<div class="fl-row" style="gap:' + gap + 'px">' + lns + '</div>';
