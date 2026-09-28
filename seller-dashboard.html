@@ -274,7 +274,7 @@ h3, h4, h5, h6, p,
             <div class="kpi-lbl" id="hcSub">Total revenue</div>
             <div class="hc-plot" id="hcPlot"></div>
             <div class="lc-x" id="hcX"></div>
-            <div class="hc-dots" id="hcDots"><span></span><span class="on"></span><span></span></div>
+            <div class="hc-dots" id="hcDots"><span class="on"></span><span></span><span></span></div>
             <div class="hc-hint">Swipe to switch · week · month · year</div>
         </div>
 
@@ -320,9 +320,7 @@ h3, h4, h5, h6, p,
                     <div class="card-t">Monthly revenue</div>
                     <div class="card-d" id="revYear"></div>
                 </div>
-                <div class="revslider" id="revSlider"></div>
-                <div class="rev-pager" id="revPager"></div>
-                <div class="rev-hint">swipe for more</div>
+                <div id="revSlider"></div>
             </div>
             <div class="card dark">
                 <div class="card-h">
@@ -616,57 +614,14 @@ h3, h4, h5, h6, p,
         }
         const maxB = Math.max(1, ...buckets.map(b => b.sum));
         (function buildRevSlider() {
-            const n = buckets.length;
+            // Single fine-line monthly chart (the multi-type swipe was removed for now).
             const labels = '<div class="revlabels">' + buckets.map(b => `<span>${b.label}</span>`).join('') + '</div>';
-            const pct = b => Math.max(3, (b.sum / maxB) * 100);              // 3..100
-            // Normalised points for the SVG forms (y inverted, small top/bottom pad).
-            const pts = buckets.map((b, i) => ({
-                x: n === 1 ? 50 : (i / (n - 1)) * 100,
-                y: 100 - pct(b) * 0.9 - 5
-            }));
-            const poly = pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
-
-            const dly = i => `animation-delay:${(i * 0.06).toFixed(2)}s`;   // staggered entrance
-
-            const barsForm =
-                '<div class="rev-chart bars">' + buckets.map((b, i) =>
-                    `<div class="bar" title="${nis(b.sum)}"><i style="height:${pct(b)}%;${dly(i)}"></i></div>`).join('') + '</div>';
-
-            const lineForm =
-                '<div class="rev-chart"><svg class="rev-svg" viewBox="0 0 100 100" preserveAspectRatio="none">' +
-                    `<polyline class="rev-line" pathLength="1" points="${poly}" vector-effect="non-scaling-stroke"/>` +
-                '</svg></div>';
-
-            const areaForm =
-                '<div class="rev-chart"><svg class="rev-svg" viewBox="0 0 100 100" preserveAspectRatio="none">' +
-                    `<path class="rev-area" d="M ${pts[0].x.toFixed(1)},100 L ${pts.map(p => p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' L ')} L ${pts[n - 1].x.toFixed(1)},100 Z"/>` +
-                    `<polyline class="rev-line" pathLength="1" points="${poly}" vector-effect="non-scaling-stroke"/>` +
-                '</svg></div>';
-
-            const lolliForm =
-                '<div class="rev-chart lolli">' + buckets.map((b, i) => {
-                    const lh = (pct(b) * 0.9).toFixed(1);   // headroom so the top dot isn't clipped
-                    return `<div class="lol" title="${nis(b.sum)}"><span class="lol-stem" style="height:${lh}%;${dly(i)}"></span>` +
-                    `<span class="lol-dot" style="bottom:${lh}%;${dly(i)}"></span></div>`;
-                }).join('') + '</div>';
-
-            const forms = [barsForm, lineForm, areaForm, lolliForm];
-            const slider = document.getElementById('revSlider');
-            slider.innerHTML = forms.map((f, i) => `<div class="revslide${i === 0 ? ' is-active' : ''}">${f}${labels}</div>`).join('');
-            const pager = document.getElementById('revPager');
-            pager.innerHTML = forms.map((_, i) => `<span class="rev-dotp${i === 0 ? ' on' : ''}"></span>`).join('');
-            const slides = slider.querySelectorAll('.revslide');
-            let cur = 0;
-            slider.addEventListener('scroll', () => {
-                const i = Math.round(slider.scrollLeft / slider.clientWidth);
-                if (i === cur) return;
-                cur = i;
-                pager.querySelectorAll('.rev-dotp').forEach((d, di) => d.classList.toggle('on', di === i));
-                // Replay the entrance animation of the form that scrolled in.
-                slides.forEach(s => s.classList.remove('is-active'));
-                void slider.offsetWidth;                 // force reflow so the animation restarts
-                if (slides[i]) slides[i].classList.add('is-active');
-            }, { passive: true });
+            const lines = buckets.map(b => {
+                const h = Math.max(2, Math.round((b.sum / maxB) * 100));
+                return `<span class="col"><i class="ln" style="height:${h}%" title="${nis(b.sum)}"></i></span>`;
+            }).join('');
+            document.getElementById('revSlider').innerHTML =
+                `<div class="fl-row" style="height:130px;gap:7px">${lines}</div>${labels}`;
         })();
         const yearSum = buckets.reduce((s, b) => s + b.sum, 0);
         document.getElementById('revYear').textContent = 'M-6 recent months ' + nis(yearSum);
@@ -884,7 +839,7 @@ h3, h4, h5, h6, p,
                 }
                 return { vals: vals, labels: labels, n: N };
             }
-            var kinds = ['Week', 'Month', 'Year'], idx = 1;
+            var kinds = ['Week', 'Month', 'Year'], idx = 0;
             var plot = document.getElementById('hcPlot'), xEl = document.getElementById('hcX');
             var rangeEl = document.getElementById('hcRange'), totalEl = document.getElementById('hcTotal'), subEl = document.getElementById('hcSub');
             var dots = host.querySelectorAll('#hcDots span');
