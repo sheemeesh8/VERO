@@ -281,11 +281,6 @@ h3, h4, h5, h6, p,
             <div class="hc-hint">Swipe to switch · week · month · year</div>
         </div>
 
-        <!-- ===== VIEW TOGGLE ===== -->
-        <div class="dash-toggle" id="dashToggle">
-            <button type="button" data-view="business" class="on">Business operations</button>
-            <button type="button" data-view="growth">Growth</button>
-        </div>
 
       <!-- ============================ BUSINESS ============================ -->
       <div class="view" data-view="business">
@@ -792,30 +787,19 @@ h3, h4, h5, h6, p,
             `<div class="row"><div class="ic">➕</div><div class="meta"><b>Follower rate</b><span>View → Follower</span></div><div class="amt">${followRate.toFixed(1)}%</div></div>` +
             `<div class="row"><div class="ic">💬</div><div class="meta"><b>Active chats</b><span>with buyers</span></div><div class="amt">${chatCount}</div></div>`;
 
-        // ---- View toggle (Business ↔ Growth). ----
-        (function viewToggle() {
-            const toggle = document.getElementById('dashToggle');
+        // ---- View selection. The Business ↔ Growth toggle was removed; the two
+        // views are reached from the seller-area nav (Stats vs. Growth) instead.
+        // Default shows Business; ?view=growth shows only Growth (revenue hero hidden).
+        (function viewSelect() {
             const views = document.querySelectorAll('.view');
             const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
-            // When a view is forced via ?view= (e.g. the "Growth" nav tab), show only
-            // that view and hide the toggle; Growth also hides the revenue hero.
             const forced = new URLSearchParams(location.search).get('view');
-            if (forced === 'business' || forced === 'growth') {
-                toggle.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.view === forced));
-                views.forEach(v => { v.hidden = v.dataset.view !== forced; });
-                toggle.style.display = 'none';
+            if (forced === 'growth') {
+                views.forEach(v => { v.hidden = v.dataset.view !== 'growth'; });
                 const hero = document.getElementById('heroChart');
-                if (hero && forced === 'growth') hero.style.display = 'none';
+                if (hero) hero.style.display = 'none';
                 requestAnimationFrame(postH);
             }
-            toggle.addEventListener('click', function (e) {
-                const btn = e.target.closest('button[data-view]');
-                if (!btn) return;
-                toggle.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === btn));
-                views.forEach(v => { v.hidden = v.dataset.view !== btn.dataset.view; });
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                requestAnimationFrame(postH);
-            });
         })();
 
         // ---- Hero range chart: swipe to switch daily / monthly / yearly. ----
