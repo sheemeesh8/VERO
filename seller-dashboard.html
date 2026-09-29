@@ -331,6 +331,29 @@
         .na-toggle .na-chev { transition: transform 0.3s ease; }
         .na-toggle.open .na-chev { transform: rotate(180deg); }
 
+        /* Products & orders — a tabbed peek (to ship / in chat / in negotiation /
+           sold), two feed cards per row, sliding + cross-fading between tabs. */
+        .po-count { font-size: 11px; color: var(--muted); margin: 4px 0 12px; }
+        .po-count b { color: #111; font-weight: 600; }
+        .po-tabs { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+            margin-bottom: 16px; padding-bottom: 2px; scrollbar-width: none; }
+        .po-tabs::-webkit-scrollbar { display: none; }
+        .po-tab { flex: none; padding: 8px 15px; border-radius: 999px; border: 1px solid #e2e0da; background: #fff;
+            color: #6b6b6b; font-family: inherit; font-size: 11px; letter-spacing: 0.4px; font-weight: 500; cursor: pointer;
+            white-space: nowrap; transition: background 0.2s, color 0.2s, border-color 0.2s; }
+        .po-tab.on { background: #111; color: #fff; border-color: #111; }
+        .po-viewport { overflow: hidden; }
+        .po-grid { transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1); }
+        .po-grid.po-out-left  { opacity: 0; transform: translateX(-26px); }
+        .po-grid.po-out-right { opacity: 0; transform: translateX(26px); }
+        @media (prefers-reduced-motion: reduce) { .po-grid { transition: opacity 0.2s ease; }
+            .po-grid.po-out-left, .po-grid.po-out-right { transform: none; } }
+        .po-note { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: #6b6b6b; padding: 0 2px; }
+        .po-note .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: #9a958c; }
+        .po-note.ship .dot { background: #c9922b; }
+        .po-note.sold .dot { background: #4a7a63; }
+        .po-note.offer .dot { background: #111; }
+
         .btn {
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
             padding: 11px 18px; border-radius: 999px; border: 1.4px solid #111; background: #fff;
@@ -499,6 +522,19 @@ h3, h4, h5, h6, p,
             <span class="na-toggle-lbl">General view</span>
             <svg class="na-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
+
+        <!-- ===== PRODUCTS AND ORDERS — tabbed, slides between states ===== -->
+        <div class="sec-title">Products and orders</div>
+        <div class="po-count" id="poCount"></div>
+        <div class="po-tabs" id="poTabs">
+            <button type="button" class="po-tab on" data-tab="ship">To ship</button>
+            <button type="button" class="po-tab" data-tab="chat">In chat</button>
+            <button type="button" class="po-tab" data-tab="offer">In negotiation</button>
+            <button type="button" class="po-tab" data-tab="sold">Sold</button>
+        </div>
+        <div class="po-viewport">
+            <div class="na-grid po-grid" id="poGrid"></div>
+        </div>
 
         <!-- ===== SALES HISTORY ===== -->
         <div class="sec-title">Sales history</div>
@@ -1116,6 +1152,112 @@ h3, h4, h5, h6, p,
             }
             paint(false);
             setInterval(tick, 1000);
+        })();
+
+        // ---- Products & orders: a tabbed peek that slides between states. ----
+        (function productsOrders() {
+            const grid = document.getElementById('poGrid');
+            const tabsEl = document.getElementById('poTabs');
+            const countEl = document.getElementById('poCount');
+            if (!grid || !tabsEl) return;
+            const imgOf = o => o.image || o.processed_cover || o.original_cover || o.cover || o.img || (Array.isArray(o.photos) ? o.photos.find(Boolean) : null) || null;
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const fmtDate = ts => ts ? new Date(Number(ts)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+            const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
+            const idxOf = p => listings.indexOf(p);
+
+            // To ship: sold items still awaiting shipment to the buyer.
+            const shipItems = sold.filter(p => !p.shipped && !p.delivered).map(p => ({
+                name: p.name || p.title, seller: p.buyer || p.seller || p.brand, price: priceOf(p.price),
+                img: imgOf(p), href: 'product-edit.html?i=' + idxOf(p) + '&from=seller',
+                note: 'Ready to ship' + ((p.soldAt || p.createdAt) ? ' · sold ' + fmtDate(p.soldAt || p.createdAt) : ''), noteType: 'ship'
+            }));
+            // In chat: items a buyer reserved / is in conversation about.
+            const chatItems = reserved.map(p => ({
+                name: p.name || p.title, seller: p.buyer || p.seller || p.brand, price: priceOf(p.price),
+                img: imgOf(p), href: 'chats.html?from=seller', note: 'In conversation', noteType: 'chat'
+            }));
+            // In negotiation: open offers from buyers.
+            const offers = arr(readJSON('vero_received_offers', []));
+            const offerItems = offers.filter(o => (o.status || 'pending') === 'pending').map(o => ({
+                name: o.name || o.item || o.product || o.title || 'Offer', seller: o.buyer || o.from || 'Buyer',
+                price: priceOf(o.offer || o.amount || o.price || o.askPrice), img: imgOf(o),
+                href: 'offers-received.html?from=seller',
+                note: (o.buyer ? o.buyer + ' · ' : '') + 'offered ' + nis(priceOf(o.offer || o.amount || o.price)), noteType: 'offer'
+            }));
+            // Sold: the full sold record.
+            const soldItems = sold.map(p => ({
+                name: p.name || p.title, seller: p.buyer || p.seller || p.brand, price: priceOf(p.price),
+                img: imgOf(p), href: 'product-edit.html?i=' + idxOf(p) + '&from=seller',
+                note: 'Sold' + ((p.soldAt || p.createdAt) ? ' · ' + fmtDate(p.soldAt || p.createdAt) : ''), noteType: 'sold'
+            }));
+
+            const buckets = { ship: shipItems, chat: chatItems, offer: offerItems, sold: soldItems };
+            const order = ['ship', 'chat', 'offer', 'sold'];
+            const emptyMsg = { ship: 'Nothing waiting to ship', chat: 'No active chats', offer: 'No open negotiations', sold: 'No sales yet' };
+
+            function card(o) {
+                const fig = o.img ? '<img src="' + esc(o.img) + '" alt="">' : '🛍️';
+                const name = esc(o.name || 'Untitled listing'), seller = esc(o.seller || '—');
+                return '<div class="na-cell">' +
+                    '<a class="product-card" href="' + o.href + '" title="' + name + '">' +
+                        '<div class="product-image">' + fig + '</div>' +
+                        '<div class="product-info">' +
+                            '<div class="pc-left"><div class="product-price">' + nis(o.price) + '</div></div>' +
+                            '<div class="pc-right">' +
+                                '<div class="product-seller">' + seller + '</div>' +
+                                '<div class="product-name">' + name + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</a>' +
+                    '<div class="po-note ' + o.noteType + '"><span class="dot"></span>' + esc(o.note) + '</div>' +
+                '</div>';
+            }
+
+            function render(tab) {
+                const list = buckets[tab] || [];
+                countEl.innerHTML = '<b>' + list.length + '</b> ' + (list.length === 1 ? 'item' : 'items');
+                grid.innerHTML = list.length ? list.map(card).join('')
+                    : '<div class="empty" style="grid-column:1/-1">' + emptyMsg[tab] + '</div>';
+            }
+
+            let cur = 'ship', animating = false;
+            function go(tab) {
+                if (tab === cur || animating || !buckets[tab]) return;
+                const dir = order.indexOf(tab) > order.indexOf(cur) ? 1 : -1;
+                animating = true;
+                tabsEl.querySelectorAll('.po-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+                grid.classList.add(dir >= 0 ? 'po-out-left' : 'po-out-right');   // slide + fade out
+                setTimeout(() => {
+                    grid.style.transition = 'none';
+                    cur = tab; render(tab);
+                    grid.classList.remove('po-out-left', 'po-out-right');
+                    grid.classList.add(dir >= 0 ? 'po-out-right' : 'po-out-left'); // jump to incoming side
+                    void grid.offsetWidth;                                         // reflow
+                    grid.style.transition = '';
+                    requestAnimationFrame(() => grid.classList.remove('po-out-left', 'po-out-right')); // slide + fade in
+                    setTimeout(() => { animating = false; postH(); }, 300);
+                }, 240);
+            }
+
+            tabsEl.addEventListener('click', e => {
+                const b = e.target.closest('.po-tab'); if (b) go(b.dataset.tab);
+            });
+
+            // Swipe across the cards to move between tabs.
+            const vp = grid.parentElement;
+            let sx = 0, sy = 0, tracking = false;
+            vp.addEventListener('touchstart', e => { if (e.touches.length !== 1) { tracking = false; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; tracking = true; }, { passive: true });
+            vp.addEventListener('touchend', e => {
+                if (!tracking) return; tracking = false;
+                const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+                if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+                    const i = order.indexOf(cur) + (dx < 0 ? 1 : -1);
+                    if (i >= 0 && i < order.length) go(order[i]);
+                }
+            }, { passive: true });
+
+            render(cur);
         })();
 
         // ---- Top products by views (feeds the Growth view ranking). ----
