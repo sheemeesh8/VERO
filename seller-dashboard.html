@@ -177,6 +177,14 @@
             border-radius: 999px 999px 2px 2px;
             transition: height 0.55s cubic-bezier(0.22,1,0.36,1);
         }
+        /* Every graph is a square (1:1) — its height tracks its own width. */
+        .hc-plot, #revSlider, #storeChart, #viewsChart {
+            width: 100%; aspect-ratio: 1 / 1; margin-top: 14px;
+            display: flex; flex-direction: column; justify-content: flex-end;
+        }
+        .hc-plot .fl-row, #revSlider .lc, #storeChart .fl-row, #viewsChart .fl-row {
+            height: 100% !important; flex: 1 1 auto; margin-top: 0;
+        }
         /* Days with no activity — visible light-grey baseline ticks. */
         .fl-row .ln.empty { background: #cbc8c1; }
         .trend-pill { font-size: 10px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
@@ -279,6 +287,24 @@
         .scd-evlink { display: inline-flex; align-items: center; gap: 9px; margin-top: 12px; font-size: 13px; color: #1c1c1c; text-decoration: none; }
         .scd-evlink .scd-ic { width: 8px; height: 8px; border-radius: 50%; background: #111; flex: none; }
         .scd-evlink .arr { color: #9a958c; margin-left: 2px; }
+
+        /* Sales history — one row per selling day, tinted by that day's strength. */
+        .sales-history { display: flex; flex-direction: column; gap: 8px; }
+        .sh-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px;
+            border: 1px solid transparent; border-left-width: 3px; background: #f6f5f2; }
+        .sh-row.strong { background: #eef4f0; border-color: #cfe0d7; border-left-color: #4a7a63; }
+        .sh-row.mid    { background: #faf5e9; border-color: #e3d3ad; border-left-color: #c9922b; }
+        .sh-row.weak   { background: #f7eeee; border-color: #e6cccc; border-left-color: #b23b3b; }
+        .sh-day { display: flex; flex-direction: column; min-width: 0; }
+        .sh-day b { font-family: 'Bodoni Moda', Georgia, serif; font-size: 15px; color: #111; font-weight: 500; }
+        .sh-day span { font-size: 10px; letter-spacing: 0.4px; color: #9a958c; text-transform: uppercase; margin-top: 2px; }
+        .sh-mid { flex: 1; display: flex; align-items: center; gap: 7px; min-width: 0; }
+        .sh-str { font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
+        .sh-row.strong .sh-str { color: #38624e; background: rgba(74,122,99,0.14); }
+        .sh-row.mid .sh-str    { color: #8a6a24; background: rgba(201,146,43,0.16); }
+        .sh-row.weak .sh-str   { color: #8a2f2f; background: rgba(178,59,59,0.14); }
+        .sh-cnt { font-size: 11px; color: #6b6b6b; }
+        .sh-amt { font-family: 'Bodoni Moda', Georgia, serif; font-size: 17px; color: #111; margin-left: auto; white-space: nowrap; }
 
         .btn {
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
@@ -439,96 +465,10 @@ h3, h4, h5, h6, p,
             <div id="salesCal"></div>
         </div>
 
-        <!-- ===== SALES OVER TIME ===== -->
-        <div class="sec-title">Sales trends</div>
-        <div class="grid g2">
-            <div class="card">
-                <div class="card-h">
-                    <div class="card-t">Sales over time</div>
-                    <span class="trend-pill" id="salesTrend"></span>
-                </div>
-                <div class="card-d">Number of items sold each month</div>
-                <div id="salesChart"></div>
-                <div class="lc-x" id="salesX"></div>
-            </div>
-            <div class="card">
-                <div class="card-h">
-                    <div class="card-t">Cumulative revenue</div>
-                    <span class="trend-pill" id="cumRevTrend"></span>
-                </div>
-                <div class="card-d">Cumulative revenue over the period</div>
-                <div id="cumRevChart"></div>
-                <div class="lc-x" id="cumRevX"></div>
-            </div>
-        </div>
-
-        <!-- ===== INVENTORY ===== -->
-        <div class="sec-title">Inventory</div>
-        <div class="grid g2">
-            <div class="card">
-                <div class="card-h"><div class="card-t">Stock status</div></div>
-                <div class="donut-wrap">
-                    <div class="donut-box">
-                        <div class="donut" id="donut"></div>
-                        <div class="mid"><b id="donutTotal">0</b><span>Items</span></div>
-                    </div>
-                    <div class="stat-legend" style="flex:1">
-                        <div class="leg"><span class="dot" style="background:var(--available)"></span>Available <span class="n" id="cntActive">0</span></div>
-                        <div class="leg"><span class="dot" style="background:var(--reserved)"></span>Reserved <span class="n" id="cntReserved">0</span></div>
-                        <div class="leg"><span class="dot" style="background:var(--sold)"></span>Sold <span class="n" id="cntSold">0</span></div>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-h">
-                    <div class="card-t">Needs attention</div>
-                    <span class="pill low" id="attnPill">0</span>
-                </div>
-                <div class="list" id="attnList"></div>
-            </div>
-        </div>
-
-        <!-- ===== TOP PRODUCTS + OFFERS ===== -->
-        <div class="sec-title">Products and orders</div>
-        <div class="grid g2">
-            <div class="card">
-                <div class="card-h"><div class="card-t">Top products</div></div>
-                <div class="list" id="topList"></div>
-            </div>
-            <div class="card">
-                <div class="card-h">
-                    <div class="card-t">Pending offers</div>
-                    <span class="pill wait" id="offersPill">0</span>
-                </div>
-                <div class="list" id="offersList"></div>
-                <a class="btn block" href="offers-received.html?from=seller" style="margin-top:16px">All offers</a>
-            </div>
-        </div>
-
-        <!-- ===== ENGAGEMENT ===== -->
-        <div class="sec-title">Activity</div>
-        <div class="grid g2">
-            <div class="card">
-                <div class="card-t">Active chats</div>
-                <div class="kpi-num" id="kChats">0</div>
-                <div class="kpi-lbl">with buyers</div>
-                <a class="btn block" href="chats.html?from=seller" style="margin-top:16px">to chats</a>
-            </div>
-            <div class="card">
-                <div class="card-t">Drafts</div>
-                <div class="kpi-num" id="kDrafts">0</div>
-                <div class="kpi-lbl">Products to promote</div>
-                <a class="btn block" href="drafts.html" style="margin-top:16px">to drafts</a>
-            </div>
-        </div>
-
-        <!-- ===== QUICK ACTIONS ===== -->
-        <div class="sec-title">Quick actions</div>
-        <div class="quick">
-            <a class="btn primary" href="product-upload.html">Add a product</a>
-            <a class="btn" href="products.html?from=seller">Manage products</a>
-            <a class="btn" href="seller-stats.html">Full statistics</a>
-            <a class="btn" href="seller-area.html">Store settings</a>
+        <!-- ===== SALES HISTORY ===== -->
+        <div class="sec-title">Sales history</div>
+        <div class="card">
+            <div class="list sales-history" id="salesHistory"></div>
         </div>
       </div><!-- /business -->
 
@@ -1016,85 +956,46 @@ h3, h4, h5, h6, p,
         document.getElementById('storeGoalLeft').textContent = 'remaining ' + Math.max(0, folGoal - folBase).toLocaleString('en-US');
         requestAnimationFrame(() => { document.getElementById('storeGoalBar').style.width = fgp + '%'; });
 
-        // Sales count per month + cumulative revenue.
-        const salesCounts = [];
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const start = d.getTime(), end = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
-            salesCounts.push(sold.filter(p => { const t = Number(p.createdAt) || Date.now(); return t >= start && t < end; }).length);
-        }
-        if (salesCounts.every(c => c === 0) && sold.length) {
-            let ws = [], wsum = 0;
-            for (let i = 0; i < 6; i++) { const w = 0.4 + rnd(i + 21) * 0.9 + i * 0.08; ws.push(w); wsum += w; }
-            let acc = 0;
-            for (let i = 0; i < 6; i++) { salesCounts[i] = i === 5 ? sold.length - acc : Math.round(sold.length * ws[i] / wsum); acc += salesCounts[i]; }
-            salesCounts[5] = Math.max(0, salesCounts[5]);
-        }
-        document.getElementById('salesChart').innerHTML = fineCols(salesCounts, '#1f8f4e');
-        document.getElementById('salesX').innerHTML = xLabels(labels);
-        trendPill(document.getElementById('salesTrend'), salesCounts[5], salesCounts[4]);
+        // ---- Sales history: one row per selling day, tinted by that day's strength. ----
+        (function salesHistory() {
+            const host = document.getElementById('salesHistory');
+            if (!host) return;
+            const dowLong = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const tsOf = p => Number(p.soldAt || p.createdAt) || 0;
+            // Group sold items into calendar days.
+            const byDay = {};
+            sold.forEach(p => {
+                const t = tsOf(p); if (!t) return;
+                const dt = new Date(t);
+                const key = dt.getFullYear() + '-' + dt.getMonth() + '-' + dt.getDate();
+                if (!byDay[key]) byDay[key] = { ts: new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime(), rev: 0, n: 0 };
+                byDay[key].rev += priceOf(p.price); byDay[key].n += 1;
+            });
+            const days = Object.values(byDay).sort((x, y) => y.ts - x.ts);
+            if (!days.length) { host.innerHTML = '<div class="empty">No sales yet</div>'; return; }
+            // Each day's colour reflects its revenue relative to the best selling day.
+            const maxRev = Math.max(1, ...days.map(d => d.rev));
+            const strength = v => v / maxRev >= 0.66 ? 'strong' : v / maxRev >= 0.33 ? 'mid' : 'weak';
+            const label = { strong: 'Strong', mid: 'Medium', weak: 'Weak' };
+            host.innerHTML = days.map(d => {
+                const dt = new Date(d.ts), cls = strength(d.rev);
+                return '<div class="sh-row ' + cls + '">' +
+                    '<div class="sh-day"><b>' + dt.getDate() + ' ' + MON[dt.getMonth()] + ' ' + dt.getFullYear() + '</b>' +
+                    '<span>' + dowLong[dt.getDay()] + '</span></div>' +
+                    '<div class="sh-mid"><span class="sh-str">' + label[cls] + '</span>' +
+                    '<span class="sh-cnt">' + d.n + (d.n === 1 ? ' item' : ' items') + '</span></div>' +
+                    '<div class="sh-amt">' + nis(d.rev) + '</div></div>';
+            }).join('');
+        })();
 
-        const cumRev = buckets.map(b => b.sum).reduce((acc, v) => { acc.push((acc[acc.length - 1] || 0) + v); return acc; }, []);
-        document.getElementById('cumRevChart').innerHTML = fineCols(cumRev, '#111');
-        document.getElementById('cumRevX').innerHTML = xLabels(labels);
-        trendPill(document.getElementById('cumRevTrend'), buckets[5].sum, buckets[4].sum);
-
-        // ---- Inventory donut. ----
-        const total = listings.length;
-        const a = active.length, r = reserved.length, s = sold.length;
-        document.getElementById('donutTotal').textContent = total;
-        document.getElementById('cntActive').textContent = a;
-        document.getElementById('cntReserved').textContent = r;
-        document.getElementById('cntSold').textContent = s;
-        const pA = total ? (a / total) * 100 : 0;
-        const pB = total ? ((a + r) / total) * 100 : 0;
-        const donut = document.getElementById('donut');
-        donut.style.setProperty('--a', pA.toFixed(1));
-        donut.style.setProperty('--b', pB.toFixed(1));
-
-        // ---- Needs attention: low stock among active items. ----
-        const stockOf = p => (p.stock != null && !isNaN(Number(p.stock))) ? Number(p.stock) : 1;
-        const lowStock = active.filter(p => stockOf(p) <= 1)
-                               .sort((x, y) => stockOf(x) - stockOf(y)).slice(0, 5);
-        document.getElementById('attnPill').textContent = lowStock.length;
-        document.getElementById('attnList').innerHTML = lowStock.length ? lowStock.map(p =>
-            `<div class="row">
-                <div class="ic">📦</div>
-                <div class="meta"><b>${p.title || 'Item'}</b><span>${p.brand || 'No brand'} · ${nis(priceOf(p.price))}</span></div>
-                <span class="pill low">${stockOf(p) === 0 ? 'Sold out' : 'Low stock'}</span>
-            </div>`).join('') : '<div class="empty">Inventory is in good shape 👍</div>';
-
-        // ---- Top products by views. ----
+        // ---- Top products by views (feeds the Growth view ranking). ----
         const top = [...listings].map((p, i) => ({ p, v: viewsOf(p, i) }))
                                  .sort((x, y) => y.v - x.v).slice(0, 5);
-        document.getElementById('topList').innerHTML = top.map(({ p, v }) => {
-            const statusPill = p.status === 'sold' ? '<span class="pill">Sold</span>'
-                             : p.status === 'reserved' ? '<span class="pill wait">Reserved</span>'
-                             : '<span class="pill ok">Available</span>';
-            return `<div class="row">
-                <div class="ic">🏷️</div>
-                <div class="meta"><b>${p.title || 'Item'}</b><span>${v.toLocaleString('en-US')} Views · ${nis(priceOf(p.price))}</span></div>
-                ${statusPill}
-            </div>`;
-        }).join('');
 
-        // ---- Pending offers. ----
-        let offers = arr(readJSON('vero_received_offers', []));
-        const pending = offers.filter(o => (o.status || 'pending') === 'pending');
-        document.getElementById('offersPill').textContent = pending.length;
-        const offersToShow = (pending.length ? pending : offers).slice(0, 4);
-        document.getElementById('offersList').innerHTML = offersToShow.length ? offersToShow.map(o =>
-            `<div class="row">
-                <div class="ic">🤝</div>
-                <div class="meta"><b>${o.item || o.product || o.title || 'Offer'}</b><span>${o.buyer || o.from || 'Buyer'}</span></div>
-                <div class="amt">${o.amount || o.offer || o.price ? nis(priceOf(o.amount || o.offer || o.price)) : '—'}</div>
-            </div>`).join('') : '<div class="empty">No pending offers</div>';
-
-        // ---- Business activity counters. ----
+        // ---- Active chats count (feeds the Growth view engagement panel). ----
         const chats = readJSON('vero_chats', {});
         const chatCount = Array.isArray(chats) ? chats.length : (chats && typeof chats === 'object' ? Object.keys(chats).length : 0);
-        document.getElementById('kChats').textContent = chatCount;
-        document.getElementById('kDrafts').textContent = arr(readJSON('vero_drafts', [])).length;
 
         // ---- Growth view: followers + profile/product views (Instagram-style). ----
         document.getElementById('gFollowers').textContent = followers.toLocaleString('en-US');
