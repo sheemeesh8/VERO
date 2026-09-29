@@ -614,7 +614,7 @@
         /* Profile-switch splash: a Gucci-style WELCOME screen shown between areas —
            black field, an editorial serif name, a thin rule and a spaced overline. */
         .vero-switch-splash {
-            position: fixed; inset: 0; z-index: 99999; background: #000; color: #fff;
+            position: fixed; inset: 0; z-index: 99999; background: #070c1c; color: #fff;
             display: grid; place-items: center; opacity: 0; transition: opacity 0.4s ease;
         }
         .vero-switch-splash.show { opacity: 1; }
