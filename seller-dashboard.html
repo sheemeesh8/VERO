@@ -230,9 +230,17 @@
         .scal-kick { font-size: 9px; letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; font-weight: 700; display: block; margin-bottom: 6px; }
         .scal-month { font-family: 'Bodoni Moda', 'Didot', Georgia, serif; font-size: clamp(22px, 6vw, 32px); font-weight: 500; color: #111; line-height: 1; letter-spacing: 0.01em; }
         .scal-year { font-size: 11px; letter-spacing: 3.2px; color: #9a958c; font-weight: 600; }
-        .scal-nav { display: inline-flex; align-items: center; gap: 12px; }
-        .scal-arrow { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #e2e2e2; background: #fff; color: #111; font-size: 14px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
-        .scal-arrow:active { background: #f0eee7; }
+        .scal-nav { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .scal-hint { font-size: 9px; letter-spacing: 1.6px; text-transform: uppercase; color: #b3ada3; font-weight: 600; white-space: nowrap; }
+        /* Months are paged by swiping the calendar; the body cross-fades between them. */
+        .scal-grid { touch-action: pan-y; }
+        .scal-month, .scal-year, .scal-summary, .scal-grid, .scal-detail { transition: opacity 0.22s ease; }
+        .scal.is-fading .scal-month, .scal.is-fading .scal-year,
+        .scal.is-fading .scal-summary, .scal.is-fading .scal-grid,
+        .scal.is-fading .scal-detail { opacity: 0; }
+        @media (prefers-reduced-motion: reduce) {
+            .scal-month, .scal-year, .scal-summary, .scal-grid, .scal-detail { transition: none; }
+        }
         .scal-summary { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 16px; font-size: 10.5px; letter-spacing: 0.2px; color: #9a958c; }
         .scal-summary b { color: #111; font-weight: 600; }
         .scal-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 5px; }
@@ -848,14 +856,13 @@ h3, h4, h5, h6, p,
             CURATED.concat(Array.isArray(userEv) ? userEv : []).forEach(e => { if (booths[e.id]) (evByDate[e.date] = evByDate[e.date] || []).push(e); });
             const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-            // Static shell — the month arrows, summary, grid and detail are refilled
-            // by render() whenever you page to another month.
+            // Static shell — the month label, summary, grid and detail are refilled
+            // by render() whenever you swipe to another month.
             host.innerHTML = '<div class="scal">' +
                 '<div class="scal-head"><span><span class="scal-kick">Sales forecast · What’s on</span>' +
                 '<span class="scal-month" id="scalMonth"></span></span>' +
-                '<span class="scal-nav"><button type="button" class="scal-arrow" data-nav="-1" aria-label="Previous month">‹</button>' +
-                '<span class="scal-year" id="scalYear"></span>' +
-                '<button type="button" class="scal-arrow" data-nav="1" aria-label="Next month">›</button></span></div>' +
+                '<span class="scal-nav"><span class="scal-year" id="scalYear"></span>' +
+                '<span class="scal-hint">Swipe ‹ ›</span></span></div>' +
                 '<div class="scal-summary" id="scalSummary"></div>' +
                 '<div class="scal-grid" id="scalGrid"></div>' +
                 '<div class="scal-legend">' +
@@ -871,7 +878,7 @@ h3, h4, h5, h6, p,
             const summary = document.getElementById('scalSummary');
             const detail = document.getElementById('scalDetail');
             const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
-            let offset = 0;
+            let offset = 0, swiped = false;
 
             function render() {
                 const view = new Date(now.getFullYear(), now.getMonth() + offset, 1);
@@ -920,15 +927,53 @@ h3, h4, h5, h6, p,
                     (evByDate[key] || []).forEach(e => h += '<a class="scd-evlink" href="events.html?seller=1" target="_top"><span class="scd-ic"></span>Your event · ' + esc(e.title || 'Event') + '<span class="arr">›</span></a>');
                     detail.innerHTML = h;
                 }
-                grid.querySelectorAll('.scal-day:not(.empty)').forEach(c => c.addEventListener('click', () => select(Number(c.dataset.d))));
+                grid.querySelectorAll('.scal-day:not(.empty)').forEach(c => c.addEventListener('click', () => { if (swiped) { swiped = false; return; } select(Number(c.dataset.d)); }));
                 select(offset === 0 && now.getDate() <= dim ? now.getDate() : 1);
                 postH();
             }
 
-            host.querySelectorAll('.scal-arrow').forEach(b => b.addEventListener('click', () => {
-                offset = Math.max(-36, Math.min(12, offset + Number(b.dataset.nav)));
-                render();
-            }));
+            // Page to another month with a soft cross-fade between the two.
+            let animating = false;
+            const scal = host.querySelector('.scal');
+            function pageTo(delta) {
+                const next = Math.max(-36, Math.min(12, offset + delta));
+                if (next === offset || animating) return;
+                animating = true;
+                scal.classList.add('is-fading');
+                setTimeout(() => {
+                    offset = next;
+                    render();
+                    requestAnimationFrame(() => { scal.classList.remove('is-fading'); animating = false; });
+                }, 220);
+            }
+
+            // Swipe left/right across the calendar to change month (replaces arrows).
+            let sx = 0, sy = 0, tracking = false;
+            scal.addEventListener('touchstart', e => {
+                if (e.touches.length !== 1) { tracking = false; return; }
+                sx = e.touches[0].clientX; sy = e.touches[0].clientY; tracking = true; swiped = false;
+            }, { passive: true });
+            scal.addEventListener('touchmove', e => {
+                if (!tracking) return;
+                if (Math.abs(e.touches[0].clientX - sx) > 12) swiped = true;
+            }, { passive: true });
+            scal.addEventListener('touchend', e => {
+                if (!tracking) return;
+                tracking = false;
+                const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+                if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) pageTo(dx < 0 ? 1 : -1);
+            }, { passive: true });
+
+            // Trackpad / mouse-wheel horizontal swipe (desktop preview).
+            let wheelLock = false;
+            scal.addEventListener('wheel', e => {
+                if (Math.abs(e.deltaX) < 30 || Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
+                e.preventDefault();
+                if (wheelLock) return;
+                wheelLock = true; setTimeout(() => { wheelLock = false; }, 400);
+                pageTo(e.deltaX > 0 ? 1 : -1);
+            }, { passive: false });
+
             render();
         })();
 
