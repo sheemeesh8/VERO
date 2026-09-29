@@ -618,11 +618,18 @@
             display: grid; place-items: center; opacity: 0; transition: opacity 0.4s ease;
         }
         .vero-switch-splash.show { opacity: 1; }
-        .vero-switch-splash .vss-inner {
-            text-align: center; transform: translateY(16px); opacity: 0;
-            transition: transform 0.6s cubic-bezier(0.22,1,0.36,1), opacity 0.6s ease;
+        .vero-switch-splash .vss-inner { text-align: center; }
+        /* Two-stage fade IN (overline, then name) and two-stage fade OUT (name, then
+           overline): the two lines animate one after the other, under the black field. */
+        .vero-switch-splash .vss-welcome,
+        .vero-switch-splash .vss-name {
+            opacity: 0; transform: translateY(14px);
+            transition: opacity 0.55s ease, transform 0.65s cubic-bezier(0.22,1,0.36,1);
         }
-        .vero-switch-splash.show .vss-inner { transform: translateY(0); opacity: 1; }
+        .vero-switch-splash.show .vss-welcome { opacity: 1; transform: translateY(0); transition-delay: 0.05s; }
+        .vero-switch-splash.show .vss-name    { opacity: 1; transform: translateY(0); transition-delay: 0.35s; }
+        .vero-switch-splash.leaving .vss-name    { opacity: 0; transform: translateY(-10px); transition-delay: 0s; }
+        .vero-switch-splash.leaving .vss-welcome { opacity: 0; transform: translateY(-10px); transition-delay: 0.25s; }
         .vero-switch-splash .vss-welcome {
             font-family: 'Inter', 'Poppins', 'Segoe UI', sans-serif !important;
             font-size: 12px; font-weight: 300; letter-spacing: 9px; text-transform: uppercase;
@@ -2720,8 +2727,11 @@
           + '</div>';
         ov.querySelector('.vss-name').textContent = name;
         document.body.appendChild(ov);
+        // Stage 1+2 in: the overline fades up, then the name. Hold, then stage 1+2
+        // out: the name fades first, then the overline — all under the black field.
         requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('show')));
-        setTimeout(go, 1250);
+        setTimeout(() => ov.classList.add('leaving'), 1400);
+        setTimeout(go, 2250);
     };
 
     // ---- Fallback handlers ----
