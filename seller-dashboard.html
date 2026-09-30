@@ -199,6 +199,13 @@
         }
         /* Days with no activity — visible light-grey baseline ticks. */
         .fl-row .ln.empty { background: #cbc8c1; }
+        /* Four figures beneath each graph — two rows, two per row. */
+        .gstats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin-top: 20px; }
+        .gstat { text-align: center; padding: 13px 6px; background: #f6f5f2; border: 1px solid #ebe9e4; border-radius: 12px; }
+        .gstat-num { font-family: 'Bodoni Moda', Georgia, serif; font-size: 18px; color: #111; line-height: 1.1; }
+        .gstat-lbl { font-size: 9.5px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+        .card.dark .gstat { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); }
+        .card.dark .gstat-num { color: #fff; }
         .trend-pill { font-size: 10px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
         .trend-pill.up { color: var(--available); border-color: rgba(31,143,78,0.3); }
         .trend-pill.down { color: var(--sold); border-color: rgba(178,59,59,0.3); }
@@ -472,6 +479,7 @@ h3, h4, h5, h6, p,
             <div class="lc-x" id="hcX"></div>
             <div class="hc-dots" id="hcDots"><span class="on"></span><span></span><span></span></div>
             <div class="hc-hint">Swipe to switch · week · month · year</div>
+            <div class="gstats" id="hcStats"></div>
         </div>
 
 
@@ -504,6 +512,7 @@ h3, h4, h5, h6, p,
                 <div class="card-d" id="revGrowthSub">Revenue trend</div>
                 <div id="revSlider"></div>
                 <div class="lc-x" id="revX"></div>
+                <div class="gstats" id="revStats"></div>
             </div>
             <div class="card dark goal-card" id="goalCard">
                 <div class="card-h">
@@ -653,6 +662,7 @@ h3, h4, h5, h6, p,
                     <span id="storeGoalLeft"></span>
                     <span id="storeGoalCap"></span>
                 </div>
+                <div class="gstats" id="storeStats"></div>
             </div>
             <div class="card">
                 <div class="card-h">
@@ -667,6 +677,7 @@ h3, h4, h5, h6, p,
                     <span id="viewsGoalLeft"></span>
                     <span id="viewsGoalCap"></span>
                 </div>
+                <div class="gstats" id="viewsStats"></div>
             </div>
         </div>
 
@@ -955,6 +966,45 @@ h3, h4, h5, h6, p,
         document.getElementById('storeGoalCap').textContent = 'Goal ' + folGoal.toLocaleString('en-US') + ' Followers';
         document.getElementById('storeGoalLeft').textContent = 'remaining ' + Math.max(0, folGoal - folBase).toLocaleString('en-US');
         requestAnimationFrame(() => { document.getElementById('storeGoalBar').style.width = fgp + '%'; });
+
+        // ---- Four figures beneath every graph (two rows, two per row). ----
+        (function graphStats() {
+            const set = (id, items) => {
+                const el = document.getElementById(id); if (!el) return;
+                el.innerHTML = items.map(it => '<div class="gstat"><div class="gstat-num">' + it[0] +
+                    '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join('');
+            };
+            const num = n => Math.round(n).toLocaleString('en-US');
+            const signed = n => (n >= 0 ? '+' : '−') + num(Math.abs(n));
+            const curM = buckets[buckets.length - 1].sum, prevM = buckets[buckets.length - 2].sum || 0;
+            const total6 = buckets.reduce((s, b) => s + b.sum, 0);
+            const avgSale = sold.length ? revenue / sold.length : 0;
+
+            set('hcStats', [
+                [nis(revenue),  'Total revenue'],
+                [num(sold.length), 'Items sold'],
+                [nis(avgSale),  'Avg sale'],
+                [nis(maxB),     'Best month'],
+            ]);
+            set('revStats', [
+                [nis(curM),  'This month'],
+                [nis(prevM), 'Last month'],
+                [nis(total6), '6-month total'],
+                [nis(total6 / 6), 'Monthly average'],
+            ]);
+            set('storeStats', [
+                [num(folBase), 'Followers'],
+                [signed(followerSeries[5] - followerSeries[4]), 'This month'],
+                [num(Math.max(0, folGoal - folBase)), 'To next goal'],
+                [num(folGoal), 'Goal'],
+            ]);
+            set('viewsStats', [
+                [num(storeViews), 'Store views'],
+                [signed(viewsSeries[5] - viewsSeries[4]), 'This month'],
+                [num(Math.max(0, viewsGoal - storeViews)), 'To next goal'],
+                [conv.toFixed(1) + '%', 'Conversion'],
+            ]);
+        })();
 
         // ---- Sales history: one row per selling day, tinted by that day's strength. ----
         (function salesHistory() {
