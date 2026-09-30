@@ -93,8 +93,8 @@
         /* Description sits on one line with the Clothing / Art toggle beside it. */
         .wl-desc-row { display: flex !important; flex-direction: row !important; align-items: center;
             justify-content: space-between; gap: 16px; flex-wrap: nowrap; text-align: left !important; margin-top: 4px; }
-        .wl-desc-row .head-sub { display: block !important; margin-top: 0; flex: 1; min-width: 0;
-            font-size: 12px; color: #6b6b66; letter-spacing: 0.3px; }
+        .wl-desc-row .head-sub { display: block !important; margin-top: 0; flex: 1 1 58%; min-width: 0;
+            font-size: 14.5px; line-height: 1.5; color: #6b6b66; letter-spacing: 0.2px; }
         .wl-desc-row .mode-toggle { flex: none; margin-left: 0 !important; }
         /* Separator line carrying the total and the item count. */
         .wl-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
@@ -279,6 +279,17 @@ h3, h4, h5, h6, p,
             display: grid; place-items: center; color: #111; padding: 0; transition: opacity 0.2s; }
         .sticky-head .sh-actions .tb-ico:hover { opacity: 0.6; }
         .sticky-head .sh-actions .tb-ico.on { color: #EB2323; }
+        .sticky-head { flex-wrap: wrap; }
+        /* Inline search field that expands inside the header when the icon is tapped. */
+        .sh-search-wrap { flex-basis: 100%; width: 100%; position: relative; display: none; margin-top: 14px; }
+        .sticky-head.searching .sh-search-wrap { display: block; }
+        .sh-search-wrap input { width: 100%; height: 44px; border: none; border-bottom: 1px solid #d8d5cd;
+            background: transparent; padding: 0 8px 0 34px; font-size: 15px; color: #1c1c1c; font-family: inherit;
+            letter-spacing: 0.3px; outline: none; transition: border-color 0.2s; }
+        .sh-search-wrap input:focus { border-bottom-color: #1c1c1c; }
+        .sh-search-wrap input::placeholder { color: #a8a49a; }
+        .sh-search-wrap svg { position: absolute; top: 50%; left: 6px; transform: translateY(-50%);
+            width: 18px; height: 18px; stroke: #a8a49a; fill: none; stroke-width: 1.25; }
         .sticky-head .sh-actions .tb-ico svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 
         /* ===== Minimal redesign (soft hairline chrome, quiet filters) ===== */
@@ -305,13 +316,17 @@ h3, h4, h5, h6, p,
                 <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
             </button>
         </div>
+        <div class="sh-search-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="search" id="listSearch" placeholder="Search this wishlist…" autocomplete="off" aria-label="Search this wishlist">
+        </div>
     </header>
 
     <div class="wrap">
         <!-- Description, with the Clothing / Art toggle beside it. -->
         <div class="head-row wl-desc-row">
             <h1 class="head-title" style="display:none">My Wishlist</h1>
-            <p class="head-sub" id="headSub">The pieces you've saved to come back to.</p>
+            <p class="head-sub" id="headSub">The pieces you keep coming back to — all saved right here, waiting for whenever you're ready.</p>
             <div class="mode-toggle">
                 <button class="mode-switch" id="modeSwitch" type="button" aria-label="Switch Clothing / Art"></button>
                 <div class="mode-labels">
@@ -323,32 +338,15 @@ h3, h4, h5, h6, p,
         </div>
 
         <div id="tickerHost"></div>
-        <style>
-            .list-search { position: relative; margin: 22px 0 6px; display: none; }
-            .list-search.open { display: block; }
-            .list-search input {
-                width: 100%; height: 46px; border: none; border-bottom: 1px solid #d8d5cd;
-                background: transparent; padding: 0 8px 0 34px; font-size: 14px; color: #1c1c1c;
-                font-family: inherit; letter-spacing: 0.3px; outline: none; transition: border-color 0.2s;
-            }
-            .list-search input:focus { border-bottom-color: #1c1c1c; }
-            .list-search input::placeholder { color: #a8a49a; }
-            .list-search svg { position: absolute; top: 50%; left: 6px; transform: translateY(-50%);
-                width: 18px; height: 18px; stroke: #a8a49a; fill: none; stroke-width: 1.25; }
-        </style>
-        <div class="list-search">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="search" id="listSearch" placeholder="Search this wishlist…" autocomplete="off" aria-label="Search this wishlist">
-        </div>
         <div id="cartBody"></div>
         <div id="checkoutHost"></div>
     </div>
     <script>
-        // The search lives as an icon in the header; tapping it reveals the search bar.
+        // The search lives in the header; tapping the icon reveals an inline search field.
         function toggleListSearch(btn) {
-            var el = document.querySelector('.list-search');
-            if (!el) return;
-            var open = el.classList.toggle('open');
+            var head = document.querySelector('.sticky-head');
+            if (!head) return;
+            var open = head.classList.toggle('searching');
             if (btn) btn.classList.toggle('on', open);
             var input = document.getElementById('listSearch');
             if (open) { if (input) input.focus(); }
@@ -476,7 +474,7 @@ h3, h4, h5, h6, p,
                 host.innerHTML = '';
                 document.getElementById('headTotal').innerHTML = '';
                 if (!term) document.getElementById('tickerHost').innerHTML = '';
-                sub.textContent = "The pieces you've saved to come back to.";
+                sub.textContent = "The pieces you keep coming back to — all saved right here, waiting for whenever you're ready.";
                 return;
             }
 
@@ -498,7 +496,7 @@ h3, h4, h5, h6, p,
 
             const count = mine.length;
             const total = mine.reduce((s, { it }) => s + priceNum(it.price), 0);
-            sub.textContent = `${count} item${count === 1 ? '' : 's'} saved in your ${MODE} wishlist.`;
+            sub.textContent = `${count} piece${count === 1 ? '' : 's'} saved in your ${MODE} wishlist — the ones you keep coming back to, waiting for whenever you're ready.`;
             document.getElementById('headTotal').innerHTML = '';
             const money = '₪' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             document.getElementById('tickerHost').innerHTML =
