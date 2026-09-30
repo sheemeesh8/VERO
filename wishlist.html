@@ -90,6 +90,17 @@
         .cart-stat .cs-num { font-size: 18px; font-weight: 300; letter-spacing: 2px; line-height: 1; color: #16150f; }
         .cart-stat .cs-lbl { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: #a8a399; }
 
+        /* Summary as a swipeable slider (total ↔ item count) sitting on the line. */
+        .wl-slider { margin: 18px 0 14px; }
+        .wl-slider-vp { overflow: hidden; border-bottom: 1px solid #16150f; padding-bottom: 8px; }
+        .wl-slider-track { display: flex; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1); }
+        .wl-slide { flex: 0 0 100%; min-width: 0; display: flex; align-items: baseline; justify-content: space-between; height: 26px; }
+        .wl-slide .cs-num { font-size: 18px; font-weight: 300; letter-spacing: 2px; color: #16150f; }
+        .wl-slide .cs-lbl { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: #a8a399; }
+        .wl-slider-dots { display: flex; justify-content: center; gap: 5px; margin-top: 9px; }
+        .wl-slider-dots span { width: 5px; height: 5px; border-radius: 50%; background: #d9d6cf; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+        .wl-slider-dots span.on { background: #16150f; transform: scale(1.2); }
+
         /* Description sits on one line with the Clothing / Art toggle beside it. */
         .wl-desc-row { display: flex !important; flex-direction: row !important; align-items: center;
             justify-content: space-between; gap: 16px; flex-wrap: nowrap; text-align: left !important; margin-top: 4px; }
@@ -500,10 +511,14 @@ h3, h4, h5, h6, p,
             document.getElementById('headTotal').innerHTML = '';
             const money = '₪' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             document.getElementById('tickerHost').innerHTML =
-                `<div class="cart-ticker" id="cartTicker">
-                    <div class="cart-stat is-active"><span class="cs-num">${money}</span><span class="cs-lbl">Total value</span></div>
-                    <div class="cart-stat"><span class="cs-num">${count}</span><span class="cs-lbl">${count === 1 ? 'Item' : 'Items'}</span></div>
+                `<div class="wl-slider" id="wlSlider">
+                    <div class="wl-slider-vp"><div class="wl-slider-track">
+                        <div class="wl-slide"><span class="cs-lbl">Total value</span><span class="cs-num">${money}</span></div>
+                        <div class="wl-slide"><span class="cs-lbl">${count === 1 ? 'Item' : 'Items'}</span><span class="cs-num">${count}</span></div>
+                    </div></div>
+                    <div class="wl-slider-dots"><span class="on"></span><span></span></div>
                  </div>`;
+            wireSummarySlider();
 
             // Action bar: move the ticked items into the cart, or select/clear all.
             const chosen = mine.filter(({ idx }) => selected.has(idx));
@@ -581,15 +596,21 @@ h3, h4, h5, h6, p,
 
         render();
 
-        // Rotate the summary stat every 4s (same as the cart).
-        setInterval(function () {
-            const slides = document.querySelectorAll('#cartTicker .cart-stat');
-            if (slides.length < 2) return;
-            let cur = [...slides].findIndex(s => s.classList.contains('is-active'));
-            if (cur < 0) cur = 0;
-            slides[cur].classList.remove('is-active');
-            slides[(cur + 1) % slides.length].classList.add('is-active');
-        }, 4000);
+        // Summary slider: swipe (or tap the dots) between the total and the item count.
+        function wireSummarySlider() {
+            const sl = document.getElementById('wlSlider');
+            if (!sl) return;
+            const track = sl.querySelector('.wl-slider-track');
+            const dots = Array.prototype.slice.call(sl.querySelectorAll('.wl-slider-dots span'));
+            let page = 0;
+            const set = () => { track.style.transform = 'translateX(' + (-page * 100) + '%)'; dots.forEach((d, i) => d.classList.toggle('on', i === page)); };
+            dots.forEach((d, i) => d.addEventListener('click', () => { page = i; set(); }));
+            const vp = sl.querySelector('.wl-slider-vp');
+            let sx = 0, tr = false;
+            vp.addEventListener('touchstart', e => { if (e.touches.length !== 1) { tr = false; return; } sx = e.touches[0].clientX; tr = true; }, { passive: true });
+            vp.addEventListener('touchend', e => { if (!tr) return; tr = false; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) { if (dx < 0 && page < 1) page++; else if (dx > 0 && page > 0) page--; set(); } }, { passive: true });
+            set();
+        }
 
         // Exit mirrors the entry: fade the data out, then go back.
         const back = document.querySelector('.back');
