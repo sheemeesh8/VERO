@@ -20,7 +20,7 @@
     //
     // The order is fixed in code — there is NO stored/remembered previous order.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['search', 'cart', 'account'];
+    const ICON_ORDER = ['search', 'account'];
 
     // Purge any previously-saved icon order from the browser, so no old layout
     // memory can ever override the order defined above.
@@ -1537,27 +1537,6 @@
                         <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </a>
-                <span class="hdr-cart" data-icon="cart">
-                    <button class="icon-btn icon-wrap hdr-cart-btn" title="Cart" aria-label="Cart" aria-expanded="false" onclick="veroToggleCartMenu(event)">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle>
-                            <path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path>
-                        </svg>
-                    </button>
-                    <!-- Down caret hinting the cart icon expands to reveal wishlist. -->
-                    <span class="hdr-cart-caret" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
-                    </span>
-                    <!-- Bare wishlist heart that drops out beneath the cart on tap. -->
-                    <div class="hdr-wish-pop" id="cartMenu" role="menu" aria-hidden="true">
-                        <a class="hwp-ico" role="menuitem" href="wishlist.html" title="Wishlist" aria-label="Wishlist" onclick="veroPickWishlist(event)">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
-                            </svg>
-                            <span class="badge" id="wishMenuBadge"></span>
-                        </a>
-                    </div>
-                </span>
                 <span class="hdr-account" data-icon="account">
                     <button class="icon-btn hdr-account-btn" title="My Account (hold to switch profile)" aria-label="My Account">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
