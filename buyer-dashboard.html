@@ -116,6 +116,23 @@
         .goal-save { width: 100%; margin-top: 12px; padding: 11px; border-radius: 999px; border: none; background: #111; color: #fff; font: inherit; font-size: 11px; letter-spacing: 0.5px; cursor: pointer; }
         .goal-save:active { opacity: 0.85; }
 
+        /* Four figures + goal share one swipeable slider beneath the graph (matches seller). */
+        .gstats { display: grid; grid-template-columns: 1fr 1fr; gap: 56px 40px; margin-top: 30px; }
+        .gstat { text-align: center; }
+        .gstat-num { font-family: 'Bodoni Moda', Georgia, serif; font-size: 26px; color: #111; line-height: 1.1; }
+        .gstat-lbl { font-size: 10.5px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-top: 5px; }
+        .gslider { margin-top: 22px; }
+        .gslider-vp { overflow: hidden; }
+        .gslider-track { display: flex; transition: transform 0.32s cubic-bezier(0.22,1,0.36,1); align-items: stretch; }
+        .gslider-page { flex: 0 0 100%; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+        .gslider-page .gstats { margin-top: 0; }
+        .goal-slide-h { text-align: center; font-size: 10.5px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+        .gslider-dots { display: flex; justify-content: center; gap: 7px; margin-top: 18px; }
+        .gslider-dots span { width: 6px; height: 6px; border-radius: 50%; background: #d9d6cf; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+        .gslider-dots span.on { background: #111; transform: scale(1.15); }
+        .grid.g1 { grid-template-columns: 1fr; }
+        .grid > * { min-width: 0; }
+
         /* Bar chart (monthly spend) */
         :root { --graph-h: 300px; }
         .bars { display: flex; align-items: flex-end; gap: 8px; height: var(--graph-h); margin-top: 18px; }
@@ -266,30 +283,33 @@ h3, h4, h5, h6, p,
 
         <!-- ===== SPENDING ===== -->
         <div class="sec-title">Expense tracking</div>
-        <div class="grid g2">
+        <div class="grid g1">
             <div class="card">
                 <div class="card-h">
                     <div class="card-t">Monthly spend</div>
                     <div class="card-d" id="spendYear"></div>
                 </div>
                 <div class="bars" id="bars"></div>
-            </div>
-            <div class="card dark goal-card" id="budgetCard">
-                <div class="card-h">
-                    <div class="card-t">Monthly budget</div>
-                    <div class="card-d" id="budgetPct"></div>
-                </div>
-                <div class="kpi-num" id="budgetSpent">₪0</div>
-                <div class="kpi-lbl">Used this month</div>
-                <div class="meter"><span id="budgetBar"></span></div>
-                <div class="meter-row">
-                    <span id="budgetLeft">Remaining ₪0</span>
-                    <span id="budgetCap">of ₪0</span>
-                </div>
-                <div class="goal-hint" id="budgetHint">Tap to set your budget ⌄</div>
-                <div class="goal-edit" id="budgetEdit">
-                    <div class="goal-field"><span class="goal-cur">₪</span><input id="budgetInput" type="number" inputmode="numeric" min="0" step="50" placeholder="0"></div>
-                    <button type="button" class="goal-save" id="budgetSave">Save budget</button>
+                <div class="gslider">
+                    <div class="gslider-vp"><div class="gslider-track">
+                        <div class="gslider-page"><div class="gstats" id="spendStats"></div></div>
+                        <div class="gslider-page"><div class="goal-slide goal-card" id="budgetCard">
+                            <div class="goal-slide-h">Monthly budget · <span id="budgetPct"></span></div>
+                            <div class="kpi-num" id="budgetSpent" style="text-align:center">₪0</div>
+                            <div class="kpi-lbl" style="text-align:center">Used this month</div>
+                            <div class="meter"><span id="budgetBar"></span></div>
+                            <div class="meter-row">
+                                <span id="budgetLeft">Remaining ₪0</span>
+                                <span id="budgetCap">of ₪0</span>
+                            </div>
+                            <div class="goal-hint" id="budgetHint">Tap to set your budget ⌄</div>
+                            <div class="goal-edit" id="budgetEdit">
+                                <div class="goal-field"><span class="goal-cur">₪</span><input id="budgetInput" type="number" inputmode="numeric" min="0" step="50" placeholder="0"></div>
+                                <button type="button" class="goal-save" id="budgetSave">Save budget</button>
+                            </div>
+                        </div></div>
+                    </div></div>
+                    <div class="gslider-dots"><span class="on"></span><span></span></div>
                 </div>
             </div>
         </div>
@@ -545,6 +565,32 @@ h3, h4, h5, h6, p,
                 }
                 renderBudget(); input.placeholder = String(Math.round(cap)); card.classList.remove('open');
                 requestAnimationFrame(emitBH); setTimeout(emitBH, 400);
+            });
+        })();
+
+        // ---- Four spend figures beneath the graph; they share a slider with the budget. ----
+        (function spendFiguresSlider() {
+            const total6 = monthSums.reduce((s, v) => s + v, 0);
+            const el = document.getElementById('spendStats');
+            if (el) el.innerHTML = [
+                [nis(monthSpend), 'This month'],
+                [nis(prevMonthSpend), 'Last month'],
+                [nis(total6), '6-month total'],
+                [nis(total6 / 6), 'Monthly average'],
+            ].map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join('');
+
+            document.querySelectorAll('.gslider').forEach(sl => {
+                const track = sl.querySelector('.gslider-track');
+                const dots = Array.prototype.slice.call(sl.querySelectorAll('.gslider-dots span'));
+                const pages = sl.querySelectorAll('.gslider-page').length;
+                let page = 0;
+                const set = () => { track.style.transform = 'translateX(' + (-page * 100) + '%)'; dots.forEach((d, i) => d.classList.toggle('on', i === page)); emitBH(); };
+                dots.forEach((d, i) => d.addEventListener('click', () => { page = i; set(); }));
+                const vp = sl.querySelector('.gslider-vp');
+                let sx = 0, tr = false;
+                vp.addEventListener('touchstart', e => { if (e.touches.length !== 1) { tr = false; return; } sx = e.touches[0].clientX; tr = true; }, { passive: true });
+                vp.addEventListener('touchend', e => { if (!tr) return; tr = false; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) { if (dx < 0 && page < pages - 1) page++; else if (dx > 0 && page > 0) page--; set(); } }, { passive: true });
+                set();
             });
         })();
 
