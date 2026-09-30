@@ -205,6 +205,16 @@
         .gstat-num { font-family: 'Bodoni Moda', Georgia, serif; font-size: 26px; color: #111; line-height: 1.1; }
         .gstat-lbl { font-size: 10.5px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-top: 5px; }
         .card.dark .gstat-num { color: #fff; }
+        /* Figures + goal share one swipeable slider beneath each graph. */
+        .gslider { margin-top: 22px; }
+        .gslider-vp { overflow: hidden; }
+        .gslider-track { display: flex; transition: transform 0.32s cubic-bezier(0.22,1,0.36,1); align-items: stretch; }
+        .gslider-page { flex: 0 0 100%; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+        .gslider-page .gstats { margin-top: 0; }
+        .goal-slide-h { text-align: center; font-size: 10.5px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+        .gslider-dots { display: flex; justify-content: center; gap: 7px; margin-top: 18px; }
+        .gslider-dots span { width: 6px; height: 6px; border-radius: 50%; background: #d9d6cf; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+        .gslider-dots span.on { background: #111; transform: scale(1.15); }
         .trend-pill { font-size: 10px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
         .trend-pill.up { color: var(--available); border-color: rgba(31,143,78,0.3); }
         .trend-pill.down { color: var(--sold); border-color: rgba(178,59,59,0.3); }
@@ -645,12 +655,20 @@ h3, h4, h5, h6, p,
                 </div>
                 <div id="storeChart"></div>
                 <div class="lc-x" id="storeX"></div>
-                <div class="meter" style="background:#f1f1ee"><span id="storeGoalBar" style="background:var(--ink)"></span></div>
-                <div class="meter-row" style="color:var(--muted)">
-                    <span id="storeGoalLeft"></span>
-                    <span id="storeGoalCap"></span>
+                <div class="gslider">
+                    <div class="gslider-vp"><div class="gslider-track">
+                        <div class="gslider-page"><div class="gstats" id="storeStats"></div></div>
+                        <div class="gslider-page"><div class="goal-slide">
+                            <div class="goal-slide-h">Progress to goal</div>
+                            <div class="meter" style="background:#f1f1ee"><span id="storeGoalBar" style="background:var(--ink)"></span></div>
+                            <div class="meter-row" style="color:var(--muted)">
+                                <span id="storeGoalLeft"></span>
+                                <span id="storeGoalCap"></span>
+                            </div>
+                        </div></div>
+                    </div></div>
+                    <div class="gslider-dots"><span class="on"></span><span></span></div>
                 </div>
-                <div class="gstats" id="storeStats"></div>
             </div>
             <div class="card">
                 <div class="card-h">
@@ -665,12 +683,20 @@ h3, h4, h5, h6, p,
                 </div>
                 <div id="viewsChart"></div>
                 <div class="lc-x" id="viewsX"></div>
-                <div class="meter" style="background:#f1f1ee"><span id="viewsGoalBar" style="background:var(--ink)"></span></div>
-                <div class="meter-row" style="color:var(--muted)">
-                    <span id="viewsGoalLeft"></span>
-                    <span id="viewsGoalCap"></span>
+                <div class="gslider">
+                    <div class="gslider-vp"><div class="gslider-track">
+                        <div class="gslider-page"><div class="gstats" id="viewsStats"></div></div>
+                        <div class="gslider-page"><div class="goal-slide">
+                            <div class="goal-slide-h">Progress to goal</div>
+                            <div class="meter" style="background:#f1f1ee"><span id="viewsGoalBar" style="background:var(--ink)"></span></div>
+                            <div class="meter-row" style="color:var(--muted)">
+                                <span id="viewsGoalLeft"></span>
+                                <span id="viewsGoalCap"></span>
+                            </div>
+                        </div></div>
+                    </div></div>
+                    <div class="gslider-dots"><span class="on"></span><span></span></div>
                 </div>
-                <div class="gstats" id="viewsStats"></div>
             </div>
         </div>
 
@@ -1095,6 +1121,32 @@ h3, h4, h5, h6, p,
                     tabs.querySelectorAll('.po-tab').forEach(x => x.classList.toggle('on', x === b));
                     render(which, b.dataset.r);
                 });
+            });
+        })();
+
+        // ---- Beneath each graph: the four figures and the goal share one slider. ----
+        (function goalSliders() {
+            const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
+            document.querySelectorAll('.gslider').forEach(sl => {
+                const track = sl.querySelector('.gslider-track');
+                const dots = Array.prototype.slice.call(sl.querySelectorAll('.gslider-dots span'));
+                const pages = sl.querySelectorAll('.gslider-page').length;
+                let page = 0;
+                const set = () => {
+                    track.style.transform = 'translateX(' + (-page * 100) + '%)';
+                    dots.forEach((d, i) => d.classList.toggle('on', i === page));
+                    postH();
+                };
+                dots.forEach((d, i) => d.addEventListener('click', () => { page = i; set(); }));
+                const vp = sl.querySelector('.gslider-vp');
+                let sx = 0, tr = false;
+                vp.addEventListener('touchstart', e => { if (e.touches.length !== 1) { tr = false; return; } sx = e.touches[0].clientX; tr = true; }, { passive: true });
+                vp.addEventListener('touchend', e => {
+                    if (!tr) return; tr = false;
+                    const dx = e.changedTouches[0].clientX - sx;
+                    if (Math.abs(dx) > 40) { if (dx < 0 && page < pages - 1) page++; else if (dx > 0 && page > 0) page--; set(); }
+                }, { passive: true });
+                set();
             });
         })();
 
