@@ -70,6 +70,9 @@
         .card-d { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
         .card.dark .card-d { color: rgba(255,255,255,0.7); }
         .sec-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 34px 0 14px; }
+        /* Centre every dashboard label — section headers, card titles, subtitles, values. */
+        .sec-title, .card-t, .card-d, .dash-sub, .na-sub, .po-count, .kpi-num, .hc-range { text-align: center; }
+        .card-h { justify-content: center; }
         .sec-title:first-of-type { margin-top: 26px; }
 
         .kpi-num { font-size: 34px; font-weight: 200; line-height: 1; margin-top: 10px; }
@@ -82,7 +85,7 @@
         /* Centre the numeric KPI tiles (cards whose direct child is a big number),
            leaving the hero graph card alone. */
         .card:not(.hero-chart):has(> .kpi-num) { text-align: center; }
-        .card:not(.hero-chart):has(> .kpi-num) .kpi-trend { justify-content: center; display: block; }
+        .card:not(.hero-chart):has(> .kpi-num) .kpi-trend { justify-content: center; }
         .card.dark .kpi-lbl { color: rgba(255,255,255,0.6); }
         .kpi-trend { font-size: 10px; margin-top: 6px; letter-spacing: 0.3px; }
         .up { color: var(--good); } .down { color: var(--bad); }
@@ -410,15 +413,18 @@ h3, h4, h5, h6, p,
         items = Array.isArray(items) ? items : [];
         if (!items.length) {
             const now = Date.now(), DAY = 864e5;
-            items = [
-                { name: 'Wool coat',    seller: 'Studio Noir',   icon: '🧥', price: 269, qty: 1, addedAt: now - 2 * DAY },
-                { name: 'Raw denim', seller: 'Studio Noir',   icon: '👖', price: 129, qty: 1, addedAt: now - 4 * DAY },
-                { name: 'Knit sweater',  seller: 'Knit & Co',     icon: '🧶', price: 95,  qty: 1, addedAt: now - 6 * DAY },
-                { name: 'Silk shirt',   seller: 'Atelier V',     icon: '👔', price: 150, qty: 1, addedAt: now - 22 * DAY },
-                { name: 'Leather boots',    seller: 'Sole Society',  icon: '🥾', price: 340, qty: 1, addedAt: now - 46 * DAY },
-                { name: 'Denim jacket',  seller: 'Vintage Vault', icon: '🧥', price: 210, qty: 1, addedAt: now - 120 * DAY },
-                { name: 'Linen trousers',  seller: 'Studio Noir',   icon: '👖', price: 160, qty: 1, addedAt: now - 250 * DAY },
-            ];
+            const rnd = s => { const x = Math.sin(s * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+            const names = ['Wool coat', 'Raw denim', 'Knit sweater', 'Silk shirt', 'Leather boots', 'Denim jacket',
+                'Linen trousers', 'Silk dress', 'Cashmere scarf', 'Suede loafers'];
+            const sellers = ['Studio Noir', 'Knit & Co', 'Atelier V', 'Sole Society', 'Vintage Vault', 'Bloom & Co'];
+            const icons = ['🧥', '👖', '🧶', '👔', '🥾', '👗', '🧣', '👠'];
+            items = []; let bi = 0;
+            const push = ts => items.push({ name: names[bi % names.length], seller: sellers[bi % sellers.length],
+                icon: icons[bi % icons.length], price: 80 + Math.round(rnd(bi + 11) * 360), qty: 1, addedAt: ts, si: bi++ });
+            // Dense recent purchases (most of the last 35 days) so week/month columns fill.
+            for (let d = 0; d < 35; d++) { if (rnd(d + 2) > 0.35) push(now - d * DAY - Math.floor(rnd(d * 3 + 5) * DAY)); }
+            // Older purchases spread across the year for the monthly/yearly views.
+            for (let i = 0; i < 40; i++) push(now - (40 + Math.floor(rnd(i + 51) * 320)) * DAY);
         }
 
         const priceOf = it => (parseFloat(it.price) || 0) * (it.qty || 1);
