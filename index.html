@@ -13141,6 +13141,13 @@ window.veroLocalImg = function (key) {
                 .feed-nav .fn-app .fn-c { font-size: 18px; line-height: 1; font-weight: 600; letter-spacing: 0; }
                 .feed-nav .fn-app.is-active, .feed-nav .fn-app.open { color: #EB2323; background: #fff; }
                 .feed-nav .fn-app.open { color: #111; }
+                /* Category mode: a back arrow + a swipeable row of category icons filling the bar. */
+                .feed-nav .fn-back { flex: 0 0 auto; width: 42px; }
+                .feed-nav .fn-back svg { width: 20px; height: 20px; }
+                .feed-nav .fn-cat-item { flex: 0 0 auto; width: 60px; }
+                .feed-nav .fn-cat-item .fn-cat-ic { width: 20px; height: 20px; }
+                .feed-nav .fn-cat-item .fn-cat-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none;
+                    stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; display: block; }
             `;
             document.head.appendChild(style2);
 
@@ -13220,7 +13227,7 @@ window.veroLocalImg = function (key) {
                 cBtn.type = 'button'; cBtn.className = 'fn-app feed-nav-more'; cBtn.dataset.vniDone = '1';
                 cBtn.setAttribute('aria-label', 'Categories');
                 cBtn.innerHTML = '<span class="fn-c">C</span><span>Categories</span>';
-                cBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePop(cBtn); });
+                cBtn.addEventListener('click', (e) => { e.stopPropagation(); buildCategories(); });
                 bar.appendChild(cBtn);
                 // Filters — price / fabric / colour / material chooser.
                 const filterBtn = document.createElement('button');
@@ -13230,6 +13237,36 @@ window.veroLocalImg = function (key) {
                 filterBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleFilterPop(filterBtn); });
                 bar.appendChild(filterBtn);
                 syncActive();
+            }
+
+            // Category mode: the bar becomes a back arrow + a swipeable row of every
+            // clothing category, spanning the full nav-bar width.
+            function buildCategories() {
+                closePop();
+                bar.innerHTML = '';
+                const back = document.createElement('button');
+                back.type = 'button'; back.className = 'fn-app fn-back'; back.dataset.vniDone = '1';
+                back.setAttribute('aria-label', 'Back');
+                back.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+                back.addEventListener('click', (e) => { e.stopPropagation(); build(); });
+                bar.appendChild(back);
+                const sep = document.createElement('span'); sep.className = 'feed-nav-sep'; bar.appendChild(sep);
+                const view = document.createElement('div'); view.className = 'feed-nav-view';
+                const track = document.createElement('div'); track.className = 'feed-nav-track';
+                view.appendChild(track); bar.appendChild(view);
+                const iconFor = label => (typeof window.veroCategoryIcon === 'function' ? window.veroCategoryIcon(label) : '');
+                cats().forEach(c => {
+                    const b = document.createElement('button');
+                    b.type = 'button'; b.className = 'fn-app fn-cat-item' + (activeType() === c ? ' is-active' : '');
+                    b.dataset.vniDone = '1'; b.dataset.type = c; b.title = c;
+                    b.innerHTML = '<span class="fn-cat-ic"><svg viewBox="0 0 24 24">' + iconFor(c) + '</svg></span><span>' + c + '</span>';
+                    b.addEventListener('click', () => {
+                        select(c);
+                        track.querySelectorAll('.fn-cat-item').forEach(x => x.classList.toggle('is-active', x === b));
+                    });
+                    track.appendChild(b);
+                });
+                requestAnimationFrame(() => { view.scrollLeft = 0; });
             }
 
             // ---- Full category chooser popup (opened by the ⋯ button) ----
