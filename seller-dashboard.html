@@ -354,6 +354,20 @@
             color: #6b6b6b; font-family: inherit; font-size: 11px; letter-spacing: 0.4px; font-weight: 500; cursor: pointer;
             white-space: nowrap; transition: background 0.2s, color 0.2s, border-color 0.2s; }
         .po-tab.on { background: #111; color: #fff; border-color: #111; }
+        /* Per-graph time-range slider. */
+        .gr-tabs { margin: 4px 0 4px; }
+        /* Clickable KPI card — an anchor/button that keeps the frameless card look. */
+        .kpi-link { display: block; width: 100%; text-align: center; font: inherit; color: inherit;
+            border: none; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .kpi-link .kpi-lbl { color: var(--muted); }
+        .card.dark.kpi-link .kpi-lbl { color: rgba(255,255,255,0.75); }
+        .kpi-link:active { opacity: 0.7; }
+        /* View-count badge on a product card (reuses the na-date position). */
+        .na-views { position: absolute; top: 8px; left: 0; right: 0; z-index: 3; text-align: center; font-size: 10px;
+            letter-spacing: 0.3px; font-weight: 600; color: #111; }
+        /* Products-by-views window: filter + scrollable grid. */
+        .pv-filter { margin: 2px 0 16px; }
+        .pv-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1 1 auto; }
         .po-viewport { overflow: hidden; }
         .po-grid { transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1); }
         .po-grid.po-out-left  { opacity: 0; transform: translateX(-26px); }
@@ -616,13 +630,19 @@ h3, h4, h5, h6, p,
       <div class="view" data-view="growth" hidden>
         <!-- Follower growth + profile-view growth over time — graphs first. -->
         <div class="sec-title" style="margin-top:26px">Growth over time</div>
-        <div class="grid g2">
+        <!-- Two stacked graphs, each with its own time-range slider and a goal. -->
+        <div class="grid g1">
             <div class="card">
                 <div class="card-h">
                     <div class="card-t">Follower growth</div>
                     <span class="trend-pill" id="storeTrend"></span>
                 </div>
-                <div class="card-d">followers over time and progress to the next goal</div>
+                <div class="card-d">Followers over time and progress to the next goal</div>
+                <div class="po-tabs gr-tabs" data-chart="store">
+                    <button type="button" class="po-tab" data-r="week">Week</button>
+                    <button type="button" class="po-tab on" data-r="month">Month</button>
+                    <button type="button" class="po-tab" data-r="year">Year</button>
+                </div>
                 <div id="storeChart"></div>
                 <div class="lc-x" id="storeX"></div>
                 <div class="meter" style="background:#f1f1ee"><span id="storeGoalBar" style="background:var(--ink)"></span></div>
@@ -637,7 +657,12 @@ h3, h4, h5, h6, p,
                     <div class="card-t">Profile views</div>
                     <span class="trend-pill" id="viewsTrend"></span>
                 </div>
-                <div class="card-d">Store views in-6 the recent months</div>
+                <div class="card-d">Store views over the selected period</div>
+                <div class="po-tabs gr-tabs" data-chart="views">
+                    <button type="button" class="po-tab" data-r="week">Week</button>
+                    <button type="button" class="po-tab on" data-r="month">Month</button>
+                    <button type="button" class="po-tab" data-r="year">Year</button>
+                </div>
                 <div id="viewsChart"></div>
                 <div class="lc-x" id="viewsX"></div>
                 <div class="meter" style="background:#f1f1ee"><span id="viewsGoalBar" style="background:var(--ink)"></span></div>
@@ -652,22 +677,22 @@ h3, h4, h5, h6, p,
         <!-- Follower + views KPIs (Instagram-style). -->
         <div class="sec-title">Followers and reach</div>
         <div class="grid g3">
-            <div class="card dark">
+            <a class="card dark kpi-link" href="follows.html?from=seller">
                 <div class="card-t">Followers</div>
                 <div class="kpi-num" id="gFollowers">0</div>
-                <div class="kpi-lbl">to the store</div>
+                <div class="kpi-lbl">to the store ›</div>
                 <div class="kpi-trend up" id="gFollowersTrend"></div>
-            </div>
+            </a>
             <div class="card">
                 <div class="card-t">Profile views</div>
                 <div class="kpi-num" id="gProfileViews">0</div>
                 <div class="kpi-lbl">Store exposure</div>
             </div>
-            <div class="card">
+            <button type="button" class="card kpi-link" id="gProductViewsCard">
                 <div class="card-t">Product views</div>
                 <div class="kpi-num" id="gProductViews">0</div>
-                <div class="kpi-lbl">Total item views</div>
-            </div>
+                <div class="kpi-lbl">All items by views ›</div>
+            </button>
             <div class="card">
                 <div class="card-t">Store views</div>
                 <div class="kpi-num" id="kViews">0</div>
@@ -682,14 +707,30 @@ h3, h4, h5, h6, p,
 
         <!-- Product views ranking + reach. -->
         <div class="sec-title">Product views</div>
-        <div class="grid g2">
-            <div class="card">
-                <div class="card-h"><div class="card-t">The most-viewed products</div></div>
-                <div class="list" id="gTopViewed"></div>
-            </div>
-            <div class="card">
-                <div class="card-h"><div class="card-t">Engagement metrics</div></div>
-                <div class="list" id="gEngage"></div>
+        <div class="card">
+            <div class="card-h"><div class="card-t">Most-viewed products</div></div>
+            <div class="na-grid" id="gTopViewed"></div>
+            <button type="button" class="po-more" id="pvMore" hidden>View all <b id="pvMoreN"></b> ›</button>
+        </div>
+        <div class="card">
+            <div class="card-h"><div class="card-t">Engagement metrics</div></div>
+            <div class="list" id="gEngage"></div>
+        </div>
+
+        <!-- All products by views — full page with a filter, most-viewed first. -->
+        <div class="po-modal" id="pvModal" hidden>
+            <div class="po-modal-scrim" id="pvModalScrim"></div>
+            <div class="po-modal-sheet">
+                <div class="po-modal-head">
+                    <span class="po-modal-title" id="pvModalTitle">Products by views</span>
+                    <button type="button" class="po-modal-close" id="pvModalClose" aria-label="Close">✕</button>
+                </div>
+                <div class="po-tabs pv-filter" id="pvFilter">
+                    <button type="button" class="po-tab on" data-f="all">All</button>
+                    <button type="button" class="po-tab" data-f="active">Available</button>
+                    <button type="button" class="po-tab" data-f="sold">Sold</button>
+                </div>
+                <div class="pv-scroll"><div class="na-grid" id="pvGrid"></div></div>
             </div>
         </div>
       </div><!-- /growth -->
@@ -1003,6 +1044,40 @@ h3, h4, h5, h6, p,
                 [num(Math.max(0, viewsGoal - storeViews)), 'To next goal'],
                 [conv.toFixed(1) + '%', 'Conversion'],
             ]);
+        })();
+
+        // ---- Growth graphs: each one has its own Week / Month / Year slider. ----
+        (function growthRangeCharts() {
+            const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            const cfg = {
+                store: { end: folBase,    color: '#c9922b', seedW: 71, seedM: 72, seedY: 73, chart: 'storeChart', x: 'storeX', trend: 'storeTrend' },
+                views: { end: storeViews, color: '#111',    seedW: 41, seedM: 42, seedY: 43, chart: 'viewsChart', x: 'viewsX', trend: 'viewsTrend' },
+            };
+            const nFor = r => r === 'week' ? 7 : r === 'year' ? 12 : 30;
+            const labelsFor = r => {
+                const now = new Date(), out = [];
+                if (r === 'week') { for (let i = 0; i < 7; i++) { const d = new Date(now); d.setDate(now.getDate() - i); out.push(DOW[d.getDay()]); } }
+                else if (r === 'year') { for (let i = 0; i < 12; i++) out.push(MONTHS[new Date(now.getFullYear(), now.getMonth() - i, 1).getMonth()]); }
+                else { for (let i = 0; i < 5; i++) { const d = new Date(now); d.setDate(now.getDate() - i * 7); out.push(String(d.getDate())); } }
+                return out;   // newest-on-left, matching fineCols
+            };
+            function render(which, range) {
+                const c = cfg[which];
+                const seed = range === 'week' ? c.seedW : range === 'year' ? c.seedY : c.seedM;
+                const series = growthSeries(c.end, nFor(range), seed);
+                document.getElementById(c.chart).innerHTML = fineCols(series, c.color);
+                document.getElementById(c.x).innerHTML = labelsFor(range).map(l => '<span>' + l + '</span>').join('');
+                const tp = document.getElementById(c.trend); if (tp) { tp.className = 'trend-pill'; trendPill(tp, series[series.length - 1], series[series.length - 2]); }
+            }
+            document.querySelectorAll('.gr-tabs').forEach(tabs => {
+                const which = tabs.dataset.chart;
+                render(which, 'month');
+                tabs.addEventListener('click', e => {
+                    const b = e.target.closest('.po-tab'); if (!b) return;
+                    tabs.querySelectorAll('.po-tab').forEach(x => x.classList.toggle('on', x === b));
+                    render(which, b.dataset.r);
+                });
+            });
         })();
 
         // ---- Sales history: one row per selling day, tinted by that day's strength. ----
@@ -1358,13 +1433,66 @@ h3, h4, h5, h6, p,
         document.getElementById('gProfileViews').textContent = storeViews.toLocaleString('en-US');
         document.getElementById('gProductViews').textContent = productViews.toLocaleString('en-US');
 
-        // Most-viewed products (ranking by views).
-        document.getElementById('gTopViewed').innerHTML = top.length ? top.map(({ p, v }, i) =>
-            `<div class="row">
-                <div class="ic">${i === 0 ? '👁️' : '🏷️'}</div>
-                <div class="meta"><b>${p.title || 'Item'}</b><span>${p.brand || 'No brand'}</span></div>
-                <div class="amt">${v.toLocaleString('en-US')} Views</div>
-            </div>`).join('') : '<div class="empty">No data yet</div>';
+        // ---- Most-viewed products as cards (peek 2) + a full-page window listing
+        //      every product by views, with a filter. ----
+        (function productViewsPanel() {
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const imgOf = p => p.image || p.processed_cover || p.original_cover || (Array.isArray(p.photos) ? p.photos.find(Boolean) : null) || null;
+            const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
+            const ranked = listings.map((p, i) => ({ p, i, v: viewsOf(p, i) })).sort((a, b) => b.v - a.v);
+
+            function card(o) {
+                const p = o.p, src = imgOf(p);
+                const fig = src ? '<img src="' + esc(src) + '" alt="">' : (p.icon || '🛍️');
+                const name = esc(p.name || p.title || 'Untitled listing');
+                const seller = esc(p.seller || p.brand || '—');
+                const href = 'product-edit.html?i=' + o.i + '&from=seller';
+                return '<div class="na-cell">' +
+                    '<a class="product-card" href="' + href + '" title="' + name + '">' +
+                        '<div class="product-image">' + fig +
+                            '<span class="na-views">👁 ' + o.v.toLocaleString('en-US') + ' views</span>' +
+                        '</div>' +
+                        '<div class="product-info">' +
+                            '<div class="pc-left"><div class="product-price">' + nis(priceOf(p.price)) + '</div></div>' +
+                            '<div class="pc-right">' +
+                                '<div class="product-seller">' + seller + '</div>' +
+                                '<div class="product-name">' + name + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</a>' +
+                '</div>';
+            }
+
+            const grid = document.getElementById('gTopViewed');
+            const moreBtn = document.getElementById('pvMore'), moreN = document.getElementById('pvMoreN');
+            if (grid) {
+                grid.innerHTML = ranked.length ? ranked.slice(0, 2).map(card).join('')
+                    : '<div class="empty" style="grid-column:1/-1">No products yet</div>';
+                if (moreBtn) { if (ranked.length > 2) { moreN.textContent = ranked.length; moreBtn.hidden = false; } else moreBtn.hidden = true; }
+            }
+
+            // Full-page window: every product by views, filtered by status.
+            const modal = document.getElementById('pvModal');
+            const pvGrid = document.getElementById('pvGrid');
+            const filterEl = document.getElementById('pvFilter');
+            const match = { all: () => true, active: p => (p.status || 'active') === 'active', sold: p => p.status === 'sold' };
+            let filter = 'all';
+            function paint() {
+                const list = ranked.filter(o => match[filter](o.p));
+                pvGrid.innerHTML = list.length ? list.map(card).join('')
+                    : '<div class="empty" style="grid-column:1/-1">No products in this filter</div>';
+            }
+            function open() { filter = 'all'; if (filterEl) filterEl.querySelectorAll('.po-tab').forEach(b => b.classList.toggle('on', b.dataset.f === 'all')); paint(); modal.hidden = false; }
+            function close() { modal.hidden = true; }
+            if (filterEl) filterEl.addEventListener('click', e => { const b = e.target.closest('.po-tab'); if (b) { filter = b.dataset.f; filterEl.querySelectorAll('.po-tab').forEach(x => x.classList.toggle('on', x === b)); paint(); } });
+            if (moreBtn) moreBtn.addEventListener('click', open);
+            const pvCard = document.getElementById('gProductViewsCard');
+            if (pvCard) pvCard.addEventListener('click', open);
+            const pvClose = document.getElementById('pvModalClose'), pvScrim = document.getElementById('pvModalScrim');
+            if (pvClose) pvClose.addEventListener('click', close);
+            if (pvScrim) pvScrim.addEventListener('click', close);
+            postH();
+        })();
 
         // Engagement metrics: reach, avg views/product, follow-through.
         const avgViews = listings.length ? Math.round(productViews / listings.length) : 0;
