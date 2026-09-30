@@ -346,7 +346,7 @@
            sold), two feed cards per row, sliding + cross-fading between tabs. */
         .po-count { font-size: 11px; color: var(--muted); margin: 4px 0 12px; }
         .po-count b { color: #111; font-weight: 600; }
-        .po-tabs { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+        .po-tabs { display: flex; justify-content: center; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch;
             margin-bottom: 16px; padding-bottom: 2px; scrollbar-width: none; }
         .po-tabs::-webkit-scrollbar { display: none; }
         .po-tab { flex: none; padding: 8px 15px; border-radius: 999px; border: 1px solid #e2e0da; background: #fff;
@@ -549,6 +549,12 @@ h3, h4, h5, h6, p,
 
         <!-- ===== SALES HISTORY ===== -->
         <div class="sec-title">Sales history</div>
+        <div class="po-tabs sh-tabs" id="shTabs">
+            <button type="button" class="po-tab" data-range="week">Week</button>
+            <button type="button" class="po-tab on" data-range="month">Month</button>
+            <button type="button" class="po-tab" data-range="year">Year</button>
+            <button type="button" class="po-tab" data-range="all">All</button>
+        </div>
         <div class="card">
             <div class="list sales-history" id="salesHistory"></div>
         </div>
@@ -1056,19 +1062,33 @@ h3, h4, h5, h6, p,
             });
             const days = Object.values(byDay).sort((x, y) => y.ts - x.ts);
             if (!days.length) { host.innerHTML = '<div class="empty">No sales yet</div>'; return; }
-            // Each day's colour reflects its revenue relative to the best selling day.
-            const maxRev = Math.max(1, ...days.map(d => d.rev));
-            const strength = v => v / maxRev >= 0.66 ? 'strong' : v / maxRev >= 0.33 ? 'mid' : 'weak';
             const label = { strong: 'Strong', mid: 'Medium', weak: 'Weak' };
-            host.innerHTML = days.map(d => {
-                const dt = new Date(d.ts), cls = strength(d.rev);
-                return '<div class="sh-row ' + cls + '">' +
-                    '<div class="sh-day"><b>' + dt.getDate() + ' ' + MON[dt.getMonth()] + ' ' + dt.getFullYear() + '</b>' +
-                    '<span>' + dowLong[dt.getDay()] + '</span></div>' +
-                    '<div class="sh-mid"><span class="sh-str">' + label[cls] + '</span>' +
-                    '<span class="sh-cnt">' + d.n + (d.n === 1 ? ' item' : ' items') + '</span></div>' +
-                    '<div class="sh-amt">' + nis(d.rev) + '</div></div>';
-            }).join('');
+            const tabsEl = document.getElementById('shTabs');
+            const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
+            const WIN = { week: 7 * 864e5, month: 30 * 864e5, year: 365 * 864e5, all: Infinity };
+
+            function render(range) {
+                const from = Date.now() - (WIN[range] || Infinity);
+                const list = days.filter(d => d.ts >= from);
+                if (tabsEl) tabsEl.querySelectorAll('.po-tab').forEach(b => b.classList.toggle('on', b.dataset.range === range));
+                if (!list.length) { host.innerHTML = '<div class="empty">No sales in this range</div>'; postH(); return; }
+                // Each day's colour reflects its revenue relative to the best day in view.
+                const maxRev = Math.max(1, ...list.map(d => d.rev));
+                const strength = v => v / maxRev >= 0.66 ? 'strong' : v / maxRev >= 0.33 ? 'mid' : 'weak';
+                host.innerHTML = list.map(d => {
+                    const dt = new Date(d.ts), cls = strength(d.rev);
+                    return '<div class="sh-row ' + cls + '">' +
+                        '<div class="sh-day"><b>' + dt.getDate() + ' ' + MON[dt.getMonth()] + ' ' + dt.getFullYear() + '</b>' +
+                        '<span>' + dowLong[dt.getDay()] + '</span></div>' +
+                        '<div class="sh-mid"><span class="sh-str">' + label[cls] + '</span>' +
+                        '<span class="sh-cnt">' + d.n + (d.n === 1 ? ' item' : ' items') + '</span></div>' +
+                        '<div class="sh-amt">' + nis(d.rev) + '</div></div>';
+                }).join('');
+                postH();
+            }
+            let range = 'month';
+            render(range);
+            if (tabsEl) tabsEl.addEventListener('click', e => { const b = e.target.closest('.po-tab'); if (b) { range = b.dataset.range; render(range); } });
         })();
 
         // ---- Needs attention: items sitting longest on the shelf. ----
