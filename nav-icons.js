@@ -236,6 +236,11 @@
         try { obs.observe(document.body, { childList: true, subtree: true }); } catch (e) {}
     }
 
+    // Expose the icon lookup so other UI (e.g. the feed's category slider) can
+    // render the same category icons. Returns the inner SVG markup (paths); falls
+    // back to the clothes-hanger so every category shows something.
+    window.veroCategoryIcon = function (label) { return iconFor(label) || I.hanger; };
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
     else boot();
 })();

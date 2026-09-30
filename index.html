@@ -12909,23 +12909,30 @@ window.veroLocalImg = function (key) {
                     font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
                     color: #9a9a95; padding: 2px 4px 8px;
                 }
-                /* Windowed slider: exactly three category buttons at a time. Tapping the
-                   third (last in RTL reading order) selects it and slides the window on
-                   by one, revealing the next category. */
-                .fnp-viewport { overflow: hidden; }
+                /* Horizontal slider: four category icons per slide, swiped page by page. */
+                .fnp-viewport { overflow: hidden; width: 300px; max-width: 78vw; }
                 .fnp-track {
-                    display: flex; direction: ltr; gap: 6px;
+                    display: flex; direction: ltr;
                     transition: transform 0.42s cubic-bezier(0.22,1,0.36,1); will-change: transform;
                 }
+                .fnp-page { flex: 0 0 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
                 .fnp-item {
-                    flex: 0 0 100px; width: 100px; box-sizing: border-box;
-                    border: 1px solid #e9e9e6; background: #fff; color: #1c1c1c; font-family: inherit;
-                    font-size: 11px; padding: 10px 10px; border-radius: 999px; cursor: pointer;
-                    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+                    box-sizing: border-box; border: 1px solid #e9e9e6; background: #fff; color: #1c1c1c; font-family: inherit;
+                    padding: 13px 4px; border-radius: 14px; cursor: pointer; text-align: center;
                     transition: border-color 0.15s, background 0.15s, color 0.15s;
                 }
+                .fnp-item .fnp-ic { width: 22px; height: 22px; }
+                .fnp-item .fnp-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none;
+                    stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; display: block; }
+                .fnp-item .fnp-lbl { font-size: 8px; letter-spacing: 0.4px; text-transform: uppercase; line-height: 1.1;
+                    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
                 .fnp-item:hover { border-color: #111; }
                 .fnp-item.on { background: #111; color: #fff; border-color: #111; }
+                .fnp-dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+                .fnp-dots span { width: 6px; height: 6px; border-radius: 50%; background: #d9d6cf; cursor: pointer;
+                    transition: background 0.2s, transform 0.2s; }
+                .fnp-dots span.on { background: #111; transform: scale(1.15); }
 
                 /* Filters button, pinned next to ALL, opening the filter popup. */
                 .feed-nav-filter {
@@ -13228,35 +13235,38 @@ window.veroLocalImg = function (key) {
                 const track = document.createElement('div'); track.className = 'fnp-track';
                 vp.appendChild(track); pop.appendChild(vp);
 
-                const ITEM = 100, GAP = 6, PER = 3, STEP = ITEM + GAP;
+                // Four category icons per slide; swipe (or tap the dots) to page across.
+                const iconFor = label => (typeof window.veroCategoryIcon === 'function' ? window.veroCategoryIcon(label) : '');
+                const allIcon = '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>';
                 const entries = [['All', '']].concat(cats().map(c => [c, c]));
-                const items = entries.map(([label, type]) => {
-                    const b = document.createElement('button');
-                    b.className = 'fnp-item' + (activeType() === type ? ' on' : '');
-                    b.textContent = label; b.title = label; b.dataset.type = type;
-                    track.appendChild(b);
-                    return b;
-                });
-
-                const shown = Math.min(PER, items.length);
-                vp.style.width = (shown * ITEM + (shown - 1) * GAP) + 'px';
-                const maxWin = Math.max(0, items.length - PER);
-                let win = 0;
-                function layout(animate) {
-                    track.style.transition = animate ? '' : 'none';
-                    track.style.transform = 'translateX(' + (win * STEP) + 'px)';
-                    if (!animate) { void track.offsetWidth; track.style.transition = ''; }
-                }
-                layout(false);
-
-                items.forEach((b, i) => {
-                    b.addEventListener('click', () => {
-                        // Rightmost visible button (first of the window in RTL) advances
-                        // the slider by one; every other button selects the category.
-                        if (i === win && win < maxWin) { win += 1; layout(true); return; }
-                        select(b.dataset.type); closePop();
+                const PER = 4;
+                const pages = Math.max(1, Math.ceil(entries.length / PER));
+                for (let p = 0; p < pages; p++) {
+                    const page = document.createElement('div'); page.className = 'fnp-page';
+                    entries.slice(p * PER, p * PER + PER).forEach(([label, type]) => {
+                        const b = document.createElement('button');
+                        b.className = 'fnp-item' + (activeType() === type ? ' on' : '');
+                        b.title = label; b.dataset.type = type;
+                        const inner = label === 'All' ? allIcon : iconFor(label);
+                        b.innerHTML = '<span class="fnp-ic"><svg viewBox="0 0 24 24">' + inner + '</svg></span>' +
+                            '<span class="fnp-lbl">' + label + '</span>';
+                        b.addEventListener('click', () => { select(type); closePop(); });
+                        page.appendChild(b);
                     });
-                });
+                    track.appendChild(page);
+                }
+
+                let page = 0;
+                const dotsWrap = document.createElement('div'); dotsWrap.className = 'fnp-dots';
+                const dots = [];
+                for (let i = 0; i < pages; i++) { const s = document.createElement('span'); if (i === 0) s.className = 'on'; dots.push(s); dotsWrap.appendChild(s); }
+                if (pages > 1) pop.appendChild(dotsWrap);
+                const setPage = () => { track.style.transform = 'translateX(' + (-page * 100) + '%)'; dots.forEach((d, i) => d.classList.toggle('on', i === page)); };
+                dots.forEach((d, i) => d.addEventListener('click', () => { page = i; setPage(); }));
+                setPage();
+                let sx = 0, tr = false;
+                vp.addEventListener('touchstart', e => { if (e.touches.length !== 1) { tr = false; return; } sx = e.touches[0].clientX; tr = true; }, { passive: true });
+                vp.addEventListener('touchend', e => { if (!tr) return; tr = false; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) { if (dx < 0 && page < pages - 1) page++; else if (dx > 0 && page > 0) page--; setPage(); } }, { passive: true });
             }
             // ---- Filters sheet (price / fabric / colour / material) ----
             // A full-width, half-height glassmorphism sheet that rises from the
