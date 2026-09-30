@@ -13112,6 +13112,22 @@ window.veroLocalImg = function (key) {
             `;
             document.head.appendChild(style);
 
+            const style2 = document.createElement('style');
+            style2.textContent = `
+                /* App-nav items: cart / feed / wishlist / categories, evenly spread. */
+                .feed-nav .fn-app { flex: 1 1 0; display: flex; flex-direction: column; align-items: center;
+                    justify-content: center; gap: 4px; padding: 7px 4px; border: none; background: transparent;
+                    color: #b5b5b0; cursor: pointer; text-decoration: none; border-radius: 999px; min-width: 0;
+                    font-family: inherit; transition: color 0.2s, background 0.2s; }
+                .feed-nav .fn-app:hover { color: #fff; }
+                .feed-nav .fn-app svg { width: 20px; height: 20px; }
+                .feed-nav .fn-app span { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; }
+                .feed-nav .fn-app .fn-c { font-size: 18px; line-height: 1; font-weight: 600; letter-spacing: 0; }
+                .feed-nav .fn-app.is-active, .feed-nav .fn-app.open { color: #EB2323; background: #fff; }
+                .feed-nav .fn-app.open { color: #111; }
+            `;
+            document.head.appendChild(style2);
+
             const bar = document.createElement('nav'); bar.className = 'feed-nav';
             const ind = document.createElement('span'); ind.className = 'feed-nav-ind';
             const pop = document.createElement('div'); pop.className = 'feed-nav-pop';
@@ -13164,38 +13180,39 @@ window.veroLocalImg = function (key) {
                     fb.classList.toggle('has', !!(f.sort || f.fabric || f.color || f.material));
                 }
             }
+            // The feed bar is an app nav: Cart · Feed · Wishlist · C (categories) · Filters.
             function build() {
                 bar.innerHTML = '';
-                const mk = (label, type) => {
-                    const b = document.createElement('button');
-                    b.type = 'button'; b.className = 'feed-nav-tab'; b.dataset.type = type;
-                    b.textContent = label;
-                    b.addEventListener('click', () => select(type));
-                    return b;
+                const svg = p => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
+                const ICON = {
+                    cart: svg('<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.2 12.4a1.5 1.5 0 0 0 1.5 1.2h8.3a1.5 1.5 0 0 0 1.5-1.2L21 7H6"/>'),
+                    feed: svg('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'),
+                    wish: svg('<path d="M12 20.5s-6.5-4.2-9-8.2C1.4 9.3 2.8 5.8 6.2 5.8c1.9 0 3.1 1.1 3.8 2.2.7-1.1 1.9-2.2 3.8-2.2 3.4 0 4.8 3.5 3.2 6.5-2.5 4-9 8.2-9 8.2z"/>'),
                 };
-                // ALL is pinned on the left as a plain text capsule — no icon above it
-                // (vniDone marks it so nav-icons.js skips decorating it).
-                const allBtn = mk('ALL', '');
-                allBtn.dataset.vniDone = '1';
-                bar.appendChild(allBtn);
-                // Filters button, pinned right after ALL — opens the price / fabric /
-                // colour / material chooser in a popup above the bar.
+                const mkLink = (label, href, icon, active) => {
+                    const a = document.createElement('a');
+                    a.className = 'fn-app' + (active ? ' is-active' : '');
+                    a.dataset.vniDone = '1'; a.href = href;
+                    a.innerHTML = icon + '<span>' + label + '</span>';
+                    return a;
+                };
+                bar.appendChild(mkLink('Cart', 'cart.html', ICON.cart, false));
+                bar.appendChild(mkLink('Feed', 'index.html', ICON.feed, true));
+                bar.appendChild(mkLink('Wishlist', 'wishlist.html', ICON.wish, false));
+                // "C" — opens the clothing-categories chooser popup.
+                const cBtn = document.createElement('button');
+                cBtn.type = 'button'; cBtn.className = 'fn-app feed-nav-more'; cBtn.dataset.vniDone = '1';
+                cBtn.setAttribute('aria-label', 'Categories');
+                cBtn.innerHTML = '<span class="fn-c">C</span><span>Categories</span>';
+                cBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePop(cBtn); });
+                bar.appendChild(cBtn);
+                // Filters — price / fabric / colour / material chooser.
                 const filterBtn = document.createElement('button');
                 filterBtn.type = 'button'; filterBtn.className = 'feed-nav-filter';
                 filterBtn.dataset.vniDone = '1'; filterBtn.setAttribute('aria-label', 'Filters');
-                filterBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>';
+                filterBtn.innerHTML = svg('<path d="M3 4h18l-7 8v6l-4 2v-8z"/>');
                 filterBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleFilterPop(filterBtn); });
                 bar.appendChild(filterBtn);
-                const sep = document.createElement('span'); sep.className = 'feed-nav-sep';
-                bar.appendChild(sep);
-                // The moving slide: a clipped viewport with a self-scrolling track.
-                const view = document.createElement('div'); view.className = 'feed-nav-view';
-                const track = document.createElement('div'); track.className = 'feed-nav-track';
-                view.appendChild(track); bar.appendChild(view);
-                // The category tabs follow directly (the ⋯ chooser was removed).
-                cats().forEach(c => track.appendChild(mk(c, c)));
-                // Start the scroll at the beginning (on the right in RTL).
-                requestAnimationFrame(() => { view.scrollLeft = 0; });
                 syncActive();
             }
 
