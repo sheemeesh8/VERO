@@ -385,11 +385,12 @@
         .po-slider-vp { overflow: hidden; flex: 1 1 auto; }
         .po-slider-track { display: flex; transition: transform 0.32s cubic-bezier(0.22,1,0.36,1); }
         .po-slider-page { flex: 0 0 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 14px; align-content: start; }
+        .po-slider-page.sh-page { display: flex; flex-direction: column; gap: 8px; }
         .po-slider-nav { display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 16px; }
         .po-slider-nav button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #e2e0da; background: #fff;
             font-size: 16px; line-height: 1; color: #111; cursor: pointer; }
         .po-slider-nav button:disabled { opacity: 0.35; cursor: default; }
-        #poPage { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; min-width: 54px; text-align: center; }
+        #poPage, #shPage { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; min-width: 54px; text-align: center; }
 
         .btn {
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
@@ -586,6 +587,24 @@ h3, h4, h5, h6, p,
         </div>
         <div class="card">
             <div class="list sales-history" id="salesHistory"></div>
+        </div>
+        <button type="button" class="po-more" id="shMore" hidden>View all <b id="shMoreN"></b> ›</button>
+
+        <!-- Sales-history window: a slider that pages through 6 days at a time. -->
+        <div class="po-modal" id="shModal" hidden>
+            <div class="po-modal-scrim" id="shModalScrim"></div>
+            <div class="po-modal-sheet">
+                <div class="po-modal-head">
+                    <span class="po-modal-title" id="shModalTitle">Sales history</span>
+                    <button type="button" class="po-modal-close" id="shModalClose" aria-label="Close">✕</button>
+                </div>
+                <div class="po-slider-vp"><div class="po-slider-track" id="shSliderTrack"></div></div>
+                <div class="po-slider-nav">
+                    <button type="button" id="shPrev" aria-label="Previous">‹</button>
+                    <span id="shPage"></span>
+                    <button type="button" id="shNext" aria-label="Next">›</button>
+                </div>
+            </div>
         </div>
       </div><!-- /business -->
 
@@ -964,28 +983,74 @@ h3, h4, h5, h6, p,
             const postH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
             const WIN = { week: 7 * 864e5, month: 30 * 864e5, year: 365 * 864e5, all: Infinity };
 
+            // A single day row; colour reflects revenue relative to the best day in view.
+            function rowHTML(d, maxRev) {
+                const strength = v => v / maxRev >= 0.66 ? 'strong' : v / maxRev >= 0.33 ? 'mid' : 'weak';
+                const dt = new Date(d.ts), cls = strength(d.rev);
+                return '<div class="sh-row ' + cls + '">' +
+                    '<div class="sh-day"><b>' + dt.getDate() + ' ' + MON[dt.getMonth()] + ' ' + dt.getFullYear() + '</b>' +
+                    '<span>' + dowLong[dt.getDay()] + '</span></div>' +
+                    '<div class="sh-mid"><span class="sh-str">' + label[cls] + '</span>' +
+                    '<span class="sh-cnt">' + d.n + (d.n === 1 ? ' item' : ' items') + '</span></div>' +
+                    '<div class="sh-amt">' + nis(d.rev) + '</div></div>';
+            }
+
+            const moreBtn = document.getElementById('shMore'), moreN = document.getElementById('shMoreN');
+            let curList = [], curMax = 1;
             function render(range) {
                 const from = Date.now() - (WIN[range] || Infinity);
                 const list = days.filter(d => d.ts >= from);
                 if (tabsEl) tabsEl.querySelectorAll('.po-tab').forEach(b => b.classList.toggle('on', b.dataset.range === range));
-                if (!list.length) { host.innerHTML = '<div class="empty">No sales in this range</div>'; postH(); return; }
-                // Each day's colour reflects its revenue relative to the best day in view.
-                const maxRev = Math.max(1, ...list.map(d => d.rev));
-                const strength = v => v / maxRev >= 0.66 ? 'strong' : v / maxRev >= 0.33 ? 'mid' : 'weak';
-                host.innerHTML = list.map(d => {
-                    const dt = new Date(d.ts), cls = strength(d.rev);
-                    return '<div class="sh-row ' + cls + '">' +
-                        '<div class="sh-day"><b>' + dt.getDate() + ' ' + MON[dt.getMonth()] + ' ' + dt.getFullYear() + '</b>' +
-                        '<span>' + dowLong[dt.getDay()] + '</span></div>' +
-                        '<div class="sh-mid"><span class="sh-str">' + label[cls] + '</span>' +
-                        '<span class="sh-cnt">' + d.n + (d.n === 1 ? ' item' : ' items') + '</span></div>' +
-                        '<div class="sh-amt">' + nis(d.rev) + '</div></div>';
-                }).join('');
+                if (!list.length) { host.innerHTML = '<div class="empty">No sales in this range</div>'; if (moreBtn) moreBtn.hidden = true; postH(); return; }
+                curList = list; curMax = Math.max(1, ...list.map(d => d.rev));
+                // The peek shows only the two most recent days; the rest open in the slider window.
+                host.innerHTML = list.slice(0, 2).map(d => rowHTML(d, curMax)).join('');
+                if (moreBtn) { if (list.length > 2) { moreN.textContent = list.length; moreBtn.hidden = false; } else moreBtn.hidden = true; }
                 postH();
             }
             let range = 'month';
             render(range);
             if (tabsEl) tabsEl.addEventListener('click', e => { const b = e.target.closest('.po-tab'); if (b) { range = b.dataset.range; render(range); } });
+
+            // ---- Sales-history window: a slider that pages through 6 days at a time. ----
+            const modal = document.getElementById('shModal');
+            const track = document.getElementById('shSliderTrack');
+            const pageEl = document.getElementById('shPage');
+            const prevBtn = document.getElementById('shPrev'), nextBtn = document.getElementById('shNext');
+            let page = 0, pages = 0;
+            function setPage() {
+                track.style.transform = 'translateX(' + (-page * 100) + '%)';
+                pageEl.textContent = (page + 1) + ' / ' + pages;
+                prevBtn.disabled = page === 0;
+                nextBtn.disabled = page >= pages - 1;
+            }
+            function openModal() {
+                if (!curList.length) return;
+                pages = Math.ceil(curList.length / 6);
+                let html = '';
+                for (let p = 0; p < pages; p++)
+                    html += '<div class="po-slider-page sh-page">' + curList.slice(p * 6, p * 6 + 6).map(d => rowHTML(d, curMax)).join('') + '</div>';
+                track.innerHTML = html;
+                page = 0; setPage();
+                modal.hidden = false;
+            }
+            function closeModal() { modal.hidden = true; }
+            if (moreBtn) moreBtn.addEventListener('click', openModal);
+            if (prevBtn) prevBtn.addEventListener('click', () => { if (page > 0) { page--; setPage(); } });
+            if (nextBtn) nextBtn.addEventListener('click', () => { if (page < pages - 1) { page++; setPage(); } });
+            const shClose = document.getElementById('shModalClose'), shScrim = document.getElementById('shModalScrim');
+            if (shClose) shClose.addEventListener('click', closeModal);
+            if (shScrim) shScrim.addEventListener('click', closeModal);
+            // Swipe inside the slider to page through the days.
+            if (track) {
+                let msx = 0, mtr = false;
+                track.addEventListener('touchstart', e => { if (e.touches.length !== 1) { mtr = false; return; } msx = e.touches[0].clientX; mtr = true; }, { passive: true });
+                track.addEventListener('touchend', e => {
+                    if (!mtr) return; mtr = false;
+                    const dx = e.changedTouches[0].clientX - msx;
+                    if (Math.abs(dx) > 45) { if (dx < 0 && page < pages - 1) page++; else if (dx > 0 && page > 0) page--; setPage(); }
+                }, { passive: true });
+            }
         })();
 
         // ---- Needs attention: items sitting longest on the shelf. ----
