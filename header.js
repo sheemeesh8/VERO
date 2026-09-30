@@ -1578,8 +1578,6 @@
                 <a class="secondary" id="veroLogoutLink" onclick="veroCloseDrawer(); veroLogout()">Log out</a>
             </nav>
             <div class="vero-drawer-social">
-                <a href="#" aria-label="Cart" onclick="event.preventDefault(); veroCloseDrawer(); openCart()">${DRAWER_ICONS.cart}<span class="badge" id="drawerCartBadge"></span></a>
-                <a href="wishlist.html" aria-label="Wishlist" onclick="veroCloseDrawer()">${DRAWER_ICONS.wishlist}<span class="badge" id="drawerWishBadge"></span></a>
                 <a class="vero-drawer-add" id="veroAddProductLink" aria-label="Add Product" onclick="veroCloseDrawer(); openUploadProduct()">${DRAWER_ICONS.plus}</a>
             </div>
         </aside>
