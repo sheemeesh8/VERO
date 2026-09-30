@@ -642,12 +642,17 @@ h3, h4, h5, h6, p,
                 <div class="gslider">
                     <div class="gslider-vp"><div class="gslider-track">
                         <div class="gslider-page"><div class="gstats" id="storeStats"></div></div>
-                        <div class="gslider-page"><div class="goal-slide">
+                        <div class="gslider-page"><div class="goal-slide goal-card" id="storeGoalCard">
                             <div class="goal-slide-h">Progress to goal</div>
                             <div class="meter" style="background:#f1f1ee"><span id="storeGoalBar" style="background:var(--ink)"></span></div>
                             <div class="meter-row" style="color:var(--muted)">
                                 <span id="storeGoalLeft"></span>
                                 <span id="storeGoalCap"></span>
+                            </div>
+                            <div class="goal-hint" id="storeGoalHint">Tap to set goal ⌄</div>
+                            <div class="goal-edit" id="storeGoalEdit">
+                                <div class="goal-field"><span class="goal-cur">◎</span><input id="storeGoalInput" type="number" inputmode="numeric" min="0" step="10" placeholder="0"></div>
+                                <button type="button" class="goal-save" id="storeGoalSave">Save goal</button>
                             </div>
                         </div></div>
                     </div></div>
@@ -670,12 +675,17 @@ h3, h4, h5, h6, p,
                 <div class="gslider">
                     <div class="gslider-vp"><div class="gslider-track">
                         <div class="gslider-page"><div class="gstats" id="viewsStats"></div></div>
-                        <div class="gslider-page"><div class="goal-slide">
+                        <div class="gslider-page"><div class="goal-slide goal-card" id="viewsGoalCard">
                             <div class="goal-slide-h">Progress to goal</div>
                             <div class="meter" style="background:#f1f1ee"><span id="viewsGoalBar" style="background:var(--ink)"></span></div>
                             <div class="meter-row" style="color:var(--muted)">
                                 <span id="viewsGoalLeft"></span>
                                 <span id="viewsGoalCap"></span>
+                            </div>
+                            <div class="goal-hint" id="viewsGoalHint">Tap to set goal ⌄</div>
+                            <div class="goal-edit" id="viewsGoalEdit">
+                                <div class="goal-field"><span class="goal-cur">◎</span><input id="viewsGoalInput" type="number" inputmode="numeric" min="0" step="50" placeholder="0"></div>
+                                <button type="button" class="goal-save" id="viewsGoalSave">Save goal</button>
                             </div>
                         </div></div>
                     </div></div>
@@ -994,11 +1004,8 @@ h3, h4, h5, h6, p,
         document.getElementById('viewsChart').innerHTML = fineCols(viewsSeries, '#111');
         document.getElementById('viewsX').innerHTML = xLabels(labels);
         trendPill(document.getElementById('viewsTrend'), viewsSeries[5], viewsSeries[4]);
-        const viewsGoal = Math.max(500, Math.ceil((storeViews + 1) / 500) * 500);
-        const vgp = Math.min(100, Math.round((storeViews / viewsGoal) * 100));
-        document.getElementById('viewsGoalCap').textContent = 'Goal ' + viewsGoal.toLocaleString('en-US') + ' Views';
-        document.getElementById('viewsGoalLeft').textContent = 'remaining ' + Math.max(0, viewsGoal - storeViews).toLocaleString('en-US');
-        requestAnimationFrame(() => { document.getElementById('viewsGoalBar').style.width = vgp + '%'; });
+        // Goal is editable (tap the goal slide); fall back to the next round milestone.
+        let viewsGoal = readNum('vero_views_goal', 0) || Math.max(500, Math.ceil((storeViews + 1) / 500) * 500);
 
         // Store growth: followers over time + progress toward the next follower
         // milestone. Fall back to a derived base when there are no real followers yet,
@@ -1008,11 +1015,8 @@ h3, h4, h5, h6, p,
         document.getElementById('storeChart').innerHTML = fineCols(followerSeries, '#c9922b');
         document.getElementById('storeX').innerHTML = xLabels(labels);
         trendPill(document.getElementById('storeTrend'), followerSeries[5], followerSeries[4]);
-        const folGoal = nextMilestone(folBase, [25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]);
-        const fgp = Math.min(100, Math.round((folBase / folGoal) * 100));
-        document.getElementById('storeGoalCap').textContent = 'Goal ' + folGoal.toLocaleString('en-US') + ' Followers';
-        document.getElementById('storeGoalLeft').textContent = 'remaining ' + Math.max(0, folGoal - folBase).toLocaleString('en-US');
-        requestAnimationFrame(() => { document.getElementById('storeGoalBar').style.width = fgp + '%'; });
+        // Goal is editable (tap the goal slide); fall back to the next milestone.
+        let folGoal = readNum('vero_followers_goal', 0) || nextMilestone(folBase, [25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]);
 
         // ---- Four figures beneath every graph (two rows, two per row). ----
         (function graphStats() {
@@ -1051,6 +1055,44 @@ h3, h4, h5, h6, p,
                 [num(Math.max(0, viewsGoal - storeViews)), 'To next goal'],
                 [conv.toFixed(1) + '%', 'Conversion'],
             ]);
+        })();
+
+        // ---- Editable follower / views goals: tap the goal slide to set a target,
+        //      just like the Revenue goal. Saved per store; updates the meter + figures. ----
+        (function editableGrowthGoals() {
+            const emitH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'seller-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
+            const gnum = n => Math.round(n).toLocaleString('en-US');
+            const gsigned = n => (n >= 0 ? '+' : '−') + gnum(Math.abs(n));
+            const gset = (id, items) => { const el = document.getElementById(id); if (el) el.innerHTML = items.map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join(''); };
+            function renderStore() {
+                const pctv = Math.min(100, Math.round(folBase / folGoal * 100));
+                document.getElementById('storeGoalCap').textContent = 'Goal ' + folGoal.toLocaleString('en-US') + ' Followers';
+                document.getElementById('storeGoalLeft').textContent = 'remaining ' + Math.max(0, folGoal - folBase).toLocaleString('en-US');
+                requestAnimationFrame(() => { document.getElementById('storeGoalBar').style.width = pctv + '%'; });
+                gset('storeStats', [[gnum(folBase), 'Followers'], [gsigned(followerSeries[5] - followerSeries[4]), 'This month'], [gnum(Math.max(0, folGoal - folBase)), 'To next goal'], [gnum(folGoal), 'Goal']]);
+            }
+            function renderViews() {
+                const pctv = Math.min(100, Math.round(storeViews / viewsGoal * 100));
+                document.getElementById('viewsGoalCap').textContent = 'Goal ' + viewsGoal.toLocaleString('en-US') + ' Views';
+                document.getElementById('viewsGoalLeft').textContent = 'remaining ' + Math.max(0, viewsGoal - storeViews).toLocaleString('en-US');
+                requestAnimationFrame(() => { document.getElementById('viewsGoalBar').style.width = pctv + '%'; });
+                gset('viewsStats', [[gnum(storeViews), 'Store views'], [gsigned(viewsSeries[5] - viewsSeries[4]), 'This month'], [gnum(Math.max(0, viewsGoal - storeViews)), 'To next goal'], [conv.toFixed(1) + '%', 'Conversion']]);
+            }
+            function wire(cardId, editId, inputId, saveId, key, getGoal, setGoal, rerender) {
+                const card = document.getElementById(cardId), edit = document.getElementById(editId), input = document.getElementById(inputId), save = document.getElementById(saveId);
+                if (!card) return;
+                input.placeholder = String(getGoal());
+                card.addEventListener('click', e => { if (edit.contains(e.target)) return; card.classList.toggle('open'); requestAnimationFrame(emitH); setTimeout(emitH, 400); });
+                save.addEventListener('click', () => {
+                    const v = Math.max(0, Math.round(Number(input.value) || 0));
+                    if (v > 0) { try { localStorage.setItem(key, String(v)); } catch (e) {} setGoal(v); }
+                    rerender(); input.placeholder = String(getGoal()); card.classList.remove('open');
+                    requestAnimationFrame(emitH); setTimeout(emitH, 400);
+                });
+            }
+            renderStore(); renderViews();
+            wire('storeGoalCard', 'storeGoalEdit', 'storeGoalInput', 'storeGoalSave', 'vero_followers_goal', () => folGoal, v => { folGoal = v; }, renderStore);
+            wire('viewsGoalCard', 'viewsGoalEdit', 'viewsGoalInput', 'viewsGoalSave', 'vero_views_goal', () => viewsGoal, v => { viewsGoal = v; }, renderViews);
         })();
 
         // ---- Growth graphs: each one has its own Week / Month / Year slider. ----

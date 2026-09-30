@@ -102,6 +102,20 @@
         .meter-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 10px; }
         .card.dark .meter-row { color: rgba(255,255,255,0.7); }
 
+        /* Editable goal — tap the card to set a target (matches the seller dashboard). */
+        .goal-card { cursor: pointer; }
+        .goal-hint { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 16px; text-align: center; }
+        .card.dark .goal-hint { color: rgba(255,255,255,0.6); }
+        .goal-card.open .goal-hint { display: none; }
+        .goal-edit { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1); }
+        .goal-card.open .goal-edit { max-height: 220px; }
+        .goal-field { display: flex; align-items: center; gap: 8px; margin-top: 16px; background: #f4f3f0; border: 1px solid var(--line, #e7e5e0); border-radius: 12px; padding: 10px 14px; }
+        .goal-cur { color: var(--muted); font-size: 18px; }
+        .goal-field input { flex: 1; background: transparent; border: none; outline: none; color: #111; font: inherit; font-size: 20px; font-weight: 300; text-align: center; -moz-appearance: textfield; }
+        .goal-field input::-webkit-outer-spin-button, .goal-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .goal-save { width: 100%; margin-top: 12px; padding: 11px; border-radius: 999px; border: none; background: #111; color: #fff; font: inherit; font-size: 11px; letter-spacing: 0.5px; cursor: pointer; }
+        .goal-save:active { opacity: 0.85; }
+
         /* Bar chart (monthly spend) */
         :root { --graph-h: 300px; }
         .bars { display: flex; align-items: flex-end; gap: 8px; height: var(--graph-h); margin-top: 18px; }
@@ -260,7 +274,7 @@ h3, h4, h5, h6, p,
                 </div>
                 <div class="bars" id="bars"></div>
             </div>
-            <div class="card dark">
+            <div class="card dark goal-card" id="budgetCard">
                 <div class="card-h">
                     <div class="card-t">Monthly budget</div>
                     <div class="card-d" id="budgetPct"></div>
@@ -271,6 +285,11 @@ h3, h4, h5, h6, p,
                 <div class="meter-row">
                     <span id="budgetLeft">Remaining ₪0</span>
                     <span id="budgetCap">of ₪0</span>
+                </div>
+                <div class="goal-hint" id="budgetHint">Tap to set your budget ⌄</div>
+                <div class="goal-edit" id="budgetEdit">
+                    <div class="goal-field"><span class="goal-cur">₪</span><input id="budgetInput" type="number" inputmode="numeric" min="0" step="50" placeholder="0"></div>
+                    <button type="button" class="goal-save" id="budgetSave">Save budget</button>
                 </div>
             </div>
         </div>
@@ -497,15 +516,37 @@ h3, h4, h5, h6, p,
         trendPill(document.getElementById('cumTrend'),   monthSums[5],   monthSums[4], false);
         trendPill(document.getElementById('itemsTrend'), monthCounts[5], monthCounts[4], false);
 
-        // ---- Budget: read a saved cap, else derive a sensible default. ----
+        // ---- Budget: editable target (tap to set), else a sensible default. ----
         const cfg = readJSON('vero_buyer_config', {});
-        const cap = parseFloat(cfg.budget) || Math.max(500, Math.round((prevMonthSpend || monthSpend || 800) / 100) * 100 + 200);
-        const pct = Math.min(100, Math.round((monthSpend / cap) * 100));
-        document.getElementById('budgetSpent').textContent = nis(monthSpend);
-        document.getElementById('budgetCap').textContent = 'of ' + nis(cap);
-        document.getElementById('budgetLeft').textContent = 'Remaining ' + nis(Math.max(0, cap - monthSpend));
-        document.getElementById('budgetPct').textContent = pct + '%';
-        requestAnimationFrame(() => { document.getElementById('budgetBar').style.width = pct + '%'; });
+        const defaultCap = Math.max(500, Math.round((prevMonthSpend || monthSpend || 800) / 100) * 100 + 200);
+        let cap = parseFloat(cfg.budget) || defaultCap;
+        const emitBH = () => { try { parent.postMessage({ type: 'vero-embed-height', page: 'buyer-dashboard', h: document.body.scrollHeight }, '*'); } catch (e) {} };
+        function renderBudget() {
+            const pct = Math.min(100, Math.round((monthSpend / cap) * 100));
+            document.getElementById('budgetSpent').textContent = nis(monthSpend);
+            document.getElementById('budgetCap').textContent = 'of ' + nis(cap);
+            document.getElementById('budgetLeft').textContent = 'Remaining ' + nis(Math.max(0, cap - monthSpend));
+            document.getElementById('budgetPct').textContent = pct + '%';
+            requestAnimationFrame(() => { document.getElementById('budgetBar').style.width = pct + '%'; });
+        }
+        renderBudget();
+        (function budgetEditor() {
+            const card = document.getElementById('budgetCard'), edit = document.getElementById('budgetEdit');
+            const input = document.getElementById('budgetInput'), save = document.getElementById('budgetSave');
+            if (!card) return;
+            input.placeholder = String(Math.round(cap));
+            card.addEventListener('click', e => { if (edit.contains(e.target)) return; card.classList.toggle('open'); requestAnimationFrame(emitBH); setTimeout(emitBH, 400); });
+            save.addEventListener('click', () => {
+                const v = Math.max(0, Math.round(Number(input.value) || 0));
+                if (v > 0) {
+                    cap = v;
+                    const next = Object.assign({}, cfg, { budget: v });
+                    try { localStorage.setItem('vero_buyer_config', JSON.stringify(next)); } catch (e) {}
+                }
+                renderBudget(); input.placeholder = String(Math.round(cap)); card.classList.remove('open');
+                requestAnimationFrame(emitBH); setTimeout(emitBH, 400);
+            });
+        })();
 
         // ---- Spend by seller (top). ----
         const bySeller = {};
