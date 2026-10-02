@@ -129,8 +129,11 @@
         .sa-nav {
             position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 50%;
             z-index: 60; display: flex; align-items: stretch; gap: 2px;
-            /* Full pill width, tabs share it evenly so none is cut off. */
             width: 94vw; max-width: 460px;
+            /* Free slider: tabs keep their natural width and the bar swipes
+               sideways (no snapping) when they don't all fit. */
+            overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain; scrollbar-width: none;
             background: rgba(7,12,28,0.94);
             -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
             border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 5px;
@@ -146,8 +149,8 @@
             font-family: inherit; font-size: 9.5px; letter-spacing: 0.4px; text-transform: uppercase;
             color: #b5b5b0; padding: 9px 4px; border-radius: 999px; cursor: pointer;
             white-space: nowrap; text-decoration: none; transition: color 0.2s;
-            /* Every tab shares the pill width equally so all six fit, none clipped. */
-            flex: 1 1 0; min-width: 0; text-align: center;
+            /* Grow to fill the pill when they fit, never shrink — the bar scrolls instead. */
+            flex: 1 0 auto; padding-left: 12px; padding-right: 12px; text-align: center;
         }
         .sa-tab:hover { color: #fff; }
         .sa-tab.is-active { color: #EB2323; }
@@ -462,6 +465,13 @@ h3, h4, h5, h6, p,
                                chats: 'Chat', offers: 'Offers', shop: 'Settings' };
             function activate(id) {
                 tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.id === id); });
+                // Slide the bar so the chosen tab is fully in view.
+                var at = nav.querySelector('.sa-tab.is-active');
+                if (at) {
+                    var l = at.offsetLeft, r = l + at.offsetWidth;
+                    if (l < nav.scrollLeft || r > nav.scrollLeft + nav.clientWidth)
+                        nav.scrollTo({ left: Math.max(0, l - (nav.clientWidth - at.offsetWidth) / 2), behavior: 'smooth' });
+                }
                 if (window.veroPageTitle) window.veroPageTitle(TAB_TITLES[id]);
                 moveInd(true);
                 // The hero is always the first section and is never covered — only the
