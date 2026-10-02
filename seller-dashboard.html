@@ -1098,7 +1098,8 @@ h3, h4, h5, h6, p,
                 views: { end: storeViews, color: '#111',    type: 'col',  seedW: 41, seedM: 42, seedY: 43, chart: 'viewsChart', x: 'viewsX', trend: 'viewsTrend' },
             };
             // A rising line (oldest → newest, left → right) with a soft area fill.
-            const lineSVG = (vals, color) => veroLineChart(vals, { color: color });
+            // Followers / views are levels: a grouped point shows the value at its end.
+            const lineSVG = (vals, color) => veroLineChart(vals, { color: color, group: 'last' });
             const nFor = r => r === 'week' ? 7 : r === 'year' ? 12 : 30;
             const labelsFor = r => {
                 const now = new Date(), out = [];
@@ -1113,7 +1114,7 @@ h3, h4, h5, h6, p,
                 const series = growthSeries(c.end, nFor(range), seed);
                 // Every chart runs oldest → newest (left → right).
                 const labels = labelsFor(range).slice().reverse();
-                document.getElementById(c.chart).innerHTML = c.type === 'line' ? lineSVG(series, c.color) : fineCols(series, c.color);
+                document.getElementById(c.chart).innerHTML = lineSVG(series, c.color);
                 document.getElementById(c.x).innerHTML = labels.map(l => '<span>' + l + '</span>').join('');
                 const tp = document.getElementById(c.trend); if (tp) { tp.className = 'trend-pill'; trendPill(tp, series[series.length - 1], series[series.length - 2]); }
             }

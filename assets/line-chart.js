@@ -4,45 +4,46 @@
      el.innerHTML = veroLineChart(values, {
          color:  '#111',            // line colour (values stay in ink)
          format: v => '₪' + v,      // how a value reads (dots + tooltip)
+         group:  'sum' | 'last',    // how a long series is grouped (default 'sum')
          labels: ['Jan', …],        // optional: point names for the tooltip
          axis:   ['Jan', …]         // optional: a date row under the chart
      });
 
-   Values run oldest → newest, left → right. The line spans the screen
-   from edge to edge. Every change of trend (a peak or a dip) gets a dot
-   with its value; long, noisy series only mark the significant swings so
-   the labels never pile up. Hover / tap shows the value at any point.
+   Values run oldest → newest, left → right, like a stock chart: the line
+   spans the screen from edge to edge over a soft fill, and every break in
+   the line (each change of direction or angle, and both ends) gets a solid
+   dot with its value. Series longer than 12 points are grouped first so
+   every label has room. Hover / tap shows the value at any point.
 ------------------------------------------------------------------ */
 (function () {
     'use strict';
 
-    var TOP = 16, BOT = 90;   // plot band, % of the height (room for labels above / below)
+    var TOP = 16, BOT = 86;   // plot band, % of the height (room for labels above / below)
+    var MAX_PTS = 12;         // a value label on every break needs room: long series are grouped
 
-    // Points where the trend turns: a zig-zag over the series that only counts
-    // a reversal once it moves by `min` — every wiggle on short series, only the
-    // real swings on long ones.
-    function turningPoints(v) {
-        var n = v.length; if (n < 3) return [];
-        var max = Math.max.apply(null, v), min = Math.min.apply(null, v), range = (max - min) || 1;
-        var th = range * (n <= 12 ? 0 : n <= 45 ? 0.12 : 0.2);
-        var out = [], dir = 0, ext = 0, i;
-        for (i = 1; i < n; i++) {
-            if (dir === 0) {
-                if (v[i] !== v[0] && Math.abs(v[i] - v[0]) >= th) { dir = v[i] > v[0] ? 1 : -1; ext = i; }
-                continue;
-            }
-            if (dir === 1) {
-                if (v[i] >= v[ext]) ext = i;
-                else if (v[ext] - v[i] > th || (th === 0 && v[i] < v[ext])) { out.push({ i: ext, peak: true }); dir = -1; ext = i; }
-            } else {
-                if (v[i] <= v[ext]) ext = i;
-                else if (v[i] - v[ext] > th || (th === 0 && v[i] > v[ext])) { out.push({ i: ext, peak: false }); dir = 1; ext = i; }
-            }
+    // Group a long series into at most MAX_PTS points: 'sum' for flows (revenue,
+    // spend per day), 'last' for levels (followers, cumulative totals).
+    function group(v, how) {
+        if (v.length <= MAX_PTS) return v.slice();
+        var out = [], size = v.length / MAX_PTS;
+        for (var g = 0; g < MAX_PTS; g++) {
+            var a = Math.round(g * size), b = Math.round((g + 1) * size), part = v.slice(a, b);
+            out.push(how === 'last' ? part[part.length - 1] : part.reduce(function (s, x) { return s + x; }, 0));
         }
-        // Keep labels apart: at least ~9% of the width between marked points.
-        var kept = [], gap = Math.max(1, Math.round((n - 1) * 0.09));
-        out.forEach(function (p) { if (!kept.length || p.i - kept[kept.length - 1].i >= gap) kept.push(p); });
-        return kept;
+        return out;
+    }
+
+    // Every break in the line: each point where its direction or angle changes,
+    // plus both ends. A point exactly in line with its neighbours isn't a break.
+    // The value sits above a point that rises over its neighbours, below one that dips.
+    function breaks(v) {
+        var n = v.length, out = [];
+        for (var i = 0; i < n; i++) {
+            if (i > 0 && i < n - 1 && (v[i] - v[i - 1]) === (v[i + 1] - v[i])) continue;
+            var ref = i === 0 ? v[1] : i === n - 1 ? v[n - 2] : (v[i - 1] + v[i + 1]) / 2;
+            out.push({ i: i, up: n < 2 || v[i] >= ref });
+        }
+        return out;
     }
 
     function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -51,7 +52,8 @@
         opts = opts || {};
         var color = opts.color || '#16150f';
         var fmt = opts.format || function (x) { return Math.round(x).toLocaleString('en-US'); };
-        var v = (vals || []).map(function (x) { return Number(x) || 0; });
+        var v = group((vals || []).map(function (x) { return Number(x) || 0; }), opts.group);
+        var lbl = opts.labels && opts.labels.length === v.length ? opts.labels : null;
         var n = v.length;
         if (!n) return '<div class="vlc"></div>';
         var max = Math.max.apply(null, v), min = Math.min(0, Math.min.apply(null, v));
@@ -60,19 +62,24 @@
         var yp = function (x) { return BOT - ((x - min) / span) * (BOT - TOP); };
 
         var d = v.map(function (x, i) { return (i ? 'L' : 'M') + xp(i).toFixed(3) + ' ' + yp(x).toFixed(3); }).join(' ');
+        var gid = 'vlcg' + Math.random().toString(36).slice(2, 8);
+        var area = d + ' L100 ' + BOT + ' L0 ' + BOT + ' Z';
         var svg = '<svg class="vlc-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
+            '<defs><linearGradient id="' + gid + '" x1="0" x2="0" y1="0" y2="1">' +
+            '<stop offset="0" stop-color="' + color + '" stop-opacity="0.16"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
+            '<path d="' + area + '" fill="url(#' + gid + ')"/>' +
             '<line class="vlc-base" x1="0" x2="100" y1="' + BOT + '" y2="' + BOT + '" vector-effect="non-scaling-stroke"/>' +
             '<path class="vlc-line" d="' + d + '" stroke="' + color + '" vector-effect="non-scaling-stroke"/></svg>';
 
-        var marks = turningPoints(v).map(function (p, k) {
+        var marks = breaks(v).map(function (p, k) {
             var x = xp(p.i), y = yp(v[p.i]);
             var edge = x < 7 ? ' at-l' : x > 93 ? ' at-r' : '';
             var delay = 'animation-delay:' + (0.5 + k * 0.06).toFixed(2) + 's';
             return '<span class="vlc-pt" style="left:' + x + '%;top:' + y + '%;color:' + color + ';' + delay + '"></span>' +
-                   '<span class="vlc-val' + (p.peak ? '' : ' dip') + edge + '" style="left:' + x + '%;top:' + y + '%;' + delay + '">' + esc(fmt(v[p.i])) + '</span>';
+                   '<span class="vlc-val' + (p.up ? '' : ' dip') + edge + '" style="left:' + x + '%;top:' + y + '%;' + delay + '">' + esc(fmt(v[p.i])) + '</span>';
         }).join('');
 
-        var data = { y: v.map(function (x) { return +yp(x).toFixed(3); }), t: v.map(function (x) { return fmt(x); }), l: opts.labels || null };
+        var data = { y: v.map(function (x) { return +yp(x).toFixed(3); }), t: v.map(function (x) { return fmt(x); }), l: lbl };
         var summary = 'Line chart, ' + n + ' points, from ' + fmt(v[0]) + ' to ' + fmt(v[n - 1]);
         var axis = opts.axis ? '<div class="vlc-x">' + opts.axis.map(function (a) { return '<span>' + esc(a) + '</span>'; }).join('') + '</div>' : '';
         return '<div class="vlc" role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
