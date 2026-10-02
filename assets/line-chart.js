@@ -2,7 +2,7 @@
    moravchick — the site's line chart (styles in line-chart.css).
 
      el.innerHTML = veroLineChart(values, {
-         color:  '#111',            // line colour (values stay in ink)
+         color:  (ignored)          // colour follows the trend: green up, blue sideways, red down
          format: v => '₪' + v,      // how a value reads (dots + tooltip)
          group:  'sum' | 'last',    // how a long series is grouped (default 'sum')
          labels: ['Jan', …],        // optional: point names for the tooltip
@@ -13,8 +13,10 @@
    the other. The shape is drawn by a field of thin vertical lines cut by a
    smooth curve through the data; every point where the line breaks (each
    change of direction or angle, and both ends) gets a solid dot with its
-   value. Series longer than 12 points are grouped first so every label has
-   room. Hover / tap shows the value at any point.
+   value. The colour follows the overall trend — green rising, blue
+   sideways, red falling — and the lines fade toward the base. Series
+   longer than 12 points are grouped first so every label has room.
+   Hover / tap shows the value at any point.
 ------------------------------------------------------------------ */
 (function () {
     'use strict';
@@ -67,6 +69,20 @@
         };
     }
 
+    // The chart's colour follows its overall trend: a least-squares line through
+    // every point, as a share of the series' typical size. Rising ≥ 10% over the
+    // period → green; falling ≥ 10% → red; anything between (sideways) → blue.
+    var TREND = { up: '#1f8a4c', flat: '#2f6fb5', down: '#c0392b' };
+    function trendOf(v) {
+        var n = v.length; if (n < 2) return 'flat';
+        var mx = (n - 1) / 2, my = v.reduce(function (s, x) { return s + x; }, 0) / n, num = 0, den = 0;
+        for (var i = 0; i < n; i++) { num += (i - mx) * (v[i] - my); den += (i - mx) * (i - mx); }
+        var size = v.reduce(function (s, x) { return s + Math.abs(x); }, 0) / n || 1;
+        var change = (num / den) * (n - 1) / size;
+        return change >= 0.1 ? 'up' : change <= -0.1 ? 'down' : 'flat';
+    }
+    window.veroTrendColor = function (vals) { return TREND[trendOf(vals || [])]; };
+
     window.veroLineChart = function (vals, opts) {
         opts = opts || {};
         var color = opts.color || '#16150f';
@@ -75,6 +91,8 @@
         var lbl = opts.labels && opts.labels.length === v.length ? opts.labels : null;
         var n = v.length;
         if (!n) return '<div class="vlc"></div>';
+        var trend = trendOf(v);
+        color = TREND[trend];   // green rising, blue sideways, red falling
         var max = Math.max.apply(null, v), min = Math.min(0, Math.min.apply(null, v));
         var span = (max - min) || 1;
         var xp = function (i) { return n <= 1 ? 50 : (i / (n - 1)) * 100; };
@@ -103,7 +121,8 @@
         var data = { y: v.map(function (x) { return +yp(x).toFixed(3); }), t: v.map(function (x) { return fmt(x); }), l: lbl };
         var summary = 'Line chart, ' + n + ' points, from ' + fmt(v[0]) + ' to ' + fmt(v[n - 1]);
         var axis = opts.axis ? '<div class="vlc-x">' + opts.axis.map(function (a) { return '<span>' + esc(a) + '</span>'; }).join('') + '</div>' : '';
-        return '<div class="vlc" role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
+        summary += ', trend ' + (trend === 'up' ? 'rising' : trend === 'down' ? 'falling' : 'sideways');
+        return '<div class="vlc trend-' + trend + '" role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
             svg + marks +
             '<div class="vlc-hover"><i class="vlc-vline"></i><i class="vlc-hdot"></i><span class="vlc-tip"></span></div>' +
             '</div>' + axis;
