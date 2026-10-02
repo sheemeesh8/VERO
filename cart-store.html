@@ -13,16 +13,12 @@
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             color: #1c1c1c; background: #fff;
-            /* Clip the slide-in's horizontal offset so it doesn't cause a sideways
-               scroll on phones (matches the other personal-area pages). */
             overflow-x: hidden;
         }
 
-        /* Entry: the cart slides in from the right, continuing the white panel the
-           header glides in on the way here (see veroSlideToCart in header.js). No
-           upward wipe — the page is white already, so the content just slides in. */
+        /* Entry: the image holds static on the left while the content slides in
+           from the left — nothing covers the image on load. */
         .page-cover { display: none; }
-        @keyframes coverOut { to { transform: translateY(-100%); } }
 
         .back {
             position: fixed; top: 26px; right: 34px; z-index: 40;
@@ -33,98 +29,52 @@
         }
         .back:hover { background: #000; color: #fff; }
 
-        /* No side image — the cart spreads evenly across the full screen. */
         .wrap {
             max-width: none; margin: 0;
-            padding: 8px clamp(20px, 5vw, 72px) 90px;
-            animation: cartSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+            padding: 40px 40px 80px;
+            /* The data slides in from the left, out from behind the static image. */
+            animation: slideInLeft 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
         }
-        @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
-        /* Slides in from the right, picking up where the header's white panel left off. */
-        @keyframes cartSlideIn { from { opacity: 0; transform: translateX(80px); } to { opacity: 1; transform: none; } }
-        @media (prefers-reduced-motion: reduce) { .wrap { animation: none; } }
+        /* Fade in — no sideways slide. */
+        @keyframes slideInLeft {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
 
-        .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1;
-                      flex: 1 1 100%; }   /* full row, so the switch stacks below — matches the wishlist */
-        .head-sub { display: none; }
+        /* Image on the left, one-rectangle width, matching the other pages. */
+        .side-image {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 20vw;
+            background: #2a2a28 url('assets/cart-hero.jpg') center / cover no-repeat;
+            filter: grayscale(1);
+            border-right: 1px solid #000;
+            /* Sits above the content so the data slides out from behind it. */
+            z-index: 5;
+        }
+        /* Left side image removed — content fills the full width. */
+        .side-image { display: none; }
 
-        /* Title on its own row, the Clothing / Art switch on the row beneath it. */
-        .head-row { display: flex; align-items: center; gap: 16px 20px; flex-wrap: wrap; }
-        /* Keep the total off the switch line so the header reads like the wishlist. */
-        .head-total { flex-basis: 100%; }
+        .head-title { font-size: clamp(40px, 6vw, 84px); font-weight: 200; letter-spacing: 1px; line-height: 1; }
+        .head-sub { margin-top: 16px; font-size: 12.50px; color: #6b6b66; letter-spacing: 0.5px; }
 
-        /* Top bar — same clean style as the product page: back on one side,
-           Filters + Share on the other, plain icon buttons. */
-        .cart-topbar {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: max(8px, env(safe-area-inset-top,0px)) 4px 16px;
-        }
-        .cart-topbar .tb-right { display: flex; align-items: center; gap: 4px; }
-        .tb-ico {
-            width: 42px; height: 42px; flex: none; border: none; background: none;
-            color: #16150f; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: opacity 0.2s;
-        }
-        .tb-ico:active { opacity: 0.5; }
-        .tb-ico svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.25; fill: none; }
-
-        /* Filters bottom-sheet. */
-        .cart-sheet-overlay {
-            position: fixed; inset: 0; background: rgba(20,18,14,0.4);
-            display: none; align-items: flex-end; justify-content: center; z-index: 300;
-        }
-        .cart-sheet-overlay.show { display: flex; }
-        .cart-sheet {
-            width: 100%; max-width: 560px; background: #fff;
-            border-radius: 20px 20px 0 0; padding: 22px 24px calc(28px + env(safe-area-inset-bottom,0px));
-            transform: translateY(100%); animation: cartSheetRise 0.34s cubic-bezier(0.2,0.8,0.2,1) forwards;
-        }
-        @keyframes cartSheetRise { to { transform: translateY(0); } }
-        .cart-sheet .sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: #e6e1d8; margin: 0 auto 18px; }
-        .cart-sheet h3 { font-size: 14px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
-        /* Inside the sheet the toolbar stacks; no big top margin or underline. */
-        .cart-sheet .cart-toolbar { margin-top: 0; padding-bottom: 0; border-bottom: none; gap: 22px; }
+        /* Title row with the Clothing / Art cart toggle beside it. */
+        .head-row { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
         .mode-toggle {
-            display: inline-flex; border: 1px solid #d8d3ca; border-radius: 999px; overflow: hidden;
+            display: inline-flex; border: 1.4px solid #000; border-radius: 999px; overflow: hidden;
         }
         .mode-btn {
-            padding: 10px 24px; font-family: inherit; font-size: 10.00px; letter-spacing: 2px;
-            text-transform: uppercase; background: transparent; color: #8c877c; border: none; cursor: pointer;
-            transition: background 0.25s, color 0.25s;
+            padding: 11px 26px; font-family: inherit; font-size: 10.00px; letter-spacing: 1.5px;
+            text-transform: uppercase; background: #fff; color: #1c1c1c; border: none; cursor: pointer;
+            transition: background 0.2s, color 0.2s;
         }
-        .mode-btn.active { background: #16150f; color: #fff; }
+        .mode-btn.active { background: #000; color: #fff; }
 
         /* Cart total shown up top, beside the title. */
-        .head-total { margin-left: auto; font-size: 10.83px; letter-spacing: 1.5px; text-transform: uppercase; color: #9a958c; }
-        .head-total b { font-size: 24.00px; font-weight: 300; letter-spacing: 0.5px; color: #16150f; margin-left: 10px; }
+        .head-total { margin-left: auto; font-size: 11.67px; letter-spacing: 0.5px; color: #1c1c1c; }
+        .head-total b { font-size: 25.00px; font-weight: 300; margin-left: 8px; }
 
-        /* ===== Filter / selection toolbar — quiet, hairline-based ===== */
-        .cart-toolbar {
-            display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap;
-            margin-top: 14px; padding-bottom: 16px; border-bottom: 1px solid #e6e1d8;
-        }
-        .ct-group { display: inline-flex; align-items: center; gap: 10px; }
-        /* Three filter capsules in one row, each label sitting BELOW its select. */
-        .ct-filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%; flex: 1 1 100%; }
-        .ct-field { display: flex; flex-direction: column; align-items: center; gap: 9px; }
-        .ct-btn {
-            border: 1px solid #d8d3ca; background: transparent; color: #16150f; cursor: pointer;
-            font-family: inherit; font-size: 9.17px; letter-spacing: 2px; text-transform: uppercase;
-            padding: 10px 20px; border-radius: 999px; transition: border-color 0.25s, color 0.25s;
-        }
-        .ct-btn:hover { border-color: #16150f; }
-        .ct-label { font-size: 9.17px; letter-spacing: 2px; text-transform: uppercase; color: #a8a399; text-align: center; }
-        .ct-select {
-            font-family: inherit; font-size: 11px; color: #16150f; background: transparent;
-            border: 1px solid #d8d3ca; border-radius: 999px; padding: 9px 16px; cursor: pointer;
-            transition: border-color 0.25s; width: 100%; text-align: center;
-        }
-        .ct-select:hover { border-color: #16150f; }
-        .ct-select:focus { outline: none; border-color: #16150f; }
-        .ct-count { margin-left: auto; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #a8a399; }
-
-        /* Cart-summary slider — one stat at a time (Total / item count), fading
-           and rotating like the profile's follower/products slider. */
+        /* Cart-summary slider — identical to the regular cart (cart-store):
+           one stat at a time (Total / item count), fading and rotating. */
         .cart-ticker {
             position: relative; width: 100%; height: 34px;
             border-bottom: 1px solid #16150f; margin: 30px 0 16px;
@@ -141,22 +91,8 @@
         .cart-stat .cs-num { font-size: 18px; font-weight: 300; letter-spacing: 2px; line-height: 1; color: #16150f; }
         .cart-stat .cs-lbl { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: #a8a399; }
 
-        /* Selection checkbox overlaid on each cart card. */
-        .cart-item { position: relative; }
-        .cart-select {
-            position: absolute; top: 12px; left: 12px; z-index: 4;
-            width: 24px; height: 24px; border-radius: 50%; border: 1.6px solid #000;
-            background: #fff; cursor: pointer; display: grid; place-items: center;
-            padding: 0; transition: background 0.2s, color 0.2s;
-        }
-        .cart-select svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 3; fill: none; opacity: 0; }
-        .cart-item.is-selected .cart-select { background: #000; }
-        .cart-item.is-selected .cart-select svg { opacity: 1; }
-
         /* Category sections within a cart. */
         .cat-section { margin-top: 44px; }
-        /* First section hugs the right-aligned ticker directly above it. */
-        #cartBody .cat-section:first-child { margin-top: 0; }
         .cat-label {
             display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
             font-size: 10.00px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95;
@@ -164,31 +100,84 @@
         }
         .cat-label b { color: #1c1c1c; font-weight: 500; letter-spacing: 2px; }
 
-        /* Five product cards per row — exactly like the feed. */
+        /* A grid of the site's product cards — same object as the feed. */
         .cart-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 28px;
         }
-        @media (max-width: 1400px) { .cart-grid { grid-template-columns: repeat(4, 1fr); } }
-        @media (max-width: 1080px) { .cart-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 760px)  { .cart-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } }
-        /* Uniform 14px side inset on phones so cards match every other page. */
-        @media (max-width: 768px)  { .wrap { padding-left: 14px; padding-right: 14px; } }
-        /* Keep two per row even on the smallest phones. */
-        @media (max-width: 480px)  { .cart-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } }
-
+        /* Phones: always two product cards per row, side by side. */
+        @media (max-width: 768px) {
+            .cart-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+            /* Uniform 14px side inset site-wide, so cards are the same size everywhere. */
+            .wrap { padding-left: 14px; padding-right: 14px; }
+        }
+        /* First card of every category: a black cover the exact size of a product
+           card, carrying the category name. */
+        /* Inherits the exact geometry (aspect-ratio, radius) from .product-card;
+           only the fill and the copy layout are its own. */
+        .cat-cover.product-card {
+            background: #111; color: #fff;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 26px; box-sizing: border-box;
+        }
+        .cat-cover.product-card:hover { transform: none; box-shadow: none; }
+        .cat-cover .cc-kicker {
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 9.17px; letter-spacing: 4px; text-transform: uppercase;
+            color: rgba(255,255,255,0.55);
+            position: absolute; top: 24px; left: 26px; right: 26px; text-align: center;
+        }
+        .cat-cover .cc-title {
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: clamp(24px, 3vw, 34px); font-weight: 700; line-height: 1.02;
+            letter-spacing: 0.5px; text-transform: uppercase; text-align: left;
+        }
+        .cat-cover .cc-count {
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 8.33px; letter-spacing: 3px; text-transform: uppercase;
+            color: rgba(255,255,255,0.55);
+            position: absolute; bottom: 24px; left: 26px; right: 26px; text-align: center;
+        }
         .cart-empty {
             margin-top: 52px; border: 1px solid #000; padding: 60px 40px;
             font-size: 12.50px; color: #9a9a95; text-align: center;
         }
+
+        /* Per-card select box — a black square that shows a white ✓ when the item
+           is chosen for checkout. Sits opposite the trash control. */
+        .product-card .pc-check {
+            position: absolute; top: 10px; left: 10px; z-index: 3;
+            width: 30px; height: 30px; border-radius: 6px;
+            border: 1.6px solid #111; background: #fff; cursor: pointer;
+            display: grid; place-items: center; padding: 0; transition: background 0.15s, transform 0.15s;
+        }
+        .product-card .pc-check:hover { transform: scale(1.08); }
+        .product-card .pc-check.on { background: #111; }
+        .product-card .pc-check svg { width: 18px; height: 18px; stroke: #fff; stroke-width: 3; fill: none; display: none; }
+        .product-card .pc-check.on svg { display: block; }
+
+        /* Sticky selection summary — same black/Oswald language as the checkout,
+           pinned to the viewport and faded in/out as items are ticked. */
+        .sel-bar {
+            position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 22px);
+            z-index: 80; display: flex; align-items: center; gap: 20px;
+            background: #111; color: #fff; padding: 15px 30px; border-radius: 999px;
+            font-family: 'Oswald', 'Segoe UI', sans-serif;
+            box-shadow: 0 14px 40px rgba(0,0,0,0.28);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.22,1,0.36,1), visibility 0.32s;
+        }
+        .sel-bar.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+        .sel-bar .sel-count { font-size: 10.00px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+        .sel-bar .sel-total { font-size: 18.33px; font-weight: 600; letter-spacing: 0.5px; }
 
         /* Action bar — same dark-pill language as the site's other bars
            (the personal-area tabs): dark rounded rail, white primary pill,
            small uppercase grey labels. */
         .cart-actionbar {
             position: fixed; left: 50%; transform: translateX(-50%);
-            bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 90;
+            bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 90;
             display: flex; align-items: stretch; gap: 6px;
             width: max-content; max-width: 92vw;
             background: rgba(7,12,28,0.94);
@@ -196,8 +185,12 @@
             border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 5px;
             box-shadow: 0 6px 26px rgba(0,0,0,0.28);
         }
+        /* Inside the personal-area hub, sit above the area-tabs nav. */
+        html.embed .cart-actionbar { bottom: 92px; }
         /* Clearance so the last cards aren't hidden behind the fixed bar. */
-        .wrap { padding-bottom: 120px; }
+        .wrap { padding-bottom: 140px; }
+        /* The old floating selection popup is redundant now the bar is sticky. */
+        .sel-bar { display: none !important; }
         .cab-cell {
             flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
             gap: 2px; min-height: 52px; padding: 8px 14px; border-radius: 999px;
@@ -206,14 +199,15 @@
             transition: background 0.2s, color 0.2s, opacity 0.2s;
         }
         button.cab-cell { border: none; cursor: pointer; }
-        /* Checkout = the white active pill. */
         .cab-checkout { flex: 1.3; background: #fff; color: #111; }
         .cab-checkout:hover { opacity: 0.9; }
-        /* Middle = live count of ticked items. */
+        .cab-checkout:disabled { opacity: 0.45; cursor: not-allowed; }
         .cab-count .cab-num { font-size: 17px; font-weight: 600; letter-spacing: 1px; color: #fff; }
         .cab-count .cab-lbl { font-size: 8px; letter-spacing: 2px; color: #8f8f8a; }
-        /* Select all / Clear toggle. */
         .cab-select:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+        /* (removed stale editor placement transform — it was calibrated for the old
+           wide segmented control and pushed the new compact switch out of place.) */
     </style>
     <!-- The product card, shared by every page (single source: product-card.css). -->
     <link rel="stylesheet" href="product-card.css">
@@ -258,6 +252,12 @@
                   color: #1c1c1c !important; font-weight: 700; white-space: nowrap; }
       .mode-btn.active { display: inline-block; animation: modeLabelSwap 0.6s ease; }
       @keyframes modeLabelSwap { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+      /* Centered header: the title sits in the middle, with the Clothing / Art
+         toggle and its label centered directly beneath it. */
+      .head-row { flex-direction: column; align-items: center; text-align: center; gap: 16px; }
+      .head-total { margin-left: 0 !important; }
+      .head-sub { text-align: center; }
     </style>
 <style id="vero-global-type">
 /* VERO global typography: main titles in Bodoni, sub-headings + descriptions in serif.
@@ -272,28 +272,111 @@ h3, h4, h5, h6, p,
 }
 </style>
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Aharoni CLM','Segoe UI',sans-serif !important;}</style>
+    <style id="list-header-style">
+        /* Shared cart / wishlist header: round back button, page name, and the
+           search / filters / share icons, with the description + Clothing / Art
+           switch on one line beneath it. */
+        html.embed .sticky-head { display: none !important; }
+        .wrap { padding-top: 14px; }
+        .sticky-head { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 16px; padding: calc(env(safe-area-inset-top, 0px) + 54px) 20px 20px; background: rgba(255,255,255,0.94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+        .sh-back { width: 44px; height: 44px; border: 1px solid #e2e0da; border-radius: 50%; background: none; display: grid; place-items: center; cursor: pointer; color: #111; flex: none; transition: background 0.2s, color 0.2s, border-color 0.2s; }
+        .sh-back svg { width: 22px; height: 22px; }
+        .sh-back:hover { background: #111; color: #fff; border-color: #111; }
+        .sh-title { font-size: 22px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; color: #1b1916; }
+        .sticky-head .sh-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+        .sticky-head .sh-actions .tb-ico { width: 40px; height: 40px; border: none; background: none; cursor: pointer;
+            display: grid; place-items: center; color: #111; padding: 0; transition: opacity 0.2s; }
+        .sticky-head .sh-actions .tb-ico:hover { opacity: 0.6; }
+        .sticky-head .sh-actions .tb-ico.on { color: #EB2323; }
+        .sticky-head .sh-actions .tb-ico svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+        /* Inline search field that expands within the header row (replacing the title). */
+        .sh-search-wrap { flex: 1 1 auto; min-width: 0; position: relative; display: none; }
+        .sticky-head.searching .sh-search-wrap { display: block; }
+        .sticky-head.searching .sh-title { display: none; }
+        .sh-search-wrap input { width: 100%; height: 40px; border: none; border-bottom: 1px solid #d8d5cd;
+            background: transparent; padding: 0 8px 0 34px; font-size: 15px; color: #1c1c1c; font-family: inherit;
+            letter-spacing: 0.3px; outline: none; transition: border-color 0.2s; }
+        .sh-search-wrap input:focus { border-bottom-color: #1c1c1c; }
+        .sh-search-wrap input::placeholder { color: #a8a49a; }
+        .sh-search-wrap svg { position: absolute; top: 50%; left: 6px; transform: translateY(-50%);
+            width: 18px; height: 18px; stroke: #a8a49a; fill: none; stroke-width: 1.25; }
+
+        /* Description sits on one line with the Clothing / Art toggle beside it. */
+        .wl-desc-row { display: flex !important; flex-direction: row !important; align-items: center !important;
+            justify-content: space-between; gap: 16px; flex-wrap: nowrap; margin-top: 4px; }
+        .wl-desc-row .head-sub { display: block !important; margin-top: 0; flex: 1 1 58%; min-width: 0;
+            font-size: 14.5px; line-height: 1.5; color: #6b6b66; letter-spacing: 0.2px; text-align: center; }
+        .wl-desc-row .mode-toggle { flex: none; margin-left: 0 !important; }
+
+        /* Filters bottom-sheet. */
+        .cart-sheet-overlay { position: fixed; inset: 0; background: rgba(20,18,14,0.4);
+            display: none; align-items: flex-end; justify-content: center; z-index: 300; }
+        .cart-sheet-overlay.show { display: flex; }
+        .cart-sheet { width: 100%; max-width: 560px; background: #fff; border-radius: 20px 20px 0 0;
+            padding: 22px 24px calc(28px + env(safe-area-inset-bottom,0px));
+            transform: translateY(100%); animation: cartSheetRise 0.34s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+        @keyframes cartSheetRise { to { transform: translateY(0); } }
+        .cart-sheet .sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: #e6e1d8; margin: 0 auto 18px; }
+        .cart-sheet h3 { font-size: 14px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
+        .ct-filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .ct-field { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+        .ct-label { font-size: 9.17px; letter-spacing: 2px; text-transform: uppercase; color: #a8a399; text-align: center; }
+        .cart-sheet select.ct-select {
+            font-family: inherit; font-size: 11px; color: #16150f; background: transparent;
+            border: 1px solid #d8d3ca !important; border-radius: 999px; padding: 9px 16px; cursor: pointer;
+            transition: border-color 0.25s; width: 100%; text-align: center; }
+        .cart-sheet select.ct-select:hover, .cart-sheet select.ct-select:focus { outline: none; border-color: #16150f !important; }
+    </style>
 </head>
 <body>
+    <!-- Embedded inside profile.html (?embed=1): the page title + back button are
+         hidden — the title is shown in the profile hero instead. -->
+    <script>if (new URLSearchParams(location.search).get('embed')) document.documentElement.classList.add('embed');</script>
+    <style>
+        html.embed .back, html.embed .head-title, html.embed .head-sub { display: none !important; }
+        html.embed .wrap { padding-top: 40px; }
+
+        /* ===== Minimal redesign (soft hairline chrome, quiet filters) ===== */
+        .cart-empty {
+            border: 1px solid #ecebe7; border-radius: 18px; background: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 10px 34px rgba(0,0,0,0.045);
+        }
+        /* Filter selects → soft rounded fields to match the rest of the app. */
+        .cart-filters select, .wrap select {
+            border: 1px solid #ecebe7 !important; border-radius: 12px; background: #f7f6f3;
+            padding: 10px 12px; font-family: inherit;
+        }
+        .cart-filters select:focus, .wrap select:focus { outline: none; border-color: #111 !important; background: #fff; }
+    </style>
     <div class="page-cover"></div>
+    <div class="side-image"></div>
+    <header class="sticky-head">
+        <button class="sh-back" type="button" aria-label="Back" onclick="(window.history.length > 1 ? window.history.back() : (location.href='index.html'))">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="sh-title">Cart</span>
+        <div class="sh-search-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="search" id="listSearch" placeholder="Search this cart…" autocomplete="off" aria-label="Search this cart">
+        </div>
+        <div class="sh-actions">
+            <button class="tb-ico sh-search-btn" onclick="toggleListSearch(this)" aria-label="Search">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <button class="tb-ico" onclick="openFilters()" aria-label="Filters">
+                <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
+            </button>
+            <button class="tb-ico" onclick="shareList()" aria-label="Share">
+                <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+            </button>
+        </div>
+    </header>
 
     <div class="wrap">
-        <!-- Clean top bar (same style as the product page). -->
-        <div class="cart-topbar">
-            <div class="tb-right">
-                <button class="tb-ico" onclick="openFilters()" aria-label="Filters">
-                    <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
-                </button>
-                <button class="tb-ico" onclick="shareCart()" aria-label="Share">
-                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-                </button>
-            </div>
-            <a class="back-btn tb-ico" href="index.html" aria-label="Back">
-                <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-            </a>
-        </div>
-
-        <div class="head-row">
-            <h1 class="head-title">Cart</h1>
+        <!-- Description, with the Clothing / Art toggle beside it. -->
+        <div class="head-row wl-desc-row">
+            <h1 class="head-title" style="display:none">My Cart</h1>
+            <p class="head-sub" id="headSub">The items you've gathered, ready to check out.</p>
             <div class="mode-toggle">
                 <button class="mode-switch" id="modeSwitch" type="button" aria-label="Switch Clothing / Art"></button>
                 <div class="mode-labels">
@@ -301,16 +384,21 @@ h3, h4, h5, h6, p,
                     <button class="mode-btn" data-mode="art">Art</button>
                 </div>
             </div>
-            <div class="head-total" id="headTotal"></div>
+            <div class="head-total" id="headTotal" hidden></div>
         </div>
-        <p class="head-sub" id="headSub">The items you've gathered, ready to check out.</p>
 
         <div id="tickerHost"></div>
         <div id="cartBody"></div>
         <div id="checkoutHost"></div>
     </div>
 
-    <!-- Filters bottom-sheet — holds every filter behind the header button. -->
+    <!-- Sticky selection summary — fades in while items are ticked for checkout. -->
+    <div class="sel-bar" id="selBar" aria-live="polite">
+        <span class="sel-count" id="selBarCount"></span>
+        <span class="sel-total" id="selBarTotal"></span>
+    </div>
+
+    <!-- Filters bottom-sheet. -->
     <div class="cart-sheet-overlay" id="filterOverlay" onclick="if(event.target===this)closeFilters()">
         <div class="cart-sheet">
             <div class="sheet-grip"></div>
@@ -318,6 +406,27 @@ h3, h4, h5, h6, p,
             <div id="toolbarHost"></div>
         </div>
     </div>
+    <script>
+        // The search lives in the header; tapping the icon reveals an inline search field.
+        function toggleListSearch(btn) {
+            var head = document.querySelector('.sticky-head');
+            if (!head) return;
+            var open = head.classList.toggle('searching');
+            if (btn) btn.classList.toggle('on', open);
+            var input = document.getElementById('listSearch');
+            if (open) { if (input) input.focus(); }
+            else if (input && input.value) { input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
+        }
+        window.openFilters = function () { document.getElementById('filterOverlay').classList.add('show'); };
+        window.closeFilters = function () { document.getElementById('filterOverlay').classList.remove('show'); };
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') window.closeFilters(); });
+        // Share (native share where available, otherwise copy the link).
+        window.shareList = function () {
+            var url = location.href;
+            if (navigator.share) { navigator.share({ title: 'moravchick', text: 'My moravchick cart', url: url }).catch(function(){}); return; }
+            if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function(){});
+        };
+    </script>
 
     <script>
         const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
@@ -332,29 +441,27 @@ h3, h4, h5, h6, p,
             : (ART_CATS.has(it.category) ? 'art' : 'clothing');
 
         // Demo pieces so both carts show their categories when nothing's saved yet.
-        const CLOTHING_DEMO = [
-            { name: 'Cotton Oxford Shirt', seller: 'Studio Vero', icon: '👕', price: 220, rating: 4.7, type: 'clothing', category: 'Shirts' },
-            { name: 'Linen Overshirt',     seller: 'Atelier Nord', icon: '👔', price: 340, rating: 4.5, type: 'clothing', category: 'Shirts' },
-            { name: 'Striped Tee',         seller: 'Basics Co.',   icon: '👕', price: 130, rating: 4.2, type: 'clothing', category: 'Shirts' },
-            { name: 'Slim Selvedge Jeans', seller: 'Denim Lab',    icon: '👖', price: 410, rating: 4.8, type: 'clothing', category: 'Pants' },
-            { name: 'Wool Trousers',       seller: 'Atelier Nord', icon: '👖', price: 380, rating: 4.6, type: 'clothing', category: 'Pants' },
-            { name: 'Cargo Pants',         seller: 'Urban Thread', icon: '🩳', price: 260, rating: 4.1, type: 'clothing', category: 'Pants' },
-            { name: 'Leather Sneakers',    seller: 'Sole Society', icon: '👟', price: 520, rating: 4.6, type: 'clothing', category: 'Shoes' },
-            { name: 'Chelsea Boots',       seller: 'Sole Society', icon: '🥾', price: 690, rating: 4.9, type: 'clothing', category: 'Shoes' },
-            { name: 'Suede Loafers',       seller: 'Milano Feet',  icon: '👞', price: 610, rating: 4.7, type: 'clothing', category: 'Shoes' },
-            { name: 'Automatic Watch',     seller: 'Horology Co.', icon: '⌚', price: 1250, rating: 5.0, type: 'clothing', category: 'Watches' },
-            { name: 'Diver Chronograph',   seller: 'Horology Co.', icon: '⌚', price: 1680, rating: 4.8, type: 'clothing', category: 'Watches' },
-            { name: 'Wool Overcoat',       seller: 'Atelier Nord', icon: '🧥', price: 980, rating: 4.9, type: 'clothing', category: 'Jackets' },
-            { name: 'Denim Jacket',        seller: 'Denim Lab',    icon: '🧥', price: 450, rating: 4.4, type: 'clothing', category: 'Jackets' },
-            { name: 'Leather Belt',        seller: 'Milano Feet',  icon: '👜', price: 190, rating: 4.3, type: 'clothing', category: 'Accessories' },
-            { name: 'Silk Scarf',          seller: 'Studio Vero',  icon: '🧣', price: 210, rating: 4.5, type: 'clothing', category: 'Accessories' },
-        ];
+        // (In-memory only — never written to the real cart.)
         let DEMO = false;
         if (!cart.length && !localStorage.getItem('vero_cart_seeded')) {
             // Seed a starter cart once, persisted to vero_cart, so both cart pages
             // (header + personal area) share exactly the same items.
             cart = [
-                ...CLOTHING_DEMO,
+                { name: 'Cotton Oxford Shirt', seller: 'Studio Vero', icon: '👕', price: 220, rating: 4.7, type: 'clothing', category: 'Shirts' },
+                { name: 'Linen Overshirt',     seller: 'Atelier Nord', icon: '👔', price: 340, rating: 4.5, type: 'clothing', category: 'Shirts' },
+                { name: 'Striped Tee',         seller: 'Basics Co.',   icon: '👕', price: 130, rating: 4.2, type: 'clothing', category: 'Shirts' },
+                { name: 'Slim Selvedge Jeans', seller: 'Denim Lab',    icon: '👖', price: 410, rating: 4.8, type: 'clothing', category: 'Pants' },
+                { name: 'Wool Trousers',       seller: 'Atelier Nord', icon: '👖', price: 380, rating: 4.6, type: 'clothing', category: 'Pants' },
+                { name: 'Cargo Pants',         seller: 'Urban Thread', icon: '🩳', price: 260, rating: 4.1, type: 'clothing', category: 'Pants' },
+                { name: 'Leather Sneakers',    seller: 'Sole Society', icon: '👟', price: 520, rating: 4.6, type: 'clothing', category: 'Shoes' },
+                { name: 'Chelsea Boots',       seller: 'Sole Society', icon: '🥾', price: 690, rating: 4.9, type: 'clothing', category: 'Shoes' },
+                { name: 'Suede Loafers',       seller: 'Milano Feet',  icon: '👞', price: 610, rating: 4.7, type: 'clothing', category: 'Shoes' },
+                { name: 'Automatic Watch',     seller: 'Horology Co.', icon: '⌚', price: 1250, rating: 5.0, type: 'clothing', category: 'Watches' },
+                { name: 'Diver Chronograph',   seller: 'Horology Co.', icon: '⌚', price: 1680, rating: 4.8, type: 'clothing', category: 'Watches' },
+                { name: 'Wool Overcoat',       seller: 'Atelier Nord', icon: '🧥', price: 980, rating: 4.9, type: 'clothing', category: 'Jackets' },
+                { name: 'Denim Jacket',        seller: 'Denim Lab',    icon: '🧥', price: 450, rating: 4.4, type: 'clothing', category: 'Jackets' },
+                { name: 'Leather Belt',        seller: 'Milano Feet',  icon: '👜', price: 190, rating: 4.3, type: 'clothing', category: 'Accessories' },
+                { name: 'Silk Scarf',          seller: 'Studio Vero',  icon: '🧣', price: 210, rating: 4.5, type: 'clothing', category: 'Accessories' },
 
                 { name: 'Sunset Landscape',    seller: 'Art House',    icon: '🖼️', price: 900, rating: 4.8, type: 'art', category: 'Oil' },
                 { name: 'Harbour at Dawn',     seller: 'Art House',    icon: '🖼️', price: 1150, rating: 4.7, type: 'art', category: 'Oil' },
@@ -371,18 +478,64 @@ h3, h4, h5, h6, p,
             localStorage.setItem('vero_cart_seeded', '1');
         }
 
-        // Keep the clothing cart stocked — if it holds no clothing, add the set.
-        if (!cart.some(it => typeOf(it) === 'clothing')) {
-            cart = [...CLOTHING_DEMO, ...cart];
-            localStorage.setItem('vero_cart', JSON.stringify(cart));
-        }
+        // Open the tab that actually has items, so the cart never reads "empty"
+        // while the personal-area peek counts items of the other type.
+        let MODE = cart.some(it => typeOf(it) === 'clothing') ? 'clothing'
+                 : cart.some(it => typeOf(it) === 'art') ? 'art' : 'clothing';
 
-        let MODE = 'clothing';
-        // Filter / sort / selection state for the cart toolbar.
-        let filterCat = 'all';      // category filter (alphabetical list)
+        // Filter / sort state behind the header's Filters button.
+        let filterCat = 'all';      // category filter
         let filterSeller = 'all';   // seller filter
         let sortBy = 'featured';    // featured | price-asc | price-desc
-        let selected = new Set();   // cart indices ticked for checkout
+        window.setFilterCat    = function (v) { filterCat = v; render(); };
+        window.setFilterSeller = function (v) { filterSeller = v; render(); };
+        window.setSortBy       = function (v) { sortBy = v; render(); };
+
+        // Category (A–Z), seller (A–Z) and price controls, inside the filters sheet.
+        function renderToolbar(rows) {
+            const host = document.getElementById('toolbarHost');
+            const cats    = [...new Set(rows.map(({ it }) => it.category || 'Other'))].sort((a, b) => a.localeCompare(b));
+            const sellers = [...new Set(rows.map(({ it }) => it.seller || 'Vero Store'))].sort((a, b) => a.localeCompare(b));
+            const opt = (v, cur, lbl) => `<option value="${v}"${v === cur ? ' selected' : ''}>${lbl || v}</option>`;
+            host.innerHTML = `
+                <div class="ct-filters">
+                    <div class="ct-field">
+                        <select class="ct-select" onchange="setFilterCat(this.value)">
+                            ${opt('all', filterCat, 'All categories')}${cats.map(c => opt(c, filterCat)).join('')}
+                        </select>
+                        <span class="ct-label">Category</span>
+                    </div>
+                    <div class="ct-field">
+                        <select class="ct-select" onchange="setFilterSeller(this.value)">
+                            ${opt('all', filterSeller, 'All sellers')}${sellers.map(s => opt(s, filterSeller)).join('')}
+                        </select>
+                        <span class="ct-label">Seller</span>
+                    </div>
+                    <div class="ct-field">
+                        <select class="ct-select" onchange="setSortBy(this.value)">
+                            ${opt('featured', sortBy, 'Featured')}${opt('price-asc', sortBy, 'Price: low to high')}${opt('price-desc', sortBy, 'Price: high to low')}
+                        </select>
+                        <span class="ct-label">Price</span>
+                    </div>
+                </div>`;
+        }
+
+        // Which cart items (by index) are ticked for checkout. Everything starts
+        // selected, so the total matches the whole cart until the buyer unticks.
+        const selected = new Set(cart.map((_, i) => i));
+        window.toggleSelect = function (idx) {
+            if (selected.has(idx)) selected.delete(idx); else selected.add(idx);
+            render();
+        };
+        // Select / clear every item in the active (Clothing / Art) cart.
+        window.selectAllVisible = function () {
+            cart.forEach((it, i) => { if (typeOf(it) === MODE) selected.add(i); });
+            render();
+        };
+        window.deselectAllVisible = function () {
+            cart.forEach((it, i) => { if (typeOf(it) === MODE) selected.delete(i); });
+            render();
+        };
 
         const priceNum = p => parseFloat(String(p == null ? 0 : p).replace(/[^\d.]/g, '')) || 0;
         const priceStr = p => {
@@ -403,14 +556,16 @@ h3, h4, h5, h6, p,
         function cartCardHTML(item, idx) {
             const rating = item.rating || 4.5;
             const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
-            const sel = selected.has(idx) ? ' is-selected' : '';
+            const on = selected.has(idx) ? ' on' : '';
             return `
-                <a href="${productPageUrl(item)}" class="product-card cart-item${sel}" data-idx="${idx}">
-                    <button class="cart-select" title="Select for checkout"
-                            onclick="event.preventDefault(); event.stopPropagation(); toggleSelect(${idx})">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </button>
+                <a href="${productPageUrl(item)}" class="product-card cart-item" data-idx="${idx}">
                     <div class="product-image">${item.icon || '🛍️'}
+                        <button class="pc-check${on}" title="Select for checkout" aria-label="Select for checkout"
+                                onclick="event.preventDefault(); event.stopPropagation(); toggleSelect(${idx})">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </button>
                         <button class="product-icon remove" title="Remove from cart"
                                 onclick="event.preventDefault(); event.stopPropagation(); removeItem(${idx})">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -432,113 +587,58 @@ h3, h4, h5, h6, p,
                 </a>`;
         }
 
-        // Rows for the active toggle (clothing / art), before the toolbar filters.
-        function modeRows() {
-            return cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
-        }
-        // Rows after applying the category / seller / price-sort toolbar controls.
-        function visibleRows() {
-            let rows = modeRows();
-            if (filterCat !== 'all')    rows = rows.filter(({ it }) => (it.category || 'Other') === filterCat);
-            if (filterSeller !== 'all') rows = rows.filter(({ it }) => (it.seller || 'Vero Store') === filterSeller);
-            if (sortBy === 'price-asc')  rows = rows.slice().sort((a, b) => priceNum(a.it.price) - priceNum(b.it.price));
-            if (sortBy === 'price-desc') rows = rows.slice().sort((a, b) => priceNum(b.it.price) - priceNum(a.it.price));
-            return rows;
-        }
-
-        // Toolbar: select all / deselect all + category (A–Z), seller (A–Z) and price filters.
-        function renderToolbar() {
-            const host = document.getElementById('toolbarHost');
-            const all = modeRows();
-            if (!all.length) { host.innerHTML = ''; return; }
-            const cats    = [...new Set(all.map(({ it }) => it.category || 'Other'))].sort((a, b) => a.localeCompare(b));
-            const sellers = [...new Set(all.map(({ it }) => it.seller || 'Vero Store'))].sort((a, b) => a.localeCompare(b));
-            const opt = (v, cur, lbl) => `<option value="${v}"${v === cur ? ' selected' : ''}>${lbl || v}</option>`;
-            const selCount = visibleRows().filter(r => selected.has(r.idx)).length;
-            host.innerHTML = `
-                <div class="cart-toolbar">
-                    <div class="ct-group">
-                        <button class="ct-btn" onclick="selectAll()">Select all</button>
-                        <button class="ct-btn" onclick="deselectAll()">Deselect all</button>
-                    </div>
-                    <div class="ct-filters">
-                        <div class="ct-field">
-                            <select class="ct-select" onchange="setFilterCat(this.value)">
-                                ${opt('all', filterCat, 'All categories')}${cats.map(c => opt(c, filterCat)).join('')}
-                            </select>
-                            <span class="ct-label">Category</span>
-                        </div>
-                        <div class="ct-field">
-                            <select class="ct-select" onchange="setFilterSeller(this.value)">
-                                ${opt('all', filterSeller, 'All sellers')}${sellers.map(s => opt(s, filterSeller)).join('')}
-                            </select>
-                            <span class="ct-label">Seller</span>
-                        </div>
-                        <div class="ct-field">
-                            <select class="ct-select" onchange="setSortBy(this.value)">
-                                ${opt('featured', sortBy, 'Featured')}${opt('price-asc', sortBy, 'Price: low to high')}${opt('price-desc', sortBy, 'Price: high to low')}
-                            </select>
-                            <span class="ct-label">Price</span>
-                        </div>
-                    </div>
-                    <span class="ct-count">${selCount} selected</span>
-                </div>`;
-        }
-
         function render() {
             const body = document.getElementById('cartBody');
             const host = document.getElementById('checkoutHost');
             const sub = document.getElementById('headSub');
 
-            renderToolbar();
+            // This cart = the items whose type matches the active toggle, and
+            // (when searching) whose name / seller / category match the query.
+            const term = (document.getElementById('listSearch')?.value || '').trim().toLowerCase();
+            const inMode = cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
+            renderToolbar(inMode);
+            let mine = term
+                ? inMode.filter(({ it }) => ((it.name || '') + ' ' + (it.seller || '') + ' ' + (it.category || '')).toLowerCase().includes(term))
+                : inMode;
+            if (filterCat !== 'all')    mine = mine.filter(({ it }) => (it.category || 'Other') === filterCat);
+            if (filterSeller !== 'all') mine = mine.filter(({ it }) => (it.seller || 'Vero Store') === filterSeller);
+            if (sortBy === 'price-asc')  mine = mine.slice().sort((a, b) => priceNum(a.it.price) - priceNum(b.it.price));
+            if (sortBy === 'price-desc') mine = mine.slice().sort((a, b) => priceNum(b.it.price) - priceNum(a.it.price));
+            const filtered = term || filterCat !== 'all' || filterSeller !== 'all';
 
-            // This cart = the items whose type matches the active toggle, after filters.
-            const mine = visibleRows();
-
-            if (!modeRows().length) {
-                body.innerHTML = `<div class="cart-empty">Your ${MODE} cart is empty — pieces you add from the feed appear here.</div>`;
-                host.innerHTML = '';
-                document.getElementById('headTotal').innerHTML = '';
-                document.getElementById('tickerHost').innerHTML = '';
-                sub.textContent = "The items you've gathered, ready to check out.";
-                return;
-            }
             if (!mine.length) {
-                body.innerHTML = `<div class="cart-empty">No items match these filters.</div>`;
+                body.innerHTML = filtered
+                    ? `<div class="cart-empty">${term ? `No items match “${term}”.` : 'No items match these filters.'}</div>`
+                    : `<div class="cart-empty">Your ${MODE} cart is empty — pieces you add from the feed appear here.</div>`;
                 host.innerHTML = '';
                 document.getElementById('headTotal').innerHTML = '';
-                document.getElementById('tickerHost').innerHTML = '';
+                if (!filtered) document.getElementById('tickerHost').innerHTML = '';
+                sub.textContent = "The items you've gathered, ready to check out.";
+                document.getElementById('selBar').classList.remove('show');
                 return;
             }
 
-            // Group the cart into product categories (Shirts, Shoes, Pants, Watches…),
-            // with the category headers themselves in alphabetical order.
+            // Group the cart into product categories (Shirts, Shoes, Pants, Watches…).
             const groups = new Map();
             mine.forEach(row => {
                 const c = row.it.category || 'Other';
                 if (!groups.has(c)) groups.set(c, []);
                 groups.get(c).push(row);
             });
-            const orderedCats = [...groups.keys()].sort((a, b) => a.localeCompare(b));
 
-            body.innerHTML = orderedCats.map(cat => {
-                const rows = groups.get(cat);
-                return `
+            body.innerHTML = [...groups.entries()].map(([cat, rows]) => `
                 <div class="cat-section">
-                    <div class="cart-grid">${rows.map(r => cartCardHTML(r.it, r.idx)).join('')}</div>
-                </div>`;
-            }).join('');
+                    <div class="cat-label"><b>${cat}</b><span>${rows.length} item${rows.length === 1 ? '' : 's'}</span></div>
+                    <div class="cart-grid">
+                        ${rows.map(r => cartCardHTML(r.it, r.idx)).join('')}
+                    </div>
+                </div>`).join('');
 
-            // Totals reflect the ticked selection when there is one, otherwise everything shown.
-            const chosen = mine.filter(r => selected.has(r.idx));
-            const forTotal = chosen.length ? chosen : mine;
-            const count = forTotal.reduce((s, { it }) => s + (it.qty || 1), 0);
-            const total = forTotal.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
-            sub.textContent = chosen.length
-                ? `${count} selected item${count === 1 ? '' : 's'} · ready to check out.`
-                : `${count} item${count === 1 ? '' : 's'} in your ${MODE} cart · ready to check out.`;
-            // The total lives on the auto-scrolling ticker (not the header), which keeps
-            // the title row clean and closed-up against the filters.
+            const count = mine.reduce((s, { it }) => s + (it.qty || 1), 0);
+            const total = mine.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
+            sub.textContent = `${count} item${count === 1 ? '' : 's'} in your ${MODE} cart · ready to check out.`;
+            // Total lives on the auto-rotating ticker (same as the regular cart),
+            // keeping the header row clean.
             document.getElementById('headTotal').innerHTML = '';
             const money = '₪' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             document.getElementById('tickerHost').innerHTML =
@@ -546,42 +646,47 @@ h3, h4, h5, h6, p,
                     <div class="cart-stat is-active"><span class="cs-num">${money}</span><span class="cs-lbl">Total</span></div>
                     <div class="cart-stat"><span class="cs-num">${count}</span><span class="cs-lbl">${count === 1 ? 'Item' : 'Items'}</span></div>
                  </div>`;
+
+            // Checkout pinned at the end, with the ticked items' count + sum beside it.
+            const chosen = mine.filter(({ idx }) => selected.has(idx));
+            const selCount = chosen.reduce((s, { it }) => s + (it.qty || 1), 0);
+            const selTotal = chosen.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
+            const selTotalStr = selTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const allSel = mine.length > 0 && chosen.length === mine.length;
             host.innerHTML = `
                 <div class="cart-actionbar">
-                    <button class="cab-cell cab-checkout" onclick="veroCheckout()">Checkout &#8594;</button>
+                    <button class="cab-cell cab-checkout" onclick="veroCheckout()"${selCount ? '' : ' disabled'}>Checkout &#8594;</button>
                     <div class="cab-cell cab-count">
-                        <span class="cab-num">${chosen.length}</span>
+                        <span class="cab-num">${selCount}</span>
                         <span class="cab-lbl">Selected</span>
                     </div>
-                    <button class="cab-cell cab-select" onclick="${allSel ? 'deselectAll()' : 'selectAll()'}">
+                    <button class="cab-cell cab-select" onclick="${allSel ? 'deselectAllVisible()' : 'selectAllVisible()'}">
                         ${allSel ? 'Clear' : 'Select all'}
                     </button>
                 </div>`;
-        }
 
-        // ---- Toolbar handlers ----
-        window.toggleSelect  = function (idx) { selected.has(idx) ? selected.delete(idx) : selected.add(idx); render(); };
-        window.selectAll     = function () { visibleRows().forEach(r => selected.add(r.idx)); render(); };
-        window.deselectAll   = function () { visibleRows().forEach(r => selected.delete(r.idx)); render(); };
-        window.setFilterCat    = function (v) { filterCat = v; render(); };
-        window.setFilterSeller = function (v) { filterSeller = v; render(); };
-        window.setSortBy       = function (v) { sortBy = v; render(); };
+            // Sticky summary popup — visible only while something is ticked.
+            document.getElementById('selBarCount').textContent = `${selCount} selected`;
+            document.getElementById('selBarTotal').innerHTML = `₪${selTotalStr}`;
+            document.getElementById('selBar').classList.toggle('show', selCount > 0);
+        }
 
         // Remove keeps the site's own cart storage in sync (demo items aren't saved).
         window.removeItem = function (idx) {
             cart.splice(idx, 1);
-            selected.clear();   // indices shift after a splice — start selection fresh
             if (!DEMO) localStorage.setItem('vero_cart', JSON.stringify(cart));
+            // Indices shifted — resync the selection to the remaining items.
+            selected.clear();
+            cart.forEach((_, i) => selected.add(i));
             render();
         };
 
         // Checkout — turns the active cart into conversations with each seller,
         // written to the same vero_chats store the Chats page reads, then opens it.
         window.veroCheckout = function () {
-            const visible = visibleRows();
-            const chosen = visible.filter(r => selected.has(r.idx));
-            const mine = chosen.length ? chosen : visible;
+            // Only the ticked items go through checkout.
+            const mine = cart.map((it, idx) => ({ it, idx }))
+                .filter(({ it, idx }) => typeOf(it) === MODE && selected.has(idx));
             if (!mine.length) return;
 
             const store = readJSON('vero_chats', {});
@@ -594,11 +699,19 @@ h3, h4, h5, h6, p,
             });
             localStorage.setItem('vero_chats', JSON.stringify(store));
 
+            // Remember which sellers we just messaged, so the Chats page can surface
+            // them first and mark them available (green dot) right after checkout.
+            const recentSellers = [...new Set(mine.map(({ it }) => it.seller || 'Vero Store'))];
+            localStorage.setItem('vero_checkout_recent',
+                JSON.stringify({ sellers: recentSellers, at: now }));
+
+            // Clear the purchased items from the real cart (demo items aren't saved).
             if (!DEMO) {
                 mine.map(m => m.idx).sort((a, b) => b - a).forEach(i => cart.splice(i, 1));
                 localStorage.setItem('vero_cart', JSON.stringify(cart));
             }
 
+            // Slide out and open the Chats page to show the synced conversations.
             const cover = document.createElement('div');
             cover.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:60;transform:translateY(100%);transition:transform .6s cubic-bezier(.76,0,.24,1)';
             document.body.appendChild(cover);
@@ -606,33 +719,30 @@ h3, h4, h5, h6, p,
             setTimeout(() => { window.location.href = 'chats.html'; }, 640);
         };
 
-        // Filters live behind the header button, in a bottom sheet.
-        window.openFilters = function () { document.getElementById('filterOverlay').classList.add('show'); };
-        window.closeFilters = function () { document.getElementById('filterOverlay').classList.remove('show'); };
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeFilters(); });
-
-        // Share the cart (native share where available, otherwise copy the link).
-        window.shareCart = function () {
-            const url = location.href;
-            const text = 'My moravchick cart';
-            if (navigator.share) { navigator.share({ title: 'moravchick', text, url }).catch(() => {}); return; }
-            if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
-        };
-
         // Clothing / Art toggle — two carts, built the same way.
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 MODE = btn.dataset.mode;
-                // Fresh filters + selection per cart.
-                filterCat = 'all'; filterSeller = 'all'; sortBy = 'featured'; selected.clear();
+                filterCat = 'all'; filterSeller = 'all'; sortBy = 'featured';
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
                 render();
             });
         });
 
+        // Reflect the auto-chosen tab in the toggle UI before the first render.
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === MODE));
+
+        // Live search: filter the cart as you type.
+        (function () {
+            const si = document.getElementById('listSearch');
+            if (!si) return;
+            let t;
+            si.addEventListener('input', () => { clearTimeout(t); t = setTimeout(render, 110); });
+        })();
+
         render();
 
-        // Rotate the cart-summary stat every 4s (like the profile's stat slider).
+        // Rotate the cart-summary stat every 4s (same as the regular cart).
         setInterval(function () {
             const slides = document.querySelectorAll('#cartTicker .cart-stat');
             if (slides.length < 2) return;
@@ -642,15 +752,17 @@ h3, h4, h5, h6, p,
             slides[(cur + 1) % slides.length].classList.add('is-active');
         }, 4000);
 
-        // Exit = same upward white-cover wipe as the entry animation.
-        const back = document.querySelector('.back-btn');
+        // Exit mirrors the entry: the image holds static while the data slides
+        // back out to the left, then the personal area loads.
+        const back = document.querySelector('.back');
         if (back) back.addEventListener('click', (e) => {
             e.preventDefault();
-            const cover = document.createElement('div');
-            cover.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:60;transform:translateY(100%);transition:transform .6s cubic-bezier(.76,0,.24,1)';
-            document.body.appendChild(cover);
-            requestAnimationFrame(() => requestAnimationFrame(() => { cover.style.transform = 'translateY(0)'; }));
-            setTimeout(() => { window.location.href = back.getAttribute('href'); }, 620);
+            const wrap = document.querySelector('.wrap');
+            wrap.style.animation = 'none';
+            void wrap.offsetWidth;
+            wrap.style.transition = 'opacity 0.5s ease';
+            wrap.style.opacity = '0';
+            setTimeout(() => { window.location.href = back.getAttribute('href'); }, 560);
         });
     </script>
     <script src="vero-editor.js"></script>
@@ -677,5 +789,6 @@ h3, h4, h5, h6, p,
     </script>
     <script src="assets/didone-hairline.js"></script>
     <script src="nav-icons.js" defer></script>
+    <script src="reveal.js" defer></script>
 </body>
 </html>
