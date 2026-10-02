@@ -12,8 +12,10 @@
    Height, padding and icon sizes match the product page's top bar
    (product.html .topbar): 64px tall, 16px top / 14px side inset,
    42px icon buttons with 24px line icons.
-   Behaviour (history back, delegating to a page's own exit control)
-   lives in page-header.js.
+   Pages that open on a hero image / video add data-hero="<selector>" and
+   the ph-overlay (+ ph-float) classes — see the overlay block below.
+   Behaviour (history back, delegating to a page's own exit control, the
+   overlay → sticky switch) lives in page-header.js.
 ------------------------------------------------------------------ */
 @import url('fonts/aharoni.css');
 
@@ -51,6 +53,33 @@
     width: 24px; height: 24px; stroke: currentColor; fill: none;
     stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round;
 }
+
+/* ---- Over a hero image / video (like the product page's top bar) ----
+   .ph-overlay   transparent, white title + icons, while over the media.
+   .ph-float     taken out of the flow so the media starts at the very top.
+   .ph-stuck     added by page-header.js once the media has scrolled past
+                 the header: it becomes a solid white sticky header. */
+.page-header.ph-overlay {
+    background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none;
+    border-bottom: 1px solid transparent;
+    transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.page-header.ph-float { position: fixed; top: 0; left: 0; right: 0; width: auto; }
+.page-header.ph-overlay .ph-name,
+.page-header.ph-overlay .ph-back,
+.page-header.ph-overlay .ph-actions .tb-ico { color: #fff; transition: color 0.3s ease; }
+.page-header.ph-overlay.ph-stuck {
+    background: rgba(255,255,255,0.86);
+    -webkit-backdrop-filter: saturate(180%) blur(14px); backdrop-filter: saturate(180%) blur(14px);
+    border-bottom-color: #e8e5df; box-shadow: 0 2px 14px rgba(0,0,0,0.05);
+}
+.page-header.ph-overlay.ph-stuck .ph-name { color: #1b1916; }
+.page-header.ph-overlay.ph-stuck .ph-back,
+.page-header.ph-overlay.ph-stuck .ph-actions .tb-ico { color: #16150f; }
+
+/* header.js creates the feed's site header (logo / menu) when a page loads it
+   without a slot; a page with this header never shows that one too. */
+html:has(.page-header) #siteHeader { display: none !important; }
 
 /* Pages shown inside the personal-area hub (?embed=1) use the hub's title. */
 html.embed .page-header { display: none !important; }
