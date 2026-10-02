@@ -130,25 +130,42 @@
 
     // ---- Values and dots wear a patch of the surface the chart sits on, so they
     //      read clearly over the lines. Found once per chart after it lands. ----
+    function opaque(c) { return c && c !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(c); }
+    // The colour actually showing behind the chart: the first painted surface
+    // under its lower part on screen (a page can paint its backdrop with a fixed
+    // layer that isn't an ancestor). Null while the chart isn't on screen yet.
     function surfaceOf(el) {
-        for (var e = el.parentElement; e; e = e.parentElement) {
-            var c = getComputedStyle(e).backgroundColor;
-            if (c && c !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(c)) return c;
+        var r = el.getBoundingClientRect();
+        if (!r.width || !r.height || !document.elementsFromPoint) return null;
+        var x = Math.min(innerWidth - 1, Math.max(0, r.left + r.width / 2));
+        var y = Math.min(innerHeight - 1, Math.max(0, r.top + r.height * 0.95));
+        var stack = document.elementsFromPoint(x, y);
+        for (var i = 0; i < stack.length; i++) {
+            if (el.contains(stack[i])) continue;
+            var c = getComputedStyle(stack[i]).backgroundColor;
+            if (opaque(c)) return c;
         }
         return '#fff';
     }
-    function paint(root) {
-        (root.querySelectorAll ? root : document).querySelectorAll('.vlc:not([data-bg])').forEach(function (c) {
-            c.style.setProperty('--vlc-bg', surfaceOf(c));
+    function paint() {
+        document.querySelectorAll('.vlc:not([data-bg])').forEach(function (c) {
+            var bg = surfaceOf(c);
+            if (!bg) return;                     // not on screen yet — try again later
+            c.style.setProperty('--vlc-bg', bg);
             c.setAttribute('data-bg', '1');
         });
     }
+    var queued = false;
+    function schedule() { if (queued) return; queued = true; requestAnimationFrame(function () { queued = false; paint(); }); }
     function bootPaint() {
-        paint(document);
+        schedule();
         try {
-            new MutationObserver(function () { paint(document); })
-                .observe(document.body, { childList: true, subtree: true });
+            new MutationObserver(schedule).observe(document.body,
+                { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
         } catch (e) {}
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', schedule);
+        window.addEventListener('load', schedule);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootPaint);
     else bootPaint();
