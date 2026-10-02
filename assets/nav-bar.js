@@ -25,7 +25,7 @@
     // Give a button one icon element and one label element.
     function normalise(btn) {
         if (btn.dataset.nbDone) return true;
-        var icon = btn.querySelector(':scope > .vni-ic, :scope > svg, :scope > .fn-c');
+        var icon = btn.querySelector(':scope > .vni-ic, :scope > svg');
         if (!icon) return false;                 // icons not added yet — try again later
         var label = null;
         Array.prototype.slice.call(btn.childNodes).forEach(function (n) {
