@@ -9,7 +9,7 @@
      • otherwise history.back() when there is history, else the href.
 
    On pages that open on a hero image / video it also switches the header
-   from transparent to a solid sticky header as soon as the page scrolls.
+   from transparent to a solid sticky header once the media is scrolled past.
 ------------------------------------------------------------------ */
 (function () {
     document.addEventListener('click', function (e) {
@@ -23,27 +23,17 @@
     });
 
     /* Header over a hero image / video (data-hero="<selector>"): transparent
-       at the top of the page, a solid sticky header as soon as the page is
-       scrolled (past 24px — the same threshold as the product page's top
-       bar). data-hero="fixed" = a full-screen backdrop that never scrolls
-       away, so the header simply stays transparent. Pages that scroll an
-       inner container (the seller area) are measured on that container. */
+       while the media is under it, a solid sticky header once the media has
+       scrolled past. data-hero="fixed" = a full-screen backdrop that never
+       scrolls away, so the header simply stays transparent. Scroll events are
+       captured so pages that scroll an inner container work too. */
     function initOverlay() {
         var hdr = document.querySelector('.page-header.ph-overlay[data-hero]');
         if (!hdr || hdr.getAttribute('data-hero') === 'fixed') return;
         var hero = document.querySelector(hdr.getAttribute('data-hero'));
         if (!hero) { hdr.classList.add('ph-stuck'); return; }   // no media: never leave white text on white
-        // The element that scrolls the hero: its nearest scrollable ancestor, else the page.
-        var scroller = hero.parentElement;
-        while (scroller && scroller !== document.body && scroller !== document.documentElement) {
-            var oy = getComputedStyle(scroller).overflowY;
-            if ((oy === 'auto' || oy === 'scroll') && scroller.scrollHeight > scroller.clientHeight) break;
-            scroller = scroller.parentElement;
-        }
-        var inner = scroller && scroller !== document.body && scroller !== document.documentElement;
         var update = function () {
-            var y = inner ? scroller.scrollTop : (window.scrollY || document.documentElement.scrollTop);
-            hdr.classList.toggle('ph-stuck', y > 24);
+            hdr.classList.toggle('ph-stuck', hero.getBoundingClientRect().bottom <= hdr.offsetHeight);
         };
         document.addEventListener('scroll', update, { passive: true, capture: true });
         window.addEventListener('resize', update);
