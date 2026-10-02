@@ -1,0 +1,71 @@
+/* ------------------------------------------------------------------
+   moravchick — one line chart for every time-series graph on the site
+   (line-chart.js). The line runs from one edge of the screen to the
+   other; every change of trend gets a dot with its value; tapping /
+   hovering shows the value at that point.
+------------------------------------------------------------------ */
+.vlc {
+    position: relative; display: block; box-sizing: border-box;
+    /* Edge to edge: break out of the card's side padding to the screen's sides. */
+    width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
+    height: var(--graph-h, 300px);
+    -webkit-tap-highlight-color: transparent; touch-action: pan-y;
+}
+.vlc-svg {
+    position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible;
+    /* The line draws in from left to right. */
+    animation: vlcDraw 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+@keyframes vlcDraw { from { clip-path: inset(-10% 100% -10% 0); } to { clip-path: inset(-10% -1% -10% 0); } }
+.vlc-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.vlc-base { stroke: #e8e5df; stroke-width: 1; }
+
+/* Trend-change markers: a dot, and its value above a peak / below a dip. */
+.vlc-pt {
+    position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%;
+    background: #fff; border: 2px solid currentColor; box-sizing: border-box;
+    opacity: 0; animation: vlcIn 0.4s ease forwards;
+}
+.vlc-val {
+    position: absolute; transform: translate(-50%, -100%); margin-top: -9px;
+    font-size: 10px; letter-spacing: 0.4px; line-height: 1; white-space: nowrap;
+    color: #16150f; font-variant-numeric: tabular-nums;
+    opacity: 0; animation: vlcIn 0.4s ease forwards;
+}
+.vlc-val.dip { transform: translate(-50%, 0); margin-top: 9px; }
+.vlc-val.at-l { transform: translate(-4px, -100%); }  .vlc-val.dip.at-l { transform: translate(-4px, 0); }
+.vlc-val.at-r { transform: translate(calc(-100% + 4px), -100%); }  .vlc-val.dip.at-r { transform: translate(calc(-100% + 4px), 0); }
+@keyframes vlcIn { to { opacity: 1; } }
+
+/* Hover / tap: a hairline at the nearest point, a dot on the line, the value. */
+.vlc-hover { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.15s ease; }
+.vlc.is-hover .vlc-hover { opacity: 1; }
+.vlc-vline { position: absolute; top: 0; bottom: 0; width: 1px; margin-left: -0.5px; background: rgba(22,21,15,0.22); }
+.vlc-hdot {
+    position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
+    background: currentColor; box-shadow: 0 0 0 2px #fff;
+}
+.vlc-tip {
+    position: absolute; top: 4px; transform: translateX(-50%);
+    background: #16150f; color: #fff; border-radius: 6px; padding: 5px 8px;
+    font-size: 10px; letter-spacing: 0.4px; line-height: 1.25; white-space: nowrap; text-align: center;
+}
+.vlc-tip small { display: block; color: rgba(255,255,255,0.65); font-size: 9px; }
+
+/* Date row under a chart: edge to edge too, so labels sit under their points. */
+.lc-x, .vlc-x {
+    width: 100vw !important; margin-left: calc(50% - 50vw) !important; margin-right: calc(50% - 50vw) !important;
+    padding: 0 6px !important; box-sizing: border-box; display: flex !important; justify-content: space-between !important;
+}
+.vlc-x { margin-top: 8px; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #a29c90; }
+
+@media (prefers-reduced-motion: reduce) {
+    .vlc-svg { animation: none; }
+    .vlc-pt, .vlc-val { animation: none; opacity: 1; }
+}
+
+/* Hosts that used to lay bars out in a row now just hold the chart. */
+.bars:has(> .vlc), .chart:has(> .vlc) { display: block !important; height: auto !important; }
+
+/* Labels at their natural width, spread edge to edge, so each sits under its point. */
+.lc-x > span, .vlc-x > span { flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; text-align: center; }

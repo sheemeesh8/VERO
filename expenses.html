@@ -240,6 +240,9 @@ h3, h4, h5, h6, p,
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Aharoni CLM','Segoe UI',sans-serif !important;}</style>
     <link rel="stylesheet" href="assets/page-header.css">
     <script src="assets/page-header.js"></script>
+    <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
+    <link rel="stylesheet" href="assets/line-chart.css">
+    <script src="assets/line-chart.js"></script>
 </head>
 <body>
     <!-- Shared page header (assets/page-header.css): title left, back arrow right. -->
@@ -498,20 +501,9 @@ h3, h4, h5, h6, p,
         }
         function renderChart() {
             const data = buckets(chartMode);
-            const max = Math.max(1, ...data.map(b => b.total));
             const chart = document.getElementById('chart');
-            chart.innerHTML = data.map((b, i) => {
-                const isCurrent = i === data.length - 1;
-                const h = Math.round((b.total / max) * 100);
-                return `<div class="bar-col${isCurrent ? ' current' : ''}">
-                    <div class="bar-val">${b.total ? nis(b.total) : ''}</div>
-                    <div class="bar${isCurrent ? ' current' : ''}" data-h="${h}" style="height:0"></div>
-                    <div class="bar-label">${b.label}</div>
-                </div>`;
-            }).join('');
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-                chart.querySelectorAll('.bar').forEach(b => { b.style.height = (b.dataset.h || 0) + '%'; });
-            }));
+            chart.innerHTML = veroLineChart(data.map(b => b.total),
+                { format: nis, labels: data.map(b => b.label), axis: data.map(b => b.label) });
             const noteMap = { weekly: 'Last 8 weeks', monthly: 'Last 6 months', yearly: 'Last 5 years' };
             document.getElementById('monthNote').textContent = noteMap[chartMode];
             document.querySelectorAll('#modeSel .mode').forEach(m => m.classList.toggle('on', m.dataset.mode === chartMode));

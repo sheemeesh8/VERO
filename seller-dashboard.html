@@ -473,6 +473,9 @@ h3, h4, h5, h6, p,
 <link rel="stylesheet" href="product-card.css">
     <link rel="stylesheet" href="assets/page-header.css">
     <script src="assets/page-header.js"></script>
+    <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
+    <link rel="stylesheet" href="assets/line-chart.css">
+    <script src="assets/line-chart.js"></script>
 </head>
 <body>
     <div class="side-image" aria-hidden="true"></div>
@@ -811,35 +814,15 @@ h3, h4, h5, h6, p,
                 '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.25" ' +
                 'vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
         }
-        const xLabels = labels => labels.slice().reverse().map(l => '<span>' + l + '</span>').join('');
+        // X-axis labels, oldest → newest (left → right), like the line.
+        const xLabels = labels => labels.map(l => '<span>' + l + '</span>').join('');
         // Growth line (oldest → newest, left → right): a line that rises and falls
         // with the monthly trend, with a soft area fill underneath.
         function growthLine(vals) {
-            const W = 100, H = 40, n = vals.length;
-            const max = Math.max(1, ...vals), min = Math.min(0, ...vals);
-            const xx = i => n <= 1 ? 0 : (i / (n - 1)) * W;
-            const yy = v => H - ((v - min) / ((max - min) || 1)) * H;
-            const pts = vals.map((v, i) => xx(i).toFixed(2) + ',' + yy(v).toFixed(2));
-            const line = 'M' + pts.join(' L');
-            const area = line + ' L' + W + ',' + H + ' L0,' + H + ' Z';
-            const id = 'rg' + Math.random().toString(36).slice(2, 7);
-            return '<svg class="lc" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
-                '<defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1">' +
-                '<stop offset="0" stop-color="#111" stop-opacity="0.16"/><stop offset="1" stop-color="#111" stop-opacity="0"/></linearGradient></defs>' +
-                '<path d="' + area + '" fill="url(#' + id + ')"/>' +
-                '<path d="' + line + '" fill="none" stroke="#111" stroke-width="1.5" ' +
-                'vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+            return veroLineChart(vals, { format: nis });
         }
-        // Fine-line column chart (newest-on-left, matching xLabels) for monthly series.
-        const fineCols = (vals, color) => {
-            const v = vals.slice().reverse(), max = Math.max(1, ...v);
-            const gap = v.length <= 7 ? 7 : v.length <= 31 ? 3 : v.length <= 90 ? 1 : 0;
-            return '<div class="fl-row" style="height:var(--graph-h);gap:' + gap + 'px">' +
-                v.map(val => val <= 0
-                    ? '<span class="col"><i class="ln empty" style="height:14px" title="0"></i></span>'
-                    : '<span class="col"><i class="ln" style="height:' + Math.max(8, Math.round(val / max * 100)) +
-                    '%;background:' + color + '" title="' + val + '"></i></span>').join('') + '</div>';
-        };
+        // Monthly series as a line, oldest → newest (left → right).
+        const fineCols = (vals, color, fmt) => veroLineChart(vals, { color: color, format: fmt });
         const trendPill = (el, cur, prev) => {
             if (!el) return;
             if (prev <= 0) { el.textContent = cur > 0 ? '▲ New' : '—'; if (cur > 0) el.classList.add('up'); return; }
@@ -1115,21 +1098,7 @@ h3, h4, h5, h6, p,
                 views: { end: storeViews, color: '#111',    type: 'col',  seedW: 41, seedM: 42, seedY: 43, chart: 'viewsChart', x: 'viewsX', trend: 'viewsTrend' },
             };
             // A rising line (oldest → newest, left → right) with a soft area fill.
-            const lineSVG = (vals, color) => {
-                const W = 100, H = 40, n = vals.length;
-                const max = Math.max(1, ...vals), min = Math.min(0, ...vals);
-                const xx = i => n <= 1 ? 0 : (i / (n - 1)) * W;
-                const yy = v => H - ((v - min) / ((max - min) || 1)) * H;
-                const pts = vals.map((v, i) => xx(i).toFixed(2) + ',' + yy(v).toFixed(2));
-                const line = 'M' + pts.join(' L'), area = line + ' L' + W + ',' + H + ' L0,' + H + ' Z';
-                const id = 'gl' + Math.random().toString(36).slice(2, 7);
-                return '<svg class="lc" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
-                    '<defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1">' +
-                    '<stop offset="0" stop-color="' + color + '" stop-opacity="0.18"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
-                    '<path d="' + area + '" fill="url(#' + id + ')"/>' +
-                    '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.5" ' +
-                    'vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
-            };
+            const lineSVG = (vals, color) => veroLineChart(vals, { color: color });
             const nFor = r => r === 'week' ? 7 : r === 'year' ? 12 : 30;
             const labelsFor = r => {
                 const now = new Date(), out = [];
@@ -1142,8 +1111,8 @@ h3, h4, h5, h6, p,
                 const c = cfg[which];
                 const seed = range === 'week' ? c.seedW : range === 'year' ? c.seedY : c.seedM;
                 const series = growthSeries(c.end, nFor(range), seed);
-                // Line runs oldest→newest (left→right); columns run newest→left.
-                const labels = c.type === 'line' ? labelsFor(range).slice().reverse() : labelsFor(range);
+                // Every chart runs oldest → newest (left → right).
+                const labels = labelsFor(range).slice().reverse();
                 document.getElementById(c.chart).innerHTML = c.type === 'line' ? lineSVG(series, c.color) : fineCols(series, c.color);
                 document.getElementById(c.x).innerHTML = labels.map(l => '<span>' + l + '</span>').join('');
                 const tp = document.getElementById(c.trend); if (tp) { tp.className = 'trend-pill'; trendPill(tp, series[series.length - 1], series[series.length - 2]); }
@@ -1636,17 +1605,8 @@ h3, h4, h5, h6, p,
             // Deterministic 0..1 from a seed, so the demo series is stable across reloads.
             var seed = function (i) { var x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
 
-            // Fine-line chart: one hairline column per day, plus a sparse axis row.
-            function fineLine(vals) {
-                var max = Math.max.apply(null, [1].concat(vals)), n = vals.length;
-                var gap = n <= 7 ? 7 : n <= 31 ? 3 : n <= 90 ? 1 : 0;
-                var lns = vals.map(function (val) {
-                    if (val <= 0) return '<span class="col"><i class="ln empty" style="height:14px" title="₪0"></i></span>';
-                    var h = Math.max(8, Math.round(val / max * 100));
-                    return '<span class="col"><i class="ln" style="height:' + h + '%" title="' + nis(val) + '"></i></span>';
-                }).join('');
-                return '<div class="fl-row" style="gap:' + gap + 'px">' + lns + '</div>';
-            }
+            // The range's daily totals as a line, oldest → newest.
+            function fineLine(vals) { return veroLineChart(vals, { format: nis }); }
 
             // Build one daily bucket per day in the range (oldest → newest, today last).
             // Week = 7 columns, Month = the current month's length, Year = 365.
