@@ -258,12 +258,6 @@
       .head-row { flex-direction: column; align-items: center; text-align: center; gap: 16px; }
       .head-total { margin-left: 0 !important; }
       .head-sub { text-align: center; }
-
-      /* Wishlist: everything aligned to the left — title, switch, description,
-         and the total / item count on the summary line. */
-      .head-row { align-items: flex-start; text-align: left; }
-      .head-sub { text-align: left; }
-      .cart-stat { flex-direction: row; justify-content: flex-start; gap: 14px; }
     </style>
 <style id="vero-global-type">
 /* VERO global typography: main titles in Bodoni, sub-headings + descriptions in serif.
@@ -278,6 +272,61 @@ h3, h4, h5, h6, p,
 }
 </style>
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Aharoni CLM','Segoe UI',sans-serif !important;}</style>
+    <style id="list-header-style">
+        /* Shared cart / wishlist header: round back button, page name, and the
+           search / filters / share icons, with the description + Clothing / Art
+           switch on one line beneath it. */
+        html.embed .sticky-head { display: none !important; }
+        .wrap { padding-top: 14px; }
+        .sticky-head { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 16px; padding: calc(env(safe-area-inset-top, 0px) + 54px) 20px 20px; background: rgba(255,255,255,0.94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+        .sh-back { width: 44px; height: 44px; border: 1px solid #e2e0da; border-radius: 50%; background: none; display: grid; place-items: center; cursor: pointer; color: #111; flex: none; transition: background 0.2s, color 0.2s, border-color 0.2s; }
+        .sh-back svg { width: 22px; height: 22px; }
+        .sh-back:hover { background: #111; color: #fff; border-color: #111; }
+        .sh-title { font-size: 22px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; color: #1b1916; }
+        .sticky-head .sh-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+        .sticky-head .sh-actions .tb-ico { width: 40px; height: 40px; border: none; background: none; cursor: pointer;
+            display: grid; place-items: center; color: #111; padding: 0; transition: opacity 0.2s; }
+        .sticky-head .sh-actions .tb-ico:hover { opacity: 0.6; }
+        .sticky-head .sh-actions .tb-ico.on { color: #EB2323; }
+        .sticky-head .sh-actions .tb-ico svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+        /* Inline search field that expands within the header row (replacing the title). */
+        .sh-search-wrap { flex: 1 1 auto; min-width: 0; position: relative; display: none; }
+        .sticky-head.searching .sh-search-wrap { display: block; }
+        .sticky-head.searching .sh-title { display: none; }
+        .sh-search-wrap input { width: 100%; height: 40px; border: none; border-bottom: 1px solid #d8d5cd;
+            background: transparent; padding: 0 8px 0 34px; font-size: 15px; color: #1c1c1c; font-family: inherit;
+            letter-spacing: 0.3px; outline: none; transition: border-color 0.2s; }
+        .sh-search-wrap input:focus { border-bottom-color: #1c1c1c; }
+        .sh-search-wrap input::placeholder { color: #a8a49a; }
+        .sh-search-wrap svg { position: absolute; top: 50%; left: 6px; transform: translateY(-50%);
+            width: 18px; height: 18px; stroke: #a8a49a; fill: none; stroke-width: 1.25; }
+
+        /* Description sits on one line with the Clothing / Art toggle beside it. */
+        .wl-desc-row { display: flex !important; flex-direction: row !important; align-items: center !important;
+            justify-content: space-between; gap: 16px; flex-wrap: nowrap; margin-top: 4px; }
+        .wl-desc-row .head-sub { display: block !important; margin-top: 0; flex: 1 1 58%; min-width: 0;
+            font-size: 14.5px; line-height: 1.5; color: #6b6b66; letter-spacing: 0.2px; text-align: center; }
+        .wl-desc-row .mode-toggle { flex: none; margin-left: 0 !important; }
+
+        /* Filters bottom-sheet. */
+        .cart-sheet-overlay { position: fixed; inset: 0; background: rgba(20,18,14,0.4);
+            display: none; align-items: flex-end; justify-content: center; z-index: 300; }
+        .cart-sheet-overlay.show { display: flex; }
+        .cart-sheet { width: 100%; max-width: 560px; background: #fff; border-radius: 20px 20px 0 0;
+            padding: 22px 24px calc(28px + env(safe-area-inset-bottom,0px));
+            transform: translateY(100%); animation: cartSheetRise 0.34s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+        @keyframes cartSheetRise { to { transform: translateY(0); } }
+        .cart-sheet .sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: #e6e1d8; margin: 0 auto 18px; }
+        .cart-sheet h3 { font-size: 14px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
+        .ct-filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .ct-field { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+        .ct-label { font-size: 9.17px; letter-spacing: 2px; text-transform: uppercase; color: #a8a399; text-align: center; }
+        .cart-sheet select.ct-select {
+            font-family: inherit; font-size: 11px; color: #16150f; background: transparent;
+            border: 1px solid #d8d3ca !important; border-radius: 999px; padding: 9px 16px; cursor: pointer;
+            transition: border-color 0.25s; width: 100%; text-align: center; }
+        .cart-sheet select.ct-select:hover, .cart-sheet select.ct-select:focus { outline: none; border-color: #16150f !important; }
+    </style>
 </head>
 <body>
     <!-- Embedded inside profile.html (?embed=1): the page title + back button are
@@ -301,11 +350,33 @@ h3, h4, h5, h6, p,
     </style>
     <div class="page-cover"></div>
     <div class="side-image"></div>
-    <a class="back" href="profile.html">&#8592; Back</a>
+    <header class="sticky-head">
+        <button class="sh-back" type="button" aria-label="Back" onclick="(window.history.length > 1 ? window.history.back() : (location.href='profile.html'))">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="sh-title">Wishlist</span>
+        <div class="sh-search-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="search" id="listSearch" placeholder="Search this wishlist…" autocomplete="off" aria-label="Search this wishlist">
+        </div>
+        <div class="sh-actions">
+            <button class="tb-ico sh-search-btn" onclick="toggleListSearch(this)" aria-label="Search">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <button class="tb-ico" onclick="openFilters()" aria-label="Filters">
+                <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
+            </button>
+            <button class="tb-ico" onclick="shareList()" aria-label="Share">
+                <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+            </button>
+        </div>
+    </header>
 
     <div class="wrap">
-        <div class="head-row">
-            <h1 class="head-title">My Wishlist</h1>
+        <!-- Description, with the Clothing / Art toggle beside it. -->
+        <div class="head-row wl-desc-row">
+            <h1 class="head-title" style="display:none">My Wishlist</h1>
+            <p class="head-sub" id="headSub">The pieces you keep coming back to — saved right here for you.</p>
             <div class="mode-toggle">
                 <button class="mode-switch" id="modeSwitch" type="button" aria-label="Switch Clothing / Art"></button>
                 <div class="mode-labels">
@@ -313,27 +384,10 @@ h3, h4, h5, h6, p,
                     <button class="mode-btn" data-mode="art">Art</button>
                 </div>
             </div>
-            <div class="head-total" id="headTotal"></div>
+            <div class="head-total" id="headTotal" hidden></div>
         </div>
-        <p class="head-sub" id="headSub">The pieces you keep coming back to — saved right here for you.</p>
 
         <div id="tickerHost"></div>
-        <style>
-            .list-search { position: relative; margin: 22px 0 6px; }
-            .list-search input {
-                width: 100%; height: 46px; border: none; border-bottom: 1px solid #d8d5cd;
-                background: transparent; padding: 0 8px 0 34px; font-size: 14px; color: #1c1c1c;
-                font-family: inherit; letter-spacing: 0.3px; outline: none; transition: border-color 0.2s;
-            }
-            .list-search input:focus { border-bottom-color: #1c1c1c; }
-            .list-search input::placeholder { color: #a8a49a; }
-            .list-search svg { position: absolute; top: 50%; left: 6px; transform: translateY(-50%);
-                width: 18px; height: 18px; stroke: #a8a49a; fill: none; stroke-width: 1.25; }
-        </style>
-        <div class="list-search">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="search" id="listSearch" placeholder="Search this wishlist…" autocomplete="off" aria-label="Search this wishlist">
-        </div>
         <div id="cartBody"></div>
         <div id="checkoutHost"></div>
     </div>
@@ -343,6 +397,36 @@ h3, h4, h5, h6, p,
         <span class="sel-count" id="selBarCount"></span>
         <span class="sel-total" id="selBarTotal"></span>
     </div>
+
+    <!-- Filters bottom-sheet. -->
+    <div class="cart-sheet-overlay" id="filterOverlay" onclick="if(event.target===this)closeFilters()">
+        <div class="cart-sheet">
+            <div class="sheet-grip"></div>
+            <h3>Filters</h3>
+            <div id="toolbarHost"></div>
+        </div>
+    </div>
+    <script>
+        // The search lives in the header; tapping the icon reveals an inline search field.
+        function toggleListSearch(btn) {
+            var head = document.querySelector('.sticky-head');
+            if (!head) return;
+            var open = head.classList.toggle('searching');
+            if (btn) btn.classList.toggle('on', open);
+            var input = document.getElementById('listSearch');
+            if (open) { if (input) input.focus(); }
+            else if (input && input.value) { input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
+        }
+        window.openFilters = function () { document.getElementById('filterOverlay').classList.add('show'); };
+        window.closeFilters = function () { document.getElementById('filterOverlay').classList.remove('show'); };
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') window.closeFilters(); });
+        // Share (native share where available, otherwise copy the link).
+        window.shareList = function () {
+            var url = location.href;
+            if (navigator.share) { navigator.share({ title: 'moravchick', text: 'My moravchick wishlist', url: url }).catch(function(){}); return; }
+            if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function(){});
+        };
+    </script>
 
     <script>
         const readJSON = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch (e) { return fb; } };
@@ -362,6 +446,43 @@ h3, h4, h5, h6, p,
         // while the personal-area peek counts items of the other type.
         let MODE = cart.some(it => typeOf(it) === 'clothing') ? 'clothing'
                  : cart.some(it => typeOf(it) === 'art') ? 'art' : 'clothing';
+
+        // Filter / sort state behind the header's Filters button.
+        let filterCat = 'all';      // category filter
+        let filterSeller = 'all';   // seller filter
+        let sortBy = 'featured';    // featured | price-asc | price-desc
+        window.setFilterCat    = function (v) { filterCat = v; render(); };
+        window.setFilterSeller = function (v) { filterSeller = v; render(); };
+        window.setSortBy       = function (v) { sortBy = v; render(); };
+
+        // Category (A–Z), seller (A–Z) and price controls, inside the filters sheet.
+        function renderToolbar(rows) {
+            const host = document.getElementById('toolbarHost');
+            const cats    = [...new Set(rows.map(({ it }) => it.category || 'Other'))].sort((a, b) => a.localeCompare(b));
+            const sellers = [...new Set(rows.map(({ it }) => it.seller || 'Vero Store'))].sort((a, b) => a.localeCompare(b));
+            const opt = (v, cur, lbl) => `<option value="${v}"${v === cur ? ' selected' : ''}>${lbl || v}</option>`;
+            host.innerHTML = `
+                <div class="ct-filters">
+                    <div class="ct-field">
+                        <select class="ct-select" onchange="setFilterCat(this.value)">
+                            ${opt('all', filterCat, 'All categories')}${cats.map(c => opt(c, filterCat)).join('')}
+                        </select>
+                        <span class="ct-label">Category</span>
+                    </div>
+                    <div class="ct-field">
+                        <select class="ct-select" onchange="setFilterSeller(this.value)">
+                            ${opt('all', filterSeller, 'All sellers')}${sellers.map(s => opt(s, filterSeller)).join('')}
+                        </select>
+                        <span class="ct-label">Seller</span>
+                    </div>
+                    <div class="ct-field">
+                        <select class="ct-select" onchange="setSortBy(this.value)">
+                            ${opt('featured', sortBy, 'Featured')}${opt('price-asc', sortBy, 'Price: low to high')}${opt('price-desc', sortBy, 'Price: high to low')}
+                        </select>
+                        <span class="ct-label">Price</span>
+                    </div>
+                </div>`;
+        }
 
         // Which cart items (by index) are ticked for checkout. Everything starts
         // selected, so the total matches the whole cart until the buyer unticks.
@@ -439,17 +560,23 @@ h3, h4, h5, h6, p,
             // (when searching) whose name / seller / category match the query.
             const term = (document.getElementById('listSearch')?.value || '').trim().toLowerCase();
             const inMode = cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
-            const mine = term
+            renderToolbar(inMode);
+            let mine = term
                 ? inMode.filter(({ it }) => ((it.name || '') + ' ' + (it.seller || '') + ' ' + (it.category || '')).toLowerCase().includes(term))
                 : inMode;
+            if (filterCat !== 'all')    mine = mine.filter(({ it }) => (it.category || 'Other') === filterCat);
+            if (filterSeller !== 'all') mine = mine.filter(({ it }) => (it.seller || 'Vero Store') === filterSeller);
+            if (sortBy === 'price-asc')  mine = mine.slice().sort((a, b) => priceNum(a.it.price) - priceNum(b.it.price));
+            if (sortBy === 'price-desc') mine = mine.slice().sort((a, b) => priceNum(b.it.price) - priceNum(a.it.price));
+            const filtered = term || filterCat !== 'all' || filterSeller !== 'all';
 
             if (!mine.length) {
-                body.innerHTML = term
-                    ? `<div class="cart-empty">No items match “${term}”.</div>`
+                body.innerHTML = filtered
+                    ? `<div class="cart-empty">${term ? `No items match “${term}”.` : 'No items match these filters.'}</div>`
                     : `<div class="cart-empty">Your ${MODE} wishlist is empty — tap the heart on any piece to save it here.</div>`;
                 host.innerHTML = '';
                 document.getElementById('headTotal').innerHTML = '';
-                if (!term) document.getElementById('tickerHost').innerHTML = '';
+                if (!filtered) document.getElementById('tickerHost').innerHTML = '';
                 sub.textContent = "The pieces you keep coming back to — saved right here for you.";
                 document.getElementById('selBar').classList.remove('show');
                 return;
@@ -547,6 +674,7 @@ h3, h4, h5, h6, p,
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 MODE = btn.dataset.mode;
+                filterCat = 'all'; filterSeller = 'all'; sortBy = 'featured';
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
                 render();
             });
