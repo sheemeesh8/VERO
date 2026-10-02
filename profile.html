@@ -429,6 +429,8 @@
             padding-bottom: 10px; border-bottom: 1px solid #d9d5cc; margin-bottom: 22px;
         }
         .ps-title--sub { margin-top: 36px; font-weight: 300; letter-spacing: 6px; color: #4a4a45; }
+        /* A section's main title is shown in the page header instead (veroPageTitle). */
+        .ps-title.ps-title--in-header { display: none; }
 
         /* Signature underline curl — a small hook that rises at the right end of
            every rule (titles, text fields, category names, the filter bar). */
@@ -2295,7 +2297,7 @@ h3, h4, h5, h6, p,
 </style>
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Aharoni CLM','Segoe UI',sans-serif !important;}</style>
     <link rel="stylesheet" href="assets/page-header.css">
-    <script src="assets/page-header.js" defer></script>
+    <script src="assets/page-header.js"></script>
 </head>
 <body>
     <!-- Shared page header (assets/page-header.css): title left, back arrow right. -->
@@ -4285,29 +4287,11 @@ h3, h4, h5, h6, p,
         // back down (translateY 180%) when landing on the Statistics/Profile tabs.
         let barPinned = false;
 
-        // ---- Fixed top header (buyer personal area): back arrow + active page title.
-        //      Reveals together with the bottom tab bar (hidden over the hero). ----
+        // The shared page header (assets/page-header.css) now carries the active
+        // section's title (veroPageTitle), so this second header is no longer built.
         let paHeader = null, paTitleEl = null;
-        if (!seller) {
-            document.body.classList.add('pa-has-header');
-            paHeader = document.createElement('header');
-            paHeader.className = 'pa-header';
-            const paBack = document.createElement('button');
-            paBack.type = 'button'; paBack.className = 'pa-back'; paBack.setAttribute('aria-label', 'Back');
-            paBack.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
-            paBack.addEventListener('click', function () {
-                // Prefer real history (returns to wherever the hub was opened from);
-                // fall back to the storefront home if this is the first page.
-                if (window.history.length > 1) window.history.back();
-                else location.href = 'index.html';
-            });
-            paTitleEl = document.createElement('span');
-            paTitleEl.className = 'pa-title';
-            paHeader.appendChild(paBack);
-            paHeader.appendChild(paTitleEl);
-            document.body.appendChild(paHeader);
-        }
-        function setPaTitle(text) { if (paTitleEl) paTitleEl.textContent = (text || '').trim(); }
+        if (!seller) document.body.classList.add('pa-has-header');
+        function setPaTitle(text) { if (window.veroPageTitle) window.veroPageTitle(text); }
 
         function moveIndicator(animate) {
             const t = bar.querySelector('.area-tab.is-active');
@@ -4350,6 +4334,11 @@ h3, h4, h5, h6, p,
         // ---- Personal-area sections: the nav bar swaps which full-screen
         //      .build-panel shows below the hero (buyer mode only). ----
         const sections = Array.from(document.querySelectorAll('.build-panel'));
+        // Each section's main title moves up into the page header — hide it in the page.
+        sections.forEach(s => {
+            const t = s.querySelector('.ps-title:not(.ps-title--sub)');
+            if (t) t.classList.add('ps-title--in-header');
+        });
         const heroNameEl = document.getElementById('storeRectName');
         const heroLastEl = document.getElementById('storeRectLast');
         function showSection(secId) {
@@ -4359,7 +4348,9 @@ h3, h4, h5, h6, p,
             const t = sec && sec.querySelector('.ps-title');
             if (heroNameEl && t) { heroNameEl.textContent = t.textContent; heroNameEl.classList.add('is-title'); }
             if (heroLastEl) heroLastEl.textContent = '';
-            if (t) setPaTitle(t.textContent);   // mirror the title into the fixed top header
+            // Header title: the section's own title, or the page it loads (iframe title).
+            const fr = !t && sec && sec.querySelector('iframe[title]');
+            if (t || fr) setPaTitle(t ? t.textContent : fr.title);
         }
         if (!seller && sections.length) showSection('slideStats');   // default view (landing)
 
@@ -4377,6 +4368,8 @@ h3, h4, h5, h6, p,
             const passed = barPinned || areaOpen || inArea || !heroEl || y > (heroEl.offsetHeight - 90);
             bar.classList.toggle('revealed', passed);
             if (paHeader) paHeader.classList.toggle('revealed', passed);   // top header follows the same reveal
+            // Inside the content: the page header turns solid and shows the section's title.
+            if (window.veroPageHeaderSolid) window.veroPageHeaderSolid(passed && (barPinned || areaOpen || inArea));
         }
         window.addEventListener('scroll', updateBarReveal, { passive: true });
         window.addEventListener('resize', updateBarReveal);
@@ -4422,10 +4415,12 @@ h3, h4, h5, h6, p,
             moveIndicator(true);   // slide the white pill to the new card
             markSeen(id);   // visiting an area clears its dot
             setHeroTitle(id);   // show this section's title where the name sits
+            if (seller) { const a = AREAS.find(x => x.id === id); setPaTitle(id === 'profile' || !a ? '' : a.label); }
             if (wrap) wrap.classList.toggle('title-only', id !== 'profile');   // hero shows only the title off-profile
             // Keep the tab bar visible when switching between any areas, including MY PROFILE.
             barPinned = true;   // never let a later scroll drop the bar back down
             bar.classList.add('revealed');
+            if (window.veroPageHeaderSolid) window.veroPageHeaderSolid(true);   // a section now covers the hero
             if (paHeader) paHeader.classList.add('revealed');
 
             const area = AREAS.find(a => a.id === id);

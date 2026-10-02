@@ -10,8 +10,49 @@
 
    On pages that open on a hero image / video it also switches the header
    from transparent to a solid sticky header once the media is scrolled past.
+   Hub pages set the section shown in the title with veroPageTitle(); a page
+   embedded in another page hides its own header.
 ------------------------------------------------------------------ */
 (function () {
+    /* A page shown inside another page (the seller area's / profile's panels,
+       the statistics page's dashboard) uses its host's header, so its own is
+       hidden. The phone-frame wrapper is not a host page — it shows the page
+       as-is. Runs before the body renders (this script is not deferred). */
+    (function markEmbedded() {
+        if (window.self === window.top) return;
+        // phone-frame.html names its iframe "vero-phone" (readable from inside,
+        // unlike the parent's address, which file:// previews block).
+        if (window.name !== 'vero-phone') document.documentElement.classList.add('ph-embedded');
+    })();
+
+    /* Section title: hub pages (seller area, profile) switch sections in place
+       and call veroPageTitle('Statistics') etc. The header shows the page's own
+       name while its hero image is on screen, and the section's name once the
+       page is scrolled down into the content (or right away on pages without
+       a hero). veroPageTitle(null) goes back to the page's own name. */
+    var sectionTitle = null;
+    function header() { return document.querySelector('.page-header'); }
+    function renderTitle() {
+        var h = header(); if (!h) return;
+        var n = h.querySelector('.ph-name'); if (!n) return;
+        if (!h.hasAttribute('data-page-title')) h.setAttribute('data-page-title', n.textContent);
+        var overHero = h.classList.contains('ph-overlay') && !h.classList.contains('ph-stuck');
+        var text = (sectionTitle && !overHero) ? sectionTitle : h.getAttribute('data-page-title');
+        if (n.textContent !== text) n.textContent = text;
+    }
+    window.veroPageTitle = function (text) {
+        sectionTitle = (text || '').trim() || null;
+        renderTitle();
+    };
+
+    /* Hubs that open a section as a layer over the hero (the profile) tell the
+       header it is no longer over the image: veroPageHeaderSolid(true). */
+    var forcedSolid = false, refreshOverlay = function () {};
+    window.veroPageHeaderSolid = function (on) {
+        forcedSolid = !!on;
+        refreshOverlay();
+    };
+
     document.addEventListener('click', function (e) {
         var b = e.target.closest && e.target.closest('.ph-back');
         if (!b || b.hasAttribute('onclick')) return;   // inline handler (e.g. goBack()) runs itself
@@ -31,10 +72,12 @@
         var hdr = document.querySelector('.page-header.ph-overlay[data-hero]');
         if (!hdr || hdr.getAttribute('data-hero') === 'fixed') return;
         var hero = document.querySelector(hdr.getAttribute('data-hero'));
-        if (!hero) { hdr.classList.add('ph-stuck'); return; }   // no media: never leave white text on white
+        if (!hero) { hdr.classList.add('ph-stuck'); renderTitle(); return; }   // no media: never leave white text on white
         var update = function () {
-            hdr.classList.toggle('ph-stuck', hero.getBoundingClientRect().bottom <= hdr.offsetHeight);
+            hdr.classList.toggle('ph-stuck', forcedSolid || hero.getBoundingClientRect().bottom <= hdr.offsetHeight);
+            renderTitle();
         };
+        refreshOverlay = update;
         document.addEventListener('scroll', update, { passive: true, capture: true });
         window.addEventListener('resize', update);
         update();
