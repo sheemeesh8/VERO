@@ -9,11 +9,12 @@
          axis:   ['Jan', …]         // optional: a date row under the chart
      });
 
-   Values run oldest → newest, left → right, like a stock chart: the line
-   spans the screen from edge to edge over a soft fill, and every break in
-   the line (each change of direction or angle, and both ends) gets a solid
-   dot with its value. Series longer than 12 points are grouped first so
-   every label has room. Hover / tap shows the value at any point.
+   Values run oldest → newest, left → right, from one edge of the screen to
+   the other. The shape is drawn by a field of thin vertical lines cut by a
+   smooth curve through the data; every point where the line breaks (each
+   change of direction or angle, and both ends) gets a solid dot with its
+   value. Series longer than 12 points are grouped first so every label has
+   room. Hover / tap shows the value at any point.
 ------------------------------------------------------------------ */
 (function () {
     'use strict';
@@ -48,6 +49,24 @@
 
     function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
+    // Monotone cubic interpolation (Fritsch–Carlson) through (xs, ys):
+    // returns y(x) for any x in 0..100.
+    function curve(xs, ys) {
+        var n = xs.length;
+        if (n < 2) return function () { return ys[0]; };
+        var d = [], m = [], i;
+        for (i = 0; i < n - 1; i++) d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]));
+        m.push(d[0]);
+        for (i = 1; i < n - 1; i++) m.push(d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2);
+        m.push(d[n - 2]);
+        return function (x) {
+            var j = Math.min(n - 2, Math.max(0, Math.floor((x - xs[0]) / (xs[n - 1] - xs[0]) * (n - 1))));
+            var h = xs[j + 1] - xs[j], t = (x - xs[j]) / h, t2 = t * t, t3 = t2 * t;
+            return (2 * t3 - 3 * t2 + 1) * ys[j] + (t3 - 2 * t2 + t) * h * m[j] +
+                   (-2 * t3 + 3 * t2) * ys[j + 1] + (t3 - t2) * h * m[j + 1];
+        };
+    }
+
     window.veroLineChart = function (vals, opts) {
         opts = opts || {};
         var color = opts.color || '#16150f';
@@ -61,15 +80,17 @@
         var xp = function (i) { return n <= 1 ? 50 : (i / (n - 1)) * 100; };
         var yp = function (x) { return BOT - ((x - min) / span) * (BOT - TOP); };
 
-        var d = v.map(function (x, i) { return (i ? 'L' : 'M') + xp(i).toFixed(3) + ' ' + yp(x).toFixed(3); }).join(' ');
-        var gid = 'vlcg' + Math.random().toString(36).slice(2, 8);
-        var area = d + ' L100 ' + BOT + ' L0 ' + BOT + ' Z';
+        // A smooth curve through every point (monotone: no overshoot past the
+        // data), drawn only by where a field of vertical hairlines is cut.
+        var cy = curve(v.map(function (_, i) { return xp(i); }), v.map(yp));
+        var count = Math.max(60, Math.min(220, Math.round((window.innerWidth || 400) / 4.6)));
+        var lines = '';
+        for (var k = 0; k < count; k++) {
+            var lx = (k + 0.5) / count * 100;
+            lines += '<line x1="' + lx.toFixed(3) + '" x2="' + lx.toFixed(3) + '" y1="' + cy(lx).toFixed(3) + '" y2="' + BOT + '"/>';
+        }
         var svg = '<svg class="vlc-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
-            '<defs><linearGradient id="' + gid + '" x1="0" x2="0" y1="0" y2="1">' +
-            '<stop offset="0" stop-color="' + color + '" stop-opacity="0.16"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
-            '<path d="' + area + '" fill="url(#' + gid + ')"/>' +
-            '<line class="vlc-base" x1="0" x2="100" y1="' + BOT + '" y2="' + BOT + '" vector-effect="non-scaling-stroke"/>' +
-            '<path class="vlc-line" d="' + d + '" stroke="' + color + '" vector-effect="non-scaling-stroke"/></svg>';
+            '<g class="vlc-lines" stroke="' + color + '">' + lines + '</g></svg>';
 
         var marks = breaks(v).map(function (p, k) {
             var x = xp(p.i), y = yp(v[p.i]);
@@ -87,6 +108,31 @@
             '<div class="vlc-hover"><i class="vlc-vline"></i><i class="vlc-hdot"></i><span class="vlc-tip"></span></div>' +
             '</div>' + axis;
     };
+
+    // ---- Values and dots wear a patch of the surface the chart sits on, so they
+    //      read clearly over the lines. Found once per chart after it lands. ----
+    function surfaceOf(el) {
+        for (var e = el.parentElement; e; e = e.parentElement) {
+            var c = getComputedStyle(e).backgroundColor;
+            if (c && c !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(c)) return c;
+        }
+        return '#fff';
+    }
+    function paint(root) {
+        (root.querySelectorAll ? root : document).querySelectorAll('.vlc:not([data-bg])').forEach(function (c) {
+            c.style.setProperty('--vlc-bg', surfaceOf(c));
+            c.setAttribute('data-bg', '1');
+        });
+    }
+    function bootPaint() {
+        paint(document);
+        try {
+            new MutationObserver(function () { paint(document); })
+                .observe(document.body, { childList: true, subtree: true });
+        } catch (e) {}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootPaint);
+    else bootPaint();
 
     // ---- Hover / tap: one delegated handler for every chart on the page ----
     var hideTimer = null;
