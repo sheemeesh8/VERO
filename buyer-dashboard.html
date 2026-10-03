@@ -673,10 +673,12 @@ h3, h4, h5, h6, p,
             function fineLine(vals) { return veroLineChart(vals, { format: nis }); }
 
             // Build one daily bucket per day in the range (oldest → newest, today last).
-            // Week = 7 columns, Month = the current month's length, Year = 365.
+            // Week = Sunday → today, Month = the 1st → today, Year = 1 January → today.
             function build(kind) {
-                var N = kind === 'Week' ? 7 : kind === 'Year' ? 365
-                        : new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                // Each range starts on its first day: Sunday, the 1st, 1 January — up to today.
+                var N = kind === 'Week' ? now.getDay() + 1
+                      : kind === 'Year' ? Math.round((sod(now) - new Date(now.getFullYear(), 0, 1).getTime()) / DAY) + 1
+                      : now.getDate();
                 var vals = [], i;
                 for (i = N - 1; i >= 0; i--) {
                     var day = sod(new Date(now.getTime() - i * DAY));
@@ -687,9 +689,9 @@ h3, h4, h5, h6, p,
                 if (kind === 'Week') {
                     for (i = 0; i < N; i++) labels.push(WD[dateAt(i).getDay()]);
                 } else if (kind === 'Month') {
-                    [0, 0.25, 0.5, 0.75, 1].forEach(function (f) { labels.push(String(dateAt(Math.round((N - 1) * f)).getDate())); });
+                    [0, 0.25, 0.5, 0.75, 1].forEach(function (f) { var l = String(dateAt(Math.round((N - 1) * f)).getDate()); if (labels.indexOf(l) < 0) labels.push(l); });
                 } else {
-                    for (i = 0; i <= 6; i++) labels.push(MON[dateAt(Math.round((N - 1) * i / 6)).getMonth()]);
+                    for (i = 0; i <= now.getMonth(); i++) labels.push(MON[i]);
                 }
                 return { vals: vals, labels: labels, n: N };
             }
