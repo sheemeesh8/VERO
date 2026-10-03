@@ -192,7 +192,7 @@
             transition: height 0.55s cubic-bezier(0.22,1,0.36,1);
         }
         /* Every chart host is the same fixed height; its inner chart fills it. */
-        .hc-plot, #revSlider, #storeChart, #viewsChart, #salesChart, #cumRevChart, #pvChart, #convChart, #soldChart, #avgSaleChart {
+        .hc-plot, #revSlider, #storeChart, #viewsChart, #salesChart, #cumRevChart, #pvChart, #convChart, #avgSaleChart {
             width: 100%; height: var(--graph-h); margin-top: 14px;
             display: flex; flex-direction: column; justify-content: flex-end;
         }
@@ -471,11 +471,11 @@ h3, h4, h5, h6, p,
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Aharoni CLM','Segoe UI',sans-serif !important;}</style>
 <style id="scal-bodoni">.scal-month:not(#zz):not(#zz):not(#zz),.scal-day:not(#zz):not(#zz):not(#zz),.scd-val:not(#zz):not(#zz):not(#zz){font-family:'Bodoni Moda','Didot',Georgia,serif !important;text-transform:none !important;}</style>
 <link rel="stylesheet" href="product-card.css">
-    <link rel="stylesheet" href="assets/page-header.css?v=20261003b">
-    <script src="assets/page-header.js?v=20261003b"></script>
+    <link rel="stylesheet" href="assets/page-header.css?v=20261003c">
+    <script src="assets/page-header.js?v=20261003c"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261003b">
-    <script src="assets/line-chart.js?v=20261003b"></script>
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261003c">
+    <script src="assets/line-chart.js?v=20261003c"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
         :root { --dash-gap: 36px; }
@@ -633,8 +633,7 @@ h3, h4, h5, h6, p,
             </div>
             <div class="card-d">How many items you sold each month</div>
             <div id="soldChart"></div>
-            <div class="lc-x" id="soldX"></div>
-            <div class="gstats" id="soldStats"></div>
+                        <div class="gstats" id="soldStats"></div>
         </div>
 
         <div class="sec-title">Sales history</div>
@@ -1666,8 +1665,7 @@ h3, h4, h5, h6, p,
             };
             const cnt = buckets.map((_, i) => inMonth(i).length);
             const fmtN = v => Math.round(v).toLocaleString('en-US');
-            document.getElementById('soldChart').innerHTML = veroLineChart(cnt, { format: fmtN, labels: labels });
-            document.getElementById('soldX').innerHTML = xLabels(labels);
+            document.getElementById('soldChart').innerHTML = veroBars(cnt, { format: fmtN, labels: labels });
             trendPill(document.getElementById('soldTrend'), cnt[5], cnt[4]);
             gset('soldStats', [[fmtN(cnt[5]), 'This month'], [fmtN(cnt[4]), 'Last month'],
                                [fmtN(Math.max(...cnt)), 'Best month'], [fmtN(cnt.reduce((x, y) => x + y, 0) / 6), 'Monthly average']]);
@@ -1684,9 +1682,9 @@ h3, h4, h5, h6, p,
             sold.forEach(p => { const b = p.brand || p.seller || 'Other'; byBrand[b] = (byBrand[b] || 0) + priceOf(p.price); });
             const rows = Object.entries(byBrand).sort((a, b) => b[1] - a[1]).slice(0, 5);
             const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-            document.getElementById('brandRev').innerHTML = rows.length ? rows.map(([b, v]) =>
-                `<div class="row"><div class="ic">${esc(b.charAt(0))}</div><div class="meta"><b>${esc(b)}</b><span>${Math.round(v / (revenue || 1) * 100)}% of revenue</span></div><div class="amt">${nis(v)}</div></div>`).join('')
-                : '<div class="empty">No sales yet</div>';
+            const rest = revenue - rows.reduce((t, r) => t + r[1], 0);
+            if (rest > 0) rows.push(['Other', rest]);
+            document.getElementById('brandRev').innerHTML = veroDonut(rows.map(([b, v]) => ({ label: b, value: v })), { format: nis, centerLabel: 'Revenue' });
         })();
 
         // ---- Growth view: product views and conversion over time, views by brand. ----
@@ -1722,9 +1720,9 @@ h3, h4, h5, h6, p,
             listings.forEach((p, i) => { const b = p.brand || p.seller || 'Other'; byBrand[b] = (byBrand[b] || 0) + viewsOf(p, i); });
             const rows = Object.entries(byBrand).sort((a, b) => b[1] - a[1]).slice(0, 5);
             const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-            document.getElementById('gBrandViews').innerHTML = rows.length ? rows.map(([b, v]) =>
-                `<div class="row"><div class="ic">${esc(b.charAt(0))}</div><div class="meta"><b>${esc(b)}</b><span>${Math.round(v / (productViews || 1) * 100)}% of product views</span></div><div class="amt">${fmtN(v)}</div></div>`).join('')
-                : '<div class="empty">No views yet</div>';
+            const rest = productViews - rows.reduce((t, r) => t + r[1], 0);
+            if (rest > 0) rows.push(['Other', rest]);
+            document.getElementById('gBrandViews').innerHTML = veroDonut(rows.map(([b, v]) => ({ label: b, value: v })), { format: fmtN, centerLabel: 'Views' });
         })();
 
         // ---- View selection. The Business ↔ Growth toggle was removed; the two

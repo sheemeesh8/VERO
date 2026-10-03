@@ -160,3 +160,64 @@
         clearTimeout(hideTimer); hideTimer = setTimeout(function () { hide(c); }, 2600);
     }, { passive: true });
 })();
+
+/* ------------------------------------------------------------------
+   Two more chart types, same look (styles in line-chart.css).
+
+     el.innerHTML = veroDonut([{ label, value }, …], { format, center, centerLabel });
+       A ring split by share, the total in the middle, a legend beneath.
+
+     el.innerHTML = veroBars(values, { format, labels });
+       Thin rounded columns, oldest → newest; the value sits on each column
+       and the newest column takes the trend colour.
+------------------------------------------------------------------ */
+(function () {
+    'use strict';
+    var PALETTE = ['#16150f', '#c9922b', '#2f6fb5', '#1f8a4c', '#b9b4aa', '#c0392b'];
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function num(x) { return Math.round(x).toLocaleString('en-US'); }
+
+    window.veroDonut = function (items, opts) {
+        opts = opts || {};
+        var fmt = opts.format || num;
+        items = (items || []).filter(function (it) { return (Number(it.value) || 0) > 0; });
+        var total = items.reduce(function (s, it) { return s + Number(it.value); }, 0);
+        if (!total) return '<div class="empty">No data yet</div>';
+        var R = 15.915, C = 2 * Math.PI * R, off = 0, gap = items.length > 1 ? 0.6 : 0;
+        var arcs = items.map(function (it, i) {
+            var len = Number(it.value) / total * C, seg = Math.max(0.01, len - gap);
+            var a = '<circle class="vdn-seg" cx="21" cy="21" r="' + R + '" stroke="' + PALETTE[i % PALETTE.length] +
+                    '" stroke-dasharray="' + seg.toFixed(3) + ' ' + (C - seg).toFixed(3) + '" stroke-dashoffset="' + (-off).toFixed(3) +
+                    '" style="animation-delay:' + (i * 0.08).toFixed(2) + 's"/>';
+            off += len; return a;
+        }).join('');
+        var legend = items.map(function (it, i) {
+            var pct = Math.round(Number(it.value) / total * 100);
+            return '<div class="vdn-row"><i style="background:' + PALETTE[i % PALETTE.length] + '"></i>' +
+                   '<span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-pct">' + pct + '%</span>' +
+                   '<span class="vdn-val">' + esc(fmt(Number(it.value))) + '</span></div>';
+        }).join('');
+        return '<div class="vdn" role="img" aria-label="' + esc('Share chart, ' + items.length + ' parts, total ' + fmt(total)) + '">' +
+            '<div class="vdn-ring"><svg viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="' + R + '" class="vdn-track"/>' + arcs + '</svg>' +
+            '<div class="vdn-mid"><b>' + esc(opts.center != null ? opts.center : fmt(total)) + '</b><span>' + esc(opts.centerLabel || 'Total') + '</span></div></div>' +
+            '<div class="vdn-legend">' + legend + '</div></div>';
+    };
+
+    window.veroBars = function (vals, opts) {
+        opts = opts || {};
+        var fmt = opts.format || num;
+        var v = (vals || []).map(function (x) { return Number(x) || 0; });
+        if (!v.length) return '<div class="vbr"></div>';
+        var max = Math.max.apply(null, v) || 1;
+        var tone = window.veroTrendColor ? window.veroTrendColor(v) : '#16150f';
+        var cols = v.map(function (x, i) {
+            var h = Math.max(2, x / max * 100), last = i === v.length - 1;
+            return '<div class="vbr-col' + (last ? ' is-last' : '') + '">' +
+                '<span class="vbr-val">' + esc(fmt(x)) + '</span>' +
+                '<span class="vbr-bar" style="height:' + h.toFixed(1) + '%;' + (last ? 'background:' + tone + ';' : '') +
+                'animation-delay:' + (i * 0.05).toFixed(2) + 's"></span>' +
+                (opts.labels ? '<span class="vbr-lbl">' + esc(opts.labels[i] || '') + '</span>' : '') + '</div>';
+        }).join('');
+        return '<div class="vbr" role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars, latest ' + fmt(v[v.length - 1])) + '">' + cols + '</div>';
+    };
+})();

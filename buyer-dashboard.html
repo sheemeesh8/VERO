@@ -211,11 +211,11 @@ h3, h4, h5, h6, p,
 </style>
 <link rel="stylesheet" href="assets/fonts/aharoni.css">
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Aharoni CLM','Segoe UI',sans-serif !important;}</style>
-    <link rel="stylesheet" href="assets/page-header.css?v=20261003b">
-    <script src="assets/page-header.js?v=20261003b"></script>
+    <link rel="stylesheet" href="assets/page-header.css?v=20261003c">
+    <script src="assets/page-header.js?v=20261003c"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261003b">
-    <script src="assets/line-chart.js?v=20261003b"></script>
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261003c">
+    <script src="assets/line-chart.js?v=20261003c"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
         :root { --dash-gap: 36px; }
@@ -367,8 +367,7 @@ h3, h4, h5, h6, p,
             </div>
             <div class="card-d">Number of purchases each month</div>
             <div id="itemsChart"></div>
-            <div class="lc-x" id="itemsX"></div>
-        </div>
+                    </div>
 
         <!-- ===== ACTIVITY ===== -->
         <div class="sec-title">Activity</div>
@@ -553,8 +552,7 @@ h3, h4, h5, h6, p,
         const labels = buckets.map(b => b.label);
         document.getElementById('cumChart').innerHTML   = fineCols(cumulative, '#111', nis);
         document.getElementById('cumX').innerHTML       = xLabels(labels);
-        document.getElementById('itemsChart').innerHTML = fineCols(monthCounts, '#1f8f4e');
-        document.getElementById('itemsX').innerHTML     = xLabels(labels);
+        document.getElementById('itemsChart').innerHTML = veroBars(monthCounts, { labels: labels });
         trendPill(document.getElementById('cumTrend'),   monthSums[5],   monthSums[4], false);
         trendPill(document.getElementById('itemsTrend'), monthCounts[5], monthCounts[4], false);
 
@@ -637,14 +635,9 @@ h3, h4, h5, h6, p,
         });
         const sellers = Object.entries(bySeller).sort((a, b) => b[1] - a[1]).slice(0, 5);
         const sellerEl = document.getElementById('sellerList');
-        sellerEl.innerHTML = sellers.length ? sellers.map(([name, sum]) => {
-            const share = Math.round((sum / total) * 100);
-            return `<div class="row">
-                <div class="ic">🏷️</div>
-                <div class="meta"><b>${name}</b><span>${share}% of total spend</span></div>
-                <div class="amt">${nis(sum)}</div>
-            </div>`;
-        }).join('') : '<div class="empty">No data yet</div>';
+        const restSpend = total - sellers.reduce((t, x) => t + x[1], 0);
+        if (restSpend > 0) sellers.push(['Other', restSpend]);
+        sellerEl.innerHTML = veroDonut(sellers.map(([name, sum]) => ({ label: name, value: sum })), { format: nis, centerLabel: 'Spent' });
 
         // ---- Recent purchases. ----
         const recent = [...items].sort((a, b) => tsOf(b) - tsOf(a)).slice(0, 5);
