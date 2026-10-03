@@ -100,6 +100,31 @@
         }
         .publish-btn:hover { background: #fff; color: #111; }
 
+        /* ---- Tiles: upload + one tile per status. A status tile filters the list
+           below; tapping it again returns to "Recently listed". ---- */
+        .mp-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .mp-tile {
+            position: relative; aspect-ratio: 1.45 / 1; padding: 16px 16px 14px; border: none; border-radius: 0;
+            background: var(--card-ground, #F2F0EF); color: #111; text-decoration: none; cursor: pointer;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start;
+            font-family: inherit; text-align: left; transition: background 0.2s, box-shadow 0.2s;
+        }
+        .mp-tile b { font-weight: 200; font-size: 40px; line-height: 1; }
+        .mp-tile span { font-size: 9.5px; letter-spacing: 2px; text-transform: uppercase; font-weight: 400; }
+        .mp-tile:active { transform: scale(0.98); }
+        .mp-tile.dark { background: #111; color: #fff; }
+        .mp-tile.dark b { font-size: 36px; }
+        .mp-tile.on { box-shadow: inset 0 0 0 1.5px #111; background: #fff; }
+        .mp-list-head { display: flex; align-items: baseline; justify-content: space-between; margin: 30px 0 0; }
+        .mp-list-head .section-title { font-weight: 400; color: rgba(17,17,17,0.6); }
+        .mp-all { border: none; background: none; cursor: pointer; padding: 0; font-family: inherit;
+            font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #111;
+            text-decoration: underline; text-underline-offset: 3px; }
+        .mp-sold-chip {
+            position: absolute; top: 10px; inset-inline-start: 10px; z-index: 3;
+            padding: 5px 11px; border-radius: 999px; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+            background: #111; color: #fff; font-family: 'Oswald', 'Segoe UI', sans-serif !important;
+        }
         .empty {
             margin-top: 16px; padding: 34px; border: 1px dashed #cfcfca; text-align: center;
             color: #9a9a95; font-size: 11.5px; letter-spacing: 0.3px; border-radius: 12px;
@@ -116,37 +141,23 @@
     </header>
 
     <main class="wrap">
-        <!-- 1 · Add a new product -->
+        <!-- Tiles: upload, then one per status (tap to filter the list below). -->
         <section class="section">
-            <div class="section-head">
-                <span class="section-title">Add</span>
-            </div>
-            <div class="prod-grid">
-                <a class="add-card" href="upload-start.html">
-                    <span class="plus">+</span>
-                    <span class="add-label">Upload new product</span>
-                </a>
+            <div class="mp-tiles">
+                <a class="mp-tile dark" href="upload-start.html"><b>+</b><span>Upload new</span></a>
+                <button class="mp-tile" type="button" data-view="drafts"><b id="nDrafts">0</b><span>Drafts ›</span></button>
+                <button class="mp-tile" type="button" data-view="live"><b id="nLive">0</b><span>Live ›</span></button>
+                <button class="mp-tile" type="button" data-view="sold"><b id="nSold">0</b><span>Sold ›</span></button>
             </div>
         </section>
-
-        <!-- 2 · Drafts -->
+        <!-- The list: "Recently listed" until a tile picks a status. -->
         <section class="section">
-            <div class="section-head">
-                <span class="section-title">Drafts</span>
-                <span class="section-note" id="draftNote">0 drafts</span>
+            <div class="mp-list-head">
+                <span class="section-title" id="listTitle">Recently listed</span>
+                <button class="mp-all" type="button" id="listAll" hidden>Show recent</button>
             </div>
-            <div class="prod-grid" id="draftGrid"></div>
-            <div class="empty" id="draftEmpty" style="display:none;">No drafts saved yet. Tap “Save as draft” on the upload page and it will appear here.</div>
-        </section>
-
-        <!-- 3 · Published products -->
-        <section class="section">
-            <div class="section-head">
-                <span class="section-title">My products</span>
-                <span class="section-note" id="prodNote">0 items</span>
-            </div>
-            <div class="prod-grid" id="prodGrid"></div>
-            <div class="empty" id="prodEmpty" style="display:none;">No products yet. Upload your first piece above.</div>
+            <div class="prod-grid" id="listGrid"></div>
+            <div class="empty" id="listEmpty" style="display:none;"></div>
         </section>
     </main>
 
@@ -169,7 +180,7 @@
             const href = `product-edit.html?i=${idx}&from=seller`;
             return `
                 <a class="product-card" href="${href}" title="Edit ${esc(p.name || 'product')}">
-                    <div class="product-image">${fig}</div>
+                    <div class="product-image">${fig}</div>${p.status === 'sold' ? '<span class="mp-sold-chip">Sold</span>' : ''}
                     <div class="product-info">
                         <div class="pc-left">
                             <div class="product-price"><span class="vprice">${nis(p.price)}</span></div>
@@ -182,16 +193,6 @@
                     </div>
                 </a>`;
         }
-        function renderProducts() {
-            let listings = readJSON('vero_listings', []);
-            if (!Array.isArray(listings)) listings = [];
-            const active = listings.filter(p => p && (p.status === 'active' || p.status == null));
-            const grid = document.getElementById('prodGrid');
-            grid.innerHTML = active.map((p) => productCard(p, listings.indexOf(p))).join('');
-            document.getElementById('prodNote').textContent = `${active.length} item${active.length === 1 ? '' : 's'}`;
-            document.getElementById('prodEmpty').style.display = active.length ? 'none' : 'block';
-        }
-
         // ---------- DRAFTS (vero_drafts) ----------
         function draftCard(p, i) {
             const src = imgOf(p);
@@ -224,24 +225,53 @@
                 </div>`;
         }
         function titleOf(d) { return [d.brand, d.itemType].filter(Boolean).join(' ') || 'Untitled draft'; }
-        function renderDrafts() {
-            let drafts = readJSON('vero_drafts', []);
-            if (!Array.isArray(drafts)) drafts = [];
-            const grid = document.getElementById('draftGrid');
-            grid.innerHTML = drafts.map((p, i) => draftCard(p, i)).join('');
-            document.getElementById('draftNote').textContent = `${drafts.length} draft${drafts.length === 1 ? '' : 's'}`;
-            document.getElementById('draftEmpty').style.display = drafts.length ? 'none' : 'block';
+        // ---------- Tiles + the one list ----------
+        const RECENT = 6;
+        let view = 'recent';
+        const EMPTY = {
+            recent: 'No products yet. Tap “Upload new” to list your first piece.',
+            live: 'Nothing live right now.',
+            drafts: 'No drafts saved yet. Tap “Save as draft” on the upload page and it will appear here.',
+            sold: 'Nothing sold yet.',
+        };
+        const TITLE = { recent: 'Recently listed', live: 'Live', drafts: 'Drafts', sold: 'Sold' };
+        const when = p => p.listedAt || p.createdAt || 0;
+        function render() {
+            let listings = readJSON('vero_listings', []); if (!Array.isArray(listings)) listings = [];
+            let drafts = readJSON('vero_drafts', []); if (!Array.isArray(drafts)) drafts = [];
+            const live = listings.filter(p => p && (p.status === 'active' || p.status == null));
+            const sold = listings.filter(p => p && p.status === 'sold');
+            document.getElementById('nDrafts').textContent = drafts.length;
+            document.getElementById('nLive').textContent = live.length;
+            document.getElementById('nSold').textContent = sold.length;
+            document.querySelectorAll('.mp-tile[data-view]').forEach(t => t.classList.toggle('on', t.dataset.view === view));
+            let html = '', n = 0;
+            if (view === 'drafts') { html = drafts.map((p, i) => draftCard(p, i)).join(''); n = drafts.length; }
+            else {
+                const items = view === 'sold' ? sold
+                    : view === 'live' ? live
+                    : live.slice().sort((x, y) => when(y) - when(x)).slice(0, RECENT);
+                html = items.map(p => productCard(p, listings.indexOf(p))).join(''); n = items.length;
+            }
+            document.getElementById('listGrid').innerHTML = html;
+            document.getElementById('listTitle').textContent = TITLE[view];
+            document.getElementById('listAll').hidden = view === 'recent';
+            const empty = document.getElementById('listEmpty');
+            empty.textContent = EMPTY[view]; empty.style.display = n ? 'none' : 'block';
         }
-
+        document.querySelectorAll('.mp-tile[data-view]').forEach(t => t.addEventListener('click', () => {
+            view = view === t.dataset.view ? 'recent' : t.dataset.view; render();
+        }));
+        document.getElementById('listAll').addEventListener('click', () => { view = 'recent'; render(); });
         // ---------- Draft actions (continue / edit / delete / publish) ----------
-        document.getElementById('draftGrid').addEventListener('click', (e) => {
+        document.getElementById('listGrid').addEventListener('click', (e) => {
             let drafts = readJSON('vero_drafts', []);
             if (!Array.isArray(drafts)) drafts = [];
             const del = e.target.closest('[data-act="delete"]');
             if (del) {
                 e.preventDefault(); e.stopPropagation();
                 drafts.splice(Number(del.dataset.i), 1); save('vero_drafts', drafts);
-                renderDrafts(); return;
+                render(); return;
             }
             const pub = e.target.closest('[data-act="publish"]');
             if (pub) {
@@ -257,7 +287,7 @@
                 });
                 save('vero_listings', listings);
                 drafts.splice(i, 1); save('vero_drafts', drafts);
-                renderDrafts(); renderProducts(); return;
+                render(); return;
             }
             // Anywhere else on the card (incl. the pencil) → continue the draft.
             const card = e.target.closest('.product-card'); if (!card) return;
@@ -266,8 +296,7 @@
             window.location.href = 'index.html';
         });
 
-        renderDrafts();
-        renderProducts();
+        render();
     })();
     </script>
 </body>

@@ -115,6 +115,48 @@
         .btn.danger:hover { background: #b23b3b; color: #fff; }
 
         .save-note { margin-top: 18px; font-size: 10.00px; letter-spacing: 1px; color: #9a9a95; }
+        /* ---- Live-preview editor ---- */
+        .wrap { padding: 4px 22px calc(110px + env(safe-area-inset-bottom, 0px)) !important; animation: none; max-width: 560px; margin: 0 auto; }
+        .side-image, .head-sub { display: none !important; }
+        .pe-prev { display: flex; flex-direction: column; align-items: center; }
+        .pe-card { width: min(210px, 56vw); aspect-ratio: 0.7; background: #F2F0EF; position: relative; }
+        .pe-img { position: absolute; inset: 0 0 58px 0; display: grid; place-items: center; font-size: 72px;
+            background: #F2F0EF center / contain no-repeat; background-origin: content-box; padding: 10%; }
+        .pe-img.has-img { color: transparent; font-size: 0; }
+        .pe-foot { position: absolute; left: 14px; right: 14px; bottom: 10px; }
+        .pe-r1 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+            padding-bottom: 7px; border-bottom: 1px solid rgba(26,26,26,0.28); font-size: 12px; font-weight: 300; }
+        .pe-r1 span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pe-r1 span:first-child { font-family: 'Bodoni Moda', Didot, Georgia, serif !important; text-transform: uppercase; letter-spacing: 0.3px; }
+        .pe-r1 .sale { color: #c0392b; font-weight: 600; }
+        .pe-r1 s { opacity: 0.5; font-size: 10px; }
+        .pe-r2 { margin-top: 6px; font-size: 10.5px; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pe-note { margin-top: 10px; font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: #9a9a95; }
+        .pe-link { margin-top: 14px; border: none; background: none; cursor: pointer; padding: 0; font-family: inherit;
+            font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #111; text-decoration: underline; text-underline-offset: 4px; }
+        .pe-prev .bg-toggle { margin: 12px 0 0; }
+        .pe-prev .bg-status { margin: 4px 0 0; text-align: center; }
+        .pe-qa { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 22px 0 8px; }
+        .pe-qa button { border: none; background: #F2F0EF; cursor: pointer; padding: 15px 0; font-family: inherit;
+            font-size: 9.5px; letter-spacing: 2px; text-transform: uppercase; color: #111; }
+        .pe-qa button:active { background: #e6e3e0; }
+        .pe-qa .red { color: #b23b3b; }
+        .pe-sec:not(#zz):not(#zz):not(#zz) { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important;
+            font-weight: 200; font-size: 22px; letter-spacing: 0.01em; margin: 34px 0 18px; }
+        .field { margin-bottom: 24px; }
+        .field:last-child { margin-bottom: 24px; }
+        .card-label { font-size: 9px; letter-spacing: 2px; color: rgba(17,17,17,0.6); margin-bottom: 6px; }
+        .field input, .field textarea, .field select { font-size: 15px; font-weight: 300; padding: 6px 0 9px; border-bottom-color: rgba(17,17,17,0.2); border-radius: 0; }
+        .field select { -webkit-appearance: none; appearance: none;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='1.6'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 2px center / 12px no-repeat; }
+        .field-row { grid-template-columns: 1fr 1fr !important; gap: 0 18px; }
+        .price-note { margin-top: -10px; }
+        .seg button { padding: 10px 20px; }
+        .pe-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: #fff; border-top: 1px solid #f0efed;
+            padding: 12px 22px calc(16px + env(safe-area-inset-bottom, 0px)); }
+        .pe-bar .btn { display: block; width: 100%; max-width: 516px; margin: 0 auto; border-radius: 0; padding: 16px; font-size: 11px; letter-spacing: 3px; }
+        .pe-bar .save-note { margin: 0 0 8px; text-align: center; }
+        .pe-bar .save-note:empty { display: none; }
         .missing { margin-top: 40px; padding: 40px; border: 1px dashed #cfcfca; text-align: center; color: #9a9a95; }
     </style>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
@@ -175,8 +217,17 @@ h3, h4, h5, h6, p,
         const isSeller = params.get('from') === 'seller';
         const idx = Number(params.get('i'));
 
-        // Keep the back link (and, later, the redirect) in the same area.
-        const backHref = 'products.html' + (isSeller ? '?from=seller' : '');
+        // Back (and the redirect after Save / Delete) returns to the page that
+        // opened the editor — My Products, the products list or the dashboard —
+        // and to My Products when there is none.
+        const backHref = (() => {
+            try {
+                const r = new URL(document.referrer);
+                const page = r.pathname.split('/').pop();
+                if (r.origin === location.origin && /\.html$/.test(page) && page !== 'product-edit.html' && page !== 'phone-frame.html') return page + r.search;
+            } catch (e) {}
+            return 'my-products.html';
+        })();
         document.querySelector('.ph-back').setAttribute('href', backHref);
         if (isSeller) document.querySelector('.head-title').textContent = 'Edit product';
 
@@ -215,101 +266,105 @@ h3, h4, h5, h6, p,
             const root = document.getElementById('editRoot');
             const catOptions = ['', ...CLOTHING];
             root.innerHTML = `
-                <div class="grid">
-                    <!-- Cover -->
-                    <div class="card">
-                        <div class="card-label">Cover photo</div>
-                        <div class="cover ${src ? 'has-img' : ''}" id="cover" style="${src ? `background-image:url('${src}')` : ''}">${src ? '' : (p.icon || '🛍️')}</div>
-                        <label class="bg-toggle"><input type="checkbox" id="removeBg" checked> Auto-remove the background from the main photo</label>
-                        <div class="bg-status" id="bgStatus"></div>
-                        <button type="button" class="change-photo" id="changePhoto">Change photo</button>
-                        <input id="photoInput" type="file" accept="image/*" hidden>
+                <!-- Live preview: the card buyers see, updated as you type. -->
+                <div class="pe-prev">
+                    <div class="pe-card">
+                        <div class="pe-img ${src ? 'has-img cutout' : ''}" id="cover" style="${src ? `background-image:url('${src}')` : ''}">${src ? '' : (p.icon || '🛍️')}</div>
+                        <div class="pe-foot">
+                            <div class="pe-r1"><span id="pvBrand"></span><span id="pvPrice"></span></div>
+                            <div class="pe-r2" id="pvName"></div>
+                        </div>
                     </div>
+                    <div class="pe-note">Updates as you type</div>
+                    <button type="button" class="pe-link" id="changePhoto">Change photo</button>
+                    <input id="photoInput" type="file" accept="image/*" hidden>
+                    <label class="bg-toggle"><input type="checkbox" id="removeBg" checked> Remove the background automatically</label>
+                    <div class="bg-status" id="bgStatus"></div>
+                </div>
 
-                    <!-- Details -->
-                    <div class="card">
-                        <div class="field">
-                            <div class="card-label">Product name</div>
-                            <input id="f-name" type="text" placeholder="e.g. Wool coat" value="${esc(p.name)}">
-                        </div>
-                        <div class="field-row">
-                            <div class="field">
-                                <div class="card-label">Brand / seller</div>
-                                <input id="f-seller" type="text" placeholder="Brand or store" value="${esc(p.seller || p.brand)}">
-                            </div>
-                            <div class="field">
-                                <div class="card-label">Category</div>
-                                <select id="f-category">
-                                    ${catOptions.map(c => `<option ${((p.category || '') === c) ? 'selected' : ''} value="${esc(c)}">${c || '—'}</option>`).join('')}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field">
-                                <div class="card-label">Price (₪)</div>
-                                <input id="f-price" type="number" inputmode="numeric" placeholder="0" value="${p.price != null ? p.price : ''}">
-                            </div>
-                            <div class="field">
-                                <div class="card-label">Discount (%)</div>
-                                <input id="f-discount" type="number" inputmode="numeric" min="0" max="99" placeholder="0" value="${p.discount != null ? p.discount : ''}">
-                            </div>
-                        </div>
-                        <div class="price-note" id="priceNote"></div>
+                <!-- Quick actions. -->
+                <div class="pe-qa">
+                    <button type="button" id="soldBtn">${p.status === 'sold' ? 'Mark available' : 'Mark sold'}</button>
+                    <button type="button" id="shareBtn">Share</button>
+                    <button type="button" id="deleteBtn" class="red">Delete</button>
+                </div>
 
-                        <div class="field-row" style="margin-top:20px;">
-                            <div class="field">
-                                <div class="card-label">Condition</div>
-                                <input id="f-condition" type="text" placeholder="e.g. New with tags" value="${esc(p.condition)}">
-                            </div>
-                            <div class="field">
-                                <div class="card-label">Size</div>
-                                <input id="f-size" type="text" placeholder="e.g. M / EU 42" value="${esc(p.size)}">
-                            </div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field">
-                                <div class="card-label">Color</div>
-                                <input id="f-color" type="text" placeholder="e.g. Camel" value="${esc(p.color)}">
-                            </div>
-                            <div class="field">
-                                <div class="card-label">Material</div>
-                                <input id="f-material" type="text" placeholder="e.g. Wool blend" value="${esc(p.material)}">
-                            </div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field">
-                                <div class="card-label">Audience</div>
-                                <select id="f-audience">
-                                    ${[['','—'],['women','Women'],['men','Men'],['kids','Kids'],['unisex','Unisex']]
-                                        .map(([v,l]) => `<option value="${v}" ${((p.audience||'')===v)?'selected':''}>${l}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div class="field">
-                                <div class="card-label">Collection / Collection</div>
-                                <select id="f-collection">
-                                    ${[['','—'],['spring','🌸 Spring'],['summer','☀️ Summer'],['autumn','🍂 Autumn'],['winter','❄️ Winter']]
-                                        .map(([v,l]) => `<option value="${v}" ${((p.collection||'')===v)?'selected':''}>${l}</option>`).join('')}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <div class="card-label">Description</div>
-                            <textarea id="f-description" rows="3" placeholder="A short line about the item">${esc(p.description)}</textarea>
-                        </div>
+                <h2 class="pe-sec">The item</h2>
+                <div class="field">
+                    <div class="card-label">Brand / designer</div>
+                    <input id="f-seller" type="text" placeholder="Brand or store" value="${esc(p.seller || p.brand)}">
+                </div>
+                <div class="field">
+                    <div class="card-label">Item name</div>
+                    <input id="f-name" type="text" placeholder="e.g. Wool coat" value="${esc(p.name)}">
+                </div>
+                <div class="field">
+                    <div class="card-label">Category</div>
+                    <select id="f-category">
+                        ${catOptions.map(c => `<option ${((p.category || '') === c) ? 'selected' : ''} value="${esc(c)}">${c || '—'}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="field">
+                    <div class="card-label">Description</div>
+                    <textarea id="f-description" rows="3" placeholder="Condition, story, anything a buyer should know">${esc(p.description)}</textarea>
+                </div>
 
-                        <div class="field" style="margin-top:8px;">
-                            <div class="card-label">Status</div>
-                            <div class="seg" id="statusSeg">
-                                ${STATUSES.map(([v, l]) => `<button type="button" data-v="${v}" class="${(p.status || 'active') === v ? 'on' : ''}">${l}</button>`).join('')}
-                            </div>
-                        </div>
-
-                        <div class="row-actions">
-                            <button class="btn solid" id="saveBtn" type="button">Save changes</button>
-                            <button class="btn danger" id="deleteBtn" type="button">Delete permanently</button>
-                        </div>
-                        <div class="save-note" id="saveNote">Changes are saved when you press Save.</div>
+                <h2 class="pe-sec">Price</h2>
+                <div class="field-row">
+                    <div class="field">
+                        <div class="card-label">Price (₪)</div>
+                        <input id="f-price" type="number" inputmode="numeric" placeholder="0" value="${p.price != null ? p.price : ''}">
                     </div>
+                    <div class="field">
+                        <div class="card-label">Discount (%)</div>
+                        <input id="f-discount" type="number" inputmode="numeric" min="0" max="99" placeholder="0" value="${p.discount != null ? p.discount : ''}">
+                    </div>
+                </div>
+                <div class="price-note" id="priceNote"></div>
+
+                <h2 class="pe-sec">Details</h2>
+                <div class="field-row">
+                    <div class="field">
+                        <div class="card-label">Condition</div>
+                        <input id="f-condition" type="text" placeholder="e.g. New with tags" value="${esc(p.condition)}">
+                    </div>
+                    <div class="field">
+                        <div class="card-label">Size</div>
+                        <input id="f-size" type="text" placeholder="e.g. M / EU 42" value="${esc(p.size)}">
+                    </div>
+                    <div class="field">
+                        <div class="card-label">Color</div>
+                        <input id="f-color" type="text" placeholder="e.g. Camel" value="${esc(p.color)}">
+                    </div>
+                    <div class="field">
+                        <div class="card-label">Material</div>
+                        <input id="f-material" type="text" placeholder="e.g. Wool blend" value="${esc(p.material)}">
+                    </div>
+                    <div class="field">
+                        <div class="card-label">Audience</div>
+                        <select id="f-audience">
+                            ${[['','—'],['women','Women'],['men','Men'],['kids','Kids'],['unisex','Unisex']]
+                                .map(([v,l]) => `<option value="${v}" ${((p.audience||'')===v)?'selected':''}>${l}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <div class="card-label">Season</div>
+                        <select id="f-collection">
+                            ${[['','—'],['spring','Spring'],['summer','Summer'],['autumn','Autumn'],['winter','Winter']]
+                                .map(([v,l]) => `<option value="${v}" ${((p.collection||'')===v)?'selected':''}>${l}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <h2 class="pe-sec">Status</h2>
+                <div class="seg" id="statusSeg">
+                    ${STATUSES.map(([v, l]) => `<button type="button" data-v="${v}" class="${(p.status || 'active') === v ? 'on' : ''}">${l}</button>`).join('')}
+                </div>
+
+                <!-- Save, pinned to the bottom of the screen. -->
+                <div class="pe-bar">
+                    <div class="save-note" id="saveNote"></div>
+                    <button class="btn solid" id="saveBtn" type="button">Save changes</button>
                 </div>`;
 
             wire(p);
@@ -522,6 +577,38 @@ h3, h4, h5, h6, p,
                 const n = document.getElementById('saveNote');
                 n.textContent = 'Saved ✓ — returning to your products…';
                 setTimeout(() => { location.href = backHref; }, 650);
+            });
+
+            // Live preview: brand, name and the price buyers pay, as you type.
+            const pv = id => document.getElementById(id);
+            function refreshPreview() {
+                pv('pvBrand').textContent = pv('f-seller').value.trim() || 'Brand';
+                pv('pvName').textContent = pv('f-name').value.trim() || 'Item name';
+                const price = Number(priceEl.value) || 0, disc = Number(discEl.value) || 0;
+                pv('pvPrice').innerHTML = (disc > 0 && disc < 100 && price > 0)
+                    ? `<b class="sale">${nis(Math.round(price * (1 - disc / 100)))}</b> <s>${nis(price)}</s>`
+                    : nis(price);
+            }
+            ['f-seller', 'f-name', 'f-price', 'f-discount'].forEach(id => pv(id).addEventListener('input', refreshPreview));
+            refreshPreview();
+
+            // Share: the system share sheet, or copy the link where there is none.
+            pv('shareBtn').addEventListener('click', async () => {
+                const data = { name: p.name, price: p.price, icon: p.icon, seller: p.seller || p.brand, category: p.category };
+                const url = new URL('product-showcase.html?product=' + encodeURIComponent(JSON.stringify(data)), location.href).href;
+                const n = pv('saveNote');
+                try {
+                    if (navigator.share) { await navigator.share({ title: p.name || 'Listing', url }); return; }
+                    await navigator.clipboard.writeText(url);
+                    n.textContent = 'Link copied ✓';
+                } catch (e) { if (e && e.name !== 'AbortError') n.textContent = 'Couldn\'t share this listing'; }
+            });
+
+            // Mark sold / available in one tap: flip the status and save.
+            document.getElementById('soldBtn').addEventListener('click', () => {
+                status = (p.status || 'active') === 'sold' ? 'active' : 'sold';
+                document.querySelectorAll('#statusSeg button').forEach(x => x.classList.toggle('on', x.dataset.v === status));
+                document.getElementById('saveBtn').click();
             });
 
             // Permanent delete.
