@@ -969,8 +969,10 @@ h3, h4, h5, h6, p,
         // ---- Monthly revenue bars (last 6 months). ----
         const now = new Date();
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        // Months run from 1 January to the current month (year to date).
+        const NM = now.getMonth() + 1, L = NM - 1;
         const buckets = [];
-        for (let i = 5; i >= 0; i--) {
+        for (let i = now.getMonth(); i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const start = d.getTime();
             const end = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
@@ -981,7 +983,7 @@ h3, h4, h5, h6, p,
         // If no dated revenue at all, spread total deterministically so the chart reads.
         if (buckets.every(b => b.sum === 0) && revenue > 0) {
             let ws = [], wsum = 0;
-            for (let i = 0; i < 6; i++) { const w = 0.4 + rnd(i + 11) * 0.9 + i * 0.08; ws.push(w); wsum += w; }
+            for (let i = 0; i < NM; i++) { const w = 0.4 + rnd(i + 11) * 0.9 + i * 0.08; ws.push(w); wsum += w; }
             buckets.forEach((b, i) => b.sum = Math.round(revenue * ws[i] / wsum));
         }
         const maxB = Math.max(1, ...buckets.map(b => b.sum));
@@ -1071,10 +1073,10 @@ h3, h4, h5, h6, p,
         const nextMilestone = (val, steps) => { for (const m of steps) if (m > val) return m; return Math.ceil((val + 1) / 1000) * 1000; };
 
         // Views progress: growth line + progress toward the next views milestone.
-        const viewsSeries = growthSeries(storeViews, 6, 3);
+        const viewsSeries = growthSeries(storeViews, NM, 3);
         document.getElementById('viewsChart').innerHTML = fineCols(viewsSeries, '#111');
         document.getElementById('viewsX').innerHTML = xLabels(labels);
-        trendPill(document.getElementById('viewsTrend'), viewsSeries[5], viewsSeries[4]);
+        trendPill(document.getElementById('viewsTrend'), viewsSeries[L], (viewsSeries[L - 1] || 0));
         // Goal is editable (tap the goal slide); fall back to the next round milestone.
         let viewsGoal = readNum('vero_views_goal', 0) || Math.max(500, Math.ceil((storeViews + 1) / 500) * 500);
 
@@ -1082,10 +1084,10 @@ h3, h4, h5, h6, p,
         // milestone. Fall back to a derived base when there are no real followers yet,
         // so the demo/empty state still reads (mirrors the derived-views fallback).
         const folBase = followers || (Math.round(storeViews * 0.04) + 12);
-        const followerSeries = growthSeries(folBase, 6, 7);
+        const followerSeries = growthSeries(folBase, NM, 7);
         document.getElementById('storeChart').innerHTML = fineCols(followerSeries, '#c9922b');
         document.getElementById('storeX').innerHTML = xLabels(labels);
-        trendPill(document.getElementById('storeTrend'), followerSeries[5], followerSeries[4]);
+        trendPill(document.getElementById('storeTrend'), followerSeries[L], (followerSeries[L - 1] || 0));
         // Goal is editable (tap the goal slide); fall back to the next milestone.
         let folGoal = readNum('vero_followers_goal', 0) || nextMilestone(folBase, [25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]);
 
@@ -1111,18 +1113,18 @@ h3, h4, h5, h6, p,
             set('revStats', [
                 [nis(curM),  'This month'],
                 [nis(prevM), 'Last month'],
-                [nis(total6), '6-month total'],
-                [nis(total6 / 6), 'Monthly average'],
+                [nis(total6), 'Year to date'],
+                [nis(total6 / NM), 'Monthly average'],
             ]);
             set('storeStats', [
                 [num(folBase), 'Followers'],
-                [signed(followerSeries[5] - followerSeries[4]), 'This month'],
+                [signed(followerSeries[L] - (followerSeries[L - 1] || 0)), 'This month'],
                 [num(Math.max(0, folGoal - folBase)), 'To next goal'],
                 [num(folGoal), 'Goal'],
             ]);
             set('viewsStats', [
                 [num(storeViews), 'Store views'],
-                [signed(viewsSeries[5] - viewsSeries[4]), 'This month'],
+                [signed(viewsSeries[L] - (viewsSeries[L - 1] || 0)), 'This month'],
                 [num(Math.max(0, viewsGoal - storeViews)), 'To next goal'],
                 [conv.toFixed(1) + '%', 'Conversion'],
             ]);
@@ -1140,14 +1142,14 @@ h3, h4, h5, h6, p,
                 document.getElementById('storeGoalCap').textContent = 'Goal ' + folGoal.toLocaleString('en-US') + ' Followers';
                 document.getElementById('storeGoalLeft').textContent = 'remaining ' + Math.max(0, folGoal - folBase).toLocaleString('en-US');
                 requestAnimationFrame(() => { document.getElementById('storeGoalBar').style.width = pctv + '%'; });
-                gset('storeStats', [[gnum(folBase), 'Followers'], [gsigned(followerSeries[5] - followerSeries[4]), 'This month'], [gnum(Math.max(0, folGoal - folBase)), 'To next goal'], [gnum(folGoal), 'Goal']]);
+                gset('storeStats', [[gnum(folBase), 'Followers'], [gsigned(followerSeries[L] - (followerSeries[L - 1] || 0)), 'This month'], [gnum(Math.max(0, folGoal - folBase)), 'To next goal'], [gnum(folGoal), 'Goal']]);
             }
             function renderViews() {
                 const pctv = Math.min(100, Math.round(storeViews / viewsGoal * 100));
                 document.getElementById('viewsGoalCap').textContent = 'Goal ' + viewsGoal.toLocaleString('en-US') + ' Views';
                 document.getElementById('viewsGoalLeft').textContent = 'remaining ' + Math.max(0, viewsGoal - storeViews).toLocaleString('en-US');
                 requestAnimationFrame(() => { document.getElementById('viewsGoalBar').style.width = pctv + '%'; });
-                gset('viewsStats', [[gnum(storeViews), 'Store views'], [gsigned(viewsSeries[5] - viewsSeries[4]), 'This month'], [gnum(Math.max(0, viewsGoal - storeViews)), 'To next goal'], [conv.toFixed(1) + '%', 'Conversion']]);
+                gset('viewsStats', [[gnum(storeViews), 'Store views'], [gsigned(viewsSeries[L] - (viewsSeries[L - 1] || 0)), 'This month'], [gnum(Math.max(0, viewsGoal - storeViews)), 'To next goal'], [conv.toFixed(1) + '%', 'Conversion']]);
             }
             function wire(cardId, editId, inputId, saveId, key, getGoal, setGoal, rerender) {
                 const card = document.getElementById(cardId), edit = document.getElementById(editId), input = document.getElementById(inputId), save = document.getElementById(saveId);
@@ -1580,7 +1582,7 @@ h3, h4, h5, h6, p,
 
         // ---- Growth view: followers + profile/product views (Instagram-style). ----
         document.getElementById('gFollowers').textContent = followers.toLocaleString('en-US');
-        trendPill(document.getElementById('gFollowersTrend'), followerSeries[5], followerSeries[4]);
+        trendPill(document.getElementById('gFollowersTrend'), followerSeries[L], (followerSeries[L - 1] || 0));
         document.getElementById('gProfileViews').textContent = storeViews.toLocaleString('en-US');
         document.getElementById('gProductViews').textContent = productViews.toLocaleString('en-US');
 
@@ -1659,23 +1661,23 @@ h3, h4, h5, h6, p,
         (function businessExtras() {
             const gset = (id, items) => { const el = document.getElementById(id); if (el) el.innerHTML = items.map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join(''); };
             const inMonth = i => {
-                const a = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1).getTime();
-                const b = new Date(now.getFullYear(), now.getMonth() - (4 - i), 1).getTime();
+                const a = new Date(now.getFullYear(), i, 1).getTime();
+                const b = new Date(now.getFullYear(), i + 1, 1).getTime();
                 return sold.filter(p => { const t = Number(p.createdAt) || 0; return t >= a && t < b; });
             };
             const cnt = buckets.map((_, i) => inMonth(i).length);
             const fmtN = v => Math.round(v).toLocaleString('en-US');
             document.getElementById('soldChart').innerHTML = veroBars(cnt, { format: fmtN, labels: labels });
-            trendPill(document.getElementById('soldTrend'), cnt[5], cnt[4]);
-            gset('soldStats', [[fmtN(cnt[5]), 'This month'], [fmtN(cnt[4]), 'Last month'],
-                               [fmtN(Math.max(...cnt)), 'Best month'], [fmtN(cnt.reduce((x, y) => x + y, 0) / 6), 'Monthly average']]);
+            trendPill(document.getElementById('soldTrend'), cnt[L], (cnt[L - 1] || 0));
+            gset('soldStats', [[fmtN(cnt[L]), 'This month'], [fmtN((cnt[L - 1] || 0)), 'Last month'],
+                               [fmtN(Math.max(...cnt)), 'Best month'], [fmtN(cnt.reduce((x, y) => x + y, 0) / NM), 'Monthly average']]);
 
             const avg = buckets.map((b, i) => cnt[i] ? b.sum / cnt[i] : 0);
             document.getElementById('avgSaleChart').innerHTML = veroLineChart(avg, { format: nis, labels: labels });
             document.getElementById('avgSaleX').innerHTML = xLabels(labels);
-            trendPill(document.getElementById('avgSaleTrend'), avg[5], avg[4]);
+            trendPill(document.getElementById('avgSaleTrend'), avg[L], (avg[L - 1] || 0));
             const prices = sold.map(p => priceOf(p.price)).filter(v => v > 0);
-            gset('avgSaleStats', [[nis(sold.length ? revenue / sold.length : 0), 'Overall'], [nis(avg[5]), 'This month'],
+            gset('avgSaleStats', [[nis(sold.length ? revenue / sold.length : 0), 'Overall'], [nis(avg[L]), 'This month'],
                                   [nis(prices.length ? Math.max(...prices) : 0), 'Top sale'], [nis(prices.length ? Math.min(...prices) : 0), 'Lowest sale']]);
 
             const byBrand = {};
@@ -1692,27 +1694,27 @@ h3, h4, h5, h6, p,
             const gset = (id, items) => { const el = document.getElementById(id); if (el) el.innerHTML = items.map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join(''); };
             const fmtN = v => Math.round(v).toLocaleString('en-US');
             // Product views: a level series that ends on today's total.
-            const pv = growthSeries(productViews, 6, 13);
+            const pv = growthSeries(productViews, NM, 13);
             document.getElementById('pvChart').innerHTML = veroLineChart(pv, { group: 'last', format: fmtN, labels: labels });
             document.getElementById('pvX').innerHTML = xLabels(labels);
-            trendPill(document.getElementById('pvTrend'), pv[5], pv[4]);
+            trendPill(document.getElementById('pvTrend'), pv[L], (pv[L - 1] || 0));
             const topV = listings.reduce((m, p, i) => Math.max(m, viewsOf(p, i)), 0);
-            gset('pvStats', [[fmtN(productViews), 'Total views'], ['+' + fmtN(pv[5] - pv[4]), 'This month'],
+            gset('pvStats', [[fmtN(productViews), 'Total views'], ['+' + fmtN(pv[L] - (pv[L - 1] || 0)), 'This month'],
                              [fmtN(avgViews), 'Avg per item'], [fmtN(topV), 'Top item']]);
 
             // Conversion: each month's sales against the overall rate.
             const monthSold = buckets.map((b, i) => {
-                const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1).getTime();
-                const e = new Date(now.getFullYear(), now.getMonth() - (4 - i), 1).getTime();
+                const d = new Date(now.getFullYear(), i, 1).getTime();
+                const e = new Date(now.getFullYear(), i + 1, 1).getTime();
                 return sold.filter(p => { const t = Number(p.createdAt) || 0; return t >= d && t < e; }).length;
             });
-            const mean = monthSold.reduce((a, b) => a + b, 0) / 6 || 1;
+            const mean = monthSold.reduce((a, b) => a + b, 0) / NM || 1;
             const cv = monthSold.map((n, i) => +(conv * (n ? n / mean : 0.4 + rnd(i + 61) * 0.8)).toFixed(2));
             const pct = v => v.toFixed(1) + '%';
             document.getElementById('convChart').innerHTML = veroLineChart(cv, { group: 'last', format: pct, labels: labels });
             document.getElementById('convX').innerHTML = xLabels(labels);
-            trendPill(document.getElementById('convTrend'), cv[5], cv[4]);
-            gset('convStats', [[pct(conv), 'Overall'], [pct(cv[5]), 'This month'],
+            trendPill(document.getElementById('convTrend'), cv[L], (cv[L - 1] || 0));
+            gset('convStats', [[pct(conv), 'Overall'], [pct(cv[L]), 'This month'],
                                [pct(Math.max(...cv)), 'Best month'], [String(sold.length), 'Sales']]);
 
             // Which brands draw the eye.

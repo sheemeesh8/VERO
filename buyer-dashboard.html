@@ -348,7 +348,7 @@ h3, h4, h5, h6, p,
                 <div class="card-t">Cumulative spend</div>
                 <span class="trend-pill" id="cumTrend"></span>
             </div>
-            <div class="card-d">Cumulative spend over 6 the recent months</div>
+            <div class="card-d">Cumulative spend since 1 January</div>
             <div id="cumChart"></div>
             <div class="lc-x" id="cumX"></div>
         </div>
@@ -528,8 +528,10 @@ h3, h4, h5, h6, p,
 
         // ---- Monthly spend bars (last 6 months). ----
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        // Months run from 1 January to the current month (year to date).
+        const NM = now.getMonth() + 1, L = NM - 1;
         const buckets = [];
-        for (let i = 5; i >= 0; i--) {
+        for (let i = now.getMonth(); i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const start = d.getTime();
             const end = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
@@ -541,7 +543,7 @@ h3, h4, h5, h6, p,
 
         // ---- Time trends: cumulative spend + items-per-month lines. ----
         const monthCounts = [];
-        for (let i = 5; i >= 0; i--) {
+        for (let i = now.getMonth(); i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const start = d.getTime();
             const end = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
@@ -553,18 +555,18 @@ h3, h4, h5, h6, p,
         document.getElementById('cumChart').innerHTML   = fineCols(cumulative, '#111', nis);
         document.getElementById('cumX').innerHTML       = xLabels(labels);
         document.getElementById('itemsChart').innerHTML = veroBars(monthCounts, { labels: labels });
-        trendPill(document.getElementById('cumTrend'),   monthSums[5],   monthSums[4], false);
-        trendPill(document.getElementById('itemsTrend'), monthCounts[5], monthCounts[4], false);
+        trendPill(document.getElementById('cumTrend'),   monthSums[L],   (monthSums[L - 1] || 0), false);
+        trendPill(document.getElementById('itemsTrend'), monthCounts[L], (monthCounts[L - 1] || 0), false);
 
         // ---- Average price per item, month by month. ----
         (function avgPrice() {
             const avg = buckets.map((bk, i) => monthCounts[i] ? bk.sum / monthCounts[i] : 0);
             document.getElementById('avgChart').innerHTML = veroLineChart(avg, { format: nis, labels: labels });
             document.getElementById('avgX').innerHTML = xLabels(labels);
-            trendPill(document.getElementById('avgTrend'), avg[5], avg[4], false);
+            trendPill(document.getElementById('avgTrend'), avg[L], (avg[L - 1] || 0), false);
             const paid = items.map(priceOf).filter(v => v > 0);
             const el = document.getElementById('avgStats');
-            if (el) el.innerHTML = [[nis(count ? total / count : 0), 'Overall'], [nis(avg[5]), 'This month'],
+            if (el) el.innerHTML = [[nis(count ? total / count : 0), 'Overall'], [nis(avg[L]), 'This month'],
                                     [nis(paid.length ? Math.max(...paid) : 0), 'Priciest item'], [nis(paid.length ? Math.min(...paid) : 0), 'Cheapest item']]
                 .map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join('');
         })();
@@ -608,8 +610,8 @@ h3, h4, h5, h6, p,
             if (el) el.innerHTML = [
                 [nis(monthSpend), 'This month'],
                 [nis(prevMonthSpend), 'Last month'],
-                [nis(total6), '6-month total'],
-                [nis(total6 / 6), 'Monthly average'],
+                [nis(total6), 'Year to date'],
+                [nis(total6 / NM), 'Monthly average'],
             ].map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join('');
 
             document.querySelectorAll('.gslider').forEach(sl => {
