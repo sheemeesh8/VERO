@@ -833,7 +833,7 @@
         .dn-artist #storeName:not(#zz):not(#zz):not(#zz),
         .dn-artist #storeLast:not(#zz):not(#zz):not(#zz) {
             font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important;
-            font-size: clamp(42px, 13vw, 56px); font-weight: 400; letter-spacing: 0; line-height: 1;
+            font-size: clamp(30px, 9vw, 38px); font-weight: 400; letter-spacing: 0; line-height: 1;
             text-transform: none; color: #fff; text-align: left; text-shadow: 0 2px 24px rgba(0,0,0,0.25); margin: 0;
         }
         .dn-artist #storeLast:empty { display: none; }
@@ -858,8 +858,16 @@
         .dn-artist .dn-fnum b { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
         .dn-artist .dn-fnum span { margin-top: 6px; font-size: 9px; letter-spacing: 2.5px; color: rgba(255,255,255,0.7); }
         .dn-artist .dn-swipe { color: rgba(255,255,255,0.7); }
-        /* The stats row takes the bio's place. */
-        .dn-artist .pf-bio { display: none !important; }
+        /* One line: the name never wraps; a long surname is cut with an ellipsis. */
+        .dn-artist .dn-names { width: 100%; }
+        .dn-artist .dn-namerow { gap: 0 10px; width: 100%; min-width: 0; flex-wrap: nowrap; }
+        .dn-artist #storeName, .dn-artist #storeLast { white-space: nowrap; }
+        .dn-artist #storeName { flex: none; }
+        .dn-artist #storeLast { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .dn-artist .dn-vbadge { flex: none; }
+        /* The bio, under the name. */
+        .dn-artist .pf-bio:not(#zz) { margin: 10px 0 0; max-width: none; text-align: left; font-size: 13px; line-height: 1.55;
+            color: rgba(255,255,255,0.85); text-shadow: 0 1px 12px rgba(0,0,0,0.3); }
     </style>
     <script src="media-store.js"></script>
     <script src="assets/back-button.js"></script>
@@ -896,11 +904,11 @@ h3, h4, h5, h6, p,
 </style>
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Aharoni CLM','Segoe UI',sans-serif !important;}</style>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
-    <script src="assets/page-header.js?v=20261003e"></script>
+    <script src="assets/page-header.js?v=20261003f"></script>
 </head>
 <body>
     <!-- Shared page header (assets/page-header.css): title left, back arrow right. -->
-    <header class="page-header ph-overlay ph-float" data-hero="#hero">
+    <header class="page-header ph-overlay ph-float" data-hero="#hero" data-stick="scroll">
         <div class="ph-name" role="heading" aria-level="1">Profile</div>
         <a class="ph-back" href="index.html" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     </header>
@@ -937,12 +945,14 @@ h3, h4, h5, h6, p,
             <div class="dn-bg" id="dnBg"></div>
             <div class="pf-overlay daniel dn-artist">
                 <div class="dn-names">
+                    <!-- First and last name on one line, the badge after them. -->
                     <div class="dn-namerow">
                         <span class="pf-first" id="storeName">Your Name</span>
+                        <span class="pf-last" id="storeLast"></span>
                         <span class="dn-vbadge" aria-label="Verified">V</span>
                     </div>
-                    <span class="pf-last" id="storeLast"></span>
                 </div>
+                <p class="pf-bio" id="storeBio"></p>
                 <!-- Profile picture + handle, Follow on the right. -->
                 <div class="dn-who">
                     <div class="dn-card">
@@ -963,7 +973,6 @@ h3, h4, h5, h6, p,
                 <span class="dn-swipe">Swipe for more</span>
                 <!-- Hidden stubs kept so existing scripts still find their elements. -->
                 <span id="storeStatus" class="is-closed" hidden>Offline</span>
-                <p class="pf-bio" id="storeBio" hidden></p>
             </div>
         </div>
 
@@ -1137,7 +1146,13 @@ h3, h4, h5, h6, p,
             }
         })();
         document.getElementById('followers').textContent = BUYER.followers.toLocaleString('en-US');
-        document.getElementById('following').textContent = (Number(BUYER.following) || 0).toLocaleString('en-US');
+        // Following: the people / shops followed from the feed (vero_following) —
+        // the same list My Profile and the network page count.
+        (function () {
+            let list; try { list = JSON.parse(localStorage.getItem('vero_following')); } catch (e) { list = null; }
+            const n = Array.isArray(list) ? list.length : (Number(BUYER.following) || 0);
+            document.getElementById('following').textContent = n.toLocaleString('en-US');
+        })();
         document.getElementById('storeBio').textContent = BUYER.tag || '';
         // Hero stats slider — rotate Followers ↔ Following every 4 seconds.
         (function(){

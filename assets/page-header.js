@@ -65,7 +65,8 @@
 
     /* Header over a hero image / video (data-hero="<selector>"): transparent
        while the media is under it, a solid sticky header once the media has
-       scrolled past. data-hero="fixed" = a full-screen backdrop that never
+       scrolled past (or, with data-stick="scroll", as soon as the page moves).
+       data-hero="fixed" = a full-screen backdrop that never
        scrolls away, so the header simply stays transparent. Scroll events are
        captured so pages that scroll an inner container work too. */
     function initOverlay() {
@@ -73,8 +74,12 @@
         if (!hdr || hdr.getAttribute('data-hero') === 'fixed') return;
         var hero = document.querySelector(hdr.getAttribute('data-hero'));
         if (!hero) { hdr.classList.add('ph-stuck'); renderTitle(); return; }   // no media: never leave white text on white
+        // data-stick="scroll": solid as soon as the page starts to scroll,
+        // not only once the media is fully past.
+        var early = hdr.getAttribute('data-stick') === 'scroll';
         var update = function () {
-            hdr.classList.toggle('ph-stuck', forcedSolid || hero.getBoundingClientRect().bottom <= hdr.offsetHeight);
+            var r = hero.getBoundingClientRect();
+            hdr.classList.toggle('ph-stuck', forcedSolid || (early ? r.top < 0 : r.bottom <= hdr.offsetHeight));
             renderTitle();
         };
         refreshOverlay = update;
