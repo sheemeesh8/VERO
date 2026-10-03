@@ -222,7 +222,7 @@ h3, h4, h5, h6, p,
         .sec-title, .sec-title:first-of-type { margin: var(--dash-gap) 0 12px !important; }
         .card { padding: 0 !important; }
         .card.hero-chart { padding-top: 14px !important; }
-        :not(.grid) > .card + .card, .grid + .card, .card + .grid { margin-top: var(--dash-gap) !important; }
+        :not(.grid) > .card + .card, .grid + .card, .card + .grid, .grid + .grid, .list + .card, .na-toggle + .card { margin-top: var(--dash-gap) !important; }
         .grid { gap: 24px !important; }
         .gstats { gap: 22px 40px !important; margin-top: 20px; }
         .gslider { margin-top: 16px !important; }
@@ -336,40 +336,38 @@ h3, h4, h5, h6, p,
             </div>
         </div>
 
-        <!-- ===== TIME TRENDS ===== -->
-        <div class="sec-title">Trends over time</div>
-        <div class="grid g2">
-            <div class="card">
-                <div class="card-h">
-                    <div class="card-t">Cumulative spend</div>
-                    <span class="trend-pill" id="cumTrend"></span>
-                </div>
-                <div class="card-d">Cumulative spend over 6 the recent months</div>
-                <div id="cumChart"></div>
-                <div class="lc-x" id="cumX"></div>
-            </div>
-            <div class="card">
-                <div class="card-h">
-                    <div class="card-t">Items per month</div>
-                    <span class="trend-pill" id="itemsTrend"></span>
-                </div>
-                <div class="card-d">Number of purchases each month</div>
-                <div id="itemsChart"></div>
-                <div class="lc-x" id="itemsX"></div>
-            </div>
+        <!-- ===== BY SELLER ===== -->
+        <div class="sec-title">Where you spent the most</div>
+        <div class="card">
+            <div class="list" id="sellerList"></div>
         </div>
 
-        <!-- ===== BREAKDOWN BY SELLER ===== -->
-        <div class="sec-title">By seller</div>
-        <div class="grid g2">
-            <div class="card">
-                <div class="card-h"><div class="card-t">Where you spent the most</div></div>
-                <div class="list" id="sellerList"></div>
+        <!-- ===== CUMULATIVE ===== -->
+        <div class="card">
+            <div class="card-h">
+                <div class="card-t">Cumulative spend</div>
+                <span class="trend-pill" id="cumTrend"></span>
             </div>
-            <div class="card">
-                <div class="card-h"><div class="card-t">Recent purchases</div></div>
-                <div class="list" id="recentList"></div>
+            <div class="card-d">Cumulative spend over 6 the recent months</div>
+            <div id="cumChart"></div>
+            <div class="lc-x" id="cumX"></div>
+        </div>
+
+        <!-- ===== RECENT ===== -->
+        <div class="sec-title">Recent purchases</div>
+        <div class="card">
+            <div class="list" id="recentList"></div>
+        </div>
+
+        <!-- ===== ITEMS ===== -->
+        <div class="card">
+            <div class="card-h">
+                <div class="card-t">Items per month</div>
+                <span class="trend-pill" id="itemsTrend"></span>
             </div>
+            <div class="card-d">Number of purchases each month</div>
+            <div id="itemsChart"></div>
+            <div class="lc-x" id="itemsX"></div>
         </div>
 
         <!-- ===== ACTIVITY ===== -->
@@ -393,6 +391,18 @@ h3, h4, h5, h6, p,
                 <div class="kpi-lbl">Sellers I follow</div>
                 <a class="btn block" href="follows.html" style="margin-top:16px">to follows</a>
             </div>
+        </div>
+
+        <!-- ===== AVERAGE PRICE ===== -->
+        <div class="card">
+            <div class="card-h">
+                <div class="card-t">Average price</div>
+                <span class="trend-pill" id="avgTrend"></span>
+            </div>
+            <div class="card-d">What you paid per item, month by month</div>
+            <div id="avgChart"></div>
+            <div class="lc-x" id="avgX"></div>
+            <div class="gstats" id="avgStats"></div>
         </div>
 
         <!-- ===== QUICK ACTIONS ===== -->
@@ -547,6 +557,19 @@ h3, h4, h5, h6, p,
         document.getElementById('itemsX').innerHTML     = xLabels(labels);
         trendPill(document.getElementById('cumTrend'),   monthSums[5],   monthSums[4], false);
         trendPill(document.getElementById('itemsTrend'), monthCounts[5], monthCounts[4], false);
+
+        // ---- Average price per item, month by month. ----
+        (function avgPrice() {
+            const avg = buckets.map((bk, i) => monthCounts[i] ? bk.sum / monthCounts[i] : 0);
+            document.getElementById('avgChart').innerHTML = veroLineChart(avg, { format: nis, labels: labels });
+            document.getElementById('avgX').innerHTML = xLabels(labels);
+            trendPill(document.getElementById('avgTrend'), avg[5], avg[4], false);
+            const paid = items.map(priceOf).filter(v => v > 0);
+            const el = document.getElementById('avgStats');
+            if (el) el.innerHTML = [[nis(count ? total / count : 0), 'Overall'], [nis(avg[5]), 'This month'],
+                                    [nis(paid.length ? Math.max(...paid) : 0), 'Priciest item'], [nis(paid.length ? Math.min(...paid) : 0), 'Cheapest item']]
+                .map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join('');
+        })();
 
         // ---- Budget: editable target (tap to set), else a sensible default. ----
         const cfg = readJSON('vero_buyer_config', {});
