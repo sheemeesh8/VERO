@@ -121,6 +121,16 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
         .sa-tag:empty { display: none; }
+        /* Followers and reach — a row of figures at the foot of the cover photo. */
+        .sa-reach {
+            display: flex; justify-content: space-between; gap: 6px; margin-top: 22px; padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.28);
+        }
+        .sa-r { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+                color: #fff; text-decoration: none; }
+        .sa-r b { font-family: 'Bodoni Moda', Georgia, serif; font-weight: 400; font-size: 18px; line-height: 1;
+                  letter-spacing: 0.2px; text-shadow: 0 1px 10px rgba(0,0,0,0.35); font-variant-numeric: tabular-nums; }
+        .sa-r span { font-size: 8.5px; letter-spacing: 1.2px; line-height: 1.35; text-transform: uppercase; color: rgba(255,255,255,0.78); }
 
         /* ============ Floating pill NAV BAR (copied from profile.html) ============
            A dark rounded pill with a single white sliding indicator on the active
@@ -359,6 +369,14 @@ h3, h4, h5, h6, p,
             <div class="sa-hero-band">
                 <div class="sa-name" id="saName">My Store</div>
                 <p class="sa-tag" id="saTag">The best for your closet</p>
+                <!-- Followers and reach, at the foot of the cover photo. -->
+                <div class="sa-reach" id="saReach" aria-label="Followers and reach">
+                    <a class="sa-r" href="follows.html?from=seller"><b data-k="followers">—</b><span>Followers</span></a>
+                    <div class="sa-r"><b data-k="profileViews">—</b><span>Profile views</span></div>
+                    <div class="sa-r"><b data-k="productViews">—</b><span>Product views</span></div>
+                    <div class="sa-r"><b data-k="storeViews">—</b><span>Store views</span></div>
+                    <div class="sa-r"><b data-k="conv">—</b><span>Conversion</span></div>
+                </div>
             </div>
         </section>
 
@@ -395,6 +413,21 @@ h3, h4, h5, h6, p,
     <!-- Big images (the store's cover) live in IndexedDB; localStorage keeps a pointer. -->
     <script src="media-store.js"></script>
     <script>
+    /* ---- Followers and reach on the cover photo: figures come from the
+           dashboard (embedded below), with the last known copy shown first. ---- */
+    (function heroReach() {
+        var box = document.getElementById('saReach'); if (!box) return;
+        var fmt = function (n) { return Math.round(Number(n) || 0).toLocaleString('en-US'); };
+        function paint(r) {
+            if (!r) return;
+            box.querySelectorAll('[data-k]').forEach(function (el) {
+                var k = el.getAttribute('data-k'); if (r[k] == null) return;
+                el.textContent = k === 'conv' ? (Number(r[k]) || 0).toFixed(1) + '%' : fmt(r[k]);
+            });
+        }
+        try { paint(JSON.parse(localStorage.getItem('vero_reach_cache'))); } catch (e) {}
+        window.addEventListener('message', function (e) { if (e.data && e.data.type === 'vero-reach') paint(e.data); });
+    })();
     (function sellerArea() {
         // Force the seller context so the header/rest of the app reads as the shop.
         try { localStorage.setItem('vero_active_account', 'seller'); } catch (e) {}

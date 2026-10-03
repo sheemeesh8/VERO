@@ -719,37 +719,6 @@ h3, h4, h5, h6, p,
       <!-- ============================= GROWTH ============================= -->
       <div class="view" data-view="growth" hidden>
         <!-- Graph, then something else, then a graph… -->
-        <!-- Hero: the store's reach at a glance. -->
-        <div class="sec-title">Followers and reach</div>
-        <div class="grid g3">
-            <a class="card dark kpi-link" href="follows.html?from=seller">
-                <div class="card-t">Followers</div>
-                <div class="kpi-num" id="gFollowers">0</div>
-                <div class="kpi-lbl">to the store ›</div>
-                <div class="kpi-trend up" id="gFollowersTrend"></div>
-            </a>
-            <div class="card">
-                <div class="card-t">Profile views</div>
-                <div class="kpi-num" id="gProfileViews">0</div>
-                <div class="kpi-lbl">Store exposure</div>
-            </div>
-            <button type="button" class="card kpi-link" id="gProductViewsCard">
-                <div class="card-t">Product views</div>
-                <div class="kpi-num" id="gProductViews">0</div>
-                <div class="kpi-lbl">All items by views ›</div>
-            </button>
-            <div class="card">
-                <div class="card-t">Store views</div>
-                <div class="kpi-num" id="kViews">0</div>
-                <div class="kpi-lbl">Total reach</div>
-            </div>
-            <div class="card">
-                <div class="card-t">Conversion rate</div>
-                <div class="kpi-num" id="kConv">0%</div>
-                <div class="kpi-lbl">View → Sale</div>
-            </div>
-        </div>
-
         <div class="grid g1">
             <div class="card">
                 <div class="card-h">
@@ -997,8 +966,9 @@ h3, h4, h5, h6, p,
         if (!storeViews) storeViews = demoMode ? 5300 : (Math.round(productViews * 0.62) + followers * 3 + 120);
         const conv = storeViews ? (sold.length / storeViews * 100) : 0;
 
-        document.getElementById('kViews').textContent   = storeViews.toLocaleString('en-US');
-        document.getElementById('kConv').textContent    = conv.toFixed(1) + '%';
+        const setTxt = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+        setTxt('kViews', storeViews.toLocaleString('en-US'));
+        setTxt('kConv', conv.toFixed(1) + '%');
 
         // ---- Monthly revenue bars (last 6 months). ----
         const now = new Date();
@@ -1627,10 +1597,20 @@ h3, h4, h5, h6, p,
             || (demoMode ? 23 : 0);
 
         // ---- Growth view: followers + profile/product views (Instagram-style). ----
-        document.getElementById('gFollowers').textContent = followers.toLocaleString('en-US');
+        setTxt('gFollowers', followers.toLocaleString('en-US'));
         trendPill(document.getElementById('gFollowersTrend'), followerSeries[L], (followerSeries[L - 1] || 0));
-        document.getElementById('gProfileViews').textContent = storeViews.toLocaleString('en-US');
-        document.getElementById('gProductViews').textContent = productViews.toLocaleString('en-US');
+        setTxt('gProfileViews', storeViews.toLocaleString('en-US'));
+        setTxt('gProductViews', productViews.toLocaleString('en-US'));
+
+        // The reach figures live on the seller area's cover photo: hand them up
+        // to every page this one is embedded in (and keep a copy for next visit).
+        (function shareReach() {
+            const reach = { type: 'vero-reach', followers: followers, profileViews: storeViews, productViews: productViews,
+                            storeViews: storeViews, conv: +conv.toFixed(1) };
+            try { localStorage.setItem('vero_reach_cache', JSON.stringify(reach)); } catch (e) {}
+            let w = window;
+            try { while (w.parent && w.parent !== w) { w = w.parent; w.postMessage(reach, '*'); } } catch (e) {}
+        })();
 
         // ---- Most-viewed products as cards (peek 2) + a full-page window listing
         //      every product by views, with a filter. ----
