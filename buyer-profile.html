@@ -818,6 +818,49 @@
             font-family: 'League Spartan', 'Poppins', sans-serif !important;
         }
     </style>
+    <!-- Artist-page profile: the cover fills the top and fades to black; the
+         name sits large on it, then the profile picture with Follow, then
+         followers / items / following. Reuses the hero IDs. -->
+    <style id="artist-profile">
+        #hero { background: #111 !important; }
+        .dn-bg::after { background: linear-gradient(180deg, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 42%, rgba(17,17,17,0.88) 74%, #111 100%) !important; }
+        .daniel.dn-artist {
+            justify-content: flex-end; align-items: stretch; text-align: left; color: #fff;
+            padding: 0 24px calc(108px + env(safe-area-inset-bottom,0px));   /* clear of the search button */
+        }
+        .dn-artist .dn-names { align-items: flex-start; }
+        .dn-artist .dn-namerow { gap: 12px; }
+        .dn-artist #storeName:not(#zz):not(#zz):not(#zz),
+        .dn-artist #storeLast:not(#zz):not(#zz):not(#zz) {
+            font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important;
+            font-size: clamp(42px, 13vw, 56px); font-weight: 400; letter-spacing: 0; line-height: 1;
+            text-transform: none; color: #fff; text-align: left; text-shadow: 0 2px 24px rgba(0,0,0,0.25); margin: 0;
+        }
+        .dn-artist #storeLast:empty { display: none; }
+        .dn-artist .dn-vbadge { width: 20px; height: 20px; font-size: 11px; }
+        .dn-artist .dn-who { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+        .dn-artist .dn-card {
+            margin: 0; flex: none; width: 52px; max-width: none; aspect-ratio: 1; border-radius: 50%;
+            border: 2px solid #fff; box-shadow: none; background: #2a2a2a;
+        }
+        .dn-artist .dn-username { margin: 0; text-align: left; font-size: 12px; color: rgba(255,255,255,0.8); text-shadow: none; }
+        .dn-artist .dn-follow {
+            margin: 0 0 0 auto; padding: 10px 26px; font-size: 11px; letter-spacing: 3px;
+            background: transparent; border: 1.4px solid #fff;
+            -webkit-backdrop-filter: none; backdrop-filter: none;
+        }
+        .dn-artist .dn-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 22px;
+            border-top: 1px solid rgba(255,255,255,0.22); padding-top: 16px;
+        }
+        .dn-artist .dn-fnum { color: #fff; text-decoration: none; text-align: left; text-shadow: none; }
+        .dn-artist .dn-fnum + .dn-fnum { padding-left: 14px; border-left: 1px solid rgba(255,255,255,0.22); }
+        .dn-artist .dn-fnum b { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+        .dn-artist .dn-fnum span { margin-top: 6px; font-size: 9px; letter-spacing: 2.5px; color: rgba(255,255,255,0.7); }
+        .dn-artist .dn-swipe { color: rgba(255,255,255,0.7); }
+        /* The stats row takes the bio's place. */
+        .dn-artist .pf-bio { display: none !important; }
+    </style>
     <script src="media-store.js"></script>
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
@@ -892,31 +935,34 @@ h3, h4, h5, h6, p,
                  3-column stats, and the bio. -->
             <!-- Blurred backdrop of the same portrait (set from JS). -->
             <div class="dn-bg" id="dnBg"></div>
-            <div class="pf-overlay daniel">
+            <div class="pf-overlay daniel dn-artist">
                 <div class="dn-names">
                     <div class="dn-namerow">
                         <span class="pf-first" id="storeName">Your Name</span>
                         <span class="dn-vbadge" aria-label="Verified">V</span>
                     </div>
                     <span class="pf-last" id="storeLast"></span>
+                </div>
+                <!-- Profile picture + handle, Follow on the right. -->
+                <div class="dn-who">
+                    <div class="dn-card">
+                        <img id="pfCardImg" alt="">
+                    </div>
                     <span class="dn-username" id="dnUsername" hidden></span>
+                    <button class="dn-follow" id="pfPlus" type="button" aria-label="Follow"
+                        onclick="var fb=document.getElementById('followBtn');if(fb){fb.click();var on=fb.classList.contains('following');this.classList.toggle('is-following',on);this.querySelector('.dn-follow-label').textContent=on?'Following':'Follow';}">
+                        <span class="dn-follow-label">Follow</span>
+                    </button>
                 </div>
-                <div class="dn-card">
-                    <img id="pfCardImg" alt="">
+                <!-- Followers / items / following, where the bio used to sit. -->
+                <div class="dn-stats">
+                    <a class="dn-fnum" href="follows.html#followers"><b id="followers">0</b><span>Followers</span></a>
+                    <a class="dn-fnum" href="#feed"><b id="itemCount">0</b><span>Items</span></a>
+                    <a class="dn-fnum" href="follows.html#following"><b id="following">0</b><span>Following</span></a>
                 </div>
-                <div class="dn-fnum">
-                    <b id="followers">0</b>
-                    <span>Followers</span>
-                </div>
-                <button class="dn-follow" id="pfPlus" type="button" aria-label="Follow"
-                    onclick="var fb=document.getElementById('followBtn');if(fb){fb.click();var on=fb.classList.contains('following');this.classList.toggle('is-following',on);this.querySelector('.dn-follow-label').textContent=on?'Following':'Follow';}">
-                    <span class="dn-follow-label">Follow</span>
-                </button>
                 <span class="dn-swipe">Swipe for more</span>
                 <!-- Hidden stubs kept so existing scripts still find their elements. -->
                 <span id="storeStatus" class="is-closed" hidden>Offline</span>
-                <span id="following" hidden>0</span>
-                <span id="itemCount" hidden>0</span>
                 <p class="pf-bio" id="storeBio" hidden></p>
             </div>
         </div>
@@ -1149,7 +1195,9 @@ h3, h4, h5, h6, p,
                     const prof = JSON.parse(localStorage.getItem('vero_profile')) || {};
                     const p = prof.avatarPos;
                     if (p && typeof p === 'object') {
-                        card.style.transform = `translate(${p.x||0}px, ${p.y||0}px) scale(${p.scale||1.18})`;
+                        // avatarPos was set against the 288px card; scale the offset to this frame.
+                        const k = (card.parentElement.clientWidth || 288) / 288;
+                        card.style.transform = `translate(${(p.x||0)*k}px, ${(p.y||0)*k}px) scale(${p.scale||1.18})`;
                         card.style.transformOrigin = 'center';
                     }
                 } catch (e) {}
