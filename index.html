@@ -7509,7 +7509,12 @@ h3, h4, h5, h6, p,
     text-align: left !important; margin: 0 !important; max-width: 280px;
     font-size: 12.5px; line-height: 1.6; color: rgba(255,255,255,0.86);
 }
-.hero-ov-actions--two { display: flex !important; gap: 10px; margin-top: 22px; pointer-events: auto; }
+#heroImage .hero-ov-actions--two { display: flex !important; flex-wrap: wrap; justify-content: flex-start !important; align-items: center;
+    gap: 10px; margin: 22px 0 0 !important; width: 100%; pointer-events: auto; }
+#heroImage .hero-ov-actions--two .hero-ov-btn { border-radius: 0 !important; margin: 0 !important; box-sizing: border-box;
+    height: 44px; padding: 0 18px !important; display: inline-flex !important; align-items: center; line-height: 1 !important;
+    font-family: 'Poppins', 'Inter', sans-serif !important; font-size: 9.5px !important; }
+button.hero-ov-btn { background: transparent; cursor: pointer; border-radius: 0; line-height: normal; }
 .hero-ov-btn {
     display: inline-block; padding: 14px 18px; border: 1px solid #fff; color: #fff; text-decoration: none; text-shadow: none;
     font-family: 'Poppins', 'Inter', sans-serif; font-size: 9.5px; font-weight: 400; letter-spacing: 2.4px; text-transform: uppercase;
@@ -7517,6 +7522,16 @@ h3, h4, h5, h6, p,
 }
 .hero-ov-btn--solid { background: #fff; color: #111; }
 .hero-ov-btn:active { opacity: 0.75; }
+
+/* -- Header over the Sales image → feed edge: white only below the feed's top line. -- */
+html body header#siteHeader.hdr-split.hdr-split,
+html body header#siteHeader.hdr-split.hdr-split.scrolled {
+    background-color: transparent !important;
+    background: linear-gradient(to bottom, transparent 0, transparent var(--hdr-cut, 0px), rgba(255,255,255,0.96) var(--hdr-cut, 0px)) !important;
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-shadow: none !important;
+}
+html body header#siteHeader.hdr-split.hdr-split::before { background: transparent !important; }
+#siteHeader.hdr-split:not(.scrolled) { border-bottom-color: #ece8e1 !important; }
 
 /* -- Top of the feed: categories as large swipeable cards (option D). -- */
 #genderRail.gr { padding: 34px 0 28px !important; background: #faf9f7; margin: 0 0 18px !important; direction: ltr; }
@@ -7624,6 +7639,7 @@ window.veroLocalImg = function (key) {
                     <!-- Two actions: list a piece, or go into the catalogue (the feed below). -->
                     <div class="hero-ov-actions hero-ov-actions--two">
                         <a class="hero-ov-btn hero-ov-btn--solid" href="upload-start.html">Upload a product</a>
+                        <button class="hero-ov-btn" type="button" onclick="openMagazine()">Magazine</button>
                         <a class="hero-ov-btn" href="#catalogue" onclick="var t=document.querySelector('.feed-section');if(t){event.preventDefault();t.scrollIntoView({behavior:'smooth'});}">Enter the catalogue</a>
                     </div>
                     <div class="hero-ov-meta" id="heroColMeta">
@@ -10529,9 +10545,18 @@ window.veroLocalImg = function (key) {
             // The header is transparent over the hero and the Men/Women/Kids gender
             // slider, then turns solid + sticky the moment you scroll PAST the gender
             // slider (i.e. on reaching the SALES block right below it).
+            // The white header starts at the feed's top line (the edge between the
+            // Sales image and the feed): while that line is inside the header, only
+            // the part below it is white (.hdr-split, --hdr-cut), and the icons turn
+            // dark once the line has passed them.
+            const feedEl = document.querySelector('.feed-section');
             const slider = document.getElementById('heroMobile2');
-            if (slider && slider.offsetParent !== null && slider.offsetHeight) {
-                return (window.scrollY + hdrH) >= (docTop(slider) + slider.offsetHeight);
+            if (feedEl && slider && slider.offsetParent !== null && slider.offsetHeight) {
+                const line = feedEl.getBoundingClientRect().top;
+                const split = line > 0 && line < hdrH;
+                hdr.classList.toggle('hdr-split', split);
+                hdr.style.setProperty('--hdr-cut', Math.max(0, Math.round(line)) + 'px');
+                return line <= hdrH * 0.4;
             }
             const sale = document.querySelector('.sale-showcase');
             if (sale) return (window.scrollY + hdrH) >= docTop(sale);
