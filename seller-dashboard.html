@@ -192,7 +192,7 @@
             transition: height 0.55s cubic-bezier(0.22,1,0.36,1);
         }
         /* Every chart host is the same fixed height; its inner chart fills it. */
-        .hc-plot, #revSlider, #storeChart, #viewsChart, #salesChart, #cumRevChart, #pvChart, #convChart {
+        .hc-plot, #revSlider, #storeChart, #viewsChart, #salesChart, #cumRevChart, #pvChart, #convChart, #soldChart, #avgSaleChart {
             width: 100%; height: var(--graph-h); margin-top: 14px;
             display: flex; flex-direction: column; justify-content: flex-end;
         }
@@ -489,6 +489,7 @@ h3, h4, h5, h6, p,
         .gslider-page .gstats { margin-top: 0 !important; }
         .na-sub, .po-count { margin: 2px 0 12px !important; }
         .hc-dots, .gslider-dots, .rev-pager { display: none !important; }
+        .card.gcard { margin-top: var(--dash-gap) !important; }
         /* Every heading on the dashboard reads like the section titles (e.g. SALES). */
         .card-t { font-size: 13px !important; font-weight: 400 !important; letter-spacing: 2px !important;
                   text-transform: uppercase; color: var(--muted) !important; }
@@ -624,6 +625,18 @@ h3, h4, h5, h6, p,
         </div>
 
         <!-- ===== SALES HISTORY ===== -->
+        <!-- Items sold, month by month. -->
+        <div class="card gcard">
+            <div class="card-h">
+                <div class="card-t">Items sold</div>
+                <span class="trend-pill" id="soldTrend"></span>
+            </div>
+            <div class="card-d">How many items you sold each month</div>
+            <div id="soldChart"></div>
+            <div class="lc-x" id="soldX"></div>
+            <div class="gstats" id="soldStats"></div>
+        </div>
+
         <div class="sec-title">Sales history</div>
         <div class="po-tabs sh-tabs" id="shTabs">
             <button type="button" class="po-tab" data-range="week">Week</button>
@@ -652,6 +665,22 @@ h3, h4, h5, h6, p,
                 </div>
             </div>
         </div>
+
+        <!-- Average sale, month by month. -->
+        <div class="card gcard">
+            <div class="card-h">
+                <div class="card-t">Average sale</div>
+                <span class="trend-pill" id="avgSaleTrend"></span>
+            </div>
+            <div class="card-d">What a buyer paid per item, month by month</div>
+            <div id="avgSaleChart"></div>
+            <div class="lc-x" id="avgSaleX"></div>
+            <div class="gstats" id="avgSaleStats"></div>
+        </div>
+
+        <!-- Revenue by brand. -->
+        <div class="sec-title">Revenue by brand</div>
+        <div class="list" id="brandRev"></div>
       </div><!-- /business -->
 
       <!-- ============================= GROWTH ============================= -->
@@ -1626,6 +1655,39 @@ h3, h4, h5, h6, p,
             `<div class="row"><div class="ic">👁️</div><div class="meta"><b>Average views per product</b><span>across the catalog</span></div><div class="amt">${avgViews.toLocaleString('en-US')}</div></div>` +
             `<div class="row"><div class="ic">➕</div><div class="meta"><b>Follower rate</b><span>View → Follower</span></div><div class="amt">${followRate.toFixed(1)}%</div></div>` +
             `<div class="row"><div class="ic">💬</div><div class="meta"><b>Active chats</b><span>with buyers</span></div><div class="amt">${chatCount}</div></div>`;
+
+        // ---- Business view: items sold and average sale over time, revenue by brand. ----
+        (function businessExtras() {
+            const gset = (id, items) => { const el = document.getElementById(id); if (el) el.innerHTML = items.map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join(''); };
+            const inMonth = i => {
+                const a = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1).getTime();
+                const b = new Date(now.getFullYear(), now.getMonth() - (4 - i), 1).getTime();
+                return sold.filter(p => { const t = Number(p.createdAt) || 0; return t >= a && t < b; });
+            };
+            const cnt = buckets.map((_, i) => inMonth(i).length);
+            const fmtN = v => Math.round(v).toLocaleString('en-US');
+            document.getElementById('soldChart').innerHTML = veroLineChart(cnt, { format: fmtN, labels: labels });
+            document.getElementById('soldX').innerHTML = xLabels(labels);
+            trendPill(document.getElementById('soldTrend'), cnt[5], cnt[4]);
+            gset('soldStats', [[fmtN(cnt[5]), 'This month'], [fmtN(cnt[4]), 'Last month'],
+                               [fmtN(Math.max(...cnt)), 'Best month'], [fmtN(cnt.reduce((x, y) => x + y, 0) / 6), 'Monthly average']]);
+
+            const avg = buckets.map((b, i) => cnt[i] ? b.sum / cnt[i] : 0);
+            document.getElementById('avgSaleChart').innerHTML = veroLineChart(avg, { format: nis, labels: labels });
+            document.getElementById('avgSaleX').innerHTML = xLabels(labels);
+            trendPill(document.getElementById('avgSaleTrend'), avg[5], avg[4]);
+            const prices = sold.map(p => priceOf(p.price)).filter(v => v > 0);
+            gset('avgSaleStats', [[nis(sold.length ? revenue / sold.length : 0), 'Overall'], [nis(avg[5]), 'This month'],
+                                  [nis(prices.length ? Math.max(...prices) : 0), 'Top sale'], [nis(prices.length ? Math.min(...prices) : 0), 'Lowest sale']]);
+
+            const byBrand = {};
+            sold.forEach(p => { const b = p.brand || p.seller || 'Other'; byBrand[b] = (byBrand[b] || 0) + priceOf(p.price); });
+            const rows = Object.entries(byBrand).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            document.getElementById('brandRev').innerHTML = rows.length ? rows.map(([b, v]) =>
+                `<div class="row"><div class="ic">${esc(b.charAt(0))}</div><div class="meta"><b>${esc(b)}</b><span>${Math.round(v / (revenue || 1) * 100)}% of revenue</span></div><div class="amt">${nis(v)}</div></div>`).join('')
+                : '<div class="empty">No sales yet</div>';
+        })();
 
         // ---- Growth view: product views and conversion over time, views by brand. ----
         (function growthExtras() {
