@@ -7576,7 +7576,9 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 .gr-rail::-webkit-scrollbar { display: none; }
 .gr-card { flex: 0 0 72%; max-width: 300px; aspect-ratio: 0.62; position: relative; scroll-snap-align: start;
     background: #222 center / cover no-repeat; text-decoration: none; color: #fff; }
-.gr-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 52%, rgba(0,0,0,0.62)); }
+.gr-card { overflow: hidden; }
+.gr-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; }
+.gr-card::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(transparent 52%, rgba(0,0,0,0.62)); }
 .gr-card.on { box-shadow: inset 0 0 0 2px #fff, 0 0 0 1.5px #111; }
 .gr-cap { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 2; }
 .gr-kick { display: block; font-family: 'Poppins', 'Inter', sans-serif; font-size: 7.5px; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
@@ -11742,16 +11744,24 @@ window.veroLocalImg = function (key) {
             paintings: 'assets/hero/paintings.mp4', sculptures: 'assets/hero/sculptures.mp4'
         };
         // ---- Categories rail at the top of the feed ----
-        const GR_IMG = { men: 'men-hero.jpg', women: 'women-hero.jpg', kids: 'clothing-hero.jpg' };
-        const GR_LINE = { men: 'Sharp, timeless, easy', women: 'Elegance, every day', kids: 'Playful, made to last' };
+        const GR_IMG = { men: 'men-hero.jpg', women: 'women-hero.jpg', kids: 'clothing-hero.jpg', unisex: 'hero-beach.jpg' };
+        const GR_LINE = { men: 'Sharp, timeless, easy', women: 'Elegance, every day', kids: 'Playful, made to last', unisex: 'No labels, all yours' };
+        // The videos the old Men / Women / Kids / Unisex slider played.
+        const GR_VIDEO = { men: 'assets/hero/men.mp4', women: 'assets/hero/women.mp4', kids: 'assets/hero/kids.mp4',
+            unisex: 'assets/hero/unisex.mp4', paintings: 'assets/hero/paintings.mp4', sculptures: 'assets/hero/sculptures.mp4' };
+        // Unisex is the whole catalogue: its card opens the feed with no segment.
+        let grAll = false;
         function renderGenderRail(category) {
             const rail = document.getElementById('grRail');
             if (!rail) return;
-            const segs = filterSegments[category || currentCategory] || [];
+            const cat = category || currentCategory;
+            const segs = (filterSegments[cat] || []).slice();
+            if (cat === 'clothing') segs.push({ key: 'unisex', name: 'Unisex' });
             const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c]);
             rail.innerHTML = segs.map(seg => `
-                <a class="gr-card${currentSegment === seg.key ? ' on' : ''}" data-key="${esc(seg.key)}" href="index.html?seg=${esc(seg.key)}"
+                <a class="gr-card${(seg.key === 'unisex' ? (grAll && !currentSegment) : currentSegment === seg.key) ? ' on' : ''}" data-key="${esc(seg.key)}" href="index.html${seg.key === 'unisex' ? '' : '?seg=' + esc(seg.key)}"
                    style="background-image:url('${esc(GR_IMG[seg.key] || veroLocalImg(seg.img || seg.key))}')">
+                    ${GR_VIDEO[seg.key] ? `<video class="gr-video" src="${GR_VIDEO[seg.key]}" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>` : ''}
                     <span class="gr-cap"><span class="gr-kick">${esc(GR_LINE[seg.key] || seg.accent || '')}</span><span class="gr-name">${esc(seg.name)}</span></span>
                 </a>`).join('');
             document.getElementById('grDots').innerHTML = segs.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('');
@@ -11772,8 +11782,15 @@ window.veroLocalImg = function (key) {
             document.getElementById('grBtn').textContent = 'Shop ' + a.querySelector('.gr-name').textContent;
         }
         function grOpen(key) {
-            if (currentSegment !== key) selectSegment(key);
-            document.querySelectorAll('#grRail .gr-card').forEach(c => c.classList.toggle('on', c.dataset.key === currentSegment));
+            if (key === 'unisex') {
+                grAll = true;
+                if (currentSegment) selectSegment(currentSegment);   // toggles back to the whole feed
+            } else {
+                grAll = false;
+                if (currentSegment !== key) selectSegment(key);
+            }
+            document.querySelectorAll('#grRail .gr-card').forEach(c => c.classList.toggle('on',
+                c.dataset.key === 'unisex' ? (grAll && !currentSegment) : c.dataset.key === currentSegment));
             // Land on the products under the rail, not on the rail itself.
             setTimeout(() => {
                 const r = document.getElementById('genderRail');
