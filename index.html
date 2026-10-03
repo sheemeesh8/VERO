@@ -7518,6 +7518,29 @@ h3, h4, h5, h6, p,
 .hero-ov-btn--solid { background: #fff; color: #111; }
 .hero-ov-btn:active { opacity: 0.75; }
 
+/* -- Top of the feed: categories as large swipeable cards (option D). -- */
+#genderRail.gr { padding: 34px 0 28px !important; background: #faf9f7; margin: 0 0 18px !important; direction: ltr; }
+#genderRail .gr-eyebrow { display: block; padding: 0 20px !important; font-family: 'Poppins', 'Inter', sans-serif; font-size: 8.5px; font-weight: 300;
+    letter-spacing: 4px; text-transform: uppercase; color: rgba(17,17,17,0.55); }
+#genderRail .gr-head:not(#zz):not(#zz):not(#zz) { margin: 6px 0 20px !important; padding: 0 20px !important; font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important;
+    font-size: 32px; font-weight: 200; letter-spacing: 0.01em; color: #111; text-transform: none; }
+#genderRail .gr-rail { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 20px !important; scroll-padding: 0 20px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.gr-rail::-webkit-scrollbar { display: none; }
+.gr-card { flex: 0 0 72%; max-width: 300px; aspect-ratio: 0.62; position: relative; scroll-snap-align: start;
+    background: #222 center / cover no-repeat; text-decoration: none; color: #fff; }
+.gr-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 52%, rgba(0,0,0,0.62)); }
+.gr-card.on { box-shadow: inset 0 0 0 2px #fff, 0 0 0 1.5px #111; }
+.gr-cap { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 2; }
+.gr-kick { display: block; font-family: 'Poppins', 'Inter', sans-serif; font-size: 7.5px; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
+.gr-name:not(#zz):not(#zz):not(#zz) { display: block; margin-top: 6px; font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important; font-size: 28px; font-weight: 200; line-height: 1; }
+#genderRail .gr-dots { display: flex; gap: 5px; padding: 16px 20px 0 !important; }
+.gr-dots i { width: 5px; height: 5px; border-radius: 3px; background: #d6d4cf; transition: width 0.25s, background 0.25s; }
+.gr-dots i.on { width: 18px; background: #111; }
+#genderRail .gr-btn { display: block; width: calc(100% - 40px) !important; margin: 18px 20px 0 !important; padding: 15px; border: none; border-radius: 0; background: #111; color: #fff; cursor: pointer;
+    font-family: 'Poppins', 'Inter', sans-serif; font-size: 9.5px; letter-spacing: 3px; text-transform: uppercase; }
+.gr-btn:active { opacity: 0.8; }
+
 /* -- Under the hero: one full-screen image that opens the Sale page. -- */
 .hm2-one { position: absolute; inset: 0; display: block; background: #222 center / cover no-repeat; color: #fff; text-decoration: none; }
 .hm2-one::after { content: ''; position: absolute; inset: 0;
@@ -8224,6 +8247,15 @@ window.veroLocalImg = function (key) {
     <!-- ==================== INFINITE FEED — continues below the categories ==================== -->
     <div class="feed-section">
         <div class="container">
+            <!-- Top of the feed: the categories as large swipeable cards (Men /
+                 Women / Kids, or the art segments). A card opens its feed. -->
+            <section class="gr" id="genderRail">
+                <span class="gr-eyebrow">Shop by</span>
+                <h2 class="gr-head">Categories</h2>
+                <div class="gr-rail" id="grRail"></div>
+                <div class="gr-dots" id="grDots"></div>
+                <button class="gr-btn" id="grBtn" type="button">Shop</button>
+            </section>
             <!-- Labels row directly under the hero image: segments + magazine. -->
             <div class="vf-navbox" id="vfNavbox"><!-- built by renderVeroFeatures() --></div>
 
@@ -11653,7 +11685,58 @@ window.veroLocalImg = function (key) {
             men: 'assets/hero/men.mp4', women: 'assets/hero/women.mp4', kids: 'assets/hero/kids.mp4',
             paintings: 'assets/hero/paintings.mp4', sculptures: 'assets/hero/sculptures.mp4'
         };
+        // ---- Categories rail at the top of the feed ----
+        const GR_IMG = { men: 'men-hero.jpg', women: 'women-hero.jpg', kids: 'clothing-hero.jpg' };
+        const GR_LINE = { men: 'Sharp, timeless, easy', women: 'Elegance, every day', kids: 'Playful, made to last' };
+        function renderGenderRail(category) {
+            const rail = document.getElementById('grRail');
+            if (!rail) return;
+            const segs = filterSegments[category || currentCategory] || [];
+            const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c]);
+            rail.innerHTML = segs.map(seg => `
+                <a class="gr-card${currentSegment === seg.key ? ' on' : ''}" data-key="${esc(seg.key)}" href="index.html?seg=${esc(seg.key)}"
+                   style="background-image:url('${esc(GR_IMG[seg.key] || veroLocalImg(seg.img || seg.key))}')">
+                    <span class="gr-cap"><span class="gr-kick">${esc(GR_LINE[seg.key] || seg.accent || '')}</span><span class="gr-name">${esc(seg.name)}</span></span>
+                </a>`).join('');
+            document.getElementById('grDots').innerHTML = segs.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('');
+            grSync();
+        }
+        // The card in view drives the dots and the button label.
+        function grActive() {
+            const rail = document.getElementById('grRail');
+            const cards = rail ? [...rail.querySelectorAll('.gr-card')] : [];
+            if (!cards.length) return null;
+            const x = rail.scrollLeft;
+            return cards.reduce((best, c) => Math.abs(c.offsetLeft - rail.offsetLeft - x) < Math.abs(best.offsetLeft - rail.offsetLeft - x) ? c : best, cards[0]);
+        }
+        function grSync() {
+            const a = grActive(); if (!a) return;
+            const cards = [...document.querySelectorAll('#grRail .gr-card')];
+            document.querySelectorAll('#grDots i').forEach((d, i) => d.classList.toggle('on', cards[i] === a));
+            document.getElementById('grBtn').textContent = 'Shop ' + a.querySelector('.gr-name').textContent;
+        }
+        function grOpen(key) {
+            if (currentSegment !== key) selectSegment(key);
+            document.querySelectorAll('#grRail .gr-card').forEach(c => c.classList.toggle('on', c.dataset.key === currentSegment));
+            // Land on the products under the rail, not on the rail itself.
+            setTimeout(() => {
+                const r = document.getElementById('genderRail');
+                if (r) window.scrollTo({ top: r.getBoundingClientRect().bottom + window.scrollY - 70, behavior: 'smooth' });
+            }, 350);
+        }
+        (function wireGenderRail() {
+            const rail = document.getElementById('grRail');
+            if (!rail) return;
+            rail.addEventListener('scroll', grSync, { passive: true });
+            rail.addEventListener('click', e => {
+                const c = e.target.closest('.gr-card'); if (!c) return;
+                e.preventDefault(); grOpen(c.dataset.key);
+            });
+            document.getElementById('grBtn').addEventListener('click', () => { const a = grActive(); if (a) grOpen(a.dataset.key); });
+        })();
+
         function updateHm2Categories(category) {
+            renderGenderRail(category);
             const slider = document.getElementById('hm2Slider');
             if (!slider) return;
             const segs = filterSegments[category] || [];
@@ -12753,6 +12836,7 @@ window.veroLocalImg = function (key) {
             renderCategories();
             renderFeedFilters();
             renderCatCapsules();
+            renderGenderRail();
             initializeApp(); // Shows onboarding if needed, then renders feed
             // Deep-link from the drawer: index.html?seg=men|women|kids selects that
             // segment's feed on load.
