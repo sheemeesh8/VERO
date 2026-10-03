@@ -35,6 +35,25 @@
         location.href = seller ? 'seller-area.html' : 'index.html';
     });
 
+    // The trees film behind the last step: make sure it is actually playing
+    // whenever that step is on screen (phones hold back autoplay on a video
+    // that was hidden when the page loaded).
+    var film = document.querySelector('.pu-stage-video');
+    var slides = document.querySelectorAll('.pu-slide');
+    if (film && slides.length) {
+        film.muted = true; film.setAttribute('muted', '');
+        var lastSlide = slides[slides.length - 1];
+        var kick = function () {
+            if (!lastSlide.classList.contains('active')) return;
+            var p = film.play(); if (p && p.catch) p.catch(function () {});
+        };
+        new MutationObserver(kick).observe(lastSlide, { attributes: true, attributeFilter: ['class'] });
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) kick(); });
+        // Any touch on the page also counts as permission to play.
+        document.addEventListener('touchstart', kick, { passive: true });
+        kick();
+    }
+
     // The header's arrow becomes an ✕: leaving the flow deletes the listing,
     // so it asks first.
     var hdr = document.querySelector('.page-header .ph-back');
