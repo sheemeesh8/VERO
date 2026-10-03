@@ -490,6 +490,37 @@ h3, h4, h5, h6, p,
         .na-sub, .po-count { margin: 2px 0 12px !important; }
         .hc-dots, .gslider-dots, .rev-pager { display: none !important; }
         .card.gcard { margin-top: var(--dash-gap) !important; }
+        /* ---- Lighter blocks between the graphs ---- */
+        /* Compact rows instead of big product cards. */
+        #attnGrid, #poGrid, #gTopViewed { display: block !important; }
+        .crow { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #efede8; color: inherit; text-decoration: none; }
+        .crow:last-child { border-bottom: none; }
+        .crow-th { width: 42px; height: 42px; border-radius: 8px; background: #f2f0ec; display: grid; place-items: center; font-size: 18px; flex: none; overflow: hidden; }
+        .crow-th img { width: 100%; height: 100%; object-fit: cover; }
+        .crow-m { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .crow-m > b { font-size: 13px; font-weight: 500 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .crow-m > span { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .crow-p { font-size: 13px; white-space: nowrap; }
+        .crow .na-timer, .crow .po-note { display: inline; padding: 0; font-size: inherit; color: inherit; }
+        .crow .na-timer b { font-weight: 400 !important; }
+        .crow .na-timer.stale { color: #8a2f2f; } .crow .na-timer.warn { color: #8a6a24; }
+        .crow .po-note .dot { display: inline-block; vertical-align: middle; margin: -2px 6px 0 0; }
+        /* Tabs as plain text with an underline, not pills. */
+        .po-tabs { justify-content: center; gap: 20px !important; }
+        .po-tab { border: none !important; background: none !important; color: var(--muted) !important; padding: 4px 0 6px !important;
+                  border-radius: 0 !important; font-size: 12px !important; box-shadow: none !important; }
+        .po-tab.on { color: var(--ink, #111) !important; box-shadow: inset 0 -1px 0 currentColor !important; }
+        /* "View all" / "Show more" as a quiet text link, not a big outlined button. */
+        .po-more, .na-toggle { border: none !important; background: none !important; padding: 8px 0 !important; margin-top: 8px !important;
+                  font-size: 11px !important; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink, #111) !important; }
+        /* Sales history: plain rows instead of tinted boxes. */
+        .sales-history { gap: 0 !important; }
+        .sh-row { background: none !important; border: none !important; border-bottom: 1px solid #efede8 !important; border-radius: 0 !important; padding: 11px 0 !important; }
+        .sh-day b { font-family: inherit !important; font-size: 13px !important; font-weight: 500 !important; }
+        .sh-row:last-child { border-bottom: none !important; }
+        .sh-amt { font-family: inherit !important; font-size: 13px !important; }
+        /* KPI tiles a touch smaller. */
+        .kpi-num { font-size: 28px !important; }
         /* Every heading on the dashboard reads like the section titles (e.g. SALES). */
         .card-t { font-size: 13px !important; font-weight: 400 !important; letter-spacing: 2px !important;
                   text-transform: uppercase; color: var(--muted) !important; }
@@ -1327,6 +1358,15 @@ h3, h4, h5, h6, p,
             }
         })();
 
+        // ---- One compact row for the lists between the graphs: thumb, name, meta, price. ----
+        const crow = (href, img, icon, name, meta, price) => {
+            const e = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            return '<a class="crow" href="' + href + '">' +
+                '<span class="crow-th">' + (img ? '<img src="' + e(img) + '" alt="">' : (icon || '🛍️')) + '</span>' +
+                '<span class="crow-m"><b>' + e(name) + '</b><span>' + meta + '</span></span>' +
+                '<span class="crow-p">' + price + '</span></a>';
+        };
+
         // ---- Needs attention: items sitting longest on the shelf. ----
         (function needsAttention() {
             const grid = document.getElementById('attnGrid');
@@ -1384,7 +1424,8 @@ h3, h4, h5, h6, p,
 
             function paint(showAll) {
                 const list = showAll ? items.slice(0, HEAD).concat(extra) : items.slice(0, HEAD);
-                grid.innerHTML = list.map(card).join('');
+                grid.innerHTML = list.map(o => crow('product-edit.html?i=' + o.i + '&from=seller', imgOf(o.p), o.p.icon, o.p.name || o.p.title || 'Untitled listing',
+                    esc(o.p.seller || o.p.brand || '—') + ' · <span class="na-timer" data-ts="' + o.ts + '"><b class="na-elapsed">…</b> on shelf</span>', nis(priceOf(o.p.price)))).join('');
                 tick();
                 postH();
             }
@@ -1486,9 +1527,10 @@ h3, h4, h5, h6, p,
                 const list = buckets[tab] || [];
                 countEl.innerHTML = '<b>' + list.length + '</b> ' + (list.length === 1 ? 'item' : 'items');
                 // The peek shows only two; the rest open in the slider window.
-                grid.innerHTML = list.length ? list.slice(0, 2).map(card).join('')
+                grid.innerHTML = list.length ? list.slice(0, 3).map(o => crow(o.href, o.img, '', o.name || 'Untitled listing',
+                        '<span class="po-note ' + o.noteType + '"><span class="dot"></span>' + esc(o.note) + '</span>', nis(o.price))).join('')
                     : '<div class="empty" style="grid-column:1/-1">' + emptyMsg[tab] + '</div>';
-                if (list.length > 2) { moreN.textContent = list.length; moreBtn.hidden = false; }
+                if (list.length > 3) { moreN.textContent = list.length; moreBtn.hidden = false; }
                 else moreBtn.hidden = true;
             }
 
@@ -1620,9 +1662,10 @@ h3, h4, h5, h6, p,
             const grid = document.getElementById('gTopViewed');
             const moreBtn = document.getElementById('pvMore'), moreN = document.getElementById('pvMoreN');
             if (grid) {
-                grid.innerHTML = ranked.length ? ranked.slice(0, 2).map(card).join('')
+                grid.innerHTML = ranked.length ? ranked.slice(0, 3).map(o => crow('product-edit.html?i=' + o.i + '&from=seller', imgOf(o.p), o.p.icon, o.p.name || o.p.title || 'Untitled listing',
+                        esc(o.p.seller || o.p.brand || '—') + ' · ' + o.v.toLocaleString('en-US') + ' views', nis(priceOf(o.p.price)))).join('')
                     : '<div class="empty" style="grid-column:1/-1">No products yet</div>';
-                if (moreBtn) { if (ranked.length > 2) { moreN.textContent = ranked.length; moreBtn.hidden = false; } else moreBtn.hidden = true; }
+                if (moreBtn) { if (ranked.length > 3) { moreN.textContent = ranked.length; moreBtn.hidden = false; } else moreBtn.hidden = true; }
             }
 
             // Full-page window: every product by views, filtered by status.
@@ -1700,7 +1743,7 @@ h3, h4, h5, h6, p,
             document.getElementById('pvX').innerHTML = xLabels(labels);
             trendPill(document.getElementById('pvTrend'), pv[L], (pv[L - 1] || 0));
             const topV = listings.reduce((m, p, i) => Math.max(m, viewsOf(p, i)), 0);
-            gset('pvStats', [[fmtN(productViews), 'Total views'], ['+' + fmtN(pv[L] - (pv[L - 1] || 0)), 'This month'],
+            gset('pvStats', [[fmtN(productViews), 'Total views'], [(pv[L] - (pv[L - 1] || 0) >= 0 ? '+' : '−') + fmtN(Math.abs(pv[L] - (pv[L - 1] || 0))), 'This month'],
                              [fmtN(avgViews), 'Avg per item'], [fmtN(topV), 'Top item']]);
 
             // Conversion: each month's sales against the overall rate.
