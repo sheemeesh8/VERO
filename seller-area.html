@@ -392,6 +392,8 @@ h3, h4, h5, h6, p,
         <button class="sa-tab is-active" type="button" data-id="shop">Settings</button>
     </nav>
 
+    <!-- Big images (the store's cover) live in IndexedDB; localStorage keeps a pointer. -->
+    <script src="media-store.js"></script>
     <script>
     (function sellerArea() {
         // Force the seller context so the header/rest of the app reads as the shop.
@@ -403,15 +405,17 @@ h3, h4, h5, h6, p,
 
         /* ---- Hero: full-bleed cover image + brand name + tagline (LIONCHA style).
                Follower count, Follow and opening hours are storefront-only. ---- */
-        var heroImg = store.hero || profile.hero || '';
+        // The saved value may be a pointer ('idb') to the image in IndexedDB (that's
+        // how My Profile saves it), a data URL or a file name — resolve it the same
+        // way the storefront does. With no cover set, show the storefront's default
+        // cover so the seller area and what buyers see match.
+        var heroVal = store.hero || profile.hero || '';
         var imgEl = document.getElementById('saHeroImg');
-        if (heroImg) {
-            imgEl.style.backgroundImage = 'url("' + heroImg + '")';
-        } else {
-            // Refined dark charcoal fallback so the white brand text stays readable
-            // until the seller sets a cover photo.
-            imgEl.style.background = 'linear-gradient(150deg, #2c2823 0%, #1a1815 60%, #100e0c 100%)';
-        }
+        var paintHero = function (url) { imgEl.style.backgroundImage = 'url("' + url + '")'; };
+        var resolveMedia = window.veroResolveMedia || function (v) { return Promise.resolve(v); };
+        Promise.resolve(heroVal ? resolveMedia(heroVal, 'hero') : null)
+            .catch(function () { return null; })
+            .then(function (url) { paintHero(url || 'women-hero.jpg'); });
 
         document.getElementById('saName').textContent = profile.name || store.name || 'My Store';
         var tagEl = document.getElementById('saTag');
@@ -429,20 +433,17 @@ h3, h4, h5, h6, p,
             file.addEventListener('change', function () {
                 var f = file.files && file.files[0];
                 if (!f) return;
-                var rd = new FileReader();
-                rd.onload = function () {
-                    var url = rd.result;
-                    imgEl.style.backgroundImage = 'url("' + url + '")';
-                    imgEl.style.backgroundSize = 'cover';
-                    imgEl.style.backgroundPosition = 'center 18%';
-                    imgEl.style.backgroundRepeat = 'no-repeat';
-                    try {
-                        var sc = JSON.parse(localStorage.getItem('vero_store_config')) || {};
-                        sc.hero = url;
+                paintHero(URL.createObjectURL(f));
+                // Save like My Profile does: the image in IndexedDB, a pointer in
+                // localStorage (a camera photo is too big for localStorage itself).
+                Promise.resolve(window.veroMediaSet ? window.veroMediaSet('hero', f) : Promise.reject())
+                    .then(function () {
+                        var sc = JSON.parse(localStorage.getItem('vero_store_config') || '{}') || {};
+                        sc.hero = window.VERO_IDB_FLAG || 'idb';
+                        delete sc.heroVideo;
                         localStorage.setItem('vero_store_config', JSON.stringify(sc));
-                    } catch (e) {}
-                };
-                rd.readAsDataURL(f);
+                    })
+                    .catch(function () {});
             });
         })();
 
