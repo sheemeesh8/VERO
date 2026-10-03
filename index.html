@@ -11764,6 +11764,12 @@ window.veroLocalImg = function (key) {
                     ${GR_VIDEO[seg.key] ? `<video class="gr-video" src="${GR_VIDEO[seg.key]}" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>` : ''}
                     <span class="gr-cap"><span class="gr-kick">${esc(GR_LINE[seg.key] || seg.accent || '')}</span><span class="gr-name">${esc(seg.name)}</span></span>
                 </a>`).join('');
+            // Videos added by script don't always autoplay on phones (iOS) from the
+            // attributes alone: mute them in code and start them explicitly.
+            rail.querySelectorAll('video.gr-video').forEach(v => {
+                v.muted = true; v.defaultMuted = true; v.playsInline = true; v.setAttribute('playsinline', '');
+                const p = v.play(); if (p && p.catch) p.catch(() => {});
+            });
             document.getElementById('grDots').innerHTML = segs.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('');
             grSync();
         }
