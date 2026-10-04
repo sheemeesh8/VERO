@@ -7632,7 +7632,7 @@ window.veroLocalImg = function (key) {
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
     <script src="media-store.js"></script>
-    <script src="header.js?v=57"></script>
+    <script src="header.js?v=58"></script>
     <script src="nav-unify.js" defer></script>
 
 <!-- ==================== UPLOAD PRODUCT VIEW ==================== -->
@@ -11561,6 +11561,21 @@ window.veroLocalImg = function (key) {
         // selections (even partial) and drops the returned cards below the filter.
         // We match on the attributes the catalogue actually carries — text, gender,
         // colour, material and price — so results refine as the buyer chooses.
+        // A compact list row for a product search result (option PB).
+        function vspProductRowHTML(prod) {
+            const productData = JSON.stringify({
+                name: prod.name, price: prod.price, icon: prod.icon,
+                category: prod.category, seller: prod.seller, rating: prod.rating,
+                type: prod.type || currentCategory
+            });
+            const productUrl = `product-showcase.html?product=${encodeURIComponent(productData)}`;
+            const photo = prod.processed_cover || prod.cover;
+            return `<a class="vsp-prow" href="${productUrl}">
+                <span class="vsp-prow-img">${photo ? `<img src="${photo}" alt="${prod.name || ''}" loading="lazy">` : `<span class="vsp-prow-emoji">${prod.icon || '\ud83d\udecd\ufe0f'}</span>`}</span>
+                <span class="vsp-prow-info"><b>${prod.name || 'Item'}</b><small>${prod.seller || ''}</small></span>
+                <span class="vsp-prow-price">${veroPriceHTML(prod)}</span>
+            </a>`;
+        }
         window.veroSearchResults = function (state) {
             state = state || {};
             let list = (currentCategory === 'clothing' ? clothingProducts : artProducts).slice();
@@ -11585,7 +11600,8 @@ window.veroLocalImg = function (key) {
                 const byType = list.filter(p => (p.category || '').toLowerCase().includes(state.type.toLowerCase()));
                 if (byType.length) list = byType;
             }
-            return list.slice(0, 12).map(productCardHTML).join('');
+            if (!list.length) return '';
+            return '<div class="vsp-rows">' + list.slice(0, 20).map(vspProductRowHTML).join('') + '</div>';
         };
 
         // Minimal filter bar above the feed; every change re-renders the feed.

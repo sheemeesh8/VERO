@@ -1273,9 +1273,9 @@
         .vsp-searchbar, .vsp-users { transition: opacity 0.32s ease; }
         .vsp-faded { opacity: 0; pointer-events: none; }
         /* Three recommended sellers fade in, staggered. */
-        .vsp-user-results.vsp-users-in .vsp-user { animation: vspUserIn 0.45s ease both; }
-        .vsp-user-results.vsp-users-in .vsp-user:nth-child(2) { animation-delay: 0.09s; }
-        .vsp-user-results.vsp-users-in .vsp-user:nth-child(3) { animation-delay: 0.18s; }
+        .vsp-user-results.vsp-users-in > * { animation: vspUserIn 0.45s ease both; }
+        .vsp-user-results.vsp-users-in > *:nth-child(2) { animation-delay: 0.09s; }
+        .vsp-user-results.vsp-users-in > *:nth-child(3) { animation-delay: 0.18s; }
         @keyframes vspUserIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         /* Product filters stay hidden until the product search bar is focused. */
         .vsp-cols.vsp-collapsed { display: none !important; }
@@ -1299,9 +1299,27 @@
         .vsp-user-search input::placeholder { color: #9a9a9a; letter-spacing: 0.4px; }
         .vsp-user-search svg { width: 20px; height: 20px; stroke: #111; stroke-width: 1.25; fill: none; }
         .vsp-user-results {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            gap: 38px 12px; justify-items: center; margin-top: 22px;
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 14px; justify-items: stretch; margin-top: 22px;
         }
+        /* Seller result card (option SD): cover photo, avatar, name, rating. */
+        .vsp-scard { display: block; border: 1px solid #e4e1dc; border-radius: 12px; overflow: hidden; text-decoration: none; color: #111; background: #fff; }
+        .vsp-scard-cover { display: block; height: 72px; background: #ddd center / cover no-repeat; filter: grayscale(0.3); }
+        .vsp-scard-av { display: block; width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; margin: -25px auto 0; overflow: hidden; background: #eee; }
+        .vsp-scard-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .vsp-scard-name { display: block; text-align: center; font-size: 13px; margin-top: 8px; }
+        .vsp-scard-meta { display: block; text-align: center; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #8a877f; margin: 3px 0 12px; }
+        .vsp-scard:hover .vsp-scard-name { text-decoration: underline; }
+        /* Product result row (option PB). */
+        .vsp-rows { grid-column: 1 / -1; display: flex; flex-direction: column; width: 100%; }
+        .vsp-prow { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid #ececec; text-decoration: none; color: #111; }
+        .vsp-prow-img { width: 60px; height: 76px; flex: none; background: #f1efeb; display: grid; place-items: center; overflow: hidden; }
+        .vsp-prow-img img { width: 100%; height: 100%; object-fit: cover; }
+        .vsp-prow-emoji { font-size: 28px; }
+        .vsp-prow-info { flex: 1; min-width: 0; }
+        .vsp-prow-info b { font-weight: 500; font-size: 15px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .vsp-prow-info small { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #8a877f; }
+        .vsp-prow-price { font-size: 15px; font-variant-numeric: tabular-nums; flex: none; }
         .vsp-user-results:empty { margin-top: 0; }
         .vsp-user {
             display: flex; flex-direction: column; align-items: center; gap: 9px;
@@ -1950,9 +1968,15 @@
         }
     };
     function vspUserCard(u) {
-        return `<a class="vsp-user" href="index.html?seller=${encodeURIComponent(u)}">
-                    <span class="vsp-user-av"><img src="https://i.pravatar.cc/150?u=${encodeURIComponent(u)}" alt="${u}" loading="lazy"></span>
-                    <span class="vsp-user-name">${u}</span>
+        const img = `https://i.pravatar.cc/150?u=${encodeURIComponent(u)}`;
+        const rating = (typeof vspSellerRating === 'function') ? Number(vspSellerRating(u)).toFixed(1) : '4.6';
+        const seed = String(u).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+        const items = 8 + (seed % 40);
+        return `<a class="vsp-scard" href="index.html?seller=${encodeURIComponent(u)}">
+                    <span class="vsp-scard-cover" style="background-image:url('${img}')"></span>
+                    <span class="vsp-scard-av"><img src="${img}" alt="${u}" loading="lazy"></span>
+                    <span class="vsp-scard-name">${u}</span>
+                    <span class="vsp-scard-meta">\u2605 ${rating} \u00b7 ${items} items</span>
                  </a>`;
     }
     // Three recommended sellers that fade in when the user bar is focused (empty).
