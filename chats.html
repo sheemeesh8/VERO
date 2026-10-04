@@ -201,6 +201,10 @@
             border-radius: 50%; background: #2fbf5e; border: 2px solid #fff;
             box-shadow: 0 0 0 1px rgba(0,0,0,0.05); pointer-events: none;
         }
+        /* Post-checkout focus: the offer threads stay sharp, the rest blur until tapped. */
+        .chat-track.has-offers .chat-row { transition: filter 0.4s ease, opacity 0.4s ease; }
+        .chat-track.has-offers .chat-row.is-dim { filter: blur(3px); opacity: 0.4; }
+        .chat-track.has-offers .chat-row.is-dim:active { opacity: 0.55; }
         /* A real product photo fills the circle; the emoji stand-in stays centred. */
         .chat-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
         /* text column, with a hairline divider under it (indented past the avatar) */
@@ -597,6 +601,10 @@ h3, h4, h5, h6, p,
         const recentInfo = readJSON('vero_checkout_recent', null);
         const recentSellers = new Set(
             recentInfo && Array.isArray(recentInfo.sellers) ? recentInfo.sellers : []);
+        // Right after a checkout, focus the threads the offers went to: they keep
+        // the green dot, every other thread is blurred until the shopper taps one.
+        const FOCUS_MS = 15 * 60 * 1000;
+        let focusOffers = !!(recentInfo && recentInfo.at && (Date.now() - recentInfo.at) < FOCUS_MS && recentSellers.size);
         const list = [...threads.values()]
             .map(t => { t.available = recentSellers.has(t.seller); return t; })
             .sort((a, b) => (b.available - a.available) || (b.at - a.at));
@@ -684,7 +692,7 @@ h3, h4, h5, h6, p,
                 el.innerHTML = `<div class="chat-empty">${why}</div>`;
                 return;
             }
-            el.innerHTML = '<div class="chat-track">' + rows.map(({ t, i }) => {
+            el.innerHTML = '<div class="chat-track' + (focusOffers ? ' has-offers' : '') + '">' + rows.map(({ t, i }) => {
                 const prod = productName(t.seller);
                 const title = prod || t.seller;          // product leads; seller sits under it
                 const photo = productPhoto(t.seller);
@@ -692,7 +700,7 @@ h3, h4, h5, h6, p,
                     ? `<img src="${photo}" alt="${title}">`
                     : t.icon;
                 return `
-                    <div class="chat-row" data-i="${i}">
+                    <div class="chat-row${(focusOffers && !t.available) ? ' is-dim' : ''}" data-i="${i}">
                         <div class="chat-av">
                             <div class="chat-avatar" data-avatar>${avatarInner}</div>
                             ${t.available ? '<span class="chat-online" title="Available now"></span>' : ''}
@@ -728,6 +736,15 @@ h3, h4, h5, h6, p,
         el.addEventListener('click', (e) => {
             const row = e.target.closest('.chat-row');
             if (!row) return;
+            // While the post-checkout focus is on, a tap on a blurred thread just
+            // lifts the focus (reveals every thread) rather than opening it.
+            if (focusOffers && row.classList.contains('is-dim')) {
+                focusOffers = false;
+                const tr = document.querySelector('.chat-track.has-offers');
+                if (tr) tr.classList.remove('has-offers');
+                document.querySelectorAll('.chat-row.is-dim').forEach(r => r.classList.remove('is-dim'));
+                return;
+            }
             const t = list[+row.dataset.i];
             // Tapping the product photo opens the product page directly; anywhere
             // else on the row opens the conversation.
