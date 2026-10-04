@@ -228,22 +228,30 @@
         function cartCardHTML(item, idx) {
             const on = selected.has(idx) ? ' on' : '';
             const photo = item.cover || item.image || item.photo;
+            const rating = item.rating || 4.5;
+            const stars = '\u2605'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '\u2606' : '');
             return `
-                <a href="${productPageUrl(item)}" class="q-card${on}" data-idx="${idx}">
-                    <div class="q-img">
-                        <span class="q-emoji">${item.icon || '🛍️'}</span>
-                        ${photo ? `<img src="${photo}" alt="" loading="lazy" onerror="this.remove()">` : ''}
-                        <button class="q-check" title="Select" aria-label="Select"
+                <a href="${productPageUrl(item)}" class="product-card cart-item" data-idx="${idx}">
+                    <div class="product-image">${photo ? `<img class="pc-photo" src="${photo}" alt="${item.name || ''}" loading="lazy" onerror="this.remove()">` : (item.icon || '🛍️')}
+                        <button class="pc-check${on}" title="Select" aria-label="Select"
                                 onclick="event.preventDefault(); event.stopPropagation(); toggleSelect(${idx})">
-                            <svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         </button>
-                        <button class="q-remove" title="Remove from cart" aria-label="Remove"
+                        <button class="product-icon remove" title="Remove from cart" aria-label="Remove from cart"
                                 onclick="event.preventDefault(); event.stopPropagation(); removeItem(${idx})">
-                            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                     </div>
-                    <div class="q-line"><span class="q-name">${item.name || 'Item'}</span><span class="q-price">${priceStr(item.price).replace(/\.00$/, '')}</span></div>
-                    <div class="q-seller">${item.seller || 'Vero Store'}</div>
+                    <div class="product-info">
+                        <div class="pc-left">
+                            <div class="product-price"><span class="vprice">${priceStr(item.price)}</span></div>
+                        </div>
+                        <div class="pc-right">
+                            <div class="product-seller">${item.seller || 'Vero Store'}</div>
+                            <div class="product-name">${item.name || 'Item'}</div>
+                            <div class="product-rating">${stars}</div>
+                        </div>
+                    </div>
                 </a>`;
         }
 
@@ -293,7 +301,7 @@
             }
 
             // One flat two-up grid — the chips above do the category split.
-            body.innerHTML = `<div class="cart-grid q-grid">${mine.map(r => cartCardHTML(r.it, r.idx)).join('')}</div>`;
+            body.innerHTML = `<div class="cart-grid">${mine.map(r => cartCardHTML(r.it, r.idx)).join('')}</div>`;
 
             const count = mine.reduce((s, { it }) => s + (it.qty || 1), 0);
             const total = mine.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
