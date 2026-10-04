@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="product-card.css">
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <!-- Page styles, shared by cart-store / cart / wishlist (single source: list-page.css). -->
-    <link rel="stylesheet" href="list-page.css?v=20261005t">
+    <link rel="stylesheet" href="list-page.css?v=20261005u">
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
@@ -79,20 +79,8 @@
         </div>
     </div>
 
-    <!-- Checkout window (fine line): product list + order summary + slide to confirm. -->
-    <div class="co-scrim" id="coScrim" onclick="closeCheckout()"></div>
-    <div class="co-sheet" id="coSheet" role="dialog" aria-modal="true" aria-label="Checkout">
-        <div class="co-grip"></div>
-        <div class="co-title" id="coTitle">Checkout</div>
-        <div class="co-items" id="coItems"></div>
-        <div class="co-summary" id="coSummary"></div>
-        <div class="co-slide" id="coSlide">
-            <span>Slide to place order</span>
-            <div class="co-knob" id="coKnob" role="button" aria-label="Slide to place order">
-                <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </div>
-        </div>
-    </div>
+    <!-- Order-placed confirmation (fine line, full screen) — shown after Checkout. -->
+    <div class="co-screen" id="coSheet" role="dialog" aria-modal="true" aria-label="Order placed"></div>
     <script>
         // The search lives in the header; tapping the icon reveals an inline search field.
         function toggleListSearch(btn) {
@@ -338,7 +326,7 @@
             host.innerHTML = `
                 <div class="cart-actionbar q-pill">
                     <div class="q-sum"><span>${selCount} selected</span><b>₪${selTotalStr.replace(/\.00$/, '')}</b></div>
-                    <button class="cab-cell cab-checkout" onclick="openCheckout()"${selCount ? '' : ' disabled'}>Checkout &#8594;</button>
+                    <button class="cab-cell cab-checkout" onclick="veroCheckout()"${selCount ? '' : ' disabled'}>Checkout &#8594;</button>
                 </div>`;
 
             // Sticky summary popup — visible only while something is ticked.
@@ -400,9 +388,7 @@
             const d = new Date();
             const dateStr = ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + String(d.getFullYear()).slice(-2);
             const sheet = document.getElementById('coSheet');
-            sheet.classList.add('co-placed');
-            sheet.innerHTML =
-                '<div class="co-grip"></div>' +
+            sheet.innerHTML = '<div class="co-card">' +
                 '<div class="co-tick"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></div>' +
                 '<div class="co-ptitle">Order placed</div>' +
                 '<div class="co-psub">moravchick \u00b7 ' + dateStr + '</div>' +
@@ -411,75 +397,12 @@
                     '<div class="co-rln"><span>Shipping</span><span>Free</span></div>' +
                     '<div class="co-rln co-rt"><span>Total</span><span>' + money(total) + '</span></div>' +
                 '</div>' +
-                '<a class="co-go" href="chats.html">Go to chats &#8594;</a>';
+                '<a class="co-go" href="chats.html">Go to chats &#8594;</a>' +
+            '</div>';
+            requestAnimationFrame(() => sheet.classList.add('show'));
         }
         window.showOrderPlaced = showOrderPlaced;
 
-
-        // ----- Checkout window (fine line): list + summary + slide to confirm -----
-        function openCheckout() {
-            const mine = cart.map((it, idx) => ({ it, idx }))
-                .filter(({ it, idx }) => typeOf(it) === MODE && selected.has(idx));
-            if (!mine.length) return;
-            const sub = mine.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
-            const ship = 0;
-            const total = sub + ship;
-            const vat = Math.round(total - total / 1.17);
-            const money = v => '\u20aa' + v.toLocaleString('en-US');
-            document.getElementById('coTitle').textContent = `Checkout \u00b7 ${mine.length} item${mine.length === 1 ? '' : 's'}`;
-            document.getElementById('coItems').innerHTML = mine.map(({ it }) => {
-                const photo = it.cover || it.image || it.photo;
-                return `<div class="co-row">
-                    <div class="co-th">${photo ? `<img src="${photo}" alt="" onerror="this.remove()">` : `<span>${it.icon || '\ud83d\udecd\ufe0f'}</span>`}</div>
-                    <div class="co-nm"><b>${it.name || 'Item'}</b><small>${it.seller || 'Vero Store'}</small></div>
-                    <div class="co-pr">${money(priceNum(it.price) * (it.qty || 1))}</div>
-                </div>`;
-            }).join('');
-            document.getElementById('coSummary').innerHTML = `
-                <p><span>Subtotal</span><span>${money(sub)}</span></p>
-                <p><span>Shipping</span><span>Free</span></p>
-                <p><span>VAT included</span><span>${money(vat)}</span></p>
-                <p class="co-t"><span>Total</span><span>${money(total)}</span></p>`;
-            resetSlide();
-            document.getElementById('coScrim').classList.add('show');
-            document.getElementById('coSheet').classList.add('show');
-        }
-        function closeCheckout() {
-            document.getElementById('coScrim').classList.remove('show');
-            document.getElementById('coSheet').classList.remove('show');
-        }
-        window.openCheckout = openCheckout;
-        window.closeCheckout = closeCheckout;
-
-        // Slide-to-confirm knob: drag past 90% to place the order.
-        function resetSlide() {
-            const knob = document.getElementById('coKnob');
-            const sl = document.getElementById('coSlide');
-            if (knob) { knob.style.transition = 'none'; knob.style.transform = 'translateX(0)'; }
-            if (sl) sl.classList.remove('done');
-        }
-        (function wireSlide() {
-            const sl = document.getElementById('coSlide');
-            const knob = document.getElementById('coKnob');
-            if (!sl || !knob) return;
-            let dragging = false, startX = 0, x = 0;
-            const maxX = () => Math.max(0, sl.offsetWidth - knob.offsetWidth - 2);
-            const px = e => (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
-            const place = v => { x = Math.max(0, Math.min(maxX(), v)); knob.style.transform = `translateX(${x}px)`; };
-            const down = e => { dragging = true; knob.style.transition = 'none'; startX = px(e) - x; };
-            const move = e => { if (!dragging) return; place(px(e) - startX); };
-            const up = () => {
-                if (!dragging) return; dragging = false; knob.style.transition = 'transform 0.25s ease';
-                if (x >= maxX() * 0.9) { sl.classList.add('done'); knob.style.transform = `translateX(${maxX()}px)`; setTimeout(() => veroCheckout(), 260); }
-                else { x = 0; knob.style.transform = 'translateX(0)'; }
-            };
-            knob.addEventListener('mousedown', down);
-            knob.addEventListener('touchstart', down, { passive: true });
-            window.addEventListener('mousemove', move);
-            window.addEventListener('touchmove', move, { passive: true });
-            window.addEventListener('mouseup', up);
-            window.addEventListener('touchend', up);
-        })();
 
         // Clothing / Art toggle — two carts, built the same way.
         document.querySelectorAll('.mode-btn').forEach(btn => {
