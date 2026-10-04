@@ -201,13 +201,29 @@
             border-radius: 50%; background: #2fbf5e; border: 2px solid #fff;
             box-shadow: 0 0 0 1px rgba(0,0,0,0.05); pointer-events: none;
         }
-        /* Post-checkout focus: the offer threads stay sharp, the rest blur until tapped. */
-        .chat-track.has-offers .chat-row { transition: filter 0.4s ease, opacity 0.4s ease; }
-        .chat-track.has-offers .chat-row.is-dim { filter: blur(3px); opacity: 0.4; }
-        .chat-track.has-offers .chat-row.is-dim:active { opacity: 0.55; }
-        .chat-divider { display: flex; align-items: center; gap: 12px; margin: 10px 4px 4px; }
-        .chat-divider::before, .chat-divider::after { content: ''; flex: 1; height: 1px; background: #e4e1dc; }
-        .chat-divider span { font-size: 8.5px; letter-spacing: 3px; text-transform: uppercase; color: #b2ada3; white-space: nowrap; }
+        /* Post-checkout focus: the offer threads get a green accent bar + tint;
+           the rest collapse under an "Other chats" accordion. */
+        .chat-track.has-offers .chat-row.is-offer {
+            background: linear-gradient(90deg, rgba(47,191,94,0.09), transparent 55%);
+            box-shadow: inset 3px 0 0 #2fbf5e;
+        }
+        .chat-track.has-offers .chat-row.is-offer:hover {
+            background: linear-gradient(90deg, rgba(47,191,94,0.15), transparent 55%);
+        }
+        .chat-acc {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            padding: 15px 20px; background: none; cursor: pointer; color: #1c1c1c; font-family: inherit;
+            border: none; border-top: 1px solid #1c1c1c; border-bottom: 1px solid #ecebe7;
+        }
+        .chat-acc b { font-size: 11px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; }
+        .chat-acc-n { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #8a877f; }
+        .chat-acc .chev { width: 16px; height: 16px; stroke: #8a877f; stroke-width: 1.4; transition: transform 0.3s ease; }
+        .chat-others {
+            display: flex; flex-direction: column; gap: 10px; padding-top: 10px;
+            overflow: hidden; max-height: 0; transition: max-height 0.45s ease;
+        }
+        .chat-track.others-open .chat-others { max-height: 2400px; }
+        .chat-track.others-open .chat-acc .chev { transform: rotate(180deg); }
         /* A real product photo fills the circle; the emoji stand-in stays centred. */
         .chat-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
         /* text column, with a hairline divider under it (indented past the avatar) */
@@ -695,18 +711,14 @@ h3, h4, h5, h6, p,
                 el.innerHTML = `<div class="chat-empty">${why}</div>`;
                 return;
             }
-            const firstDim = focusOffers ? rows.findIndex(({ t }) => !t.available) : -1;
-            el.innerHTML = '<div class="chat-track' + (focusOffers ? ' has-offers' : '') + '">' + rows.map(({ t, i }, ri) => {
-                const sep = (ri === firstDim && firstDim > 0)
-                    ? '<div class="chat-divider"><span>Other chats</span></div>' : '';
+            const rowHtml = ({ t, i }) => {
                 const prod = productName(t.seller);
                 const title = prod || t.seller;          // product leads; seller sits under it
                 const photo = productPhoto(t.seller);
-                const avatarInner = photo
-                    ? `<img src="${photo}" alt="${title}">`
-                    : t.icon;
-                return sep + `
-                    <div class="chat-row${(focusOffers && !t.available) ? ' is-dim' : ''}" data-i="${i}">
+                const avatarInner = photo ? `<img src="${photo}" alt="${title}">` : t.icon;
+                const cls = (focusOffers && t.available) ? ' is-offer' : '';
+                return `
+                    <div class="chat-row${cls}" data-i="${i}">
                         <div class="chat-av">
                             <div class="chat-avatar" data-avatar>${avatarInner}</div>
                             ${t.available ? '<span class="chat-online" title="Available now"></span>' : ''}
@@ -720,7 +732,23 @@ h3, h4, h5, h6, p,
                             <div class="chat-item">${t.seller}</div>
                         </div>
                     </div>`;
-            }).join('') + '</div>';
+            };
+            // After checkout: offer threads shown first with a green accent; the rest
+            // collapse under an "Other chats" accordion that opens on tap.
+            const chev = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+            let inner;
+            if (focusOffers) {
+                const offerRows = rows.filter(({ t }) => t.available);
+                const otherRows = rows.filter(({ t }) => !t.available);
+                inner = offerRows.map(rowHtml).join('') + (otherRows.length
+                    ? '<button type="button" class="chat-acc" id="chatAcc"><b>Other chats</b>'
+                        + '<span class="chat-acc-n">' + otherRows.length + chev + '</span></button>'
+                        + '<div class="chat-others">' + otherRows.map(rowHtml).join('') + '</div>'
+                    : '');
+            } else {
+                inner = rows.map(rowHtml).join('');
+            }
+            el.innerHTML = '<div class="chat-track' + (focusOffers ? ' has-offers' : '') + '">' + inner + '</div>';
         }
         renderList();
 
@@ -740,17 +768,10 @@ h3, h4, h5, h6, p,
             window.closeFilters();
         });
         el.addEventListener('click', (e) => {
+            const acc = e.target.closest('.chat-acc');
+            if (acc) { const tr = el.querySelector('.chat-track'); if (tr) tr.classList.toggle('others-open'); return; }
             const row = e.target.closest('.chat-row');
             if (!row) return;
-            // While the post-checkout focus is on, a tap on a blurred thread just
-            // lifts the focus (reveals every thread) rather than opening it.
-            if (focusOffers && row.classList.contains('is-dim')) {
-                focusOffers = false;
-                const tr = document.querySelector('.chat-track.has-offers');
-                if (tr) tr.classList.remove('has-offers');
-                document.querySelectorAll('.chat-row.is-dim').forEach(r => r.classList.remove('is-dim'));
-                return;
-            }
             const t = list[+row.dataset.i];
             // Tapping the product photo opens the product page directly; anywhere
             // else on the row opens the conversation.
