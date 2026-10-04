@@ -1169,8 +1169,8 @@
         .vsp-searchfield {
             flex: 1 1 50%; min-width: 0;
             display: flex; align-items: center; gap: 14px;
-            border: 1.5px solid #111; border-radius: 999px;
-            height: 86px; padding: 0 32px; box-sizing: border-box;
+            border: none; border-bottom: 1.5px solid #111; border-radius: 0;
+            height: 64px; padding: 0 2px; box-sizing: border-box;
         }
         @media (max-width: 620px) { .vsp-searchbar { flex-direction: column; } }
         .vsp-searchfield {
@@ -1286,12 +1286,12 @@
         /* Match .vsp-searchfield exactly so the two rows read as one stacked pair. */
         .vsp-user-search {
             width: 100%; display: flex; align-items: center; gap: 14px;
-            border: 1.5px solid #111; border-radius: 999px;
-            height: 58px; padding: 0 26px; box-sizing: border-box; background: none;
+            border: none; border-bottom: 1.5px solid #111; border-radius: 0;
+            height: 54px; padding: 0 2px; box-sizing: border-box; background: none;
             transition: height 0.35s cubic-bezier(0.2,0.8,0.2,1), opacity 0.3s ease;
         }
         /* Focusing the user bar grows it up to the product bar's height. */
-        .vsp-user-search.vsp-user-expanded { height: 86px; }
+        .vsp-user-search.vsp-user-expanded { height: 64px; }
         .vsp-user-search input {
             flex: 1; min-width: 0; border: none; outline: none; background: none;
             font-family: inherit; font-size: 15.00px; font-weight: 500; color: #111;
