@@ -589,6 +589,8 @@
             filter: brightness(0.6) saturate(1.03);
         }
         #heroImage.clothing-video #heroVideo { display: block; }
+        /* The clothing hero clip runs brighter — matched to the Sale screen below. */
+        #heroVideo { filter: none; }
         #heroImage.art-video #heroVideoArt { display: block; }
         /* Art-mode hero video: full colour, full-bleed like the fashion hero. */
 
@@ -2758,15 +2760,16 @@
            through the hero + Men/Women/Kids stages, then slides down once the feed
            reaches the top (the same moment it gains .scrolled). */
         #siteHeader {
-            transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease,
+            transition: opacity 0.4s ease,
                         background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease !important;
         }
-        /* Header visible from the top (over the hero) — no longer hidden until scroll. */
+        /* Header visible from the top (over the hero). --hdr-shift (set by
+           veroHeaderScrolled) scrolls it away and brings it back on the feed line. */
         #siteHeader:not(.scrolled) {
-            transform: translateY(0) !important; opacity: 1 !important; pointer-events: auto !important;
+            transform: translateY(var(--hdr-shift, 0px)) !important; opacity: 1 !important; pointer-events: auto !important;
         }
         #siteHeader.scrolled {
-            transform: translateY(0) !important; opacity: 1 !important; pointer-events: auto !important;
+            transform: translateY(var(--hdr-shift, 0px)) !important; opacity: 1 !important; pointer-events: auto !important;
         }
 
         /* ---- Fine-line editorial events board (end of the first feed block) ---- */
@@ -7592,9 +7595,10 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 
 /* -- Under the hero: one full-screen image that opens the Sale page. -- */
 .hm2-one { position: absolute; inset: 0; display: block; overflow: hidden; background: #222 url('assets/hero/art-section-poster.jpg') center / cover no-repeat; color: #fff; text-decoration: none; }
-.hm2-one::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.38); }
+.hm2-one::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.1); }
 /* The trees film, full-bleed behind the type. */
-.hm2-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+/* Lifted to the same on-screen brightness as the clothing hero clip above. */
+.hm2-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; filter: brightness(1.25); }
 .hm2-look { position: absolute; inset: 0; z-index: 2; direction: ltr; pointer-events: none; }
 /* "SALE" four times: three in outline, one solid. */
 .hm2-stack { position: absolute; left: 0; right: 0; top: 15.5%; text-align: center; }
@@ -7602,7 +7606,7 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
     font-size: clamp(96px, 34vw, 160px); font-weight: 700; line-height: 0.86; letter-spacing: 2px; text-transform: uppercase;
     color: transparent; -webkit-text-stroke: 1.2px rgba(255,255,255,0.75); }
 .hm2-stack span.on:not(#zz):not(#zz):not(#zz) { color: #fff; -webkit-text-stroke: 0; }
-.hm2-foot { position: absolute; left: 28px; right: 28px; bottom: 110px; display: flex; justify-content: space-between; align-items: flex-end; }
+.hm2-foot { position: absolute; left: 28px; right: 28px; bottom: 110px; display: flex; justify-content: space-between; align-items: center; }
 .so-eyebrow { font-family: 'Poppins', 'Inter', sans-serif; font-size: 9px; font-weight: 300; letter-spacing: 5px;
     text-transform: uppercase; line-height: 1.9; }
 .so-pct:not(#zz):not(#zz):not(#zz) { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important; font-size: 46px; font-weight: 400; line-height: 0.9; text-align: right; }
@@ -7656,7 +7660,7 @@ window.veroLocalImg = function (key) {
         <!-- Clothing-mode hero video, full-bleed over the background image. Shown only
              in clothing mode (toggled in setCategory); the background image remains
              the poster / art-mode fallback. -->
-        <video class="hero-video-bg" id="heroVideo" src="assets/hero/women.mp4" poster="clothing-hero.jpg"
+        <video class="hero-video-bg" id="heroVideo" src="assets/hero/unisex.mp4" poster="clothing-hero.jpg"
                autoplay muted loop playsinline preload="metadata"></video>
         <!-- Art-mode hero video. Shown only in art mode (toggled in setCategory). -->
         <video class="hero-video-bg hero-video-bg--art" id="heroVideoArt" src="assets/hero/hero-art.mp4" poster="art-hero.jpg"
@@ -10589,11 +10593,20 @@ window.veroLocalImg = function (key) {
             const slider = document.getElementById('heroMobile2');
             if (feedEl && slider && slider.offsetParent !== null && slider.offsetHeight) {
                 const line = feedEl.getBoundingClientRect().top;
+                // Sticky only from the feed's top line: the header scrolls away with
+                // the hero, then sits on top of that line (like a sticky bar placed
+                // there) and pins to the top once the line reaches it.
+                const y = window.scrollY || 0;
+                const shift = line <= hdrH ? 0 : (y < hdrH ? -y : line - hdrH);
+                hdr.style.setProperty('--hdr-shift', Math.round(shift) + 'px');
+                hdr.style.animation = 'none';   // it slides in on the line, no drop-in
                 const split = line > 0 && line < hdrH;
                 hdr.classList.toggle('hdr-split', split);
                 hdr.style.setProperty('--hdr-cut', Math.max(0, Math.round(line)) + 'px');
                 return line <= hdrH * 0.4;
             }
+            hdr.style.removeProperty('--hdr-shift');
+            hdr.style.animation = '';
             const sale = document.querySelector('.sale-showcase');
             if (sale) return (window.scrollY + hdrH) >= docTop(sale);
             const feed = document.querySelector('.feed-section');
