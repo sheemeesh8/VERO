@@ -205,6 +205,9 @@
         .chat-track.has-offers .chat-row { transition: filter 0.4s ease, opacity 0.4s ease; }
         .chat-track.has-offers .chat-row.is-dim { filter: blur(3px); opacity: 0.4; }
         .chat-track.has-offers .chat-row.is-dim:active { opacity: 0.55; }
+        .chat-divider { display: flex; align-items: center; gap: 12px; margin: 10px 4px 4px; }
+        .chat-divider::before, .chat-divider::after { content: ''; flex: 1; height: 1px; background: #e4e1dc; }
+        .chat-divider span { font-size: 8.5px; letter-spacing: 3px; text-transform: uppercase; color: #b2ada3; white-space: nowrap; }
         /* A real product photo fills the circle; the emoji stand-in stays centred. */
         .chat-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
         /* text column, with a hairline divider under it (indented past the avatar) */
@@ -692,14 +695,17 @@ h3, h4, h5, h6, p,
                 el.innerHTML = `<div class="chat-empty">${why}</div>`;
                 return;
             }
-            el.innerHTML = '<div class="chat-track' + (focusOffers ? ' has-offers' : '') + '">' + rows.map(({ t, i }) => {
+            const firstDim = focusOffers ? rows.findIndex(({ t }) => !t.available) : -1;
+            el.innerHTML = '<div class="chat-track' + (focusOffers ? ' has-offers' : '') + '">' + rows.map(({ t, i }, ri) => {
+                const sep = (ri === firstDim && firstDim > 0)
+                    ? '<div class="chat-divider"><span>Other chats</span></div>' : '';
                 const prod = productName(t.seller);
                 const title = prod || t.seller;          // product leads; seller sits under it
                 const photo = productPhoto(t.seller);
                 const avatarInner = photo
                     ? `<img src="${photo}" alt="${title}">`
                     : t.icon;
-                return `
+                return sep + `
                     <div class="chat-row${(focusOffers && !t.available) ? ' is-dim' : ''}" data-i="${i}">
                         <div class="chat-av">
                             <div class="chat-avatar" data-avatar>${avatarInner}</div>
