@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="product-card.css">
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <!-- Page styles, shared by cart-store / cart / wishlist (single source: list-page.css). -->
-    <link rel="stylesheet" href="list-page.css?v=20261003e">
+    <link rel="stylesheet" href="list-page.css?v=20261004q">
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
@@ -45,10 +45,9 @@
     </header>
 
     <div class="wrap">
-        <!-- Description, with the Clothing / Art toggle beside it. -->
-        <div class="head-row wl-desc-row">
-            <h1 class="head-title" style="display:none">My Cart</h1>
-            <p class="head-sub" id="headSub">The items you've gathered, ready to check out.</p>
+        <!-- Category chips (tap to filter), with the Clothing / Art switch at the end. -->
+        <div class="q-bar">
+            <div class="q-chips" id="qChips"></div>
             <div class="mode-toggle">
                 <button class="mode-switch" id="modeSwitch" type="button" aria-label="Switch Clothing / Art"></button>
                 <div class="mode-labels">
@@ -56,8 +55,9 @@
                     <button class="mode-btn" data-mode="art">Art</button>
                 </div>
             </div>
-            <div class="head-total" id="headTotal" hidden></div>
         </div>
+        <p class="head-sub" id="headSub" hidden></p>
+        <div class="head-total" id="headTotal" hidden></div>
 
         <div id="tickerHost"></div>
         <div id="cartBody"></div>
@@ -224,39 +224,40 @@
             return `product-showcase.html?product=${encodeURIComponent(JSON.stringify(data))}`;
         }
 
-        // One feed product-card per cart item — the exact markup product-card.css expects.
+        // One card per item: photo (or the emoji), select ✓, remove ×, name + price, seller.
         function cartCardHTML(item, idx) {
-            const rating = item.rating || 4.5;
-            const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '☆' : '');
             const on = selected.has(idx) ? ' on' : '';
+            const photo = item.cover || item.image || item.photo;
             return `
-                <a href="${productPageUrl(item)}" class="product-card cart-item" data-idx="${idx}">
-                    <div class="product-image">${item.icon || '🛍️'}
-                        <button class="pc-check${on}" title="Select for checkout" aria-label="Select for checkout"
+                <a href="${productPageUrl(item)}" class="q-card${on}" data-idx="${idx}">
+                    <div class="q-img">
+                        <span class="q-emoji">${item.icon || '🛍️'}</span>
+                        ${photo ? `<img src="${photo}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+                        <button class="q-check" title="Select" aria-label="Select"
                                 onclick="event.preventDefault(); event.stopPropagation(); toggleSelect(${idx})">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
+                            <svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>
                         </button>
-                        <button class="product-icon remove" title="Remove from cart"
+                        <button class="q-remove" title="Remove from cart" aria-label="Remove"
                                 onclick="event.preventDefault(); event.stopPropagation(); removeItem(${idx})">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
+                            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
                         </button>
                     </div>
-                    <div class="product-info">
-                        <div class="pc-left">
-                            <div class="product-price"><span class="vprice">${priceStr(item.price)}</span></div>
-                        </div>
-                        <div class="pc-right">
-                            <div class="product-seller">${item.seller || 'Vero Store'}</div>
-                            <div class="product-name">${item.name || 'Item'}</div>
-                            <div class="product-rating">${stars}</div>
-                        </div>
-                    </div>
+                    <div class="q-line"><span class="q-name">${item.name || 'Item'}</span><span class="q-price">${priceStr(item.price).replace(/\.00$/, '')}</span></div>
+                    <div class="q-seller">${item.seller || 'Vero Store'}</div>
                 </a>`;
+        }
+
+        // Category chips: "All" plus one per category in this (Clothing / Art) list.
+        function renderChips(rows) {
+            const host = document.getElementById('qChips');
+            if (!host) return;
+            const counts = new Map();
+            rows.forEach(({ it }) => { const c = it.category || 'Other'; counts.set(c, (counts.get(c) || 0) + 1); });
+            const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+            const chip = (v, lbl) => `<button type="button" class="q-chip${filterCat === v ? ' on' : ''}" data-cat="${esc(v)}">${lbl}</button>`;
+            host.innerHTML = chip('all', `All · ${rows.length}`) +
+                [...counts.keys()].sort((a, b) => a.localeCompare(b)).map(c => chip(c, esc(c))).join('');
+            host.querySelectorAll('.q-chip').forEach(b => b.addEventListener('click', () => setFilterCat(b.dataset.cat)));
         }
 
         function render() {
@@ -269,6 +270,7 @@
             const term = (document.getElementById('listSearch')?.value || '').trim().toLowerCase();
             const inMode = cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
             renderToolbar(inMode);
+            renderChips(inMode);
             let mine = term
                 ? inMode.filter(({ it }) => ((it.name || '') + ' ' + (it.seller || '') + ' ' + (it.category || '')).toLowerCase().includes(term))
                 : inMode;
@@ -290,21 +292,8 @@
                 return;
             }
 
-            // Group the cart into product categories (Shirts, Shoes, Pants, Watches…).
-            const groups = new Map();
-            mine.forEach(row => {
-                const c = row.it.category || 'Other';
-                if (!groups.has(c)) groups.set(c, []);
-                groups.get(c).push(row);
-            });
-
-            body.innerHTML = [...groups.entries()].map(([cat, rows]) => `
-                <div class="cat-section">
-                    <div class="cat-label"><b>${cat}</b><span>${rows.length} item${rows.length === 1 ? '' : 's'}</span></div>
-                    <div class="cart-grid">
-                        ${rows.map(r => cartCardHTML(r.it, r.idx)).join('')}
-                    </div>
-                </div>`).join('');
+            // One flat two-up grid — the chips above do the category split.
+            body.innerHTML = `<div class="cart-grid q-grid">${mine.map(r => cartCardHTML(r.it, r.idx)).join('')}</div>`;
 
             const count = mine.reduce((s, { it }) => s + (it.qty || 1), 0);
             const total = mine.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
@@ -313,28 +302,19 @@
             // keeping the header row clean.
             document.getElementById('headTotal').innerHTML = '';
             const money = '₪' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            document.getElementById('tickerHost').innerHTML =
-                `<div class="cart-ticker" id="cartTicker">
-                    <div class="cart-stat is-active"><span class="cs-num">${money}</span><span class="cs-lbl">Total</span></div>
-                    <div class="cart-stat"><span class="cs-num">${count}</span><span class="cs-lbl">${count === 1 ? 'Item' : 'Items'}</span></div>
-                 </div>`;
-
             // Checkout pinned at the end, with the ticked items' count + sum beside it.
             const chosen = mine.filter(({ idx }) => selected.has(idx));
             const selCount = chosen.reduce((s, { it }) => s + (it.qty || 1), 0);
             const selTotal = chosen.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
             const selTotalStr = selTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const allSel = mine.length > 0 && chosen.length === mine.length;
+            document.getElementById('tickerHost').innerHTML = `
+                <div class="q-meta"><span>${count} item${count === 1 ? '' : 's'}</span>
+                    <button type="button" onclick="${allSel ? 'deselectAllVisible()' : 'selectAllVisible()'}">${allSel ? 'Clear' : 'Select all'}</button></div>`;
             host.innerHTML = `
-                <div class="cart-actionbar">
+                <div class="cart-actionbar q-pill">
+                    <div class="q-sum"><span>${selCount} selected</span><b>₪${selTotalStr.replace(/\.00$/, '')}</b></div>
                     <button class="cab-cell cab-checkout" onclick="veroCheckout()"${selCount ? '' : ' disabled'}>Checkout &#8594;</button>
-                    <div class="cab-cell cab-count">
-                        <span class="cab-num">${selCount}</span>
-                        <span class="cab-lbl">Selected</span>
-                    </div>
-                    <button class="cab-cell cab-select" onclick="${allSel ? 'deselectAllVisible()' : 'selectAllVisible()'}">
-                        ${allSel ? 'Clear' : 'Select all'}
-                    </button>
                 </div>`;
 
             // Sticky summary popup — visible only while something is ticked.
