@@ -1484,6 +1484,16 @@
         }
         .vsp-results .product-card { width: 100%; margin: 0; }
         .vsp-results-empty { color: #9a9a9a; font-size: 11.67px; letter-spacing: 1px; padding: 30px 0; text-align: center; }
+        /* No results: a quiet circle-and-magnifier, the message, then popular
+           searches as chips the buyer can tap to search again. */
+        .vsp-noresults { grid-column: 1 / -1; width: 100%; text-align: center; padding: 46px 0 30px; animation: vspFadeUp 0.45s ease both; }
+        .vsp-noresults-ico { width: 64px; height: 64px; border-radius: 50%; border: 1px solid #cfcbc4; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+        .vsp-noresults-ico svg { width: 24px; height: 24px; stroke: #111; stroke-width: 1.1; fill: none; }
+        .vsp-noresults-title { font-size: 22px; letter-spacing: 1px; color: #111; margin-top: 16px; }
+        .vsp-noresults-msg { font-size: 13px; color: #8a877f; line-height: 1.6; margin-top: 8px; }
+        .vsp-noresults-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 18px auto 0; max-width: 360px; }
+        .vsp-noresults-chip { background: none; border: 1px solid #cfcbc4; border-radius: 999px; padding: 8px 15px; font: inherit; font-size: 11px; letter-spacing: 1px; color: #111; cursor: pointer; transition: border-color 0.2s, background 0.2s, color 0.2s; }
+        .vsp-noresults-chip:hover { background: #111; border-color: #111; color: #fff; }
         .vsp-apply {
             align-self: center; margin-top: 8px;
             background: #111; color: #fff; border: 1.5px solid #111;
@@ -1492,6 +1502,8 @@
             transition: background 0.2s, color 0.2s;
         }
         .vsp-apply:hover { background: #fff; color: #111; }
+        /* Nothing to show all of when the search came up empty. */
+        .vsp-results-wrap:has(.vsp-noresults) .vsp-apply { display: none; }
         @media (max-width: 600px) {
             .vsp-inner { padding: 48px 18px 80px; }
             /* Product bar taller than the user bar on phones. */
@@ -2102,6 +2114,52 @@
         requestAnimationFrame(() => wrap.classList.add('revealed'));
     }
 
+    // Empty results: the message plus up to five popular searches as chips.
+    // Product suggestions are kept only when they would actually find something.
+    const VSP_POPULAR = {
+        clothing: ['Coat', 'Knitwear', 'Denim', 'Dress', 'Sneakers', 'Shirt', 'Bag', 'Boots'],
+        art: ['Painting', 'Print', 'Photography', 'Sculpture', 'Ceramic', 'Abstract', 'Portrait']
+    };
+    function vspEscape(t) {
+        return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function vspNoResultsHTML(q, kind) {
+        let picks;
+        if (kind === 'seller') {
+            picks = (document.body.dataset.mode === 'art' ? VSP_ART_SELLERS : vspGatherSellers()).slice(0, 5);
+        } else {
+            const pool = VSP_POPULAR[document.body.dataset.mode === 'art' ? 'art' : 'clothing'];
+            const finds = t => typeof window.veroSearchResults !== 'function' || !!window.veroSearchResults({ ...vspState, query: t });
+            picks = pool.filter(t => t.toLowerCase() !== q.toLowerCase() && finds(t)).slice(0, 5);
+        }
+        const what = kind === 'seller' ? 'sellers' : 'pieces';
+        const msg = q ? `We couldn’t find ${what} for “${vspEscape(q)}”.` : `No ${what} match your search.`;
+        const chips = picks.length
+            ? `<div class="vsp-noresults-chips">${picks.map(t =>
+                `<button class="vsp-noresults-chip" type="button" data-kind="${kind}" data-term="${vspEscape(t)}" onclick="vspSearchSuggestion(this)">${vspEscape(t)}</button>`).join('')}</div>`
+            : '';
+        return `<div class="vsp-noresults">
+            <div class="vsp-noresults-ico"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+            <div class="vsp-noresults-title">No results</div>
+            <div class="vsp-noresults-msg">${msg}${picks.length ? '<br>Try another word, or one of these:' : '<br>Try another word.'}</div>
+            ${chips}
+        </div>`;
+    }
+    // A suggestion chip drops its term into the field and searches again.
+    window.vspSearchSuggestion = function (btn) {
+        const term = btn.dataset.term || '';
+        if (btn.dataset.kind === 'seller') {
+            const inp = document.getElementById('vspSellerInput');
+            if (inp) inp.value = term;
+            vspSearchSellers();
+        } else {
+            const inp = document.getElementById('vspInput');
+            if (inp) inp.value = term;
+            vspState.query = term;
+            vspSearchProducts();
+        }
+    };
+
     // Enter in the product field → matching pieces rise in below the bar.
     window.vspSearchProducts = function () {
         const host = document.getElementById('vspResults');
@@ -2111,7 +2169,7 @@
         let html = '';
         if (typeof window.veroSearchResults === 'function') html = window.veroSearchResults({ ...vspState });
         head.textContent = q ? `Pieces matching “${q}”` : 'Matching pieces';
-        host.innerHTML = html || '<div class="vsp-results-empty">No products match your search.</div>';
+        host.innerHTML = html || vspNoResultsHTML(q, 'product');
         document.getElementById('veroSearchPage')?.classList.add('searching');
         vspRevealResults();
     };
@@ -2186,7 +2244,7 @@
                         <span class="vsp-seller-tags">${tagsOf(s).join(' · ')}</span>
                     </span>
                 </a>`).join('') + '</div>'
-            : '<div class="vsp-results-empty">No sellers match your search.</div>';
+            : vspNoResultsHTML((document.getElementById('vspSellerInput')?.value || '').trim(), 'seller');
         document.getElementById('veroSearchPage')?.classList.add('searching');
         vspRevealResults();
     };
@@ -2208,7 +2266,8 @@
             return;
         }
         const html = window.veroSearchResults({ ...vspState });
-        host.innerHTML = html || '<div class="vsp-results-empty">No matching pieces yet — adjust your filters</div>';
+        const q = (vspState.query || '').trim();
+        host.innerHTML = html || (q ? vspNoResultsHTML(q, 'product') : '<div class="vsp-results-empty">No matching pieces yet — adjust your filters</div>');
     }
 
     // A chip was clicked.
