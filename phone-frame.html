@@ -41,6 +41,11 @@
       }
     </script>
     <title>moravchick</title>
+    <!-- Intro montage frames: fetch early so each cut is ready on time. -->
+    <link rel="preload" as="image" href="women-hero.jpg">
+    <link rel="preload" as="image" href="men-hero.jpg">
+    <link rel="preload" as="image" href="hero-beach.jpg">
+    <link rel="preload" as="image" href="clothing-hero.jpg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
@@ -173,66 +178,53 @@
             .pf-spin { animation-duration: 3s; }
         }
 
-        /* ---- Entrance: a black peacock zooms in onto a white field, holds for a
-               beat at rest, then leaves the same way it arrived (zooms back out
-               and fades) while the white panel fades with it to reveal the app. ---- */
+        /* ---- Entrance: a fashion montage. Three editorial photos cut quickly behind
+               the white wordmark, the fourth (the home hero itself) holds and eases
+               back from a slight zoom, then the whole panel fades onto the app —
+               so the intro dissolves straight into the same picture. ~2.9s, once. ---- */
         .pf-intro {
             position: absolute; inset: 0; z-index: 40;
             background: #000;
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
-            /* Panel stays opaque through the hold, then fades out during the exit. */
-            animation: pfiPanelFade 2.6s ease both;
+            animation: pfiPanelFade 2.9s ease both;
         }
-        @keyframes pfiPanelFade { 0%, 73% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes pfiPanelFade { 0%, 78.6% { opacity: 1; } 99.3%, 100% { opacity: 0; } }
         /* Once faded, drop it entirely so it never intercepts taps (JS adds .done). */
         .pf-intro.done { opacity: 0; visibility: hidden; pointer-events: none; }
-        /* The moravchick wordmark: zooms in to rest, holds ~1s in place, then mirrors
-           the entrance to leave. The mark wraps the logo so it scales as one. */
+        /* Montage frames: darkened, slightly desaturated so the wordmark reads. */
+        .pf-intro-ph {
+            position: absolute; inset: 0;
+            background: center / cover no-repeat;
+            filter: grayscale(0.4) brightness(0.55);
+            opacity: 0;
+            animation: 2.9s steps(1, end) both;
+        }
+        .pf-intro-ph.p1 { background-image: url('women-hero.jpg');    animation-name: pfiP1; }
+        .pf-intro-ph.p2 { background-image: url('men-hero.jpg');      animation-name: pfiP2; }
+        .pf-intro-ph.p3 { background-image: url('hero-beach.jpg');    animation-name: pfiP3; }
+        .pf-intro-ph.p4 { background-image: url('clothing-hero.jpg'); animation-name: pfiP4; animation-timing-function: ease; }
+        @keyframes pfiP1 { 0% { opacity: 1; } 16.5%, 100% { opacity: 0; } }
+        @keyframes pfiP2 { 0%, 16.5% { opacity: 0; } 16.51% { opacity: 1; } 33%, 100% { opacity: 0; } }
+        @keyframes pfiP3 { 0%, 33% { opacity: 0; } 33.01% { opacity: 1; } 49.7%, 100% { opacity: 0; } }
+        @keyframes pfiP4 {
+            0%, 49.7% { opacity: 0; transform: scale(1.12); }
+            49.71%    { opacity: 1; transform: scale(1.12); }
+            91%, 100% { opacity: 1; transform: scale(1); }
+        }
+        /* The white moravchick wordmark (letters-only PNG) fades in over the photos. */
         .pf-intro-mark {
             position: relative; display: block; line-height: 0;
-            transform-origin: center center;
-            animation: pfiInHoldOut 2.6s cubic-bezier(0.5, 0, 0.5, 1) both;
-            will-change: transform, opacity;
+            width: 72%; max-width: 460px;
+            animation: pfiFadeIn 0.36s ease both;
         }
-        /* White wordmark (letters-only PNG, transparent background) on the black
-           field. Kept a touch under full white so the shine reads as it passes. */
-        .pf-intro-logo {
-            width: min(84vw, 460px); height: auto; display: block;
-            filter: brightness(0.9);
-        }
-        @keyframes pfiInHoldOut {
-            0%   { transform: scale(2.1); opacity: 0; }   /* enter */
-            23%  { transform: scale(1);   opacity: 1; }   /* settled */
-            73%  { transform: scale(1);   opacity: 1; }   /* hold ~1s in place */
-            100% { transform: scale(2.1); opacity: 0; }   /* leave as it entered */
-        }
-        /* ---- Lightning: a subtle bright shine, masked to the letter shapes, that
-               travels across the wordmark while it holds. Only the letters light up. ---- */
-        .pf-shine {
-            position: absolute; inset: 0;
-            background: linear-gradient(100deg,
-                transparent 42%, rgba(255,255,255,0.95) 50%, transparent 58%);
-            background-size: 260% 100%;
-            background-repeat: no-repeat;
-            -webkit-mask: url('moravchick-letters.png') center / contain no-repeat;
-                    mask: url('moravchick-letters.png') center / contain no-repeat;
-            mix-blend-mode: screen; pointer-events: none;
-            filter: drop-shadow(0 0 5px rgba(255,255,255,0.65));
-            opacity: 0;
-            animation: pfShine 2.6s ease-in-out both;
-        }
-        @keyframes pfShine {
-            0%, 30% { background-position: 130% 0; opacity: 0; }
-            38%     { opacity: 1; }
-            55%     { background-position: -30% 0; opacity: 1; }
-            62%, 100% { background-position: -30% 0; opacity: 0; }
-        }
+        .pf-intro-logo { width: 100%; height: auto; display: block; }
         @keyframes pfiFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @media (prefers-reduced-motion: reduce) {
-            .pf-intro { animation: none; }
-            .pf-intro-mark { animation: pfiFadeIn 0.5s ease both; transform: none; }
-            .pf-shine { display: none; }
+            .pf-intro { animation: pfiPanelFade 0.8s ease both; }
+            .pf-intro-ph { animation: none; }
+            .pf-intro-ph.p4 { opacity: 1; }
+            .pf-intro-mark { animation: pfiFadeIn 0.5s ease both; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -290,15 +282,16 @@ h3, h4, h5, h6, p,
             <!-- The whole site lives in here. index.html detects it is framed and renders
                  the real homepage instead of bouncing back to this frame. -->
             <iframe title="moravchick" id="siteFrame" name="vero-phone"></iframe>
-            <!-- Entrance intro: the moravchick wordmark over a black field with a
-                 lightning shine, played once each time the app is opened. It covers
-                 the iframe while the home feed loads, then fades away (see playIntro). -->
+            <!-- Entrance intro: a quick fashion-photo montage behind the moravchick
+                 wordmark, played once each time the app is opened. It covers the
+                 iframe while the home feed loads, then fades away (see playIntro). -->
             <div id="pfIntro" class="pf-intro" aria-hidden="true">
+                <span class="pf-intro-ph p1"></span>
+                <span class="pf-intro-ph p2"></span>
+                <span class="pf-intro-ph p3"></span>
+                <span class="pf-intro-ph p4"></span>
                 <div class="pf-intro-mark">
                     <img class="pf-intro-logo" src="moravchick-letters.png?v=1" alt="moravchick" draggable="false" />
-                    <!-- A subtle bright shine, masked to the letter shapes, so the
-                         lightning travels over the letters themselves and nothing else. -->
-                    <span class="pf-shine" aria-hidden="true"></span>
                 </div>
             </div>
             <!-- Camera island floats over the full-screen content. -->
@@ -367,9 +360,9 @@ h3, h4, h5, h6, p,
             var intro = document.getElementById('pfIntro');
             if (!intro) return;
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            // settle + grow-and-fade open ≈ 1.3s; remove the panel just after so it
-            // never intercepts taps. Reduced motion just fades the mark in briefly.
-            var total = reduce ? 800 : 2650;
+            // montage + fade ≈ 2.9s; remove the panel just after so it never
+            // intercepts taps. Reduced motion just shows the last frame briefly.
+            var total = reduce ? 850 : 2950;
             setTimeout(function () { intro.classList.add('done'); }, total);
         })();
 
