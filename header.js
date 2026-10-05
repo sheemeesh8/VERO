@@ -1502,6 +1502,8 @@
             transition: background 0.2s, color 0.2s;
         }
         .vsp-apply:hover { background: #fff; color: #111; }
+        /* Nothing to show all of when the search came up empty. */
+        .vsp-results-wrap:has(.vsp-noresults) .vsp-apply { display: none; }
         @media (max-width: 600px) {
             .vsp-inner { padding: 48px 18px 80px; }
             /* Product bar taller than the user bar on phones. */
