@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Store Editor — Shopify style</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz@6..96&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --muted: #8a877f; --ui: #2f6bff; --panel: #f6f7f9; --line2: #e6e8ec; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #eceae4; color: #111; font-family: 'Inter', 'Segoe UI', sans-serif; padding: 40px 24px 60px; }
+h1 { font-size: 22px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; text-align: center; font-family: 'Aharoni CLM', sans-serif; }
+.sub { text-align: center; color: var(--muted); font-size: 13px; margin: 8px 0 34px; direction: rtl; max-width: 680px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+.grid { display: flex; flex-wrap: wrap; gap: 38px 26px; justify-content: center; max-width: 1280px; margin: 0 auto; }
+.opt { width: 284px; }
+.opt-label { direction: rtl; margin-top: 14px; }
+.opt-label b { display: block; font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
+.opt-label span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+
+.phone { width: 284px; height: 616px; border-radius: 30px; overflow: hidden; position: relative; background: #fff; box-shadow: 0 16px 36px rgba(0,0,0,0.16); border: 6px solid #0d0d0d; }
+.screen { width: 390px; height: 846px; transform: scale(0.7); transform-origin: 0 0; position: relative; overflow: hidden; background: #fff; }
+.th { display: block; background: #ddd center / cover no-repeat; }
+
+/* editor top bar */
+.ebar { height: 56px; background: #fff; border-bottom: 1px solid var(--line2); display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 0; font-size: 13px; }
+.ebar .x { color: #555; font-size: 20px; }
+.ebar .t { font-weight: 600; font-size: 14px; }
+.ebar .save { background: #111; color: #fff; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 600; }
+.ebar .bk { color: var(--ui); display: flex; align-items: center; gap: 4px; }
+
+/* live preview strip */
+.preview { background: #e9eaed; padding: 14px 0; display: flex; justify-content: center; position: relative; }
+.preview .mini { width: 150px; height: 300px; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 6px 18px rgba(0,0,0,0.14); border: 3px solid #0d0d0d; position: relative; }
+.preview .mini .ph { position: absolute; inset: 0; }
+.preview .mini .ph .hh { height: 150px; position: relative; } .preview .mini .ph .hh .th { position: absolute; inset: 0; filter: grayscale(1); }
+.preview .mini .ph .hh b { position: absolute; left: 10px; bottom: 10px; color: #fff; font-size: 15px; font-weight: 300; z-index: 1; }
+.preview .mini .ph .hh::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(0,0,0,0.6)); }
+.preview .mini .ro { display: flex; gap: 5px; padding: 8px; } .preview .mini .ro .th { width: 44px; height: 56px; filter: grayscale(1); }
+.preview .mini .gg { display: flex; gap: 5px; padding: 0 8px; } .preview .mini .gg .th { flex: 1; height: 34px; filter: grayscale(1); }
+.preview .mini .cc { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; } .preview .mini .cc i { height: 16px; border-radius: 8px; background: #eee; }
+.preview .mini.sel-hero .hh { outline: 2px solid var(--ui); outline-offset: -2px; }
+.preview .edithint { position: absolute; right: 16px; top: 16px; background: rgba(0,0,0,0.65); color: #fff; font-size: 9px; padding: 5px 9px; border-radius: 6px; letter-spacing: 0.5px; }
+
+/* sections list */
+.secs { background: var(--panel); flex: 1; }
+.secs .hd { padding: 16px 18px 8px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
+.row { background: #fff; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line2); }
+.row .grip { color: #c3c6cc; font-size: 15px; letter-spacing: -2px; }
+.row .ic { width: 30px; height: 30px; border-radius: 7px; background: var(--panel); display: flex; align-items: center; justify-content: center; }
+.row .ic svg { width: 16px; height: 16px; stroke: #555; stroke-width: 1.5; fill: none; }
+.row .bd { flex: 1; } .row .bd b { font-weight: 500; font-size: 14px; display: block; } .row .bd small { font-size: 11px; color: var(--muted); }
+.row .eye { color: #9aa0a8; font-size: 15px; } .row .chev { color: #c3c6cc; font-size: 16px; }
+.row.locked { opacity: 0.75; } .row.hidden-s { opacity: 0.45; }
+.row.sel { box-shadow: inset 3px 0 0 var(--ui); }
+.row.drag { box-shadow: 0 10px 24px rgba(0,0,0,0.16); border-radius: 10px; transform: rotate(-1deg); border: none; position: relative; z-index: 2; }
+.add { margin: 14px 16px; border: 1.5px dashed #c3c6cc; border-radius: 10px; text-align: center; padding: 14px; color: var(--ui); font-size: 13px; font-weight: 500; }
+.tabbar { display: flex; border-top: 1px solid var(--line2); background: #fff; }
+.tabbar div { flex: 1; text-align: center; padding: 13px 0 20px; font-size: 10px; color: #9aa0a8; letter-spacing: 0.5px; }
+.tabbar div.on { color: #111; } .tabbar div .d { width: 18px; height: 18px; margin: 0 auto 5px; border: 1.6px solid currentColor; border-radius: 5px; }
+
+/* section settings */
+.set { flex: 1; background: var(--panel); overflow: hidden; }
+.set .grp { background: #fff; margin: 12px 0 0; border-top: 1px solid var(--line2); border-bottom: 1px solid var(--line2); }
+.set .glabel { padding: 16px 16px 6px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.field { padding: 13px 16px; border-bottom: 1px solid var(--line2); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.field:last-child { border-bottom: none; }
+.field .fl { font-size: 13px; color: #333; } .field .fl small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+.field .val { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.field .thumb { width: 44px; height: 44px; border-radius: 7px; } .field .thumb .th { width: 100%; height: 100%; border-radius: 7px; filter: grayscale(1); }
+.field .rep { color: var(--ui); font-size: 12px; font-weight: 500; }
+.inp { background: var(--panel); border: 1px solid var(--line2); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #111; width: 100%; }
+.seg { display: flex; background: var(--panel); border-radius: 8px; padding: 3px; }
+.seg span { flex: 1; text-align: center; padding: 7px 0; font-size: 11px; border-radius: 6px; color: #666; }
+.seg span.on { background: #fff; color: #111; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+.sliderow { padding: 14px 16px; }
+.track { height: 3px; background: var(--line2); border-radius: 3px; position: relative; margin: 10px 2px; }
+.track i { position: absolute; left: 0; top: 0; height: 3px; background: var(--ui); border-radius: 3px; }
+.track b { position: absolute; top: -7px; width: 17px; height: 17px; border-radius: 50%; background: #fff; border: 1.5px solid var(--ui); }
+.toggle { width: 40px; height: 23px; border-radius: 23px; background: var(--ui); position: relative; }
+.toggle.off { background: #c9ccd2; } .toggle::after { content: ''; position: absolute; right: 3px; top: 3px; width: 17px; height: 17px; border-radius: 50%; background: #fff; } .toggle.off::after { right: auto; left: 3px; }
+
+/* add-section sheet */
+.scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.3); z-index: 5; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; background: #fff; border-radius: 20px 20px 0 0; padding: 12px 0 20px; max-height: 620px; }
+.grab { width: 40px; height: 4px; border-radius: 4px; background: #d6d8dd; margin: 0 auto 10px; }
+.sheet h3 { font-size: 15px; font-weight: 600; padding: 4px 18px 12px; }
+.sheet .srch { margin: 0 16px 8px; background: var(--panel); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #9aa0a8; }
+.addrow { display: flex; align-items: center; gap: 13px; padding: 13px 18px; border-top: 1px solid var(--line2); }
+.addrow .wf { width: 40px; height: 40px; border-radius: 8px; background: var(--panel); display: grid; place-items: center; }
+.addrow .wf svg { width: 22px; height: 22px; stroke: #555; stroke-width: 1.4; fill: none; }
+.addrow .bd b { font-size: 13px; font-weight: 500; display: block; } .addrow .bd small { font-size: 11px; color: var(--muted); }
+.addrow .plus { margin-left: auto; color: var(--ui); font-size: 20px; }
+
+/* theme tab */
+.theme { flex: 1; background: var(--panel); overflow: hidden; }
+.tcards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+.tcard { background: #fff; border-radius: 12px; overflow: hidden; border: 2px solid transparent; }
+.tcard.on { border-color: var(--ui); }
+.tcard .sw { height: 70px; position: relative; display: flex; align-items: flex-end; padding: 8px; }
+.tcard .sw b { font-size: 13px; }
+.tcard .nm { padding: 9px 10px; font-size: 12px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
+.tcard .nm .dot { width: 14px; height: 14px; border-radius: 50%; }
+.tsec { background: #fff; border-top: 1px solid var(--line2); border-bottom: 1px solid var(--line2); margin-top: 6px; }
+.swatches { display: flex; gap: 8px; padding: 14px 16px; }
+.swatches i { width: 30px; height: 30px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.1); }
+.swatches i.on { box-shadow: 0 0 0 2px var(--ui); }
+.pub { position: absolute; left: 16px; right: 16px; bottom: 16px; background: #111; color: #fff; text-align: center; padding: 15px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 4; }
+</style>
+</head>
+<body>
+<h1>עריכת חנות — בסגנון Shopify</h1>
+<p class="sub">עורך "theme" אמיתי: תצוגה חיה למעלה, רשימת אזורים שגוררים ומכבים, לחיצה על אזור פותחת את ההגדרות שלו, מוסיפים אזורים מתפריט, ובוחרים ערכת עיצוב. כך כל מוכר בונה חנות שנראית כמו אתר משלו.</p>
+
+<div class="grid" id="opts"></div>
+
+<script>
+var MINI = '<div class="ph"><div class="hh"><span class="th" style="background-image:url(\'../clothing-hero.jpg\')"></span><b>Studio Vero</b></div>' +
+  '<div class="ro"><span class="th" style="background-image:url(\'../men-hero.jpg\')"></span><span class="th" style="background-image:url(\'../women-hero.jpg\')"></span><span class="th" style="background-image:url(\'../hero-beach.jpg\')"></span></div>' +
+  '<div class="gg"><span class="th" style="background-image:url(\'../women-hero.jpg\')"></span><span class="th" style="background-image:url(\'../men-hero.jpg\')"></span><span class="th" style="background-image:url(\'../clothing-hero.jpg\')"></span><span class="th" style="background-image:url(\'../hero-beach.jpg\')"></span></div>' +
+  '<div class="cc"><i style="width:40px"></i><i style="width:30px"></i><i style="width:46px"></i><i style="width:34px"></i><i style="width:38px"></i></div></div>';
+
+var I = {
+  img: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>',
+  slider: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="7" height="12" rx="1"/><rect x="12" y="6" width="7" height="12" rx="1"/><path d="M21 7v10"/></svg>',
+  gen: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/></svg>',
+  cat: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="4" rx="2"/><rect x="3" y="11" width="12" height="4" rx="2"/><rect x="3" y="17" width="15" height="4" rx="2"/></svg>',
+  text: '<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+  grid: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>',
+  star: '<svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/></svg>',
+  mail: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+  clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+};
+var srow = (ic, nm, sub, flags) => {
+  flags = flags || {};
+  return '<div class="row' + (flags.sel ? ' sel' : '') + (flags.locked ? ' locked' : '') + (flags.hidden ? ' hidden-s' : '') + (flags.drag ? ' drag' : '') + '">' +
+    (flags.locked ? '<span class="grip" style="opacity:0">⋮⋮</span>' : '<span class="grip">⋮⋮</span>') +
+    '<span class="ic">' + ic + '</span><div class="bd"><b>' + nm + '</b><small>' + sub + '</small></div>' +
+    (flags.locked ? '<span class="eye">🔒</span>' : '<span class="eye">' + (flags.hidden ? '◠' : '◉') + '</span>') +
+    '<span class="chev">›</span></div>';
+};
+
+var S1 = '<div class="screen"><div class="ebar"><span class="x">✕</span><span class="t">Store editor</span><span class="save">Save</span></div>' +
+  '<div class="preview"><div class="mini">' + MINI + '</div><span class="edithint">Tap a part to edit</span></div>' +
+  '<div class="secs"><div class="hd"><span>Sections</span><span>Drag to reorder</span></div>' +
+  srow(I.img, 'Header', 'Logo · menu · search', { locked: true }) +
+  srow(I.img, 'Hero', 'Full screen · Studio Vero') +
+  srow(I.slider, 'New in', 'Product slider · 5 items') +
+  srow(I.gen, 'Shop by gender', '4 tiles') +
+  srow(I.cat, 'Clothing categories', '8 chips') +
+  srow(I.text, 'About', 'Hidden', { hidden: true }) +
+  '<div class="add">+ Add section</div></div>' +
+  '<div class="tabbar"><div class="on"><div class="d"></div>Sections</div><div><div class="d"></div>Theme</div><div><div class="d"></div>Settings</div></div></div>';
+
+var S2 = '<div class="screen"><div class="ebar"><span class="bk">‹ Sections</span><span class="t">Hero</span><span class="save">Done</span></div>' +
+  '<div class="preview"><div class="mini sel-hero">' + MINI + '</div></div>' +
+  '<div class="set"><div class="glabel">Image</div><div class="grp"><div class="field"><span class="thumb"><span class="th" style="background-image:url(\'../clothing-hero.jpg\')"></span></span><span class="fl">hero.jpg<small>1080 × 1920</small></span><span class="rep">Replace</span></div></div>' +
+  '<div class="glabel">Content</div><div class="grp"><div class="field" style="display:block"><span class="fl" style="display:block;margin-bottom:8px">Heading</span><div class="inp">Studio Vero</div></div>' +
+  '<div class="field" style="display:block"><span class="fl" style="display:block;margin-bottom:8px">Subheading</span><div class="inp" style="color:#777">Slow fashion, sourced in Tel Aviv.</div></div></div>' +
+  '<div class="glabel">Layout</div><div class="grp"><div class="field" style="display:block"><span class="fl" style="display:block;margin-bottom:8px">Height</span><div class="seg"><span>Medium</span><span>Large</span><span class="on">Full screen</span></div></div>' +
+  '<div class="field" style="display:block"><span class="fl" style="display:block;margin-bottom:8px">Text position</span><div class="seg"><span>Top</span><span>Center</span><span class="on">Bottom</span></div></div>' +
+  '<div class="sliderow"><span class="fl">Image overlay · 45%</span><div class="track"><i style="width:45%"></i><b style="left:calc(45% - 8px)"></b></div></div>' +
+  '<div class="field"><span class="fl">Show Follow button</span><span class="toggle"></span></div></div></div></div>';
+
+var S3 = '<div class="screen"><div class="ebar"><span class="x">✕</span><span class="t">Store editor</span><span class="save">Save</span></div>' +
+  '<div class="preview"><div class="mini">' + MINI + '</div></div>' +
+  '<div class="secs"><div class="hd"><span>Sections</span><span>Drag to reorder</span></div>' +
+  srow(I.img, 'Hero', 'Full screen', {}) +
+  srow(I.slider, 'New in', 'Moving…', { drag: true }) +
+  srow(I.gen, 'Shop by gender', '4 tiles') +
+  '</div>' +
+  '<div class="scrim"></div><div class="sheet"><div class="grab"></div><h3>Add a section</h3><div class="srch">Search sections</div>' +
+  [[I.img, 'Image banner', 'Full-width image with text'], [I.slider, 'Product slider', 'Scrollable row of products'], [I.grid, 'Collection grid', 'Products in a grid'], [I.gen, 'Gender picker', 'Women / Men / Kids tiles'], [I.cat, 'Category chips', 'Filter by clothing type'], [I.text, 'Rich text', 'Heading and paragraph'], [I.star, 'Reviews', 'Ratings from buyers'], [I.clock, 'Countdown', 'For a drop or sale'], [I.mail, 'Newsletter', 'Collect emails']].map(a =>
+    '<div class="addrow"><span class="wf">' + a[0] + '</span><div class="bd"><b>' + a[1] + '</b><small>' + a[2] + '</small></div><span class="plus">+</span></div>').join('') +
+  '</div></div>';
+
+var tcard = (nm, sw, dot, on) => '<div class="tcard' + (on ? ' on' : '') + '"><div class="sw" style="' + sw + '"><b style="' + (on ? 'color:inherit' : '') + '"></b></div><div class="nm">' + nm + '<span class="dot" style="background:' + dot + '"></span></div></div>';
+var S4 = '<div class="screen"><div class="ebar"><span class="bk">‹</span><span class="t">Theme</span><span class="save">Done</span></div>' +
+  '<div class="theme"><div class="glabel" style="padding:16px 16px 0">Style</div><div class="tcards">' +
+  tcard('Minimal', 'background:#fff;border-bottom:1px solid #eee;color:#111', '#111', true) +
+  tcard('Editorial', 'background:#f6f1e8;color:#2a251d;font-family:\'Bodoni Moda\',serif', '#9a7d52') +
+  tcard('Street', 'background:#111;color:#fff', '#ff5a1f') +
+  tcard('Luxe', 'background:#0f2419;color:#efe9da', '#c8a24a') +
+  '</div>' +
+  '<div class="glabel" style="padding:4px 16px 0">Accent colour</div><div class="tsec"><div class="swatches"><i class="on" style="background:#111"></i><i style="background:#9a7d52"></i><i style="background:#ff5a1f"></i><i style="background:#c8a24a"></i><i style="background:#7b5cd6"></i><i style="background:#1f9c8f"></i></div></div>' +
+  '<div class="glabel" style="padding:12px 16px 0">Heading font</div><div class="tsec"><div class="field"><span class="fl" style="font-family:\'Bodoni Moda\',serif;font-size:17px">Bodoni Moda</span><span class="val">›</span></div></div>' +
+  '<div class="glabel" style="padding:12px 16px 0">Corners</div><div class="tsec"><div class="field" style="display:block"><div class="seg"><span class="on">Sharp</span><span>Soft</span><span>Round</span></div></div></div>' +
+  '</div><div class="pub">Save &amp; preview store</div></div>';
+
+var OPTS = [
+  ['1 · רשימת אזורים', 'תצוגה חיה למעלה, ומתחת כל אזורי החנות. גוררים מהידית לשינוי סדר, לוחצים על העין להסתרה (About מוסתר), וה-Header נעול. לחיצה על אזור פותחת אותו. למטה טאבים: Sections / Theme / Settings.', S1],
+  ['2 · עריכת אזור (Hero)', 'לחיצה על Hero פותחת את ההגדרות שלו בלבד: תמונה, כותרת וכותרת משנה, גובה (כאן "Full screen"), מיקום טקסט, שקיפות, וכפתור Follow. התצוגה למעלה מסמנת את האזור שעורכים.', S2],
+  ['3 · הוספת אזור', 'כפתור "Add section" פותח תפריט של סוגי אזורים: באנר תמונה, סליידר מוצרים, גריד, בוחר מגדר, צ\'יפים, טקסט, ביקורות, ספירה לאחור וניוזלטר — בדיוק כמו חנות אמיתית.', S3],
+  ['4 · ערכת עיצוב', 'טאב Theme: בוחרים סגנון בסיס (Minimal / Editorial / Street / Luxe), צבע הדגשה, פונט כותרות ועיגול פינות. משנה את כל החנות בבת אחת, ואז "Save & preview".', S4]
+];
+document.getElementById('opts').innerHTML = OPTS.map(o =>
+  '<div class="opt"><div class="phone">' + o[2] + '</div><div class="opt-label"><b>' + o[0] + '</b><span>' + o[1] + '</span></div></div>').join('');
+</script>
+</body>
+</html>
