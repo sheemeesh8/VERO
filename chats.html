@@ -137,6 +137,27 @@
 
         .summary { display: none; }
 
+        /* Tabs — All / Buying / Selling / Offers, with an unread count. */
+        .chat-tabs {
+            display: flex; gap: 26px; padding: 0 24px; border-bottom: 1px solid var(--line);
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .chat-tabs::-webkit-scrollbar { display: none; }
+        .chat-tab {
+            position: relative; flex: none; padding: 16px 0 12px; border: none; background: none;
+            font-family: inherit; font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase;
+            color: var(--faint); cursor: pointer; transition: color 0.2s; -webkit-tap-highlight-color: transparent;
+        }
+        .chat-tab.active { color: var(--ink); }
+        .chat-tab.active::after {
+            content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1.5px; background: var(--ink);
+        }
+        .chat-tab sup { font-size: 8px; letter-spacing: 0; color: var(--unread); margin-left: 3px; }
+        /* Unread dot at the end of the preview line. */
+        .chat-unread { width: 8px; height: 8px; border-radius: 50%; background: var(--unread); flex: none; margin-inline-start: auto; align-self: center; }
+        .chat-topline .chat-preview { flex: 1 1 auto; min-width: 0; }
+        .chat-row.is-unread .chat-preview { color: var(--ink); font-weight: 500; }
+
         /* ===== Filters bottom-sheet — identical to the cart page. ===== */
         .cart-sheet-overlay {
             position: fixed; inset: 0; background: rgba(20,18,14,0.4);
@@ -472,6 +493,14 @@ h3, h4, h5, h6, p,
     <div class="wrap">
         <p class="head-sub">Your conversations with sellers and buyers.</p>
 
+        <!-- Tabs: every chat / chats as a buyer / as a seller / offer threads -->
+        <div class="chat-tabs" id="chatTabs" role="tablist">
+            <button class="chat-tab active" data-tab="all" type="button" role="tab">All</button>
+            <button class="chat-tab" data-tab="buying" type="button" role="tab">Buying</button>
+            <button class="chat-tab" data-tab="selling" type="button" role="tab">Selling</button>
+            <button class="chat-tab" data-tab="offers" type="button" role="tab">Offers</button>
+        </div>
+
         <!-- Search, with the time filter on its right -->
         <div class="chat-controls">
             <input class="chat-search" id="chatSearch" type="text" placeholder="Search sellers…" autocomplete="off">
@@ -581,18 +610,25 @@ h3, h4, h5, h6, p,
 
         // Build one conversation thread per seller.
         const threads = new Map();
-        const touch = (seller, name, icon, at, preview) => {
+        // role: 'buying' (I'm the buyer) or 'selling' (someone wants my item);
+        // offer: the thread carries a price offer either way.
+        const touch = (seller, name, icon, at, preview, role, offer) => {
             const key = seller || 'moravchick';
-            const t = threads.get(key) || { seller: key, icon: icon || '💬', at: 0, preview: '' };
+            const t = threads.get(key) || { seller: key, icon: icon || '💬', at: 0, preview: '', role: role || 'buying', offer: false };
             if (icon) t.icon = icon;
+            if (role) t.role = role;
+            if (offer) t.offer = true;
             if (at && at >= t.at) { t.at = at; t.preview = preview; }
             if (!t.preview) t.preview = preview;
             threads.set(key, t);
         };
         offs.forEach(o => touch(o.seller, o.name, '💬', o.at,
-            `You offered ${nis(o.offer)}${o.askPrice ? ` · asking ${nis(o.askPrice)}` : ''} — ${o.name || 'item'}`));
+            `You offered ${nis(o.offer)}${o.askPrice ? ` · asking ${nis(o.askPrice)}` : ''} — ${o.name || 'item'}`, 'buying', true));
         items.forEach(it => touch(it.seller, it.name, it.icon, it.addedAt,
-            `About “${it.name || 'item'}” in your cart`));
+            `About “${it.name || 'item'}” in your cart`, 'buying'));
+        // Offers buyers made on my items — selling-side threads.
+        (Array.isArray(recvOffers) ? recvOffers : []).forEach(o => o && o.buyer && touch(o.buyer, o.name, o.icon, o.at,
+            `Offered ${nis(o.offer)}${o.askPrice ? ` · asking ${nis(o.askPrice)}` : ''} — ${o.name || 'item'}`, 'selling', true));
 
         // A few standing conversations so the inbox always has sellers to browse.
         const H = 3600 * 1000, D = 24 * H;
@@ -604,14 +640,21 @@ h3, h4, h5, h6, p,
             { seller: 'Art House',           icon: '🎨', at: Date.now() - 3 * D,  preview: 'The painting ships tomorrow.' },
             { seller: 'Sole Society',        icon: '👟', at: Date.now() - 4 * D,  preview: 'Size 42 is back in stock.' },
         ];
-        DEMO.forEach(d => touch(d.seller, d.seller, d.icon, d.at, d.preview));
+        DEMO.forEach(d => touch(d.seller, d.seller, d.icon, d.at, d.preview, 'buying'));
+        // Until real buyers write in, keep a couple of selling-side threads so the
+        // Selling tab isn't empty.
+        if (!threads.size || ![...threads.values()].some(t => t.role === 'selling')) {
+            touch('Maya L.', 'Wool coat', '🧥', Date.now() - 3 * H, 'Would you take ₪230 for the wool coat?', 'selling', true);
+            touch('Omer T.', 'Raw denim', '👖', Date.now() - 1 * D, 'Is the raw denim still available?', 'selling');
+        }
 
         // Conversations created elsewhere live in vero_chats.
         const chatStore = readJSON('vero_chats', {});
         Object.entries(chatStore).forEach(([seller, msgs]) => {
             if (Array.isArray(msgs) && msgs.length) {
                 const lastM = msgs[msgs.length - 1];
-                touch(seller, seller, '💬', lastM.at || Date.now(), lastM.content);
+                touch(seller, seller, '💬', lastM.at || Date.now(), lastM.content,
+                    (threads.get(seller) || {}).role || 'buying');
             }
         });
 
@@ -669,6 +712,28 @@ h3, h4, h5, h6, p,
         const ICO_TAG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>';
         const ICO_CLOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>';
 
+        // Unread = a message newer than the last time the thread was opened
+        // (vero_chats_seen: { [thread]: at }). Only the last two days count.
+        const seen = readJSON('vero_chats_seen', {}) || {};
+        const isUnread = t => !!t.at && t.at > (seen[t.seller] || 0) && t.at > Date.now() - 2 * 86400000;
+        function markSeen(t) {
+            seen[t.seller] = Date.now();
+            try { localStorage.setItem('vero_chats_seen', JSON.stringify(seen)); } catch (e) {}
+        }
+        // Active tab — the seller area opens straight on Selling.
+        let chatTab = VIEW_ROLE === 'seller' ? 'selling' : 'all';
+        const inTab = t => chatTab === 'all' || (chatTab === 'offers' ? t.offer : t.role === chatTab);
+        function renderTabs() {
+            document.querySelectorAll('#chatTabs .chat-tab').forEach(b => {
+                const k = b.dataset.tab;
+                const n = list.filter(t => (k === 'all' || (k === 'offers' ? t.offer : t.role === k)) && isUnread(t)).length;
+                b.classList.toggle('active', k === chatTab);
+                b.setAttribute('aria-selected', k === chatTab);
+                b.innerHTML = b.dataset.label + (n && k !== 'all' ? '<sup>' + n + '</sup>' : '');
+            });
+        }
+        document.querySelectorAll('#chatTabs .chat-tab').forEach(b => { b.dataset.label = b.textContent; });
+
         // Active time filter + current search query.
         let chatRange = 'all';
         let chatQuery = '';
@@ -701,13 +766,16 @@ h3, h4, h5, h6, p,
             const q = chatQuery.trim().toLowerCase();
             const rows = list
                 .map((t, i) => ({ t, i }))
-                .filter(({ t }) => (!q || t.seller.toLowerCase().includes(q)) && inRange(t.at));
+                .filter(({ t }) => (!q || t.seller.toLowerCase().includes(q)) && inRange(t.at) && inTab(t));
+            renderTabs();
             if (!list.length) {
                 el.innerHTML = '<div class="chat-empty">No conversations yet — start one from any product page.</div>';
                 return;
             }
             if (!rows.length) {
-                const why = q ? `No sellers match “${chatQuery}”.` : 'No conversations in this period.';
+                const why = q ? `No sellers match “${chatQuery}”.`
+                    : chatTab === 'all' ? 'No conversations in this period.'
+                    : { buying: 'No chats with sellers yet.', selling: 'No buyers have written yet.', offers: 'No offers yet.' }[chatTab];
                 el.innerHTML = `<div class="chat-empty">${why}</div>`;
                 return;
             }
@@ -716,7 +784,8 @@ h3, h4, h5, h6, p,
                 const title = prod || t.seller;          // product leads; seller sits under it
                 const photo = productPhoto(t.seller);
                 const avatarInner = photo ? `<img src="${photo}" alt="${title}">` : t.icon;
-                const cls = (focusOffers && t.available) ? ' is-offer' : '';
+                const unread = isUnread(t);
+                const cls = ((focusOffers && t.available) ? ' is-offer' : '') + (unread ? ' is-unread' : '');
                 return `
                     <div class="chat-row${cls}" data-i="${i}">
                         <div class="chat-av">
@@ -728,7 +797,10 @@ h3, h4, h5, h6, p,
                                 <span class="chat-name">${title}</span>
                                 <span class="chat-time">${fullWhen(t.at)}</span>
                             </div>
-                            <div class="chat-preview">${t.preview}</div>
+                            <div class="chat-topline">
+                                <div class="chat-preview">${t.preview}</div>
+                                ${unread ? '<span class="chat-unread" aria-label="Unread"></span>' : ''}
+                            </div>
                             <div class="chat-item">${t.seller}</div>
                         </div>
                     </div>`;
@@ -751,6 +823,13 @@ h3, h4, h5, h6, p,
             el.innerHTML = '<div class="chat-track' + (focusOffers ? ' has-offers' : '') + '">' + inner + '</div>';
         }
         renderList();
+
+        document.getElementById('chatTabs').addEventListener('click', (e) => {
+            const tab = e.target.closest('.chat-tab');
+            if (!tab || tab.dataset.tab === chatTab) return;
+            chatTab = tab.dataset.tab;
+            renderList();
+        });
 
         // Filter bottom-sheet (same behaviour as the cart page).
         window.openFilters  = function () { document.getElementById('filterOverlay').classList.add('show'); };
@@ -887,6 +966,8 @@ h3, h4, h5, h6, p,
             openSeller = t.seller;
             openItem = itemFor(t.seller);
             seedThread(t);
+            markSeen(t);
+            renderList();
             // Title = the product; the seller's name sits underneath it.
             const prodName = openItem || itemFor(t.seller) || t.seller;
             document.getElementById('cpName').textContent = prodName;
