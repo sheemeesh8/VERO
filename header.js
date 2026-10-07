@@ -533,7 +533,7 @@
         /* Plain switch — no labels, just a track with a sliding knob. */
         #siteHeader .toggle-category {
             position: relative; display: inline-block; box-sizing: border-box;
-            width: 40px; height: 21px; flex: 0 0 auto;
+            width: 34px; height: 18px; flex: 0 0 auto;
             background: transparent; padding: 0; border-radius: 999px; cursor: pointer;
             /* Not "all": border-color is mode-driven and must switch immediately when
                the mode flips — transitioning it left the switch showing the old
@@ -542,12 +542,12 @@
         }
         #siteHeader .toggle-category::before {
             content: ''; position: absolute; top: 2px; left: 2px;
-            width: 17px; height: 17px; border-radius: 50%; background: #111; z-index: 0;
+            width: 14px; height: 14px; border-radius: 50%; background: #111; z-index: 0;
             /* Only the slide animates. The knob's colour is mode-driven, same as the
                track's border, and must switch instantly rather than fade. */
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(19px); }
+        #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(16px); }
         /* labels kept in the markup for state/a11y, but not shown */
         #siteHeader .toggle-category .seg {
             position: absolute; width: 1px; height: 1px; overflow: hidden;
