@@ -7647,6 +7647,19 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 #genderRail .gr-btn { display: block; width: calc(100% - 40px) !important; margin: 18px 20px 0 !important; padding: 15px; border: none; border-radius: 0; background: #111; color: #fff; cursor: pointer;
     font-family: 'Poppins', 'Inter', sans-serif; font-size: 9.5px; letter-spacing: 3px; text-transform: uppercase; }
 .gr-btn:active { opacity: 0.8; }
+/* One big image (G3) with a glass switch over it (G8): the switch picks the
+   category, the card slides to it, and "Shop X →" sits inside the image. */
+#genderRail .gr-stage { position: relative; }
+#genderRail .gr-seg { position: absolute; top: 16px; left: 36px; right: 36px; z-index: 3; display: flex; padding: 4px;
+    background: rgba(20,20,20,0.24); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; }
+#genderRail .gr-seg button { flex: 1; border: none; background: transparent; color: #fff; cursor: pointer; padding: 10px 0; border-radius: 999px;
+    font-family: 'Aharoni CLM', 'Segoe UI', sans-serif; font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase;
+    transition: background 0.25s, color 0.25s; -webkit-tap-highlight-color: transparent; }
+#genderRail .gr-seg button.on { background: #fff; color: #111; }
+.gr-shop { display: inline-block; margin-top: 14px; font-family: 'Aharoni CLM', 'Segoe UI', sans-serif; font-size: 10px; letter-spacing: 3px;
+    text-transform: uppercase; border-bottom: 1px solid #fff; padding-bottom: 3px; }
+#genderRail .gr-dots, #genderRail .gr-btn { display: none !important; }
 
 /* -- Under the hero: one full-screen image that opens the Sale page. -- */
 .hm2-one { position: absolute; inset: 0; display: block; overflow: hidden; background: #222 url('assets/hero/art-section-poster.jpg') center / cover no-repeat; color: #fff; text-decoration: none; }
@@ -8363,7 +8376,10 @@ window.veroLocalImg = function (key) {
             <section class="gr" id="genderRail">
                 <span class="gr-eyebrow">Shop by</span>
                 <h2 class="gr-head">Categories</h2>
-                <div class="gr-rail" id="grRail"></div>
+                <div class="gr-stage">
+                    <div class="gr-rail" id="grRail"></div>
+                    <div class="gr-seg" id="grSeg" role="tablist"></div>
+                </div>
                 <div class="gr-dots" id="grDots"></div>
                 <button class="gr-btn" id="grBtn" type="button">Shop</button>
             </section>
@@ -11806,7 +11822,7 @@ window.veroLocalImg = function (key) {
                 <a class="gr-card${(seg.key === 'unisex' ? (grAll && !currentSegment) : currentSegment === seg.key) ? ' on' : ''}" data-key="${esc(seg.key)}" href="index.html${seg.key === 'unisex' ? '' : '?seg=' + esc(seg.key)}"
                    style="background-image:url('${esc(GR_IMG[seg.key] || veroLocalImg(seg.img || seg.key))}')">
                     ${GR_VIDEO[seg.key] ? `<video class="gr-video" src="${GR_VIDEO[seg.key]}" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>` : ''}
-                    <span class="gr-cap"><span class="gr-kick">${esc(GR_LINE[seg.key] || seg.accent || '')}</span><span class="gr-name">${esc(seg.name)}</span></span>
+                    <span class="gr-cap"><span class="gr-kick">${esc(GR_LINE[seg.key] || seg.accent || '')}</span><span class="gr-name">${esc(seg.name)}</span><span class="gr-shop">Shop ${esc(seg.name)} &rarr;</span></span>
                 </a>`).join('');
             // Videos added by script don't always autoplay on phones (iOS) from the
             // attributes alone: mute them in code and start them explicitly.
@@ -11815,6 +11831,8 @@ window.veroLocalImg = function (key) {
                 const p = v.play(); if (p && p.catch) p.catch(() => {});
             });
             document.getElementById('grDots').innerHTML = segs.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('');
+            document.getElementById('grSeg').innerHTML = segs.map((sg, i) =>
+                `<button type="button" role="tab" data-i="${i}" class="${i ? '' : 'on'}">${esc(sg.name)}</button>`).join('');
             grSync();
         }
         // The card in view drives the dots and the button label.
@@ -11829,6 +11847,9 @@ window.veroLocalImg = function (key) {
             const a = grActive(); if (!a) return;
             const cards = [...document.querySelectorAll('#grRail .gr-card')];
             document.querySelectorAll('#grDots i').forEach((d, i) => d.classList.toggle('on', cards[i] === a));
+            document.querySelectorAll('#grSeg button').forEach((b, i) => {
+                b.classList.toggle('on', cards[i] === a); b.setAttribute('aria-selected', cards[i] === a);
+            });
             document.getElementById('grBtn').textContent = 'Shop ' + a.querySelector('.gr-name').textContent;
         }
         function grOpen(key) {
@@ -11856,6 +11877,13 @@ window.veroLocalImg = function (key) {
                 e.preventDefault(); grOpen(c.dataset.key);
             });
             document.getElementById('grBtn').addEventListener('click', () => { const a = grActive(); if (a) grOpen(a.dataset.key); });
+            // Glass switch: slide the rail to the chosen category's card.
+            document.getElementById('grSeg').addEventListener('click', e => {
+                const b = e.target.closest('button'); if (!b) return;
+                const cards = [...rail.querySelectorAll('.gr-card')];
+                const c = cards[+b.dataset.i]; if (!c) return;
+                rail.scrollTo({ left: c.offsetLeft - cards[0].offsetLeft, behavior: 'smooth' });
+            });
         })();
 
         function updateHm2Categories(category) {
