@@ -296,33 +296,6 @@
         }
         .cp-whobox { display: flex; align-items: center; gap: 12px; min-width: 0; }
 
-        /* Actions row under the header — icon circles with a label:
-           seller profile / item / sold / not sold. */
-        .cp-actions {
-            flex: 0 0 auto; display: flex; justify-content: space-around;
-            padding: 12px clamp(10px, 4vw, 48px) 14px;
-            background: var(--card); border-bottom: 1px solid var(--line);
-        }
-        .cp-act {
-            display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 64px;
-            border: none; background: none; cursor: pointer; text-decoration: none; font-family: inherit;
-            font-size: 8.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted);
-            -webkit-tap-highlight-color: transparent;
-        }
-        .cp-act i {
-            width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line);
-            display: grid; place-items: center; color: var(--ink); font-style: normal;
-            transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
-        }
-        .cp-act svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
-        .cp-act:active i { transform: scale(0.92); }
-        .cp-act[hidden] { display: none; }
-        /* Selected deal outcome = a filled circle. */
-        #cpSold.is-sold #cpSoldYes i { background: #1f8f4e; border-color: #1f8f4e; color: #fff; }
-        #cpSold.is-sold #cpSoldYes { color: #1f8f4e; }
-        #cpSold.is-notsold #cpSoldNo i { background: #b23b3b; border-color: #b23b3b; color: #fff; }
-        #cpSold.is-notsold #cpSoldNo { color: #b23b3b; }
-
         /* Quick replies above the composer — one tap sends. */
         .cp-quick {
             flex: 0 0 auto; display: flex; gap: 8px; padding: 0 clamp(18px, 5vw, 56px) 12px;
@@ -336,39 +309,49 @@
         }
         .cp-chip:active { background: var(--paper); border-color: var(--ink); }
         .cp-chip.offer { border-color: var(--ink); }
-        /* Offer mode: the composer takes a price. */
-        .cp-input-row.offering .cp-input { border-color: var(--ink); }
-        .cp-offer-x {
-            display: none; flex: none; width: 44px; border: 1px solid var(--line); background: none;
-            border-radius: 50%; cursor: pointer; font-size: 18px; color: var(--muted);
-        }
-        .cp-input-row.offering .cp-offer-x { display: block; }
 
-        /* Offer card inside the conversation. */
-        .cp-offer {
-            width: 78%; max-width: 320px; background: var(--card); border: 1px solid var(--line);
-            border-radius: 18px; overflow: hidden; animation: bubbleIn 0.32s ease both;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        /* "+" beside the composer opens the actions sheet. */
+        .cp-plus {
+            flex: none; width: 44px; height: 44px; align-self: center; border-radius: 50%;
+            border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer;
+            display: grid; place-items: center; transition: transform 0.25s ease, border-color 0.2s;
         }
-        .cp-offer.them { align-self: flex-start; }
-        .cp-offer.me { align-self: flex-end; }
-        .cp-offer-img { height: 120px; background: var(--paper) center / cover no-repeat; }
-        .cp-offer-bd { padding: 14px 16px 12px; }
-        .cp-offer-k { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-        .cp-offer-pr { font-family: 'Bodoni Moda', Georgia, serif; font-size: 28px; line-height: 1.15; margin-top: 4px; }
-        .cp-offer-pr s { font-family: 'Poppins', sans-serif; font-size: 12px; color: var(--faint); margin-inline-start: 8px; }
-        .cp-offer-it { font-size: 11px; color: var(--muted); margin-top: 2px; }
-        .cp-offer-st { font-size: 9.5px; letter-spacing: 1.4px; text-transform: uppercase; margin-top: 10px; color: var(--muted); }
-        .cp-offer-st.accepted { color: #1f8f4e; }
-        .cp-offer-st.declined { color: #b23b3b; }
-        .cp-offer .cp-time { padding: 0 16px 10px; }
-        .cp-offer-acts { display: flex; border-top: 1px solid var(--line); }
-        .cp-offer-acts button {
-            flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
-            font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink); padding: 13px 0;
+        .cp-plus svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
+        .cp-plus:active { border-color: var(--ink); }
+        /* Offer mode: the composer takes a price; the "+" turns into a cancel ×. */
+        .cp-input-row.offering .cp-input { border-color: var(--ink); }
+        .cp-input-row.offering .cp-plus { transform: rotate(45deg); }
+
+        /* Actions bottom-sheet: seller profile / item / offer / sold / not sold. */
+        .cp-sheet-overlay {
+            position: absolute; inset: 0; z-index: 5; background: rgba(20,18,14,0.35);
+            display: none; align-items: flex-end;
         }
-        .cp-offer-acts button + button { border-inline-start: 1px solid var(--line); }
-        .cp-offer-acts button.ok { background: var(--ink); color: #fff; }
+        .cp-sheet-overlay.show { display: flex; }
+        .cp-sheet {
+            width: 100%; background: var(--card); border-radius: 22px 22px 0 0;
+            padding: 14px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.12);
+            animation: cartSheetRise 0.34s cubic-bezier(0.2,0.8,0.2,1) both;
+        }
+        .cp-sheet .sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: #e6e1d8; margin: 0 auto 10px; }
+        .cp-sheet-row {
+            width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px 0;
+            border: none; border-bottom: 1px solid var(--line); background: none; cursor: pointer;
+            font-family: inherit; font-size: 13px; color: var(--ink); text-decoration: none; text-align: start;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cp-sheet-row:last-child { border-bottom: none; }
+        .cp-sheet-row:active { opacity: 0.55; }
+        .cp-sheet-row svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+        .cp-sheet-row .cur { width: 20px; flex: none; text-align: center; font-size: 17px; font-weight: 300; }
+        .cp-sheet-row .go { margin-inline-start: auto; color: var(--faint); font-size: 16px; }
+        .cp-sheet-row[hidden] { display: none; }
+        /* Chosen deal outcome is marked in the sheet. */
+        #cpSold.is-sold #cpSoldYes { color: #1f8f4e; }
+        #cpSold.is-sold #cpSoldYes .go::before { content: '✓ '; }
+        #cpSold.is-notsold #cpSoldNo { color: #b23b3b; }
+        #cpSold.is-notsold #cpSoldNo .go::before { content: '✓ '; }
         .cp-avatar {
             width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper);
             display: flex; align-items: center; justify-content: center; font-size: 20px;
@@ -614,20 +597,24 @@ h3, h4, h5, h6, p,
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
             </button>
         </header>
-        <!-- Actions under the header: seller page / item page / deal outcome -->
-        <nav class="cp-actions" id="cpSold">
-            <a class="cp-act" id="cpSellerLink" href="#"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></i>Profile</a>
-            <a class="cp-act" id="cpItemLink" href="#"><i><svg viewBox="0 0 24 24"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1"/></svg></i>Item</a>
-            <button class="cp-act" id="cpSoldYes" type="button"><i><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></i>Sold</button>
-            <button class="cp-act" id="cpSoldNo" type="button"><i><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>Not sold</button>
-        </nav>
         <div class="cp-feed" id="cpFeed"></div>
-        <!-- Quick replies — tap to send; the offer chip switches the composer to a price -->
+        <!-- Quick replies — tap to send; the first chip makes an offer -->
         <div class="cp-quick" id="cpQuick"></div>
         <div class="cp-input-row">
-            <button class="cp-offer-x" id="cpOfferX" type="button" aria-label="Cancel offer">×</button>
+            <button class="cp-plus" id="cpPlus" type="button" aria-label="Actions"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
             <input class="cp-input" id="cpInput" type="text" placeholder="Write a message…" autocomplete="off">
             <button class="cp-send" id="cpSend">SEND</button>
+        </div>
+        <!-- Actions sheet, opened from the "+" beside the composer -->
+        <div class="cp-sheet-overlay" id="cpSheet">
+            <div class="cp-sheet" id="cpSold">
+                <div class="sheet-grip"></div>
+                <a class="cp-sheet-row" id="cpSellerLink" href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Seller profile<span class="go">›</span></a>
+                <a class="cp-sheet-row" id="cpItemLink" href="#"><svg viewBox="0 0 24 24"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1"/></svg>View item<span class="go">›</span></a>
+                <button class="cp-sheet-row" id="cpOfferBtn" type="button"><span class="cur" aria-hidden="true">₪</span><span id="cpOfferLbl">Make an offer</span><span class="go">›</span></button>
+                <button class="cp-sheet-row" id="cpSoldYes" type="button"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>Mark as sold<span class="go">›</span></button>
+                <button class="cp-sheet-row" id="cpSoldNo" type="button"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>Not sold<span class="go">›</span></button>
+            </div>
         </div>
     </div>
 
@@ -655,26 +642,23 @@ h3, h4, h5, h6, p,
         const threads = new Map();
         // role: 'buying' (I'm the buyer) or 'selling' (someone wants my item);
         // offer: the thread carries a price offer either way.
-        const touch = (seller, name, icon, at, preview, role, offer, deal) => {
+        const touch = (seller, name, icon, at, preview, role, offer) => {
             const key = seller || 'moravchick';
             const t = threads.get(key) || { seller: key, icon: icon || '💬', at: 0, preview: '', role: role || 'buying', offer: false };
             if (icon) t.icon = icon;
             if (role) t.role = role;
             if (offer) t.offer = true;
-            if (deal) t.deal = deal;   // { amount, ask, from: 'me' | 'them', at } — seeds the offer card
             if (at && at >= t.at) { t.at = at; t.preview = preview; }
             if (!t.preview) t.preview = preview;
             threads.set(key, t);
         };
         offs.forEach(o => touch(o.seller, o.name, '💬', o.at,
-            `You offered ${nis(o.offer)}${o.askPrice ? ` · asking ${nis(o.askPrice)}` : ''} — ${o.name || 'item'}`, 'buying', true,
-            o.offer ? { amount: o.offer, ask: o.askPrice, from: 'me', at: o.at } : null));
+            `You offered ${nis(o.offer)}${o.askPrice ? ` · asking ${nis(o.askPrice)}` : ''} — ${o.name || 'item'}`, 'buying', true));
         items.forEach(it => touch(it.seller, it.name, it.icon, it.addedAt,
             `About “${it.name || 'item'}” in your cart`, 'buying'));
         // Offers buyers made on my items — selling-side threads.
         (Array.isArray(recvOffers) ? recvOffers : []).forEach(o => o && o.buyer && touch(o.buyer, o.name, o.icon, o.at,
-            `Offered ${nis(o.offer)}${o.askPrice ? ` · asking ${nis(o.askPrice)}` : ''} — ${o.name || 'item'}`, 'selling', true,
-            o.offer ? { amount: o.offer, ask: o.askPrice, from: 'them', at: o.at } : null));
+            `Offered ${nis(o.offer)}${o.askPrice ? ` · asking ${nis(o.askPrice)}` : ''} — ${o.name || 'item'}`, 'selling', true));
 
         // A few standing conversations so the inbox always has sellers to browse.
         const H = 3600 * 1000, D = 24 * H;
@@ -690,8 +674,7 @@ h3, h4, h5, h6, p,
         // Until real buyers write in, keep a couple of selling-side threads so the
         // Selling tab isn't empty.
         if (!threads.size || ![...threads.values()].some(t => t.role === 'selling')) {
-            touch('Maya L.', 'Wool coat', '🧥', Date.now() - 3 * H, 'Offered ₪230 · asking ₪269 — Wool coat', 'selling', true,
-                { amount: 230, ask: 269, from: 'them', at: Date.now() - 3 * H });
+            touch('Maya L.', 'Wool coat', '🧥', Date.now() - 3 * H, 'Would you take ₪230 for the wool coat?', 'selling', true);
             touch('Omer T.', 'Raw denim', '👖', Date.now() - 1 * D, 'Is the raw denim still available?', 'selling');
         }
 
@@ -931,91 +914,19 @@ h3, h4, h5, h6, p,
 
         function seedThread(t) {
             if (!CHATS[t.seller] || !CHATS[t.seller].length) {
-                CHATS[t.seller] = t.deal
-                    ? [{ type: 'offer', sender: t.deal.from === 'me' ? 'buyer' : 'seller', amount: t.deal.amount, ask: t.deal.ask || 0, status: 'pending', at: t.deal.at || t.at || Date.now() }]
-                    : [{ sender: 'seller', content: t.preview || `Hi, this is ${t.seller}. How can I help?`, at: t.at || Date.now() }];
+                CHATS[t.seller] = [{ sender: 'seller', content: t.preview || `Hi, this is ${t.seller}. How can I help?`, at: t.at || Date.now() }];
                 saveChats();
             }
         }
 
         function renderFeed() {
             const msgs = CHATS[openSeller] || [];
-            const photo = productPhoto(openSeller);
-            feedEl.innerHTML = msgs.map((m, idx) => m.type === 'offer' ? offerCard(m, idx, photo) : `
+            feedEl.innerHTML = msgs.map(m => `
                 <div class="cp-bubble ${m.sender}">${m.content}
                     <span class="cp-time">${timeShort(m.at)}</span>
                 </div>`).join('');
             feedEl.scrollTop = feedEl.scrollHeight;
         }
-
-        // An offer as a card: photo, price (asking price struck through), and
-        // Accept / Counter / Decline while the other side's offer is pending.
-        // 'buyer' = me, 'seller' = the other person (also in selling threads).
-        function offerCard(m, idx, photo) {
-            const mine = m.sender === 'buyer';
-            const prev = (CHATS[openSeller] || []).slice(0, idx).some(x => x.type === 'offer');
-            const label = mine ? (prev ? 'Your counter offer' : 'Your offer') : (prev ? 'Counter offer' : 'Offer');
-            const st = m.status === 'accepted' ? '<div class="cp-offer-st accepted">Accepted ✓</div>'
-                : m.status === 'declined' ? '<div class="cp-offer-st declined">Declined</div>'
-                : m.status === 'countered' ? '<div class="cp-offer-st">Countered</div>'
-                : mine ? '<div class="cp-offer-st">Waiting for a reply</div>' : '';
-            const acts = (!mine && m.status === 'pending')
-                ? `<div class="cp-offer-acts" data-offer="${idx}"><button type="button" data-act="decline">Decline</button><button type="button" data-act="counter">Counter</button><button type="button" class="ok" data-act="accept">Accept</button></div>`
-                : '';
-            return `<div class="cp-offer ${mine ? 'me' : 'them'}">
-                    ${photo ? `<div class="cp-offer-img" style="background-image:url('${photo}')"></div>` : ''}
-                    <div class="cp-offer-bd">
-                        <div class="cp-offer-k">${label}</div>
-                        <div class="cp-offer-pr">${nis(m.amount)}${m.ask && m.ask !== m.amount ? `<s>${nis(m.ask)}</s>` : ''}</div>
-                        ${openItem ? `<div class="cp-offer-it">${openItem}</div>` : ''}
-                        ${st}
-                    </div>
-                    <span class="cp-time">${timeShort(m.at)}</span>
-                    ${acts}
-                </div>`;
-        }
-        function askFor(seller) {
-            const msgs = CHATS[seller] || [];
-            for (let k = msgs.length - 1; k >= 0; k--) if (msgs[k].type === 'offer' && msgs[k].ask) return msgs[k].ask;
-            const obj = itemObjFor(seller) || {};
-            return +(obj.askPrice || obj.price) || 0;
-        }
-        // Settle the latest pending offer, then post mine.
-        function sendOffer(amount) {
-            if (!openSeller || !(amount > 0)) return;
-            const msgs = CHATS[openSeller];
-            msgs.forEach(x => { if (x.type === 'offer' && x.status === 'pending') x.status = 'countered'; });
-            msgs.push({ type: 'offer', sender: 'buyer', amount: amount, ask: askFor(openSeller), status: 'pending', at: Date.now() });
-            saveChats();
-            renderFeed();
-            // Demo reply: meet halfway, or accept when the offer is close enough.
-            const who = openSeller;
-            setTimeout(() => {
-                if (openSeller !== who) return;
-                const mine = CHATS[who][CHATS[who].length - 1];
-                const ask = mine.ask;
-                if (!ask || amount >= ask * 0.95) {
-                    mine.status = 'accepted';
-                    CHATS[who].push({ sender: 'system', content: `Offer accepted — ${nis(amount)}`, at: Date.now() });
-                } else {
-                    mine.status = 'countered';
-                    CHATS[who].push({ type: 'offer', sender: 'seller', amount: Math.round((amount + ask) / 2 / 5) * 5, ask: ask, status: 'pending', at: Date.now() });
-                }
-                saveChats();
-                renderFeed();
-            }, 1100);
-        }
-        feedEl.addEventListener('click', (e) => {
-            const b = e.target.closest('.cp-offer-acts button');
-            if (!b || !openSeller) return;
-            const m = CHATS[openSeller][+b.parentElement.dataset.offer];
-            if (!m) return;
-            if (b.dataset.act === 'counter') { setOfferMode(true); return; }
-            m.status = b.dataset.act === 'accept' ? 'accepted' : 'declined';
-            CHATS[openSeller].push({ sender: 'system', content: m.status === 'accepted' ? `Offer accepted — ${nis(m.amount)}` : 'Offer declined', at: Date.now() });
-            saveChats();
-            renderFeed();
-        });
 
         // ===== Quick replies (depend on which side of the deal I'm on) =====
         const QUICK = {
@@ -1023,9 +934,12 @@ h3, h4, h5, h6, p,
             selling: ['Counter offer', 'Yes, it\'s available', 'Ships within 2 days', 'Pickup works too', 'Thanks!']
         };
         const quickEl = document.getElementById('cpQuick');
+        let openRole = 'buying';
         function renderQuick(t) {
-            quickEl.innerHTML = QUICK[t.role === 'selling' ? 'selling' : 'buying']
-                .map((q, k) => `<button type="button" class="cp-chip${k === 0 ? ' offer' : ''}" data-q="${k}">${q}</button>`).join('');
+            openRole = t.role === 'selling' ? 'selling' : 'buying';
+            quickEl.innerHTML = QUICK[openRole]
+                .map((q, k) => `<button type="button" class="cp-chip${k === 0 ? ' offer' : ''}">${q}</button>`).join('');
+            document.getElementById('cpOfferLbl').textContent = openRole === 'selling' ? 'Counter offer' : 'Make an offer';
         }
         quickEl.addEventListener('click', (e) => {
             const c = e.target.closest('.cp-chip');
@@ -1033,7 +947,7 @@ h3, h4, h5, h6, p,
             if (c.classList.contains('offer')) { setOfferMode(true); return; }
             sendMessage(c.textContent);
         });
-        // Offer mode: the composer asks for a price and sends an offer card.
+        // Offer mode: the composer asks for a price and sends it as a message.
         const inputRow = document.querySelector('.cp-input-row');
         let offering = false;
         function setOfferMode(on) {
@@ -1045,7 +959,17 @@ h3, h4, h5, h6, p,
             document.getElementById('cpSend').textContent = on ? 'OFFER' : 'SEND';
             if (on) inputEl.focus();
         }
-        document.getElementById('cpOfferX').addEventListener('click', () => setOfferMode(false));
+
+        // ===== Actions sheet =====
+        const sheetEl = document.getElementById('cpSheet');
+        const openSheet = () => sheetEl.classList.add('show');
+        const closeSheet = () => sheetEl.classList.remove('show');
+        sheetEl.addEventListener('click', (e) => { if (e.target === sheetEl) closeSheet(); });
+        document.getElementById('cpPlus').addEventListener('click', () => {
+            if (offering) { setOfferMode(false); return; }   // the rotated "+" cancels an offer
+            openSheet();
+        });
+        document.getElementById('cpOfferBtn').addEventListener('click', () => { closeSheet(); setOfferMode(true); });
 
         function itemFor(seller) {
             const o = offs.find(x => (x.seller || 'moravchick') === seller && x.name);
@@ -1138,6 +1062,7 @@ h3, h4, h5, h6, p,
             renderSold(t.seller);
             renderQuick(t);
             setOfferMode(false);
+            closeSheet();
             renderFeed();
             panel.classList.add('open');
             notifyParent('vero-chat-open');   // hide the profile nav bars while in a chat
@@ -1146,6 +1071,7 @@ h3, h4, h5, h6, p,
         function closeChat() {
             panel.classList.remove('open'); openSeller = null;
             setOfferMode(false);
+            closeSheet();
             notifyParent('vero-chat-close');  // restore the profile nav bars
             const sv = document.getElementById('chatSearch');
             chatQuery = sv ? sv.value : '';
@@ -1158,14 +1084,13 @@ h3, h4, h5, h6, p,
         }
 
         function sendMessage(quick) {
+            let text = (typeof quick === 'string' ? quick : inputEl.value).trim();
             if (offering && typeof quick !== 'string') {
-                const amount = parseInt(inputEl.value.replace(/[^\d]/g, ''), 10);
+                const amount = parseInt(text.replace(/[^\d]/g, ''), 10);
                 if (!amount) return;
+                text = openRole === 'selling' ? `I can do ${nis(amount)}.` : `I'd like to offer ${nis(amount)}.`;
                 setOfferMode(false);
-                sendOffer(amount);
-                return;
             }
-            const text = (typeof quick === 'string' ? quick : inputEl.value).trim();
             if (!text || !openSeller) return;
             CHATS[openSeller].push({ sender: 'buyer', content: text, at: Date.now() });
             saveChats();
@@ -1184,10 +1109,13 @@ h3, h4, h5, h6, p,
 
         document.getElementById('cpBack').addEventListener('click', closeChat);
         document.getElementById('cpSend').addEventListener('click', () => sendMessage());
-        document.getElementById('cpSoldYes').addEventListener('click', () => markSold(true));
-        document.getElementById('cpSoldNo').addEventListener('click', () => markSold(false));
+        document.getElementById('cpSoldYes').addEventListener('click', () => { markSold(true); closeSheet(); });
+        document.getElementById('cpSoldNo').addEventListener('click', () => { markSold(false); closeSheet(); });
         inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel.classList.contains('open')) closeChat(); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape' || !panel.classList.contains('open')) return;
+            if (sheetEl.classList.contains('show')) closeSheet(); else closeChat();
+        });
 
         // Exit animation mirrors the entry fade.
         const back = document.getElementById('navBack');
