@@ -69,7 +69,35 @@
   .sm-num { font-family: 'Bodoni Moda', serif; font-weight: 500; font-size: 26px; line-height: 1; }
   .sm-lbl { font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
 
+  /* ---- Featured: the highest open offer as a big photo tile ---- */
+  .feat {
+    position: relative; overflow: hidden; border-radius: 20px; min-height: 250px; margin: 6px 0 10px;
+    color: #fff; display: flex; align-items: flex-end;
+    background: radial-gradient(120% 90% at 85% 15%, #6b5a46 0%, #2b2620 55%, #16150f 100%) center / cover no-repeat;
+    animation: fade 0.45s ease both;
+  }
+  .feat[hidden] { display: none; }
+  .feat::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.7)); }
+  .feat-ico { position: absolute; top: 22px; right: 26px; font-size: 64px; line-height: 1; opacity: 0.9; z-index: 1; }
+  .feat.has-photo .feat-ico { display: none; }
+  .feat-tx { position: relative; z-index: 1; width: 100%; padding: 18px; }
+  .feat-k { font-size: 9.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.8); }
+  .feat-pr { font-family: 'Bodoni Moda', Georgia, serif; font-weight: 500; font-size: 36px; line-height: 1.1; margin-top: 4px; }
+  .feat-w { font-size: 12px; opacity: 0.9; margin-top: 2px; }
+  .feat-row { display: flex; gap: 8px; margin-top: 14px; }
+  .feat-row button {
+    flex: 1; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
+    padding: 12px 0; border-radius: 999px; border: 1px solid rgba(255,255,255,0.7); background: none; color: #fff;
+    transition: background 0.2s, color 0.2s;
+  }
+  .feat-row button:active { background: rgba(255,255,255,0.15); }
+  .feat-row .ok { background: #fff; color: var(--ink); border-color: #fff; }
+  .feat-row .ok:active { background: rgba(255,255,255,0.85); }
+  .feat-cap { font-size: 9.5px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-top: 22px; }
+  .feat-cap[hidden] { display: none; }
+
   /* ---- Filter tabs — text with a thin active underline ---- */
+  .summary[hidden] { display: none; }
   .tabs { display: flex; gap: 22px; margin: 26px 0 6px; border-bottom: 1px solid var(--line); }
   .tab {
     background: none; border: none; cursor: pointer; font-family: inherit;
@@ -171,7 +199,11 @@
   <main class="wrap">
     <h1 style="display:none">Offers &amp; Negotiation</h1>
 
-    <div class="summary">
+    <!-- The highest open offer, front and centre -->
+    <div class="feat" id="feat" hidden></div>
+    <div class="feat-cap" id="featCap" hidden>All offers</div>
+
+    <div class="summary" hidden>
       <div class="sm"><div class="sm-num" id="sPending">0</div><div class="sm-lbl">Pending</div></div>
       <div class="sm"><div class="sm-num" id="sAccepted">0</div><div class="sm-lbl">Accepted</div></div>
       <div class="sm"><div class="sm-num" id="sValue">₪0</div><div class="sm-lbl">Open value</div></div>
@@ -261,6 +293,7 @@
       document.getElementById('sAccepted').textContent = offers.filter(function (o) { return o.status === 'accepted'; }).length;
       document.getElementById('sValue').textContent = nis(pend.reduce(function (s, o) { return s + (o.counter || o.offer); }, 0));
 
+      renderFeat();
       if (!rows.length) { list.innerHTML = '<div class="empty">Nothing here yet.</div>'; return; }
       list.innerHTML = rows.map(function (r) {
         var o = r.o, i = r.i, label = o.status === 'countered' ? 'Countered' : o.status;
@@ -279,6 +312,42 @@
         '</div>';
       }).join('');
     }
+
+    // Featured tile: the highest offer still waiting on me.
+    var feat = document.getElementById('feat'), featCap = document.getElementById('featCap');
+    function photoOf(o) { return o.processed_cover || o.image || o.cover || o.img || o.photo || null; }
+    function renderFeat() {
+      var top = -1;
+      offers.forEach(function (o, i) { if (o.status === 'pending' && (top < 0 || o.offer > offers[top].offer)) top = i; });
+      feat.hidden = featCap.hidden = top < 0;
+      if (top < 0) return;
+      var o = offers[top], ph = photoOf(o);
+      feat.classList.toggle('has-photo', !!ph);
+      feat.style.backgroundImage = ph ? 'url("' + String(ph).replace(/"/g, '%22') + '")' : '';
+      feat.innerHTML =
+        '<div class="feat-ico" aria-hidden="true">' + esc(o.icon || '🛍️') + '</div>' +
+        '<div class="feat-tx">' +
+          '<div class="feat-k">Top open offer · ' + esc(o.buyer) + '</div>' +
+          '<div class="feat-pr">' + nis(o.offer) + '</div>' +
+          '<div class="feat-w">' + esc(o.name) + ' · asking ' + nis(o.askPrice) + ' · −' + pct(o) + '%</div>' +
+          '<div class="feat-row">' +
+            '<button type="button" data-feat="counter" data-i="' + top + '">Counter</button>' +
+            '<button type="button" class="ok" data-feat="accept" data-i="' + top + '">Accept</button>' +
+          '</div>' +
+        '</div>';
+    }
+    feat.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-feat]'); if (!b) return;
+      var i = +b.getAttribute('data-i'), o = offers[i]; if (!o) return;
+      if (b.getAttribute('data-feat') === 'accept') { o.status = 'accepted'; save(); render(); reopen(i); return; }
+      // Counter: open that offer's row in the list with the counter field ready.
+      if (filter !== 'all' && filter !== 'pending') document.querySelector('#tabs .tab[data-f="all"]').click();
+      reopen(i);
+      var c = list.querySelector('[data-counter="' + i + '"]'), row = list.querySelector('[data-row="' + i + '"]');
+      if (c) c.classList.add('show');
+      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      var inp = c && c.querySelector('input'); if (inp) setTimeout(function () { inp.focus({ preventScroll: true }); }, 350);
+    });
 
     // Expand / collapse.
     list.addEventListener('click', function (e) {
