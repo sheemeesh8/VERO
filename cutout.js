@@ -47,11 +47,24 @@ function veroCutoutDeadline(promise, ms = VERO_CUTOUT_TIMEOUT) {
 
 let veroCutoutLib = null;
 
+// Library + model-data versions, pinned as a MATCHED pair. The library fetches its
+// WASM + ONNX model from `@imgly/background-removal-data/<library-version>/dist/`,
+// so the two must line up. The data package only exists up to 1.4.5 — a newer
+// library (e.g. 1.5.8) asks for a data version that was never published, the model
+// 404s, and the cut-out silently falls back to the original photo ("background
+// removal does nothing"). 1.4.5 is the newest library whose data actually exists.
+const VERO_CUTOUT_VERSION = '1.4.5';
+// Pin publicPath to that existing data on imgly's asset CDN, so the model loads
+// even if the library's built-in default ever drifts. (The data's binary chunks
+// live only here, not on the npm/jsDelivr mirror.)
+const VERO_CUTOUT_PUBLIC_PATH =
+    'https://staticimgly.com/@imgly/background-removal-data/' + VERO_CUTOUT_VERSION + '/dist/';
+
 // One import, the first time a seller uploads. Kept out of page load so the
 // site does not pay 5MB for visitors who never list anything.
 async function veroCutoutLoad() {
     if (veroCutoutLib) return veroCutoutLib;
-    veroCutoutLib = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.8/+esm');
+    veroCutoutLib = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@' + VERO_CUTOUT_VERSION + '/+esm');
     return veroCutoutLib;
 }
 
@@ -119,7 +132,7 @@ async function veroCutout(src, opts = {}) {
         const lib = await veroCutoutDeadline(veroCutoutLoad());
         say('Removing background…');
         const blob = await veroCutoutToBlob(src);
-        const cut = await veroCutoutDeadline(lib.removeBackground(blob));
+        const cut = await veroCutoutDeadline(lib.removeBackground(blob, { publicPath: VERO_CUTOUT_PUBLIC_PATH }));
         const img = await veroCutoutLoadImage(cut);
         const composed = veroCutoutCompose(img);
         if (!composed) throw new Error('empty cut-out');
