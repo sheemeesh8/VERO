@@ -7661,6 +7661,8 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 #genderRail .gr-dots, #genderRail .gr-btn { display: none !important; }
 /* Only the active card shows — no slivers of the neighbours at the edges. */
 #genderRail .gr-rail { gap: 40px !important; }
+/* A touch shorter, so the Shop button clears the bottom bar once the title sits under the header. */
+#genderRail .gr-card { aspect-ratio: 0.8; }
 /* As in G3: the switch names the category, so the card keeps just the line + Shop link. */
 /* Name first, then the line, then the Shop pill. */
 #genderRail .gr-cap { display: flex; flex-direction: column; }
@@ -13845,11 +13847,19 @@ window.veroLocalImg = function (key) {
             const mv = document.getElementById('mainView');
             return mv && mv.style.display !== 'none';
         }
+        function headerH() {
+            const h = document.getElementById('siteHeader');
+            if (!h) return 0;
+            const pos = getComputedStyle(h).position;
+            return (pos === 'fixed' || pos === 'sticky') ? h.getBoundingClientRect().height : 0;
+        }
         function feedTop() {
             const f = document.querySelector('.feed-section');
             // The feed is retired (hidden) — the page ends at the category slider, so
             // its bottom is the last landing point. A laid-out feed uses its own top.
-            if (f && f.offsetParent !== null) return f.getBoundingClientRect().top + (window.scrollY || 0);
+            // Land just below the fixed site header, so it never covers the
+            // "Shop by / Categories" title at the top of the feed.
+            if (f && f.offsetParent !== null) return f.getBoundingClientRect().top + (window.scrollY || 0) - headerH();
             const cat = document.getElementById('catFull');
             if (cat && cat.offsetParent !== null) {
                 return cat.getBoundingClientRect().top + (window.scrollY || 0) + cat.offsetHeight;
