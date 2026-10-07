@@ -139,8 +139,11 @@
         #siteHeader .hdr-left-stack {
             display: flex; flex-direction: column; align-items: center; gap: 8px;
         }
-        /* Logo (centre column) removed — keep the icon group pinned to the last column. */
+        /* Peacock mark in the centre column, sized to match the icon row. */
         #siteHeader .header-container > .header-right { grid-column: 3; }
+        #siteHeader .logo-peacock-wrap { grid-column: 2; justify-self: center; position: static;
+            left: auto !important; padding: 0; min-width: 0; display: flex; align-items: center; cursor: pointer; }
+        #siteHeader .logo .logo-peacock { height: 34px; width: auto; }
         /* "Menu" / "Search" text buttons on the left, à la couture navigation. */
         #siteHeader .hdr-textbtn {
             display: inline-flex; align-items: center; gap: 9px;
@@ -1580,6 +1583,9 @@
                     </div>
                 </span>
             </div>
+            <a class="logo logo-peacock-wrap" href="index.html" aria-label="moravchick — home">
+                <img class="logo-img logo-peacock" src="peacock-logo.png?v=1" alt="moravchick" draggable="false" />
+            </a>
             <div class="header-right">
                 <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
