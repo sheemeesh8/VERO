@@ -877,14 +877,15 @@
         .vero-drawer {
             position: fixed; top: 0; left: 0; height: 100%; width: 320px; max-width: 72vw;
             background: #faf9f6; color: #1b1916; z-index: 201; transform: translateX(-100%);
-            transition: transform 0.55s cubic-bezier(0.16,1,0.3,1);
-            box-shadow: 30px 0 80px rgba(0,0,0,0.10);
+            transition: transform 0.55s cubic-bezier(0.16,1,0.3,1), box-shadow 0.55s ease;
+            /* Shadow only while open — closed, it spilled a gray band onto the page's left edge. */
+            box-shadow: none;
             border-radius: 0 22px 22px 22px; overflow: hidden;
             display: flex; flex-direction: column;
             padding: calc(30px + env(safe-area-inset-top,0px)) 34px calc(30px + env(safe-area-inset-bottom,0px));
             box-sizing: border-box; direction: ltr; text-align: left;
         }
-        .vero-drawer.open { transform: translateX(0); }
+        .vero-drawer.open { transform: translateX(0); box-shadow: 30px 0 80px rgba(0,0,0,0.10); }
 
         /* Header row: back arrow (matches the page headers) */
         .vero-drawer-head {
