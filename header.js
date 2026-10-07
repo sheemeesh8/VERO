@@ -1399,6 +1399,25 @@
         .vsp-chip:hover { transform: translateY(-1px); }
         .vsp-chip.active { background: #111; color: #fff; border-color: #111; font-weight: 700; }
 
+        /* Gender as one segmented control (A3). */
+        .vsp-seg { display: flex; border: 1.5px solid #111; border-radius: 12px; overflow: hidden; max-width: 520px; margin: 0 auto; }
+        .vsp-seg .vsp-chip { flex: 1; border: none; border-left: 1px solid #d9d6d0; border-radius: 0; padding: 14px 6px; font-size: 13.3px; }
+        .vsp-seg .vsp-chip:first-child { border-left: none; }
+        .vsp-seg .vsp-chip:hover { transform: none; }
+        .vsp-seg .vsp-chip.active { background: #111; color: #fff; }
+
+        /* Product type as a scannable list with counts + chevron (A3). */
+        .vsp-list { display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; width: 100%; }
+        .vsp-trow { display: flex; align-items: center; justify-content: space-between; width: 100%;
+            border: none; border-bottom: 1px solid #e4e1dc; border-radius: 0; padding: 15px 6px;
+            font-size: 15px; font-weight: 400; text-align: left; }
+        .vsp-trow:hover { transform: none; background: #faf9f6; }
+        .vsp-trow.active { font-weight: 700; }
+        .vsp-trow-right { display: flex; align-items: center; gap: 10px; }
+        .vsp-trow-count { font-size: 12px; color: #8a877f; font-variant-numeric: tabular-nums; }
+        .vsp-trow-chev { font-size: 18px; color: #c3bfb7; line-height: 1; }
+        .vsp-trow.active .vsp-trow-chev { color: #111; }
+
         /* Final stage: material / price / colour, still stacked. */
         .vsp-final { display: flex; flex-direction: column; gap: 34px; }
         .vsp-price-out { font-weight: 800; color: #d40000; font-size: 12.50px; }
@@ -1765,6 +1784,25 @@
         return `<button class="vsp-chip${active ? ' active' : ''}" onclick="vspPick('${group}', this)" data-value="${value}">${value}</button>`;
     }
 
+    // How many pieces a gender + type would currently return, for the A3 list.
+    // Counts live products via the page's own matcher; null when none is wired.
+    function vspTypeCount(gender, type) {
+        if (typeof window.veroSearchResults !== 'function') return null;
+        try {
+            const html = window.veroSearchResults({ gender, type }) || '';
+            const n = (html.match(/vsp-prow/g) || []).length;
+            return n >= 20 ? '20+' : n;
+        } catch (e) { return null; }
+    }
+    // One product-type row: name on the left, count + chevron on the right.
+    function typeRow(gender, type, active) {
+        const c = vspTypeCount(gender, type);
+        return `<button class="vsp-chip vsp-trow${active ? ' active' : ''}" onclick="vspPick('type', this)" data-value="${type}">`
+            + `<span class="vsp-trow-name">${type}</span>`
+            + `<span class="vsp-trow-right">${c != null ? `<span class="vsp-trow-count">${c}</span>` : ''}<span class="vsp-trow-chev">›</span></span>`
+            + `</button>`;
+    }
+
     const SEARCH_MARKUP = `
         <div class="vsp-overlay" id="veroSearchPage" aria-hidden="true" role="dialog" aria-label="Search">
             <button class="vsp-close" aria-label="Close search" onclick="veroCloseSearchPage()">&times;</button>
@@ -1829,13 +1867,13 @@
                     <div class="vsp-col">
                         <div class="vsp-step show" data-step="gender">
                             <div class="vsp-step-label">Who are you shopping for?</div>
-                            <div class="vsp-chips">
+                            <div class="vsp-seg">
                                 ${['Men', 'Women', 'Kids', 'Unisex'].map(g => chip('gender', g)).join('')}
                             </div>
                         </div>
                         <div class="vsp-step" data-step="type">
                             <div class="vsp-step-label">Product type</div>
-                            <div class="vsp-chips" id="vspTypeChips"></div>
+                            <div class="vsp-list" id="vspTypeChips"></div>
                         </div>
                         <div class="vsp-step" data-step="size">
                             <div class="vsp-step-label">Size</div>
@@ -2310,7 +2348,7 @@
         if (group === 'gender') {
             // Product types depend on the gender — rebuild them for the new choice.
             const chips = document.getElementById('vspTypeChips');
-            if (chips) chips.innerHTML = (VSP_TYPES[value] || []).map(t => chip('type', t)).join('');
+            if (chips) chips.innerHTML = (VSP_TYPES[value] || []).map(t => typeRow(value, t)).join('');
             vspReveal('type');
         } else if (group === 'type') {
             vspReveal('size');
