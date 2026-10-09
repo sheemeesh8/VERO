@@ -178,7 +178,11 @@ h3, h4, h5, h6, p,
             // hidden. The in-season collection comes first, so you land on it.
             var list = [];
             var seen = {};
-            [curr, sale].forEach(function (k) {
+            // Art mode shows its own collection only (Interior Design, for now).
+            var isArt = false;
+            try { isArt = localStorage.getItem('vero_category') === 'art'; } catch (e) {}
+            if (new URLSearchParams(location.search).get('mode') === 'art') isArt = true;
+            (isArt ? VC.artList().map(function (c) { return c.key; }) : [curr, sale]).forEach(function (k) {
                 var c = VC.get(k);
                 if (c && !seen[k]) { seen[k] = 1; list.push(c); }
             });
@@ -192,7 +196,7 @@ h3, h4, h5, h6, p,
 
             slider.innerHTML = list.map(function (c) {
                 var count = VC.byCollection(c.key).length;
-                var months = c.months.map(function (m) { return monthName[m]; }).join(' · ');
+                var months = c.art ? c.tagline : c.months.map(function (m) { return monthName[m]; }).join(' · ');
                 return '<a class="col-slide" href="collection.html?c=' + c.key + '">' +
                         '<div class="bg" style="background-image:url(\'' + c.hero + '\')"></div>' +
                         '<div class="col-body">' +
@@ -204,7 +208,8 @@ h3, h4, h5, h6, p,
                             '<div class="chips">' +
                                 (c.key === curr ? '<span class="chip-now">In season now</span>' : '') +
                                 (c.key === sale ? '<span class="chip-sale">End of season · ' + c.eos + '%-</span>' : '') +
-                                (c.key !== curr && c.key !== sale ? '<span class="chip-soon">Coming soon</span>' : '') +
+                                (c.art ? '<span class="chip-now">For interior designers</span>' : '') +
+                                (!c.art && c.key !== curr && c.key !== sale ? '<span class="chip-soon">Coming soon</span>' : '') +
                             '</div>' +
                             '<span class="col-cta">View the collection</span>' +
                         '</div>' +

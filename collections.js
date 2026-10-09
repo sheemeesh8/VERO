@@ -36,8 +36,19 @@
     };
     var ORDER = ['spring', 'summer', 'autumn', 'winter'];
 
+    // ---- Art mode: one collection, not seasonal ------------------------------
+    // Home decor picked for interior designers. For now it is the only art-mode
+    // collection; every art listing belongs to it.
+    var ART_COLLECTIONS = {
+        interiors: { key: 'interiors', he: 'Interior Design', en: 'Interior Design', emoji: '🛋️', months: [],
+                     hero: 'art-hero.jpg', accent: '#8a7559', eos: 0, art: true,
+                     tagline: 'Home decor, curated for interior designers' }
+    };
+    var ART_ORDER = ['interiors'];
+
     function list() { return ORDER.map(function (k) { return COLLECTIONS[k]; }); }
-    function get(key) { return COLLECTIONS[key] || null; }
+    function artList() { return ART_ORDER.map(function (k) { return ART_COLLECTIONS[k]; }); }
+    function get(key) { return COLLECTIONS[key] || ART_COLLECTIONS[key] || null; }
 
     // ---- Calendar ------------------------------------------------------------
     // Which collection owns the current month.
@@ -74,6 +85,8 @@
     function collectionOf(p) {
         if (!p) return currentKey();
         if (p.collection && COLLECTIONS[p.collection]) return p.collection;
+        // Art listings all sit in the art-mode collection.
+        if (p.collection === 'interiors' || p.type === 'art' || String(p.category || '').toLowerCase() === 'art') return 'interiors';
         var s = String(p.season || '').trim().toLowerCase();
         if (s && SEASON_MAP.hasOwnProperty(s) && SEASON_MAP[s]) return SEASON_MAP[s];
         var at = p.createdAt || p.listedAt;
@@ -156,7 +169,18 @@
             { id: 'c_au3', collection: 'autumn', name: 'Plaid scarf',      seller: 'Art House',         category: 'Accessories', price: 120, icon: '🧣', salePercent: 30 },
             { id: 'c_wi1', collection: 'winter', name: 'Down parka',       seller: 'Studio Noir',       category: 'Outerwear', price: 640, icon: '🧥', salePercent: 10 },
             { id: 'c_wi2', collection: 'winter', name: 'Cashmere sweater', seller: 'Luxe Atelier',      category: 'Knitwear',  price: 390, icon: '🧶', salePercent: 50 },
-            { id: 'c_wi3', collection: 'winter', name: 'Leather gloves',   seller: 'Vintage Vault',     category: 'Accessories', price: 150, icon: '🧤' }
+            { id: 'c_wi3', collection: 'winter', name: 'Leather gloves',   seller: 'Vintage Vault',     category: 'Accessories', price: 150, icon: '🧤' },
+            // Interior Design — home decor for interior designers (art mode).
+            { id: 'c_in1', collection: 'interiors', type: 'art', name: 'Travertine side table', seller: 'Atelier Pierre',  category: 'Furniture', price: 2400, icon: '🪨' },
+            { id: 'c_in2', collection: 'interiors', type: 'art', name: 'Linen pleated floor lamp', seller: 'Lumen Studio', category: 'Lighting',  price: 1350, icon: '💡' },
+            { id: 'c_in3', collection: 'interiors', type: 'art', name: 'Hand-thrown stoneware vase', seller: 'Clay & Co',  category: 'Ceramics',  price: 480,  icon: '🏺' },
+            { id: 'c_in4', collection: 'interiors', type: 'art', name: 'Large abstract canvas',   seller: 'Studio Noir',      category: 'Wall Art',  price: 3200, icon: '🖼️' },
+            { id: 'c_in5', collection: 'interiors', type: 'art', name: 'Arched oak mirror',        seller: 'Nord Atelier',     category: 'Mirrors',   price: 1100, icon: '🪞' },
+            { id: 'c_in6', collection: 'interiors', type: 'art', name: 'Hand-knotted wool rug',    seller: 'Loom House',       category: 'Rugs',      price: 4600, icon: '🧶' },
+            { id: 'c_in7', collection: 'interiors', type: 'art', name: 'Bronze figure sculpture',  seller: 'Art House',        category: 'Sculpture', price: 2900, icon: '🗿' },
+            { id: 'c_in8', collection: 'interiors', type: 'art', name: 'Bouclé accent chair',      seller: 'Maison Vero',      category: 'Furniture', price: 3800, icon: '🪑' },
+            { id: 'c_in9', collection: 'interiors', type: 'art', name: 'Alabaster table lamp',     seller: 'Lumen Studio',     category: 'Lighting',  price: 890,  icon: '🕯️' },
+            { id: 'c_in10', collection: 'interiors', type: 'art', name: 'Wool & cashmere throw',   seller: 'Loom House',       category: 'Textiles',  price: 620,  icon: '🧣' }
         ].map(function (p, i) { p.status = 'active'; p.createdAt = now - (i + 1) * D; p.demo = true; return p; });
     }
 
@@ -235,7 +259,7 @@
         var productData = JSON.stringify({
             name: p.name, price: priceNum, icon: p.icon, cover: p.cover || '',
             category: p.category || '', seller: p.seller, rating: p.rating || 4.5,
-            type: p.type || 'clothing'
+            type: p.type || (p.collection === 'interiors' ? 'art' : 'clothing')
         });
         var href = 'product-showcase.html?product=' + encodeURIComponent(productData);
         var data = ' data-name="' + esc(p.name) + '" data-seller="' + esc(p.seller) + '"' +
@@ -267,7 +291,7 @@
     }
 
     window.veroCollections = {
-        list: list, get: get, order: ORDER,
+        list: list, artList: artList, get: get, order: ORDER,
         currentKey: currentKey, saleKey: saleKey,
         collectionOf: collectionOf, discountOf: discountOf, ownPercent: ownPercent,
         allProducts: allProducts, byCollection: byCollection, onSale: onSale,

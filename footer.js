@@ -145,7 +145,7 @@
             { name: 'Women', href: 'index.html?seg=women' },
             { name: 'Men', href: 'index.html?seg=men' },
             { name: 'Kids', href: 'index.html?seg=kids' },
-            { name: 'Art', href: 'collections.html' },
+            { name: 'Art', href: 'collection.html?c=interiors' },
         ]},
         { title: 'Company', links: [
             { name: 'About Us', href: 'about.html' },
