@@ -7926,7 +7926,20 @@ window.veroLocalImg = function (key) {
         <script>
             function heroSearch(f) {
                 var q = (f.q.value || '').trim();
-                location.href = 'products.html' + (q ? '?q=' + encodeURIComponent(q) : '');
+                if (f.q) f.q.blur();          // dismiss the mobile keyboard
+                // On the home feed: filter the feed in place, then glide down to the
+                // matching products. Elsewhere (no feed hook): fall back to the page.
+                if (typeof window.veroOnSearch === 'function') {
+                    window.veroOnSearch(q);
+                    setTimeout(function () {
+                        var target = document.getElementById('feedContainer');
+                        if (!target) return;
+                        var y = target.getBoundingClientRect().top + window.pageYOffset - 80;
+                        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                    }, 260);
+                } else {
+                    location.href = 'products.html' + (q ? '?q=' + encodeURIComponent(q) : '');
+                }
                 return false;
             }
         </script>
