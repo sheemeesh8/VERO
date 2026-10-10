@@ -2854,6 +2854,34 @@
         .vce-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; flex: none; }
         .vce-tag.art { color: #8a6a24; } .vce-tag.art::before { background: #b5892f; }
         .vce-tag.sh  { color: #38624e; } .vce-tag.sh::before  { background: #4a7a63; }
+
+        /* ---- Feed events slider: 4 upcoming dates at a time, crossfading ----
+           Styled like the dashboard KPI tiles: a big date, a small label beneath. */
+        .vcs { margin-top: 14px; }
+        .vcs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 20px;
+            transition: opacity 0.55s ease; }
+        .vcs-grid.fade { opacity: 0; }
+        .vcs-grid.single { grid-template-columns: 1fr; max-width: 60%; margin: 0 auto; }
+        .vcs-tile { text-align: center; text-decoration: none; color: inherit;
+            -webkit-tap-highlight-color: transparent; }
+        .vcs-tile:active { opacity: 0.6; }
+        .vcs-day { font-family: 'Bodoni Moda', Georgia, serif; font-weight: 400; font-size: 42px;
+            line-height: 0.95; color: #1c1c1c; }
+        .vcs-tile.is-next .vcs-day { color: #b5892f; }
+        .vcs-mon { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif; font-size: 9px;
+            letter-spacing: 2.5px; text-transform: uppercase; color: #b3ada3; margin-top: 7px; }
+        .vcs-name { font-family: 'Bodoni Moda', Georgia, serif; font-size: 14px; color: #1c1c1c;
+            line-height: 1.3; margin-top: 11px; }
+        .vcs-tag { display: inline-flex; align-items: center; gap: 6px; margin-top: 7px;
+            font-family: 'Aharoni CLM', 'Segoe UI', sans-serif; font-size: 9px; letter-spacing: 1px;
+            text-transform: uppercase; }
+        .vcs-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+        .vcs-tag.art { color: #8a6a24; } .vcs-tag.art::before { background: #b5892f; }
+        .vcs-tag.sh  { color: #38624e; } .vcs-tag.sh::before  { background: #4a7a63; }
+        .vcs-dots { display: flex; justify-content: center; gap: 6px; margin-top: 22px; }
+        .vcs-dots i { width: 6px; height: 6px; border-radius: 50%; background: #d6d4cf;
+            transition: width 0.25s, background 0.25s; cursor: pointer; }
+        .vcs-dots i.on { width: 18px; background: #111; }
         /* Detail panel below the grid — shows the selected day's event (or that
            there is none). Updated on every day tap. */
         .vcal-detail { margin-top: 16px; border-top: 1px solid #111; padding-top: 12px; }
@@ -10605,17 +10633,45 @@ window.veroLocalImg = function (key) {
             const sorted = events.slice().sort((a, b) => a.d - b.d);
             const nextEv = sorted.find(e => e.d >= today);
 
-            const agenda = document.createElement('div'); agenda.className = 'vcal-agenda';
-            agenda.innerHTML = sorted.map(e =>
-                '<a class="vca-row' + (e === nextEv ? ' is-next' : '') + '" href="events.html">' +
-                    '<span class="vca-date"><span class="vca-dn">' + e.d + '</span><span class="vca-dm">' + monAbbr + '</span></span>' +
-                    '<span class="vca-bd">' +
-                        '<span class="vca-name">' + esc(e.name) + '<span class="vce-tag ' + e.type + '">' + typeLabel[e.type] + '</span></span>' +
-                        '<span class="vca-meta"><span>' + esc(e.time) + '</span><span>' + esc(e.place) + '</span></span>' +
-                    '</span>' +
-                '</a>'
-            ).join('');
-            inner.appendChild(agenda);
+            // A crossfading slider: the month's events, 4 at a time, as dashboard-style
+            // tiles — a big date with the event name beneath. Upcoming events first.
+            const upcoming = sorted.filter(e => e.d >= today);
+            const ordered = upcoming.concat(sorted.filter(e => e.d < today));
+            const pages = [];
+            for (let i = 0; i < ordered.length; i += 4) pages.push(ordered.slice(i, i + 4));
+
+            const slider = document.createElement('div'); slider.className = 'vcs';
+            const stage = document.createElement('div'); stage.className = 'vcs-grid';
+            const dotsEl = document.createElement('div'); dotsEl.className = 'vcs-dots';
+            slider.appendChild(stage); slider.appendChild(dotsEl);
+            inner.appendChild(slider);
+
+            const tileHTML = e =>
+                '<a class="vcs-tile' + (e === nextEv ? ' is-next' : '') + '" href="events.html?date=' +
+                        year + '-' + String(month + 1).padStart(2, '0') + '-' + String(e.d).padStart(2, '0') + '">' +
+                    '<div class="vcs-day">' + e.d + '</div>' +
+                    '<div class="vcs-mon">' + monAbbr + '</div>' +
+                    '<div class="vcs-name">' + esc(e.name) + '</div>' +
+                    '<div class="vcs-tag ' + e.type + '">' + typeLabel[e.type] + ' · ' + esc(e.place.split(',')[0]) + '</div>' +
+                '</a>';
+
+            let pg = 0, timer = null;
+            const paint = () => {
+                stage.innerHTML = pages[pg].map(tileHTML).join('');
+                stage.classList.toggle('single', pages[pg].length === 1);
+                dotsEl.innerHTML = pages.map((_, i) => '<i class="' + (i === pg ? 'on' : '') + '" data-p="' + i + '"></i>').join('');
+                stage.classList.remove('fade');
+            };
+            const show = (i, instant) => {
+                pg = (i + pages.length) % pages.length;
+                if (instant) { paint(); return; }
+                stage.classList.add('fade');
+                setTimeout(paint, 550);
+            };
+            const start = () => { if (timer) clearInterval(timer); if (pages.length > 1) timer = setInterval(() => show(pg + 1), 4200); };
+            dotsEl.addEventListener('click', ev => { const d = ev.target.closest('[data-p]'); if (!d) return; show(+d.getAttribute('data-p')); start(); });
+
+            if (pages.length) { show(0, true); start(); }
 
             return cal;
         }
