@@ -43,6 +43,27 @@
   h1 { font-family: 'Bodoni Moda', 'Didot', Georgia, serif; font-weight: 500; font-size: clamp(30px, 8vw, 42px); margin: 12px 0 12px; letter-spacing: 0.5px; }
   .lede { color: var(--muted); font-size: 13px; font-weight: 300; max-width: 42ch; }
 
+  /* ---- Featured slider: 4 upcoming events at a time, crossfading ----
+     Styled like the dashboard KPI tiles: a big date, a small label beneath. */
+  .evs { margin: 2px 0 30px; }
+  .evs-head { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 16px; }
+  .evs-eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); }
+  .evs-count { font-size: 11px; color: var(--muted); }
+  .evs-stage { position: relative; }
+  .evs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px 24px; transition: opacity 0.55s ease; }
+  .evs-grid.fade { opacity: 0; }
+  .evs-grid.single { grid-template-columns: 1fr; max-width: 60%; margin: 0 auto; }
+  .evs-tile { text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .evs-tile:active { opacity: 0.6; }
+  .evs-day { font-family: 'Bodoni Moda', 'Didot', Georgia, serif; font-weight: 400; font-size: 44px; line-height: 0.95; letter-spacing: 0.5px; }
+  .evs-mon { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-top: 7px; }
+  .evs-name { font-size: 13px; font-weight: 400; margin-top: 12px; line-height: 1.35; }
+  .evs-type { font-size: 10.5px; letter-spacing: 0.5px; color: var(--muted); margin-top: 6px; display: inline-flex; align-items: center; gap: 6px; }
+  .evs-type i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .evs-dots { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
+  .evs-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line-strong); transition: width 0.25s, background 0.25s; cursor: pointer; }
+  .evs-dots i.on { width: 18px; background: var(--ink); }
+
   /* ---- Month navigation ---- */
   .cal-nav { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; }
   .cal-month { font-family: 'Bodoni Moda', serif; font-weight: 500; font-size: 22px; letter-spacing: 0.5px; }
@@ -180,6 +201,18 @@
     </header>
 
   <main class="wrap">
+    <!-- Featured strip: 4 upcoming events at a time, crossfading. Built by renderSlider(). -->
+    <section class="evs" id="evsSlider" style="display:none">
+      <div class="evs-head">
+        <span class="evs-eyebrow">Coming up</span>
+        <span class="evs-count" id="evsCount"></span>
+      </div>
+      <div class="evs-stage">
+        <div class="evs-grid" id="evsGrid"></div>
+      </div>
+      <div class="evs-dots" id="evsDots"></div>
+    </section>
+
     <!-- The page header carries the title; the calendar starts right below it. -->
     <div id="sellerAdd" style="display:none; margin-bottom:22px;">
       <button class="add-btn" id="addToggle" type="button">
@@ -433,7 +466,78 @@
         : '<div class="ev-empty">No events this month.</div>';
     }
 
-    function refresh() { renderCal(); renderDetail(); }
+    // ---- Featured slider: 4 upcoming events per page, crossfading. ----
+    var slGrid = document.getElementById('evsGrid');
+    var slDots = document.getElementById('evsDots');
+    var slCount = document.getElementById('evsCount');
+    var slWrap = document.getElementById('evsSlider');
+    var slPages = [], slPage = 0, slTimer = null;
+
+    function slTile(e) {
+      var parts = e.date.split('-'), dd = +parts[2], mm = +parts[1] - 1;
+      var where = e.place ? (' · ' + esc(e.place.split(',')[0])) : '';
+      return '<div class="evs-tile" data-d="' + e.date + '">' +
+        '<div class="evs-day">' + dd + '</div>' +
+        '<div class="evs-mon">' + MON[mm] + '</div>' +
+        '<div class="evs-name">' + esc(e.title) + '</div>' +
+        '<div class="evs-type">' + dot(e.type) + (TYPEN[e.type] || e.type) + where + '</div>' +
+      '</div>';
+    }
+
+    function slRenderDots() {
+      slDots.innerHTML = slPages.map(function (_, i) {
+        return '<i class="' + (i === slPage ? 'on' : '') + '" data-p="' + i + '"></i>';
+      }).join('');
+    }
+
+    function slShow(i, instant) {
+      if (!slPages.length) return;
+      slPage = (i + slPages.length) % slPages.length;
+      function paint() {
+        slGrid.innerHTML = slPages[slPage].map(slTile).join('');
+        slGrid.classList.toggle('single', slPages[slPage].length === 1);
+        slRenderDots();
+        slGrid.classList.remove('fade');
+      }
+      if (instant) { paint(); return; }
+      slGrid.classList.add('fade');          // fade out
+      setTimeout(paint, 550);                 // swap, then fade in
+    }
+
+    function slStart() {
+      if (slTimer) clearInterval(slTimer);
+      if (slPages.length > 1) slTimer = setInterval(function () { slShow(slPage + 1); }, 4200);
+    }
+
+    function renderSlider() {
+      var todayIso = iso(base);
+      var upcoming = EVENTS.filter(function (e) { return e.date >= todayIso; })
+        .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.time < b.time ? -1 : 1); });
+      if (!upcoming.length) { slWrap.style.display = 'none'; if (slTimer) clearInterval(slTimer); return; }
+      slWrap.style.display = 'block';
+      slPages = [];
+      for (var i = 0; i < upcoming.length; i += 4) slPages.push(upcoming.slice(i, i + 4));
+      slCount.textContent = upcoming.length + (upcoming.length === 1 ? ' event' : ' events');
+      if (slPage >= slPages.length) slPage = 0;
+      slShow(slPage, true);
+      slStart();
+    }
+
+    // Tap a tile → select that day; tap a dot → jump to that page.
+    slGrid.addEventListener('click', function (e) {
+      var t = e.target.closest('.evs-tile'); if (!t) return;
+      var ds = t.getAttribute('data-d');
+      view = new Date(+ds.slice(0, 4), +ds.slice(5, 7) - 1, 1);
+      selected = ds; refresh();
+      var nav = document.querySelector('.cal-nav');
+      if (nav) nav.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    slDots.addEventListener('click', function (e) {
+      var d = e.target.closest('[data-p]'); if (!d) return;
+      slShow(+d.getAttribute('data-p')); slStart();
+    });
+
+    function refresh() { renderCal(); renderDetail(); renderSlider(); }
 
     grid.addEventListener('click', function (e) {
       var cell = e.target.closest('.cal-cell.has'); if (!cell) return;
