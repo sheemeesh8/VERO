@@ -83,8 +83,14 @@
     // gives up one row of height for it.
     var CSS = [
         '.product-card { --pc-stats-h: 20px; }',
+        // The piece is centred in the card's open space: the field ends just
+        // above the brand line and its top padding clears the top line (hint /
+        // controls) — padding, not inset, so the controls that ride inside the
+        // field keep their place at the card's top.
         '.product-card:has(.pc-stats) .product-image {',
-        '    inset: 0 0 calc(var(--foot-h) + var(--pc-stats-h)) 0;',
+        '    inset: 0 0 calc(var(--foot-h) + var(--pc-stats-h) - 12px) 0 !important;',
+        '    padding-top: 44px !important;',
+        '    aspect-ratio: auto !important;',
         '}',
         '.product-card .product-info .pc-stats {',
         '    grid-area: 4 / 1 / 5 / -1;',
