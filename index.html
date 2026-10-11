@@ -5972,7 +5972,7 @@
         .products-grid .product-price,
         .acat-grid .product-price { font-size: 13px; }
         .products-grid .product-name,
-        .acat-grid .product-name { font-size: 9.5px; color: #6b6760; }  /* clearly below the title */
+        .acat-grid .product-name { font-size: 11px; }
 
         /* ---- Feed & category cards: hold-to-flip ----
            The cart/wishlist icons are gone from the front; the card shows a
@@ -6043,31 +6043,6 @@
             color: #8a8a8a;
         }
 
-        /* ---- Feed & category cards: social proof (option 8h) ----
-           A third copy row under the name — saves · offers · views as outline
-           icons. The foot grows by one row so the piece keeps its room. */
-        .products-grid .product-card,
-        .acat-grid .product-card { --foot-h: 92px; }
-        .pc-stats { display: none; }
-        .products-grid .pc-stats,
-        .acat-grid .pc-stats {
-            grid-area: 4 / 1 / 5 / -1;
-            display: flex; align-items: center; gap: 11px;
-            margin-top: 6px;
-        }
-        .products-grid .pc-stats span,
-        .acat-grid .pc-stats span {
-            display: inline-flex; align-items: center; gap: 3px;
-            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
-            font-size: 10px; font-weight: 300; letter-spacing: 0.3px; line-height: 1;
-            color: #5b5750;
-        }
-        .products-grid .pc-stats svg,
-        .acat-grid .pc-stats svg {
-            width: 12px; height: 12px; flex: none;
-            fill: none; stroke: #5b5750; stroke-width: 1.6 !important;
-            stroke-linecap: round; stroke-linejoin: round;
-        }
 
         /* ==================== SECURE CHAT — Quiet Luxury UI ==================== */
         .vchat {
@@ -6796,6 +6771,7 @@
     <script src="photo-guide.js"></script>
     <!-- The product card, shared by every page (single source: product-card.css). -->
     <link rel="stylesheet" href="product-card.css">
+    <script src="pc-social.js"></script>
     <!-- ==================== HOME FEED — FIGMA LAYOUT ====================
          The home feed's sections (built into index.html's markup and filled by
          renderVeroFeatures): five featured picks, a full-width hero band, a
@@ -10492,30 +10468,6 @@ window.veroLocalImg = function (key) {
         // (which some engines ignore for negative RTL offsets).
         // Build a single product card (shared by the home feed and category pages
         // so both render at identical size and form).
-        // Social proof on the feed card (option 8h): saves · offers · views. A product's own counts are
-        // used when it carries them; until the backend tracks these, steady demo
-        // figures are derived from the product id so a card never changes between
-        // renders.
-        function veroSocialStats(prod) {
-            const pid = `${prod.name}|${prod.price}`;
-            let h = 2166136261;
-            for (let i = 0; i < pid.length; i++) { h ^= pid.charCodeAt(i); h = Math.imul(h, 16777619); }
-            h >>>= 0;
-            const saves = prod.saves ?? prod.likes ?? (h % 96) + 4;
-            const offers = prod.offers ?? Math.floor(saves / 9) + ((h >>> 8) % 3);
-            const views = prod.views ?? saves * (4 + ((h >>> 12) % 5)) + ((h >>> 16) % 40);
-            return { saves, offers, views };
-        }
-        function veroSocialHTML(prod) {
-            const s = veroSocialStats(prod);
-            const ico = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
-            return `<div class="pc-stats">` +
-                `<span title="Saves">${ico('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>')}${s.saves}</span>` +
-                `<span title="Offers">${ico('<path d="M4 5h16v11H9l-5 4V5z"/>')}${s.offers}</span>` +
-                `<span title="Views">${ico('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>')}${s.views}</span>` +
-                `</div>`;
-        }
-
         function productCardHTML(prod) {
             const pid = `${prod.name}|${prod.price}`;
             const stars = '★'.repeat(Math.floor(prod.rating)) + (prod.rating % 1 >= 0.5 ? '☆' : '');
@@ -10541,7 +10493,7 @@ window.veroLocalImg = function (key) {
                                     <div class="product-price">${veroPriceHTML(prod)}</div>
                                 </div>
                                 <div class="product-name">${prod.name}</div>
-                                ${veroSocialHTML(prod)}
+                                ${window.veroSocialHTML ? veroSocialHTML(prod) : ''}
                             </div>
                         </div>
                         <div class="pc-face pc-back">
