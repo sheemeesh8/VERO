@@ -77,21 +77,18 @@
     // The row's own styles travel with the script: if a browser holds an older
     // product-card.css, the row still renders right (never as bare black icons).
     //
-    // The row sits OUTSIDE the card, under it (option 2, "spread"): it hangs
-    // from the copy block (top: 100%) across the card's full width, its three
-    // marks flush with the card's two edges. The card stops clipping so the row
-    // can show below it, and keeps a bottom margin so the grid leaves room.
+    // The row sits inside the card, on the copy template's fourth row under the
+    // name, "spread": the three marks run across the copy's width, the first
+    // and last flush with the two ends of the hairline rule. The piece's field
+    // gives up one row of height for it.
     var CSS = [
-        '.product-card:has(.pc-stats),',
-        '.product-card:has(.pc-stats) .pc-flip,',
-        '.product-card:has(.pc-stats) .pc-face { overflow: visible !important; }',
-        '.product-card:has(.pc-stats) { margin-bottom: 22px; }',
+        '.product-card { --pc-stats-h: 20px; }',
+        '.product-card:has(.pc-stats) .product-image {',
+        '    inset: 0 0 calc(var(--foot-h) + var(--pc-stats-h)) 0;',
+        '}',
         '.product-card .product-info .pc-stats {',
-        '    position: absolute;',
-        '    top: 100%;',
-        '    left: 0;',
-        '    right: 0;',
-        '    margin: 7px 0 0;',
+        '    grid-area: 4 / 1 / 5 / -1;',
+        '    margin: 6px 0 0;',
         '    padding: 0;',
         '    display: flex;',
         '    justify-content: space-between;',
