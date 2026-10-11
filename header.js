@@ -59,7 +59,7 @@
            renders. design-system.css forces its own face on every element with a
            universal !important rule, so Poppins is reasserted the same way, scoped
            to #siteHeader, so only the header changes. */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&family=Pinyon+Script&display=swap');
         #siteHeader, #siteHeader *, #siteHeader *::before, #siteHeader *::after,
         #veroDrawerRoot, #veroDrawerRoot *, #veroDrawerRoot *::before, #veroDrawerRoot *::after,
         #veroSearchPageRoot, #veroSearchPageRoot *, #veroSearchPageRoot *::before, #veroSearchPageRoot *::after {
@@ -520,6 +520,16 @@
            white on dark — with no per-context filter needed. */
         /* The logo art is a white-on-transparent PNG; paint it solid black everywhere. */
         #siteHeader .logo .logo-img { height: 42px; width: auto; display: block; mix-blend-mode: normal !important; filter: brightness(0) !important; transition: filter 0.25s ease; }
+        /* Script wordmark logo (moravchick) — oak on a light bar, white over the dark hero. */
+        #siteHeader .logo .logo-script:not(#z):not(#z):not(#z) {
+            font-family: 'Pinyon Script', cursive !important; font-weight: 400 !important;
+            font-size: 32px; line-height: 1; letter-spacing: 0; text-transform: none;
+            color: var(--oak, #4C5A31); white-space: nowrap; display: block;
+            transition: color 0.25s ease; -webkit-font-smoothing: antialiased;
+        }
+        /* Over the dark hero (transparent / scrolled-over-dark) → white. */
+        #siteHeader.sticky-look:not(.scrolled) .logo .logo-script,
+        #siteHeader.scrolled.over-dark .logo .logo-script { color: #fff !important; }
         /* While the header floats transparent over the hero image, the logo is white;
            once the header turns solid (scrolled), it reverts to black (rule above). */
         #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: brightness(0) invert(1) !important; }
@@ -1585,7 +1595,7 @@
                 </span>
             </div>
             <a class="logo logo-peacock-wrap" href="index.html" aria-label="moravchick — home">
-                <img class="logo-img logo-peacock" src="peacock-logo.png?v=1" alt="moravchick" draggable="false" />
+                <span class="logo-script" aria-hidden="true">moravchick</span>
             </a>
             <div class="header-right">
                 <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
