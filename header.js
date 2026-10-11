@@ -524,7 +524,7 @@
         #siteHeader .logo .logo-script:not(#z):not(#z):not(#z) {
             font-family: 'Pinyon Script', cursive !important; font-weight: 400 !important;
             font-size: 32px; line-height: 1; letter-spacing: 0; text-transform: none;
-            color: var(--oak, #4C5A31); white-space: nowrap; display: block;
+            color: var(--oak, #2A331B); white-space: nowrap; display: block;
             transition: color 0.25s ease; -webkit-font-smoothing: antialiased;
         }
         /* Over the dark hero (transparent / scrolled-over-dark) → white. */
@@ -2898,7 +2898,7 @@
         s.id = 'veroOakTheme';
         s.textContent = `
             :root {
-                --oak: #4C5A31; --oak-deep: #2E3A1E; --oak-mid: #66764A;
+                --oak: #2A331B; --oak-deep: #2A331B; --oak-mid: #66764A;
                 --oak-soft: #A7B486; --oak-wash: #EEF1E6; --oak-line: #D7DCC7;
             }
             /* Art/Fashion toggle — the sliding knob. */
