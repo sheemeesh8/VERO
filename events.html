@@ -72,7 +72,11 @@
     transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
   .evs-track.show-detail { transform: translateX(0); }
   .evs-track > .evs-grid, .evs-track > .evs-detail { flex: 0 0 50%; width: 50%; align-self: flex-start; }
-  .evs-detail-inner { position: relative; }
+  /* While open, the detail auto-advances through every event; each swap slides across. */
+  .evs-detail-inner { position: relative; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease; }
+  .evs-detail-inner.d-out { transform: translateX(-24px); opacity: 0; }
+  .evs-detail-inner.d-in { transform: translateX(24px); opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { .evs-detail-inner { transition: none; } }
   .evs-detail-date { display: flex; align-items: baseline; gap: 10px; }
   .evs-detail-d { font-family: 'Bodoni Moda', Georgia, serif; font-weight: 500; font-size: 42px; line-height: 1; color: var(--oak); }
   .evs-detail-m { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); }
@@ -530,24 +534,37 @@
       '</div>';
     }
 
+    var slDTimer = null;
     function slRenderDots() {
-      slDots.innerHTML = slPages.map(function (_, i) {
-        return '<i class="' + (i === slPage ? 'on' : '') + '" data-p="' + i + '"></i>';
-      }).join('');
+      slDots.innerHTML = (slOpen == null)
+        ? slPages.map(function (_, i) { return '<i class="' + (i === slPage ? 'on' : '') + '" data-p="' + i + '"></i>'; }).join('')
+        : slItems.map(function (_, i) { return '<i class="' + (i === slOpen ? 'on' : '') + '" data-e="' + i + '"></i>'; }).join('');
     }
+    // Swap the open detail to another event, sliding the content across.
+    function slSetDetail(idx, animate) {
+      slOpen = (idx + slItems.length) % slItems.length;
+      function swap() {
+        slDetail.innerHTML = slDetailHTML(slItems[slOpen]);
+        slSetH(slDetail); slRenderDots();
+        if (animate) { var ni = slDetail.querySelector('.evs-detail-inner'); ni.classList.add('d-in'); void ni.offsetWidth; ni.classList.remove('d-in'); }
+      }
+      var old = animate && slDetail.querySelector('.evs-detail-inner');
+      if (old) { old.classList.add('d-out'); setTimeout(swap, 320); } else { swap(); }
+    }
+    function slDStart() { if (slDTimer) clearInterval(slDTimer); if (slItems.length > 1) slDTimer = setInterval(function () { slSetDetail(slOpen + 1, true); }, 4200); }
+    function slDStop() { if (slDTimer) { clearInterval(slDTimer); slDTimer = null; } }
 
     function slCloseDetail() {
-      slOpen = null;
+      slDStop(); slOpen = null;
       slTrack.classList.remove('show-detail');   // dates slide back in from the right
-      slSetH(slGrid);
+      slRenderDots(); slSetH(slGrid);
       slStart();
     }
     function slOpenDetail(idx) {
-      slOpen = idx;
-      if (slTimer) { clearInterval(slTimer); slTimer = null; }   // pause autoplay while viewing
-      slDetail.innerHTML = slDetailHTML(slItems[idx]);
-      slSetH(slDetail);
+      if (slTimer) { clearInterval(slTimer); slTimer = null; }   // pause the grid autoplay
+      slSetDetail(idx, false);
       slTrack.classList.add('show-detail');       // dates slide out right, detail slides in
+      slDStart();                                  // the detail now auto-cycles through every event
     }
 
     function slShow(i, instant) {
@@ -582,7 +599,7 @@
       for (var i = 0; i < slItems.length; i += 4) slPages.push(slItems.slice(i, i + 4));
       slCount.textContent = slItems.length + (slItems.length === 1 ? ' event' : ' events');
       if (slPage >= slPages.length) slPage = 0;
-      slOpen = null; slTrack.classList.remove('show-detail');
+      slDStop(); slOpen = null; slTrack.classList.remove('show-detail');
       slShow(slPage, true);
       slStart();
       requestAnimationFrame(function () { if (slOpen == null) slSetH(slGrid); });
@@ -605,8 +622,9 @@
       }
     });
     slDots.addEventListener('click', function (e) {
-      var d = e.target.closest('[data-p]'); if (!d) return;
-      slShow(+d.getAttribute('data-p')); slStart();
+      var g = e.target.closest('[data-p]'), d = e.target.closest('[data-e]');
+      if (g) { slShow(+g.getAttribute('data-p')); slStart(); }
+      else if (d) { slDStop(); slSetDetail(+d.getAttribute('data-e'), true); slDStart(); }
     });
 
     function refresh() { renderCal(); renderDetail(); renderSlider(); }

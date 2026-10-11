@@ -2889,7 +2889,12 @@
             transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
         .vcs-track.show-detail { transform: translateX(0); }
         .vcs-track > .vcs-grid, .vcs-track > .vcs-detail { flex: 0 0 50%; width: 50%; align-self: flex-start; }
-        .vcs-detail-inner { position: relative; }
+        /* While the detail is open it auto-advances through every event; each swap
+           slides the content across. */
+        .vcs-detail-inner { position: relative; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease; }
+        .vcs-detail-inner.d-out { transform: translateX(-24px); opacity: 0; }
+        .vcs-detail-inner.d-in { transform: translateX(24px); opacity: 0; }
+        @media (prefers-reduced-motion: reduce) { .vcs-detail-inner { transition: none; } }
         .vcs-detail-date { display: flex; align-items: baseline; gap: 10px; }
         .vcs-detail-d { font-family: 'Bodoni Moda', Georgia, serif; font-size: 42px; line-height: 1; color: #4C5A31; }
         .vcs-detail-m { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif; font-size: 10px; letter-spacing: 2.5px;
@@ -10738,26 +10743,45 @@ window.veroLocalImg = function (key) {
                     '<a class="vcs-detail-cta" href="events.html?date=' + isoOf(e) + '">View in events &#8594;</a>' +
                 '</div>';
 
-            let pg = 0, timer = null, openIdx = null;
+            let pg = 0, timer = null, openIdx = null, dTimer = null;
+            const renderDots = () => {
+                dotsEl.innerHTML = (openIdx == null)
+                    ? pages.map((_, i) => '<i class="' + (i === pg ? 'on' : '') + '" data-p="' + i + '"></i>').join('')
+                    : ordered.map((_, i) => '<i class="' + (i === openIdx ? 'on' : '') + '" data-e="' + i + '"></i>').join('');
+            };
             const paint = () => {
                 stage.innerHTML = pages[pg].map(e => tileHTML(e, ordered.indexOf(e))).join('');
                 stage.classList.toggle('single', pages[pg].length === 1);
-                dotsEl.innerHTML = pages.map((_, i) => '<i class="' + (i === pg ? 'on' : '') + '" data-p="' + i + '"></i>').join('');
+                renderDots();
                 stage.classList.remove('fade');
                 if (openIdx == null) setH(stage);
             };
+            // Swap the open detail to another event, sliding the content across.
+            const setDetail = (idx, animate) => {
+                openIdx = (idx + ordered.length) % ordered.length;
+                const swap = () => {
+                    detail.innerHTML = detailHTML(ordered[openIdx]);
+                    setH(detail); renderDots();
+                    if (animate) {
+                        const ni = detail.querySelector('.vcs-detail-inner');
+                        ni.classList.add('d-in'); void ni.offsetWidth; ni.classList.remove('d-in');
+                    }
+                };
+                const old = animate && detail.querySelector('.vcs-detail-inner');
+                if (old) { old.classList.add('d-out'); setTimeout(swap, 320); } else { swap(); }
+            };
+            const dStart = () => { if (dTimer) clearInterval(dTimer); if (ordered.length > 1) dTimer = setInterval(() => setDetail(openIdx + 1, true), 4200); };
+            const dStop = () => { if (dTimer) { clearInterval(dTimer); dTimer = null; } };
             const closeDetail = () => {
-                openIdx = null;
+                dStop(); openIdx = null;
                 track.classList.remove('show-detail');   // dates slide back in from the right
-                setH(stage);
-                start();
+                renderDots(); setH(stage); start();
             };
             const openDetail = idx => {
-                openIdx = idx;
-                if (timer) { clearInterval(timer); timer = null; }   // pause autoplay while viewing
-                detail.innerHTML = detailHTML(ordered[idx]);
-                setH(detail);
+                if (timer) { clearInterval(timer); timer = null; }   // pause the grid autoplay
+                setDetail(idx, false);
                 track.classList.add('show-detail');       // dates slide out right, detail slides in
+                dStart();                                  // the detail now auto-cycles through every event
             };
             const show = (i, instant) => {
                 if (openIdx != null) closeDetail();
@@ -10773,7 +10797,11 @@ window.veroLocalImg = function (key) {
                 openDetail(+t.getAttribute('data-idx'));
             });
             detail.addEventListener('click', ev => { if (ev.target.closest('.vcs-detail-x')) closeDetail(); });
-            dotsEl.addEventListener('click', ev => { const d = ev.target.closest('[data-p]'); if (!d) return; show(+d.getAttribute('data-p')); start(); });
+            dotsEl.addEventListener('click', ev => {
+                const g = ev.target.closest('[data-p]'), d = ev.target.closest('[data-e]');
+                if (g) { show(+g.getAttribute('data-p')); start(); }
+                else if (d) { dStop(); setDetail(+d.getAttribute('data-e'), true); dStart(); }
+            });
 
             if (pages.length) { show(0, true); start(); requestAnimationFrame(() => setH(stage)); }
 
