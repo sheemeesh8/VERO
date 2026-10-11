@@ -228,7 +228,7 @@
                 #veroCookie { position:fixed; left:50%; transform:translateX(-50%);
                     bottom:calc(16px + var(--vero-cookie-inset, 0px) + env(safe-area-inset-bottom,0px)); z-index:950;
                     width:min(92vw,560px); display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-                    background:#111; color:#fff; border-radius:16px; padding:16px 18px;
+                    background:#2E3A1E; color:#fff; border-radius:16px; padding:16px 18px;
                     box-shadow:0 14px 40px rgba(0,0,0,0.32); font-family:'Poppins','Segoe UI',sans-serif; }
                 #veroCookie p { flex:1 1 240px; margin:0; font-size:12.5px; line-height:1.5; color:rgba(255,255,255,0.82); }
                 #veroCookie a { color:#fff; text-decoration:underline; }

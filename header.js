@@ -2874,6 +2874,49 @@
         style.id = 'veroHeaderCSS';
         style.textContent = CSS;
         document.head.appendChild(style);
+        injectOakTheme();
+    }
+
+    // ---- Oak Green theme (site-wide) ----
+    // One stylesheet, loaded by the header on every page, so the brand colour reaches
+    // the shared chrome everywhere: the Art/Fashion toggle, the filter funnel, the
+    // search panel's apply button + active filter chips, and the primary CTA buttons.
+    // Appended after the header CSS (and marked !important) so it wins over page CSS.
+    function injectOakTheme() {
+        if (document.getElementById('veroOakTheme')) return;
+        const s = document.createElement('style');
+        s.id = 'veroOakTheme';
+        s.textContent = `
+            :root {
+                --oak: #4C5A31; --oak-deep: #2E3A1E; --oak-mid: #66764A;
+                --oak-soft: #A7B486; --oak-wash: #EEF1E6; --oak-line: #D7DCC7;
+            }
+            /* Art/Fashion toggle — the sliding knob. */
+            #siteHeader .toggle-category::before,
+            #siteHeader.scrolled .toggle-category::before,
+            #siteHeader.force-dark .toggle-category::before,
+            #siteHeader.force-light .toggle-category::before,
+            #siteHeader.sticky-look:not(.scrolled) .toggle-category::before { background: var(--oak) !important; }
+            /* Filter funnel + search dock. */
+            #siteHeader .hdr-funnel { background: var(--oak) !important; }
+            #siteHeader .hdr-searchdock.open .hdr-searchtoggle { background: var(--oak) !important; border-color: var(--oak) !important; }
+            #siteHeader .hdr-search:focus-within { border-color: var(--oak) !important; }
+            /* Search / filter panel: apply button + active filter chips. */
+            #veroSearchPageRoot .vsp-chip.active,
+            #veroSearchPageRoot .vsp-apply,
+            #veroSearchPageRoot .vsp-searchgo,
+            #veroSearchPageRoot .vsp-go { background: var(--oak) !important; border-color: var(--oak) !important; color: #fff !important; }
+            #veroSearchPageRoot .vsp-searchfield input:focus { outline-color: var(--oak) !important; }
+            /* Primary CTA buttons shared across pages — recolour the solid dark fill. */
+            .hero-ov-btn--solid,
+            .fbtn.save, .bbtn.save, .btn.save,
+            .btn-primary, .btn--primary, .primary-btn, .cta-primary,
+            .pc-buy, .achs-buy, .buy-now, .add-to-cart, .add-cart,
+            .save-btn.primary, .solid-dark {
+                background: var(--oak) !important; border-color: var(--oak) !important; color: #fff !important;
+            }
+        `;
+        document.head.appendChild(s);
     }
 
     function render() {
