@@ -279,7 +279,8 @@ h3, h4, h5, h6, p,
                  covers the iframe while the home feed loads (see playIntro). -->
             <div id="pfIntro" class="pf-intro" aria-hidden="true">
                 <video class="pf-intro-video" autoplay muted loop playsinline preload="auto" poster="clothing-hero.jpg">
-                    <source src="assets/hero/clothing-section.mp4" type="video/mp4">
+                    <source src="assets/hero/intro.webm" type="video/webm">
+                    <source src="assets/hero/intro.mp4" type="video/mp4">
                 </video>
                 <div class="pf-intro-scrim"></div>
                 <img class="pf-intro-mark" src="moravchick-letters.png?v=1" alt="moravchick" draggable="false" />
@@ -321,7 +322,7 @@ h3, h4, h5, h6, p,
         // file from the network (bypassing cache) and, if the deployed build number is
         // higher than the one running, hard-reload with a cache-bust so the shell
         // catches up too.
-        var PF_BUILD = 250;
+        var PF_BUILD = 251;
         (function shellFreshness() {
             try {
                 if (sessionStorage.getItem('vero_shellfresh')) return;
@@ -350,13 +351,19 @@ h3, h4, h5, h6, p,
             var intro = document.getElementById('pfIntro');
             if (!intro) return;
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            // Kick the clip off (muted autoplay is allowed; this covers browsers that
-            // defer it). The wordmark fades in over it, then the intro eases away.
             var vid = intro.querySelector('.pf-intro-video');
-            if (vid && vid.play) { var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); }
-            // Reduced motion shows the clip briefly; otherwise the full ~3.1s reveal.
-            var total = reduce ? 1100 : 3100;
-            setTimeout(function () { intro.classList.add('done'); }, total);
+            var ended = false;
+            function finish() { if (ended) return; ended = true; intro.classList.add('done'); }
+            if (reduce) { setTimeout(finish, 1100); return; }
+            // Hold the clip on screen ONCE it is actually playing, so the video (not
+            // just its poster) is what the viewer sees before the app is revealed.
+            if (vid) {
+                vid.addEventListener('playing', function () { setTimeout(finish, 2800); }, { once: true });
+                var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {});
+            }
+            // Hard fallback: if the clip never reports playing (autoplay blocked or a
+            // decode failure), reveal the app anyway so the intro can't get stuck.
+            setTimeout(finish, 4500);
         })();
 
         // ---- Straight-to-home entry ----
