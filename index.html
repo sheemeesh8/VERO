@@ -2882,14 +2882,14 @@
         .vcs-dots i { width: 6px; height: 6px; border-radius: 50%; background: #d6d4cf;
             transition: width 0.25s, background 0.25s; cursor: pointer; }
         .vcs-dots i.on { width: 18px; background: #111; }
-        /* Tap a tile → a detail panel slides open with the event's full info. */
-        .vcs-tile.sel .vcs-day { color: #4C5A31; }
-        .vcs-detail { overflow: hidden; max-height: 0; opacity: 0;
-            transition: max-height 0.55s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease; }
-        .vcs-detail.open { max-height: 420px; opacity: 1; }
-        .vcs-detail-inner { position: relative; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ece9e2;
-            transform: translateY(18px); transition: transform 0.55s cubic-bezier(0.22,1,0.36,1); }
-        .vcs-detail.open .vcs-detail-inner { transform: none; }
+        /* Tap a tile → the 4 dates slide out to the right and that date's full
+           info slides in to take their place (a horizontal filmstrip). */
+        .vcs-viewport { overflow: hidden; transition: height 0.5s cubic-bezier(0.22,1,0.36,1); }
+        .vcs-track { display: flex; width: 200%; transform: translateX(-50%);
+            transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
+        .vcs-track.show-detail { transform: translateX(0); }
+        .vcs-track > .vcs-grid, .vcs-track > .vcs-detail { flex: 0 0 50%; width: 50%; align-self: flex-start; }
+        .vcs-detail-inner { position: relative; }
         .vcs-detail-date { display: flex; align-items: baseline; gap: 10px; }
         .vcs-detail-d { font-family: 'Bodoni Moda', Georgia, serif; font-size: 42px; line-height: 1; color: #4C5A31; }
         .vcs-detail-m { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif; font-size: 10px; letter-spacing: 2.5px;
@@ -10704,11 +10704,16 @@ window.veroLocalImg = function (key) {
             for (let i = 0; i < ordered.length; i += 4) pages.push(ordered.slice(i, i + 4));
 
             const slider = document.createElement('div'); slider.className = 'vcs';
-            const stage = document.createElement('div'); stage.className = 'vcs-grid';
-            const detail = document.createElement('div'); detail.className = 'vcs-detail';
+            const viewport = document.createElement('div'); viewport.className = 'vcs-viewport';
+            const track = document.createElement('div'); track.className = 'vcs-track';
+            const detail = document.createElement('div'); detail.className = 'vcs-detail';   // left pane
+            const stage = document.createElement('div'); stage.className = 'vcs-grid';        // right pane
+            track.appendChild(detail); track.appendChild(stage);
+            viewport.appendChild(track);
             const dotsEl = document.createElement('div'); dotsEl.className = 'vcs-dots';
-            slider.appendChild(stage); slider.appendChild(detail); slider.appendChild(dotsEl);
+            slider.appendChild(viewport); slider.appendChild(dotsEl);
             inner.appendChild(slider);
+            const setH = el => { viewport.style.height = el.scrollHeight + 'px'; };
 
             const isoOf = e => year + '-' + String(month + 1).padStart(2, '0') + '-' + String(e.d).padStart(2, '0');
             const tileHTML = (e, idx) =>
@@ -10739,21 +10744,20 @@ window.veroLocalImg = function (key) {
                 stage.classList.toggle('single', pages[pg].length === 1);
                 dotsEl.innerHTML = pages.map((_, i) => '<i class="' + (i === pg ? 'on' : '') + '" data-p="' + i + '"></i>').join('');
                 stage.classList.remove('fade');
+                if (openIdx == null) setH(stage);
             };
             const closeDetail = () => {
-                openIdx = null; detail.classList.remove('open');
-                stage.querySelectorAll('.vcs-tile.sel').forEach(x => x.classList.remove('sel'));
+                openIdx = null;
+                track.classList.remove('show-detail');   // dates slide back in from the right
+                setH(stage);
                 start();
             };
-            const openDetail = (idx, tileEl) => {
+            const openDetail = idx => {
                 openIdx = idx;
                 if (timer) { clearInterval(timer); timer = null; }   // pause autoplay while viewing
-                stage.querySelectorAll('.vcs-tile.sel').forEach(x => x.classList.remove('sel'));
-                if (tileEl) tileEl.classList.add('sel');
-                detail.classList.remove('open');
                 detail.innerHTML = detailHTML(ordered[idx]);
-                void detail.offsetWidth;                              // reflow → re-run the slide
-                detail.classList.add('open');
+                setH(detail);
+                track.classList.add('show-detail');       // dates slide out right, detail slides in
             };
             const show = (i, instant) => {
                 if (openIdx != null) closeDetail();
@@ -10766,13 +10770,12 @@ window.veroLocalImg = function (key) {
 
             stage.addEventListener('click', ev => {
                 const t = ev.target.closest('.vcs-tile'); if (!t) return;
-                const idx = +t.getAttribute('data-idx');
-                if (openIdx === idx) closeDetail(); else openDetail(idx, t);
+                openDetail(+t.getAttribute('data-idx'));
             });
             detail.addEventListener('click', ev => { if (ev.target.closest('.vcs-detail-x')) closeDetail(); });
             dotsEl.addEventListener('click', ev => { const d = ev.target.closest('[data-p]'); if (!d) return; show(+d.getAttribute('data-p')); start(); });
 
-            if (pages.length) { show(0, true); start(); }
+            if (pages.length) { show(0, true); start(); requestAnimationFrame(() => setH(stage)); }
 
             return cal;
         }
