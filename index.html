@@ -7823,8 +7823,9 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 <!-- data-back="none": this page opens on the home view, which carries no back
      control. hideAllViews() clears it for every other view. -->
 <body data-footer="manual" data-back="none">
-<!-- Intro-over-hero: hide the chrome immediately so it can fade in after the intro. -->
-<script>try { document.body.classList.add('vero-intro'); } catch (e) {}</script>
+<!-- Intro-over-hero: hide the chrome immediately so it can fade in after the intro —
+     but only ONCE per app open, so returning home doesn't replay it. -->
+<script>try { if (!sessionStorage.getItem('vero_intro_done')) document.body.classList.add('vero-intro'); } catch (e) {}</script>
 <script>
 /* Local, self-hosted imagery for the hero, categories and feed — replaces the
    external loremflickr placeholders (which the CDN/proxy blocks in production).
@@ -7885,8 +7886,11 @@ window.veroLocalImg = function (key) {
         <script>
         (function heroIntroReveal() {
             var body = document.body, v = document.getElementById('heroVideo'), done = false;
-            function reveal() { if (done) return; done = true; body.classList.remove('vero-intro'); }
             function tellParent() { try { if (window.parent && window.parent !== window) window.parent.postMessage('vero-hero-playing', '*'); } catch (e) {} }
+            function reveal() { if (done) return; done = true; body.classList.remove('vero-intro'); try { sessionStorage.setItem('vero_intro_done', '1'); } catch (e) {} }
+            // Intro already played this session (e.g. returning to the home feed) →
+            // no overlay was added; just make sure the frame's load cover lifts.
+            if (!body.classList.contains('vero-intro')) { tellParent(); return; }
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (reduce) { tellParent(); setTimeout(reveal, 700); return; }
             if (v) {
