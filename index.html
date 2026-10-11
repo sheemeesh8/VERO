@@ -2887,10 +2887,14 @@
         /* Tap a tile → the 4 dates slide out to the right and that date's full
            info slides in to take their place (a horizontal filmstrip). */
         .vcs-viewport { overflow: hidden; transition: height 0.5s cubic-bezier(0.22,1,0.36,1); }
-        .vcs-track { display: flex; width: 200%; transform: translateX(-50%);
+        .vcs-track { display: flex; width: 200%; height: 100%; transform: translateX(-50%);
             transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
         .vcs-track.show-detail { transform: translateX(0); }
-        .vcs-track > .vcs-grid, .vcs-track > .vcs-detail { flex: 0 0 50%; width: 50%; align-self: flex-start; }
+        .vcs-track > .vcs-grid, .vcs-track > .vcs-detail { flex: 0 0 50%; width: 50%; align-self: stretch; }
+        /* The slider stands ~3/4 of the screen tall; the dates spread down it and
+           the open detail centres in the same space. */
+        .vcs-track > .vcs-grid { height: 100%; align-content: space-evenly; }
+        .vcs-track > .vcs-detail { display: flex; flex-direction: column; justify-content: center; }
         /* While the detail is open it auto-advances through every event; each swap
            slides the content across. */
         .vcs-detail-inner { position: relative; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease; }
@@ -10720,7 +10724,7 @@ window.veroLocalImg = function (key) {
             const dotsEl = document.createElement('div'); dotsEl.className = 'vcs-dots';
             slider.appendChild(viewport); slider.appendChild(dotsEl);
             inner.appendChild(slider);
-            const setH = el => { viewport.style.height = el.scrollHeight + 'px'; };
+            const setH = el => { viewport.style.height = Math.max(el.scrollHeight, Math.round(window.innerHeight * 0.75)) + 'px'; };
 
             const isoOf = e => year + '-' + String(month + 1).padStart(2, '0') + '-' + String(e.d).padStart(2, '0');
             const tileHTML = (e, idx) =>

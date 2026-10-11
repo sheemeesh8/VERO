@@ -69,10 +69,14 @@
   /* Tap a tile → the 4 dates slide out to the right and that date's full
      info slides in to take their place (a horizontal filmstrip). */
   .evs-viewport { overflow: hidden; transition: height 0.5s cubic-bezier(0.22,1,0.36,1); }
-  .evs-track { display: flex; width: 200%; transform: translateX(-50%);
+  .evs-track { display: flex; width: 200%; height: 100%; transform: translateX(-50%);
     transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
   .evs-track.show-detail { transform: translateX(0); }
-  .evs-track > .evs-grid, .evs-track > .evs-detail { flex: 0 0 50%; width: 50%; align-self: flex-start; }
+  .evs-track > .evs-grid, .evs-track > .evs-detail { flex: 0 0 50%; width: 50%; align-self: stretch; }
+  /* The slider stands ~3/4 of the screen tall; the dates spread down it and the
+     open detail centres in the same space. */
+  .evs-track > .evs-grid { height: 100%; align-content: space-evenly; }
+  .evs-track > .evs-detail { display: flex; flex-direction: column; justify-content: center; }
   /* While open, the detail auto-advances through every event; each swap slides across. */
   .evs-detail-inner { position: relative; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease; }
   .evs-detail-inner.d-out { transform: translateX(-24px); opacity: 0; }
@@ -504,7 +508,7 @@
     var slCount = document.getElementById('evsCount');
     var slWrap = document.getElementById('evsSlider');
     var slPages = [], slPage = 0, slTimer = null, slItems = [], slOpen = null;
-    function slSetH(el) { slViewport.style.height = el.scrollHeight + 'px'; }
+    function slSetH(el) { slViewport.style.height = Math.max(el.scrollHeight, Math.round(window.innerHeight * 0.75)) + 'px'; }
 
     function slTile(e, idx) {
       var parts = e.date.split('-'), dd = +parts[2], mm = +parts[1] - 1;
