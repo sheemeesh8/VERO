@@ -181,42 +181,22 @@
                so the app is entered "through" the tag. ~3.15s, once per open.
                Percentages are of 3.15s; JS sets --pf-gs / --pf-gy (the scale and
                offset that make the tag cover this screen). ---- */
-        /* ---- Opening video intro: a full-screen clip with the moravchick wordmark
-               fading in over it, then the whole thing eases out into the app. ---- */
+        /* ---- Load cover ----
+           Just bridges the brief iframe load with the hero clip's first frame, then
+           fades the moment the in-app hero video starts playing (the real intro — the
+           wordmark over the running clip — happens inside the app, over that same
+           never-restarted video). ---- */
         .pf-intro {
             position: absolute; inset: 0; z-index: 40;
-            overflow: hidden; background: #0e0e0c;
+            overflow: hidden;
+            background: #0e0e0c url('assets/hero/intro-poster.jpg') center / cover no-repeat;
         }
-        /* JS adds .done near the end → the intro fades + lifts away, revealing the app. */
         .pf-intro.done {
             opacity: 0; visibility: hidden; pointer-events: none;
-            transform: scale(1.04);
-            transition: opacity 0.7s ease, transform 0.9s ease, visibility 0s linear 0.9s;
-        }
-        .pf-intro-video {
-            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-            animation: pfiZoom 3.3s ease both;         /* slow push-in */
-        }
-        @keyframes pfiZoom { 0% { transform: scale(1.09); } 100% { transform: scale(1.0); } }
-        .pf-intro-scrim {
-            position: absolute; inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0.14) 42%, rgba(0,0,0,0.58) 100%);
-        }
-        .pf-intro-mark {
-            position: absolute; left: 50%; top: 50%; width: 58%; max-width: 270px; height: auto;
-            opacity: 0; transform: translate(-50%, -46%);
-            filter: drop-shadow(0 2px 18px rgba(0,0,0,0.5));
-            animation: pfiMark 3.3s ease both;
-        }
-        /* Fade the wordmark in, hold, then out just before the reveal. */
-        @keyframes pfiMark {
-            0% { opacity: 0; transform: translate(-50%, -46%); }
-            20%, 70% { opacity: 1; transform: translate(-50%, -50%); }
-            92%, 100% { opacity: 0; transform: translate(-50%, -53%); }
+            transition: opacity 0.6s ease, visibility 0s linear 0.6s;
         }
         @media (prefers-reduced-motion: reduce) {
-            .pf-intro-video, .pf-intro-mark { animation: none; }
-            .pf-intro-mark { opacity: 1; transform: translate(-50%, -50%); }
+            .pf-intro { background-image: none; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -277,14 +257,7 @@ h3, h4, h5, h6, p,
             <!-- Entrance intro: a clothing hang-tag with the moravchick wordmark drops
                  in, flips to the home photo on its back and grows into the app. It
                  covers the iframe while the home feed loads (see playIntro). -->
-            <div id="pfIntro" class="pf-intro" aria-hidden="true">
-                <video class="pf-intro-video" autoplay muted loop playsinline preload="auto" poster="assets/hero/intro-poster.jpg">
-                    <source src="assets/hero/intro.webm" type="video/webm">
-                    <source src="assets/hero/intro.mp4" type="video/mp4">
-                </video>
-                <div class="pf-intro-scrim"></div>
-                <img class="pf-intro-mark" src="moravchick-letters.png?v=1" alt="moravchick" draggable="false" />
-            </div>
+            <div id="pfIntro" class="pf-intro" aria-hidden="true"></div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
             <!-- Tiny build stamp (diagnostic): tells at a glance which deploy is live. -->
@@ -322,7 +295,7 @@ h3, h4, h5, h6, p,
         // file from the network (bypassing cache) and, if the deployed build number is
         // higher than the one running, hard-reload with a cache-bust so the shell
         // catches up too.
-        var PF_BUILD = 252;
+        var PF_BUILD = 253;
         (function shellFreshness() {
             try {
                 if (sessionStorage.getItem('vero_shellfresh')) return;
@@ -350,20 +323,13 @@ h3, h4, h5, h6, p,
         (function playIntro() {
             var intro = document.getElementById('pfIntro');
             if (!intro) return;
-            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            var vid = intro.querySelector('.pf-intro-video');
-            var ended = false;
-            function finish() { if (ended) return; ended = true; intro.classList.add('done'); }
-            if (reduce) { setTimeout(finish, 1100); return; }
-            // Hold the clip on screen ONCE it is actually playing, so the video (not
-            // just its poster) is what the viewer sees before the app is revealed.
-            if (vid) {
-                vid.addEventListener('playing', function () { setTimeout(finish, 2800); }, { once: true });
-                var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {});
-            }
-            // Hard fallback: if the clip never reports playing (autoplay blocked or a
-            // decode failure), reveal the app anyway so the intro can't get stuck.
-            setTimeout(finish, 4500);
+            var done = false;
+            function finish() { if (done) return; done = true; intro.classList.add('done'); }
+            // The app posts this once its hero video is actually playing — then the
+            // cover fades, revealing the live clip (with the wordmark) underneath.
+            window.addEventListener('message', function (e) { if (e && e.data === 'vero-hero-playing') finish(); });
+            // Fallback so the cover can never get stuck if the message never arrives.
+            setTimeout(finish, 4000);
         })();
 
         // ---- Straight-to-home entry ----
