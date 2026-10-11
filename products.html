@@ -212,17 +212,25 @@
 
         /* Quick "assign to collection" picker under each live card, so a seller
            can file an already-listed piece without opening the editor. Minimal:
-           widely tracked caps over a hairline that spans the card. */
-        .prod-cell .pe-collection {
-            align-self: stretch; width: 100%;
-            text-align: center; text-align-last: center;   /* centred across the card's width */
+           caps spread edge to edge over a hairline that spans the card. */
+        .prod-cell .pe-coll {
+            position: relative; align-self: stretch;
+            padding: 0 0 6px; border-bottom: 1px solid #2A331B; cursor: pointer;
+        }
+        /* The label is set letter by letter across the card's full width. */
+        .prod-cell .pe-coll-text {
+            display: flex; justify-content: space-between; align-items: center;
             font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
-            font-size: 10.5px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase;
-            padding: 0 0 6px; border: none; border-bottom: 1px solid #2A331B; border-radius: 0;
-            background: none; color: #2A331B; cursor: pointer;
+            font-size: 10.5px; font-weight: 400; text-transform: uppercase; line-height: 1;
+            color: #2A331B; pointer-events: none;
+        }
+        /* The native picker lies invisibly over it, so tapping anywhere opens it. */
+        .prod-cell .pe-collection {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer; border: none; font-size: 16px;
             -webkit-appearance: none; appearance: none;
         }
-        .prod-cell .pe-collection:hover { opacity: 0.7; }
+        .prod-cell .pe-coll:hover { opacity: 0.7; }
 
         /* History controls: sort toggle + date-range trigger. */
         .hist-controls { display: flex; align-items: center; gap: 12px; }
@@ -529,19 +537,29 @@ h3, h4, h5, h6, p,
         // bubbling to the card's edit link so choosing a collection never
         // navigates away; onchange files the piece into that collection.
         const COLLECTION_OPTS = [['', 'Collection +'], ['spring', '🌸 Spring'], ['summer', '☀️ Summer'], ['autumn', '🍂 Autumn'], ['winter', '❄️ Winter']];
+        // The label shown under the card: the collection's name (no emoji), one
+        // span per letter so flexbox can spread it across the full width.
+        function collLabel(v) {
+            const hit = COLLECTION_OPTS.find(([k]) => k === (v || ''));
+            const text = v && hit ? hit[1].replace(/^\S+\s+/, '') : 'Collection +';
+            return Array.from(text).map(ch => `<span>${ch === ' ' ? '&nbsp;' : ch}</span>`).join('');
+        }
         function collectionSelect(p, idx) {
             const opts = COLLECTION_OPTS.map(([v, l]) =>
                 `<option value="${v}" ${((p.collection || '') === v) ? 'selected' : ''}>${l}</option>`).join('');
-            return `<select class="pe-collection" title="Belongs to the collection" aria-label="Assign collection"
+            return `<label class="pe-coll"><span class="pe-coll-text" aria-hidden="true">${collLabel(p.collection)}</span>` +
+                   `<select class="pe-collection" title="Belongs to the collection" aria-label="Assign collection"
                         onmousedown="event.stopPropagation()"
-                        onclick="event.stopPropagation();event.preventDefault();"
-                        onchange="veroSetCardCollection(event, ${idx})">${opts}</select>`;
+                        onclick="event.stopPropagation();"
+                        onchange="veroSetCardCollection(event, ${idx})">${opts}</select></label>`;
         }
         window.veroSetCardCollection = function (e, i) {
             e.stopPropagation();
             if (!listings[i]) return;
             listings[i].collection = e.target.value;
             save('vero_listings', listings);
+            const t = e.target.parentNode.querySelector('.pe-coll-text');
+            if (t) t.innerHTML = collLabel(e.target.value);
         };
 
         function card(p, idx, past) {
