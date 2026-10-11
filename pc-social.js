@@ -33,7 +33,12 @@
         return { saves: saves, offers: offers, views: views };
     }
 
-    function ico(d) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>'; }
+    // Size and stroke are set on the element too, so even with no stylesheet at
+    // all the icons stay small outline marks.
+    function ico(d) {
+        return '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#5b5750" ' +
+               'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+    }
 
     function html(prod) {
         var s = stats(prod);
@@ -68,6 +73,52 @@
             info.insertAdjacentHTML('beforeend', html(prodOf(card)));
         });
     }
+
+    // The row's own styles travel with the script: if a browser holds an older
+    // product-card.css, the row still renders right (never as bare black icons).
+    var CSS = [
+        '.product-card { --pc-stats-h: 20px; }',
+        '.product-card:has(.pc-stats) .product-image {',
+        '    inset: 0 0 calc(var(--foot-h) + var(--pc-stats-h)) 0;',
+        '}',
+        '.pc-stats {',
+        '    grid-area: 4 / 1 / 5 / -1;',
+        '    display: flex;',
+        '    align-items: center;',
+        '    gap: 11px;',
+        '    margin-top: 6px;',
+        '    direction: ltr;',
+        '}',
+        '.pc-stats span {',
+        '    display: inline-flex;',
+        '    align-items: center;',
+        '    gap: 3px;',
+        '    font-family: \'Oswald\', \'Segoe UI\', Helvetica, Arial, sans-serif !important;',
+        '    font-size: 10px;',
+        '    font-weight: 300;',
+        '    letter-spacing: 0.3px;',
+        '    line-height: 1;',
+        '    color: #5b5750;',
+        '}',
+        '.pc-stats svg {',
+        '    width: 12px;',
+        '    height: 12px;',
+        '    flex: none;',
+        '    fill: none;',
+        '    stroke: #5b5750;',
+        '    stroke-width: 1.6 !important;',
+        '    stroke-linecap: round;',
+        '    stroke-linejoin: round;',
+        '}'
+    ].join('\n');
+    function injectCSS() {
+        if (document.getElementById('pc-social-css')) return;
+        var st = document.createElement('style');
+        st.id = 'pc-social-css';
+        st.textContent = CSS;
+        (document.head || document.documentElement).appendChild(st);
+    }
+    injectCSS();
 
     window.veroSocialStats = stats;
     window.veroSocialHTML = html;
