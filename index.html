@@ -7876,7 +7876,7 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
         var mids = hero.querySelectorAll('.hero-overlay .hero-ov-mid'), mid = null;
         for (var i = 0; i < mids.length; i++) if (mids[i].getBoundingClientRect().height > 0) { mid = mids[i]; break; }
         if (!mid) return;
-        var top = mid.getBoundingClientRect().bottom - hero.getBoundingClientRect().top + 20;
+        var top = mid.getBoundingClientRect().bottom - hero.getBoundingClientRect().top + 12;
         if (top > 0) form.style.top = Math.round(top) + 'px';
     }
     function start() {
@@ -8106,20 +8106,24 @@ window.veroLocalImg = function (key) {
             function heroSearch(f) {
                 var q = (f.q.value || '').trim();
                 if (f.q) f.q.blur();          // dismiss the mobile keyboard
-                // On the home feed: filter the feed in place, then glide down to the
-                // matching products. Elsewhere (no feed hook): fall back to the page.
-                if (typeof window.veroOnSearch === 'function') {
-                    window.veroOnSearch(q);
-                    setTimeout(function () {
-                        var target = document.getElementById('feedContainer');
-                        if (!target) return;
-                        var y = target.getBoundingClientRect().top + window.pageYOffset - 80;
-                        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-                    }, 260);
+                if (!q) { closeHeroResults(); return false; }
+                // Open a dedicated results panel right below the hero (openHeroResults
+                // lives with the feed JS, where the product data is in scope). If it is
+                // not ready yet, fall back to the products page.
+                if (typeof window.openHeroResults === 'function') {
+                    window.openHeroResults(q);
                 } else {
-                    location.href = 'products.html' + (q ? '?q=' + encodeURIComponent(q) : '');
+                    location.href = 'products.html?q=' + encodeURIComponent(q);
                 }
                 return false;
+            }
+            // Clear + close the hero search results (the X button, or an empty submit).
+            function closeHeroResults() {
+                document.body.classList.remove('vero-searching');
+                var form = document.querySelector('#heroImage .hero-search');
+                if (form && form.q) form.q.value = '';
+                var hero = document.getElementById('heroImage');
+                if (hero) window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         </script>
         <div class="slide-more slide-more--over" aria-hidden="true"><span>Slide for more</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 9l6 6 6-6"/></svg></div>
@@ -8634,6 +8638,49 @@ window.veroLocalImg = function (key) {
         </div>
     </section>
     </div><!-- /.feed-retired : hero-slider + category picker stay hidden -->
+
+    <!-- ==================== HERO SEARCH RESULTS ====================
+         Opens below the hero when a search is run from the hero search box.
+         Shows only the matching products; everything else below the hero
+         (the sale screen + the feed) is hidden until the X closes it. -->
+    <style id="hero-results-css">
+        /* position:relative + z-index so the white panel covers the sticky hero
+           (which is positioned with z-index:0) instead of letting it show through. */
+        .hero-results { display: none; position: relative; z-index: 3; background: #fff; min-height: 100vh; padding: 28px 0 80px; }
+        body.vero-searching #heroMobile2,
+        body.vero-searching .feed-section { display: none !important; }
+        body.vero-searching .hero-results { display: block; }
+        .hero-results .container { max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px,5vw,28px); }
+        .hero-results-head { display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 16px; padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid #1c1c1c; }
+        .hero-results-kicker { display: block; font-family: 'Poppins','Inter',sans-serif; font-size: 10px;
+            font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
+        .hero-results-title { font-family: 'Bodoni Moda','Didot',Georgia,serif !important; font-weight: 500;
+            font-size: clamp(22px,6vw,32px); line-height: 1.1; color: #1c1c1c; margin: 0; }
+        .hero-results-title span { color: #9a9a95; }
+        .hero-results-close { flex: none; width: 44px; height: 44px; border: 1px solid #1c1c1c; background: #fff;
+            border-radius: 50%; cursor: pointer; display: grid; place-items: center; transition: background .2s, color .2s; }
+        .hero-results-close:hover { background: #1c1c1c; color: #fff; }
+        .hero-results-close svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.5;
+            stroke-linecap: round; fill: none; }
+        .hero-results-empty { text-align: center; color: #9a9a95; font-size: 14px; padding: 60px 0; }
+        .hero-results-empty b { color: #1c1c1c; font-weight: 500; }
+    </style>
+    <section class="hero-results" id="heroResults" aria-live="polite">
+        <div class="container">
+            <div class="hero-results-head">
+                <div>
+                    <span class="hero-results-kicker">Search results</span>
+                    <h2 class="hero-results-title" id="heroResultsTitle"></h2>
+                </div>
+                <button class="hero-results-close" type="button" onclick="closeHeroResults()" aria-label="Close search results">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+            </div>
+            <div class="products-grid" id="heroResultsGrid"></div>
+            <div class="hero-results-empty" id="heroResultsEmpty" hidden></div>
+        </div>
+    </section>
 
     <!-- ==================== INFINITE FEED — continues below the categories ==================== -->
     <div class="feed-section">
@@ -11643,6 +11690,43 @@ window.veroLocalImg = function (key) {
             headerQuery = (q || '').trim().toLowerCase();
             clearTimeout(window.veroOnSearch._t);
             window.veroOnSearch._t = setTimeout(renderFeed, 160);
+        };
+
+        // ---- Hero search → dedicated results panel below the hero ----
+        window.openHeroResults = function (q) {
+            var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c]; }); };
+            var query = (q || '').trim();
+            var key = query.toLowerCase();
+            var matches = feedBaseProducts().filter(function (p) {
+                var hay = [p.name, p.seller, p.category, productBrand(p)].join(' ').toLowerCase();
+                return hay.indexOf(key) >= 0;
+            });
+            var titleEl = document.getElementById('heroResultsTitle');
+            var grid = document.getElementById('heroResultsGrid');
+            var empty = document.getElementById('heroResultsEmpty');
+            if (!titleEl || !grid || !empty) return;
+            titleEl.innerHTML = matches.length + ' result' + (matches.length === 1 ? '' : 's') +
+                ' for <span>&ldquo;' + esc(query) + '&rdquo;</span>';
+            if (matches.length) {
+                grid.innerHTML = matches.map(productCardHTML).join('');
+                grid.hidden = false; empty.hidden = true;
+            } else {
+                grid.innerHTML = ''; grid.hidden = true;
+                empty.innerHTML = 'No pieces match <b>&ldquo;' + esc(query) + '&rdquo;</b>. Try another search.';
+                empty.hidden = false;
+            }
+            document.body.classList.add('vero-searching');
+            // Glide down so the results panel's header (title + X) sits just under
+            // the sticky site header. Wait a tick so the layout reflows after the
+            // sale screen is hidden, then measure.
+            setTimeout(function () {
+                var panel = document.getElementById('heroResults');
+                if (!panel) return;
+                var header = document.getElementById('siteHeader');
+                var hh = header ? header.offsetHeight : 0;
+                var y = panel.getBoundingClientRect().top + window.pageYOffset - hh - 8;
+                window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+            }, 60);
         };
 
         // Apply the header-panel filter state to the current mode's products.
