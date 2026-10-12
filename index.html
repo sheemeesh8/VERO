@@ -7844,6 +7844,20 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 .hm2-ed-cta { margin-top: 8px; display: inline-flex; align-items: center; height: 44px; padding: 0 22px;
     background: #fff; color: #111; font-family: 'Poppins', 'Inter', sans-serif; font-size: 9.5px; font-weight: 400;
     letter-spacing: 2.4px; text-transform: uppercase; }
+/* Discount slider on the feed sale screen — interactive (pointer-events on),
+   bordered like the sale-page control. */
+.hm2-slider { pointer-events: auto; width: min(80vw, 300px); margin-top: 12px; display: flex; flex-direction: column; gap: 9px;
+    border: 1px solid rgba(255,255,255,0.75); background: rgba(0,0,0,0.24); -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px); padding: 12px 15px 13px; box-shadow: 0 2px 16px rgba(0,0,0,0.22); }
+.hm2-slider-row { display: flex; align-items: baseline; justify-content: space-between; }
+.hm2-slider-lbl { font-family: 'Poppins', 'Inter', sans-serif; font-size: 8.5px; font-weight: 300; letter-spacing: 2.5px;
+    text-transform: uppercase; color: rgba(255,255,255,0.72); }
+.hm2-slider-val { font-family: 'Poppins', 'Inter', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; color: #fff; }
+.hm2-slider-range { -webkit-appearance: none; appearance: none; width: 100%; height: 2px; border-radius: 2px;
+    background: rgba(255,255,255,0.3); outline: none; }
+.hm2-slider-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+    border-radius: 50%; background: #fff; cursor: pointer; }
+.hm2-slider-range::-moz-range-thumb { width: 20px; height: 20px; border: none; border-radius: 50%; background: #fff; cursor: pointer; }
 /* "Slide for more" cue at the foot of the hero, the Sale screen and Categories. */
 .slide-more { display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; color: #fff; direction: ltr; }
 .slide-more--over { position: absolute; left: 0; right: 0; bottom: 26px; z-index: 6; text-shadow: 0 1px 6px rgba(0,0,0,0.45); filter: drop-shadow(0 1px 3px rgba(0,0,0,0.35)); }
@@ -8114,6 +8128,21 @@ window.veroLocalImg = function (key) {
         </script>
         <div class="slide-more slide-more--over" aria-hidden="true"><span>Slide for more</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 9l6 6 6-6"/></svg></div>
     </div>
+    <script>
+        // Feed sale screen discount slider: drag to a minimum discount, release to
+        // open the sale page already filtered to that discount (sales.html#disc=N).
+        // Inline handlers (on the element) so they survive the feed rebuilding the
+        // sale panel's DOM.
+        function feedSaleSlide(el) {
+            var v = parseInt(el.value, 10) || 0;
+            var lbl = document.getElementById('feedSaleVal');
+            if (lbl) lbl.textContent = v > 0 ? v + '% off or more' : 'All items';
+        }
+        function feedSaleGo(el) {
+            var v = parseInt(el.value, 10) || 0;
+            location.href = 'sales.html' + (v > 0 ? '#disc=' + v : '');
+        }
+    </script>
 
 
     <!-- Second full-screen panel — mobile only. A swipe slider of full images:
@@ -8123,15 +8152,24 @@ window.veroLocalImg = function (key) {
         <!-- One full-screen image: the whole screen opens the Sale page. -->
         <a class="hm2-one" id="hm2One" href="sales.html" aria-label="Shop the sale">
             <video class="hm2-video" poster="assets/hero/art-section-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-hidden="true"><source src="assets/hero/art-section-bg.webm" type="video/webm"><source src="assets/hero/art-section-bg.mp4" type="video/mp4"></video>
-            <span class="hm2-look hm2-look--ed">
-                <span class="hm2-ed">
-                    <span class="hm2-ed-kicker">End of Season</span>
-                    <span class="hm2-ed-word">Sale</span>
-                    <span class="hm2-ed-sub">Up to 70% off everything</span>
-                    <span class="hm2-ed-cta">Shop the sale</span>
-                </span>
-            </span>
         </a>
+        <!-- Editorial caption over the sale video. Taps on the text fall through to
+             the link behind; the discount slider is interactive and, on release,
+             opens the sale page at the chosen discount. -->
+        <div class="hm2-look hm2-look--ed">
+            <div class="hm2-ed">
+                <span class="hm2-ed-kicker">End of Season</span>
+                <span class="hm2-ed-word">Sale</span>
+                <span class="hm2-ed-sub">Up to 70% off everything</span>
+                <div class="hm2-slider" id="feedSaleSlider">
+                    <div class="hm2-slider-row">
+                        <span class="hm2-slider-lbl">Shop by discount</span>
+                        <span class="hm2-slider-val" id="feedSaleVal">All items</span>
+                    </div>
+                    <input type="range" class="hm2-slider-range" id="feedSaleRange" min="0" max="80" step="10" value="0" aria-label="Minimum discount" oninput="feedSaleSlide(this)" onchange="feedSaleGo(this)">
+                </div>
+            </div>
+        </div>
         <div class="slide-more slide-more--over" aria-hidden="true"><span>Slide for more</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 9l6 6 6-6"/></svg></div>
     </div>
 
