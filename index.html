@@ -7855,6 +7855,20 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
     font-family: 'Poppins', 'Inter', sans-serif; font-size: 12px; letter-spacing: 0.3px; text-align: left; }
 .hm2-search input::placeholder { color: rgba(255,255,255,0.75); }
 
+/* Two featured sale deals under the search. */
+.hm2-deals { pointer-events: auto; width: min(86%, 332px); margin-top: 18px; display: flex; gap: 10px; }
+.hm2-deal { flex: 1; min-width: 0; display: block; text-decoration: none; color: #fff;
+    background: rgba(16,19,10,0.72); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); padding: 9px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.22); }
+.hm2-deal .hd-img { width: 100%; height: 72px; background: #f1e9dc; display: grid; place-items: center;
+    color: #9a8f7e; font-size: 30px; overflow: hidden; }
+.hm2-deal .hd-img img { width: 100%; height: 100%; object-fit: cover; }
+.hm2-deal .hd-name { display: block; font-family: 'Poppins', 'Inter', sans-serif; font-size: 11px; font-weight: 400;
+    letter-spacing: 0.3px; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+.hm2-deal .hd-price { display: block; margin-top: 3px; font-family: 'Poppins', 'Inter', sans-serif; font-size: 12px; }
+.hm2-deal .hd-price b { font-weight: 600; color: #fff; }
+.hm2-deal .hd-price s { color: rgba(255,255,255,0.5); font-size: 9px; margin-left: 5px; }
+
 /* Discount slider on the feed sale screen — frameless, pinned at the bottom
    just above "Slide for more". */
 .hm2-disc { pointer-events: auto; position: absolute; left: 50%; transform: translateX(-50%);
@@ -8160,6 +8174,34 @@ window.veroLocalImg = function (key) {
             location.href = 'sales.html' + (q ? '#q=' + encodeURIComponent(q) : '');
             return false;
         }
+        // Fill the two featured sale deals from the catalogue (deepest cuts first),
+        // each linking to its product page.
+        (function () {
+            function fill() {
+                var host = document.getElementById('feedSaleDeals');
+                var VC = window.veroCollections;
+                if (!host || !VC) return;
+                var items = (VC.onSale() || []).slice(0, 2);
+                if (!items.length) { host.style.display = 'none'; return; }
+                host.innerHTML = items.map(function (p) {
+                    var d = p._d || {};
+                    var media = p.cover ? '<img src="' + p.cover + '" alt="">' : (p.icon || '');
+                    var price = '<b>' + VC.money(d.price) + '</b>' +
+                        (d.onSale ? '<s>' + VC.money(d.original) + '</s>' : '');
+                    var data = encodeURIComponent(JSON.stringify({
+                        name: p.name, price: VC.toNum(d.onSale ? d.price : d.original), icon: p.icon,
+                        cover: p.cover || '', category: p.category || '', seller: p.seller,
+                        rating: p.rating || 4.5, type: p.type || 'clothing'
+                    }));
+                    return '<a class="hm2-deal" href="product-showcase.html?product=' + data + '">' +
+                        '<span class="hd-img">' + media + '</span>' +
+                        '<span class="hd-name">' + p.name + '</span>' +
+                        '<span class="hd-price">' + price + '</span></a>';
+                }).join('');
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fill);
+            else fill();
+        })();
     </script>
 
 
@@ -8183,6 +8225,8 @@ window.veroLocalImg = function (key) {
                     <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                     <input type="search" name="q" placeholder="Search the sale" aria-label="Search the sale" autocomplete="off" enterkeyhint="search">
                 </form>
+                <!-- Two featured sale pieces, filled from the catalogue by JS. -->
+                <div class="hm2-deals" id="feedSaleDeals"></div>
             </div>
         </div>
         <!-- Discount slider pinned at the bottom of the panel, just above
