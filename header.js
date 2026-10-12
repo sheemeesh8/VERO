@@ -509,7 +509,7 @@
             font-size: 35.00px; font-weight: 700; letter-spacing: 5px; color: #111;
             font-style: normal; text-transform: uppercase; min-width: 80px;
             flex: 0 0 auto; text-align: center; transition: all 0.3s ease;
-            cursor: pointer; padding-left: 5px;
+            cursor: pointer; padding-left: 5px; text-decoration: none !important;
         }
         #siteHeader .logo:hover { color: rgba(0, 0, 0, 0.7); transform: scale(1.02); }
         /* The Vero script logo is a white-on-transparent PNG. It is flipped to black
@@ -521,10 +521,12 @@
         /* The logo art is a white-on-transparent PNG; paint it solid black everywhere. */
         #siteHeader .logo .logo-img { height: 42px; width: auto; display: block; mix-blend-mode: normal !important; filter: brightness(0) !important; transition: filter 0.25s ease; }
         /* Script wordmark logo (moravchick) — oak on a light bar, white over the dark hero. */
+        /* Minimalist wordmark: clean light uppercase sans, small and letter-spaced,
+           no underline — replaces the ornate Pinyon Script. */
         #siteHeader .logo .logo-script:not(#z):not(#z):not(#z) {
-            font-family: 'Pinyon Script', cursive !important; font-weight: 400 !important;
-            font-size: 32px; line-height: 1; letter-spacing: 0; text-transform: none;
-            color: var(--oak, #2A331B); white-space: nowrap; display: block;
+            font-family: 'Poppins', 'Inter', 'Segoe UI', sans-serif !important; font-weight: 300 !important;
+            font-size: 15px; line-height: 1; letter-spacing: 4.5px; text-transform: uppercase;
+            color: var(--oak, #2A331B); white-space: nowrap; display: block; text-decoration: none;
             transition: color 0.25s ease; -webkit-font-smoothing: antialiased;
         }
         /* Over the dark hero (transparent / scrolled-over-dark) → white. */
