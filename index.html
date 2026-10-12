@@ -7857,26 +7857,19 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 
 /* Featured sale deals — a swipeable slider pinned at the bottom of the panel,
    just above "Slide for more". */
-.hm2-deals { pointer-events: auto; position: absolute; left: 0; right: 0; bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+.hm2-deals { pointer-events: auto; position: absolute; left: 0; right: 0; bottom: calc(66px + env(safe-area-inset-bottom, 0px));
     z-index: 3; display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; padding: 0 24px 2px; }
+    scrollbar-width: none; padding: 0 20px 2px; }
 .hm2-deals::-webkit-scrollbar { display: none; height: 0; }
-.hm2-deal { flex: 0 0 142px; min-width: 0; display: block; text-decoration: none; color: #fff; scroll-snap-align: start;
-    background: rgba(16,19,10,0.72); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); padding: 9px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.22); }
-.hm2-deal .hd-img { width: 100%; height: 72px; background: #f1e9dc; display: grid; place-items: center;
-    color: #9a8f7e; font-size: 30px; overflow: hidden; }
-.hm2-deal .hd-img img { width: 100%; height: 100%; object-fit: cover; }
-.hm2-deal .hd-name { display: block; font-family: 'Poppins', 'Inter', sans-serif; font-size: 11px; font-weight: 400;
-    letter-spacing: 0.3px; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
-.hm2-deal .hd-price { display: block; margin-top: 3px; font-family: 'Poppins', 'Inter', sans-serif; font-size: 12px; }
-.hm2-deal .hd-price b { font-weight: 600; color: #fff; }
-.hm2-deal .hd-price s { color: rgba(255,255,255,0.5); font-size: 9px; margin-left: 5px; }
+/* Each child is a regular product card, given a fixed width for the slider and
+   a slightly shorter image so the panel isn't crowded. */
+.hm2-deals .product-card { flex: 0 0 150px; width: 150px; scroll-snap-align: start; margin: 0; }
+.hm2-deals .product-card .product-image { height: 118px !important; }
+.hm2-deals .pc-holdhint { display: none !important; }
 
-/* Discount slider on the feed sale screen — frameless, pinned at the bottom
-   just above "Slide for more". */
-.hm2-disc { pointer-events: auto; position: absolute; left: 50%; transform: translateX(-50%);
-    bottom: calc(230px + env(safe-area-inset-bottom, 0px)); z-index: 3; width: min(80vw, 320px);
+/* Discount slider on the feed sale screen — frameless, in the editorial column
+   right under the search. */
+.hm2-disc { pointer-events: auto; width: min(80vw, 320px); margin-top: 16px;
     display: flex; flex-direction: column; gap: 9px; text-shadow: 0 1px 6px rgba(0,0,0,0.4); }
 .hm2-disc-row { display: flex; align-items: baseline; justify-content: space-between; }
 .hm2-disc-lbl { font-family: 'Poppins', 'Inter', sans-serif; font-size: 8.5px; font-weight: 300; letter-spacing: 2.5px;
@@ -8187,21 +8180,8 @@ window.veroLocalImg = function (key) {
                 if (!host || !VC) return;
                 var items = (VC.onSale() || []).slice(0, 8);
                 if (!items.length) { host.style.display = 'none'; return; }
-                host.innerHTML = items.map(function (p) {
-                    var d = p._d || {};
-                    var media = p.cover ? '<img src="' + p.cover + '" alt="">' : (p.icon || '');
-                    var price = '<b>' + VC.money(d.price) + '</b>' +
-                        (d.onSale ? '<s>' + VC.money(d.original) + '</s>' : '');
-                    var data = encodeURIComponent(JSON.stringify({
-                        name: p.name, price: VC.toNum(d.onSale ? d.price : d.original), icon: p.icon,
-                        cover: p.cover || '', category: p.category || '', seller: p.seller,
-                        rating: p.rating || 4.5, type: p.type || 'clothing'
-                    }));
-                    return '<a class="hm2-deal" href="product-showcase.html?product=' + data + '">' +
-                        '<span class="hd-img">' + media + '</span>' +
-                        '<span class="hd-name">' + p.name + '</span>' +
-                        '<span class="hd-price">' + price + '</span></a>';
-                }).join('');
+                // Regular product cards (the same card used across the site).
+                host.innerHTML = items.map(function (p) { return VC.cardHTML(p); }).join('');
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fill);
             else fill();
@@ -8229,18 +8209,18 @@ window.veroLocalImg = function (key) {
                     <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                     <input type="search" name="q" placeholder="Search the sale" aria-label="Search the sale" autocomplete="off" enterkeyhint="search">
                 </form>
+                <!-- Discount slider, grouped with the editorial content so it sits
+                     above the product cards at the bottom. -->
+                <div class="hm2-disc" id="feedSaleSlider">
+                    <div class="hm2-disc-row">
+                        <span class="hm2-disc-lbl">Shop by discount</span>
+                        <span class="hm2-disc-val" id="feedSaleVal">All items</span>
+                    </div>
+                    <input type="range" class="hm2-disc-range" id="feedSaleRange" min="0" max="80" step="10" value="0" aria-label="Minimum discount" oninput="feedSaleSlide(this)" onchange="feedSaleGo(this)">
+                </div>
             </div>
         </div>
-        <!-- Bottom of the panel, stacked up from "Slide for more":
-             discount slider, then the featured-deals slider, then "Slide for more". -->
-        <div class="hm2-disc" id="feedSaleSlider">
-            <div class="hm2-disc-row">
-                <span class="hm2-disc-lbl">Shop by discount</span>
-                <span class="hm2-disc-val" id="feedSaleVal">All items</span>
-            </div>
-            <input type="range" class="hm2-disc-range" id="feedSaleRange" min="0" max="80" step="10" value="0" aria-label="Minimum discount" oninput="feedSaleSlide(this)" onchange="feedSaleGo(this)">
-        </div>
-        <!-- Featured sale pieces (a swipeable slider), filled from the catalogue. -->
+        <!-- Featured sale pieces (regular product cards, a swipeable slider). -->
         <div class="hm2-deals" id="feedSaleDeals"></div>
         <div class="slide-more slide-more--over" aria-hidden="true"><span>Slide for more</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 9l6 6 6-6"/></svg></div>
     </div>
