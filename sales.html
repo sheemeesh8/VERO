@@ -493,6 +493,45 @@ h3, h4, h5, h6, p,
     <!-- Bottom navigation bars: one size; section bars show icons, the tapped one its label. -->
     <link rel="stylesheet" href="assets/nav-bar.css?v=20261003e">
     <script src="assets/nav-bar.js?v=20261003e" defer></script>
+<style id="sale-quick-pick">
+    /* Quick discount pills in the hero — the sale-page counterpart of the home
+       hero search box. Pinned near the bottom, above the scroll hint. */
+    .sh-discounts {
+        position: absolute; left: 50%; transform: translateX(-50%); bottom: 104px; z-index: 3;
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; width: min(90vw, 430px);
+    }
+    .sh-disc-label {
+        width: 100%; text-align: center; margin-bottom: 4px; font-family: 'Poppins','Inter',sans-serif;
+        font-size: 8.5px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.82);
+    }
+    .sh-disc-btn {
+        font-family: 'Poppins','Inter',sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px;
+        text-transform: uppercase; color: #fff; background: rgba(0,0,0,0.24); border: 1px solid rgba(255,255,255,0.8);
+        padding: 11px 15px; cursor: pointer; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+        box-shadow: 0 2px 16px rgba(0,0,0,0.22); transition: background .2s, color .2s;
+    }
+    .sh-disc-btn:hover, .sh-disc-btn.on { background: #fff; color: #111; }
+
+    /* Results panel below the hero — same treatment as the home search results.
+       position:relative + z-index so it covers everything while open. */
+    .sale-results { display: none; position: relative; z-index: 3; background: #fff; min-height: 100vh; padding: 28px 0 90px; }
+    body.sale-searching .page-body,
+    body.sale-searching .feed-nav { display: none !important; }
+    body.sale-searching .sale-results { display: block; }
+    .sale-results .sr-wrap { max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px,5vw,28px); }
+    .sale-results-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+        padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid #1c1c1c; }
+    .sale-results-kicker { display: block; font-family: 'Poppins','Inter',sans-serif; font-size: 10px;
+        font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #9a9a95; margin-bottom: 8px; }
+    .sale-results-title { font-family: 'Bodoni Moda','Didot',Georgia,serif !important; font-weight: 500;
+        font-size: clamp(22px,6vw,32px); line-height: 1.1; color: #1c1c1c; margin: 0; }
+    .sale-results-title span { color: #9a9a95; }
+    .sale-results-close { flex: none; width: 44px; height: 44px; border: 1px solid #1c1c1c; background: #fff;
+        border-radius: 50%; cursor: pointer; display: grid; place-items: center; transition: background .2s, color .2s; }
+    .sale-results-close:hover { background: #1c1c1c; color: #fff; }
+    .sale-results-close svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; fill: none; }
+    .sale-results-empty { text-align: center; color: #9a9a95; font-size: 14px; padding: 60px 0; }
+</style>
 </head>
 <body>
     <!-- Shared site header (single source: header.js) — the same header the home
@@ -539,6 +578,32 @@ h3, h4, h5, h6, p,
                     <span class="sh-swipe">Scroll</span>
                     <span class="sh-scrollline"></span>
                 </div>
+            </div>
+            <!-- Quick discount picker — tap a tier to see those products below. -->
+            <div class="sh-discounts" id="shDiscounts">
+                <span class="sh-disc-label">Shop by discount</span>
+                <button type="button" class="sh-disc-btn" data-min="20">20% +</button>
+                <button type="button" class="sh-disc-btn" data-min="30">30% +</button>
+                <button type="button" class="sh-disc-btn" data-min="40">40% +</button>
+                <button type="button" class="sh-disc-btn" data-min="50">50% +</button>
+                <button type="button" class="sh-disc-btn" data-min="70">70% +</button>
+            </div>
+        </section>
+
+        <!-- ===== DISCOUNT RESULTS — opens below the hero when a tier is picked ===== -->
+        <section class="sale-results" id="saleResults" aria-live="polite">
+            <div class="sr-wrap">
+                <div class="sale-results-head">
+                    <div>
+                        <span class="sale-results-kicker">On sale</span>
+                        <h2 class="sale-results-title" id="saleResultsTitle"></h2>
+                    </div>
+                    <button type="button" class="sale-results-close" onclick="closeSaleResults()" aria-label="Close discount results">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                    </button>
+                </div>
+                <div class="prod-grid" id="saleResultsGrid"></div>
+                <div class="sale-results-empty" id="saleResultsEmpty" hidden></div>
             </div>
         </section>
 
@@ -743,6 +808,44 @@ h3, h4, h5, h6, p,
             if (qEl) qEl.addEventListener('input', function () {
                 clearTimeout(t);
                 t = setTimeout(function () { term = qEl.value.trim().toLowerCase(); render(); }, 120);
+            });
+
+            // ---- Hero quick-discount picker → results panel below the hero ----
+            window.openSaleResults = function (minPct) {
+                var items = all.filter(function (p) { return (p._d.percent || 0) >= minPct; })
+                               .sort(function (a, b) { return b._d.percent - a._d.percent; });
+                var titleEl = document.getElementById('saleResultsTitle');
+                var grid = document.getElementById('saleResultsGrid');
+                var empty = document.getElementById('saleResultsEmpty');
+                titleEl.innerHTML = items.length + ' item' + (items.length === 1 ? '' : 's') +
+                    ' at <span>' + minPct + '% off or more</span>';
+                if (items.length) {
+                    // #saleResultsGrid already carries .prod-grid, so render cards straight in.
+                    grid.innerHTML = items.map(function (p) { return VC.cardHTML(p); }).join('');
+                    grid.hidden = false; empty.hidden = true;
+                } else {
+                    grid.innerHTML = ''; grid.hidden = true;
+                    empty.textContent = 'Nothing at ' + minPct + '% off right now — try a lower tier.';
+                    empty.hidden = false;
+                }
+                document.querySelectorAll('.sh-disc-btn').forEach(function (b) { b.classList.toggle('on', +b.dataset.min === minPct); });
+                document.body.classList.add('sale-searching');
+                setTimeout(function () {
+                    var panel = document.getElementById('saleResults');
+                    if (!panel) return;
+                    var hdr = document.querySelector('.page-header') || document.getElementById('siteHeader');
+                    var hh = hdr ? hdr.offsetHeight : 0;
+                    var y = panel.getBoundingClientRect().top + window.pageYOffset - hh - 8;
+                    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                }, 60);
+            };
+            window.closeSaleResults = function () {
+                document.body.classList.remove('sale-searching');
+                document.querySelectorAll('.sh-disc-btn').forEach(function (b) { b.classList.remove('on'); });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+            document.querySelectorAll('.sh-disc-btn').forEach(function (b) {
+                b.addEventListener('click', function () { openSaleResults(+b.dataset.min); });
             });
 
             render();
