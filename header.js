@@ -521,17 +521,23 @@
         /* The logo art is a white-on-transparent PNG; paint it solid black everywhere. */
         #siteHeader .logo .logo-img { height: 42px; width: auto; display: block; mix-blend-mode: normal !important; filter: brightness(0) !important; transition: filter 0.25s ease; }
         /* Script wordmark logo (moravchick) — oak on a light bar, white over the dark hero. */
-        /* Minimalist wordmark: clean light uppercase sans, small and letter-spaced,
-           no underline — replaces the ornate Pinyon Script. */
+        /* Stacked wordmark: the peacock mark above a small uppercase label. */
+        #siteHeader .logo .logo-stack { display: flex; flex-direction: column; align-items: center; gap: 4px; line-height: 1; }
+        #siteHeader .logo .logo-peacock-mark {
+            height: 26px; width: auto; display: block; filter: brightness(0);   /* black on light bars */
+            transition: filter 0.25s ease;
+        }
         #siteHeader .logo .logo-script:not(#z):not(#z):not(#z) {
             font-family: 'Poppins', 'Inter', 'Segoe UI', sans-serif !important; font-weight: 300 !important;
-            font-size: 15px; line-height: 1; letter-spacing: 4.5px; text-transform: uppercase;
+            font-size: 9px; line-height: 1; letter-spacing: 4px; text-transform: uppercase;
             color: var(--oak, #2A331B); white-space: nowrap; display: block; text-decoration: none;
             transition: color 0.25s ease; -webkit-font-smoothing: antialiased;
         }
-        /* Over the dark hero (transparent / scrolled-over-dark) → white. */
+        /* Over the dark hero (transparent / scrolled-over-dark) → white mark + label. */
         #siteHeader.sticky-look:not(.scrolled) .logo .logo-script,
         #siteHeader.scrolled.over-dark .logo .logo-script { color: #fff !important; }
+        #siteHeader.sticky-look:not(.scrolled) .logo .logo-peacock-mark,
+        #siteHeader.scrolled.over-dark .logo .logo-peacock-mark { filter: brightness(0) invert(1); }
         /* While the header floats transparent over the hero image, the logo is white;
            once the header turns solid (scrolled), it reverts to black (rule above). */
         #siteHeader.sticky-look:not(.scrolled) .logo .logo-img { filter: brightness(0) invert(1) !important; }
@@ -1597,7 +1603,10 @@
                 </span>
             </div>
             <a class="logo logo-peacock-wrap" href="index.html" aria-label="moravchick — home">
-                <span class="logo-script" aria-hidden="true">moravchick</span>
+                <span class="logo-stack">
+                    <img class="logo-peacock-mark" src="peacock-logo.png?v=1" alt="" aria-hidden="true">
+                    <span class="logo-script" aria-hidden="true">Moravchick</span>
+                </span>
             </a>
             <div class="header-right">
                 <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
