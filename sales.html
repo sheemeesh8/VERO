@@ -916,14 +916,26 @@ h3, h4, h5, h6, p,
 
             render();
 
-            // Arriving from the feed slider (sales.html#disc=N): preset the hero
-            // slider and open those results straight away.
+            // Arriving from the feed (sales.html#disc=N or #q=term): preset the hero
+            // slider / search term and show the matching sale items straight away.
             (function () {
-                var m = (location.hash || '').match(/disc=(\d+)/);
-                if (!m) return;
-                var v = Math.max(0, Math.min(80, parseInt(m[1], 10) || 0));
-                if (discRange) { discRange.value = v; discValue.textContent = discLabel(v); }
-                if (v > 0) openSaleResults(v);
+                var h = location.hash || '';
+                var md = h.match(/disc=(\d+)/);
+                if (md) {
+                    var v = Math.max(0, Math.min(80, parseInt(md[1], 10) || 0));
+                    if (discRange) { discRange.value = v; discValue.textContent = discLabel(v); }
+                    if (v > 0) openSaleResults(v);
+                }
+                var mq = h.match(/q=([^&]+)/);
+                if (mq) {
+                    term = decodeURIComponent(mq[1]).trim().toLowerCase();
+                    if (qEl) qEl.value = decodeURIComponent(mq[1]);
+                    render();
+                    setTimeout(function () {
+                        var grid = document.getElementById('saleGrid');
+                        if (grid) window.scrollTo({ top: Math.max(0, grid.getBoundingClientRect().top + window.pageYOffset - 70), behavior: 'smooth' });
+                    }, 80);
+                }
             })();
         })();
 
