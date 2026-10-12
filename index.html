@@ -7846,18 +7846,53 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 @media (prefers-reduced-motion: reduce) { .slide-more svg { animation: none; } }
 </style>
 <style id="hero-centred">
-/* Hero copy centred: kicker, title, description, the two actions and the
-   search field all sit on the screen's centre line. ("Slide for more" keeps
-   its own placement.) Same selectors as #home-redesign, one id deeper. */
-#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-overlay-inner { align-items: center !important; text-align: center !important; }
-#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) :is(.hero-ov-top, .hero-ov-mid) { align-items: center !important; text-align: center !important; width: 100%; }
-#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-eyebrow { text-align: center !important; padding-left: 4px; /* balances the trailing letter-space */ }
-#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-title:not(#zz):not(#zz):not(#zz):not(#zz) { text-align: center !important; margin: 0 auto !important; }
-#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-text { text-align: center !important; margin: 0 auto !important; }
-#heroImage#heroImage .hero-ov-actions--two { justify-content: center !important; }
-#heroImage#heroImage .hero-search { justify-content: center; }
-#heroImage#heroImage .hero-search input { flex: 0 1 auto; width: 220px; text-align: center; }
+/* Hero copy: the kicker, title, description, the two actions and the search
+   field form one left-aligned group, centred vertically on the screen.
+   The inner box keeps 72px extra at the bottom (52px search + 20px gap) so the
+   copy + search together sit on the centre line; the search is pinned under
+   the copy by the script below. ("Slide for more" keeps its own placement.) */
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-overlay-inner {
+    justify-content: center !important; align-items: flex-start !important; text-align: left !important;
+    padding: 96px 24px 168px !important;
+}
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) :is(.hero-ov-top, .hero-ov-mid) { align-items: flex-start !important; text-align: left !important; width: 100%; }
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-eyebrow { text-align: left !important; }
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-title:not(#zz):not(#zz):not(#zz):not(#zz) { text-align: left !important; margin: 0 !important; }
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-text { text-align: left !important; margin: 0 !important; }
+#heroImage#heroImage .hero-ov-actions--two { justify-content: flex-start !important; }
+#heroImage#heroImage .hero-search { bottom: auto; top: calc(50% + 60px); justify-content: flex-start; }
+#heroImage#heroImage .hero-search input { flex: 1; width: auto; text-align: left; }
 </style>
+<script>
+/* Keep the hero search 20px under the visible copy (its height varies by
+   season text and mode), so copy + search stay one centred group. */
+(function () {
+    function place() {
+        var hero = document.getElementById('heroImage');
+        var form = hero && hero.querySelector('.hero-search');
+        if (!form) return;
+        var mids = hero.querySelectorAll('.hero-overlay .hero-ov-mid'), mid = null;
+        for (var i = 0; i < mids.length; i++) if (mids[i].getBoundingClientRect().height > 0) { mid = mids[i]; break; }
+        if (!mid) return;
+        var top = mid.getBoundingClientRect().bottom - hero.getBoundingClientRect().top + 20;
+        if (top > 0) form.style.top = Math.round(top) + 'px';
+    }
+    function start() {
+        place();
+        var hero = document.getElementById('heroImage');
+        if (hero && window.ResizeObserver) {
+            var ro = new ResizeObserver(place);
+            ro.observe(hero);
+            hero.querySelectorAll('.hero-overlay .hero-ov-mid').forEach(function (m) { ro.observe(m); });
+        }
+        window.addEventListener('resize', place);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+        var n = 0, t = setInterval(function () { place(); if (++n > 10) clearInterval(t); }, 400);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
+</script>
 </head>
 <!-- data-back="none": this page opens on the home view, which carries no back
      control. hideAllViews() clears it for every other view. -->
