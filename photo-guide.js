@@ -263,7 +263,7 @@
                 <style>${STYLE}</style>
                 <div class="pg">
                     <button class="pg-head" type="button" part="head">
-                        <span class="ic">📸</span>
+                        <span class="ic"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h4l1.8-2.5h6.4L17 8h4v11.5H3z"/><circle cx="12" cy="13.5" r="3.5"/></svg></span>
                         <span class="tt">
                             <b>Photo guide — ${data.title}</b>
                             <span>How to photograph this item right</span>
@@ -274,7 +274,7 @@
                     <div class="pg-body"><div class="inner"><div class="pg-pad">
                         <div class="pg-hero">
                             <b>The main photo:</b> ${data.heroAngle}
-                            <span class="tip">💡 ${data.tip}</span>
+                            <span class="tip">${data.tip}</span>
                         </div>
                         <div class="pg-core">${core}</div>
                         <div class="pg-slots-h">Required photos · ${slots.length}</div>
