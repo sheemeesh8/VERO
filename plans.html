@@ -84,7 +84,7 @@
     <div class="brand">VERO</div>
     <div class="tagline">מנוע ההתאמה החכם</div>
     <h1>בחרו את חבילת ה-DME שלכם</h1>
-    <div class="sub">שלב 1 מתוך 2 · ביטול בכל עת</div>
+    <div class="sub">בחרו חבילה כדי לראות איך האפליקציה נראית — בחינם, ללא תשלום</div>
 
     <div class="toggle">
         <div class="toggle-inner" id="billToggle">
@@ -125,12 +125,13 @@
         ]}
     ];
     var bill='yearly';
-    var current=(function(){try{return localStorage.getItem('vero_dme')==='1'?null:'free';}catch(e){return null;}})();
+    // Which tier is currently previewed (free / premium / luxury).
+    var current=(window.veroTier && window.veroTier()) || 'free';
     function nis(n){return '₪'+n.toLocaleString('he-IL');}
     function ck(){return '<svg class="ck" viewBox="0 0 24 24"><path d="M5 12l4 4 10-11"/></svg>';}
 
     function cardHTML(p){
-        var isCurrent=(p.id==='free'&&current==='free');
+        var isCurrent=(p.id===current);
         var price,per,sub;
         if(p.monthly===0){price=0;per='לתמיד';sub='ללא תשלום, לנצח';}
         else if(bill==='yearly'){var mo=Math.round(p.yearly/12);price=mo;per='לחודש';
@@ -138,7 +139,7 @@
             sub='<span class="save">חסכו '+save+'%</span> · '+nis(p.yearly)+' לשנה';}
         else{price=p.monthly;per='לחודש';sub='חיוב חודשי · '+nis(p.monthly*12)+' לשנה';}
         var feats=p.feats.map(function(f){return '<li class="'+(f.on?'':'muted')+'">'+ck()+'<span>'+f.t+'</span></li>';}).join('');
-        var cta=isCurrent?'החבילה הנוכחית שלך':(p.id==='free'?'המשיכו בחינם':'בחרו ב-'+p.name);
+        var cta=isCurrent?'החבילה הפעילה ✓':(p.id==='free'?'עברו ל-Free':'נסו את '+p.name);
         return '<div class="card'+(p.reco?' reco':'')+(isCurrent?' current':'')+'" data-id="'+p.id+'">'+
             (p.reco?'<span class="ribbon">הכי מומלץ</span>':'')+
             '<div class="c-name">'+p.name+'</div>'+
@@ -158,16 +159,16 @@
     document.getElementById('cards').addEventListener('click',function(e){
         var cta=e.target.closest('.c-cta');if(!cta)return;
         var card=e.target.closest('.card');var id=card&&card.dataset.id;if(!id)return;
-        var dme=(id!=='free');
-        if(window.veroSetTier)window.veroSetTier(dme?'dme':'free');
-        else{try{localStorage.setItem('vero_dme',dme?'1':'0');}catch(e){}}
-        // Confirm, then enter the app (completes the signup/upgrade flow).
-        cta.textContent=dme?'הופעל ✓ ממשיכים…':'ממשיכים…';
+        if(id===current)return;                       // already active
+        if(window.veroSetTier)window.veroSetTier(id); // free / premium / luxury
+        current=id;
+        // Preview: enter the app skinned as the chosen tier.
+        cta.textContent='נכנסים לתצוגה מקדימה…';
         cta.style.opacity='.7';
         setTimeout(function(){
             if(window.top!==window){try{window.top.location.hash='#page=index.html';return;}catch(e){}}
             location.href='index.html';
-        },700);
+        },650);
     });
     document.getElementById('backBtn').addEventListener('click',function(){
         if(window.top!==window){try{window.top.location.hash='#page=index.html';return;}catch(e){}}
