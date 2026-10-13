@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>VERO — The Edit</title>
+    <script src="vero-theme.js"></script>
+<style>
+    :root{
+        --bg:#ffffff;          /* page — white */
+        --sand:#F4F2EE;        /* image + hero tone — soft warm */
+        --ink:#1b1916;         /* soft charcoal, not pure black */
+        --muted:#a29c90;       /* quiet label grey */
+        --line:#ece8e1;        /* faint hairline */
+        --gold:#9a7d52;        /* restrained luxe accent */
+    }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+    html,body{height:100%;}
+    body{
+        background:var(--bg);color:var(--ink);
+        font-family:'Aharoni CLM','Assistant','Segoe UI',sans-serif;
+        -webkit-font-smoothing:antialiased;line-height:1.5;
+        overflow-x:hidden;
+    }
+    .page{width:100%;max-width:480px;margin:0 auto;min-height:100%;background:var(--bg);padding-bottom:88px;}
+
+    /* ---------- top bar ---------- */
+    .topbar{
+        position:relative;z-index:30;display:flex;align-items:center;justify-content:space-between;
+        padding:max(34px,calc(env(safe-area-inset-top,0px) + 14px)) 18px 10px;background:var(--sand);
+    }
+    .tb-back{
+        width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+        border:none;background:none;color:var(--ink);cursor:pointer;transition:opacity .2s;
+    }
+    .tb-back:active{opacity:.5;}
+    .tb-back svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.6;fill:none;}
+    .tb-word{font-size:13px;letter-spacing:6px;font-weight:600;text-transform:uppercase;}
+    .tb-spacer{width:40px;}
+
+    /* ---------- masthead ---------- */
+    .masthead{background:var(--sand);text-align:center;padding:14px 26px 30px;}
+    .mh-kicker{font-size:8.5px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;}
+    .mh-title{font-size:40px;font-weight:300;letter-spacing:4px;line-height:1;}
+    .mh-date{margin-top:14px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+    .mh-rule{width:34px;height:1px;background:var(--ink);margin:20px auto 0;opacity:.5;}
+
+    /* ---------- hero piece ---------- */
+    .hero{background:var(--sand);position:relative;overflow:hidden;}
+    .hero-img-wrap{aspect-ratio:4/5;overflow:hidden;position:relative;background:var(--sand);}
+    .hero-img{width:100%;height:112%;object-fit:cover;display:block;will-change:transform;}
+    .hero-info{padding:22px 26px 30px;background:var(--sand);}
+    .eyebrow{font-size:8.5px;letter-spacing:3.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+    .hero-name{font-size:25px;font-weight:300;line-height:1.3;letter-spacing:2px;}
+    .hero-maison{margin-top:11px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+    .hero-row{display:flex;align-items:center;justify-content:space-between;margin-top:26px;gap:16px;}
+    .hero-price{font-size:19px;font-weight:300;letter-spacing:.5px;}
+    .hero-price .was{font-size:12px;color:var(--muted);text-decoration:line-through;margin-inline-start:8px;}
+    /* scarcity cue */
+    .scarce{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink);}
+    .scarce .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);}
+
+    /* ---------- savings ribbon ---------- */
+    .ribbon{
+        margin:0;padding:30px 26px;text-align:center;background:var(--bg);
+        border-bottom:1px solid var(--line);
+    }
+    .ribbon-k{font-size:8.5px;letter-spacing:3.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+    .ribbon-v{font-size:34px;font-weight:300;letter-spacing:1px;}
+    .ribbon-v .cur{font-size:18px;color:var(--muted);margin-inline-end:3px;}
+
+    /* ---------- the edit grid (2-up standard) ---------- */
+    .edit{padding:40px 14px 10px;}
+    .edit-head{text-align:center;margin-bottom:28px;}
+    .edit-head .eyebrow{margin-bottom:10px;}
+    .edit-head h2{font-size:17px;font-weight:300;letter-spacing:3px;text-transform:uppercase;}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .card{cursor:pointer;}
+    .card-img{aspect-ratio:4/5;background:var(--sand);overflow:hidden;position:relative;}
+    .card-img img{width:100%;height:100%;object-fit:cover;display:block;}
+    .card-img.cut img{object-fit:contain;padding:9%;}
+    .card-eyebrow{font-size:7.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-top:12px;}
+    .card-name{font-size:12.5px;font-weight:400;letter-spacing:.4px;margin-top:5px;line-height:1.35;}
+    .card-price{font-size:12px;font-weight:300;color:var(--ink);margin-top:7px;letter-spacing:.3px;}
+
+    /* ---------- ritual footer ---------- */
+    .ritual{text-align:center;padding:46px 26px 20px;}
+    .ritual .eyebrow{margin-bottom:12px;}
+    .ritual p{font-size:12px;letter-spacing:1px;color:#5c564b;line-height:1.9;}
+    .ritual .time{color:var(--ink);font-weight:600;letter-spacing:2px;}
+
+    /* ============ BEHAVIOUR / MOTION ============ */
+    /* image develop — blurred + slightly zoomed, resolves to sharp */
+    .develop{filter:blur(16px);transform:scale(1.06);opacity:.6;
+        transition:filter 1.3s var(--e,cubic-bezier(.22,1,.36,1)),transform 1.4s var(--e,cubic-bezier(.22,1,.36,1)),opacity 1s ease;}
+    .develop.done{filter:blur(0);transform:scale(1);opacity:1;}
+    /* staggered reveal */
+    .rise{opacity:0;transform:translateY(22px);
+        transition:opacity .8s ease,transform .9s cubic-bezier(.22,1,.36,1);transition-delay:var(--d,0s);will-change:opacity,transform;}
+    .rise.in{opacity:1;transform:none;}
+    /* tactile press */
+    .press{transition:transform .35s cubic-bezier(.22,1,.36,1);}
+    .press.down{transform:scale(.97);}
+    /* scarcity dot quiet pulse */
+    @keyframes quietPulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+    .scarce .dot{animation:quietPulse 2.6s ease-in-out infinite;}
+    /* intro curtain */
+    #curtain{
+        position:fixed;inset:0;z-index:200;background:var(--sand);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+        transition:transform 1s cubic-bezier(.76,0,.24,1);
+    }
+    #curtain.lift{transform:translateY(-100%);}
+    #curtain .c-kicker{font-size:8.5px;letter-spacing:5px;text-transform:uppercase;color:var(--gold);opacity:0;transition:opacity .7s ease .15s;}
+    #curtain .c-title{font-size:34px;font-weight:300;letter-spacing:16px;padding-inline-start:16px;color:var(--ink);opacity:0;transform:translateY(8px);transition:opacity .9s ease .25s,transform .9s cubic-bezier(.22,1,.36,1) .25s,letter-spacing 1s ease .25s;}
+    #curtain.show .c-kicker{opacity:1;}
+    #curtain.show .c-title{opacity:1;transform:none;letter-spacing:9px;}
+
+    @media (prefers-reduced-motion:reduce){
+        .develop{filter:none!important;transform:none!important;opacity:1!important;transition:none!important;}
+        .rise{opacity:1!important;transform:none!important;transition:none!important;}
+        .scarce .dot{animation:none!important;}
+        #curtain{display:none!important;}
+    }
+</style>
+</head>
+<body>
+<div class="page">
+    <div class="topbar">
+        <button class="tb-back" id="backBtn" aria-label="חזרה">
+            <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <span class="tb-word">VERO</span>
+        <span class="tb-spacer"></span>
+    </div>
+
+    <!-- masthead -->
+    <header class="masthead">
+        <div class="mh-kicker rise">אוצרות יומית</div>
+        <h1 class="mh-title rise" style="--d:.06s">The Edit</h1>
+        <div class="mh-date rise" id="todayDate" style="--d:.12s"></div>
+        <div class="mh-rule rise" style="--d:.18s"></div>
+    </header>
+
+    <!-- hero piece of the day -->
+    <section class="hero">
+        <div class="hero-img-wrap">
+            <img class="hero-img develop" id="heroImg" src="women-hero.jpg" alt="היצירה של היום">
+        </div>
+        <div class="hero-info">
+            <div class="eyebrow rise">היצירה של היום</div>
+            <div class="hero-name rise" style="--d:.06s">מעיל צמר אוברסייז · גזרת וינטג'</div>
+            <div class="hero-maison rise" style="--d:.1s">Maison Vero · אוצר אישית</div>
+            <div class="hero-row rise" style="--d:.16s">
+                <div class="hero-price">₪1,480 <span class="was">₪4,200</span></div>
+                <div class="scarce"><span class="dot"></span> 1 מתוך 1 · לא יחזור</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- cumulative savings ribbon -->
+    <section class="ribbon">
+        <div class="ribbon-k rise">חסכת עד היום מול מחירי הבוטיק</div>
+        <div class="ribbon-v rise" style="--d:.08s"><span class="cur">₪</span><span class="count" data-to="18640">0</span></div>
+    </section>
+
+    <!-- the curated edit -->
+    <section class="edit">
+        <div class="edit-head">
+            <div class="eyebrow rise">נבחרו עבורך היום</div>
+            <h2 class="rise" style="--d:.06s">האוסף</h2>
+        </div>
+        <div class="grid" id="grid"></div>
+    </section>
+
+    <!-- ritual footer -->
+    <footer class="ritual">
+        <div class="eyebrow rise">הריטואל היומי</div>
+        <p class="rise" style="--d:.06s">אוסף חדש נאצר בכל יום בשעה <span class="time">20:00</span>.<br>כל פריט ייחודי. מי שמחכה — מפספס.</p>
+    </footer>
+</div>
+
+<!-- intro curtain -->
+<div id="curtain">
+    <div class="c-kicker">VERO · אוצרות יומית</div>
+    <div class="c-title">THE EDIT</div>
+</div>
+
+<script>
+(function(){
+    'use strict';
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ---- today's date, Hebrew ----
+    try{
+        var d=new Date();
+        document.getElementById('todayDate').textContent =
+            d.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'});
+    }catch(e){ document.getElementById('todayDate').textContent='היום'; }
+
+    // ---- build the curated grid (real repo assets) ----
+    var items=[
+        {img:'men-hero.jpg',    eyebrow:'קפסולה',    name:"חליפת צמר · תפירה איטלקית", price:'₪1,250'},
+        {img:'art-hero.png',    eyebrow:'אמנות',     name:'הדפס ממוספר · מהדורה נדירה', price:'₪2,900', cut:true},
+        {img:'clothing-hero.png',eyebrow:'אובייקט',  name:'ז\'קט עור וינטג\' · שחור', price:'₪980', cut:true},
+        {img:'gallery-hero.jpg',eyebrow:'אספנות',    name:'תיק מבנה · עור חלק', price:'₪3,400'}
+    ];
+    var grid=document.getElementById('grid');
+    items.forEach(function(it,i){
+        var card=document.createElement('div');
+        card.className='card press rise';
+        card.style.setProperty('--d',(i*0.07)+'s');
+        card.innerHTML=
+            '<div class="card-img '+(it.cut?'cut':'')+'"><img class="develop" src="'+it.img+'" alt=""></div>'+
+            '<div class="card-eyebrow">'+it.eyebrow+'</div>'+
+            '<div class="card-name">'+it.name+'</div>'+
+            '<div class="card-price">'+it.price+'</div>';
+        grid.appendChild(card);
+    });
+
+    // ---- image develop (blur -> sharp) on load ----
+    function develop(img){
+        if(reduce){img.classList.add('done');return;}
+        if(img.complete && img.naturalWidth){ requestAnimationFrame(function(){img.classList.add('done');}); }
+        else img.addEventListener('load',function(){img.classList.add('done');},{once:true});
+        img.addEventListener('error',function(){img.classList.add('done');},{once:true});
+    }
+    document.querySelectorAll('img.develop').forEach(develop);
+
+    // ---- reveal-on-scroll + count-up ----
+    function countUp(el){
+        var to=parseInt(el.getAttribute('data-to'),10)||0;
+        if(reduce){el.textContent=to.toLocaleString('he-IL');return;}
+        var start=null,dur=1400;
+        function step(t){
+            if(!start)start=t;
+            var p=Math.min((t-start)/dur,1);
+            var eased=1-Math.pow(1-p,3);
+            el.textContent=Math.round(to*eased).toLocaleString('he-IL');
+            if(p<1)requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+    var rises=[].slice.call(document.querySelectorAll('.rise'));
+    if(reduce || !('IntersectionObserver' in window)){
+        rises.forEach(function(el){el.classList.add('in');});
+        document.querySelectorAll('.count').forEach(countUp);
+    } else {
+        var io=new IntersectionObserver(function(entries){
+            entries.forEach(function(e){
+                if(e.isIntersecting){
+                    e.target.classList.add('in');
+                    var c=e.target.querySelector?e.target.querySelector('.count'):null;
+                    if(e.target.classList.contains('count'))countUp(e.target);
+                    else if(c)countUp(c);
+                    io.unobserve(e.target);
+                }
+            });
+        },{threshold:.2,rootMargin:'0px 0px -6% 0px'});
+        rises.forEach(function(el){
+            var r=el.getBoundingClientRect();
+            if(r.top<window.innerHeight && r.bottom>0){el.classList.add('in');var c=el.querySelector('.count');if(c)countUp(c);}
+            else io.observe(el);
+        });
+    }
+
+    // ---- tactile press ----
+    document.addEventListener('pointerdown',function(e){
+        var t=e.target.closest&&e.target.closest('.press');if(t)t.classList.add('down');
+    },{passive:true});
+    ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+        document.addEventListener(ev,function(){
+            document.querySelectorAll('.press.down').forEach(function(el){el.classList.remove('down');});
+        },{passive:true});
+    });
+
+    // ---- intro curtain (once per session, calm) ----
+    var curtain=document.getElementById('curtain');
+    var seen;try{seen=sessionStorage.getItem('vero_edit_curtain');}catch(e){seen=null;}
+    if(reduce||seen){ if(curtain)curtain.parentNode&&curtain.parentNode.removeChild(curtain); }
+    else{
+        requestAnimationFrame(function(){curtain.classList.add('show');});
+        setTimeout(function(){curtain.classList.add('lift');},1700);
+        setTimeout(function(){if(curtain.parentNode)curtain.parentNode.removeChild(curtain);
+            try{sessionStorage.setItem('vero_edit_curtain','1');}catch(e){}},2800);
+    }
+
+    // ---- back to feed ----
+    document.getElementById('backBtn').addEventListener('click',function(){
+        if(window.top!==window){ try{window.top.location.hash='#page=index.html';return;}catch(e){} }
+        location.href='index.html';
+    });
+})();
+</script>
+</body>
+</html>

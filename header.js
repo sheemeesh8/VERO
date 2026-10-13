@@ -1636,6 +1636,7 @@
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('women')">Women</a>
                 <a class="primary" onclick="veroCloseDrawer(); veroGoSegment('kids')">Kids</a>
                 <a class="primary" href="about.html">About</a>
+                <a class="primary" href="plans.html">DME Plans</a>
                 <span class="vero-drawer-heading">Events</span>
                 <a class="secondary" href="events.html" onclick="veroCloseDrawer()">Calendar &amp; happenings</a>
                 <span class="vero-drawer-heading" id="veroAreaHeading">Personal Area</span>

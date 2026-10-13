@@ -102,7 +102,12 @@
     // way everywhere.
     function cardClass(p) {
         const m = apply(p);
-        return (m.onSale ? ' is-sale' : '') + (m.saleFresh ? ' is-sale-new' : '');
+        // A DME match ("especially for you") carries its own flag on the item;
+        // the "is-dme" treatment is styled site-wide in vero-animations.js, so
+        // tagging it here makes every surface that draws the card show it.
+        const dme = p && (p.dme || p.isDme);
+        return (m.onSale ? ' is-sale' : '') + (m.saleFresh ? ' is-sale-new' : '') +
+               (dme ? ' is-dme' : '');
     }
 
     function save(p, patch) {
