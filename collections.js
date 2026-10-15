@@ -247,11 +247,22 @@
     // The same flip card the home feed uses: a front face (cover image, hold
     // hint, price / seller / name) and a frosted-glass back with the wishlist +
     // cart icons, revealed on press-and-hold (see feed-card.css / feed-card.js).
+    // Deterministic size label (no real size data exists yet): clothing gets a
+    // letter size derived from its name so it stays stable per product; art has none.
+    var E_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
+    function sizeFor(p) {
+        if ((p.type || '') === 'art' || p.collection === 'interiors') return '';
+        var s = String((p.name || '') + (p.id || '')), h = 0;
+        for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+        return E_SIZES[h % E_SIZES.length];
+    }
+
     function cardHTML(p, now) {
         var d = p._d || discountOf(p._raw, now);
         var media = p.cover
             ? '<img class="pc-photo" src="' + esc(p.cover) + '" alt="' + esc(p.name) + '">'
             : esc(p.icon);
+        var sz = sizeFor(p);
         var priceNum = toNum(d.onSale ? d.price : d.original);
         // Carry the product itself in the link so the product page renders it,
         // rather than falling back to its "Product name" placeholder. Same
@@ -268,13 +279,19 @@
         return '<a class="product-card' + (d.onSale ? ' is-sale' : '') + '" href="' + esc(href) + '" title="' + esc(p.name) + '"' + data + '>' +
                     '<div class="pc-flip">' +
                         '<div class="pc-face pc-front">' +
-                            '<div class="product-image">' + media + '</div>' +
+                            '<div class="product-image">' + media +
+                                (sz ? '<span class="pc-size">Size ' + esc(sz) + '</span>' : '') +
+                                '<div class="pc-left pc-price-top"><div class="product-price">' + priceBlock(d) + '</div></div>' +
+                                '<button class="pc-front-heart" type="button" aria-label="Add to wishlist" ' +
+                                    'onclick="event.preventDefault();event.stopPropagation();this.classList.toggle(\'wish-on\');">' +
+                                    '<svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>' +
+                                '</button>' +
+                            '</div>' +
                             '<div class="pc-holdhint">hold to add to</div>' +
                             '<div class="product-info">' +
-                                '<div class="pc-left"><div class="product-price">' + priceBlock(d) + '</div></div>' +
                                 '<div class="pc-right">' +
-                                    '<div class="product-seller">' + esc(p.seller) + '</div>' +
                                     '<div class="product-name">' + esc(p.name) + '</div>' +
+                                    '<div class="product-seller">' + esc(p.seller) + '</div>' +
                                 '</div>' +
                             '</div>' +
                         '</div>' +
