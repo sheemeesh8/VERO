@@ -59,7 +59,7 @@
            renders. design-system.css forces its own face on every element with a
            universal !important rule, so Poppins is reasserted the same way, scoped
            to #siteHeader, so only the header changes. */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&family=Pinyon+Script&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&display=swap');
         #siteHeader, #siteHeader *, #siteHeader *::before, #siteHeader *::after,
         #veroDrawerRoot, #veroDrawerRoot *, #veroDrawerRoot *::before, #veroDrawerRoot *::after,
         #veroSearchPageRoot, #veroSearchPageRoot *, #veroSearchPageRoot *::before, #veroSearchPageRoot *::after {
@@ -1574,29 +1574,64 @@
         #siteHeader.force-light .hdr-mode-pair .toggle-category::before { background: #111 !important; }
         /* (The mode-coloured red/black knob was reverted — the knob now uses the
            normal state colours: white over the hero, dark when the header is solid.) */
+
+        /* ===== Nav redesign (option B): fineline toggle + wordmark on the left,
+           icons on the right, an italic category row beneath. Appended last so it
+           wins; :not(#z) boosts beat the mode/state rules above. ===== */
+        #siteHeader .header-container.hdr-b:not(#z) {
+            display: flex !important; grid-template-columns: none !important;
+            align-items: center; gap: 14px;
+        }
+        #siteHeader .hdr-b .header-left:not(#z) {
+            grid-column: auto !important; justify-self: auto !important; gap: 14px !important;
+        }
+        #siteHeader .hdr-b .logo-peacock-wrap:not(#z) {
+            grid-column: auto !important; justify-self: auto !important;
+            position: static !important; left: auto !important; text-decoration: none !important;
+        }
+        #siteHeader .hdr-b .header-right:not(#z) {
+            grid-column: auto !important; justify-self: auto !important;
+            margin-left: auto !important; flex: 0 0 auto !important; gap: 4px !important;
+        }
+        /* Logo: Pinyon, no underline. */
+        #siteHeader .hdr-b .logo .logo-script:not(#z):not(#z):not(#z) { text-decoration: none !important; }
+        /* Fineline toggle: hollow ring knob (beats the state ::before fills). */
+        #siteHeader .hdr-b .toggle-category:not(#z):not(#z)::before {
+            background: transparent !important; border: 1.3px solid currentColor; box-sizing: border-box;
+        }
+        /* Italic category row, in the logo's quiet serif spirit. */
+        #siteHeader .hdr-cats {
+            display: flex; justify-content: center; gap: 22px;
+            padding: 2px 16px 12px; direction: ltr;
+        }
+        #siteHeader .hdr-cats a {
+            font-family: 'Cormorant Garamond', 'Bodoni Moda', serif; font-style: italic; font-weight: 500;
+            font-size: 16px; letter-spacing: .3px; color: #6f6a62; text-decoration: none;
+            cursor: pointer; white-space: nowrap; transition: color .2s;
+        }
+        #siteHeader .hdr-cats a:hover { color: #111; }
+        #siteHeader .hdr-cats a.on { color: #004225; border-bottom: 1px solid #004225; padding-bottom: 2px; }
+        /* Over the dark hero the category row goes white like the rest of the header. */
+        #siteHeader.sticky-look:not(.scrolled) .hdr-cats a,
+        #siteHeader.scrolled.over-dark .hdr-cats a { color: rgba(255,255,255,0.82); }
+        #siteHeader.sticky-look:not(.scrolled) .hdr-cats a.on,
+        #siteHeader.scrolled.over-dark .hdr-cats a.on { color: #fff; border-bottom-color: #fff; }
 `;
 
     // ---- Markup (identical everywhere) ----
     const MARKUP = `
-        <div class="header-container">
+        <div class="header-container hdr-b">
             <div class="header-left">
-                <a class="icon-btn" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu" title="Menu">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round">
-                        <line x1="3" y1="7" x2="21" y2="7"></line>
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="17" x2="21" y2="17"></line>
-                    </svg>
-                </a>
                 <span class="hdr-mode-pair" data-icon="mode">
                     <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
                         <span class="seg active" id="segArt">Art</span>
                         <span class="seg" id="segFashion">Fashion</span>
                     </div>
                 </span>
+                <a class="logo logo-peacock-wrap" href="index.html" aria-label="moravchick — home">
+                    <span class="logo-script" aria-hidden="true">moravchick</span>
+                </a>
             </div>
-            <a class="logo logo-peacock-wrap" href="index.html" aria-label="moravchick — home">
-                <span class="logo-script" aria-hidden="true">moravchick</span>
-            </a>
             <div class="header-right">
                 <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
@@ -1611,8 +1646,21 @@
                         </svg>
                     </button>
                 </span>
+                <a class="icon-btn" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu" title="Menu">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round">
+                        <line x1="3" y1="7" x2="21" y2="7"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="17" x2="21" y2="17"></line>
+                    </svg>
+                </a>
             </div>
         </div>
+        <nav class="hdr-cats" aria-label="Categories">
+            <a onclick="veroGoSegment('women')" role="button" tabindex="0">Women</a>
+            <a onclick="veroGoSegment('men')" role="button" tabindex="0">Men</a>
+            <a onclick="veroGoSegment('kids')" role="button" tabindex="0">Kids</a>
+            <a onclick="veroGoSegment('unisex')" role="button" tabindex="0">Unisex</a>
+        </nav>
     `;
 
     // ---- Slide-in side drawer (opened by the header hamburger) ----
