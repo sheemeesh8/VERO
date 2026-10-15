@@ -13425,26 +13425,26 @@ window.veroLocalImg = function (key) {
         (function feedNav() {
             const style = document.createElement('style');
             style.textContent = `
+                /* Reference-style bar: a full-width white bar that sits flush on the
+                   bottom edge of the screen, with a raised black "+" FAB in the middle.
+                   !important where nav-unify.js forces the old dark pill. */
                 .feed-nav {
-                    position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 50%;
-                    transform: translateX(-50%) translateY(26px);
-                    opacity: 0;
-                    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22,1,0.36,1);
-                    z-index: 900; display: flex; align-items: stretch; gap: 4px;
-                    /* Forced LTR so the ⋯ is pinned on the left and the category slide
-                       scrolls in from the right and vanishes behind it, regardless of
-                       the page's RTL. */
-                    direction: ltr;
-                    /* Shared bottom-bar size (feed / sale / seller area / personal area): 94vw up to 460px wide, 62px tall, 24px above the bottom edge. */
-                    width: 94vw; max-width: 460px; height: 62px; box-sizing: border-box;
-                    /* Free slider: items keep their natural width and the bar swipes
-                       sideways (no snapping) when they don't all fit. */
-                    overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
-                    overscroll-behavior-x: contain; scrollbar-width: none;
-                    background: rgba(17,17,17,0.97); backdrop-filter: blur(6px);
-                    border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 5px;
-                    box-shadow: 0 6px 26px rgba(0,0,0,0.28); font-family: inherit;
+                    position: fixed; bottom: 0; left: 0; right: 0;
+                    transform: translateY(100%);
+                    opacity: 1;
+                    transition: transform 0.5s cubic-bezier(0.22,1,0.36,1);
+                    z-index: 900; direction: ltr;
+                    display: flex !important; align-items: center; justify-content: space-around; gap: 4px;
+                    width: 100% !important; max-width: none !important;
+                    height: calc(74px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box;
+                    overflow: visible;
+                    background: #ffffff !important; backdrop-filter: none;
+                    border: none !important; border-radius: 22px 22px 0 0 !important;
+                    padding: 0 20px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+                    box-shadow: 0 -6px 24px rgba(0,0,0,0.08) !important; font-family: inherit;
                 }
+                /* The sliding white indicator is not used in the light bar. */
+                .feed-nav .feed-nav-ind { display: none !important; }
                 /* The moving slide: a clipped viewport with a track that scrolls itself
                    leftward, fading out behind the ⋯ button on the left. */
                 .feed-nav-view {
@@ -13462,9 +13462,9 @@ window.veroLocalImg = function (key) {
                        leftward by hand, the chips passing behind the ⋯ on the left. */
                     direction: ltr;
                 }
-                .feed-nav.in { opacity: 1; transform: translateX(-50%) translateY(0); }
+                .feed-nav.in { opacity: 1; transform: translateY(0); }
                 @media (prefers-reduced-motion: reduce) {
-                    .feed-nav { transition: none; opacity: 1; transform: translateX(-50%); }
+                    .feed-nav { transition: none; opacity: 1; transform: translateY(0); }
                 }
                 .feed-nav::-webkit-scrollbar { display: none; }
                 .feed-nav-tab {
@@ -13776,6 +13776,30 @@ window.veroLocalImg = function (key) {
                 .feed-nav .fn-cat-item.is-active { color: #111; width: auto; padding: 9px 18px; }
                 .feed-nav .fn-cat-item.is-active > span:not(.fn-cat-ic) {
                     max-width: 120px; opacity: 1; margin-inline-start: 8px; }
+                /* ===== Reference light bar: flat icons (no white pill), dark active,
+                   and a raised black "+" FAB in the middle. Overrides the 1c pill. ===== */
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) {
+                    flex-direction: column !important; gap: 0 !important; padding: 8px 10px !important;
+                    flex: 1 1 0 !important; background: transparent !important; color: #b7b5b0 !important;
+                }
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) span { display: none !important; }
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more).is-active {
+                    color: #111 !important; background: transparent !important; padding: 8px 10px !important;
+                }
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) svg {
+                    width: 24px !important; height: 24px !important;
+                }
+                /* The "+" upload button becomes the raised centre FAB. The extra
+                   :not()s out-specify the flat-icon rule above so the black fill wins. */
+                .feed-nav .fn-app.fn-fab:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) {
+                    flex: 0 0 auto !important; width: 56px !important; height: 56px !important;
+                    border-radius: 50% !important; background: #111 !important; color: #fff !important;
+                    transform: translateY(-16px) !important; padding: 0 !important; align-self: center !important;
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+                }
+                .feed-nav .fn-app.fn-fab:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) svg {
+                    stroke: #fff !important; width: 26px !important; height: 26px !important; stroke-width: 2 !important;
+                }
             `;
             document.head.appendChild(style2);
 
@@ -13850,8 +13874,10 @@ window.veroLocalImg = function (key) {
                 };
                 bar.appendChild(mkLink('Feed', 'index.html', ICON.feed, true));
                 bar.appendChild(mkLink('Cart', 'cart.html', ICON.cart, false));
-                // "+" — upload a product (same entry point as the header's upload action).
-                bar.appendChild(mkLink('Upload', 'upload-start.html', ICON.plus, false));
+                // "+" — upload a product. Styled as the raised centre FAB.
+                var up = mkLink('Upload', 'upload-start.html', ICON.plus, false);
+                up.classList.add('fn-fab');
+                bar.appendChild(up);
                 bar.appendChild(mkLink('Wishlist', 'wishlist.html', ICON.wish, false));
                 // "C" — opens the clothing-categories chooser popup.
                 const cBtn = document.createElement('button');
