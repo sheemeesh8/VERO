@@ -810,5 +810,30 @@ h3, h4, h5, h6, p,
     <script>window.VERO_RISE_SELECTOR = '.card';</script>
     <script src="assets/data-rise.js" defer></script>
 <script src="assets/line-icons.js"></script>
+<script>
+    /* Fit each square-tile number to (almost) the tile's side borders. Numbers
+       vary in length, so scale per value; a cap keeps a short number from
+       growing taller than the square. Re-runs after data loads and on resize. */
+    (function fitTileNumbers() {
+        var MAX = 56, MIN = 20, INSET = 14; // px gutter kept inside the side borders
+        function fit() {
+            document.querySelectorAll('.grid .card > .kpi-num').forEach(function (el) {
+                var tile = el.closest('.card'); if (!tile) return;
+                el.style.whiteSpace = 'nowrap';
+                el.style.display = 'inline-block';
+                el.style.setProperty('font-size', '40px', 'important'); // measure at a known size
+                var w = el.scrollWidth; if (!w) return;
+                var avail = tile.clientWidth - INSET * 2;
+                var fs = Math.max(MIN, Math.min(MAX, 40 * (avail / w)));
+                el.style.setProperty('font-size', fs + 'px', 'important');
+            });
+        }
+        var run = function () { requestAnimationFrame(fit); };
+        if (document.readyState === 'complete') run(); else window.addEventListener('load', run);
+        window.addEventListener('load', function () { setTimeout(run, 400); setTimeout(run, 1400); });
+        window.addEventListener('resize', run);
+        try { new MutationObserver(run).observe(document.body, { subtree: true, childList: true, characterData: true }); } catch (e) {}
+    })();
+</script>
 </body>
 </html>
