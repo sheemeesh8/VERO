@@ -1580,10 +1580,12 @@
            wins; :not(#z) boosts beat the mode/state rules above. ===== */
         #siteHeader .header-container.hdr-b:not(#z) {
             display: flex !important; grid-template-columns: none !important;
-            align-items: center; gap: 14px;
+            align-items: center; gap: 14px; flex-wrap: nowrap !important;
         }
         #siteHeader .hdr-b .header-left:not(#z) {
-            grid-column: auto !important; justify-self: auto !important; gap: 14px !important;
+            grid-column: auto !important; justify-self: auto !important; gap: 12px !important;
+            flex: 0 1 auto !important; order: 0 !important; width: auto !important;
+            justify-content: flex-start !important; min-width: 0 !important;
         }
         #siteHeader .hdr-b .logo-peacock-wrap:not(#z) {
             grid-column: auto !important; justify-self: auto !important;
@@ -1591,8 +1593,11 @@
         }
         #siteHeader .hdr-b .header-right:not(#z) {
             grid-column: auto !important; justify-self: auto !important;
-            margin-left: auto !important; flex: 0 0 auto !important; gap: 4px !important;
+            margin-left: auto !important; flex: 0 0 auto !important; gap: 6px !important;
+            order: 0 !important; width: auto !important; justify-content: flex-end !important;
         }
+        /* Keep the wordmark compact so toggle + logo + icons stay on one line on phones. */
+        #siteHeader .hdr-b .logo .logo-script:not(#z):not(#z):not(#z) { font-size: 26px !important; }
         /* Logo: Pinyon, no underline. */
         #siteHeader .hdr-b .logo .logo-script:not(#z):not(#z):not(#z) { text-decoration: none !important; }
         /* Fineline toggle: hollow ring knob (beats the state ::before fills). */
