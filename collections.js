@@ -276,7 +276,7 @@
         var data = ' data-name="' + esc(p.name) + '" data-seller="' + esc(p.seller) + '"' +
                    ' data-price="' + priceNum + '" data-icon="' + esc(p.icon) + '" data-cover="' + esc(p.cover || '') + '"' +
                    " data-product='" + esc(productData) + "'";
-        return '<a class="product-card' + (d.onSale ? ' is-sale' : '') + '" href="' + esc(href) + '" title="' + esc(p.name) + '"' + data + '>' +
+        return '<a class="product-card pc-e' + (d.onSale ? ' is-sale' : '') + '" href="' + esc(href) + '" title="' + esc(p.name) + '"' + data + '>' +
                     '<div class="pc-flip">' +
                         '<div class="pc-face pc-front">' +
                             '<div class="product-image">' + media +
