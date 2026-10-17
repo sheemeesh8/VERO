@@ -12293,6 +12293,33 @@ window.veroLocalImg = function (key) {
             });
         })();
 
+        // On the home page, the header's gender links (Women/Men/Kids/Unisex)
+        // filter the feed in-page by gender — the same behaviour as the gender
+        // slider — instead of reloading the page. Registered on load so it wins
+        // over header.js's navigating default.
+        window.addEventListener('load', function () {
+            function syncHdrCats(key) {
+                document.querySelectorAll('#siteHeader .hdr-cats a').forEach(function (a) {
+                    var oc = a.getAttribute('onclick') || '';
+                    a.classList.toggle('on', oc.indexOf("'" + key + "'") !== -1);
+                });
+            }
+            window.veroGoSegment = function (key) {
+                var k = (key === 'unisex') ? null : key;
+                var ok = k && typeof filterSegments !== 'undefined' && filterSegments[currentCategory]
+                    && filterSegments[currentCategory].some(function (s) { return s.key === k; });
+                if (typeof selectSegment === 'function') {
+                    if (ok) { if (currentSegment !== k) selectSegment(k); }
+                    else if (currentSegment) { selectSegment(currentSegment); } // clear → whole feed
+                }
+                // keep the gender rail's highlight in step with the header choice
+                document.querySelectorAll('#grRail .gr-card').forEach(function (c) {
+                    c.classList.toggle('on', c.dataset.key === 'unisex' ? !currentSegment : c.dataset.key === currentSegment);
+                });
+                syncHdrCats(key);
+            };
+        });
+
         function updateHm2Categories(category) {
             renderGenderRail(category);
             const slider = document.getElementById('hm2Slider');
