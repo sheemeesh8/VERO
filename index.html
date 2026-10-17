@@ -14237,15 +14237,19 @@ window.veroLocalImg = function (key) {
                 const marker = document.getElementById('heroMobile2')
                     || document.querySelector('.sale-showcase')
                     || document.getElementById('heroImage');
-                if (!marker) { bar.classList.add('in'); return; }
-                const bottom = marker.getBoundingClientRect().bottom;
-                // "crossed" once the gender slider's bottom has scrolled up near the
-                // top of the screen — i.e. we've moved past it into the feed.
-                const crossed = bottom <= window.innerHeight * 0.35;
+                // Bottom nav: appears once past the gender slider (entering the feed).
+                let crossed;
+                if (!marker) crossed = true;
+                else crossed = marker.getBoundingClientRect().bottom <= window.innerHeight * 0.35;
                 bar.classList.toggle('in', crossed);
-                // The header's Women/Men/Kids/Unisex row drops in as a popup with the
-                // same trigger — only once you've scrolled past the gender slider.
-                document.body.classList.toggle('cats-pop', crossed);
+                // Header + its Women/Men/Kids/Unisex popup: appear only once the actual
+                // product-cards block itself comes into view (not over the sale block).
+                const cardsBlock = document.querySelector('#feedContainer .products-grid')
+                    || document.querySelector('#feedContainer .feed-block');
+                const cardsIn = cardsBlock
+                    ? cardsBlock.getBoundingClientRect().top <= window.innerHeight * 0.6
+                    : crossed;
+                document.body.classList.toggle('cats-pop', cardsIn);
             }
             window.addEventListener('scroll', updateBar, { passive: true });
             window.addEventListener('resize', updateBar);
