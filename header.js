@@ -1600,10 +1600,7 @@
         #siteHeader .hdr-b .logo .logo-script:not(#z):not(#z):not(#z) { font-size: 26px !important; }
         /* Logo: Pinyon, no underline. */
         #siteHeader .hdr-b .logo .logo-script:not(#z):not(#z):not(#z) { text-decoration: none !important; }
-        /* Fineline toggle: hollow ring knob (beats the state ::before fills). */
-        #siteHeader .hdr-b .toggle-category:not(#z):not(#z)::before {
-            background: transparent !important; border: 1.3px solid currentColor; box-sizing: border-box;
-        }
+        /* Toggle knob kept in its normal (filled) state. */
         /* Italic category row, in the logo's quiet serif spirit. */
         #siteHeader .hdr-cats {
             display: flex; justify-content: center; gap: 22px;
