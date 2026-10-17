@@ -7853,7 +7853,9 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
    monogram crest, the house name in spaced caps, "The Sale" in high-contrast
    Bodoni, and a gold "Shop the Collection" link. */
 .sale-frame { position: absolute;
-    top: calc(76px + env(safe-area-inset-top, 0px)); left: 20px; right: 20px; bottom: 20px;
+    /* Top line dropped so the gap from the header icons down to the frame equals
+       the gap from the screen edge up to the header icons (symmetric spacing). */
+    top: calc(114px + env(safe-area-inset-top, 0px)); left: 20px; right: 20px; bottom: 20px;
     border: 1px solid rgba(255,255,255,0.75);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center; gap: 14px; padding: 26px 26px 130px; }
@@ -7989,7 +7991,7 @@ window.veroLocalImg = function (key) {
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
     <script src="media-store.js"></script>
-    <script src="header.js?v=58"></script>
+    <script src="header.js?v=59"></script>
     <script src="nav-unify.js" defer></script>
 
 <!-- ==================== UPLOAD PRODUCT VIEW ==================== -->
@@ -10398,20 +10400,24 @@ window.veroLocalImg = function (key) {
 
         // Set Category Helper
         function setCategory(category) {
+            // The Art/Fashion toggle was removed from the header, so these may be
+            // absent — guard every access so the mode still switches without it.
             const toggleBtn = document.getElementById('categoryToggleBtn');
             const segArt = document.getElementById('segArt');
             const segFashion = document.getElementById('segFashion');
 
-            toggleBtn.classList.remove('clothing', 'art');
-            toggleBtn.classList.add(category);
+            if (toggleBtn) {
+                toggleBtn.classList.remove('clothing', 'art');
+                toggleBtn.classList.add(category);
+            }
 
             // 'clothing' maps to the FASHION segment, 'art' to the ART segment.
             if (category === 'art') {
-                segArt.classList.add('active');
-                segFashion.classList.remove('active');
+                if (segArt) segArt.classList.add('active');
+                if (segFashion) segFashion.classList.remove('active');
             } else {
-                segFashion.classList.add('active');
-                segArt.classList.remove('active');
+                if (segFashion) segFashion.classList.add('active');
+                if (segArt) segArt.classList.remove('active');
             }
 
             currentCategory = category;
@@ -14292,19 +14298,23 @@ window.veroLocalImg = function (key) {
                 const marker = document.getElementById('heroMobile2')
                     || document.querySelector('.sale-showcase')
                     || document.getElementById('heroImage');
-                // Bottom nav: appears once past the gender slider (entering the feed).
-                let crossed;
-                if (!marker) crossed = true;
-                else crossed = marker.getBoundingClientRect().bottom <= window.innerHeight * 0.35;
-                bar.classList.toggle('in', crossed);
-                // Header + its Women/Men/Kids/Unisex popup: appear only once the actual
-                // product-cards block itself comes into view (not over the sale block).
+                // The bottom nav bar and the header's Women/Men/Kids/Unisex popup now
+                // appear together, and only once the header is CLOSE to the actual
+                // product cards — i.e. when the cards block has risen into the upper
+                // third of the screen (not while still over the Sale panel). This
+                // delays the nav/popup entrance and keeps them in sync.
                 const cardsBlock = document.querySelector('#feedContainer .products-grid')
                     || document.querySelector('#feedContainer .feed-block');
-                const cardsIn = cardsBlock
-                    ? cardsBlock.getBoundingClientRect().top <= window.innerHeight * 0.6
-                    : crossed;
-                document.body.classList.toggle('cats-pop', cardsIn);
+                let shown;
+                if (cardsBlock) {
+                    shown = cardsBlock.getBoundingClientRect().top <= window.innerHeight * 0.35;
+                } else if (marker) {
+                    shown = marker.getBoundingClientRect().bottom <= window.innerHeight * 0.35;
+                } else {
+                    shown = true;
+                }
+                bar.classList.toggle('in', shown);
+                document.body.classList.toggle('cats-pop', shown);
             }
             window.addEventListener('scroll', updateBar, { passive: true });
             window.addEventListener('resize', updateBar);

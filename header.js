@@ -1624,12 +1624,13 @@
     const MARKUP = `
         <div class="header-container hdr-b">
             <div class="header-left">
-                <span class="hdr-mode-pair" data-icon="mode">
-                    <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
-                        <span class="seg active" id="segArt">Art</span>
-                        <span class="seg" id="segFashion">Fashion</span>
-                    </div>
-                </span>
+                <a class="icon-btn" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu" title="Menu">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round">
+                        <line x1="3" y1="7" x2="21" y2="7"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="17" x2="21" y2="17"></line>
+                    </svg>
+                </a>
                 <a class="logo logo-peacock-wrap" href="index.html" aria-label="moravchick — home">
                     <span class="logo-script" aria-hidden="true">moravchick</span>
                 </a>
@@ -1648,13 +1649,6 @@
                         </svg>
                     </button>
                 </span>
-                <a class="icon-btn" onclick="veroToggleDrawer()" aria-label="Menu" role="button" tabindex="0" data-icon="menu" title="Menu">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round">
-                        <line x1="3" y1="7" x2="21" y2="7"></line>
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="17" x2="21" y2="17"></line>
-                    </svg>
-                </a>
             </div>
         </div>
         <nav class="hdr-cats" aria-label="Categories">
