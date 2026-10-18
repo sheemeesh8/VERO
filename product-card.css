@@ -57,7 +57,7 @@
     --row-2: 14px;
     /* How much of the card's foot belongs to the copy — the feed value, so the
        copy sits low, tucked near the bottom edge, on every page. */
-    --foot-h: 46px;
+    --foot-h: 54px;
 
     /* Design tokens set in Card Studio (card-studio.html). Edit here or export
        from the studio and every product card on the site follows. */
@@ -169,39 +169,123 @@
 /* The remove control the cart and wishlist rows carry keeps its own colour. */
 .product-image .product-icon.remove svg { stroke: #c0392b; }
 
-/* ---- The bottom: a template, not a layout ---- */
+/* ---- The bottom: product name over the company ----
+   The card's copy is two stacked lines at the foot: the piece's own name on
+   top (the loud line), the company beneath it (quiet). The price is lifted to
+   the card's top-right corner and the size to the top-left (see pc-social.js,
+   which moves the price node up and injects the size + the wishlist heart). */
 .product-info {
     position: absolute;
     inset: auto 0 0 0;
     z-index: 2;
     direction: ltr;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;   /* copy | figure */
-    grid-template-rows: var(--row-1);             /* title row only — the second (name) row is dropped */
-    column-gap: 12px;
-    row-gap: 0;
-    align-items: center;
-    padding: 0 14px 6px;          /* block sits low, near the bottom edge */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    row-gap: 2px;
+    padding: 0 46px 12px 14px;    /* right pad clears the wishlist heart */
     background: none;
     border: none;
 }
-/* The hairline rule and the second (name) row are dropped — the card's
-   bottom is now the single title row (company + price). */
-.product-info::after { content: none; }
-/* The markup wraps the copy in two boxes (.pc-right holds company, type and
-   rating; .pc-left holds the price). Those boxes are dissolved with
-   `display: contents` so the four lines become siblings in ONE grid — that is
-   what keeps the two sides on shared rows. Nested boxes each sized themselves,
-   which is how the rating ended up on a third line of its own. */
+.product-info::after { content: none; }   /* no hairline rule */
+/* The markup wraps the copy in .pc-right / .pc-left boxes; dissolve them so the
+   name and company stack directly in the flex column. */
 .pc-right,
 .pc-left { display: contents; }
 
-/* Row 1 is the title row, as on the feed: the company on the left, the price
-   on the right, on one shared baseline. */
-.product-seller { grid-area: 1 / 1 / 2 / 2; align-self: baseline; }
-.product-price  { grid-area: 1 / 2 / 2 / 3; justify-self: end; align-self: baseline; }
-/* The second line (the piece's descriptor) is dropped from the card. */
-.product-name   { display: none; }
+/* The piece's name — the loud line, on top. Stretches to the copy's width so a
+   long name is cut with an ellipsis (block, not flex, so the ellipsis shows)
+   rather than running under the heart. */
+.product-name {
+    order: 1;
+    display: block !important;
+    height: auto;
+    align-self: stretch;
+    min-width: 0;
+    width: 100%;
+}
+/* The company — the quiet line beneath. */
+.product-seller {
+    order: 2;
+    display: block;
+    height: auto;
+    align-self: stretch;
+    min-width: 0;
+    width: 100%;
+}
+/* The size and the price ride in the image field's top corners; the price
+   element is moved there from the copy by pc-social.js. */
+.product-image .product-price {
+    position: absolute;
+    top: 11px;
+    right: 14px;
+    z-index: 3;
+    height: auto;
+    display: block;
+    width: auto;
+    max-width: none;
+    overflow: visible;      /* defeat the ellipsis-group clipping in the corner */
+    pointer-events: none;
+}
+.pc-size {
+    position: absolute;
+    top: 13px;
+    left: 14px;
+    z-index: 3;
+    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: #8a857c;
+    pointer-events: none;
+    white-space: nowrap;
+}
+/* The wishlist heart — where the price used to sit. The app's own line-icon;
+   a hollow oak stroke that fills solid black once saved. */
+.pc-wish {
+    position: absolute;
+    right: 10px;
+    bottom: 9px;
+    z-index: 4;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+.pc-wish svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: var(--pc-icon-color, #2A331B);
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: fill 0.18s, stroke 0.18s, transform 0.15s;
+}
+.pc-wish:hover svg { transform: scale(1.1); }
+.pc-wish.saved svg { fill: #111; stroke: #111; }
+
+/* The cart icon is dropped from the card face — the price takes its corner. */
+.product-image .product-icon.cart { display: none !important; }
+
+/* On-sale, in the corner: show the sale price alone, in the sale red — that is
+   the sale signal now, so the struck old price, the "-%", and the dog-ear fold
+   (which sat in this same corner) are all dropped. */
+.product-image .product-price .vprice-was,
+.product-image .product-price .vprice-off { display: none !important; }
+.product-image .product-price .vprice-wrap { display: inline-flex; align-items: baseline; }
+.product-card.is-sale .product-image .product-price .vprice-sale {
+    font-size: var(--pc-price-size, 13px);
+    font-weight: 500;
+    color: #c0392b;
+}
+.product-card.is-sale::after { display: none; }
 
 /* The cart's 48-hour hold notice is not part of the template — it rides on the
    field above the copy, so a cart card stays the same height as every other. */
@@ -248,43 +332,39 @@
     font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
 }
 
-/* Row 1, left: the company. Quiet — one weight, no emphasis. */
+/* The company — the quiet line, beneath the name. Small Oswald caps, muted. */
 .product-seller {
-    height: var(--row-1);
-    display: flex;
-    align-items: center;
-    font-family: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif !important;
-    font-size: var(--pc-seller-size, 22px);
+    display: block;
+    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
+    font-size: 10px;
     font-weight: 400;
-    letter-spacing: 0.4px;
+    letter-spacing: 1.4px;
     text-transform: uppercase;
-    color: var(--pc-seller-color, #111);
+    color: #9a948a;
     cursor: pointer;
     transform: none;
 }
-/* Company name in Bodoni — beat the site-wide Aharoni 3-id !important override
-   (aharoni.css) by matching its 3-id specificity plus a class. */
+/* Beat the site-wide Aharoni 3-id !important override (aharoni.css) by matching
+   its 3-id specificity plus a class, so the company stays Oswald. */
 .product-seller:not(#zzzz):not(#zzzz):not(#zzzz) {
-    font-family: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif !important;
+    font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
 }
 
-/* Row 2, left: what the piece is — dropped from the card. */
+/* The piece's name — the loud line, on top. Bodoni, dark. */
 .product-name {
-    display: none;
-    height: var(--row-2);
-    align-items: center;
-    font-family: 'Cormorant Garamond', 'Bodoni Moda', Georgia, serif !important;
-    font-style: italic;
-    font-size: var(--pc-name-size, 17px);
+    display: block;
+    font-family: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif !important;
+    font-style: normal;
+    font-size: 13px;
     font-weight: 500;
-    letter-spacing: 0.2px;
-    color: var(--pc-name-color, #5b5750);
+    letter-spacing: 0.3px;
+    color: #16150f;
     transform: none;
 }
 
-/* Row 1, right: the price — the one loud thing on the card. */
+/* The price — the loud figure in the top-right corner (moved there by
+   pc-social.js). */
 .product-price {
-    height: var(--row-2);
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -395,12 +475,11 @@
 /* The social-proof row (saves · offers · views) is styled by pc-social.js
    itself, so it can never appear unstyled next to a stale copy of this file. */
 
-/* The product name reads as a subtitle: clearly smaller than the company line
-   above the rule, and muted. !important because several pages still size it
-   in their own <style> (and the card RULE above is that they should not). */
+/* The product name is the loud top line now. !important because several pages
+   still size it in their own <style> (and the card RULE is that they should not). */
 .product-card .product-name {
-    font-size: 9.5px !important;
-    color: #6b6760 !important;
+    font-size: 13px !important;
+    color: #16150f !important;
 }
 
 /* ---- Controls inside the card: minimal, never a bubble ----
@@ -420,6 +499,9 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    /* Pushed below the SIZE mark in the top-left corner so the two don't collide. */
+    top: 34px;
+    left: 14px;
     font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
     font-size: 8.5px;
     font-weight: 400;
