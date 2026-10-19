@@ -591,8 +591,87 @@
             filter: none;
         }
         #heroImage.clothing-video #heroVideo { display: block; }
+        /* Clothing hero: video fills the top two-thirds of the box (raised up so the
+           top is cropped), leaving a clean white band across the bottom third. The
+           overall hero height / scroll is unchanged. */
+        #heroImage.clothing-video #heroVideo {
+            top: 0; bottom: auto;
+            height: 66.667%;
+            object-position: center bottom;
+        }
+        /* White band across the bottom third of the clothing hero — holds the
+           rotating 2-up product strip. */
+        .hero-whiteband {
+            position: absolute; left: 0; right: 0; bottom: 0;
+            height: 33.333%;
+            background: #fff;
+            z-index: 5;
+            display: none;
+        }
+        #heroImage.clothing-video .hero-whiteband { display: block; }
+        /* In clothing mode the caption copy stays within the top two-thirds (over
+           the video), so it never collides with the white product strip. */
+        #heroImage.clothing-video .hero-overlay-inner { bottom: 33.333%; }
         /* The clothing hero clip runs brighter — matched to the Sale screen below. */
         #heroVideo { filter: none; }
+
+        /* ===== White-band product strip — shared by the clothing hero and the Sale
+           screen. Two minimalist product cards (photo, name, price) side by side,
+           swapping at random through a pool of ten. No dots, no arrows. ===== */
+        .wb-strip {
+            position: absolute; inset: 0; z-index: 6;
+            display: flex; align-items: center; justify-content: center;
+            padding: 12px 14px 30px;
+            direction: ltr; pointer-events: auto;
+        }
+        /* The clothing hero's scroll cue would sit on top of the strip — the white
+           band replaces it, so hide it in clothing-video mode. */
+        #heroImage.clothing-video .hero-ov-bottom,
+        #heroImage.clothing-video .slide-more--over { display: none; }
+        .wb-pair {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+            width: 100%; max-width: 520px; height: 100%;
+            opacity: 1; transition: opacity 0.5s ease;
+        }
+        .wb-pair.wb-fading { opacity: 0; }
+        .wb-card {
+            display: flex; flex-direction: column; min-width: 0;
+            text-decoration: none; color: #111;
+        }
+        .wb-img {
+            flex: 1 1 auto; min-height: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: #f3f1ec; overflow: hidden; font-size: 40px;
+        }
+        .wb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .wb-meta { padding: 7px 2px 0; text-align: left; }
+        .wb-name {
+            font-family: 'Poppins','Inter',sans-serif;
+            font-size: 11px; font-weight: 500; letter-spacing: 0.02em;
+            color: #1b2330; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .wb-price {
+            font-family: 'Poppins','Inter',sans-serif;
+            font-size: 11px; font-weight: 400; color: #555; margin-top: 2px;
+        }
+        .wb-price .vprice-was { text-decoration: line-through; color: #b0a89c; margin-right: 6px; font-size: 10px; }
+        .wb-price .vprice-sale { color: #c0392b; font-weight: 600; }
+        .wb-price .vprice-off { display: none; }
+
+        /* Sale screen (#heroMobile2): same treatment — image fills the top two-thirds
+           (raised, top cropped), the bottom third is a white product strip. */
+        #heroMobile2 .hm2-video {
+            top: 0; bottom: auto; height: 66.667%;
+            object-position: center bottom;
+        }
+        #heroMobile2 .sale-frame { bottom: 33.333%; padding-bottom: 40px; }
+        .hm2-whiteband {
+            position: absolute; left: 0; right: 0; bottom: 0;
+            height: 33.333%; background: #fff; z-index: 3;
+        }
+        /* Keep the Sale slide cue above the white band (its white text would vanish
+           on the band), sitting just inside the image region. */
+        #heroMobile2 .slide-more--over { bottom: calc(33.333% + 12px); }
         #heroImage.art-video #heroVideoArt { display: block; }
         /* Art-mode hero video: full colour, full-bleed like the fashion hero. */
 
@@ -8139,6 +8218,10 @@ window.veroLocalImg = function (key) {
                 </div>
             </div>
         </div>
+        <!-- Bottom-third white band: a rotating 2-up product strip (clothing only). -->
+        <div class="hero-whiteband" aria-hidden="false">
+            <div class="wb-strip" data-wb="hero"></div>
+        </div>
         <!-- The clothing hero shows the current season's collection instead of the
              generic welcome copy. -->
         <script>
@@ -8271,6 +8354,7 @@ window.veroLocalImg = function (key) {
                 </span>
             </span>
         </a>
+        <div class="hm2-whiteband"><div class="wb-strip" data-wb="sale"></div></div>
         <div class="slide-more slide-more--over" aria-hidden="true"><span>Slide for more</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 9l6 6 6-6"/></svg></div>
     </div>
 
@@ -11738,6 +11822,68 @@ window.veroLocalImg = function (key) {
         }
         seedCategorySales(clothingProducts);
         seedCategorySales(artProducts);
+
+        // ===== White-band product strip (clothing hero + Sale screen) =====
+        // Two minimalist cards side by side — photo/icon, name, price — drawn from a
+        // random pool of ten catalogue pieces and swapped at random. Some pieces carry
+        // a seeded sale (struck-through price), the rest are regular collection pieces,
+        // so each card reads as "from the collection" or "from the sale" per product.
+        // No dots, no arrows — the pair just crossfades on its own.
+        (function initWhiteBandStrips() {
+            var strips = document.querySelectorAll('.wb-strip');
+            if (!strips.length) return;
+            function shuffle(a) {
+                a = a.slice();
+                for (var i = a.length - 1; i > 0; i--) {
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var t = a[i]; a[i] = a[j]; a[j] = t;
+                }
+                return a;
+            }
+            function cardHTML(p) {
+                var img = (p.processed_cover || p.cover)
+                    ? '<img src="' + (p.processed_cover || p.cover) + '" alt="' + (p.name || '') + '">'
+                    : (p.icon || '');
+                var price = (typeof veroPriceHTML === 'function')
+                    ? veroPriceHTML(p) : '<span class="vprice">' + p.price + '</span>';
+                var href = (typeof productPageUrl === 'function') ? productPageUrl(p) : '#';
+                return '<a class="wb-card" href="' + href + '">' +
+                    '<div class="wb-img">' + img + '</div>' +
+                    '<div class="wb-meta">' +
+                        '<div class="wb-name">' + (p.name || '') + '</div>' +
+                        '<div class="wb-price">' + price + '</div>' +
+                    '</div>' +
+                '</a>';
+            }
+            function initStrip(strip) {
+                var src = (typeof clothingProducts !== 'undefined' && clothingProducts.length)
+                    ? clothingProducts : [];
+                var pool = shuffle(src).slice(0, 10);
+                if (pool.length < 2) return;
+                var order = shuffle(pool.map(function (_, i) { return i; }));
+                var ptr = 0;
+                function nextPair() {
+                    if (ptr + 2 > order.length) { order = shuffle(order); ptr = 0; }
+                    var pair = [pool[order[ptr]], pool[order[ptr + 1]]];
+                    ptr += 2;
+                    return pair;
+                }
+                function render(el, pair) { el.innerHTML = pair.map(cardHTML).join(''); }
+                var pairEl = document.createElement('div');
+                pairEl.className = 'wb-pair';
+                strip.innerHTML = '';
+                strip.appendChild(pairEl);
+                render(pairEl, nextPair());
+                setInterval(function () {
+                    pairEl.classList.add('wb-fading');
+                    setTimeout(function () {
+                        render(pairEl, nextPair());
+                        pairEl.classList.remove('wb-fading');
+                    }, 500);
+                }, 3600);
+            }
+            Array.prototype.forEach.call(strips, initStrip);
+        })();
 
         // ---- The status row under the home title ----
         // Items is a real count of the catalogue, so publishing a listing moves it.
