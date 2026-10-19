@@ -2867,8 +2867,44 @@
         .vcal-kicker { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif; font-size: 9px;
             letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; font-weight: 700;
             display: block; margin-bottom: 6px; }
-        .vcal-inner { max-width: 460px; width: 100%; margin: 0 auto; padding: 20px 8px 0;
-            border-top: 1px solid #111; }
+        .vcal-inner { max-width: 460px; width: 100%; margin: 0 auto; padding: 8px 8px 0;
+            border-top: none; }
+        /* ---- Minimal wall-calendar sheet (Kalstore direction): a full month word,
+               a Mon-first grid with last/next month ghosted, and the brand gold/green
+               kept only as a quiet dot under an event day. ---- */
+        .vcm-sheet { max-width: 360px; width: 100%; margin: 0 auto; position: relative;
+            background: #f4f4f2; border-radius: 4px; padding: 34px 24px 24px; direction: ltr;
+            box-shadow: 0 2px 3px rgba(20,18,10,0.05), 0 24px 46px -26px rgba(20,18,10,0.38); }
+        .vcm-clip { position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+            width: 104px; height: 16px; background: #141412; border-radius: 3px; }
+        .vcm-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+        .vcm-month { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 700;
+            font-size: clamp(30px, 9vw, 46px); line-height: 0.85; letter-spacing: -0.025em; color: #111110; }
+        .vcm-yr { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 400; font-size: 15px;
+            color: #111110; padding-top: 6px; letter-spacing: 0.01em; }
+        .vcm-cal { width: 100%; border-collapse: collapse; table-layout: fixed;
+            font-family: 'Helvetica Neue', Arial, sans-serif; }
+        .vcm-cal th { font-weight: 500; font-size: 10px; color: #6f6e69; text-align: center;
+            padding: 0 0 11px; letter-spacing: 0.02em; }
+        .vcm-cal td { text-align: center; height: 42px; font-weight: 600; font-size: 16px; color: #111110;
+            border-top: 1px solid #e4e3df; position: relative; font-variant-numeric: tabular-nums; }
+        .vcm-cal td.vcm-mut { color: #c7c6c1; font-weight: 400; }
+        .vcm-dots { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
+            display: flex; gap: 3px; }
+        .vcm-ev { width: 5px; height: 5px; border-radius: 50%; }
+        .vcm-ev.art { background: #b5892f; } .vcm-ev.sh { background: #4a7a63; }
+        .vcm-cal td.vcm-today::before { content: ''; position: absolute; left: 50%; top: 47%;
+            transform: translate(-50%, -50%); width: 31px; height: 31px; border: 1.5px solid #111110;
+            border-radius: 50%; pointer-events: none; }
+        .vcm-legend { display: flex; gap: 16px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #e4e3df; }
+        .vcm-lg { display: flex; align-items: center; gap: 7px; font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10px; font-weight: 600; color: #6f6e69; letter-spacing: 0.02em; }
+        .vcm-lg i { width: 6px; height: 6px; border-radius: 50%; }
+        .vcm-lg i.art { background: #b5892f; } .vcm-lg i.sh { background: #4a7a63; }
+        .vcm-lg i.now { width: 11px; height: 11px; border: 1.5px solid #111110; background: none; }
+        /* Heading for the events block that follows the sheet (to be restyled next). */
+        .vcm-evhead { max-width: 360px; margin: 30px auto 2px; font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 11px; letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; font-weight: 600; }
         .vcal-head { display: flex; align-items: baseline; justify-content: space-between;
             margin-bottom: 18px; }
         .vcal-month { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif;
@@ -10985,13 +11021,45 @@ window.veroLocalImg = function (key) {
             const inner = document.createElement('div'); inner.className = 'vcal-inner';
             cal.appendChild(inner);
 
-            const head = document.createElement('div'); head.className = 'vcal-head';
-            head.innerHTML = '<span>' +
-                    '<span class="vcal-kicker">Events this month</span>' +
-                    '<span class="vcal-month">' + months[month] + '</span>' +
-                '</span>' +
-                '<span class="vcal-year">' + year + '</span>';
-            inner.appendChild(head);
+            // ---- Minimal wall-calendar sheet: the full month word + a Mon-first grid,
+            //      last/next month ghosted, today ringed, and a quiet gold/green dot on
+            //      event days. Built from the live date + events above.
+            const sheet = document.createElement('div'); sheet.className = 'vcm-sheet';
+            const leading = (firstDow + 6) % 7;                     // blanks before day 1 (Mon-first)
+            const prevDays = new Date(year, month, 0).getDate();
+            const cells = [];
+            for (let i = 0; i < leading; i++) cells.push({ n: prevDays - leading + 1 + i, mut: true });
+            for (let d = 1; d <= daysInMonth; d++) cells.push({ n: d, d: d });
+            let nx = 1; while (cells.length % 7 !== 0) cells.push({ n: nx++, mut: true });
+            const cellHTML = c => {
+                if (c.mut) return '<td class="vcm-mut">' + c.n + '</td>';
+                const types = Array.from(new Set((byDay[c.d] || []).map(e => e.type)));
+                const dots = types.length
+                    ? '<span class="vcm-dots">' + types.map(t => '<span class="vcm-ev ' + t + '"></span>').join('') + '</span>'
+                    : '';
+                return '<td class="' + (c.d === today ? 'vcm-today' : '') + '">' + c.n + dots + '</td>';
+            };
+            let weeks = '';
+            for (let i = 0; i < cells.length; i += 7)
+                weeks += '<tr>' + cells.slice(i, i + 7).map(cellHTML).join('') + '</tr>';
+            sheet.innerHTML =
+                '<span class="vcm-clip"></span>' +
+                '<div class="vcm-top"><div class="vcm-month">' + months[month] + '</div>' +
+                    '<div class="vcm-yr">' + year + '</div></div>' +
+                '<table class="vcm-cal"><thead><tr>' +
+                    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => '<th>' + d + '</th>').join('') +
+                '</tr></thead><tbody>' + weeks + '</tbody></table>' +
+                '<div class="vcm-legend">' +
+                    '<span class="vcm-lg"><i class="art"></i>Art</span>' +
+                    '<span class="vcm-lg"><i class="sh"></i>Second-hand</span>' +
+                    '<span class="vcm-lg"><i class="now"></i>Today</span>' +
+                '</div>';
+            inner.appendChild(sheet);
+
+            // Events block below the sheet (kept as-is — to be restyled next).
+            const evHead = document.createElement('div'); evHead.className = 'vcm-evhead';
+            evHead.textContent = 'Events this month';
+            inner.appendChild(evHead);
 
             // Option C3 — an agenda list: the month's events in date order, each a
             // row with a date block on the left and name / place / time on the right.
