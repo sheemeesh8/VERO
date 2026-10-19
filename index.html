@@ -635,7 +635,7 @@
            side inset), so the cards match the feed exactly in size and spacing; we
            only centre it vertically in the band and drive the crossfade here. */
         .wb-strip .wb-pair {
-            width: 100%; margin-top: 0; margin-bottom: 0;
+            width: 100%; margin: 0;
             opacity: 1; transition: opacity 0.5s ease;
         }
         .wb-strip .wb-pair.wb-fading { opacity: 0; }
@@ -1258,11 +1258,10 @@
                 /* Holds the Men / Women / Kids panels as a single-viewport horizontal
                    pager. Each slide sits stacked in place; the incoming one slides in
                    from the right and rises over the current one (cover reveal). */
-                /* OMEGA-style pinned hand-off: like the hero, the Sale panel pins to the
-                   top once it has covered the hero, and the feed (Categories) then scrolls
-                   up over it — a sticky transition between the Sale screen and Categories. */
-                position: sticky;
-                top: 0;
+                /* Sticky hand-off disabled — the Sale panel scrolls as an ordinary
+                   block (it is also relocated into the feed as the second block). */
+                position: relative;
+                top: auto;
                 z-index: 1;
                 width: 100%;
                 height: 100vh;
@@ -7896,33 +7895,6 @@ button.hero-ov-btn { background: transparent; cursor: pointer; border-radius: 0;
 .hero-ov-btn--solid { background: #fff; color: #111; }
 .hero-ov-btn:active { opacity: 0.75; }
 
-/* ---- Hero CTA zone: Upload (top-left) + Search (bottom-left, same size) +
-        a tall white "the closet magazine" on the right spanning both rows. ---- */
-#heroImage .hero-ov-actions--two { position: static; min-height: 0; }
-#heroImage .hero-ov-actions--two .hero-ov-btn { position: absolute; z-index: 5; }
-/* Left column, top: the primary CTA (Upload a product / Shop the collection). */
-#heroImage .hero-ov-actions--two .hero-ov-btn--solid:not(.hero-ov-btn--mag) {
-    left: 24px; right: 41%;
-    bottom: calc(158px + env(safe-area-inset-bottom, 0px));
-    height: 44px !important; justify-content: center;
-}
-/* Right column: the tall white magazine button, bottom-aligned with the search. */
-#heroImage .hero-ov-actions--two .hero-ov-btn--mag {
-    left: 61%; right: 24px;
-    bottom: calc(104px + env(safe-area-inset-bottom, 0px));
-    height: 98px !important;
-    background: #fff !important; color: #111 !important; border: 1px solid #fff !important;
-    display: flex !important; flex-direction: column; align-items: center; justify-content: center;
-    white-space: normal !important; text-align: center; line-height: 1.55 !important;
-    letter-spacing: 2.4px !important; padding: 0 12px !important;
-}
-/* Left column, bottom: the search, matched to the Upload button's size. */
-#heroImage .hero-search {
-    left: 24px; right: 41%;
-    bottom: calc(104px + env(safe-area-inset-bottom, 0px));
-    height: 44px;
-}
-
 /* -- Header over the Sales image → feed edge: white only below the feed's top line. -- */
 html body header#siteHeader.hdr-split.hdr-split,
 html body header#siteHeader.hdr-split.hdr-split.scrolled {
@@ -8287,7 +8259,7 @@ window.veroLocalImg = function (key) {
                     <!-- Hero actions: list a piece, or open the magazine. -->
                     <div class="hero-ov-actions hero-ov-actions--two">
                         <a class="hero-ov-btn hero-ov-btn--solid" href="upload-start.html">Upload a product</a>
-                        <button class="hero-ov-btn hero-ov-btn--mag" type="button" onclick="openMagazine()">the closet magazine</button>
+                        <button class="hero-ov-btn" type="button" onclick="openMagazine()">Magazine</button>
                     </div>
                     <form class="hero-search" role="search" onsubmit="return heroSearch(this)">
                         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -8395,7 +8367,7 @@ window.veroLocalImg = function (key) {
                     <!-- Art mode's only collection for now: Interior Design (see collections.js). -->
                     <div class="hero-ov-actions hero-ov-actions--two">
                         <a class="hero-ov-btn hero-ov-btn--solid" href="interiors.html">Shop the collection</a>
-                        <button class="hero-ov-btn hero-ov-btn--mag" type="button" onclick="openMagazine()">the closet magazine</button>
+                        <button class="hero-ov-btn" type="button" onclick="openMagazine()">Magazine</button>
                     </div>
                 </div>
             </div>
@@ -14595,30 +14567,24 @@ window.veroLocalImg = function (key) {
             // Men/Women/Kids gender slider, and slides up the moment you scroll PAST
             // that slider — i.e. on entering the feed (the SALES block below it).
             // Slides back down when you scroll above it again.
-            let barPinned = false;
             function updateBar() {
-                // The bottom nav bar rises at the EXACT moment the header turns solid
-                // (its "popup"), and the Women/Men/Kids/Unisex popup appears with them —
-                // all three driven by the same trigger the header itself uses: the
-                // feed's top edge reaching the header's bottom edge.
                 const hdr = document.getElementById('siteHeader');
                 const hdrH = (hdr && hdr.offsetHeight) || 0;
+                // The header popup still appears when the feed's top edge reaches the
+                // header (unchanged).
                 const feedEl = document.querySelector('.feed-section');
-                let shown;
-                if (feedEl) {
-                    shown = feedEl.getBoundingClientRect().top <= hdrH;
-                } else {
-                    const marker = document.getElementById('heroMobile2')
-                        || document.querySelector('.sale-showcase')
-                        || document.getElementById('heroImage');
-                    shown = marker ? marker.getBoundingClientRect().bottom <= window.innerHeight * 0.35 : true;
-                }
-                // Once the bar first rises (on entering the feed) keep it pinned, so a
-                // later upward scroll never drops it — matching the personal-area bar.
-                if (shown) barPinned = true;
-                const show = shown || barPinned;
-                bar.classList.toggle('in', show);
-                document.body.classList.toggle('cats-pop', show);
+                const headerPop = feedEl
+                    ? feedEl.getBoundingClientRect().top <= hdrH
+                    : true;
+                // The bottom nav bar appears ONLY once the Categories section has been
+                // scrolled past — i.e. its bottom edge rises above the header — and
+                // hides again when you scroll back up above it.
+                const cats = document.getElementById('genderRail');
+                const navShown = cats
+                    ? cats.getBoundingClientRect().bottom <= hdrH
+                    : headerPop;
+                bar.classList.toggle('in', navShown);
+                document.body.classList.toggle('cats-pop', headerPop);
             }
             window.addEventListener('scroll', updateBar, { passive: true });
             window.addEventListener('resize', updateBar);
