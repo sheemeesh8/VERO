@@ -1651,12 +1651,6 @@
                 </span>
             </div>
         </div>
-        <nav class="hdr-cats" aria-label="Categories">
-            <a onclick="veroGoSegment('women')" role="button" tabindex="0">Women</a>
-            <a onclick="veroGoSegment('men')" role="button" tabindex="0">Men</a>
-            <a onclick="veroGoSegment('kids')" role="button" tabindex="0">Kids</a>
-            <a onclick="veroGoSegment('unisex')" role="button" tabindex="0">Unisex</a>
-        </nav>
     `;
 
     // ---- Slide-in side drawer (opened by the header hamburger) ----
