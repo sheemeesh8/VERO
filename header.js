@@ -1044,7 +1044,6 @@
         .vero-drawer-social .badge.show { display: flex; }
         /* Add-product: a plus inside a ring, sitting to the right of the wishlist. */
         .vero-drawer-social .vero-drawer-add {
-            margin-left: auto;
             width: 38px; height: 38px; border-radius: 50%;
             align-items: center; justify-content: center;
             border: 1.5px solid #c9c1b2; color: #1b1916;
