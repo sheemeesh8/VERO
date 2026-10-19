@@ -25,7 +25,7 @@
     var INDS = '.feed-nav-ind,.sec-ind,.sa-ind,.area-ind,.stats-subind,.set-ind,.stf-ind,.vinbox-ind';
 
     var css = [
-        BARS + '{background:rgba(17,17,17,0.97)!important;border-color:transparent!important;border-radius:999px!important;}',
+        BARS + '{background:rgba(17,17,17,0.97)!important;border-color:transparent!important;border-radius:0!important;}',
         TABS + '{padding:9px 16px!important;font-size:10px!important;min-height:38px!important;border-radius:999px!important;'
              + 'display:inline-flex!important;align-items:center;justify-content:center;}',
         INDS + '{background:#fff!important;box-shadow:none!important;border:none!important;border-radius:999px!important;'
