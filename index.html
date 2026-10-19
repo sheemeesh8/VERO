@@ -2890,19 +2890,19 @@
         .vcm-cal td { text-align: center; height: 42px; font-weight: 600; font-size: 16px; color: #111110;
             border-top: 1px solid #e4e3df; position: relative; font-variant-numeric: tabular-nums; }
         .vcm-cal td.vcm-mut { color: #c7c6c1; font-weight: 400; }
-        /* Event days + today are marked by colour (NISMO red-pink), not by circles. */
-        .vcm-cal td.vcm-ev-day { color: var(--vcm-accent); font-weight: 700; }
-        .vcm-cal td.vcm-today { color: var(--vcm-accent); font-weight: 700; }
+        /* Only a tapped date takes the accent colour; today keeps a quiet underline. */
+        .vcm-cal td.vcm-d { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .vcm-cal td.vcm-sel { color: var(--vcm-accent); font-weight: 700; }
         .vcm-cal td.vcm-today::after { content: ''; position: absolute; left: 50%; bottom: 7px;
-            transform: translateX(-50%); width: 15px; height: 2px; background: var(--vcm-accent);
+            transform: translateX(-50%); width: 15px; height: 2px; background: #111110;
             border-radius: 1px; pointer-events: none; }
+        .vcm-cal td.vcm-today.vcm-sel::after { background: var(--vcm-accent); }
         .vcm-legend { display: flex; gap: 18px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #e4e3df;
             font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10px; font-weight: 600;
             letter-spacing: 0.06em; text-transform: uppercase; }
-        .vcm-lg-ev { color: var(--vcm-accent); }
         .vcm-lg-today { color: #6f6e69; }
-        .vcm-lg-today u { text-underline-offset: 3px; text-decoration-thickness: 2px;
-            text-decoration-color: var(--vcm-accent); }
+        .vcm-lg-today u { text-underline-offset: 3px; text-decoration-thickness: 2px; text-decoration-color: #111110; }
+        .vcm-lg-hint { color: #9a958c; }
         /* Heading for the events block that follows the sheet (to be restyled next). */
         .vcm-evhead { max-width: 360px; margin: 30px auto 2px; font-family: 'Oswald', 'Segoe UI', sans-serif;
             font-size: 11px; letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; font-weight: 600; }
@@ -11034,9 +11034,8 @@ window.veroLocalImg = function (key) {
             let nx = 1; while (cells.length % 7 !== 0) cells.push({ n: nx++, mut: true });
             const cellHTML = c => {
                 if (c.mut) return '<td class="vcm-mut">' + c.n + '</td>';
-                const cls = [c.d === today ? 'vcm-today' : '', byDay[c.d] ? 'vcm-ev-day' : '']
-                    .filter(Boolean).join(' ');
-                return '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + c.n + '</td>';
+                const cls = 'vcm-d' + (c.d === today ? ' vcm-today' : '');
+                return '<td class="' + cls + '" data-d="' + c.d + '">' + c.n + '</td>';
             };
             let weeks = '';
             for (let i = 0; i < cells.length; i += 7)
@@ -11049,10 +11048,21 @@ window.veroLocalImg = function (key) {
                     ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => '<th>' + d + '</th>').join('') +
                 '</tr></thead><tbody>' + weeks + '</tbody></table>' +
                 '<div class="vcm-legend">' +
-                    '<span class="vcm-lg-ev">Event</span>' +
                     '<span class="vcm-lg-today"><u>Today</u></span>' +
+                    '<span class="vcm-lg-hint">Tap a date</span>' +
                 '</div>';
             inner.appendChild(sheet);
+
+            // Tap a date to select it — only the selected one takes the accent colour.
+            const calEl = sheet.querySelector('.vcm-cal');
+            calEl.addEventListener('click', ev => {
+                const td = ev.target.closest('td.vcm-d');
+                if (!td || !calEl.contains(td)) return;
+                const cur = calEl.querySelector('td.vcm-sel');
+                if (cur === td) { td.classList.remove('vcm-sel'); return; }   // tap again to clear
+                if (cur) cur.classList.remove('vcm-sel');
+                td.classList.add('vcm-sel');
+            });
 
             // Events block below the sheet (kept as-is — to be restyled next).
             const evHead = document.createElement('div'); evHead.className = 'vcm-evhead';
