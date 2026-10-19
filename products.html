@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="moravchick is a curated marketplace for pre-loved fashion and art. Discover unique pieces, chat with sellers and complete every sale safely in person.">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
     <title>moravchick — My Products</title>
+    <script src="vero-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
@@ -210,18 +213,28 @@
         }
         .old-price { text-decoration: line-through; color: #9a9a95; font-size: 0.78em; margin-left: 6px; }
 
-        /* Quick "assign to collection" picker on each live card. Sits over the
-           image so a seller can file an already-listed piece without opening the
-           editor. Its own click handling keeps the card's edit link from firing. */
-        .product-card .pe-collection {
-            position: absolute; right: 12px; bottom: 12px; z-index: 4;
-            max-width: calc(60% - 12px);
-            font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
-            padding: 6px 10px; border: 1px solid #000; border-radius: 999px;
-            background: rgba(255,255,255,0.92); color: #1c1c1c; cursor: pointer;
+        /* Quick "assign to collection" picker under each live card, so a seller
+           can file an already-listed piece without opening the editor. Minimal:
+           wide caps over a hairline that spans the card. */
+        .prod-cell .pe-coll {
+            position: relative; align-self: stretch;
+            padding: 0 0 6px; border-bottom: 1px solid #2A331B; cursor: pointer;
+        }
+        /* The label: widely tracked caps, centred on the card's width. */
+        .prod-cell .pe-coll-text {
+            display: flex; justify-content: center; align-items: center;
+            letter-spacing: 5.5px; padding-left: 5.5px;   /* even, wide tracking; pad balances the last letter's space */
+            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif !important;
+            font-size: 10.5px; font-weight: 400; text-transform: uppercase; line-height: 1;
+            color: #2A331B; pointer-events: none;
+        }
+        /* The native picker lies invisibly over it, so tapping anywhere opens it. */
+        .prod-cell .pe-collection {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer; border: none; font-size: 16px;
             -webkit-appearance: none; appearance: none;
         }
-        .product-card .pe-collection:hover { background: #fff; }
+        .prod-cell .pe-coll:hover { opacity: 0.7; }
 
         /* History controls: sort toggle + date-range trigger. */
         .hist-controls { display: flex; align-items: center; gap: 12px; }
@@ -324,7 +337,8 @@
         .drafts-link { justify-content: center; }
     </style>
     <!-- The shared product card, so drafts render as the same object as the feed. -->
-    <link rel="stylesheet" href="product-card.css">
+    <link rel="stylesheet" href="product-card.css?v=6">
+    <script src="pc-social.js?v=6"></script>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
@@ -526,20 +540,30 @@ h3, h4, h5, h6, p,
         // Quick collection picker for a live card. Its clicks are kept from
         // bubbling to the card's edit link so choosing a collection never
         // navigates away; onchange files the piece into that collection.
-        const COLLECTION_OPTS = [['', 'Collection +'], ['spring', '🌸 Spring'], ['summer', '☀️ Summer'], ['autumn', '🍂 Autumn'], ['winter', '❄️ Winter']];
+        const COLLECTION_OPTS = [['', 'Collection +'], ['spring', 'Spring'], ['summer', 'Summer'], ['autumn', 'Autumn'], ['winter', 'Winter']];
+        // The label shown under the card: the collection's name (no emoji), one
+        // span per letter so flexbox can spread it across the full width.
+        function collLabel(v) {
+            const hit = COLLECTION_OPTS.find(([k]) => k === (v || ''));
+            const text = v && hit ? hit[1].replace(/^\S+\s+/, '') : 'Collection +';
+            return Array.from(text).map(ch => `<span>${ch === ' ' ? '&nbsp;' : ch}</span>`).join('');
+        }
         function collectionSelect(p, idx) {
             const opts = COLLECTION_OPTS.map(([v, l]) =>
                 `<option value="${v}" ${((p.collection || '') === v) ? 'selected' : ''}>${l}</option>`).join('');
-            return `<select class="pe-collection" title="Belongs to the collection" aria-label="Assign collection"
+            return `<label class="pe-coll"><span class="pe-coll-text" aria-hidden="true">${collLabel(p.collection)}</span>` +
+                   `<select class="pe-collection" title="Belongs to the collection" aria-label="Assign collection"
                         onmousedown="event.stopPropagation()"
-                        onclick="event.stopPropagation();event.preventDefault();"
-                        onchange="veroSetCardCollection(event, ${idx})">${opts}</select>`;
+                        onclick="event.stopPropagation();"
+                        onchange="veroSetCardCollection(event, ${idx})">${opts}</select></label>`;
         }
         window.veroSetCardCollection = function (e, i) {
             e.stopPropagation();
             if (!listings[i]) return;
             listings[i].collection = e.target.value;
             save('vero_listings', listings);
+            const t = e.target.parentNode.querySelector('.pe-coll-text');
+            if (t) t.innerHTML = collLabel(e.target.value);
         };
 
         function card(p, idx, past) {
@@ -572,7 +596,6 @@ h3, h4, h5, h6, p,
                         <span class="status-badge ${status}">${badgeText}</span>
                         ${hasDisc ? `<span class="disc-badge">-${disc}%</span>` : ''}
                         ${past ? '' : `<span class="pe-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg></span>`}
-                        ${past ? '' : collectionSelect(p, idx)}
                     </div>
                     <div class="product-info">
                         <div class="pc-left">
@@ -587,7 +610,8 @@ h3, h4, h5, h6, p,
             const cardEl = past
                 ? `<div class="product-card" title="${p.name || 'Untitled listing'}">${inner}</div>`
                 : `<a class="product-card" href="${editHref}" title="${p.name || 'Untitled listing'}">${inner}</a>`;
-            return `<div class="prod-cell ${past ? 'past' : ''}">${cardEl}</div>`;
+            // The collection picker sits under the card, not on its image.
+            return `<div class="prod-cell ${past ? 'past' : ''}">${cardEl}${past ? '' : collectionSelect(p, idx)}</div>`;
         }
 
         // ---- Draft card (inline preview, links into the drafts editor) ----
@@ -864,5 +888,6 @@ h3, h4, h5, h6, p,
     <script src="vero-editor.js"></script>
     <script src="assets/didone-hairline.js"></script>
     <script src="nav-icons.js" defer></script>
+<script src="assets/line-icons.js"></script>
 </body>
 </html>

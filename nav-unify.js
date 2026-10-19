@@ -15,7 +15,9 @@
 (function () {
     'use strict';
 
-    var RED = '#EB2323';
+    // Active label/icon colour on the white sliding pill. Black to match the
+    // home feed bar's 1c treatment (was the brand red).
+    var RED = '#111';
 
     // All bars / tabs / indicators share these metrics so heights and motion line up.
     var BARS = '.feed-nav,.sec-nav,.sa-nav,.area-tabs,.stats-subnav,.set-nav,.stf-tabs,.vinbox-tabs';
@@ -23,7 +25,7 @@
     var INDS = '.feed-nav-ind,.sec-ind,.sa-ind,.area-ind,.stats-subind,.set-ind,.stf-ind,.vinbox-ind';
 
     var css = [
-        BARS + '{background:rgba(42,51,27,0.96)!important;border-color:transparent!important;border-radius:999px!important;}',
+        BARS + '{background:rgba(17,17,17,0.97)!important;border-color:transparent!important;border-radius:26px!important;}',
         TABS + '{padding:9px 16px!important;font-size:10px!important;min-height:38px!important;border-radius:999px!important;'
              + 'display:inline-flex!important;align-items:center;justify-content:center;}',
         INDS + '{background:#fff!important;box-shadow:none!important;border:none!important;border-radius:999px!important;'

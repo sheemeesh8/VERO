@@ -29,7 +29,10 @@
         } catch (e) {}
       })();
     </script>
-    <title>moravchick - Fashion & Art Marketplace</title>
+    <meta name="description" content="moravchick is a curated marketplace for pre-loved fashion and art. Discover unique pieces, chat with sellers and complete every sale safely in person.">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
+    <title>moravchick — Fashion &amp; Art Marketplace</title>
+    <script src="vero-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Inter:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@200;300;400;500;600&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -585,8 +588,7 @@
             object-fit: cover;
             display: none;
             z-index: 0;
-            /* Low exposure, matching the category hero clips. */
-            filter: brightness(0.6) saturate(1.03);
+            filter: none;
         }
         #heroImage.clothing-video #heroVideo { display: block; }
         /* The clothing hero clip runs brighter — matched to the Sale screen below. */
@@ -647,7 +649,7 @@
             z-index: 2;
             display: block;
             pointer-events: none;            /* let the hero scroll; buttons re-enable below */
-            background: linear-gradient(to bottom, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0.04) 38%, rgba(0,0,0,0.72) 100%);
+            background: none;
         }
         .hero-overlay-inner {
             position: absolute;
@@ -1018,6 +1020,7 @@
 
         /* Second full-screen hero image — mobile only (see the media query below). */
         .hero-mobile-2 { display: none; }
+        .hero-rl-frame { display: none; }
         /* Mid image panel between hero and M/W/K slider — mobile only. */
         .hero-mid { display: none; }
         /* The Men/Women/Kids guiding line lives in the categories slider; mobile-only. */
@@ -1031,17 +1034,33 @@
            are built by JS (buildOmegaHero) on mobile only. Placeholder images for now —
            swap the two background-image URLs below for the real mobile shots. */
         @media (max-width: 768px) {
-            /* Sectioned scroll: each full-screen panel "catches" as you scroll near it.
-               proximity (not mandatory) so scrolling is never trapped or jumpy. */
-            /* No y-snap here: the hero + Men/Women/Kids panels are sticky (top:0), and
-               scroll-snapping on sticky elements makes scrolling catch and land
-               imprecisely. The OMEGA cover reveal works on free scroll, so snapping is
-               left off for smooth, accurate scrolling through all three stages. */
-            /* No scroll-snapping here. The hero is sticky (top:0) and the feed scrolls
-               up over it (OMEGA cover reveal); snapping the feed top against the sticky
-               hero made the transition from hero → categories → feed "catch" and stall.
-               Free scroll keeps the whole hand-off smooth and continuous. */
-            html { scroll-snap-type: none; }
+            /* Sectioned scroll for the FIRST two parts (hero → Sale): proximity snap so
+               the scroll "catches" and feels static between them, while the rest of the
+               hand-off into the feed stays free. The snap point lives on the relative
+               Sale panel (#heroMobile2), never on the sticky hero (snapping a sticky
+               element makes the back-scroll catch imprecisely). */
+            /* The scroll catches on the Categories section so it rests framed like a
+               slide (the hero → Sale hand-off stays sticky; proximity keeps it gentle). */
+            html { scroll-snap-type: y proximity; }
+            /* Never snap the sticky panels themselves — only the Categories rests. */
+            #heroImage.hero, .hero-mobile-2 { scroll-snap-align: none; }
+            #genderRail.gr { scroll-snap-align: start; scroll-snap-stop: normal; scroll-margin-top: calc(90px + env(safe-area-inset-top, 0px)); }
+
+            /* Ralph Lauren heritage frame over the hero (matches the Sale panel).
+               The top line starts below the header so it never sits behind it. */
+            #heroImage .hero-rl-frame {
+                display: block; position: absolute;
+                /* Top line matches the Sale panel's frame (symmetric spacing below the header). */
+                top: calc(95px + env(safe-area-inset-top, 0px)); left: 20px; right: 20px; bottom: calc(95px + env(safe-area-inset-bottom, 0px));
+                z-index: 4; pointer-events: none;
+                border: 1px solid rgba(255,255,255,0.75);
+            }
+            #heroImage .hero-rl-frame::before {
+                content: ''; position: absolute; inset: 5px;
+                border: 1px solid rgba(255,255,255,0.4);
+            }
+            /* Hide the frame during the opening intro (the wordmark reveal). */
+            body.vero-intro #heroImage .hero-rl-frame { display: none !important; }
 
             /* The hero image pins to the top; everything after it (the second image and
                the feed) scrolls up and covers it — the OMEGA-style reveal. */
@@ -1164,7 +1183,11 @@
                 /* Holds the Men / Women / Kids panels as a single-viewport horizontal
                    pager. Each slide sits stacked in place; the incoming one slides in
                    from the right and rises over the current one (cover reveal). */
-                position: relative;
+                /* OMEGA-style pinned hand-off: like the hero, the Sale panel pins to the
+                   top once it has covered the hero, and the feed (Categories) then scrolls
+                   up over it — a sticky transition between the Sale screen and Categories. */
+                position: sticky;
+                top: 0;
                 z-index: 1;
                 width: 100%;
                 height: 100vh;
@@ -1557,13 +1580,7 @@
         /* Darken the top of the hero so the transparent header reads clearly over
            the image — a soft top-down scrim that fades out by mid-frame. */
         .hero::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 45%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.28) 45%, rgba(0,0,0,0) 100%);
-            pointer-events: none;
-            z-index: 1;
+            content: none;
         }
 
         /* Water animation canvas — fills the hero, sits behind all hero content. */
@@ -2139,6 +2156,30 @@
         #siteHeader.sticky-look:not(.scrolled):not(.hero-left-box) .header-left .hdr-mode-pair .toggle-category::before {
             background: #fff !important;
         }
+
+        /* Home feed: the header's category row (Women/Men/Kids/Unisex) is not a
+           permanent row — it slides in from under the header once you scroll past
+           the gender slider into the feed. Absolutely positioned so it reserves no
+           space (no layout jump), and it slides down from behind the header. */
+        #siteHeader .header-container { position: relative; z-index: 2; }
+        #siteHeader .hdr-cats:not(#z) {
+            position: absolute; top: 100%; left: 0; right: 0; z-index: 1;
+            transform: translateY(-100%); opacity: 0; pointer-events: none;
+            padding: 8px 16px 14px !important;
+            background: rgba(255,255,255,0.97); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+            transition: transform .45s cubic-bezier(.22,1,.36,1), opacity .30s ease;
+        }
+        body.cats-pop #siteHeader .hdr-cats:not(#z) {
+            transform: translateY(0); opacity: 1; pointer-events: auto;
+        }
+        /* Home: the whole header slides down into view when you enter the feed
+           (the product cards); over the hero and gender slider it is tucked up
+           out of sight. */
+        #siteHeader { transition: transform .45s cubic-bezier(.22,1,.36,1); will-change: transform; }
+        body:not(.cats-pop) #siteHeader { transform: translateY(-100%); }
+        body.cats-pop #siteHeader { transform: translateY(0); }
 
         @media (max-width: 900px) {
             .htb-inner { padding: 0 28px 28px; gap: 24px; }
@@ -2826,8 +2867,71 @@
         .vcal-kicker { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif; font-size: 9px;
             letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; font-weight: 700;
             display: block; margin-bottom: 6px; }
-        .vcal-inner { max-width: 460px; width: 100%; margin: 0 auto; padding: 20px 8px 0;
-            border-top: 1px solid #111; }
+        .vcal-inner { max-width: 460px; width: 100%; margin: 0 auto; padding: 8px 8px 0;
+            border-top: none; }
+        /* ---- Minimal wall-calendar sheet (Kalstore direction): a full month word,
+               a Mon-first grid with last/next month ghosted, and the brand gold/green
+               kept only as a quiet dot under an event day. ---- */
+        .vcm-sheet { max-width: 360px; width: 100%; margin: 0 auto; position: relative;
+            background: #f4f4f2; border-radius: 4px; padding: 34px 24px 24px; direction: ltr;
+            --vcm-accent: #E8004C;   /* NISMO-style red-pink for event days + today */
+            box-shadow: 0 2px 3px rgba(20,18,10,0.05), 0 24px 46px -26px rgba(20,18,10,0.38); }
+        .vcm-clip { position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+            width: 104px; height: 16px; background: #141412; border-radius: 3px; }
+        .vcm-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+        .vcm-month { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 700;
+            font-size: clamp(30px, 9vw, 46px); line-height: 0.85; letter-spacing: -0.025em; color: #111110; }
+        .vcm-yr { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 400; font-size: 15px;
+            color: #111110; padding-top: 6px; letter-spacing: 0.01em; }
+        .vcm-cal { width: 100%; border-collapse: collapse; table-layout: fixed;
+            font-family: 'Helvetica Neue', Arial, sans-serif; }
+        .vcm-cal th { font-weight: 500; font-size: 10px; color: #6f6e69; text-align: center;
+            padding: 0 0 11px; letter-spacing: 0.02em; }
+        .vcm-cal td { text-align: center; height: 42px; font-weight: 600; font-size: 16px; color: #111110;
+            border-top: 1px solid #e4e3df; position: relative; font-variant-numeric: tabular-nums; }
+        .vcm-cal td.vcm-mut { color: #c7c6c1; font-weight: 400; }
+        /* Only a tapped date takes the accent colour; today keeps a quiet underline. */
+        .vcm-cal td.vcm-d { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .vcm-cal td.vcm-sel { color: var(--vcm-accent); font-weight: 700; }
+        .vcm-cal td.vcm-today::after { content: ''; position: absolute; left: 50%; bottom: 7px;
+            transform: translateX(-50%); width: 15px; height: 2px; background: #111110;
+            border-radius: 1px; pointer-events: none; }
+        .vcm-cal td.vcm-today.vcm-sel::after { background: var(--vcm-accent); }
+        .vcm-legend { display: flex; gap: 18px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #e4e3df;
+            font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10px; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase; }
+        .vcm-lg-today { color: #6f6e69; }
+        .vcm-lg-today u { text-underline-offset: 3px; text-decoration-thickness: 2px; text-decoration-color: #111110; }
+        .vcm-lg-hint { color: #9a958c; }
+        /* Heading for the events block that follows the sheet (to be restyled next). */
+        .vcm-evhead { max-width: 360px; margin: 32px auto 4px; font-family: 'Oswald', 'Segoe UI', sans-serif;
+            font-size: 11px; letter-spacing: 2.6px; text-transform: uppercase; color: #9a958c; font-weight: 600; }
+        /* Events agenda below the sheet — matches the wall calendar (Helvetica, hairlines),
+           the accent (tapped-date red-pink) used only on the next event + an active row. */
+        .vce-list { max-width: 360px; width: 100%; margin: 0 auto; --vce-accent: #E8004C;
+            font-family: 'Helvetica Neue', Arial, sans-serif; }
+        .vce-item { display: flex; align-items: center; gap: 16px; padding: 15px 4px;
+            border-top: 1px solid #e8e7e3; text-decoration: none; color: inherit;
+            transition: background 0.2s ease; -webkit-tap-highlight-color: transparent; }
+        .vce-item:first-child { border-top: none; }
+        .vce-date { flex: 0 0 auto; width: 40px; text-align: center; }
+        .vce-dn { display: block; font-size: 25px; font-weight: 700; color: #1a1a19; line-height: 1;
+            font-variant-numeric: tabular-nums; }
+        .vce-dow { display: block; font-size: 9px; font-weight: 600; letter-spacing: 1.4px;
+            text-transform: uppercase; color: #b3ada3; margin-top: 6px; }
+        .vce-body { min-width: 0; flex: 1; }
+        .vce-name { font-size: 16px; font-weight: 600; color: #1a1a19; line-height: 1.2; }
+        .vce-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 7px;
+            font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #9a958c; }
+        .vce-meta span + span { padding-left: 11px; border-left: 1px solid #dedcd6; }
+        .vce-arrow { flex: 0 0 auto; width: 17px; height: 17px; color: #cbcac4; }
+        .vce-next { font-size: 8px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
+            color: var(--vce-accent); border: 1px solid var(--vce-accent); border-radius: 999px;
+            padding: 1px 6px; margin-left: 8px; vertical-align: 2px; white-space: nowrap; }
+        .vce-item.is-next .vce-dn { color: var(--vce-accent); }
+        .vce-item.is-past { opacity: 0.5; }
+        .vce-item.is-active { background: #fbf3f6; }
+        .vce-item.is-active .vce-dn, .vce-item.is-active .vce-name { color: var(--vce-accent); }
         .vcal-head { display: flex; align-items: baseline; justify-content: space-between;
             margin-bottom: 18px; }
         .vcal-month { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif;
@@ -6043,6 +6147,7 @@
             color: #8a8a8a;
         }
 
+
         /* ==================== SECURE CHAT — Quiet Luxury UI ==================== */
         .vchat {
             --c-bg: #F9F8F6;
@@ -6769,7 +6874,8 @@
     <!-- FEATURE 2: dynamic category photo guide (<vero-photo-guide>). -->
     <script src="photo-guide.js"></script>
     <!-- The product card, shared by every page (single source: product-card.css). -->
-    <link rel="stylesheet" href="product-card.css">
+    <link rel="stylesheet" href="product-card.css?v=6">
+    <script src="pc-social.js?v=6"></script>
     <!-- ==================== HOME FEED — FIGMA LAYOUT ====================
          The home feed's sections (built into index.html's markup and filled by
          renderVeroFeatures): five featured picks, a full-width hero band, a
@@ -7690,9 +7796,9 @@ h3, h4, h5, h6, p,
 #heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-mid { align-items: flex-start !important; text-align: left !important; }
 #heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-eyebrow { text-align: left !important; margin-bottom: 12px; letter-spacing: 4px; }
 #heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-title:not(#zz):not(#zz):not(#zz):not(#zz) {
-    font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important; font-weight: 200 !important;
-    text-transform: none !important; text-align: left !important; letter-spacing: 0 !important;
-    font-size: clamp(40px, 12vw, 54px) !important; line-height: 1.02 !important; margin: 0 !important; max-width: 300px;
+    font-family: 'Bodoni Moda', 'Didot', Georgia, serif !important; font-weight: 500 !important;
+    text-transform: none !important; text-align: center !important; letter-spacing: 0.5px !important;
+    font-size: clamp(42px, 13vw, 60px) !important; line-height: 1.0 !important; margin: 0 auto !important; max-width: none;
 }
 #heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-heading { display: none !important; }
 #heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-mid { margin-top: 12px !important; }
@@ -7787,11 +7893,13 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 #feedContainer .promo-slider--feed .fp-btn-label { display: inline; }
 
 /* -- Top of the feed: categories as large swipeable cards (option D). -- */
-#genderRail.gr { padding: 18px 0 22px !important; background: #fff; margin: 0 0 18px !important; direction: ltr; }
+/* "Shop by / Categories" removed — the feed below rises in its place. */
+#genderRail { display: none !important; }
+#genderRail.gr { padding: 52px 0 22px !important; background: #fff; margin: 0 0 18px !important; direction: ltr; }
 #genderRail .gr-eyebrow { display: block; padding: 0 20px !important; font-family: 'Poppins', 'Inter', sans-serif; font-size: 8.5px; font-weight: 300;
-    letter-spacing: 4px; text-transform: uppercase; color: rgba(17,17,17,0.55); }
+    letter-spacing: 4px; text-transform: uppercase; color: rgba(17,17,17,0.55); text-align: center; }
 #genderRail .gr-head:not(#zz):not(#zz):not(#zz) { margin: 4px 0 12px !important; padding: 0 20px !important; font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important;
-    font-size: 32px; font-weight: 200; letter-spacing: 0.01em; color: #111; text-transform: none; }
+    font-size: 32px; font-weight: 200; letter-spacing: 0.01em; color: #111; text-transform: none; text-align: center; }
 #genderRail .gr-rail { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 20px !important; scroll-padding: 0 20px;
     -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .gr-rail::-webkit-scrollbar { display: none; }
@@ -7813,7 +7921,7 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 /* G3: text tabs above one big image; the tab picks the category, the card
    slides to it, and "Shop X →" sits inside the image. */
 #genderRail .gr-stage { position: relative; }
-#genderRail .gr-seg { display: flex; gap: 22px; margin: 0 20px 12px; border-bottom: 1px solid #e6e4de; }
+#genderRail .gr-seg { display: flex; gap: 22px; margin: 0 20px 12px; border-bottom: 1px solid #e6e4de; justify-content: center; }
 #genderRail .gr-seg button { position: relative; border: none; background: none; color: #b5b2aa; cursor: pointer; padding: 0 0 12px;
     font-family: 'Aharoni CLM', 'Segoe UI', sans-serif; font-size: 15px; letter-spacing: 0; text-transform: none;
     transition: color 0.2s; -webkit-tap-highlight-color: transparent; }
@@ -7835,24 +7943,79 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 #genderRail .gr-cap { left: 16px; right: 16px; bottom: 16px; }
 #genderRail .gr-kick { padding-left: 6px; }
 
+/* === Categories cards styled like the hero's framed "look": a double thin-line
+      white frame inset over the image, centred editorial caption with a hairline
+      rule, and a compact white CTA (echoing .sale-frame / .rl-cta). === */
+.gr-card::before {
+    content: ''; position: absolute; inset: 14px; z-index: 2; pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.75);
+    outline: 1px solid rgba(255,255,255,0.4); outline-offset: -5px;
+}
+/* The frame takes over from the old active-card inset ring. */
+.gr-card.on { box-shadow: 0 10px 30px rgba(0,0,0,0.18) !important; }
+/* Caption centred inside the frame. */
+#genderRail .gr-cap {
+    left: 26px !important; right: 26px !important; bottom: 40px !important;
+    align-items: center; text-align: center;
+}
+#genderRail .gr-name:not(#zz):not(#zz):not(#zz) {
+    order: 0; padding: 0 !important; margin: 0 !important;
+    font-family: 'Bodoni Moda', 'Didot', Georgia, serif !important;
+    font-weight: 600 !important; font-size: clamp(34px, 11vw, 48px) !important;
+    letter-spacing: 1px; line-height: 0.98; color: #fff;
+}
+/* Hairline rule under the name, like .rl-rule in the hero. */
+#genderRail .gr-name:not(#zz):not(#zz):not(#zz)::after {
+    content: ''; display: block; width: 44px; height: 1px;
+    background: rgba(255,255,255,0.9); margin: 14px auto 12px;
+}
+#genderRail .gr-kick {
+    order: 1; padding: 0 !important;
+    font-family: 'Poppins', 'Inter', sans-serif; font-size: 9px; font-weight: 300;
+    letter-spacing: 3px; text-transform: uppercase; color: #fff; opacity: 0.92;
+}
+#genderRail .gr-shop {
+    order: 2; align-self: stretch; display: block;
+    width: 100%; max-width: none;
+    margin-top: 18px !important; padding: 14px 0 !important;
+    background: #fff !important; color: #1b2330 !important;
+    font-family: 'Poppins', 'Inter', sans-serif; font-size: 9px; font-weight: 400;
+    letter-spacing: 2px; text-transform: uppercase; border-radius: 0; text-align: center;
+}
+
 /* -- Under the hero: one full-screen image that opens the Sale page. -- */
 .hm2-one { position: absolute; inset: 0; display: block; overflow: hidden; background: #222 url('assets/hero/art-section-poster.jpg') center / cover no-repeat; color: #fff; text-decoration: none; }
-.hm2-one::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(42,51,27,0.55), rgba(20,26,14,0.35)); }
+.hm2-one::after { content: ''; position: absolute; inset: 0; background: none; }
 /* The trees film, full-bleed behind the type. */
 /* Lifted to the same on-screen brightness as the clothing hero clip above. */
-.hm2-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; filter: brightness(1.25); }
+.hm2-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; filter: none; }
 .hm2-look { position: absolute; inset: 0; z-index: 2; direction: ltr; pointer-events: none; }
-/* "SALE" four times: three in outline, one solid. */
-.hm2-stack { position: absolute; left: 0; right: 0; top: 15.5%; text-align: center; }
-.hm2-stack span:not(#zz):not(#zz):not(#zz) { display: block; font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important;
-    font-size: clamp(96px, 34vw, 160px); font-weight: 700; line-height: 0.86; letter-spacing: 2px; text-transform: uppercase;
-    color: transparent; -webkit-text-stroke: 1.2px rgba(255,255,255,0.75); }
-.hm2-stack span.on:not(#zz):not(#zz):not(#zz) { color: #fff; -webkit-text-stroke: 0; }
-.hm2-foot { position: absolute; left: 28px; right: 28px; bottom: 110px; display: flex; justify-content: space-between; align-items: center; }
-.so-eyebrow { font-family: 'Poppins', 'Inter', sans-serif; font-size: 9px; font-weight: 300; letter-spacing: 5px;
-    text-transform: uppercase; line-height: 1.9; }
-.so-pct:not(#zz):not(#zz):not(#zz) { font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important; font-size: 46px; font-weight: 400; line-height: 0.9; text-align: right; }
-.so-pct small { display: block; font-size: 9px; letter-spacing: 4px; text-transform: uppercase; margin: 8px 0; }
+/* Ralph Lauren–style heritage frame: a cream double rule on deep navy, a gold
+   monogram crest, the house name in spaced caps, "The Sale" in high-contrast
+   Bodoni, and a gold "Shop the Collection" link. */
+.sale-frame { position: absolute;
+    /* Top line dropped so the gap from the header icons down to the frame equals
+       the gap from the screen edge up to the header icons (symmetric spacing). */
+    top: calc(95px + env(safe-area-inset-top, 0px)); left: 20px; right: 20px; bottom: calc(95px + env(safe-area-inset-bottom, 0px));
+    border: 1px solid rgba(255,255,255,0.75);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 14px; padding: 26px 26px 130px; }
+.sale-frame::before { content: ''; position: absolute; inset: 5px;
+    border: 1px solid rgba(255,255,255,0.4); pointer-events: none; }
+.rl-peacock { width: auto; height: 34px; display: block; margin: 0 auto 6px;
+    filter: drop-shadow(0 2px 10px rgba(0,0,0,0.3)); }
+.rl-logo:not(#zz):not(#zz):not(#zz) { font-family: 'Pinyon Script', cursive !important;
+    font-size: 26px; font-weight: 400 !important; line-height: 1; color: #ffffff; text-transform: none;
+    letter-spacing: 0; margin-bottom: 4px; }
+.sf-title:not(#zz):not(#zz):not(#zz) { font-family: 'Bodoni Moda', 'Didot', Georgia, serif !important;
+    font-style: normal; font-weight: 600; font-size: clamp(46px, 16vw, 80px); line-height: 0.95;
+    letter-spacing: 1px; text-transform: none; color: #ffffff; }
+.rl-rule { width: 44px; height: 1px; background: rgba(255,255,255,0.9); }
+.rl-sub { font-family: 'Poppins', 'Inter', sans-serif; font-size: 9px; font-weight: 300;
+    letter-spacing: 3px; text-transform: uppercase; color: #ffffff; line-height: 2.1; }
+.rl-cta { font-family: 'Poppins', 'Inter', sans-serif; font-size: 9px; font-weight: 400;
+    letter-spacing: 2px; text-transform: uppercase; color: #1b2330;
+    background: #ffffff; border: none; border-radius: 0; padding: 12px 24px; margin-top: 12px; }
 .hm2-one:active .hm2-look { opacity: 0.7; }
 /* "Slide for more" cue at the foot of the hero, the Sale screen and Categories. */
 .slide-more { display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; color: #fff; direction: ltr; }
@@ -7868,6 +8031,85 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 @keyframes slideMoreBob { 0%,100% { transform: translateY(0); opacity: 0.55; } 50% { transform: translateY(5px); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .slide-more svg { animation: none; } }
 </style>
+<style id="hero-centred">
+/* Hero copy: the kicker, title, description, the two actions and the search
+   field form one left-aligned group, centred vertically on the screen.
+   The inner box keeps 72px extra at the bottom (52px search + 20px gap) so the
+   copy + search together sit on the centre line; the search is pinned under
+   the copy by the script below. ("Slide for more" keeps its own placement.) */
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-overlay-inner {
+    justify-content: center !important; align-items: flex-start !important; text-align: left !important;
+    padding: 96px 24px 96px !important;
+}
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) :is(.hero-ov-top, .hero-ov-mid) { align-items: flex-start !important; text-align: left !important; width: 100%; }
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-eyebrow { text-align: left !important; }
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-title:not(#zz):not(#zz):not(#zz):not(#zz) { text-align: center !important; margin: 0 auto !important; }
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-text { text-align: left !important; margin: 0 !important; }
+#heroImage#heroImage .hero-ov-actions--two { justify-content: flex-start !important; margin-top: 0 !important; }
+/* Description → buttons: 18px (was 24px gap + 22px margin). */
+#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-ov-mid { gap: 18px !important; }
+#heroImage#heroImage .hero-search { bottom: auto; top: calc(50% + 60px); justify-content: flex-start; }
+#heroImage#heroImage .hero-search input { flex: 1; width: auto; text-align: left; }
+/* Centre the hero copy, mirroring the Sale panel's composition. */
+#heroImage#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) .hero-overlay-inner {
+    align-items: center !important; justify-content: center !important; text-align: center !important;
+}
+#heroImage#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) :is(.hero-ov-top, .hero-ov-mid) {
+    align-items: center !important; text-align: center !important;
+}
+#heroImage#heroImage#heroImage :is(.hero-overlay--clothing, .hero-overlay--art) :is(.hero-ov-eyebrow, .hero-ov-title, .hero-ov-text) {
+    text-align: center !important; margin-left: auto !important; margin-right: auto !important;
+}
+#heroImage#heroImage#heroImage .hero-ov-actions--two {
+    justify-content: center !important; flex-wrap: nowrap !important;
+    width: min(340px, calc(100% - 56px)) !important; margin-left: auto !important; margin-right: auto !important;
+}
+#heroImage#heroImage#heroImage .hero-ov-actions--two .hero-ov-btn { flex: 1 1 0 !important; justify-content: center !important; min-width: 0 !important; }
+/* Search sits in-flow directly below the buttons, same width as their span. */
+#heroImage#heroImage#heroImage .hero-search {
+    position: static !important; left: auto !important; right: auto !important; transform: none !important;
+    top: auto !important; bottom: auto !important;
+    width: min(340px, calc(100% - 56px)) !important; margin: 12px auto 0 !important;
+    justify-content: center !important;
+}
+#heroImage#heroImage#heroImage .hero-search input { text-align: center !important; flex: 0 1 auto !important; }
+/* Heritage composition on the hero, matching the Sale panel. */
+#heroImage .hero-peacock { height: 34px; display: block; margin: 0 auto 6px; filter: drop-shadow(0 2px 10px rgba(0,0,0,0.4)); }
+#heroImage .hero-logo:not(#z):not(#z):not(#z) { font-family: 'Pinyon Script', cursive !important; font-weight: 400 !important;
+    font-size: 26px; line-height: 1; color: #fff; display: block; text-align: center; margin-bottom: 10px; text-transform: none; letter-spacing: 0; }
+#heroImage .hero-rule { width: 44px; height: 1px; background: rgba(255,255,255,0.9); display: block; margin: 14px auto; }
+#heroImage .hero-ov-actions--two .hero-ov-btn--solid:not(#z) { background: #ffffff !important; color: #1b2330 !important; border: none !important; }
+</style>
+<script>
+/* Keep the hero search 20px under the visible copy (its height varies by
+   season text and mode), so copy + search stay one centred group. */
+(function () {
+    function place() {
+        var hero = document.getElementById('heroImage');
+        var form = hero && hero.querySelector('.hero-search');
+        if (!form) return;
+        var mids = hero.querySelectorAll('.hero-overlay .hero-ov-mid'), mid = null;
+        for (var i = 0; i < mids.length; i++) if (mids[i].getBoundingClientRect().height > 0) { mid = mids[i]; break; }
+        if (!mid) return;
+        var top = mid.getBoundingClientRect().bottom - hero.getBoundingClientRect().top + 20;
+        if (top > 0) form.style.top = Math.round(top) + 'px';
+    }
+    function start() {
+        place();
+        var hero = document.getElementById('heroImage');
+        if (hero && window.ResizeObserver) {
+            var ro = new ResizeObserver(place);
+            ro.observe(hero);
+            hero.querySelectorAll('.hero-overlay .hero-ov-mid').forEach(function (m) { ro.observe(m); });
+        }
+        window.addEventListener('resize', place);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+        var n = 0, t = setInterval(function () { place(); if (++n > 10) clearInterval(t); }, 400);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
+</script>
 </head>
 <!-- data-back="none": this page opens on the home view, which carries no back
      control. hideAllViews() clears it for every other view. -->
@@ -7890,7 +8132,7 @@ window.veroLocalImg = function (key) {
     <!-- Shared site header (single source: header.js) -->
     <div id="siteHeader"></div>
     <script src="media-store.js"></script>
-    <script src="header.js?v=58"></script>
+    <script src="header.js?v=60"></script>
     <script src="nav-unify.js" defer></script>
 
 <!-- ==================== UPLOAD PRODUCT VIEW ==================== -->
@@ -7920,12 +8162,14 @@ window.veroLocalImg = function (key) {
              the poster / art-mode fallback. -->
         <video class="hero-video-bg" id="heroVideo" poster="assets/hero/intro-poster.jpg"
                autoplay muted loop playsinline preload="auto">
-            <source src="assets/hero/intro.webm" type="video/webm">
-            <source src="assets/hero/intro.mp4" type="video/mp4">
+            <source src="assets/hero/unisex.mp4" type="video/mp4">
         </video>
         <!-- Art-mode hero video. Shown only in art mode (toggled in setCategory). -->
         <video class="hero-video-bg hero-video-bg--art" id="heroVideoArt" src="assets/hero/hero-art.mp4" poster="art-hero.jpg"
                autoplay muted loop playsinline preload="metadata"></video>
+        <!-- Ralph Lauren–style heritage frame: a decorative cream double rule,
+             matching the Sale panel. Purely visual (pointer-events:none). -->
+        <div class="hero-rl-frame" aria-hidden="true"></div>
         <!-- Opening intro, played OVER this same running hero video: the moravchick
              wordmark holds, then fades as the site fades in — the clip never restarts. -->
         <div class="hero-intro-layer" id="heroIntro" aria-hidden="true">
@@ -7955,10 +8199,13 @@ window.veroLocalImg = function (key) {
         <!-- Clothing-mode caption overlay — hidden in art mode via CSS. -->
         <div class="hero-overlay hero-overlay--clothing">
             <div class="hero-overlay-inner">
+                <img class="hero-peacock" src="peacock-logo-white.png" alt="" aria-hidden="true">
+                <span class="hero-logo">moravchick</span>
                 <div class="hero-ov-top">
                     <span class="hero-ov-eyebrow" id="heroColKicker">Welcome to</span>
                     <h1 class="hero-ov-title" id="heroColName">VERO</h1>
                 </div>
+                <span class="hero-rule" aria-hidden="true"></span>
                 <div class="hero-ov-mid">
                     <span class="hero-ov-heading" id="heroColHeading">Now you are shopping boutique &amp; vintage pieces</span>
                     <p class="hero-ov-text" id="heroColText">Welcome to your high-fashion era. Discover exclusive pieces made to feel iconic.</p>
@@ -7967,6 +8214,10 @@ window.veroLocalImg = function (key) {
                         <a class="hero-ov-btn hero-ov-btn--solid" href="upload-start.html">Upload a product</a>
                         <button class="hero-ov-btn hero-ov-btn--mag" type="button" onclick="openMagazine()">the closet magazine</button>
                     </div>
+                    <form class="hero-search" role="search" onsubmit="return heroSearch(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                        <input type="search" name="q" placeholder="Search for your first product" aria-label="Search for your first product" autocomplete="off" enterkeyhint="search">
+                    </form>
                     <div class="hero-ov-meta" id="heroColMeta">
                         <span>Authenticated</span><em>&middot;</em><span>Boutique &amp; vintage</span><em>&middot;</em><span>New drops weekly</span>
                     </div>
@@ -8070,11 +8321,6 @@ window.veroLocalImg = function (key) {
                 </div>
             </div>
         </div>
-        <!-- Search field in the gap below the hero content. -->
-        <form class="hero-search" role="search" onsubmit="return heroSearch(this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-            <input type="search" name="q" placeholder="Search for your first product" aria-label="Search for your first product" autocomplete="off" enterkeyhint="search">
-        </form>
         <script>
             function heroSearch(f) {
                 var q = (f.q.value || '').trim();
@@ -8104,13 +8350,16 @@ window.veroLocalImg = function (key) {
          PLACEHOLDER images (kids reuses clothing-hero) — swap the three URLs. -->
     <div class="hero-mobile-2" id="heroMobile2">
         <!-- One full-screen image: the whole screen opens the Sale page. -->
-        <a class="hm2-one" id="hm2One" href="sales.html" aria-label="Shop the sale">
-            <video class="hm2-video" poster="assets/hero/art-section-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-hidden="true"><source src="assets/hero/art-section-bg.webm" type="video/webm"><source src="assets/hero/art-section-bg.mp4" type="video/mp4"></video>
+        <a class="hm2-one" id="hm2One" href="sales.html?mode=clothing" aria-label="Shop the sale">
+            <img class="hm2-video" id="hm2SaleVideo" src="assets/hero/sale-clothing.webp" alt="" aria-hidden="true">
             <span class="hm2-look">
-                <span class="hm2-stack" aria-hidden="true"><span>Sale</span><span class="on">Sale</span><span>Sale</span><span>Sale</span></span>
-                <span class="hm2-foot">
-                    <span class="so-eyebrow">End of Season<br>Shop the sale &#8250;</span>
-                    <span class="so-pct"><small>Up to</small>70%<small>Off</small></span>
+                <span class="sale-frame">
+                    <img class="rl-peacock" src="peacock-logo-white.png" alt="" aria-hidden="true">
+                    <span class="rl-logo">moravchick</span>
+                    <span class="sf-title">The Sale</span>
+                    <span class="rl-rule"></span>
+                    <span class="rl-sub">End of Season<br>Up to 30% Off</span>
+                    <span class="rl-cta">Shop the Collection &#8250;</span>
                 </span>
             </span>
         </a>
@@ -8925,9 +9174,9 @@ window.veroLocalImg = function (key) {
             <!-- Perspective toggle (demo only) -->
             <div class="vchat-persona">
                 <button class="vchat-back" onclick="vchatOpenInbox()" title="Back to the list">→ Chats</button>
-                <span class="vchat-persona-label">Preview:</span>
-                <button class="vchat-seg active" id="vchatSegBuyer" onclick="vchatSetRole('buyer')">Buyer</button>
-                <button class="vchat-seg" id="vchatSegSeller" onclick="vchatSetRole('seller')">Seller</button>
+                <span class="vchat-persona-label" hidden>Preview:</span>
+                <button class="vchat-seg active" id="vchatSegBuyer" onclick="vchatSetRole('buyer')" hidden>Buyer</button>
+                <button class="vchat-seg" id="vchatSegSeller" onclick="vchatSetRole('seller')" hidden>Seller</button>
             </div>
 
             <!-- B. Chat feed -->
@@ -8991,9 +9240,9 @@ window.veroLocalImg = function (key) {
             // Basic Casual
             { name: 'Classic White T-Shirt', category: 'Basic Casual', price: '₪49.90', icon: '👕', seller: 'H&M', rating: 4.7 },
             { name: 'Blue Skinny Jeans', category: 'Basic Casual', price: '₪189.00', icon: '👖', seller: 'Zara', rating: 4.6 },
-            { name: 'Classic White Sneakers', category: 'Basic Casual', price: '₪150.00', icon: '👟', seller: 'Nike', rating: 4.8 },
+            { name: 'Classic White Sneakers', category: 'Basic Casual', price: '₪150.00', icon: '👟', seller: 'Nike', rating: 4.8, dme: true },
             // Smart Casual
-            { name: 'Navy Blazer', category: 'Smart Casual', price: '₪320.00', icon: '👔', seller: 'Ralph Lauren', rating: 4.8 },
+            { name: 'Navy Blazer', category: 'Smart Casual', price: '₪320.00', icon: '👔', seller: 'Ralph Lauren', rating: 4.8, dme: true },
             { name: 'Buttoned Shirt', category: 'Smart Casual', price: '₪145.00', icon: '👔', seller: 'Hugo Boss', rating: 4.5 },
             // Athleisure
             { name: 'Sport Leggings', category: 'Athleisure', price: '₪120.00', icon: '🏃', seller: 'Nike', rating: 4.9 },
@@ -9663,7 +9912,7 @@ window.veroLocalImg = function (key) {
             const sellerProducts = allProducts.filter(p => p.seller === sellerName);
 
             document.getElementById('sellerName').textContent = sellerName;
-            document.getElementById('sellerRating').textContent = `⭐ ${(Math.random() * 0.4 + 4.5).toFixed(1)} • ${sellerProducts.length} items`;
+            document.getElementById('sellerRating').textContent = `★ ${(Math.random() * 0.4 + 4.5).toFixed(1)} • ${sellerProducts.length} items`;
             document.getElementById('sellerBio').textContent = `Quality ${currentCategory} from a trusted seller. Committed to authentic pieces and fair pricing.`;
 
             const html = sellerProducts.map(productCardHTML).join('');
@@ -9856,7 +10105,7 @@ window.veroLocalImg = function (key) {
             if (descEl) descEl.textContent = 'SHOPPING LIST';
 
             if (cart.length === 0) {
-                body.innerHTML = '<div class="cart-empty">Your cart is empty 🛒<br>Go back to the home page and add products</div>';
+                body.innerHTML = '<div class="cart-empty">Your cart is empty<br>Go back to the home page and add products</div>';
                 return;
             }
 
@@ -9970,7 +10219,7 @@ window.veroLocalImg = function (key) {
             if (cart.length === 0) return;
             const total = cart.reduce((sum, i) => sum + priceToNum(i.price) * i.qty, 0);
             const items = cart.slice();   // capture before clearing → one chat per seller
-            showToast(`Payment of ₪${total.toFixed(2)} received! Thank you 🎉`);
+            showToast(`Payment of ₪${total.toFixed(2)} received! Thank you.`);
             cart = [];
             saveState();
             updateBadges();
@@ -10008,7 +10257,7 @@ window.veroLocalImg = function (key) {
             wishlist = [];
             saveState();
             updateBadges();
-            showToast(`${count} items moved to cart 🛒`);
+            showToast(`${count} items moved to cart`);
             renderWishlistPage();
         }
 
@@ -10025,7 +10274,7 @@ window.veroLocalImg = function (key) {
                 : "The pieces you saved for later — keep them close until you're ready.";
 
             if (wishlist.length === 0) {
-                body.innerHTML = '<div class="cart-empty">Your wishlist is empty 💭<br>Go back to the home page and add products you love</div>';
+                body.innerHTML = '<div class="cart-empty">Your wishlist is empty<br>Go back to the home page and add products you love</div>';
                 return;
             }
 
@@ -10292,20 +10541,24 @@ window.veroLocalImg = function (key) {
 
         // Set Category Helper
         function setCategory(category) {
+            // The Art/Fashion toggle was removed from the header, so these may be
+            // absent — guard every access so the mode still switches without it.
             const toggleBtn = document.getElementById('categoryToggleBtn');
             const segArt = document.getElementById('segArt');
             const segFashion = document.getElementById('segFashion');
 
-            toggleBtn.classList.remove('clothing', 'art');
-            toggleBtn.classList.add(category);
+            if (toggleBtn) {
+                toggleBtn.classList.remove('clothing', 'art');
+                toggleBtn.classList.add(category);
+            }
 
             // 'clothing' maps to the FASHION segment, 'art' to the ART segment.
             if (category === 'art') {
-                segArt.classList.add('active');
-                segFashion.classList.remove('active');
+                if (segArt) segArt.classList.add('active');
+                if (segFashion) segFashion.classList.remove('active');
             } else {
-                segFashion.classList.add('active');
-                segArt.classList.remove('active');
+                if (segFashion) segFashion.classList.add('active');
+                if (segArt) segArt.classList.remove('active');
             }
 
             currentCategory = category;
@@ -10325,6 +10578,17 @@ window.veroLocalImg = function (key) {
             heroImage.classList.toggle('art-video', category === 'art');
             // The mobile full-screen slider swaps its three main categories by mode.
             updateHm2Categories(category);
+            // The Sale band swaps between the clothing sale and the art sale.
+            (function updateSaleBand(){
+                var art = category === 'art';
+                var v = document.getElementById('hm2SaleVideo');
+                var link = document.getElementById('hm2One');
+                if (v) {
+                    var want = art ? 'assets/hero/sale-art.webp' : 'assets/hero/sale-clothing.webp';
+                    if (v.getAttribute('src') !== want) { v.setAttribute('src', want); }
+                }
+                if (link) link.setAttribute('href', 'sales.html?mode=' + (art ? 'art' : 'clothing'));
+            })();
             // Hero caption: the mode-switch button offers the other mode.
             const modeBtn = document.getElementById('heroModeBtn');
             if (modeBtn) modeBtn.textContent = category === 'art' ? 'Switch to Fashion' : 'Switch to Art';
@@ -10506,18 +10770,24 @@ window.veroLocalImg = function (key) {
                 type: prod.type || currentCategory
             });
             const productUrl = `product-showcase.html?product=${encodeURIComponent(productData)}`;
+            const _esz = ['XS', 'S', 'M', 'L', 'XL'];
+            let _sz = '';
+            if ((prod.type || '') !== 'art' && prod.collection !== 'interiors') {
+                const _s = String((prod.name || '') + (prod.price || '')); let _h = 0;
+                for (let _i = 0; _i < _s.length; _i++) _h = (_h * 31 + _s.charCodeAt(_i)) >>> 0;
+                _sz = _esz[_h % _esz.length];
+            }
             return `
-                <a href="${productUrl}" draggable="false" style="text-decoration: none;" class="product-card${veroCardClass(prod)}" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
+                <a href="${productUrl}" draggable="false" style="text-decoration: none;" class="product-card pc-e${veroCardClass(prod)}" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
                     <div class="pc-flip">
                         <div class="pc-face pc-front">
-                            <div class="product-image">${(prod.processed_cover || prod.cover) ? `<img class="pc-photo" src="${prod.processed_cover || prod.cover}" alt="${prod.name || ''}" draggable="false">` : (prod.icon || '')}</div>
+                            <div class="product-image">${(prod.processed_cover || prod.cover) ? `<img class="pc-photo" src="${prod.processed_cover || prod.cover}" alt="${prod.name || ''}" draggable="false">` : (prod.icon || '')}${_sz ? `<span class="pc-size">Size ${_sz}</span>` : ''}<div class="pc-left pc-price-top"><div class="product-price">${veroPriceHTML(prod)}</div></div><button class="pc-front-heart" type="button" aria-label="Add to wishlist" onclick="event.preventDefault();event.stopPropagation();this.classList.toggle('wish-on');"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></button></div>
                             <div class="pc-holdhint">hold to add to</div>
                             <div class="product-info">
-                                <div class="pc-headrow">
+                                <div class="pc-right">
+                                    <div class="product-name">${prod.name}</div>
                                     <div class="product-seller" onclick="event.preventDefault(); event.stopPropagation(); showSellerProfile('${prod.seller}');">${prod.seller}</div>
-                                    <div class="product-price">${veroPriceHTML(prod)}</div>
                                 </div>
-                                <div class="product-name">${prod.name}</div>
                             </div>
                         </div>
                         <div class="pc-face pc-back">
@@ -10807,125 +11077,86 @@ window.veroLocalImg = function (key) {
             const inner = document.createElement('div'); inner.className = 'vcal-inner';
             cal.appendChild(inner);
 
-            const head = document.createElement('div'); head.className = 'vcal-head';
-            head.innerHTML = '<span>' +
-                    '<span class="vcal-kicker">Events this month</span>' +
-                    '<span class="vcal-month">' + months[month] + '</span>' +
-                '</span>' +
-                '<span class="vcal-year">' + year + '</span>';
-            inner.appendChild(head);
+            // ---- Minimal wall-calendar sheet: the full month word + a Mon-first grid,
+            //      last/next month ghosted, today ringed, and a quiet gold/green dot on
+            //      event days. Built from the live date + events above.
+            const sheet = document.createElement('div'); sheet.className = 'vcm-sheet';
+            const leading = (firstDow + 6) % 7;                     // blanks before day 1 (Mon-first)
+            const prevDays = new Date(year, month, 0).getDate();
+            const cells = [];
+            for (let i = 0; i < leading; i++) cells.push({ n: prevDays - leading + 1 + i, mut: true });
+            for (let d = 1; d <= daysInMonth; d++) cells.push({ n: d, d: d });
+            let nx = 1; while (cells.length % 7 !== 0) cells.push({ n: nx++, mut: true });
+            const cellHTML = c => {
+                if (c.mut) return '<td class="vcm-mut">' + c.n + '</td>';
+                const cls = 'vcm-d' + (c.d === today ? ' vcm-today' : '');
+                return '<td class="' + cls + '" data-d="' + c.d + '">' + c.n + '</td>';
+            };
+            let weeks = '';
+            for (let i = 0; i < cells.length; i += 7)
+                weeks += '<tr>' + cells.slice(i, i + 7).map(cellHTML).join('') + '</tr>';
+            sheet.innerHTML =
+                '<span class="vcm-clip"></span>' +
+                '<div class="vcm-top"><div class="vcm-month">' + months[month] + '</div>' +
+                    '<div class="vcm-yr">' + year + '</div></div>' +
+                '<table class="vcm-cal"><thead><tr>' +
+                    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => '<th>' + d + '</th>').join('') +
+                '</tr></thead><tbody>' + weeks + '</tbody></table>' +
+                '<div class="vcm-legend">' +
+                    '<span class="vcm-lg-today"><u>Today</u></span>' +
+                    '<span class="vcm-lg-hint">Tap a date</span>' +
+                '</div>';
+            inner.appendChild(sheet);
 
-            // Option C3 — an agenda list: the month's events in date order, each a
-            // row with a date block on the left and name / place / time on the right.
-            // The soonest still-upcoming event (today or later) is marked.
+            // Events this month — a minimal agenda below the sheet, matching the
+            // wall-calendar (big date, name, meta line). The next upcoming event is
+            // flagged; past events dim; tapping a calendar date spotlights its row.
+            const evHead = document.createElement('div'); evHead.className = 'vcm-evhead';
+            evHead.textContent = 'Events this month';
+            inner.appendChild(evHead);
+
             const typeLabel = { art: 'Art', sh: 'Second-hand' };
-            const dowLong = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-            const monAbbr = months[month].slice(0, 3).toUpperCase();
+            const dow3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const isoOf = e => year + '-' + String(month + 1).padStart(2, '0') + '-' + String(e.d).padStart(2, '0');
             const sorted = events.slice().sort((a, b) => a.d - b.d);
             const nextEv = sorted.find(e => e.d >= today);
-
-            // A crossfading slider: the month's events, 4 at a time, as dashboard-style
-            // tiles — a big date with the event name beneath. Upcoming events first.
-            const upcoming = sorted.filter(e => e.d >= today);
-            const ordered = upcoming.concat(sorted.filter(e => e.d < today));
-            const pages = [];
-            for (let i = 0; i < ordered.length; i += 4) pages.push(ordered.slice(i, i + 4));
-
-            const slider = document.createElement('div'); slider.className = 'vcs';
-            const viewport = document.createElement('div'); viewport.className = 'vcs-viewport';
-            const track = document.createElement('div'); track.className = 'vcs-track';
-            const detail = document.createElement('div'); detail.className = 'vcs-detail';   // left pane
-            const stage = document.createElement('div'); stage.className = 'vcs-grid';        // right pane
-            track.appendChild(detail); track.appendChild(stage);
-            viewport.appendChild(track);
-            const dotsEl = document.createElement('div'); dotsEl.className = 'vcs-dots';
-            slider.appendChild(viewport); slider.appendChild(dotsEl);
-            inner.appendChild(slider);
-            const setH = el => { viewport.style.height = Math.max(el.scrollHeight, Math.round(window.innerHeight * 0.75)) + 'px'; };
-
-            const isoOf = e => year + '-' + String(month + 1).padStart(2, '0') + '-' + String(e.d).padStart(2, '0');
-            const tileHTML = (e, idx) =>
-                '<button type="button" class="vcs-tile' + (e === nextEv ? ' is-next' : '') + '" data-idx="' + idx + '">' +
-                    '<div class="vcs-day">' + e.d + '</div>' +
-                    '<div class="vcs-mon">' + monAbbr + '</div>' +
-                '</button>';
-
-            // The full-info panel that slides open under the grid.
-            const detailHTML = e =>
-                '<div class="vcs-detail-inner">' +
-                    '<button type="button" class="vcs-detail-x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
-                    '<div class="vcs-detail-date"><span class="vcs-detail-d">' + e.d + '</span><span class="vcs-detail-m">' + monAbbr + ' ' + year + '</span></div>' +
-                    '<div class="vcs-detail-name">' + esc(e.name) + '</div>' +
-                    '<div class="vcs-detail-meta">' +
-                        '<span class="vcs-tag ' + e.type + '">' + typeLabel[e.type] + '</span>' +
-                        '<span>' + esc(e.time) + '</span><span>' + esc(e.place) + '</span>' +
-                    '</div>' +
-                    (e.desc ? '<p class="vcs-detail-desc">' + esc(e.desc) + '</p>' : '') +
-                    '<a class="vcs-detail-cta" href="events.html?date=' + isoOf(e) + '">View in events &#8594;</a>' +
-                '</div>';
-
-            let pg = 0, timer = null, openIdx = null, dTimer = null;
-            const renderDots = () => {
-                dotsEl.innerHTML = (openIdx == null)
-                    ? pages.map((_, i) => '<i class="' + (i === pg ? 'on' : '') + '" data-p="' + i + '"></i>').join('')
-                    : ordered.map((_, i) => '<i class="' + (i === openIdx ? 'on' : '') + '" data-e="' + i + '"></i>').join('');
+            const chevron = '<svg class="vce-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+            const rowHTML = e => {
+                const cls = ['vce-item', e === nextEv ? 'is-next' : '', e.d < today ? 'is-past' : '']
+                    .filter(Boolean).join(' ');
+                return '<a class="' + cls + '" href="events.html?date=' + isoOf(e) + '" data-d="' + e.d + '">' +
+                        '<span class="vce-date"><span class="vce-dn">' + e.d + '</span>' +
+                            '<span class="vce-dow">' + dow3[new Date(year, month, e.d).getDay()] + '</span></span>' +
+                        '<span class="vce-body">' +
+                            '<span class="vce-name">' + esc(e.name) +
+                                (e === nextEv ? '<span class="vce-next">Next</span>' : '') + '</span>' +
+                            '<span class="vce-meta"><span>' + typeLabel[e.type] + '</span>' +
+                                '<span>' + esc(e.time) + '</span><span>' + esc(e.place) + '</span></span>' +
+                        '</span>' + chevron +
+                    '</a>';
             };
-            const paint = () => {
-                stage.innerHTML = pages[pg].map(e => tileHTML(e, ordered.indexOf(e))).join('');
-                stage.classList.toggle('single', pages[pg].length === 1);
-                renderDots();
-                stage.classList.remove('fade');
-                if (openIdx == null) setH(stage);
-            };
-            // Swap the open detail to another event, sliding the content across.
-            const setDetail = (idx, animate) => {
-                openIdx = (idx + ordered.length) % ordered.length;
-                const swap = () => {
-                    detail.innerHTML = detailHTML(ordered[openIdx]);
-                    setH(detail); renderDots();
-                    if (animate) {
-                        const ni = detail.querySelector('.vcs-detail-inner');
-                        ni.classList.add('d-in'); void ni.offsetWidth; ni.classList.remove('d-in');
-                    }
-                };
-                const old = animate && detail.querySelector('.vcs-detail-inner');
-                if (old) { old.classList.add('d-out'); setTimeout(swap, 320); } else { swap(); }
-            };
-            const dStart = () => { if (dTimer) clearInterval(dTimer); if (ordered.length > 1) dTimer = setInterval(() => setDetail(openIdx + 1, true), 4200); };
-            const dStop = () => { if (dTimer) { clearInterval(dTimer); dTimer = null; } };
-            const closeDetail = () => {
-                dStop(); openIdx = null;
-                track.classList.remove('show-detail');   // dates slide back in from the right
-                renderDots(); setH(stage); start();
-            };
-            const openDetail = idx => {
-                if (timer) { clearInterval(timer); timer = null; }   // pause the grid autoplay
-                setDetail(idx, false);
-                track.classList.add('show-detail');       // dates slide out right, detail slides in
-                dStart();                                  // the detail now auto-cycles through every event
-            };
-            const show = (i, instant) => {
-                if (openIdx != null) closeDetail();
-                pg = (i + pages.length) % pages.length;
-                if (instant) { paint(); return; }
-                stage.classList.add('fade');
-                setTimeout(paint, 550);
-            };
-            const start = () => { if (timer) clearInterval(timer); if (openIdx == null && pages.length > 1) timer = setInterval(() => show(pg + 1), 4200); };
+            const list = document.createElement('div'); list.className = 'vce-list';
+            list.innerHTML = sorted.map(rowHTML).join('');
+            inner.appendChild(list);
 
-            stage.addEventListener('click', ev => {
-                const t = ev.target.closest('.vcs-tile'); if (!t) return;
-                openDetail(+t.getAttribute('data-idx'));
+            // Tap a date → colour it, and spotlight that day's event row below.
+            const calEl = sheet.querySelector('.vcm-cal');
+            const syncList = d => {
+                list.querySelectorAll('.vce-item').forEach(r =>
+                    r.classList.toggle('is-active', !!d && r.getAttribute('data-d') === d));
+                const act = d && list.querySelector('.vce-item.is-active');
+                if (act) act.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            };
+            calEl.addEventListener('click', ev => {
+                const td = ev.target.closest('td.vcm-d');
+                if (!td || !calEl.contains(td)) return;
+                const cur = calEl.querySelector('td.vcm-sel');
+                if (cur === td) { td.classList.remove('vcm-sel'); syncList(null); return; }  // tap again clears
+                if (cur) cur.classList.remove('vcm-sel');
+                td.classList.add('vcm-sel');
+                syncList(td.getAttribute('data-d'));
             });
-            detail.addEventListener('click', ev => { if (ev.target.closest('.vcs-detail-x')) closeDetail(); });
-            dotsEl.addEventListener('click', ev => {
-                const g = ev.target.closest('[data-p]'), d = ev.target.closest('[data-e]');
-                if (g) { show(+g.getAttribute('data-p')); start(); }
-                else if (d) { dStop(); setDetail(+d.getAttribute('data-e'), true); dStart(); }
-            });
-
-            if (pages.length) { show(0, true); start(); requestAnimationFrame(() => setH(stage)); }
 
             return cal;
         }
@@ -11203,7 +11434,7 @@ window.veroLocalImg = function (key) {
             const slideFn = isFeed ? feedPromoSlideHTML : promoSlideHTML;
             const footer = isFeed
                 ? `<div class="fp-hint"><span>Slide for more</span><span class="line"></span></div>`
-                : `<div class="promo-viewall" onclick="showToast('Featured products coming soon ✨')"><span class="line"></span> VIEW ALL</div>`;
+                : `<div class="promo-viewall" onclick="location.href='collections.html'"><span class="line"></span> VIEW ALL</div>`;
             return `
                 <button class="promo-arrow prev" aria-label="Previous" onclick="promoGo('${uid}', promoState['${uid}'].index - 1)">${promoChevron('left')}</button>
                 <div class="promo-viewport">
@@ -11531,7 +11762,11 @@ window.veroLocalImg = function (key) {
                         icon: t.icon,
                         seller: sellers[n % sellers.length],
                         rating: parseFloat((4.4 + ((n * 3) % 6) / 10).toFixed(1)),
-                        type: 'clothing'
+                        type: 'clothing',
+                        // DME "especially for you" picks — a curated minority of the
+                        // feed, so the tagged card treatment reads as a signal, not noise.
+                        // (Placeholder rule; real DME will match on the buyer's Style DNA.)
+                        dme: (n % 6 === 0)
                     });
                     n++;
                 }
@@ -12217,6 +12452,33 @@ window.veroLocalImg = function (key) {
             });
         })();
 
+        // On the home page, the header's gender links (Women/Men/Kids/Unisex)
+        // filter the feed in-page by gender — the same behaviour as the gender
+        // slider — instead of reloading the page. Registered on load so it wins
+        // over header.js's navigating default.
+        window.addEventListener('load', function () {
+            function syncHdrCats(key) {
+                document.querySelectorAll('#siteHeader .hdr-cats a').forEach(function (a) {
+                    var oc = a.getAttribute('onclick') || '';
+                    a.classList.toggle('on', oc.indexOf("'" + key + "'") !== -1);
+                });
+            }
+            window.veroGoSegment = function (key) {
+                var k = (key === 'unisex') ? null : key;
+                var ok = k && typeof filterSegments !== 'undefined' && filterSegments[currentCategory]
+                    && filterSegments[currentCategory].some(function (s) { return s.key === k; });
+                if (typeof selectSegment === 'function') {
+                    if (ok) { if (currentSegment !== k) selectSegment(k); }
+                    else if (currentSegment) { selectSegment(currentSegment); } // clear → whole feed
+                }
+                // keep the gender rail's highlight in step with the header choice
+                document.querySelectorAll('#grRail .gr-card').forEach(function (c) {
+                    c.classList.toggle('on', c.dataset.key === 'unisex' ? !currentSegment : c.dataset.key === currentSegment);
+                });
+                syncHdrCats(key);
+            };
+        });
+
         function updateHm2Categories(category) {
             renderGenderRail(category);
             const slider = document.getElementById('hm2Slider');
@@ -12630,7 +12892,7 @@ window.veroLocalImg = function (key) {
             if (!session.pending || session.pending.type !== 'AVAILABILITY') return;
             session.pending = null;
             session.status = 'ACTIVE';
-            vchatAddTo(session, 'SELLER', 'TEXT', 'Yes, The item is available and waiting for you 🙂');
+            vchatAddTo(session, 'SELLER', 'TEXT', 'Yes, the item is available and waiting for you.');
             vchatAddTo(session, 'SYSTEM', 'TEXT', 'The seller confirmed the item\'s availability. You can proceed to arrange the meeting.', 'good');
         }
 
@@ -12853,7 +13115,7 @@ window.veroLocalImg = function (key) {
                 if (m.type === 'LOCATION_WIDGET') {
                     const c = m.content;
                     return `<div class="vloc"${anim}>
-                        <div class="vloc-addr">📍 ${c.addressString}</div>
+                        <div class="vloc-addr">${c.addressString}</div>
                         <div class="vloc-maps">
                             <a href="${c.googleMapsUrl}" target="_blank" rel="noopener">Google Maps</a>
                             <a href="${c.wazeUrl}" target="_blank" rel="noopener">Waze</a>
@@ -12875,12 +13137,12 @@ window.veroLocalImg = function (key) {
         function vchatBuyerQuery(type) {
             if (VCHAT.status === 'INITIATED') VCHAT.status = 'ACTIVE';
             const labels = {
-                LOCATION: '📍 What is the exact location of the store/meeting?',
-                HOURS: '🕒 What are the opening hours / arrival times?',
-                SIMILAR: '👗 Are there other similar items in the closet?',
-                RETURNS: '🛡️ What is your closet\'s return policy?',
-                DEFECTS: '🔍 Are there any defects, stains or tears that weren\'t mentioned?',
-                RECHECK: '✅ Is the product available right now?',
+                LOCATION: 'What is the exact location of the store/meeting?',
+                HOURS: 'What are the opening hours / arrival times?',
+                SIMILAR: 'Are there other similar items in the closet?',
+                RETURNS: 'What is your closet\'s return policy?',
+                DEFECTS: 'Are there any defects, stains or tears that weren\'t mentioned?',
+                RECHECK: 'Is the product available right now?',
                 LATE: '⏰ I\'m running late / won\'t make it at the arranged time',
             };
             vchatAdd('BUYER', 'TEXT', labels[type]);
@@ -12902,7 +13164,7 @@ window.veroLocalImg = function (key) {
                 switch (type) {
                     case 'RECHECK':
                     case 'AVAILABILITY':
-                        vchatAdd('SELLER', 'TEXT', 'Yes, The item is available and waiting for you 🙂');
+                        vchatAdd('SELLER', 'TEXT', 'Yes, the item is available and waiting for you.');
                         vchatAdd('SYSTEM', 'TEXT', 'The seller confirmed the item\'s availability. You can proceed to arrange the meeting.', 'good');
                         break;
                     case 'LOCATION':
@@ -12946,7 +13208,7 @@ window.veroLocalImg = function (key) {
         /* ---- Seller responses ---- */
         function vchatSellerRespond(action) {
             if (action === 'AVAILABLE') {
-                vchatAdd('SELLER', 'TEXT', 'Yes, The item is available and waiting for you 🙂');
+                vchatAdd('SELLER', 'TEXT', 'Yes, the item is available and waiting for you.');
                 vchatAdd('SYSTEM', 'TEXT', 'The seller confirmed the item\'s availability. You can proceed to arrange the meeting.', 'good');
                 VCHAT.pending = null;
                 vchatRenderDeck();
@@ -13085,7 +13347,7 @@ window.veroLocalImg = function (key) {
             VCHAT.offer = { amount, by, state: 'PENDING', expiresAt: Date.now() + OFFER_TTL };
             if (VCHAT.status === 'INITIATED') VCHAT.status = 'ACTIVE';
             const who = by === 'buyer' ? 'The buyer' : 'The seller';
-            vchatAdd(by.toUpperCase(), 'TEXT', `💰 ${who} offers ${cur}${amount} on the item.`);
+            vchatAdd(by.toUpperCase(), 'TEXT', `${who} offers ${cur}${amount} on the item.`);
             vchatAdd('SYSTEM', 'TEXT', `New offer: ${cur}${amount}. valid for-24 hours. The ball is in the other side's court.`);
             vchatRenderDeck();
         }
@@ -13094,14 +13356,14 @@ window.veroLocalImg = function (key) {
             const cur = VCHAT.product.currency;
             o.state = 'ACCEPTED';
             VCHAT.product.current = o.amount;
-            vchatAdd(VCHAT.role.toUpperCase(), 'TEXT', '✅ The offer was approved.');
+            vchatAdd(VCHAT.role.toUpperCase(), 'TEXT', 'The offer was accepted.');
             vchatAdd('SYSTEM', 'TEXT', `The price is locked at ${cur}${o.amount}. The item is held to complete the purchase within-24 the coming hours.`, 'good');
             vchatRenderHead();
             vchatRenderDeck();
         }
         function vchatDeclineOffer() {
             VCHAT.offer.state = 'DECLINED';
-            vchatAdd(VCHAT.role.toUpperCase(), 'TEXT', '✕ The offer was declined.');
+            vchatAdd(VCHAT.role.toUpperCase(), 'TEXT', 'The offer was declined.');
             vchatAdd('SYSTEM', 'TEXT', 'The offer was declined. You can submit a new offer.', 'alert');
             vchatRenderDeck();
         }
@@ -13112,9 +13374,9 @@ window.veroLocalImg = function (key) {
             const cur = VCHAT.product.currency;
             const from = o.by === 'buyer' ? 'The buyer' : 'The seller';
             return `<div class="vchat-hint" style="width:100%">${from} offers <strong>${cur}${o.amount}</strong> · Expires in ${vchatOfferHoursLeft(o)} hrs</div>
-                <button class="vpill" onclick="vchatAcceptOffer()">✅ Confirm</button>
-                <button class="vpill special" onclick="vchatDeclineOffer()">✕ Decline</button>
-                <button class="vpill" onclick="vchatCounterOffer()">🔄 Counter-offer</button>`;
+                <button class="vpill" onclick="vchatAcceptOffer()">Accept</button>
+                <button class="vpill special" onclick="vchatDeclineOffer()">Decline</button>
+                <button class="vpill" onclick="vchatCounterOffer()">Counter-offer</button>`;
         }
 
         /* ---- Action deck ---- */
@@ -13141,24 +13403,24 @@ window.veroLocalImg = function (key) {
             } else if (VCHAT.role === 'buyer') {
                 if (VCHAT.submenu) {
                     upper.innerHTML =
-                        `<button class="vpill" onclick="vchatBuyerQuery('RETURNS')">🛡️ Return policy</button>
-                         <button class="vpill" onclick="vchatBuyerQuery('DEFECTS')">🔍 Defects not mentioned?</button>
+                        `<button class="vpill" onclick="vchatBuyerQuery('RETURNS')">Return policy</button>
+                         <button class="vpill" onclick="vchatBuyerQuery('DEFECTS')">Unlisted defects?</button>
                          <button class="vpill" onclick="vchatBuyerQuery('LATE')">⏰ I'll be late / won't arrive on time</button>
                          <button class="vpill" onclick="VCHAT.submenu=false;vchatRenderDeck()">← Back</button>`;
                 } else {
                     upper.innerHTML =
-                        `<button class="vpill offer" onclick="vchatMakeOffer()">💰 Submit a price offer</button>
-                         <button class="vpill" onclick="vchatBuyerQuery('LOCATION')">📍 Meeting location</button>
-                         <button class="vpill" onclick="vchatBuyerQuery('HOURS')">🕒 Arrival hours</button>
-                         <button class="vpill" onclick="vchatBuyerQuery('RECHECK')">✅ Available now?</button>
-                         <button class="vpill" onclick="vchatBuyerQuery('SIMILAR')">👗 Similar items</button>
-                         <button class="vpill special" onclick="VCHAT.submenu=true;vchatRenderDeck()">⚠️ Special question</button>`;
+                        `<button class="vpill offer" onclick="vchatMakeOffer()">Make an offer</button>
+                         <button class="vpill" onclick="vchatBuyerQuery('LOCATION')">Meeting location</button>
+                         <button class="vpill" onclick="vchatBuyerQuery('HOURS')">Pickup hours</button>
+                         <button class="vpill" onclick="vchatBuyerQuery('RECHECK')">Available now?</button>
+                         <button class="vpill" onclick="vchatBuyerQuery('SIMILAR')">Similar items</button>
+                         <button class="vpill special" onclick="VCHAT.submenu=true;vchatRenderDeck()">Other question</button>`;
                 }
             } else { // seller
                 if (VCHAT.pending && VCHAT.pending.type === 'AVAILABILITY') {
                     upper.innerHTML =
-                        `<button class="vpill" onclick="vchatSellerRespond('AVAILABLE')">✅ The item is available — availability confirmed</button>
-                         <button class="vpill special" onclick="vchatSellerRespond('UNAVAILABLE')">✕ The item is unavailable</button>`;
+                        `<button class="vpill" onclick="vchatSellerRespond('AVAILABLE')">Confirm the item is available</button>
+                         <button class="vpill special" onclick="vchatSellerRespond('UNAVAILABLE')">Item no longer available</button>`;
                 } else if (VCHAT.pending && VCHAT.pending.type === 'LOCATION') {
                     upper.innerHTML = `<button class="vpill" onclick="vchatSellerRespond('LOCATION')">[Send a verified location from the profile]</button>`;
                 } else if (VCHAT.pending && VCHAT.pending.type === 'HOURS') {
@@ -13184,10 +13446,10 @@ window.veroLocalImg = function (key) {
         function vchatBuyerBar() {
             switch (VCHAT.status) {
                 case 'INITIATED':
-                    return `<button class="vbtn" disabled>🛒 The purchase was completed successfully</button>`;
+                    return `<button class="vbtn" disabled>Purchase completed</button>`;
                 case 'ACTIVE':
-                    return `<button class="vbtn primary" onclick="vchatBuyerReport()">🛒 The purchase was completed successfully</button>
-                            <button class="vbtn ghost-cancel" onclick="vchatBuyerCancel()">❌ Fell through</button>`;
+                    return `<button class="vbtn primary" onclick="vchatBuyerReport()">Purchase completed</button>
+                            <button class="vbtn ghost-cancel" onclick="vchatBuyerCancel()">The sale fell through</button>`;
                 case 'BUYER_REPORTED':
                     return `<button class="vbtn" disabled>Awaiting seller confirmation…</button>`;
                 case 'SELLER_REPORTED':
@@ -13205,7 +13467,7 @@ window.veroLocalImg = function (key) {
                     return `<button class="vbtn" disabled>Awaiting buyer</button>
                             <button class="vbtn ghost-cancel" onclick="vchatSellerCancel()">Cancel item</button>`;
                 case 'BUYER_REPORTED':
-                    return `<button class="vbtn blink" onclick="vchatSellerConfirm()">📦 Item handover confirmation</button>`;
+                    return `<button class="vbtn blink" onclick="vchatSellerConfirm()">Confirm handover</button>`;
                 case 'SELLER_REPORTED':
                     return `<button class="vbtn" disabled>Awaiting buyer confirmation…</button>`;
                 case 'COMPLETED':
@@ -13278,7 +13540,7 @@ window.veroLocalImg = function (key) {
         function vchatRating() {
             const card = document.getElementById('vchatModalCard');
             const extra = VCHAT.role === 'buyer'
-                ? '<p style="margin-top:-8px">This deal saved ~4 kg CO₂ buying second-hand 🌿</p>' : '';
+                ? '<p style="margin-top:-8px">This deal saved ~4 kg CO₂ buying second-hand.</p>' : '';
             let picked = 0;
             card.innerHTML = `<h3>Thanks for the deal</h3><p>Rate the other side:</p>
                 <div class="vstars" id="vstars">${[1,2,3,4,5].map(n=>`<span data-n="${n}">★</span>`).join('')}</div>
@@ -13377,26 +13639,38 @@ window.veroLocalImg = function (key) {
         (function feedNav() {
             const style = document.createElement('style');
             style.textContent = `
+                /* Reference-style bar: a full-width white bar that sits flush on the
+                   bottom edge of the screen, with a raised black "+" FAB in the middle.
+                   !important where nav-unify.js forces the old dark pill. */
                 .feed-nav {
-                    position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 50%;
-                    transform: translateX(-50%) translateY(26px);
-                    opacity: 0;
-                    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22,1,0.36,1);
-                    z-index: 900; display: flex; align-items: stretch; gap: 4px;
-                    /* Forced LTR so the ⋯ is pinned on the left and the category slide
-                       scrolls in from the right and vanishes behind it, regardless of
-                       the page's RTL. */
-                    direction: ltr;
-                    /* Shared bottom-bar size (feed / sale / seller area / personal area): 94vw up to 460px wide, 62px tall, 24px above the bottom edge. */
-                    width: 94vw; max-width: 460px; height: 62px; box-sizing: border-box;
-                    /* Free slider: items keep their natural width and the bar swipes
-                       sideways (no snapping) when they don't all fit. */
-                    overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
-                    overscroll-behavior-x: contain; scrollbar-width: none;
-                    background: rgba(42,51,27,0.95); backdrop-filter: blur(6px);
-                    border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 5px;
-                    box-shadow: 0 6px 26px rgba(0,0,0,0.28); font-family: inherit;
+                    position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+                    left: 0 !important; right: 0 !important;
+                    margin-left: auto !important; margin-right: auto !important;
+                    transform: translateY(160%);
+                    opacity: 1;
+                    transition: transform 0.5s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease;
+                    z-index: 900; direction: ltr;
+                    display: flex !important; align-items: center; justify-content: space-around; gap: 4px;
+                    width: calc(100% - 20px) !important; max-width: 480px !important;
+                    height: 62px; box-sizing: border-box;
+                    overflow: visible;
+                    background: #ffffff !important; backdrop-filter: none;
+                    border: none !important; border-radius: 999px !important;
+                    padding: 0 14px !important;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.18) !important; font-family: inherit;
                 }
+                /* The sliding white indicator is not used in the light bar. */
+                .feed-nav .feed-nav-ind { display: none !important; }
+                /* App mode: five equal cells so every icon (and the centre FAB) is
+                   spaced uniformly. Category mode keeps its free-scroll flex layout. */
+                .feed-nav.fn-appmode {
+                    display: grid !important;
+                    grid-template-columns: repeat(5, 1fr) !important;
+                    align-items: center; justify-content: stretch !important;
+                    /* A transparent circular hole in the white bar behind the FAB. */
+                    background: radial-gradient(circle 34px at 50% 50%, rgba(255,255,255,0) 0 33px, #ffffff 34px) !important;
+                }
+                .feed-nav.fn-appmode .fn-app { justify-self: center; }
                 /* The moving slide: a clipped viewport with a track that scrolls itself
                    leftward, fading out behind the ⋯ button on the left. */
                 .feed-nav-view {
@@ -13414,9 +13688,9 @@ window.veroLocalImg = function (key) {
                        leftward by hand, the chips passing behind the ⋯ on the left. */
                     direction: ltr;
                 }
-                .feed-nav.in { opacity: 1; transform: translateX(-50%) translateY(0); }
+                .feed-nav.in { opacity: 1; transform: translateY(0); }
                 @media (prefers-reduced-motion: reduce) {
-                    .feed-nav { transition: none; opacity: 1; transform: translateX(-50%); }
+                    .feed-nav { transition: none; opacity: 1; transform: translateY(0); }
                 }
                 .feed-nav::-webkit-scrollbar { display: none; }
                 .feed-nav-tab {
@@ -13686,6 +13960,29 @@ window.veroLocalImg = function (key) {
                 .feed-nav .fn-app span { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; }
                 .feed-nav .fn-app.is-active, .feed-nav .fn-app.open { color: #EB2323; background: #fff; }
                 .feed-nav .fn-app.open { color: #111; }
+                /* ===== Bottom bar redesign (option 1c): black bar, inactive = icon
+                   only, active = white pill with the icon and its label side by side,
+                   in black. Scoped to the main app buttons so category mode and the
+                   back arrow keep their own layout. ===== */
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) {
+                    flex-direction: row; gap: 0; padding: 9px 14px;
+                    transition: color 0.2s, background 0.2s, padding 0.25s ease;
+                }
+                /* The label collapses to zero width when idle and opens out beside the
+                   icon when the tab is selected — a smooth expand rather than a pop. */
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) span {
+                    display: inline-block; max-width: 0; opacity: 0; overflow: hidden;
+                    white-space: nowrap; font-size: 10px;
+                    transition: max-width 0.28s ease, opacity 0.2s ease, margin 0.28s ease;
+                }
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more).is-active {
+                    color: #111; padding: 9px 18px;
+                }
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more).is-active span {
+                    max-width: 120px; opacity: 1; margin-inline-start: 8px;
+                }
+                /* The Categories (⌐) utility button stays icon-only too. */
+                .feed-nav .feed-nav-more span { display: none; }
                 /* Category mode: a back arrow + a swipeable row of category icons filling the bar. */
                 .feed-nav .fn-back { flex: 0 0 auto; width: 42px; }
                 .feed-nav .fn-back svg { width: 20px; height: 20px; }
@@ -13693,6 +13990,108 @@ window.veroLocalImg = function (key) {
                 .feed-nav .fn-cat-item .fn-cat-ic { width: 20px; height: 20px; }
                 .feed-nav .fn-cat-item .fn-cat-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none;
                     stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; display: block; }
+                /* Align category-mode chips with the main bar (option 1c): inactive
+                   show the icon only; the active chip is a white pill with its icon
+                   and label side by side, in black. */
+                .feed-nav .fn-cat-item { flex-direction: row; gap: 0; padding: 9px 0;
+                    transition: color 0.2s, background 0.2s, width 0.25s ease, padding 0.25s ease; }
+                .feed-nav .fn-cat-item > span:not(.fn-cat-ic) {
+                    display: inline-block; max-width: 0; opacity: 0; overflow: hidden;
+                    white-space: nowrap; font-size: 10px;
+                    transition: max-width 0.28s ease, opacity 0.2s ease, margin 0.28s ease; }
+                .feed-nav .fn-cat-item.is-active { color: #111; width: auto; padding: 9px 18px; }
+                .feed-nav .fn-cat-item.is-active > span:not(.fn-cat-ic) {
+                    max-width: 120px; opacity: 1; margin-inline-start: 8px; }
+                /* ===== Reference light bar: flat icons (no white pill), dark active,
+                   and a raised black "+" FAB in the middle. Overrides the 1c pill. ===== */
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) {
+                    flex-direction: column !important; gap: 0 !important; padding: 8px 10px !important;
+                    flex: 1 1 0 !important; background: transparent !important; color: #b7b5b0 !important;
+                }
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) span { display: none !important; }
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more).is-active {
+                    color: #111 !important; background: transparent !important; padding: 8px 10px !important;
+                }
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) svg {
+                    width: 24px !important; height: 24px !important;
+                }
+                /* Flat icons only — no white pill/square behind any icon in the green
+                   capsule (kills the leftover 1c active/open white background). The FAB
+                   keeps its black fill (excluded here). */
+                .feed-nav.fn-appmode .fn-app:not(.fn-fab) { background: transparent !important; }
+                .feed-nav.fn-appmode .fn-app:not(.fn-fab).is-active,
+                .feed-nav.fn-appmode .fn-app:not(.fn-fab).open { color: #111 !important; background: transparent !important; }
+                .feed-nav.fn-appmode .feed-nav-more { color: #b7b5b0 !important; }
+                /* The "+" upload button becomes the raised centre FAB. The extra
+                   :not()s out-specify the flat-icon rule above so the black fill wins. */
+                .feed-nav .fn-app.fn-fab:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) {
+                    flex: 0 0 auto !important; width: 64px !important; height: 64px !important;
+                    border-radius: 50% !important; background: #111 !important; color: #fff !important;
+                    /* Transparent gap: the bar is cut with a white-rimmed hole behind
+                       the circle (radial-gradient on .fn-appmode), and the FAB's own
+                       border is transparent, so the page shows through around it. */
+                    border: 4px solid transparent !important; background-clip: padding-box !important;
+                    transform: translateY(0) !important; padding: 0 !important; align-self: center !important;
+                    box-shadow: 0 6px 18px rgba(0,0,0,0.30) !important;
+                }
+                .feed-nav .fn-app.fn-fab:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) svg {
+                    stroke: #fff !important; width: 32px !important; height: 32px !important; stroke-width: 2 !important;
+                }
+                /* ===== Dark bottom bar: black capsule, white centre FAB with a black
+                   "+", and white active icons so they stay legible on black. ===== */
+                .feed-nav { background: #111 !important; }
+                .feed-nav.fn-appmode {
+                    background: radial-gradient(circle 34px at 50% 50%, rgba(0,0,0,0) 0 33px, #111 34px) !important;
+                }
+                /* Centre FAB inverts: white circle, black plus. */
+                .feed-nav .fn-app.fn-fab:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) {
+                    background: #fff !important; color: #111 !important;
+                }
+                .feed-nav .fn-app.fn-fab:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) svg {
+                    stroke: #111 !important;
+                }
+                /* Active / open items read white on the black bar. */
+                .feed-nav .fn-app:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more).is-active,
+                .feed-nav .fn-app.open,
+                .feed-nav.fn-appmode .fn-app:not(.fn-fab).is-active,
+                .feed-nav.fn-appmode .fn-app:not(.fn-fab).open,
+                .feed-nav .fn-cat-item.is-active {
+                    color: #fff !important; background: transparent !important;
+                }
+                /* ===== Flat-edge treatment: full-width bar pinned to the bottom edge,
+                   top corners rounded, hairline top, no floating capsule or FAB hole.
+                   The centre "+" becomes an inline rounded-square button. ===== */
+                .feed-nav {
+                    left: max(14px, env(safe-area-inset-left, 0px)) !important; right: max(14px, env(safe-area-inset-right, 0px)) !important; width: auto !important; max-width: none !important;
+                    margin: 0 !important; bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+                    height: auto !important; min-height: 62px;
+                    border-radius: 0 !important;
+                    border: none !important;
+                    box-shadow: 0 8px 28px rgba(0,0,0,0.22) !important;
+                    padding: 6px max(14px, env(safe-area-inset-left, 0px)) 6px max(14px, env(safe-area-inset-right, 0px)) !important;
+                }
+                /* Flat bar: no transparent hole behind the FAB. */
+                .feed-nav.fn-appmode { background: #111 !important; }
+                /* Fully clear the bottom edge over the hero / Sale (the bar sits 24px +
+                   safe-area above the bottom, so translateY(100%) alone would leave a
+                   sliver peeking — add that offset so it hides completely). */
+                .feed-nav:not(.in) {
+                    /* Clear the bar's full height, its 24px bottom gap, the safe area AND
+                       its soft drop-shadow (≈28px blur) so nothing peeks over the hero;
+                       fade + disable hit-testing so a stray sliver can never show. */
+                    transform: translateY(calc(100% + 48px + env(safe-area-inset-bottom, 0px))) !important;
+                    opacity: 0 !important; pointer-events: none !important;
+                }
+                .feed-nav.in { transform: translateY(0) !important; opacity: 1 !important; pointer-events: auto !important; }
+                /* FAB as an inline circle (no raise, no transparent ring). */
+                .feed-nav .fn-app.fn-fab:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) {
+                    width: 46px !important; height: 46px !important; border-radius: 50% !important;
+                    border: none !important; transform: none !important;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.30) !important;
+                }
+                .feed-nav .fn-app.fn-fab:not(.fn-cat-item):not(.fn-back):not(.feed-nav-more) svg {
+                    width: 26px !important; height: 26px !important;
+                }
             `;
             document.head.appendChild(style2);
 
@@ -13751,6 +14150,7 @@ window.veroLocalImg = function (key) {
             // The feed bar is an app nav: Feed · Cart · + (upload) · Wishlist · C (categories).
             function build() {
                 bar.innerHTML = '';
+                bar.classList.add('fn-appmode');
                 const svg = p => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
                 const ICON = {
                     cart: svg('<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.2 12.4a1.5 1.5 0 0 0 1.5 1.2h8.3a1.5 1.5 0 0 0 1.5-1.2L21 7H6"/>'),
@@ -13767,15 +14167,17 @@ window.veroLocalImg = function (key) {
                 };
                 bar.appendChild(mkLink('Feed', 'index.html', ICON.feed, true));
                 bar.appendChild(mkLink('Cart', 'cart.html', ICON.cart, false));
-                // "+" — upload a product (same entry point as the header's upload action).
-                bar.appendChild(mkLink('Upload', 'upload-start.html', ICON.plus, false));
+                // "+" — upload a product. Styled as the raised centre FAB.
+                var up = mkLink('Upload', 'upload-start.html', ICON.plus, false);
+                up.classList.add('fn-fab');
+                bar.appendChild(up);
                 bar.appendChild(mkLink('Wishlist', 'wishlist.html', ICON.wish, false));
                 // "C" — opens the clothing-categories chooser popup.
                 const cBtn = document.createElement('button');
                 cBtn.type = 'button'; cBtn.className = 'fn-app feed-nav-more'; cBtn.dataset.vniDone = '1';
                 cBtn.setAttribute('aria-label', 'Categories');
-                // Categories icon: a square open on its right side — a "C" drawn in line.
-                cBtn.innerHTML = svg('<path d="M18 5H6v14h12"/>') + '<span>Categories</span>';
+                // Categories icon: the letter "C" — an arc open on its right side.
+                cBtn.innerHTML = svg('<path d="M17.5 6.5a8 8 0 1 0 0 11"/>') + '<span>Categories</span>';
                 cBtn.addEventListener('click', (e) => { e.stopPropagation(); buildCategories(); });
                 bar.appendChild(cBtn);
                 syncActive();
@@ -13786,6 +14188,7 @@ window.veroLocalImg = function (key) {
             function buildCategories() {
                 closePop();
                 bar.innerHTML = '';
+                bar.classList.remove('fn-appmode');
                 const back = document.createElement('button');
                 back.type = 'button'; back.className = 'fn-app fn-back'; back.dataset.vniDone = '1';
                 back.setAttribute('aria-label', 'Back');
@@ -14043,16 +14446,30 @@ window.veroLocalImg = function (key) {
             // Men/Women/Kids gender slider, and slides up the moment you scroll PAST
             // that slider — i.e. on entering the feed (the SALES block below it).
             // Slides back down when you scroll above it again.
+            let barPinned = false;
             function updateBar() {
-                const marker = document.getElementById('heroMobile2')
-                    || document.querySelector('.sale-showcase')
-                    || document.getElementById('heroImage');
-                if (!marker) { bar.classList.add('in'); return; }
-                const bottom = marker.getBoundingClientRect().bottom;
-                // "crossed" once the gender slider's bottom has scrolled up near the
-                // top of the screen — i.e. we've moved past it into the feed.
-                const crossed = bottom <= window.innerHeight * 0.35;
-                bar.classList.toggle('in', crossed);
+                // The bottom nav bar rises at the EXACT moment the header turns solid
+                // (its "popup"), and the Women/Men/Kids/Unisex popup appears with them —
+                // all three driven by the same trigger the header itself uses: the
+                // feed's top edge reaching the header's bottom edge.
+                const hdr = document.getElementById('siteHeader');
+                const hdrH = (hdr && hdr.offsetHeight) || 0;
+                const feedEl = document.querySelector('.feed-section');
+                let shown;
+                if (feedEl) {
+                    shown = feedEl.getBoundingClientRect().top <= hdrH;
+                } else {
+                    const marker = document.getElementById('heroMobile2')
+                        || document.querySelector('.sale-showcase')
+                        || document.getElementById('heroImage');
+                    shown = marker ? marker.getBoundingClientRect().bottom <= window.innerHeight * 0.35 : true;
+                }
+                // Once the bar first rises (on entering the feed) keep it pinned, so a
+                // later upward scroll never drops it — matching the personal-area bar.
+                if (shown) barPinned = true;
+                const show = shown || barPinned;
+                bar.classList.toggle('in', show);
+                document.body.classList.toggle('cats-pop', show);
             }
             window.addEventListener('scroll', updateBar, { passive: true });
             window.addEventListener('resize', updateBar);
@@ -14190,6 +14607,27 @@ window.veroLocalImg = function (key) {
             }
             return Infinity;
         }
+        // The landing the glide rests on when it leaves the Sale panel: stop so the
+        // Categories "Slide for more" cue sits ~12px above the bottom nav bar (rather
+        // than running the panel to the header). The panel is taller than the room above
+        // the bar, so this favours the cue — the bottom of the panel reads cleanly over
+        // the bar. Falls back to the title-safe feedTop() when the cue can't be found.
+        function feedLanding() {
+            const base = feedTop();
+            if (!isFinite(base)) return base;
+            const gr = document.getElementById('genderRail');
+            const cue = gr && gr.querySelector('.slide-more');
+            if (!cue || gr.offsetParent === null) return base;
+            const nav = document.querySelector('.feed-nav');
+            const navH = nav ? nav.getBoundingClientRect().height : 62;
+            const NAV_GAP = 24;                      // the bar rests 24px above the bottom
+            const CUE_GAP = 12;                      // "a bit below" the cue line (requested)
+            const cueBottomDoc = cue.getBoundingClientRect().bottom + (window.scrollY || 0);
+            // Scroll so the cue's bottom edge lands CUE_GAP above the nav bar's top edge.
+            const wanted = cueBottomDoc - (window.innerHeight - (NAV_GAP + navH + CUE_GAP));
+            // Never above the Sale panel, never past the panel's own top-safe landing.
+            return Math.max(0, wanted);
+        }
         function sectionStops() {
             const stops = [0];
             // SALES banner (under the Men/Women/Kids slider) — its own landing
@@ -14223,7 +14661,7 @@ window.veroLocalImg = function (key) {
             if (blank && blank.offsetParent !== null) {
                 stops.push(blank.getBoundingClientRect().top + (window.scrollY || 0));
             }
-            stops.push(feedTop());
+            stops.push(feedLanding());
             // Sections are collected by type, not page order — keep them top-down.
             return stops.sort(function (a, b) { return a - b; });
         }
@@ -14349,5 +14787,6 @@ window.veroLocalImg = function (key) {
     </script>
     <script src="assets/didone-hairline.js"></script>
     <script src="nav-icons.js" defer></script>
+<script src="assets/line-icons.js"></script>
 </body>
 </html>
