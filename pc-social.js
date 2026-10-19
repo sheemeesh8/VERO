@@ -1,21 +1,16 @@
 /* ------------------------------------------------------------------
-   VERO — social proof on the product card (feed option 8h).
+   VERO — product-card foot layout.
 
-   ONE source for the third copy row every product card carries: saves ·
-   offers · views as outline icons, under the product name. Load it next to
-   product-card.css on any page that shows product cards:
+   One source for the card's new foot, applied to every product card on
+   every page (the file is already loaded site-wide). Per card it:
+     • lifts the price node into the image field's top-right corner,
+     • injects the SIZE mark in the top-left corner (demo value until the
+       backend tracks real dimensions — steady per piece, from its name),
+     • injects the wishlist heart where the price used to sit; a tap fills
+       it solid black and records the piece in vero_wishlist.
+   The cart icon is dropped from the card face in product-card.css.
 
-     <link rel="stylesheet" href="product-card.css">
-     <script src="pc-social.js"></script>
-
-   Renderers may emit the row themselves with veroSocialHTML(prod); any card
-   that reaches the page without one gets it added here, so a page needs no
-   changes of its own. Draft cards are skipped — a draft is not listed yet.
-
-   A product's own counts (saves / likes, offers, views) are used when it
-   carries them. Until the backend tracks these, steady demo figures are
-   derived from the product's name + seller, so a piece shows the same
-   numbers on every page and every render.
+   Draft cards are skipped — a draft is not listed yet.
 ------------------------------------------------------------------ */
 (function () {
     function hash(str) {
@@ -24,116 +19,106 @@
         return h >>> 0;
     }
 
-    function stats(prod) {
-        prod = prod || {};
-        var h = hash((prod.name || '') + '|' + (prod.seller || ''));
-        var saves = prod.saves != null ? prod.saves : prod.likes != null ? prod.likes : (h % 96) + 4;
-        var offers = prod.offers != null ? prod.offers : Math.floor(saves / 9) + ((h >>> 8) % 3);
-        var views = prod.views != null ? prod.views : saves * (4 + ((h >>> 12) % 5)) + ((h >>> 16) % 40);
-        return { saves: saves, offers: offers, views: views };
+    // A steady demo size for a piece, derived from its name + seller so it
+    // reads the same on every page and every render. Replace with the real
+    // dimensions once the product carries them (data-size / prod.size).
+    function demoSize(name, seller) {
+        var h = hash((name || '') + '|' + (seller || ''));
+        var w = 40 + (h % 160);                 // 40–199
+        var d = 30 + ((h >>> 8) % 90);          // 30–119
+        return w + '×' + d + ' cm';
     }
 
-    // Size and stroke are set on the element too, so even with no stylesheet at
-    // all the icons stay small outline marks.
-    function ico(d) {
-        return '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#5b5750" ' +
-               'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
-    }
+    var HEART = '<path d="M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>';
 
-    function html(prod) {
-        var s = stats(prod);
-        return '<div class="pc-stats">' +
-            '<span title="Saves">' + ico('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>') + s.saves + '</span>' +
-            '<span title="Offers">' + ico('<path d="M4 5h16v11H9l-5 4V5z"/>') + s.offers + '</span>' +
-            '<span title="Views">' + ico('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>') + s.views + '</span>' +
-            '</div>';
-    }
+    function readJSON(k, fb) { try { return JSON.parse(localStorage.getItem(k)) || fb; } catch (e) { return fb; } }
+    function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-    // Read the product off a card that was rendered without the row.
-    function prodOf(card) {
+    function text(card, sel) { var el = card.querySelector(sel); return el ? el.textContent.trim() : ''; }
+
+    function sizeOf(card) {
         var d = card.dataset || {};
-        var p = {};
-        try { if (d.product) p = JSON.parse(d.product) || {}; } catch (e) { p = {}; }
-        var text = function (sel) { var el = card.querySelector(sel); return el ? el.textContent.trim() : ''; };
-        return {
-            name: p.name || d.name || text('.product-name') || card.getAttribute('title') || '',
-            seller: p.seller || d.seller || text('.product-seller'),
-            saves: p.saves, likes: p.likes, offers: p.offers, views: p.views
-        };
+        if (d.size) return d.size;
+        try { if (d.product) { var p = JSON.parse(d.product) || {}; if (p.size) return p.size; } } catch (e) {}
+        return demoSize(d.name || text(card, '.product-name') || card.getAttribute('title') || '',
+                        d.seller || text(card, '.product-seller'));
+    }
+
+    function wishKey(card) {
+        var d = card.dataset || {};
+        return (d.name || text(card, '.product-name') || card.getAttribute('title') || '') + '|' +
+               (d.seller || text(card, '.product-seller'));
+    }
+    function isSaved(card) {
+        var wish = readJSON('vero_wishlist', []);
+        if (!Array.isArray(wish)) return false;
+        var key = wishKey(card);
+        return wish.some(function (w) { return w && (w.name + '|' + (w.seller || '')) === key; });
+    }
+    function toggleSave(card, btn) {
+        var wish = readJSON('vero_wishlist', []);
+        if (!Array.isArray(wish)) wish = [];
+        var d = card.dataset || {};
+        var name = d.name || text(card, '.product-name') || card.getAttribute('title') || 'Item';
+        var seller = d.seller || text(card, '.product-seller') || '';
+        var key = name + '|' + seller;
+        var idx = wish.findIndex(function (w) { return w && (w.name + '|' + (w.seller || '')) === key; });
+        if (idx === -1) {
+            wish.push({ name: name, seller: seller, icon: d.icon || '🛍️', cover: d.cover || '',
+                        price: parseFloat(d.price) || 0, addedAt: Date.now() });
+            btn.classList.add('saved');
+        } else {
+            wish.splice(idx, 1);
+            btn.classList.remove('saved');
+        }
+        writeJSON('vero_wishlist', wish);
+    }
+
+    function decorate(card) {
+        if (card.classList.contains('draft-card')) return;
+        if (card.dataset.pcFoot === '1') return;
+        card.dataset.pcFoot = '1';
+
+        var image = card.querySelector('.product-image');
+        var info = card.querySelector('.product-info');
+        if (!image) return;
+
+        // Lift the price into the image's top-right corner.
+        var price = info && info.querySelector('.product-price');
+        if (price && price.parentElement !== image) image.appendChild(price);
+
+        // Size, top-left.
+        if (!image.querySelector('.pc-size')) {
+            var size = document.createElement('span');
+            size.className = 'pc-size';
+            size.textContent = sizeOf(card);
+            image.appendChild(size);
+        }
+
+        // Wishlist heart, bottom-right — where the price used to be.
+        if (!card.querySelector('.pc-wish')) {
+            var btn = document.createElement('button');
+            btn.className = 'pc-wish' + (isSaved(card) ? ' saved' : '');
+            btn.type = 'button';
+            btn.setAttribute('aria-label', 'Add to wishlist');
+            btn.innerHTML = '<svg viewBox="0 0 24 24">' + HEART + '</svg>';
+            btn.addEventListener('click', function (e) {
+                e.preventDefault(); e.stopPropagation();
+                toggleSave(card, btn);
+            });
+            card.appendChild(btn);
+        }
     }
 
     function fill(root) {
         if (!root || !root.querySelectorAll) return;
-        var cards = root.matches && root.matches('.product-card') ? [root] : [];
-        cards = cards.concat(Array.prototype.slice.call(root.querySelectorAll('.product-card')));
-        cards.forEach(function (card) {
-            if (card.classList.contains('draft-card')) return;
-            var info = card.querySelector('.product-info');
-            if (!info || info.querySelector('.pc-stats')) return;
-            info.insertAdjacentHTML('beforeend', html(prodOf(card)));
-        });
+        if (root.matches && root.matches('.product-card')) decorate(root);
+        Array.prototype.forEach.call(root.querySelectorAll('.product-card'), decorate);
     }
 
-    // The row's own styles travel with the script: if a browser holds an older
-    // product-card.css, the row still renders right (never as bare black icons).
-    //
-    // The row sits inside the card, on the copy template's fourth row under the
-    // name, "spread": the three marks run across the copy's width, the first
-    // and last flush with the two ends of the hairline rule. The piece's field
-    // gives up one row of height for it.
-    var CSS = [
-        '.product-card { --pc-stats-h: 20px; }',
-        // The piece is centred in the card's open space: the field ends just
-        // above the brand line and its top padding clears the top line (hint /
-        // controls) — padding, not inset, so the controls that ride inside the
-        // field keep their place at the card's top.
-        '.product-card:has(.pc-stats) .product-image {',
-        '    inset: 0 0 calc(var(--foot-h) + var(--pc-stats-h) - 12px) 0 !important;',
-        '    padding-top: 44px !important;',
-        '    aspect-ratio: auto !important;',
-        '}',
-        '.product-card .product-info .pc-stats {',
-        '    grid-area: 4 / 1 / 5 / -1;',
-        '    margin: 6px 0 0;',
-        '    padding: 0;',
-        '    display: flex;',
-        '    justify-content: space-between;',
-        '    align-items: center;',
-        '    direction: ltr;',
-        '}',
-        '.pc-stats span {',
-        '    display: inline-flex;',
-        '    align-items: center;',
-        '    gap: 3px;',
-        '    font-family: \'Oswald\', \'Segoe UI\', Helvetica, Arial, sans-serif !important;',
-        '    font-size: 10px;',
-        '    font-weight: 300;',
-        '    letter-spacing: 0.3px;',
-        '    line-height: 1;',
-        '    color: #5b5750;',
-        '}',
-        '.pc-stats svg {',
-        '    width: 12px;',
-        '    height: 12px;',
-        '    flex: none;',
-        '    fill: none;',
-        '    stroke: #5b5750;',
-        '    stroke-width: 1.6 !important;',
-        '    stroke-linecap: round;',
-        '    stroke-linejoin: round;',
-        '}'
-    ].join('\n');
-    function injectCSS() {
-        if (document.getElementById('pc-social-css')) return;
-        var st = document.createElement('style');
-        st.id = 'pc-social-css';
-        st.textContent = CSS;
-        (document.head || document.documentElement).appendChild(st);
-    }
-    injectCSS();
-
-    window.veroSocialStats = stats;
-    window.veroSocialHTML = html;
+    // Kept as safe stubs for any page that still calls these.
+    window.veroSocialStats = function () { return {}; };
+    window.veroSocialHTML = function () { return ''; };
     window.veroSocialFill = fill;
 
     function start() {
