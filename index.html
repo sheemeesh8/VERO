@@ -14554,6 +14554,27 @@ window.veroLocalImg = function (key) {
             }
             return Infinity;
         }
+        // The landing the glide rests on when it leaves the Sale panel: stop so the
+        // Categories "Slide for more" cue sits ~12px above the bottom nav bar (rather
+        // than running the panel to the header). The panel is taller than the room above
+        // the bar, so this favours the cue — the bottom of the panel reads cleanly over
+        // the bar. Falls back to the title-safe feedTop() when the cue can't be found.
+        function feedLanding() {
+            const base = feedTop();
+            if (!isFinite(base)) return base;
+            const gr = document.getElementById('genderRail');
+            const cue = gr && gr.querySelector('.slide-more');
+            if (!cue || gr.offsetParent === null) return base;
+            const nav = document.querySelector('.feed-nav');
+            const navH = nav ? nav.getBoundingClientRect().height : 62;
+            const NAV_GAP = 24;                      // the bar rests 24px above the bottom
+            const CUE_GAP = 12;                      // "a bit below" the cue line (requested)
+            const cueBottomDoc = cue.getBoundingClientRect().bottom + (window.scrollY || 0);
+            // Scroll so the cue's bottom edge lands CUE_GAP above the nav bar's top edge.
+            const wanted = cueBottomDoc - (window.innerHeight - (NAV_GAP + navH + CUE_GAP));
+            // Never above the Sale panel, never past the panel's own top-safe landing.
+            return Math.max(0, wanted);
+        }
         function sectionStops() {
             const stops = [0];
             // SALES banner (under the Men/Women/Kids slider) — its own landing
@@ -14587,7 +14608,7 @@ window.veroLocalImg = function (key) {
             if (blank && blank.offsetParent !== null) {
                 stops.push(blank.getBoundingClientRect().top + (window.scrollY || 0));
             }
-            stops.push(feedTop());
+            stops.push(feedLanding());
             // Sections are collected by type, not page order — keep them top-down.
             return stops.sort(function (a, b) { return a - b; });
         }
