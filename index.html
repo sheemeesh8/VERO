@@ -591,87 +591,79 @@
             filter: none;
         }
         #heroImage.clothing-video #heroVideo { display: block; }
-        /* Clothing hero: video fills the top two-thirds of the box (raised up so the
-           top is cropped), leaving a clean white band across the bottom third. The
-           overall hero height / scroll is unchanged. */
+        /* Clothing hero: the video fills the space above a fixed-height white band at
+           the bottom (raised up so the top is cropped). The band is tall enough to
+           hold a full-size feed product row; the video takes whatever is left. */
+        :root { --wb-band: 318px; }
         #heroImage.clothing-video #heroVideo {
             top: 0; bottom: auto;
-            height: 66.667%;
+            height: calc(100% - var(--wb-band));
             object-position: center bottom;
         }
-        /* White band across the bottom third of the clothing hero — holds the
-           rotating 2-up product strip. */
+        /* White band at the bottom of the clothing hero — holds the rotating 2-up
+           product strip (real feed cards). */
         .hero-whiteband {
             position: absolute; left: 0; right: 0; bottom: 0;
-            height: 33.333%;
+            height: var(--wb-band);
             background: #fff;
             z-index: 5;
             display: none;
         }
         #heroImage.clothing-video .hero-whiteband { display: block; }
-        /* In clothing mode the caption copy stays within the top two-thirds (over
-           the video), so it never collides with the white product strip. */
-        #heroImage.clothing-video .hero-overlay-inner { bottom: 33.333%; }
+        /* In clothing mode the caption copy stays above the white product strip. */
+        #heroImage.clothing-video .hero-overlay-inner { bottom: var(--wb-band); }
         /* The clothing hero clip runs brighter — matched to the Sale screen below. */
         #heroVideo { filter: none; }
 
         /* ===== White-band product strip — shared by the clothing hero and the Sale
-           screen. Two minimalist product cards (photo, name, price) side by side,
-           swapping at random through a pool of ten. No dots, no arrows. ===== */
+           screen. Two real feed product cards side by side (same size and style as the
+           feed), swapping at random through a pool of ten. No dots, no arrows. ===== */
         .wb-strip {
             position: absolute; inset: 0; z-index: 6;
             display: flex; align-items: center; justify-content: center;
-            padding: 12px 14px 30px;
+            padding: 14px 14px 16px;
             direction: ltr; pointer-events: auto;
         }
         /* The clothing hero's scroll cue would sit on top of the strip — the white
            band replaces it, so hide it in clothing-video mode. */
         #heroImage.clothing-video .hero-ov-bottom,
         #heroImage.clothing-video .slide-more--over { display: none; }
-        .wb-pair {
+        /* Two feed cards, feed sizing: 2-up, 14px gutter, identical card styling
+           (the .products-grid class carries the feed card rules). */
+        .wb-strip .wb-pair {
             display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-            width: 100%; max-width: 520px; height: 100%;
-            opacity: 1; transition: opacity 0.5s ease;
+            width: 100%; max-width: 420px; height: 100%; align-items: stretch;
+            margin: 0 auto; opacity: 1; transition: opacity 0.5s ease;
         }
-        .wb-pair.wb-fading { opacity: 0; }
-        .wb-card {
-            display: flex; flex-direction: column; min-width: 0;
-            text-decoration: none; color: #111;
-        }
-        .wb-img {
-            flex: 1 1 auto; min-height: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: #f3f1ec; overflow: hidden; font-size: 40px;
-        }
-        .wb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .wb-meta { padding: 7px 2px 0; text-align: left; }
-        .wb-name {
-            font-family: 'Poppins','Inter',sans-serif;
-            font-size: 11px; font-weight: 500; letter-spacing: 0.02em;
-            color: #1b2330; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .wb-price {
-            font-family: 'Poppins','Inter',sans-serif;
-            font-size: 11px; font-weight: 400; color: #555; margin-top: 2px;
-        }
-        .wb-price .vprice-was { text-decoration: line-through; color: #b0a89c; margin-right: 6px; font-size: 10px; }
-        .wb-price .vprice-sale { color: #c0392b; font-weight: 600; }
-        .wb-price .vprice-off { display: none; }
+        .wb-strip .wb-pair.wb-fading { opacity: 0; }
+        .wb-strip .product-card { height: 100%; }
 
-        /* Sale screen (#heroMobile2): same treatment — image fills the top two-thirds
-           (raised, top cropped), the bottom third is a white product strip. */
+        /* Sale screen (#heroMobile2): same treatment — image fills the space above the
+           fixed white band that holds the product strip. */
         #heroMobile2 .hm2-video {
-            top: 0; bottom: auto; height: 66.667%;
+            top: 0; bottom: auto; height: calc(100% - var(--wb-band));
             object-position: center bottom;
         }
-        #heroMobile2 .sale-frame { bottom: 33.333%; padding-bottom: 40px; }
+        #heroMobile2 .sale-frame { padding-bottom: 40px; }
         .hm2-whiteband {
             position: absolute; left: 0; right: 0; bottom: 0;
-            height: 33.333%; background: #fff; z-index: 3;
+            height: var(--wb-band); background: #fff; z-index: 3;
         }
         /* Keep the Sale slide cue above the white band (its white text would vanish
            on the band), sitting just inside the image region. */
-        #heroMobile2 .slide-more--over { bottom: calc(33.333% + 12px); }
+        #heroMobile2 .slide-more--over { bottom: calc(var(--wb-band) + 12px); }
+        /* Shrink both Ralph Lauren heritage frames so they enclose only the image /
+           video region above the white band. */
+        #heroImage.clothing-video .hero-rl-frame { bottom: calc(var(--wb-band) + 10px); }
+        #heroMobile2 .sale-frame { bottom: calc(var(--wb-band) + 10px); }
+        /* When relocated into the feed (second block), the Sale screen stops pinning
+           and sits as an ordinary full-bleed block after the first feed block. */
+        #heroMobile2.hm2-in-feed {
+            position: relative; top: auto; z-index: auto;
+            width: 100vw; left: 50%; right: 50%;
+            margin-left: -50vw; margin-right: -50vw;
+            scroll-snap-align: start;
+        }
         #heroImage.art-video #heroVideoArt { display: block; }
         /* Art-mode hero video: full colour, full-bleed like the fashion hero. */
 
@@ -3377,7 +3369,7 @@
             --pd-company-color: #000000;
             --pd-title-color: #000000;
             --pd-desc-color: #000000;
-            --pd-panel-bg: #f1f1ef;
+            --pd-panel-bg: #F0F0F0;
             --pd-btn-bg: #f1f1ef;
             --pd-btn-color: #111;
             --pd-btn-h: 53px;
@@ -3470,7 +3462,7 @@
             max-width: var(--pd-img-w, 620px);
             aspect-ratio: 1 / var(--pd-img-aspect, 1.25);
             margin: 0;
-            background: var(--pd-panel-bg, #f2f0ec);   /* flat, minimalist neutral */
+            background: var(--pd-panel-bg, #F0F0F0);   /* flat, minimalist neutral */
             border-radius: 4px;
             display: flex;
             align-items: center;
@@ -3819,7 +3811,7 @@
         }
         .q5-img {
             display: flex; align-items: center; justify-content: center;
-            width: 100%; aspect-ratio: 1 / 1; background: #f2f0ec; border-radius: 10px;
+            width: 100%; aspect-ratio: 1 / 1; background: #F0F0F0; border-radius: 10px;
             overflow: hidden; text-decoration: none;
             font-size: clamp(64px, 22vw, 120px); color: rgba(0,0,0,0.14);
         }
@@ -4391,13 +4383,13 @@
         .slider-rects { margin-top: 28px; gap: 10px; }
         .slider-rect {
             aspect-ratio: 0.7;          /* width / height, same as .product-card */
-            background: #efece4;
+            background: #F0F0F0;
             border-radius: 10px;
             overflow: hidden;
         }
 
         .product-card {
-            background: #efece4;
+            background: #F0F0F0;
             border: none;
             border-radius: 10px;
             overflow: hidden;
@@ -4417,8 +4409,9 @@
         .product-image {
             width: 100%;
             aspect-ratio: 3 / 4;
-            /* Same ground as the product page's first image (--sand #F2F0EF). */
-            background: #F2F0EF;
+            /* Neutral light-grey product ground (Maison Margiela style), shared with
+               the product page gallery. */
+            background: #F0F0F0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -4444,7 +4437,7 @@
         }
 
         .product-card:hover .product-image {
-            background: #ecebe8;
+            background: #E8E8E8;
         }
 
         /* wishlist/cart quick-actions live over the image, top-right */
@@ -4514,7 +4507,7 @@
             align-items: stretch;
             gap: 8px;
             position: relative;
-            background: #efece4;
+            background: #F0F0F0;
             text-align: left;
         }
 
@@ -5822,7 +5815,7 @@
             display: flex; align-items: center; justify-content: space-between;
             /* clear the phone camera / status bar so the icons are never hidden */
             padding: max(22px, calc(env(safe-area-inset-top, 0px) + 6px)) 18px 12px;
-            background: #F2F0EF;
+            background: #F0F0F0;
         }
         .cat-tb-right { display: flex; align-items: center; gap: 4px; }
         .cat-tb-ico {
@@ -5876,7 +5869,7 @@
         .cat-hero-back svg { width: 20px; height: 20px; }
         /* Plain variant: no image, just the same area filled with F2F0EF. Dark
            text and back control since there's no dark photo behind them. */
-        .cat-hero--plain { background: #F2F0EF; }
+        .cat-hero--plain { background: #F0F0F0; }
         .cat-hero--plain::after { display: none; }
         .cat-hero--plain .cat-hero-title { color: #171717; }
         .cat-hero--plain .cat-hero-kicker { color: #a99f86; }
@@ -6054,15 +6047,15 @@
         /* Category page: more compact product cards — a shorter square image and
            a tighter info row, so the cards don't run tall in the 2-up grid. */
         /* Baseline card in the F2F0EF tone (category page only). */
-        .acat-grid .product-card { background: #F2F0EF; }
+        .acat-grid .product-card { background: #F0F0F0; }
         .acat-grid .product-image {
             aspect-ratio: 3 / 4;
-            background: #F2F0EF;
+            background: #F0F0F0;
             font-size: 54px;
             padding: 16% 18%;
         }
-        .acat-grid .product-card:hover .product-image { background: #ecebe8; }
-        .acat-grid .product-info { background: #F2F0EF; padding: 16px 16px 18px; gap: 12px; }
+        .acat-grid .product-card:hover .product-image { background: #E8E8E8; }
+        .acat-grid .product-info { background: #F0F0F0; padding: 16px 16px 18px; gap: 12px; }
         .acat-grid .pc-left { gap: 12px; }
         /* Real product photo filling the card image area. */
         .acat-grid .product-image img.pc-photo {
@@ -6628,7 +6621,7 @@
         .vinbox-mid { flex: 1; min-width: 0; order: 1; }   /* content → right */
         .vinbox-img {
             width: 96px; height: 96px; border-radius: 10px; flex: 0 0 auto; order: 2;  /* image → left */
-            background: #efece4; display: flex; align-items: center; justify-content: center; font-size: 40.00px;
+            background: #F0F0F0; display: flex; align-items: center; justify-content: center; font-size: 40.00px;
             background-size: cover; background-position: center;
         }
         .vinbox-seller { font-family: var(--f-serif); font-size: 20.00px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -7849,7 +7842,7 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 /* -- Collection banner in the feed: the hero's treatment on the card's light
       ground. Clear product, small spaced kicker, light large title, size ·
       condition with the price, and two square text buttons. -- */
-#feedContainer .promo-slider--feed .fp-media { background: #F2F0EF !important; padding-bottom: 150px; opacity: 1 !important; filter: none !important; color: #111 !important; }
+#feedContainer .promo-slider--feed .fp-media { background: #F0F0F0 !important; padding-bottom: 150px; opacity: 1 !important; filter: none !important; color: #111 !important; }
 #feedContainer .promo-slider--feed .fp-media::before, #feedContainer .promo-slider--feed .fp-media::after { display: none !important; }
 #feedContainer .promo-slider--feed .fp-text {
     grid-template-columns: 1fr auto !important;
@@ -10811,7 +10804,21 @@ window.veroLocalImg = function (key) {
             if (!feedContainer.children.length) {
                 feedContainer.innerHTML = '<div class="feed-empty">No pieces match these filters.</div>';
             }
+            placeSaleInFeed();
             renderVeroFeatures();
+        }
+
+        // Move the Sale screen (#heroMobile2) down into the feed, right after the first
+        // feed block, so it reads as the second block instead of sitting straight after
+        // the hero. Full-bleed is restored with the hm2-in-feed class.
+        function placeSaleInFeed() {
+            var sale = document.getElementById('heroMobile2');
+            var fc = document.getElementById('feedContainer');
+            if (!sale || !fc) return;
+            var firstBlock = fc.querySelector('.feed-block--first');
+            if (!firstBlock) return;
+            sale.classList.add('hm2-in-feed');
+            firstBlock.insertAdjacentElement('afterend', sale);
         }
 
         // ---- Home feed Figma sections: featured picks, hero band, section bar
@@ -11841,19 +11848,12 @@ window.veroLocalImg = function (key) {
                 return a;
             }
             function cardHTML(p) {
-                var img = (p.processed_cover || p.cover)
-                    ? '<img src="' + (p.processed_cover || p.cover) + '" alt="' + (p.name || '') + '">'
-                    : (p.icon || '');
+                // Use the real feed product card so the strip matches the feed exactly
+                // in size and style (image panel, name, seller, price, sale framing).
+                if (typeof productCardHTML === 'function') return productCardHTML(p);
                 var price = (typeof veroPriceHTML === 'function')
                     ? veroPriceHTML(p) : '<span class="vprice">' + p.price + '</span>';
-                var href = (typeof productPageUrl === 'function') ? productPageUrl(p) : '#';
-                return '<a class="wb-card" href="' + href + '">' +
-                    '<div class="wb-img">' + img + '</div>' +
-                    '<div class="wb-meta">' +
-                        '<div class="wb-name">' + (p.name || '') + '</div>' +
-                        '<div class="wb-price">' + price + '</div>' +
-                    '</div>' +
-                '</a>';
+                return '<a class="product-card">' + (p.name || '') + ' ' + price + '</a>';
             }
             function initStrip(strip) {
                 var src = (typeof clothingProducts !== 'undefined' && clothingProducts.length)
@@ -11870,7 +11870,7 @@ window.veroLocalImg = function (key) {
                 }
                 function render(el, pair) { el.innerHTML = pair.map(cardHTML).join(''); }
                 var pairEl = document.createElement('div');
-                pairEl.className = 'wb-pair';
+                pairEl.className = 'wb-pair products-grid';
                 strip.innerHTML = '';
                 strip.appendChild(pairEl);
                 render(pairEl, nextPair());
