@@ -735,50 +735,6 @@
         #heroImage.art-video #heroVideoArt { display: block; }
         /* Art-mode hero video: full colour, full-bleed like the fashion hero. */
 
-        /* ---- Opening intro, over the running hero video ----
-           While body.vero-intro is set, the wordmark holds over the clip and the
-           site chrome is hidden; removing the class fades the wordmark out and the
-           site in — all over the same, never-restarted hero video. */
-        .hero-intro-layer {
-            position: absolute; inset: 0; z-index: 6; pointer-events: none;
-            opacity: 0; transition: opacity 0.8s ease;
-        }
-        body.vero-intro .hero-intro-layer { opacity: 1; }
-        .hero-intro-scrim {
-            position: absolute; inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.12) 42%, rgba(0,0,0,0.5) 100%);
-        }
-        .hero-intro-mark {
-            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-            width: 60%; max-width: 280px; height: auto;
-            filter: drop-shadow(0 2px 18px rgba(0,0,0,0.5));
-        }
-        /* Script wordmark variant of the intro logo (white over the clip). */
-        .hero-intro-script:not(#z):not(#z):not(#z) {
-            width: auto; max-width: 86%; height: auto;
-            font-family: 'Pinyon Script', cursive !important; font-weight: 400 !important;
-            font-size: clamp(54px, 18vw, 86px); line-height: 1; color: #fff; white-space: nowrap;
-            text-transform: none; letter-spacing: 0;
-        }
-        /* Hide the site chrome and hero copy until the intro hands off; they fade in
-           when body.vero-intro is removed. */
-        body.vero-intro #siteHeader,
-        body.vero-intro .feed-nav,
-        body.vero-intro #heroImage .hero-overlay-inner,
-        body.vero-intro #heroImage .hero-search,
-        body.vero-intro #heroImage .slide-more {
-            opacity: 0 !important;
-        }
-        #siteHeader, .feed-nav,
-        #heroImage .hero-overlay-inner, #heroImage .hero-search, #heroImage .slide-more {
-            transition: opacity 0.9s ease;
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-intro-layer, body.vero-intro #siteHeader, body.vero-intro .feed-nav,
-            body.vero-intro #heroImage .hero-overlay-inner, body.vero-intro #heroImage .hero-search,
-            body.vero-intro #heroImage .slide-more { transition: none; }
-        }
-
         /* Hero caption overlay — a modern, bottom-anchored editorial layout over the
            video: a small kicker at the top, the headline block at the bottom-left, and
            the scroll cue at the bottom-right. */
@@ -1199,9 +1155,6 @@
                 content: ''; position: absolute; inset: 5px;
                 border: 1px solid rgba(255,255,255,0.4);
             }
-            /* Hide the frame during the opening intro (the wordmark reveal). */
-            body.vero-intro #heroImage .hero-rl-frame { display: none !important; }
-
             /* The hero image pins to the top; everything after it (the second image and
                the feed) scrolls up and covers it — the OMEGA-style reveal. */
             #heroImage.hero {
@@ -8229,9 +8182,6 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 <!-- data-back="none": this page opens on the home view, which carries no back
      control. hideAllViews() clears it for every other view. -->
 <body data-footer="manual" data-back="none">
-<!-- Intro-over-hero: hide the chrome immediately so it can fade in after the intro —
-     but only ONCE per app open, so returning home doesn't replay it. -->
-<script>try { if (!sessionStorage.getItem('vero_intro_done')) document.body.classList.add('vero-intro'); } catch (e) {}</script>
 <script>
 /* Local, self-hosted imagery for the hero, categories and feed — replaces the
    external loremflickr placeholders (which the CDN/proxy blocks in production).
@@ -8275,7 +8225,7 @@ window.veroLocalImg = function (key) {
         <!-- Clothing-mode hero video, full-bleed over the background image. Shown only
              in clothing mode (toggled in setCategory); the background image remains
              the poster / art-mode fallback. -->
-        <video class="hero-video-bg" id="heroVideo" poster="assets/hero/intro-poster.jpg"
+        <video class="hero-video-bg" id="heroVideo"
                autoplay muted loop playsinline preload="auto">
             <source src="assets/hero/unisex.mp4" type="video/mp4">
         </video>
@@ -8285,32 +8235,6 @@ window.veroLocalImg = function (key) {
         <!-- Ralph Lauren–style heritage frame: a decorative cream double rule,
              matching the Sale panel. Purely visual (pointer-events:none). -->
         <div class="hero-rl-frame" aria-hidden="true"></div>
-        <!-- Opening intro, played OVER this same running hero video: the moravchick
-             wordmark holds, then fades as the site fades in — the clip never restarts. -->
-        <div class="hero-intro-layer" id="heroIntro" aria-hidden="true">
-            <div class="hero-intro-scrim"></div>
-            <span class="hero-intro-mark hero-intro-script" aria-hidden="true">moravchick</span>
-        </div>
-        <script>
-        (function heroIntroReveal() {
-            var body = document.body, v = document.getElementById('heroVideo'), done = false;
-            function tellParent() { try { if (window.parent && window.parent !== window) window.parent.postMessage('vero-hero-playing', '*'); } catch (e) {} }
-            function reveal() { if (done) return; done = true; body.classList.remove('vero-intro'); try { sessionStorage.setItem('vero_intro_done', '1'); } catch (e) {} }
-            // Intro already played this session (e.g. returning to the home feed) →
-            // no overlay was added; just make sure the frame's load cover lifts.
-            if (!body.classList.contains('vero-intro')) { tellParent(); return; }
-            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            if (reduce) { tellParent(); setTimeout(reveal, 700); return; }
-            if (v) {
-                var onPlay = function () { tellParent(); setTimeout(reveal, 2600); };   // hold the logo, then hand off
-                if (!v.paused && v.currentTime > 0) onPlay();
-                else v.addEventListener('playing', onPlay, { once: true });
-                var pr = v.play && v.play(); if (pr && pr.catch) pr.catch(function () {});
-            }
-            // Never let the intro get stuck if the clip can't report playing.
-            setTimeout(function () { tellParent(); reveal(); }, 4500);
-        })();
-        </script>
         <!-- Clothing-mode caption overlay — hidden in art mode via CSS. -->
         <div class="hero-overlay hero-overlay--clothing">
             <div class="hero-overlay-inner">
