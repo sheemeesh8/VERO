@@ -640,6 +640,47 @@
         }
         .wb-strip .wb-pair.wb-fading { opacity: 0; }
 
+        /* ---- Strip cards: the data sits below the card ----
+           In the two white-band strips (the clothing hero and the Sale screen) the
+           price drops out of the image's top-right corner and into the footer, so
+           each card reads as one line of data under the piece: the product name and
+           the company on the LEFT, the price on the RIGHT, level with the name. The
+           wishlist heart moves up to the top-right corner the price left behind.
+           Scoped to .wb-pair so no other product card on the site changes. The price
+           node is relocated into the footer by initWhiteBandStrips() (JS), so it can
+           ride in the flex row rather than floating over the image. */
+        .wb-strip .wb-pair .product-card.pc-e .product-info {
+            display: flex !important;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px !important;
+        }
+        .wb-strip .wb-pair .product-card.pc-e .pc-right {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .wb-strip .wb-pair .product-card.pc-e .pc-price-top {
+            position: static !important;
+            top: auto !important;
+            right: auto !important;
+            left: auto !important;
+            flex: 0 0 auto;
+            display: block !important;
+            text-align: right;
+        }
+        .wb-strip .wb-pair .product-card.pc-e .pc-price-top .product-price:not(#zzzz):not(#zzzz):not(#zzzz) {
+            justify-content: flex-end !important;
+            text-align: right;
+        }
+        /* The heart steps up to the image's top-right corner — out of the footer so
+           it never collides with the price now sitting there. */
+        .wb-strip .wb-pair .product-card.pc-e .pc-wish {
+            top: 12px;
+            bottom: auto;
+        }
+
         /* Sale screen (#heroMobile2): same treatment — image fills the space above the
            fixed white band that holds the product strip. */
         #heroMobile2 .hm2-video {
@@ -1152,8 +1193,11 @@
                 right: auto;
                 margin-left: 0;
                 margin-right: 0;
-                height: 100vh;
-                min-height: 100vh;
+                /* Not a full screen: the hero is a little shorter than the viewport so
+                   the section below it peeks in and the page scrolls as one natural
+                   flow, instead of making you scroll a whole screen past the hero. */
+                height: 84vh;
+                min-height: 0;
                 max-height: none;
                 background-image: url('./clothing-hero.jpg') !important; /* portrait hero (local) */
                 background-position: center center;
@@ -11891,7 +11935,18 @@ window.veroLocalImg = function (key) {
                     ptr += 2;
                     return pair;
                 }
-                function render(el, pair) { el.innerHTML = pair.map(cardHTML).join(''); }
+                function render(el, pair) {
+                    el.innerHTML = pair.map(cardHTML).join('');
+                    // Drop the price out of the image's top-right corner and into the
+                    // card's footer, so it reads below the piece on the product's line
+                    // (name + company on the left, price on the right). CSS turns the
+                    // footer into that row; here we just move the node into it.
+                    Array.prototype.forEach.call(el.querySelectorAll('.product-card'), function (card) {
+                        var info = card.querySelector('.product-info');
+                        var price = card.querySelector('.pc-price-top');
+                        if (info && price && price.parentElement !== info) info.appendChild(price);
+                    });
+                }
                 var pairEl = document.createElement('div');
                 pairEl.className = 'wb-pair products-grid';
                 strip.innerHTML = '';
