@@ -647,6 +647,31 @@
         }
         .wb-strip .wb-pair.wb-fading { transform: translateX(100%); }
 
+        /* Horizontal scrollable slider with 10 products */
+        .wb-scroller {
+            display: flex !important;
+            flex-direction: row;
+            gap: 10px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 !important;
+            margin: 0 !important;
+            scroll-behavior: smooth;
+        }
+        .wb-scroller::-webkit-scrollbar {
+            display: none;
+        }
+        .wb-scroller .wb-card-wrapper {
+            flex: 0 0 auto;
+            width: calc((100% - 90px) / 4);
+            min-width: 140px;
+            gap: 4px;
+        }
+        .wb-scroller .product-card.pc-e {
+            aspect-ratio: 1 !important;
+        }
+
         /* A small heading at the top-left of the white band, in the design's Aharoni
            CLM face (sample English copy — swap the words in the markup). It also opens
            a small gap between the hero image and the slider: the strip is nudged down
@@ -11918,18 +11943,11 @@ window.veroLocalImg = function (key) {
                 var src = (typeof clothingProducts !== 'undefined' && clothingProducts.length)
                     ? clothingProducts : [];
                 var pool = shuffle(src).slice(0, 10);
-                if (pool.length < 2) return;
-                var order = shuffle(pool.map(function (_, i) { return i; }));
-                var ptr = 0;
-                function nextPair() {
-                    if (ptr + 2 > order.length) { order = shuffle(order); ptr = 0; }
-                    var pair = [pool[order[ptr]], pool[order[ptr + 1]]];
-                    ptr += 2;
-                    return pair;
-                }
-                function render(el, pair) {
-                    // Build cards with data below each one
-                    var html = pair.map(function (p) {
+                if (pool.length < 1) return;
+
+                function renderScroller(el, products) {
+                    // Build horizontal scrollable container with all 10 products
+                    var html = products.map(function (p) {
                         var card = cardHTML(p);
                         var name = p.name || '';
                         var seller = p.seller || '';
@@ -11947,18 +11965,12 @@ window.veroLocalImg = function (key) {
                     }).join('');
                     el.innerHTML = html;
                 }
-                var pairEl = document.createElement('div');
-                pairEl.className = 'wb-pair products-grid';
+
+                var scrollerEl = document.createElement('div');
+                scrollerEl.className = 'wb-scroller';
                 strip.innerHTML = '';
-                strip.appendChild(pairEl);
-                render(pairEl, nextPair());
-                setInterval(function () {
-                    pairEl.classList.add('wb-fading');
-                    setTimeout(function () {
-                        render(pairEl, nextPair());
-                        pairEl.classList.remove('wb-fading');
-                    }, 500);
-                }, 3600);
+                strip.appendChild(scrollerEl);
+                renderScroller(scrollerEl, pool);
             }
             Array.prototype.forEach.call(strips, initStrip);
         })();
