@@ -637,21 +637,11 @@
         /* The pair inherits the feed's .products-grid metrics (2-up, same gutter and
            side inset), so the cards match the feed exactly in size and spacing; we
            only centre it vertically in the band and drive the slide animation here. */
-        .wb-strip .wb-pair {
-            width: 100%; margin: 0;
-            display: grid !important;
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 14px !important;
-            padding: 0 !important;
-            transform: translateX(0); transition: transform 0.5s ease;
-        }
-        .wb-strip .wb-pair.wb-fading { transform: translateX(100%); }
-
-        /* Horizontal scrollable slider with 10 products */
-        .wb-scroller {
+        /* Horizontal scrollable carousel with regular product cards */
+        .carousel-scroll {
             display: flex !important;
             flex-direction: row;
-            gap: 10px;
+            gap: 16px;
             overflow-x: auto;
             overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
@@ -659,17 +649,13 @@
             margin: 0 !important;
             scroll-behavior: smooth;
         }
-        .wb-scroller::-webkit-scrollbar {
+        .carousel-scroll::-webkit-scrollbar {
             display: none;
         }
-        .wb-scroller .wb-card-wrapper {
+        .carousel-scroll .product-card {
             flex: 0 0 auto;
-            width: calc((100% - 130px) / 6);
-            min-width: 100px;
-            gap: 4px;
-        }
-        .wb-scroller .product-card.pc-e {
-            aspect-ratio: 1 !important;
+            width: calc((100% - 144px) / 5);
+            min-width: 140px;
         }
 
         /* A small heading at the top-left of the white band, in the design's Aharoni
@@ -697,67 +683,6 @@
            In the two white-band strips (the clothing hero and the Sale screen),
            the cards are square with product data (name, company, price) displayed
            below the card. */
-        .wb-card-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .wb-strip .wb-pair .product-card.pc-e {
-            aspect-ratio: 1 !important;
-            flex-direction: column;
-        }
-        .wb-strip .wb-pair .product-card.pc-e .product-image {
-            flex: 1;
-        }
-        /* Hide the product-info inside the card; it will be shown below */
-        .wb-strip .wb-pair .product-card.pc-e .product-info {
-            display: none !important;
-        }
-        /* Style the data footer below the card */
-        .wb-card-data {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 6px;
-            font-size: 13px;
-            line-height: 1.3;
-        }
-        .wb-card-data .wb-card-text {
-            flex: 1;
-            min-width: 0;
-        }
-        .wb-card-data .wb-card-price {
-            flex: 0 0 auto;
-            font-weight: 600;
-            text-align: right;
-            font-size: 14px;
-        }
-        .wb-card-name {
-            font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
-            font-size: 15px;
-            font-weight: 400;
-            color: #111;
-            margin-bottom: 4px;
-            line-height: 1.2;
-        }
-        .wb-card-seller {
-            font-family: 'Oswald', 'Segoe UI', Helvetica, Arial, sans-serif;
-            font-size: 10px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: #8a857c;
-        }
-        /* The heart and size are hidden on strip cards — they show only the product
-           name, company, and price. This makes the strip cards distinct "empty cards"
-           from the rest of the site. */
-        .wb-strip .wb-pair .product-card.pc-e .pc-wish,
-        .wb-strip .wb-pair .product-card.pc-e .pc-size {
-            display: none !important;
-        }
-        .wb-strip .wb-pair .product-card.pc-e .pc-price-top {
-            display: none !important;
-        }
 
         /* Sale screen (#heroMobile2): same treatment — image fills the space above the
            fixed white band that holds the product strip. */
@@ -11914,13 +11839,10 @@ window.veroLocalImg = function (key) {
         seedCategorySales(clothingProducts);
         seedCategorySales(artProducts);
 
-        // ===== White-band product strip (clothing hero + Sale screen) =====
-        // Two minimalist cards side by side — photo/icon, name, price — drawn from a
-        // random pool of ten catalogue pieces and swapped at random. Some pieces carry
-        // a seeded sale (struck-through price), the rest are regular collection pieces,
-        // so each card reads as "from the collection" or "from the sale" per product.
-        // No dots, no arrows — the pair just crossfades on its own.
-        (function initWhiteBandStrips() {
+        // ===== White-band product carousel (clothing hero + Sale screen) =====
+        // Horizontal scrollable carousel with regular product cards from the feed.
+        // Shows 10 random products that can be scrolled manually.
+        (function initWhiteBandCarousel() {
             var strips = document.querySelectorAll('.wb-strip');
             if (!strips.length) return;
             function shuffle(a) {
@@ -11931,46 +11853,25 @@ window.veroLocalImg = function (key) {
                 }
                 return a;
             }
-            function cardHTML(p) {
-                // Use the real feed product card so the strip matches the feed exactly
-                // in size and style (image panel, name, seller, price, sale framing).
-                if (typeof productCardHTML === 'function') return productCardHTML(p);
-                var price = (typeof veroPriceHTML === 'function')
-                    ? veroPriceHTML(p) : '<span class="vprice">' + p.price + '</span>';
-                return '<a class="product-card">' + (p.name || '') + ' ' + price + '</a>';
-            }
             function initStrip(strip) {
                 var src = (typeof clothingProducts !== 'undefined' && clothingProducts.length)
                     ? clothingProducts : [];
                 var pool = shuffle(src).slice(0, 10);
                 if (pool.length < 1) return;
 
-                function renderScroller(el, products) {
-                    // Build horizontal scrollable container with all 10 products
-                    var html = products.map(function (p) {
-                        var card = cardHTML(p);
-                        var name = p.name || '';
-                        var seller = p.seller || '';
-                        var price = p.price ? '₪' + p.price : '';
-                        return '<div class="wb-card-wrapper">' +
-                            card +
-                            '<div class="wb-card-data">' +
-                            '<div class="wb-card-text">' +
-                            '<div class="wb-card-name">' + name + '</div>' +
-                            '<div class="wb-card-seller">' + seller + '</div>' +
-                            '</div>' +
-                            '<div class="wb-card-price">' + price + '</div>' +
-                            '</div>' +
-                            '</div>';
-                    }).join('');
-                    el.innerHTML = html;
-                }
+                // Build carousel with regular product cards
+                var carouselEl = document.createElement('div');
+                carouselEl.className = 'carousel-scroll';
+                var html = pool.map(function (p) {
+                    if (typeof productCardHTML === 'function') return productCardHTML(p);
+                    var price = (typeof veroPriceHTML === 'function')
+                        ? veroPriceHTML(p) : '<span class="vprice">' + p.price + '</span>';
+                    return '<a class="product-card pc-e">' + (p.name || '') + ' ' + price + '</a>';
+                }).join('');
+                carouselEl.innerHTML = html;
 
-                var scrollerEl = document.createElement('div');
-                scrollerEl.className = 'wb-scroller';
                 strip.innerHTML = '';
-                strip.appendChild(scrollerEl);
-                renderScroller(scrollerEl, pool);
+                strip.appendChild(carouselEl);
             }
             Array.prototype.forEach.call(strips, initStrip);
         })();
