@@ -8509,6 +8509,30 @@ html { scroll-snap-type: y proximity; }
 #naFade { position: fixed; inset: 0; z-index: 1200; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.34s ease; }
 #naFade.show { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { #naFade { transition: none; } }
+
+/* ====================================================================
+   FEED STRIP — a horizontal product slider that separates the full-screen
+   editorial sections (like the gender slider), so the feed breathes between
+   them. Populated from veroCollections by JS.
+   ==================================================================== */
+.feed-strip { background: #fff; color: #111; direction: ltr; padding: 40px 0 44px; border-top: 1px solid #efefed; }
+.feed-strip *:not(#zz):not(#zz):not(#zz) { font-family: 'Inter', 'Arimo', 'Helvetica Neue', Helvetica, Arial, sans-serif !important; }
+.feed-strip .fs-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 20px 16px; }
+.feed-strip .fs-label { font-size: 11px; font-weight: 500; letter-spacing: 2.4px; text-transform: uppercase; color: #8a8a85; }
+.feed-strip .fs-all { font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: #111; text-decoration: none; }
+.feed-strip .fs-all:hover { color: #EB2323; }
+.feed-strip .fs-row { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 0 20px; scroll-padding: 0 20px; }
+.feed-strip .fs-row::-webkit-scrollbar { display: none; }
+.feed-strip .fs-card { flex: 0 0 46%; max-width: 46%; scroll-snap-align: start; text-decoration: none; color: #111; }
+.feed-strip .fs-img { position: relative; width: 100%; aspect-ratio: 0.82; background: #f4f3f0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.feed-strip .fs-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1); }
+.feed-strip .fs-card:hover .fs-img img { transform: scale(1.04); }
+.feed-strip .fs-emoji { font-size: 58px; }
+.feed-strip .fs-name { margin-top: 11px; font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; line-height: 1.2; }
+.feed-strip .fs-name:not(#zz):not(#zz):not(#zz) { font-family: 'Prachason Neue', 'Archivo', 'Inter', 'Arimo', sans-serif !important; }
+.feed-strip .fs-meta { margin-top: 4px; display: flex; gap: 8px; font-size: 11px; font-weight: 400; letter-spacing: 0.4px; color: #6b6b6b; }
+.feed-strip .fs-price { color: #111; font-weight: 600; }
+@media (min-width: 720px) { .feed-strip .fs-card { flex: 0 0 240px; max-width: 240px; } }
 /* Swipe dots at the very bottom, over slides 1 & 2. */
 #naSection .na-dots { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 6; display: flex; gap: 8px; pointer-events: none; }
 #naSection .na-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.22); transition: background 0.25s, transform 0.25s; }
@@ -9556,6 +9580,50 @@ window.veroLocalImg = function (key) {
             })();
             </script>
 
+            <!-- Populate the feed strips that separate the editorial sections. -->
+            <script>
+            (function () {
+                function build() {
+                    var VC = window.veroCollections;
+                    var strips = document.querySelectorAll('.feed-strip');
+                    if (!strips.length) return;
+                    var all = (VC && typeof VC.allProducts === 'function') ? VC.allProducts() : [];
+                    if (!all.length) return;
+                    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+                    function money(n) { return Math.round(Number(n) || 0).toLocaleString('en-US') + '₪'; }
+                    function hash(s) { s = String(s); var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+                    function cardHTML(p) {
+                        var media = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">' : '<span class="fs-emoji">' + esc(p.icon || '🛍️') + '</span>';
+                        var dataObj = { name: p.name, price: p.price, icon: p.icon, category: p.category, seller: p.seller, rating: 4.6, type: ((p._raw && p._raw.type === 'art') ? 'art' : 'clothing') };
+                        var href = 'product-showcase.html?product=' + encodeURIComponent(JSON.stringify(dataObj));
+                        return '<a class="fs-card" href="' + esc(href) + '">' +
+                            '<div class="fs-img">' + media + '</div>' +
+                            '<div class="fs-name">' + esc(p.category || p.name) + '</div>' +
+                            '<div class="fs-meta"><span>' + esc(p.seller || '') + '</span><span class="fs-price">' + money(p.price) + '</span></div>' +
+                        '</a>';
+                    }
+                    strips.forEach(function (strip, si) {
+                        var row = strip.querySelector('.fs-row'); if (!row) return;
+                        var kind = strip.getAttribute('data-strip') || 'recent';
+                        var items = all.slice();
+                        if (kind === 'recent') items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+                        else { // deterministic shuffle per strip, so each shows a different set
+                            items.sort(function (a, b) { return (hash(kind + (a.id || a.name)) % 997) - (hash(kind + (b.id || b.name)) % 997); });
+                        }
+                        row.innerHTML = items.slice(0, 10).map(cardHTML).join('');
+                    });
+                }
+                if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
+                else build();
+            })();
+            </script>
+
+            <!-- Feed strip — breaks the editorial sections with a product slider. -->
+            <div class="feed-strip" data-strip="recent">
+                <div class="fs-head"><span class="fs-label">This week&rsquo;s picks</span><a class="fs-all" href="products.html">View all</a></div>
+                <div class="fs-row"></div>
+            </div>
+
             <!-- ===== DISCOVER BY CATEGORIES — editorial gender slider + a
                  product slider beneath it. Built by renderDiscoverCats(). ===== -->
             <section id="discoverCats" class="dc" aria-label="Discover by categories">
@@ -9570,6 +9638,12 @@ window.veroLocalImg = function (key) {
                     <div class="dc-prods-count" id="dcProdCount">1/1</div>
                 </div>
             </section>
+
+            <!-- Feed strip — breaks the editorial sections with a product slider. -->
+            <div class="feed-strip" data-strip="popular">
+                <div class="fs-head"><span class="fs-label">Trending now</span><a class="fs-all" href="products.html">View all</a></div>
+                <div class="fs-row"></div>
+            </div>
 
             <!-- ===== SALE HERO — editorial season-sale block. The second block
                  after the gender rail (gender → Discover cats → Sale). Mode-aware
@@ -9592,6 +9666,12 @@ window.veroLocalImg = function (key) {
                     <a class="sh-cta" id="shCta" href="sales.html?mode=clothing">Discover<br>More</a>
                 </div>
             </section>
+
+            <!-- Feed strip — breaks the editorial sections with a product slider. -->
+            <div class="feed-strip" data-strip="foryou">
+                <div class="fs-head"><span class="fs-label">You might like</span><a class="fs-all" href="products.html">View all</a></div>
+                <div class="fs-row"></div>
+            </div>
 
             <!-- Top of the feed: the categories as large swipeable cards (Men /
                  Women / Kids, or the art segments). A card opens its feed. -->
