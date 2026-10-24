@@ -8492,8 +8492,8 @@ html { scroll-snap-type: y proximity; }
    reach the products (slide 3) and hides otherwise. Active tab = white pill
    with red text, exactly like the feed's category tabs. */
 #naSection .na-nav { position: absolute; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; margin: 0 auto; z-index: 6; direction: ltr;
-    display: flex; align-items: center; gap: 4px; width: calc(100% - 20px); max-width: 480px; height: 56px; box-sizing: border-box;
-    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; background: #111; border-radius: 999px; padding: 5px 8px; box-shadow: 0 8px 28px rgba(0,0,0,0.3);
+    display: flex; align-items: center; gap: 4px; width: calc(100% - 28px); max-width: none; height: 62px; min-height: 62px; box-sizing: border-box;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; background: #111; border-radius: 999px; padding: 6px 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.22);
     transform: translateY(calc(100% + 60px)); opacity: 0; pointer-events: none;
     transition: transform 0.5s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease; }
 #naSection .na-nav.in { transform: translateY(0); opacity: 1; pointer-events: auto; }
@@ -8505,6 +8505,10 @@ html { scroll-snap-type: y proximity; }
 /* "Back to the feed" — an action, not a sort: white text + a divider after it. */
 #naSection .na-nav .na-back { color: #fff; font-weight: 600; border-right: 1px solid rgba(255,255,255,0.22); border-radius: 0; margin-right: 4px; padding-right: 14px; }
 #naSection .na-nav .na-back:hover { color: #EB2323; }
+/* White fade for the "Back to the feed" hand-off. */
+#naFade { position: fixed; inset: 0; z-index: 1200; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.34s ease; }
+#naFade.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { #naFade { transition: none; } }
 /* Swipe dots at the very bottom, over slides 1 & 2. */
 #naSection .na-dots { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 6; display: flex; gap: 8px; pointer-events: none; }
 #naSection .na-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.22); transition: background 0.25s, transform 0.25s; }
@@ -9438,6 +9442,8 @@ window.veroLocalImg = function (key) {
                     </article>
                 </div>
             </section>
+            <!-- White fade used by the "Back to the feed" button. -->
+            <div id="naFade" aria-hidden="true"></div>
             <script>
             (function () {
                 var VC = window.veroCollections;
@@ -9520,11 +9526,20 @@ window.veroLocalImg = function (key) {
                     grid.innerHTML = items.length ? items.map(itemHTML).join('') : '<div style="padding:60px 24px;text-align:center;color:#9a9a95;font-size:13px;">Nothing in this view yet — check back next week.</div>';
                 }
                 if (nav) nav.addEventListener('click', function (e) {
-                    // "Back to the feed" leaves New Arrivals for the rest of the feed.
+                    // "Back to the feed" leaves New Arrivals for the rest of the feed,
+                    // with a white fade in / out over the hand-off.
                     var back = e.target.closest('button[data-nav="back"]');
                     if (back) {
                         var next = document.getElementById('discoverCats') || document.getElementById('naSection').nextElementSibling;
-                        if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        if (!next) return;
+                        var fade = document.getElementById('naFade');
+                        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                        if (!fade || reduce) { next.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+                        fade.classList.add('show');                       // fade in to white
+                        setTimeout(function () {
+                            next.scrollIntoView({ behavior: 'auto', block: 'start' });   // jump while white
+                            requestAnimationFrame(function () { fade.classList.remove('show'); });  // fade back out
+                        }, 340);
                         return;
                     }
                     var btn = e.target.closest('button[data-sort]'); if (!btn) return;
