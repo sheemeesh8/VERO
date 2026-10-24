@@ -8150,6 +8150,13 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
     display: block; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; color: #111;
     font-variant-numeric: tabular-nums;
 }
+#discoverCats .dc-shop {
+    display: block; width: calc(100% - 40px); margin: 22px 20px 0; padding: 16px;
+    background: #111; color: #fff; border: 0; border-radius: 0; cursor: pointer;
+    font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    -webkit-tap-highlight-color: transparent;
+}
+#discoverCats .dc-shop:active { opacity: 0.85; }
 #discoverCats .dc-slidehint {
     margin: 26px 20px 0; font-size: 10px; font-weight: 400; letter-spacing: 1.6px;
     text-transform: uppercase; color: #8a8a8a; line-height: 1.4;
@@ -12915,6 +12922,7 @@ window.veroLocalImg = function (key) {
                         <h2 class="dc-cat-name">${dcEsc(seg.name)}</h2>
                         <div class="dc-cat-count"><span>Items on air</span><b>${count.toLocaleString()}</b></div>
                     </div>
+                    <button type="button" class="dc-shop" onclick="dcOpen('${dcEsc(seg.key)}')">Shop now &rarr;</button>
                 </div>`;
             }).join('');
 
@@ -13009,8 +13017,16 @@ window.veroLocalImg = function (key) {
             out.textContent = Math.min(cur + 1, pages) + '/' + pages;
         }
         function dcOpen(key) {
-            if (typeof grOpen === 'function') { grOpen(key); return; }
-            if (typeof selectSegment === 'function' && key !== 'unisex') selectSegment(key);
+            // Filter the feed by the chosen gender/segment (unisex = whole feed).
+            if (typeof selectSegment === 'function') {
+                if (key === 'unisex') { if (currentSegment) selectSegment(currentSegment); }
+                else if (currentSegment !== key) selectSegment(key);
+            }
+            // Land on the product feed so the filtered items are in view.
+            setTimeout(function () {
+                const f = document.getElementById('feedContainer') || document.querySelector('.feed-section');
+                if (f) window.scrollTo({ top: f.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+            }, 420);
         }
         (function wireDiscoverCats() {
             const rail = document.getElementById('dcRail');
