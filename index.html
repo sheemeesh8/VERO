@@ -8500,6 +8500,9 @@ html { scroll-snap-type: y proximity; }
 #naSection .na-nav button { flex: 0 0 auto; cursor: pointer; border: none; background: transparent; font-size: 10px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.55); padding: 9px 16px; border-radius: 999px; white-space: nowrap; transition: color 0.2s, background 0.2s; }
 #naSection .na-nav button:hover { color: #fff; }
 #naSection .na-nav button.on { color: #EB2323; background: #fff; }
+/* "Back to the feed" — an action, not a sort: white text + a divider after it. */
+#naSection .na-nav .na-back { color: #fff; font-weight: 600; border-right: 1px solid rgba(255,255,255,0.22); border-radius: 0; margin-right: 4px; padding-right: 14px; }
+#naSection .na-nav .na-back:hover { color: #EB2323; }
 /* Swipe dots at the very bottom, over slides 1 & 2. */
 #naSection .na-dots { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 6; display: flex; gap: 8px; pointer-events: none; }
 #naSection .na-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.22); transition: background 0.25s, transform 0.25s; }
@@ -9423,11 +9426,11 @@ window.veroLocalImg = function (key) {
                             <div class="na-grid" id="naGrid"><!-- products built by JS --></div>
                         </div>
                         <nav class="na-nav" id="naNav" aria-label="Sort new arrivals">
+                            <button type="button" class="na-back" data-nav="back">&#8595; Back to the feed</button>
                             <button type="button" data-sort="liked" class="on">Most liked</button>
                             <button type="button" data-sort="recent">Recent</button>
                             <button type="button" data-sort="price-asc">Price low</button>
                             <button type="button" data-sort="price-desc">Price high</button>
-                            <button type="button" data-sort="designer">Designer</button>
                             <button type="button" data-sort="art">Art</button>
                         </nav>
                     </article>
@@ -9515,8 +9518,15 @@ window.veroLocalImg = function (key) {
                     grid.innerHTML = items.length ? items.map(itemHTML).join('') : '<div style="padding:60px 24px;text-align:center;color:#9a9a95;font-size:13px;">Nothing in this view yet — check back next week.</div>';
                 }
                 if (nav) nav.addEventListener('click', function (e) {
+                    // "Back to the feed" leaves New Arrivals for the rest of the feed.
+                    var back = e.target.closest('button[data-nav="back"]');
+                    if (back) {
+                        var next = document.getElementById('discoverCats') || document.getElementById('naSection').nextElementSibling;
+                        if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        return;
+                    }
                     var btn = e.target.closest('button[data-sort]'); if (!btn) return;
-                    [].forEach.call(nav.querySelectorAll('button'), function (b) { b.classList.toggle('on', b === btn); });
+                    [].forEach.call(nav.querySelectorAll('button[data-sort]'), function (b) { b.classList.toggle('on', b === btn); });
                     render(btn.getAttribute('data-sort'));
                 });
                 render('liked');
