@@ -8486,13 +8486,20 @@ html { scroll-snap-type: y proximity; }
 #naSection .na-cap { margin: 18px auto 0 0; max-width: 56%; text-align: left; font-size: clamp(11px, 3vw, 13px); font-weight: 400; line-height: 1.5; color: #1c1c1c; }
 #naSection .na-item:nth-child(even) .na-cap { margin: 18px 0 0 auto; text-align: right; }
 /* Floating filter bar — pinned to the bottom of slide 3 only. */
+/* Filter bar — the feed's nav bar: a black capsule that slides up when you
+   reach the products (slide 3) and hides otherwise. Active tab = white pill
+   with red text, exactly like the feed's category tabs. */
 #naSection .na-nav { position: absolute; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; margin: 0 auto; z-index: 6; direction: ltr;
-    display: flex; align-items: center; gap: 4px; width: calc(100% - 20px); max-width: 480px; height: 62px; box-sizing: border-box;
-    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; background: #fff; border-radius: 999px; padding: 0 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.18); }
+    display: flex; align-items: center; gap: 4px; width: calc(100% - 20px); max-width: 480px; height: 56px; box-sizing: border-box;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; background: #111; border-radius: 999px; padding: 5px 8px; box-shadow: 0 8px 28px rgba(0,0,0,0.3);
+    transform: translateY(calc(100% + 60px)); opacity: 0; pointer-events: none;
+    transition: transform 0.5s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease; }
+#naSection .na-nav.in { transform: translateY(0); opacity: 1; pointer-events: auto; }
 #naSection .na-nav::-webkit-scrollbar { display: none; }
-#naSection .na-nav button { flex: 0 0 auto; cursor: pointer; border: none; background: transparent; font-size: 10px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: #b5b5b0; padding: 9px 16px; border-radius: 999px; white-space: nowrap; transition: color 0.2s; }
-#naSection .na-nav button:hover { color: #111; }
-#naSection .na-nav button.on { color: #EB2323; }
+@media (prefers-reduced-motion: reduce) { #naSection .na-nav { transition: none; } }
+#naSection .na-nav button { flex: 0 0 auto; cursor: pointer; border: none; background: transparent; font-size: 10px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.55); padding: 9px 16px; border-radius: 999px; white-space: nowrap; transition: color 0.2s, background 0.2s; }
+#naSection .na-nav button:hover { color: #fff; }
+#naSection .na-nav button.on { color: #EB2323; background: #fff; }
 /* Swipe dots at the very bottom, over slides 1 & 2. */
 #naSection .na-dots { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 6; display: flex; gap: 8px; pointer-events: none; }
 #naSection .na-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.22); transition: background 0.25s, transform 0.25s; }
@@ -9434,10 +9441,15 @@ window.veroLocalImg = function (key) {
                 var track = document.getElementById('naTrack');
 
                 // Re-evaluate the header's hero/solid look when swiping between the
-                // New Arrivals slides (the predicate lives in veroHeaderScrolled).
-                if (track) track.addEventListener('scroll', function () {
+                // New Arrivals slides, and float the filter bar up only on slide 3
+                // (the products) — same slide-in behaviour as the feed's nav bar.
+                function naSync() {
+                    var idx = track ? Math.round(track.scrollLeft / track.clientWidth) : 0;
+                    if (nav) nav.classList.toggle('in', idx === 2);
                     window.dispatchEvent(new Event('scroll'));
-                }, { passive: true });
+                }
+                if (track) track.addEventListener('scroll', naSync, { passive: true });
+                naSync();
 
                 function hash(s) { s = String(s); var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
                 var CONDITIONS = ['Like New', 'Excellent', 'Very Good', 'Good'];
