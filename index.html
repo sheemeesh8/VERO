@@ -8122,29 +8122,30 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
     width: 100%; aspect-ratio: 0.74; background: #1b1b1b center / cover no-repeat;
     filter: grayscale(1) contrast(1.02); cursor: pointer;
 }
-/* Title row under the image: big category name + item count. */
+/* Title row under the image: big category name + item count — balanced to
+   match the collection hero (same size, tracking, and label-over-number order). */
 #discoverCats .dc-caprow {
-    display: flex; align-items: flex-end; justify-content: space-between;
-    gap: 16px; margin-top: 30px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-top: 30px;
 }
 #discoverCats .dc-cat-name {
-    margin: 0; font-size: clamp(48px, 16.5vw, 72px); font-weight: 900; min-width: 0;
-    letter-spacing: -0.035em; line-height: 0.86; text-transform: uppercase; color: #111;
+    margin: 0; font-size: clamp(30px, 10.5vw, 46px); font-weight: 900; min-width: 0;
+    letter-spacing: 0.005em; line-height: 0.82; text-transform: uppercase; color: #111;
 }
 #discoverCats .dc-cat-count {
-    text-align: right; line-height: 1.2; padding-bottom: 7px;
+    text-align: right; line-height: 1.25; padding-top: 5px;
     flex: none; white-space: nowrap;
 }
-#discoverCats .dc-cat-count b {
-    display: block; font-size: 16px; font-weight: 900; letter-spacing: 0.1px; color: #111;
-    font-variant-numeric: tabular-nums;
-}
 #discoverCats .dc-cat-count span {
-    display: block; font-size: 9.5px; font-weight: 400; letter-spacing: 0.8px;
+    display: block; font-size: 9px; font-weight: 400; letter-spacing: 1.6px;
     text-transform: uppercase; color: #111; white-space: nowrap;
 }
+#discoverCats .dc-cat-count b {
+    display: block; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; color: #111;
+    font-variant-numeric: tabular-nums;
+}
 #discoverCats .dc-slidehint {
-    margin: 18px 20px 0; font-size: 11px; font-weight: 400; letter-spacing: 0.8px;
+    margin: 18px 20px 0; font-size: 10px; font-weight: 400; letter-spacing: 1.6px;
     text-transform: uppercase; color: #8a8a8a; line-height: 1.4;
 }
 /* Product slider — two cards per view, snaps a page (pair) at a time. */
@@ -11521,6 +11522,18 @@ window.veroLocalImg = function (key) {
         // header. Read by header.js's scroll handler.
         window.veroHeaderScrolled = function (hdr) {
             const hdrH = (hdr && hdr.offsetHeight) || 0;
+            // The home page leads with the collection hero image. Keep the header
+            // transparent while that image is behind it, and turn it solid only once
+            // the image has scrolled up past the header's bottom edge — so scrolling
+            // back up returns the header to its transparent state over the image.
+            const chImg = document.querySelector('#collectionHero .ch-img');
+            if (chImg && chImg.offsetParent !== null) {
+                hdr.style.removeProperty('--hdr-shift');
+                hdr.style.animation = '';
+                hdr.classList.remove('hdr-split');
+                hdr.style.removeProperty('--hdr-cut');
+                return chImg.getBoundingClientRect().bottom <= hdrH;
+            }
             // Sum an element's document-space top (immune to sticky transforms above).
             const docTop = (el) => { let t = 0, n = el; while (n) { t += n.offsetTop; n = n.offsetParent; } return t; };
             // The header is transparent over the hero and the Men/Women/Kids gender
@@ -12813,7 +12826,7 @@ window.veroLocalImg = function (key) {
                          onclick="dcOpen('${dcEsc(seg.key)}')"></div>
                     <div class="dc-caprow">
                         <h2 class="dc-cat-name">${dcEsc(seg.name)}</h2>
-                        <div class="dc-cat-count"><b>${count.toLocaleString()}</b><span>Items on air</span></div>
+                        <div class="dc-cat-count"><span>Items on air</span><b>${count.toLocaleString()}</b></div>
                     </div>
                 </div>`;
             }).join('');
