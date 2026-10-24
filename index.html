@@ -9178,19 +9178,19 @@ window.veroLocalImg = function (key) {
             <!-- ===== COLLECTION HERO — the page's lead: a full-width editorial
                  image, the season title, and a product slider beneath it.
                  Built by renderCollectionHero(). ===== -->
-            <section id="collectionHero" class="ch" aria-label="Autumn collection">
-                <div class="ch-img" style="background-image:url('assets/hero/autumn-hero.jpg')">
-                    <video class="ch-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg"
+            <section id="collectionHero" class="ch" aria-label="Collection hero">
+                <div class="ch-img" id="chImg" style="background-image:url('assets/hero/autumn-hero.jpg')">
+                    <video class="ch-video" id="chVideo" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg"
                            autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
                 </div>
                 <div class="ch-titlerow">
-                    <h1 class="ch-title">Autumn</h1>
+                    <h1 class="ch-title" id="chTitle">Autumn</h1>
                     <div class="ch-side">
-                        <span class="ch-coll">Collection</span>
-                        <span class="ch-count"><em>Items on air</em><b>4932</b></span>
+                        <span class="ch-coll" id="chColl">Collection</span>
+                        <span class="ch-count"><em>Items on air</em><b id="chCount">4932</b></span>
                     </div>
                 </div>
-                <div class="ch-kicker">A small example</div>
+                <div class="ch-kicker" id="chKicker">A small example</div>
                 <div class="ch-prods-wrap">
                     <div class="ch-prods" id="chProds"><!-- products, built by JS --></div>
                     <div class="ch-prods-count" id="chProdCount">1/1</div>
@@ -12956,16 +12956,45 @@ window.veroLocalImg = function (key) {
         })();
 
         // ---- Collection hero — a lead collection + its floating product slider.
+        // Per-mode hero copy + media (clothing vs art).
+        const CH_HERO = {
+            clothing: { title: 'Autumn', coll: 'Collection', kicker: 'A small example',
+                        img: 'assets/hero/autumn-hero.jpg', video: 'assets/hero/unisex.mp4' },
+            art:      { title: 'Gallery', coll: 'Collection', kicker: 'A small example',
+                        img: 'art-hero.jpg', video: 'assets/hero/hero-art.mp4' }
+        };
         function renderCollectionHero(category) {
             const wrap = document.getElementById('chProds');
             if (!wrap) return;
             const cat = category || currentCategory;
+
+            // Hero copy + media follow the mode.
+            const cfg = CH_HERO[cat] || CH_HERO.clothing;
+            const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            setTxt('chTitle', cfg.title);
+            setTxt('chColl', cfg.coll);
+            setTxt('chKicker', cfg.kicker);
+            const imgEl = document.getElementById('chImg');
+            if (imgEl) imgEl.style.backgroundImage = `url('${cfg.img}')`;
+            const vidEl = document.getElementById('chVideo');
+            if (vidEl && vidEl.getAttribute('src') !== cfg.video) {
+                vidEl.setAttribute('poster', cfg.img);
+                vidEl.src = cfg.video; vidEl.load();
+                vidEl.muted = true; vidEl.playsInline = true;
+                const pr = vidEl.play(); if (pr && pr.catch) pr.catch(() => {});
+            }
             // Blend the category's segments into one "collection" feed.
             let items = [];
             if (typeof buildSegmentProducts === 'function') {
                 (filterSegments[cat] || []).forEach(s => {
                     items = items.concat(buildSegmentProducts(cat, s.key).slice(0, 4));
                 });
+            }
+            // Item count = total pieces across the mode's segments.
+            if (typeof buildSegmentProducts === 'function') {
+                const total = (filterSegments[cat] || []).reduce(
+                    (t, s) => t + buildSegmentProducts(cat, s.key).length, 0);
+                setTxt('chCount', total.toLocaleString());
             }
             items = items.slice(0, 10);
             wrap.innerHTML = items.map(p => {
