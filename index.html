@@ -8491,7 +8491,7 @@ html { scroll-snap-type: y proximity; }
 /* Filter bar — the feed's nav bar: a black capsule that slides up when you
    reach the products (slide 3) and hides otherwise. Active tab = white pill
    with red text, exactly like the feed's category tabs. */
-#naSection .na-nav { position: absolute; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; margin: 0 auto; z-index: 6; direction: ltr;
+#naSection .na-nav { position: fixed; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; margin: 0 auto; z-index: 850; direction: ltr;
     display: flex; align-items: center; gap: 4px; width: calc(100% - 28px); max-width: none; height: 62px; min-height: 62px; box-sizing: border-box;
     overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; background: #111; border-radius: 999px; padding: 6px 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.22);
     transform: translateY(calc(100% + 60px)); opacity: 0; pointer-events: none;
@@ -9451,16 +9451,21 @@ window.veroLocalImg = function (key) {
                 var nav   = document.getElementById('naNav');
                 var track = document.getElementById('naTrack');
 
-                // Re-evaluate the header's hero/solid look when swiping between the
-                // New Arrivals slides, and float the filter bar up only on slide 3
-                // (the products) — same slide-in behaviour as the feed's nav bar.
-                function naSync() {
+                var sec = document.getElementById('naSection');
+                // Float the filter bar up only while the products (slide 3) are on
+                // screen — fixed to the viewport and shown/hidden like the feed's bar.
+                function syncNav() {
                     var idx = track ? Math.round(track.scrollLeft / track.clientWidth) : 0;
-                    if (nav) nav.classList.toggle('in', idx === 2);
-                    window.dispatchEvent(new Event('scroll'));
+                    var inView = false;
+                    if (sec) { var r = sec.getBoundingClientRect(); inView = r.top < window.innerHeight * 0.5 && r.bottom > window.innerHeight * 0.5; }
+                    if (nav) nav.classList.toggle('in', idx === 2 && inView);
                 }
-                if (track) track.addEventListener('scroll', naSync, { passive: true });
-                naSync();
+                // Re-evaluate the header's hero/solid look when swiping between slides.
+                function naSwipe() { syncNav(); window.dispatchEvent(new Event('scroll')); }
+                if (track) track.addEventListener('scroll', naSwipe, { passive: true });
+                window.addEventListener('scroll', syncNav, { passive: true });
+                window.addEventListener('resize', syncNav);
+                syncNav();
 
                 function hash(s) { s = String(s); var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
                 var CONDITIONS = ['Like New', 'Excellent', 'Very Good', 'Good'];
@@ -9537,6 +9542,7 @@ window.veroLocalImg = function (key) {
                         if (!fade || reduce) { next.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
                         fade.classList.add('show');                       // fade in to white
                         setTimeout(function () {
+                            if (track) track.scrollLeft = 0;              // reset the slider to slide 1 while white
                             next.scrollIntoView({ behavior: 'auto', block: 'start' });   // jump while white
                             requestAnimationFrame(function () { fade.classList.remove('show'); });  // fade back out
                         }, 340);
