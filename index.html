@@ -8325,6 +8325,62 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 /* Slide counter hidden per request. */
 #collectionHero .ch-prods-count { display: none; }
 
+/* ====================================================================
+   SALE HERO — editorial season-sale block (same language as the hero).
+   Replaces the old full-screen #heroMobile2 sale panel.
+   ==================================================================== */
+#heroMobile2 { display: none !important; }
+
+#saleHero.sh {
+    background: #fff; color: #111; direction: ltr; margin: 0; padding: 44px 0 56px;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+#saleHero.sh *:not(#zz):not(#zz):not(#zz),
+#saleHero.sh *:not(#zz):not(#zz):not(#zz)::before,
+#saleHero.sh *:not(#zz):not(#zz):not(#zz)::after {
+    font-family: 'Inter', 'Arimo', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+}
+#saleHero .sh-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 0 20px; margin-bottom: 18px;
+    font-size: 12.5px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: #111;
+}
+#saleHero .sh-img {
+    display: block; width: 100%; aspect-ratio: 0.9;
+    background: #cfcecb center 50% / cover no-repeat;
+}
+#saleHero .sh-titlerow {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin: 34px 20px 0;
+}
+#saleHero .sh-title {
+    margin: 0; font-size: clamp(46px, 16vw, 72px); font-weight: 900; flex: none;
+    letter-spacing: 0.005em; line-height: 0.82; text-transform: uppercase; color: #111;
+}
+#saleHero .sh-title:not(#zz):not(#zz):not(#zz) {
+    font-family: 'Prachason Neue', 'Archivo', 'Inter', 'Arimo', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+}
+#saleHero .sh-side { flex: none; text-align: right; white-space: nowrap; padding-top: 5px; }
+#saleHero .sh-sub { font-size: clamp(15px, 4.6vw, 20px); font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; color: #111; }
+#saleHero .sh-sub:not(#zz):not(#zz):not(#zz) {
+    font-family: 'Prachason Neue', 'Archivo', 'Inter', 'Arimo', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+}
+#saleHero .sh-side em {
+    display: block; font-style: normal; font-size: 9px; font-weight: 400;
+    letter-spacing: 1.6px; text-transform: uppercase; color: #111; margin-top: 7px;
+}
+#saleHero .sh-kicker {
+    margin: 26px 20px 0; font-size: 10px; font-weight: 400; letter-spacing: 1.6px;
+    text-transform: uppercase; color: #8a8a8a; line-height: 1.4;
+}
+#saleHero .sh-cta {
+    display: block; margin: 40px 20px 0; padding: 16px; text-align: center;
+    border: 1px solid #111; color: #111; text-decoration: none;
+    font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    transition: background 0.2s, color 0.2s;
+}
+#saleHero .sh-cta:hover { background: #111; color: #fff; }
+
 /* -- Under the hero: one full-screen image that opens the Sale page. -- */
 .hm2-one { position: absolute; inset: 0; display: block; overflow: hidden; background: #222 url('assets/hero/art-section-poster.jpg') center / cover no-repeat; color: #fff; text-decoration: none; }
 .hm2-one::after { content: ''; position: absolute; inset: 0; background: none; }
@@ -8664,6 +8720,23 @@ window.veroLocalImg = function (key) {
     <!-- Second full-screen panel — mobile only. A swipe slider of full images:
          Men / Women / Kids. Pins over the hero, then the feed scrolls up over it.
          PLACEHOLDER images (kids reuses clothing-hero) — swap the three URLs. -->
+    <!-- ===== SALE HERO — editorial season-sale block, same language as the
+         collection hero. Mode-aware (clothing / art) via renderSaleHero(). ===== -->
+    <section id="saleHero" class="sh" aria-label="Season sale">
+        <div class="sh-head"><span>Season sale</span></div>
+        <a class="sh-img" id="shImg" href="sales.html?mode=clothing"
+           style="background-image:url('assets/hero/sale-clothing.webp')" aria-label="Shop the sale"></a>
+        <div class="sh-titlerow">
+            <h2 class="sh-title">Sale</h2>
+            <div class="sh-side">
+                <span class="sh-sub" id="shSub">Up to 30%</span>
+                <em>Off everything</em>
+            </div>
+        </div>
+        <div class="sh-kicker">End of season · while stock lasts</div>
+        <a class="sh-cta" id="shCta" href="sales.html?mode=clothing">Shop the sale &rarr;</a>
+    </section>
+
     <div class="hero-mobile-2" id="heroMobile2">
         <!-- One full-screen image: the whole screen opens the Sale page. -->
         <a class="hm2-one" id="hm2One" href="sales.html?mode=clothing" aria-label="Shop the sale">
@@ -12996,6 +13069,14 @@ window.veroLocalImg = function (key) {
                     (t, s) => t + buildSegmentProducts(cat, s.key).length, 0);
                 setTxt('chCount', total.toLocaleString());
             }
+
+            // Sale hero follows the mode too (image + links).
+            const saleImg = cat === 'art' ? 'assets/hero/sale-art.webp' : 'assets/hero/sale-clothing.webp';
+            const saleHref = 'sales.html?mode=' + cat;
+            const shImg = document.getElementById('shImg');
+            if (shImg) { shImg.style.backgroundImage = `url('${saleImg}')`; shImg.setAttribute('href', saleHref); }
+            const shCta = document.getElementById('shCta');
+            if (shCta) shCta.setAttribute('href', saleHref);
             items = items.slice(0, 10);
             wrap.innerHTML = items.map(p => {
                 const cover = p.processed_cover || p.cover || '';
