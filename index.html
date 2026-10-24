@@ -8433,7 +8433,9 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
 
 /* Slide 1 — editorial. */
 #naSection .na-s1 { display: flex; flex-direction: column; }
-#naSection .na-s1-img { flex: 0 0 68svh; height: 68svh; width: 100%; background: #cfcecb center 42% / cover no-repeat; filter: grayscale(1) contrast(1.03); }
+#naSection .na-s1-img { position: relative; flex: 0 0 68svh; height: 68svh; width: 100%; background: #cfcecb center 42% / cover no-repeat; filter: grayscale(1) contrast(1.03); }
+/* Top scrim so the hero-style (white) header stays legible over the image. */
+#naSection .na-s1-img::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 160px; z-index: 1; pointer-events: none; background: linear-gradient(rgba(0,0,0,0.42), rgba(0,0,0,0)); }
 #naSection .na-s1-cap { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: space-between; padding: 18px 26px 96px; }
 #naSection .na-s1-title { font-size: clamp(32px, 9vw, 50px); font-weight: 800; letter-spacing: -0.01em; line-height: 0.95; text-transform: uppercase; color: #111; white-space: nowrap; }
 #naSection .na-s1-kicker { display: block; margin: 7px 0 0 4px; font-size: clamp(13px, 4vw, 17px); font-weight: 400; letter-spacing: 4px; text-transform: uppercase; color: #1c1c1c; }
@@ -9368,57 +9370,6 @@ window.veroLocalImg = function (key) {
                 </div>
             </section>
 
-            <!-- Top of the feed: the categories as large swipeable cards (Men /
-                 Women / Kids, or the art segments). A card opens its feed. -->
-            <section class="gr" id="genderRail">
-                <span class="gr-eyebrow">Shop by</span>
-                <h2 class="gr-head">Categories</h2>
-                <div class="gr-seg" id="grSeg" role="tablist"></div>
-                <div class="gr-stage">
-                    <div class="gr-rail" id="grRail"></div>
-                </div>
-                <div class="slide-more slide-more--dark" aria-hidden="true"><span>Slide for more</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 9l6 6 6-6"/></svg></div>
-                <div class="gr-dots" id="grDots"></div>
-                <button class="gr-btn" id="grBtn" type="button">Shop</button>
-            </section>
-
-            <!-- ===== DISCOVER BY CATEGORIES — editorial gender slider + a
-                 product slider beneath it. Built by renderDiscoverCats(). ===== -->
-            <section id="discoverCats" class="dc" aria-label="Discover by categories">
-                <div class="dc-head">
-                    <span class="dc-head-label">Discover by categories</span>
-                    <span class="dc-head-count" id="dcCatCount">1/1</span>
-                </div>
-                <div class="dc-rail" id="dcRail"><!-- gender slides, built by JS --></div>
-                <div class="dc-slidehint">Slide for the next<br>category</div>
-                <div class="dc-prods-wrap">
-                    <div class="dc-prods" id="dcProds"><!-- product cards, built by JS --></div>
-                    <div class="dc-prods-count" id="dcProdCount">1/1</div>
-                </div>
-            </section>
-
-            <!-- ===== SALE HERO — editorial season-sale block. The second block
-                 after the gender rail (gender → Discover cats → Sale). Mode-aware
-                 (clothing / art) via the shImg/shCta updater. ===== -->
-            <section id="saleHero" class="sh" aria-label="Season sale">
-                <!-- 3/4 image region (75svh) with the season label overlaid top-left. -->
-                <a class="sh-img" id="shImg" href="sales.html?mode=clothing"
-                   style="background-image:url('assets/hero/sale-clothing.webp')" aria-label="Shop the sale">
-                    <span class="sh-label">
-                        <span class="sh-label-title">Season<br>Sale</span>
-                        <span class="sh-label-count"><b id="shCount">1350</b>items on air</span>
-                    </span>
-                </a>
-                <!-- 1/4 white footer (25svh): index number + blurb on the left, CTA on the right. -->
-                <div class="sh-foot">
-                    <div class="sh-foot-left">
-                        <span class="sh-foot-num">06</span>
-                        <p class="sh-foot-desc">A thoughtful blend of lightweight layers, rich textures, and deep warm tones.</p>
-                    </div>
-                    <a class="sh-cta" id="shCta" href="sales.html?mode=clothing">Discover<br>More</a>
-                </div>
-            </section>
-
             <!-- ===== NEW ARRIVALS — in-feed swipeable section (slides + products). ===== -->
             <section id="naSection" aria-label="Weekly new arrivals">
                 <div class="na-track" id="naTrack">
@@ -9474,6 +9425,13 @@ window.veroLocalImg = function (key) {
                 var VC = window.veroCollections;
                 var grid  = document.getElementById('naGrid');
                 var nav   = document.getElementById('naNav');
+                var track = document.getElementById('naTrack');
+
+                // Re-evaluate the header's hero/solid look when swiping between the
+                // New Arrivals slides (the predicate lives in veroHeaderScrolled).
+                if (track) track.addEventListener('scroll', function () {
+                    window.dispatchEvent(new Event('scroll'));
+                }, { passive: true });
 
                 function hash(s) { s = String(s); var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
                 var CONDITIONS = ['Like New', 'Excellent', 'Very Good', 'Good'];
@@ -9546,6 +9504,57 @@ window.veroLocalImg = function (key) {
                 render('liked');
             })();
             </script>
+
+            <!-- ===== DISCOVER BY CATEGORIES — editorial gender slider + a
+                 product slider beneath it. Built by renderDiscoverCats(). ===== -->
+            <section id="discoverCats" class="dc" aria-label="Discover by categories">
+                <div class="dc-head">
+                    <span class="dc-head-label">Discover by categories</span>
+                    <span class="dc-head-count" id="dcCatCount">1/1</span>
+                </div>
+                <div class="dc-rail" id="dcRail"><!-- gender slides, built by JS --></div>
+                <div class="dc-slidehint">Slide for the next<br>category</div>
+                <div class="dc-prods-wrap">
+                    <div class="dc-prods" id="dcProds"><!-- product cards, built by JS --></div>
+                    <div class="dc-prods-count" id="dcProdCount">1/1</div>
+                </div>
+            </section>
+
+            <!-- ===== SALE HERO — editorial season-sale block. The second block
+                 after the gender rail (gender → Discover cats → Sale). Mode-aware
+                 (clothing / art) via the shImg/shCta updater. ===== -->
+            <section id="saleHero" class="sh" aria-label="Season sale">
+                <!-- 3/4 image region (75svh) with the season label overlaid top-left. -->
+                <a class="sh-img" id="shImg" href="sales.html?mode=clothing"
+                   style="background-image:url('assets/hero/sale-clothing.webp')" aria-label="Shop the sale">
+                    <span class="sh-label">
+                        <span class="sh-label-title">Season<br>Sale</span>
+                        <span class="sh-label-count"><b id="shCount">1350</b>items on air</span>
+                    </span>
+                </a>
+                <!-- 1/4 white footer (25svh): index number + blurb on the left, CTA on the right. -->
+                <div class="sh-foot">
+                    <div class="sh-foot-left">
+                        <span class="sh-foot-num">06</span>
+                        <p class="sh-foot-desc">A thoughtful blend of lightweight layers, rich textures, and deep warm tones.</p>
+                    </div>
+                    <a class="sh-cta" id="shCta" href="sales.html?mode=clothing">Discover<br>More</a>
+                </div>
+            </section>
+
+            <!-- Top of the feed: the categories as large swipeable cards (Men /
+                 Women / Kids, or the art segments). A card opens its feed. -->
+            <section class="gr" id="genderRail">
+                <span class="gr-eyebrow">Shop by</span>
+                <h2 class="gr-head">Categories</h2>
+                <div class="gr-seg" id="grSeg" role="tablist"></div>
+                <div class="gr-stage">
+                    <div class="gr-rail" id="grRail"></div>
+                </div>
+                <div class="slide-more slide-more--dark" aria-hidden="true"><span>Slide for more</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 9l6 6 6-6"/></svg></div>
+                <div class="gr-dots" id="grDots"></div>
+                <button class="gr-btn" id="grBtn" type="button">Shop</button>
+            </section>
 
             <!-- Labels row directly under the hero image: segments + magazine. -->
             <div class="vf-navbox" id="vfNavbox"><!-- built by renderVeroFeatures() --></div>
@@ -11854,6 +11863,22 @@ window.veroLocalImg = function (key) {
         // header. Read by header.js's scroll handler.
         window.veroHeaderScrolled = function (hdr) {
             const hdrH = (hdr && hdr.offsetHeight) || 0;
+            // New Arrivals: while that section sits under the header, wear the hero
+            // look (transparent) over its image slides (1 & 2) and go solid over the
+            // white products slide (3).
+            const naSec = document.getElementById('naSection');
+            if (naSec) {
+                const nr = naSec.getBoundingClientRect();
+                if (nr.top < hdrH && nr.bottom > hdrH) {
+                    const tr = document.getElementById('naTrack');
+                    const idx = tr ? Math.round(tr.scrollLeft / tr.clientWidth) : 0;
+                    hdr.classList.remove('hdr-split');
+                    hdr.style.removeProperty('--hdr-cut');
+                    hdr.style.removeProperty('--hdr-shift');
+                    hdr.style.animation = '';
+                    return idx > 1;
+                }
+            }
             // The home page leads with the collection hero image. Keep the header
             // transparent while that image is behind it, and turn it solid only once
             // the image has scrolled up past the header's bottom edge — so scrolling
