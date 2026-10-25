@@ -8523,16 +8523,24 @@ html { scroll-snap-type: y proximity; }
 .feed-strip .fs-all:hover { color: #EB2323; }
 /* A 2-column product grid, like the regular feed. */
 .feed-strip .fs-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px 14px; padding: 0 20px; }
-.feed-strip .fs-card { width: 100%; text-decoration: none; color: #111; }
-.feed-strip .fs-img { position: relative; width: 100%; aspect-ratio: 0.82; background: #f4f3f0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-.feed-strip .fs-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1); }
-.feed-strip .fs-card:hover .fs-img img { transform: scale(1.04); }
-.feed-strip .fs-emoji { font-size: 58px; }
-.feed-strip .fs-name { margin-top: 11px; font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; line-height: 1.2; }
-.feed-strip .fs-name:not(#zz):not(#zz):not(#zz) { font-family: 'Prachason Neue', 'Archivo', 'Inter', 'Arimo', sans-serif !important; }
-.feed-strip .fs-meta { margin-top: 4px; display: flex; gap: 8px; font-size: 11px; font-weight: 400; letter-spacing: 0.4px; color: #6b6b6b; }
-.feed-strip .fs-price { color: #111; font-weight: 600; }
 @media (min-width: 720px) { .feed-strip .fs-row { grid-template-columns: repeat(3, 1fr); } }
+/* The fs-card is the shared feed card — used by the strips AND the main feed /
+   category grids (productCardHTML emits it), so every grid card looks the same. */
+.fs-card { width: 100%; text-decoration: none; color: #111; -webkit-tap-highlight-color: transparent; }
+.fs-card *:not(#zz):not(#zz):not(#zz) { font-family: 'Inter', 'Arimo', 'Helvetica Neue', Helvetica, Arial, sans-serif !important; }
+.fs-img { position: relative; width: 100%; aspect-ratio: 0.82; background: #f4f3f0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.fs-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1); }
+.fs-card:hover .fs-img img { transform: scale(1.04); }
+.fs-emoji { font-size: 58px; }
+.fs-name { margin-top: 11px; font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; line-height: 1.2; color: #111; }
+.fs-name:not(#zz):not(#zz):not(#zz) { font-family: 'Prachason Neue', 'Archivo', 'Inter', 'Arimo', sans-serif !important; }
+.fs-meta { margin-top: 4px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 400; letter-spacing: 0.4px; color: #6b6b6b; }
+.fs-price { color: #111; font-weight: 600; white-space: nowrap; }
+.fs-price .vprice-wrap { display: inline-flex; align-items: baseline; gap: 6px; }
+.fs-price .vprice-off { display: none; }
+.fs-price .vprice-was { text-decoration: line-through; color: #b5b5b0; font-weight: 400; }
+.fs-price .vprice-sale { color: #EB2323; }
+.fs-brand { cursor: pointer; }
 /* Swipe dots at the very bottom, over slides 1 & 2. */
 #naSection .na-dots { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 6; display: flex; gap: 8px; pointer-events: none; }
 #naSection .na-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.22); transition: background 0.25s, transform 0.25s; }
@@ -11584,39 +11592,15 @@ window.veroLocalImg = function (key) {
                 type: prod.type || currentCategory
             });
             const productUrl = `product-showcase.html?product=${encodeURIComponent(productData)}`;
-            const _esz = ['XS', 'S', 'M', 'L', 'XL'];
-            let _sz = '';
-            if ((prod.type || '') !== 'art' && prod.collection !== 'interiors') {
-                const _s = String((prod.name || '') + (prod.price || '')); let _h = 0;
-                for (let _i = 0; _i < _s.length; _i++) _h = (_h * 31 + _s.charCodeAt(_i)) >>> 0;
-                _sz = _esz[_h % _esz.length];
-            }
+            const media = (prod.processed_cover || prod.cover)
+                ? `<img src="${prod.processed_cover || prod.cover}" alt="${prod.name || ''}" draggable="false" loading="lazy">`
+                : `<span class="fs-emoji">${prod.icon || '🛍️'}</span>`;
+            // Shared feed card (same as the separator strips): image, name, brand + price.
             return `
-                <a href="${productUrl}" draggable="false" style="text-decoration: none;" class="product-card pc-e${veroCardClass(prod)}" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
-                    <div class="pc-flip">
-                        <div class="pc-face pc-front">
-                            <div class="product-image">${(prod.processed_cover || prod.cover) ? `<img class="pc-photo" src="${prod.processed_cover || prod.cover}" alt="${prod.name || ''}" draggable="false">` : (prod.icon || '')}${_sz ? `<span class="pc-size">Size ${_sz}</span>` : ''}<div class="pc-left pc-price-top"><div class="product-price">${veroPriceHTML(prod)}</div></div><button class="pc-front-heart" type="button" aria-label="Add to wishlist" onclick="event.preventDefault();event.stopPropagation();this.classList.toggle('wish-on');"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg></button></div>
-                            <div class="pc-holdhint">hold to add to</div>
-                            <div class="product-info">
-                                <div class="pc-right">
-                                    <div class="product-name">${prod.name}</div>
-                                    <div class="product-seller" onclick="event.preventDefault(); event.stopPropagation(); showSellerProfile('${prod.seller}');">${prod.seller}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="pc-face pc-back">
-                            <button class="product-icon heart" data-action="wishlist" title="Add to Wishlist" onclick="event.preventDefault(); event.stopPropagation();">
-                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                </svg>
-                            </button>
-                            <button class="product-icon cart" data-action="cart" title="Add to Cart" onclick="event.preventDefault(); event.stopPropagation();">
-                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+                <a href="${productUrl}" draggable="false" class="fs-card" data-id="${pid}" data-name="${prod.name}" data-price="${prod.price}" data-icon="${prod.icon}" data-category="${prod.category}" data-seller="${prod.seller}" data-rating="${prod.rating}" data-product='${productData}'>
+                    <div class="fs-img">${media}</div>
+                    <div class="fs-name">${prod.name}</div>
+                    <div class="fs-meta"><span class="fs-brand" onclick="event.preventDefault(); event.stopPropagation(); showSellerProfile('${prod.seller}');">${prod.seller}</span><span class="fs-price">${veroPriceHTML(prod)}</span></div>
                 </a>
             `;
         }
