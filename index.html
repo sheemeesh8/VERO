@@ -2950,6 +2950,35 @@
             font-size: clamp(42px, 13vw, 66px); line-height: 0.85; letter-spacing: -0.03em; color: #111110; }
         .vcm-yr { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 400; font-size: 15px;
             color: #111110; padding-top: 6px; letter-spacing: 0.01em; }
+        /* ---- Split-flap clock (replaces the year): HH:MM:SS, each digit flips over
+               like an airport/station flap display once a second. ---- */
+        .vcm-clock { display: flex; align-items: center; gap: 2px; padding-top: 9px;
+            perspective: 220px; -webkit-perspective: 220px; }
+        .vcm-clock .flip { position: relative; width: 19px; height: 28px;
+            font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 700; font-size: 20px;
+            color: #f4f4f2; }
+        .vcm-clock .fp { position: absolute; left: 0; width: 100%; height: 14px; overflow: hidden;
+            background: #1a1a18; }
+        .vcm-clock .fp span { display: block; height: 28px; line-height: 28px; text-align: center;
+            font-variant-numeric: tabular-nums; }
+        .vcm-clock .top, .vcm-clock .top-flip { top: 0; border-radius: 3px 3px 0 0;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+        .vcm-clock .top-flip { border-bottom: 1px solid rgba(0,0,0,0.45); transform-origin: bottom;
+            background: #201f1d; }
+        .vcm-clock .bottom, .vcm-clock .bottom-flip { bottom: 0; border-radius: 0 0 3px 3px; }
+        .vcm-clock .bottom span, .vcm-clock .bottom-flip span { margin-top: -14px; }
+        .vcm-clock .top-flip, .vcm-clock .bottom-flip { z-index: 2;
+            backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+        .vcm-clock .bottom-flip { transform: rotateX(90deg); transform-origin: top; background: #201f1d; }
+        .vcm-clock .flip.go .top-flip { animation: vcmFlipTop 0.26s ease-in forwards; }
+        .vcm-clock .flip.go .bottom-flip { animation: vcmFlipBot 0.26s ease-out 0.26s forwards; }
+        @keyframes vcmFlipTop { from { transform: rotateX(0); } to { transform: rotateX(-90deg); } }
+        @keyframes vcmFlipBot { from { transform: rotateX(90deg); } to { transform: rotateX(0); } }
+        .vcm-clock .flip-colon { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 700;
+            font-size: 18px; color: #111110; padding: 0 1px; line-height: 28px; }
+        @media (prefers-reduced-motion: reduce) {
+            .vcm-clock .flip.go .top-flip, .vcm-clock .flip.go .bottom-flip { animation-duration: 0.001s; }
+        }
         .vcm-cal { width: 100%; border-collapse: collapse; table-layout: fixed;
             font-family: 'Helvetica Neue', Arial, sans-serif; }
         .vcm-cal th { font-weight: 500; font-size: 10px; color: #6f6e69; text-align: center;
@@ -11958,7 +11987,7 @@ window.veroLocalImg = function (key) {
             sheet.innerHTML =
                 '<span class="vcm-clip"></span>' +
                 '<div class="vcm-top"><div class="vcm-month">' + months[month] + '</div>' +
-                    '<div class="vcm-yr">' + year + '</div></div>' +
+                    '<div class="vcm-clock" id="vcmClock" aria-label="Current time" role="timer"></div></div>' +
                 '<table class="vcm-cal"><thead><tr>' +
                     ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => '<th>' + d + '</th>').join('') +
                 '</tr></thead><tbody>' + weeks + '</tbody></table>' +
@@ -12017,6 +12046,58 @@ window.veroLocalImg = function (key) {
                 td.classList.add('vcm-sel');
                 syncList(td.getAttribute('data-d'));
             });
+
+            // ---- Split-flap clock: build HH:MM:SS and tick it once a second. ----
+            const clockEl = sheet.querySelector('#vcmClock');
+            if (clockEl) {
+                const makeFlip = ch => {
+                    const f = document.createElement('div'); f.className = 'flip';
+                    f.innerHTML =
+                        '<div class="fp top"><span>' + ch + '</span></div>' +
+                        '<div class="fp bottom"><span>' + ch + '</span></div>' +
+                        '<div class="fp top-flip"><span>' + ch + '</span></div>' +
+                        '<div class="fp bottom-flip"><span>' + ch + '</span></div>';
+                    f._d = ch;
+                    const botFlip = f.querySelector('.bottom-flip');
+                    botFlip.addEventListener('animationend', () => {
+                        f.classList.remove('go');
+                        f.querySelector('.bottom span').textContent = f._d;
+                        f.querySelector('.top span').textContent = f._d;
+                        f.querySelector('.top-flip span').textContent = f._d;
+                    });
+                    return f;
+                };
+                const flip = (f, nd) => {
+                    if (f._d === nd) return;
+                    const od = f._d; f._d = nd;
+                    f.querySelector('.top span').textContent = nd;          // new, revealed as top folds
+                    f.querySelector('.bottom span').textContent = od;       // old, until bottom unfolds
+                    f.querySelector('.top-flip span').textContent = od;
+                    f.querySelector('.bottom-flip span').textContent = nd;
+                    f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+                };
+                const colon = () => { const c = document.createElement('span'); c.className = 'flip-colon'; c.textContent = ':'; return c; };
+                const now0 = new Date();
+                const str0 = [now0.getHours(), now0.getMinutes(), now0.getSeconds()]
+                    .map(n => String(n).padStart(2, '0')).join('');
+                const digits = [];
+                str0.split('').forEach((ch, i) => {
+                    if (i === 2 || i === 4) clockEl.appendChild(colon());
+                    const f = makeFlip(ch); digits.push(f); clockEl.appendChild(f);
+                });
+                const tick = () => {
+                    const n = new Date();
+                    const s = [n.getHours(), n.getMinutes(), n.getSeconds()]
+                        .map(v => String(v).padStart(2, '0')).join('');
+                    s.split('').forEach((ch, i) => flip(digits[i], ch));
+                };
+                const timer = setInterval(tick, 1000);
+                // Stop ticking if the calendar leaves the DOM.
+                const obs = new MutationObserver(() => {
+                    if (!document.body.contains(clockEl)) { clearInterval(timer); obs.disconnect(); }
+                });
+                obs.observe(document.body, { childList: true, subtree: true });
+            }
 
             return cal;
         }
