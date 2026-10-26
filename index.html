@@ -2940,16 +2940,49 @@
                a Mon-first grid with last/next month ghosted, and the brand gold/green
                kept only as a quiet dot under an event day. ---- */
         .vcm-sheet { max-width: 360px; width: 100%; margin: 0 auto; position: relative;
-            background: #f4f4f2; border-radius: 4px; padding: 34px 24px 24px; direction: ltr;
+            background: transparent; border-radius: 0; padding: 8px 4px 4px; direction: ltr;
             --vcm-accent: #E8004C;   /* NISMO-style red-pink for event days + today */
-            box-shadow: 0 2px 3px rgba(20,18,10,0.05), 0 24px 46px -26px rgba(20,18,10,0.38); }
-        .vcm-clip { position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
-            width: 104px; height: 16px; background: #141412; border-radius: 3px; }
+            box-shadow: none; }
+        /* The calendar lays out flat on the page now — no clipboard tab. */
+        .vcm-clip { display: none; }
         .vcm-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
         .vcm-month { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 700;
-            font-size: clamp(30px, 9vw, 46px); line-height: 0.85; letter-spacing: -0.025em; color: #111110; }
+            font-size: clamp(42px, 13vw, 66px); line-height: 0.85; letter-spacing: -0.03em; color: #111110; }
         .vcm-yr { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 400; font-size: 15px;
             color: #111110; padding-top: 6px; letter-spacing: 0.01em; }
+        /* ---- Split-flap clock (replaces the year): HH:MM:SS, each digit flips over
+               like a flap display once a second. Fine-line treatment: pale cards,
+               hairline borders, ink digits — matching the calendar's thin rules. ---- */
+        .vcm-clock { display: flex; align-items: center; gap: 3px; padding-top: 10px;
+            perspective: 240px; -webkit-perspective: 240px; }
+        .vcm-clock .flip { position: relative; width: 16px; height: 26px;
+            font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 400; font-size: 16px;
+            letter-spacing: 0.01em; color: #111110; }
+        .vcm-clock .fp { position: absolute; left: 0; width: 100%; height: 13px; overflow: hidden;
+            background: #faf9f7; border: 1px solid #e4e3df; }
+        .vcm-clock .fp span { display: block; height: 26px; line-height: 26px; text-align: center;
+            font-variant-numeric: tabular-nums; }
+        .vcm-clock .top, .vcm-clock .top-flip { top: 0; border-radius: 2px 2px 0 0; border-bottom: none; }
+        .vcm-clock .top-flip { border-bottom: 1px solid #d8d7d2; transform-origin: bottom; }
+        .vcm-clock .bottom, .vcm-clock .bottom-flip { bottom: 0; border-radius: 0 0 2px 2px; border-top: none; }
+        .vcm-clock .bottom span, .vcm-clock .bottom-flip span { margin-top: -13px; }
+        .vcm-clock .top-flip, .vcm-clock .bottom-flip { z-index: 2;
+            backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+        .vcm-clock .bottom-flip { transform: rotateX(90deg); transform-origin: top; border-top: 1px solid #d8d7d2; }
+        .vcm-clock .flip.go .top-flip { animation: vcmFlipTop 0.26s ease-in forwards; }
+        .vcm-clock .flip.go .bottom-flip { animation: vcmFlipBot 0.26s ease-out 0.26s forwards; }
+        @keyframes vcmFlipTop { from { transform: rotateX(0); } to { transform: rotateX(-90deg); } }
+        @keyframes vcmFlipBot { from { transform: rotateX(90deg); } to { transform: rotateX(0); } }
+        /* Seconds only: inverted flap — black card, white number. */
+        .vcm-clock .flip.sec { color: #ffffff; }
+        .vcm-clock .flip.sec .fp { background: #111110; border-color: #111110; }
+        .vcm-clock .flip.sec .top-flip { border-bottom-color: #000; }
+        .vcm-clock .flip.sec .bottom-flip { border-top-color: #000; }
+        .vcm-clock .flip-colon { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 400;
+            font-size: 14px; color: #9a958c; padding: 0 1px; line-height: 26px; }
+        @media (prefers-reduced-motion: reduce) {
+            .vcm-clock .flip.go .top-flip, .vcm-clock .flip.go .bottom-flip { animation-duration: 0.001s; }
+        }
         .vcm-cal { width: 100%; border-collapse: collapse; table-layout: fixed;
             font-family: 'Helvetica Neue', Arial, sans-serif; }
         .vcm-cal th { font-weight: 500; font-size: 10px; color: #6f6e69; text-align: center;
@@ -8460,14 +8493,14 @@ html body header#siteHeader.hdr-split.hdr-split::before { background: transparen
     font-weight: 100 900; font-style: normal; font-display: swap;
 }
 #naSection { position: relative; width: 100%; height: 100vh; height: 100svh; min-height: 560px; background: #fff; color: #111; direction: ltr; overflow: hidden; }
-/* Sticky hand-off: the New Arrivals block catches as one screen, then snaps on
-   firmly to the rest of the feed. A snap point + firm stop on every main feed
-   section so each one catches as you pass it, while proximity still lets the
-   tall sections be scrolled through freely (no mid-section trap). */
-html { scroll-snap-type: y mandatory; }
+/* Sticky hand-off limited to the hero → New Arrivals pair: those two screens
+   catch firmly against each other, and everything below New Arrivals scrolls as
+   one free flow. Proximity (not mandatory) so the bottom edge of the snapping
+   zone never traps the scroll above the rest of the feed. */
+html { scroll-snap-type: y proximity; }
 #collectionHero.ch { scroll-snap-align: start; scroll-snap-stop: always; }
 #naSection { scroll-snap-align: start; scroll-snap-stop: always; }
-#discoverCats.dc, #saleHero.sh, #genderRail.gr { scroll-snap-align: start; scroll-snap-stop: always; scroll-margin-top: 0; }
+#discoverCats.dc, #saleHero.sh, #genderRail.gr { scroll-snap-align: none; scroll-margin-top: 0; }
 #naSection *:not(#zz):not(#zz):not(#zz) { font-family: 'Inter', 'Arimo', 'Helvetica Neue', Helvetica, Arial, sans-serif !important; }
 #naSection .na-display:not(#zz):not(#zz):not(#zz) { font-family: 'Prachason Neue', 'Archivo', 'Inter', 'Arimo', 'Helvetica Neue', Helvetica, Arial, sans-serif !important; }
 #naSection .na-felix:not(#zz):not(#zz):not(#zz) { font-family: 'Felix007', 'Space Grotesk', 'Archivo', 'Inter', 'Arimo', 'Helvetica Neue', Helvetica, Arial, sans-serif !important; }
@@ -8507,7 +8540,7 @@ html { scroll-snap-type: y mandatory; }
 #naSection .na-s3-head { padding: 0 24px 6px; }
 #naSection .na-s3-eyebrow { font-size: 10px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: #8a8a85; }
 #naSection .na-s3-title { margin-top: 6px; font-size: clamp(28px, 8vw, 42px); font-weight: 800; line-height: 0.92; letter-spacing: -0.01em; text-transform: uppercase; color: #111; }
-#naSection .na-grid { padding: 30px 24px 0; display: flex; flex-direction: column; gap: 70px; }
+#naSection .na-grid { padding: 30px 24px 0; display: flex; flex-direction: column; gap: 120px; }
 #naSection .na-card { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center; text-decoration: none; color: #111; }
 #naSection .na-item:nth-child(even) .na-card { direction: rtl; }
 #naSection .na-item:nth-child(even) .na-card > * { direction: ltr; }
@@ -8520,15 +8553,17 @@ html { scroll-snap-type: y mandatory; }
 #naSection .na-idx { font-size: 22px; font-weight: 800; color: #111; font-variant-numeric: tabular-nums; }
 #naSection .na-card-name { font-size: clamp(17px, 4.8vw, 22px); font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; line-height: 1.04; }
 #naSection .na-card-brand { margin-top: 5px; font-size: clamp(14px, 3.9vw, 17px); font-weight: 400; letter-spacing: 1px; text-transform: uppercase; color: #333; }
-#naSection .na-card-spec { margin-top: 26px; display: flex; flex-direction: column; gap: 1px; font-size: clamp(12px, 3.4vw, 15px); font-weight: 400; letter-spacing: 0.8px; text-transform: uppercase; color: #333; }
-#naSection .na-card-price { margin-top: 6px; font-size: clamp(14px, 3.9vw, 17px); font-weight: 800; color: #111; letter-spacing: 0.3px; }
+/* Size / condition / price — one uniform, understated treatment: same font
+   family (body, not the display face), same small size, same left alignment. */
+#naSection .na-card-spec { margin-top: 18px; display: flex; flex-direction: column; gap: 2px; font-family: inherit; font-size: 12px; font-weight: 400; letter-spacing: 0.6px; text-transform: uppercase; color: #333; }
+#naSection .na-card-price { margin-top: 2px; font-family: inherit; font-size: 12px; font-weight: 500; letter-spacing: 0.6px; text-transform: uppercase; color: #111; }
 #naSection .na-cap { margin: 18px auto 0 0; max-width: 56%; text-align: left; font-size: clamp(11px, 3vw, 13px); font-weight: 400; line-height: 1.5; color: #1c1c1c; }
 #naSection .na-item:nth-child(even) .na-cap { margin: 18px 0 0 auto; text-align: right; }
 /* Floating filter bar — pinned to the bottom of slide 3 only. */
 /* Filter bar — the feed's nav bar: a black capsule that slides up when you
    reach the products (slide 3) and hides otherwise. Active tab = white pill
    with red text, exactly like the feed's category tabs. */
-#naSection .na-nav { position: fixed; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; margin: 0 auto; z-index: 850; direction: ltr;
+#naSection .na-nav { position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; margin: 0 auto; z-index: 850; direction: ltr;
     display: flex; align-items: center; gap: 4px; width: calc(100% - 28px); max-width: none; height: 62px; min-height: 62px; box-sizing: border-box;
     overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; background: #111; border-radius: 999px; padding: 6px 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.22);
     transform: translateY(calc(100% + 60px)); opacity: 0; pointer-events: none;
@@ -11956,7 +11991,7 @@ window.veroLocalImg = function (key) {
             sheet.innerHTML =
                 '<span class="vcm-clip"></span>' +
                 '<div class="vcm-top"><div class="vcm-month">' + months[month] + '</div>' +
-                    '<div class="vcm-yr">' + year + '</div></div>' +
+                    '<div class="vcm-clock" id="vcmClock" aria-label="Current time" role="timer"></div></div>' +
                 '<table class="vcm-cal"><thead><tr>' +
                     ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => '<th>' + d + '</th>').join('') +
                 '</tr></thead><tbody>' + weeks + '</tbody></table>' +
@@ -12015,6 +12050,60 @@ window.veroLocalImg = function (key) {
                 td.classList.add('vcm-sel');
                 syncList(td.getAttribute('data-d'));
             });
+
+            // ---- Split-flap clock: build HH:MM:SS and tick it once a second. ----
+            const clockEl = sheet.querySelector('#vcmClock');
+            if (clockEl) {
+                const makeFlip = ch => {
+                    const f = document.createElement('div'); f.className = 'flip';
+                    f.innerHTML =
+                        '<div class="fp top"><span>' + ch + '</span></div>' +
+                        '<div class="fp bottom"><span>' + ch + '</span></div>' +
+                        '<div class="fp top-flip"><span>' + ch + '</span></div>' +
+                        '<div class="fp bottom-flip"><span>' + ch + '</span></div>';
+                    f._d = ch;
+                    const botFlip = f.querySelector('.bottom-flip');
+                    botFlip.addEventListener('animationend', () => {
+                        f.classList.remove('go');
+                        f.querySelector('.bottom span').textContent = f._d;
+                        f.querySelector('.top span').textContent = f._d;
+                        f.querySelector('.top-flip span').textContent = f._d;
+                    });
+                    return f;
+                };
+                const flip = (f, nd) => {
+                    if (f._d === nd) return;
+                    const od = f._d; f._d = nd;
+                    f.querySelector('.top span').textContent = nd;          // new, revealed as top folds
+                    f.querySelector('.bottom span').textContent = od;       // old, until bottom unfolds
+                    f.querySelector('.top-flip span').textContent = od;
+                    f.querySelector('.bottom-flip span').textContent = nd;
+                    f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+                };
+                const colon = () => { const c = document.createElement('span'); c.className = 'flip-colon'; c.textContent = ':'; return c; };
+                const now0 = new Date();
+                const str0 = [now0.getHours(), now0.getMinutes(), now0.getSeconds()]
+                    .map(n => String(n).padStart(2, '0')).join('');
+                const digits = [];
+                str0.split('').forEach((ch, i) => {
+                    if (i === 2 || i === 4) clockEl.appendChild(colon());
+                    const f = makeFlip(ch);
+                    if (i >= 4) f.classList.add('sec');   // seconds get the inverted dark flap
+                    digits.push(f); clockEl.appendChild(f);
+                });
+                const tick = () => {
+                    const n = new Date();
+                    const s = [n.getHours(), n.getMinutes(), n.getSeconds()]
+                        .map(v => String(v).padStart(2, '0')).join('');
+                    s.split('').forEach((ch, i) => flip(digits[i], ch));
+                };
+                const timer = setInterval(tick, 1000);
+                // Stop ticking if the calendar leaves the DOM.
+                const obs = new MutationObserver(() => {
+                    if (!document.body.contains(clockEl)) { clearInterval(timer); obs.disconnect(); }
+                });
+                obs.observe(document.body, { childList: true, subtree: true });
+            }
 
             return cal;
         }
