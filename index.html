@@ -8756,6 +8756,71 @@ html { scroll-snap-type: y proximity; }
 <!-- data-back="none": this page opens on the home view, which carries no back
      control. hideAllViews() clears it for every other view. -->
 <body data-footer="manual" data-back="none">
+<!-- ===== App entrance intro: hero video + centred wordmark, then the logo
+     fades and the site is revealed sliding up from the bottom. ===== -->
+<style>
+  #appIntro {
+      position: fixed; inset: 0; z-index: 100000; background: #0d0d0d;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      transform: translateY(0); transition: transform .85s cubic-bezier(.76,0,.24,1);
+  }
+  #appIntro .intro-vid {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; z-index: 0; filter: grayscale(.25);
+  }
+  #appIntro .intro-scrim { position: absolute; inset: 0; z-index: 1; background: rgba(0,0,0,.42); }
+  #appIntro .intro-logo {
+      position: relative; z-index: 2; color: #fff; font-weight: 400;
+      font-size: clamp(46px, 15.5vw, 92px); line-height: 1; white-space: nowrap;
+      padding: 0 16px; max-width: 100%;
+      opacity: 0; transform: translateY(10px) scale(.97);
+      transition: opacity .9s ease, transform .9s ease;
+      text-shadow: 0 2px 34px rgba(0,0,0,.45);
+  }
+  /* Beat the site-wide forced font (aharoni `* !important`) with the id-trick. */
+  #appIntro .intro-logo:not(#zz):not(#zz):not(#zz) {
+      font-family: 'Pinyon Script', cursive !important; font-weight: 400 !important;
+  }
+  #appIntro.intro-show .intro-logo { opacity: 1; transform: translateY(0) scale(1); }
+  #appIntro.intro-hidelogo .intro-logo {
+      opacity: 0; transform: translateY(-6px) scale(1.03);
+      transition: opacity .5s ease, transform .5s ease;
+  }
+  #appIntro.intro-up { transform: translateY(-100%); }
+  body.intro-active { overflow: hidden !important; }
+</style>
+<div id="appIntro" aria-hidden="true">
+    <video class="intro-vid" src="assets/hero/unisex.mp4" autoplay muted loop playsinline preload="auto"></video>
+    <div class="intro-scrim"></div>
+    <span class="intro-logo">moravchick</span>
+</div>
+<script>
+(function veroAppIntro() {
+    var intro = document.getElementById('appIntro');
+    if (!intro) return;
+    var reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    var seen = false;
+    try { seen = sessionStorage.getItem('vero_intro_done') === '1'; } catch (e) {}
+    var remove = function () {
+        document.body.classList.remove('intro-active');
+        if (intro.parentNode) intro.parentNode.removeChild(intro);
+        try { sessionStorage.setItem('vero_intro_done', '1'); } catch (e) {}
+    };
+    if (reduce || seen) { remove(); return; }
+
+    document.body.classList.add('intro-active');
+    var vid = intro.querySelector('video');
+    if (vid) { try { var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} }
+    // Fade/scale the wordmark in.
+    requestAnimationFrame(function () { requestAnimationFrame(function () { intro.classList.add('intro-show'); }); });
+
+    var HOLD = 2300;      // time the logo is held centred on the video
+    setTimeout(function () { intro.classList.add('intro-hidelogo'); }, HOLD);           // logo fades out
+    setTimeout(function () { intro.classList.add('intro-up'); }, HOLD + 600);           // curtain lifts → site rises from bottom
+    setTimeout(remove, HOLD + 600 + 900);                                              // clean up
+})();
+</script>
 <script>
 /* Local, self-hosted imagery for the hero, categories and feed — replaces the
    external loremflickr placeholders (which the CDN/proxy blocks in production).
