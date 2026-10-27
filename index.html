@@ -9594,7 +9594,7 @@ window.veroLocalImg = function (key) {
             .cv-coll-sub { font-family: 'Arimo','Inter',sans-serif; color: #fff; font-size: 15px; margin-top: 16px; max-width: 18ch; }
             .cv-coll-rule { width: 62%; max-width: 420px; height: 1.5px; background: rgba(255,255,255,0.85); margin: 34px 0; }
             .cv-coll-cta { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); bottom: 0; top: 54%; width: 48%; max-width: 240px; background: rgba(120,116,110,0.72); color: #fff; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 20px; line-height: 1.05; text-transform: uppercase; text-decoration: none; padding: 22px 16px; display: flex; align-items: flex-start; justify-content: center; text-align: center; transition: background 0.2s; }
-            .cv-coll-cta:hover { background: rgba(90,86,80,0.82); }
+            .cv-coll-cta:hover { filter: brightness(0.9); }
             .cv-coll-foot { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 20px 0 6px; }
             .cv-coll-foot p { font-family: 'Arimo','Inter',sans-serif; font-size: 12.5px; line-height: 1.35; color: #1b1b1b; max-width: 60%; margin: 0; }
             .cv-coll-foot .cv-air { text-align: right; }
@@ -9626,7 +9626,7 @@ window.veroLocalImg = function (key) {
             .cv-na > *:not(.cv-na-bg):not(.cv-na-box) { position: relative; z-index: 2; }
             .cv-na .cv-mega { font-size: 17vw; }
             .cv-na-box { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); bottom: 0; top: 50%; width: 50%; max-width: 250px; background: rgba(92,104,62,0.55); display: flex; align-items: flex-start; justify-content: center; padding: 26px 10px; transition: background 0.2s; }
-            .cv-na-box:hover { background: rgba(78,90,50,0.7); }
+            .cv-na-box:hover { filter: brightness(0.9); }
             .cv-na-box span { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 26px; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
             .cv-na-intro { font-family: 'Arimo','Inter',sans-serif; font-size: 12.5px; line-height: 1.5; color: #1b1b1b; margin: 24px 0 0; }
 
@@ -9640,7 +9640,7 @@ window.veroLocalImg = function (key) {
             .cv-sale-row { display: flex; align-items: center; gap: 0; margin-top: 10px; }
             .cv-sale-row .cv-sale-cap { font-family: 'Arimo','Inter',sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 13px; color: #fff; flex: 1; }
             .cv-sale-disc { position: absolute; z-index: 2; right: 0; bottom: 0; top: 40%; width: 44%; max-width: 230px; background: rgba(190,180,164,0.82); display: flex; align-items: flex-start; justify-content: center; padding: 22px 10px; transition: background 0.2s; }
-            .cv-sale-disc:hover { background: rgba(170,160,144,0.9); }
+            .cv-sale-disc:hover { filter: brightness(0.92); }
             .cv-sale-disc span { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 24px; letter-spacing: 1px; text-transform: uppercase; color: #fff; }
 
             /* featured product detail (Sale + Special) */
@@ -9834,6 +9834,75 @@ window.veroLocalImg = function (key) {
                 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
                 // veroCollections may hydrate late — retry briefly.
                 var tries=0,t=setInterval(function(){VC=window.veroCollections;if((VC&&VC.allProducts&&VC.allProducts().length)||tries++>20){clearInterval(t);if(VC)build();}},200);
+            })();
+            </script>
+
+            <!-- Tint each hero CTA box with the dominant colour of that hero's
+                 image / video, so the button always reads as part of the media. -->
+            <script>
+            (function () {
+                // Average the visible pixels of a drawable source, biased toward
+                // more saturated pixels so the result reads as the "dominant" hue
+                // rather than a muddy grey. Returns [r,g,b] or null.
+                function dominantOf(src, draw) {
+                    try {
+                        var n = 44, c = document.createElement('canvas'); c.width = n; c.height = n;
+                        var x = c.getContext('2d'); draw(x, n);
+                        var d = x.getImageData(0, 0, n, n).data;
+                        var r = 0, g = 0, b = 0, wsum = 0;
+                        for (var i = 0; i < d.length; i += 4) {
+                            if (d[i + 3] < 125) continue;
+                            var R = d[i], G = d[i + 1], B = d[i + 2];
+                            var mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+                            var sat = mx === 0 ? 0 : (mx - mn) / mx;      // 0..1
+                            var w = 0.35 + sat;                           // weight saturated pixels more
+                            r += R * w; g += G * w; b += B * w; wsum += w;
+                        }
+                        if (!wsum) return null;
+                        r = r / wsum; g = g / wsum; b = b / wsum;
+                        // Keep white text legible: pull very light results down to a
+                        // mid tone, nudge very dark ones up.
+                        var lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                        if (lum > 165) { var k = 150 / lum; r *= k; g *= k; b *= k; }
+                        else if (lum < 55) { var k2 = 70 / (lum || 1); r = Math.min(255, r * k2); g = Math.min(255, g * k2); b = Math.min(255, b * k2); }
+                        return [Math.round(r), Math.round(g), Math.round(b)];
+                    } catch (e) { return null; }
+                }
+                function tint(box, rgb, alpha) { if (box && rgb) box.style.background = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + alpha + ')'; }
+
+                function fromImage(url, box, alpha) {
+                    var img = new Image(); img.crossOrigin = 'anonymous';
+                    img.onload = function () { tint(box, dominantOf(url, function (x, n) { x.drawImage(img, 0, 0, n, n); }), alpha); };
+                    img.src = url;
+                }
+                function fromVideo(video, box, alpha) {
+                    if (!video) return;
+                    var done = false;
+                    var grab = function () {
+                        if (done) return;
+                        var rgb = dominantOf(null, function (x, n) { x.drawImage(video, 0, 0, n, n); });
+                        if (rgb) { done = true; tint(box, rgb, alpha); }
+                    };
+                    video.addEventListener('loadeddata', grab);
+                    video.addEventListener('canplay', grab);
+                    // Fallback to the poster image if the frame can't be read.
+                    setTimeout(function () { if (!done && video.poster) fromImage(video.poster, box, alpha); }, 1200);
+                    grab();
+                }
+
+                function run() {
+                    var collBox = document.querySelector('.cv-coll-cta');
+                    var collVid = document.querySelector('.cv-coll .cv-coll-bg');
+                    if (collVid && collVid.tagName === 'VIDEO') fromVideo(collVid, collBox, 0.74);
+                    else if (collVid) fromImage(collVid.currentSrc || collVid.src, collBox, 0.74);
+
+                    var naImg = document.querySelector('.cv-na .cv-na-bg');
+                    if (naImg) fromImage(naImg.currentSrc || naImg.src, document.querySelector('.cv-na-box'), 0.6);
+
+                    var saleImg = document.querySelector('.cv-sale .cv-sale-bg');
+                    if (saleImg) fromImage(saleImg.currentSrc || saleImg.src, document.querySelector('.cv-sale-disc'), 0.8);
+                }
+                if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
             })();
             </script>
 
