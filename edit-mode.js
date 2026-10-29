@@ -61,6 +61,11 @@
         if (d.color) el.style.setProperty('color', d.color, 'important');
         if (d.bg) el.style.setProperty('background-color', d.bg, 'important');
         if (d.fontSize) el.style.setProperty('font-size', d.fontSize, 'important');
+        /* move: CSS `translate` (independent of `transform`, so it won't clobber
+           an existing transform such as a centering translateX(-50%)). */
+        if (d.move) el.style.setProperty('translate', d.move);
+        if (d.w) el.style.setProperty('width', d.w, 'important');
+        if (d.h) el.style.setProperty('height', d.h, 'important');
         if (d.bgImage) el.style.setProperty('background-image', 'url("' + d.bgImage + '")', 'important');
         if (d.src) {
             if (el.tagName === 'IMG' || el.tagName === 'VIDEO') { el.removeAttribute('poster'); el.src = d.src; }
@@ -152,6 +157,8 @@
         pop.appendChild(popBtn('🖌 רקע', function () { pick('bg'); }));
         pop.appendChild(popBtn('A+ גדול', function () { bumpFont(target, 1.1); }));
         pop.appendChild(popBtn('A− קטן', function () { bumpFont(target, 0.9); }));
+        pop.appendChild(popBtn('✥ הזז', function () { startMove(target); hidePop(); }));
+        pop.appendChild(popBtn('⤢ גודל', function () { startResize(target); hidePop(); }));
         if (isMedia || hasBgImg) pop.appendChild(popBtn('🖼 החלף מדיה', function () { replaceMedia(target, hasBgImg && !isMedia); }));
         pop.appendChild(popBtn('🔗 קישור', function () { editLink(target); }));
         pop.appendChild(popBtn('🔒 הסתר', function () { hideEl(target); hidePop(); }));
@@ -206,6 +213,124 @@
         var next = Math.max(8, Math.round(cur * factor)) + 'px';
         t.style.setProperty('font-size', next, 'important');
         entry(pathOf(t)).fontSize = next; save(); drawOutline(t);
+    }
+
+    /* ---------- move + resize sessions ---------- */
+    var session = null;   // active drag/resize session (suppresses click selection)
+
+    function parsePair(str) {
+        var m = /(-?\d+(?:\.\d+)?)\s*px?\s+(-?\d+(?:\.\d+)?)/.exec(str || '');
+        return m ? { x: parseFloat(m[1]), y: parseFloat(m[2]) } : { x: 0, y: 0 };
+    }
+
+    // Floating "done" hint shown during a move/resize session.
+    var hint = el('div', [
+        'position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:2147483002;',
+        'display:none;align-items:center;gap:10px;background:#1b1916;color:#fff;border-radius:999px;',
+        'padding:8px 10px 8px 16px;box-shadow:0 8px 24px rgba(0,0,0,.4);direction:rtl;',
+        "font-family:'Jost','Inter',sans-serif;font-size:12px;white-space:nowrap;"
+    ].join(''));
+
+    // Resize handle (bottom-right corner).
+    var handle = el('div', [
+        'position:fixed;z-index:2147483002;display:none;width:26px;height:26px;border-radius:50%;',
+        'background:' + ACCENT + ';border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);',
+        'cursor:nwse-resize;touch-action:none;'
+    ].join(''));
+
+    function endSession() {
+        if (session && session.cleanup) session.cleanup();
+        session = null;
+        hint.style.display = 'none';
+        handle.style.display = 'none';
+        outline.style.display = 'none';
+    }
+
+    function showHint(label) {
+        hint.innerHTML = '<span>' + label + '</span>' +
+            '<button data-em="1" id="emSessDone" style="all:unset;cursor:pointer;padding:6px 14px;background:#fff;color:#1b1916;border-radius:999px;font-weight:600">✓ סיום</button>';
+        hint.style.display = 'flex';
+        hint.querySelector('#emSessDone').addEventListener('click', function (e) { e.stopPropagation(); endSession(); });
+    }
+
+    function startMove(t) {
+        endSession();
+        var p = pathOf(t), e2 = entry(p);
+        t.style.setProperty('cursor', 'move');
+        t.style.setProperty('touch-action', 'none');
+        drawOutline(t);
+        showHint('גרור את האלמנט למיקום הרצוי');
+        var dragging = false, sx = 0, sy = 0, base = parsePair(e2.move);
+        function down(ev) {
+            ev.preventDefault(); ev.stopPropagation();
+            dragging = true; base = parsePair(e2.move);
+            sx = ev.clientX; sy = ev.clientY;
+            try { t.setPointerCapture(ev.pointerId); } catch (e) {}
+        }
+        function move(ev) {
+            if (!dragging) return;
+            ev.preventDefault();
+            var nx = base.x + (ev.clientX - sx), ny = base.y + (ev.clientY - sy);
+            t.style.setProperty('translate', nx + 'px ' + ny + 'px');
+            drawOutline(t);
+        }
+        function up(ev) {
+            if (!dragging) return; dragging = false;
+            var nx = base.x + (ev.clientX - sx), ny = base.y + (ev.clientY - sy);
+            e2.move = nx + 'px ' + ny + 'px'; save();
+        }
+        t.addEventListener('pointerdown', down, true);
+        t.addEventListener('pointermove', move, true);
+        t.addEventListener('pointerup', up, true);
+        session = { el: t, cleanup: function () {
+            t.style.removeProperty('cursor'); t.style.removeProperty('touch-action');
+            t.removeEventListener('pointerdown', down, true);
+            t.removeEventListener('pointermove', move, true);
+            t.removeEventListener('pointerup', up, true);
+        } };
+    }
+
+    function startResize(t) {
+        endSession();
+        var p = pathOf(t), e2 = entry(p);
+        drawOutline(t);
+        showHint('גרור את הידית כדי לשנות גודל');
+        function placeHandle() {
+            var r = t.getBoundingClientRect();
+            handle.style.display = 'block';
+            handle.style.left = (r.right - 13) + 'px';
+            handle.style.top = (r.bottom - 13) + 'px';
+        }
+        placeHandle();
+        var dragging = false, sx = 0, sy = 0, bw = 0, bh = 0;
+        function down(ev) {
+            ev.preventDefault(); ev.stopPropagation();
+            dragging = true;
+            var r = t.getBoundingClientRect(); bw = r.width; bh = r.height;
+            sx = ev.clientX; sy = ev.clientY;
+            try { handle.setPointerCapture(ev.pointerId); } catch (e) {}
+        }
+        function move(ev) {
+            if (!dragging) return;
+            ev.preventDefault();
+            var nw = Math.max(20, bw + (ev.clientX - sx)), nh = Math.max(20, bh + (ev.clientY - sy));
+            t.style.setProperty('width', nw + 'px', 'important');
+            t.style.setProperty('height', nh + 'px', 'important');
+            drawOutline(t); placeHandle();
+        }
+        function up() {
+            if (!dragging) return; dragging = false;
+            var r = t.getBoundingClientRect();
+            e2.w = Math.round(r.width) + 'px'; e2.h = Math.round(r.height) + 'px'; save();
+        }
+        handle.addEventListener('pointerdown', down, true);
+        handle.addEventListener('pointermove', move, true);
+        handle.addEventListener('pointerup', up, true);
+        session = { el: t, reposition: placeHandle, cleanup: function () {
+            handle.removeEventListener('pointerdown', down, true);
+            handle.removeEventListener('pointermove', move, true);
+            handle.removeEventListener('pointerup', up, true);
+        } };
     }
 
     function replaceMedia(t, asBackground) {
@@ -269,11 +394,12 @@
         var t = e.target;
         if (t.closest && t.closest('[data-em]')) return;   // our own UI
         if (editingEl) return;                               // let text editing proceed
+        if (session) { e.preventDefault(); e.stopPropagation(); return; }  // move/resize in progress
         e.preventDefault(); e.stopPropagation();
         showPopFor(t, e.clientX, e.clientY);
     }
     function onOver(e) {
-        if (!active || editingEl) return;
+        if (!active || editingEl || session) return;
         var t = e.target; if (t.closest && t.closest('[data-em]')) return;
         drawOutline(t);
     }
@@ -287,6 +413,7 @@
     }
     function exit() {
         active = false;
+        endSession();
         document.body.classList.remove('vero-em-active');
         bar.style.display = 'none'; hidePop();
         fab.style.background = '#1b1916'; fab.textContent = '✎';
@@ -300,6 +427,8 @@
         document.body.appendChild(outline);
         document.body.appendChild(colorInp);
         document.body.appendChild(fileInp);
+        document.body.appendChild(hint);
+        document.body.appendChild(handle);
 
         var style = document.createElement('style');
         style.textContent = '.vero-em-active, .vero-em-active * { cursor: crosshair !important; }' +
@@ -308,8 +437,11 @@
 
         document.addEventListener('click', onClick, true);
         document.addEventListener('mouseover', onOver, true);
-        window.addEventListener('scroll', function () { if (sel) drawOutline(sel); }, true);
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (editingEl) editingEl.blur(); else hidePop(); } });
+        window.addEventListener('scroll', function () {
+            if (session) { drawOutline(session.el); if (session.reposition) session.reposition(); }
+            else if (sel) drawOutline(sel);
+        }, true);
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (editingEl) editingEl.blur(); else if (session) endSession(); else hidePop(); } });
 
         bar.querySelector('#emDone').addEventListener('click', exit);
         bar.querySelector('#emReset').addEventListener('click', resetPage);
