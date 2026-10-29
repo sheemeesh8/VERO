@@ -12290,6 +12290,21 @@ window.veroLocalImg = function (key) {
         // header. Read by header.js's scroll handler.
         window.veroHeaderScrolled = function (hdr) {
             const hdrH = (hdr && hdr.offsetHeight) || 0;
+            // Canva homepage (.cv-feed): transparent while the Autumn collection
+            // hero image is behind the header, solid only once that image has
+            // scrolled up past the header's bottom edge — so scrolling back to the
+            // top returns the header to its transparent state. (The legacy branches
+            // below reference retired/hidden sections like .sale-showcase whose
+            // doc-space top collapses to ~0, which otherwise latched the header
+            // permanently solid.)
+            const cvColl = document.querySelector('.cv-feed .cv-coll');
+            if (cvColl && cvColl.offsetParent !== null) {
+                hdr.style.removeProperty('--hdr-shift');
+                hdr.style.animation = '';
+                hdr.classList.remove('hdr-split');
+                hdr.style.removeProperty('--hdr-cut');
+                return cvColl.getBoundingClientRect().bottom <= hdrH;
+            }
             // New Arrivals: while that section sits under the header, wear the hero
             // look (transparent) over its image slides (1 & 2) and go solid over the
             // white products slide (3).
