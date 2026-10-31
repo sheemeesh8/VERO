@@ -386,7 +386,30 @@
         var e2 = entry(pathOf(a)); e2.href = url; save();
     }
 
-    function hideEl(t) { t.style.setProperty('display', 'none', 'important'); entry(pathOf(t)).hidden = true; save(); }
+    /* Major feed bands (hero / New Arrivals / Sale) must never stay hidden: a
+       stray hide there wipes a whole screen and is hard to undo. We refuse to
+       hide them, and clear any such hide left in storage on load. */
+    var PROTECTED = '.cv-coll, .cv-na, .cv-feature, #naSection';
+    function isProtected(el) { try { return !!(el && el.closest && el.closest(PROTECTED)); } catch (e) { return false; } }
+
+    function purgeProtectedHides() {
+        var changed = false;
+        for (var path in store) {
+            if (!store[path] || !store[path].hidden) continue;
+            var el; try { el = document.querySelector(path); } catch (e) { el = null; }
+            if (el && isProtected(el)) {
+                delete store[path].hidden;
+                el.style.removeProperty('display');
+                changed = true;
+            }
+        }
+        if (changed) save();
+    }
+
+    function hideEl(t) {
+        if (isProtected(t)) { alert('אי אפשר להסתיר את הקטע הזה — זה באנר ראשי של הדף.'); return; }
+        t.style.setProperty('display', 'none', 'important'); entry(pathOf(t)).hidden = true; save();
+    }
     function unhideAll() {
         for (var p in store) if (store[p].hidden) {
             delete store[p].hidden;
@@ -533,6 +556,7 @@
         });
         panel.addEventListener('click', function (e) { if (e.target === panel) panel.style.display = 'none'; });
 
+        purgeProtectedHides();
         applyAll();
     }
 
