@@ -9622,14 +9622,9 @@ window.veroLocalImg = function (key) {
             .cv-top-sub { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; color: #8a857c; }
             .cv-top-track { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin: 0 -20px; padding: 0 20px 6px; }
             .cv-top-track::-webkit-scrollbar { display: none; }
-            /* Same width as a regular feed card (the 2-up grid), so a Most-Loved
-               card reads at the normal product-card size; the rest peek on scroll. */
-            .cv-top-card { flex: 0 0 calc(50% - 6px); max-width: calc(50% - 6px); min-width: 0; scroll-snap-align: start; text-decoration: none; color: #1b1916; }
-            .cv-top-img { position: relative; width: 100%; aspect-ratio: 0.82; background: #efece6; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 9px; }
-            .cv-top-img img { width: 100%; height: 100%; object-fit: cover; }
-            .cv-top-img .cv-card-emoji { font-size: 44px; opacity: 0.45; }
-            .cv-top-rank { position: absolute; top: 8px; left: 8px; z-index: 2; width: 22px; height: 22px; display: grid; place-items: center; background: #1b1916; color: #fff; font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 11px; }
-            .cv-top-likes { position: absolute; bottom: 8px; right: 8px; z-index: 2; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: rgba(255,255,255,0.92); color: #B3433B; font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 10px; letter-spacing: 0.3px; }
+            /* The slider holds the exact same card as the feed (.cv-card); only the
+               width is set here so it reads at the normal 2-up product-card size. */
+            .cv-top-track > .cv-card { flex: 0 0 calc(50% - 6px); max-width: calc(50% - 6px); min-width: 0; scroll-snap-align: start; }
 
             /* category band under grid #1 */
             .cv-catband { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-top: 26px; }
@@ -9859,16 +9854,6 @@ window.veroLocalImg = function (key) {
                     var r=Math.round((parseFloat(p.rating)||4.5)*8);
                     return 80+(hash('like'+(p.id||p.name||''))%620)+r;
                 }
-                function topCardHTML(p,i){
-                    return '<a class="cv-top-card" href="'+esc(hrefOf(p))+'">'+
-                        '<div class="cv-top-img">'+media(p)+
-                            '<span class="cv-top-rank">'+(i+1)+'</span>'+
-                            '<span class="cv-top-likes">&#9829; '+likesOf(p).toLocaleString('en-US')+'</span>'+
-                        '</div>'+
-                        '<div class="cv-card-row"><span class="cv-card-name">'+esc(p.name||p.category)+'</span><span class="cv-card-price">'+cardPrice(p.price)+'</span></div>'+
-                        '<div class="cv-card-brand">'+esc(p.seller||'')+'</div>'+
-                    '</a>';
-                }
                 function build(){
                     if(!VC||typeof VC.allProducts!=='function')return;
                     var all=VC.allProducts().slice();
@@ -9896,7 +9881,7 @@ window.veroLocalImg = function (key) {
                     var topEl=document.getElementById('cvTop');
                     if(topEl){
                         var ranked=all.slice().sort(function(a,b){return likesOf(b)-likesOf(a);}).slice(0,10);
-                        topEl.innerHTML=ranked.map(topCardHTML).join('');
+                        topEl.innerHTML=ranked.map(cardHTML).join('');
                     }
                     // Sale featured product
                     var sf=document.getElementById('cvSaleFeature');
