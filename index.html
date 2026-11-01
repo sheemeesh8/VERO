@@ -9589,6 +9589,13 @@ window.veroLocalImg = function (key) {
             }
             .cv-grid.cv-slider::-webkit-scrollbar { display: none; }
             .cv-grid.cv-slider .cv-card { flex: 0 0 calc((100% - 8px) / 2); scroll-snap-align: start; }
+            /* Slider card: transparent image area (icon only), three centred lines. */
+            .cv-scard-img { background: transparent !important; }
+            .cv-scard-meta { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; margin-top: 12px; }
+            .cv-scard-name { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 0.4px; text-transform: uppercase; color: #1b1916; }
+            .cv-scard-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #8a857c; }
+            .cv-scard-likes { display: inline-flex; align-items: center; gap: 5px; font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #1b1916; }
+            .cv-scard-likes svg { width: 13px; height: 13px; }
             /* Editorial product card — uppercase name, brand line, price with the
                shekel after the number, a hairline, and a SHOW MORE link beneath. */
             .cv-card { text-decoration: none; color: #1b1916; display: block; min-width: 0; }
@@ -9843,6 +9850,21 @@ window.veroLocalImg = function (key) {
                         '<div class="cv-card-brand">'+esc(p.seller||'')+'</div>'+
                     '</a>';
                 }
+                // Likes count for a product — derived deterministically until a real
+                // likes field exists on the data.
+                function likesOf(p){return hash('like'+(p.id||p.name))%480+12;}
+                // Slider card: transparent (no ground) image, just the icon, then three
+                // centred lines — product name, company (seller), and the like count.
+                function sliderCardHTML(p){
+                    return '<a class="cv-card cv-scard" href="'+esc(hrefOf(p))+'">'+
+                        '<div class="cv-card-img cv-scard-img">'+media(p)+'</div>'+
+                        '<div class="cv-scard-meta">'+
+                            '<span class="cv-scard-name">'+esc(p.name||p.category)+'</span>'+
+                            '<span class="cv-scard-brand">'+esc(p.seller||'')+'</span>'+
+                            '<span class="cv-scard-likes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>'+likesOf(p)+'</span>'+
+                        '</div>'+
+                    '</a>';
+                }
                 function build(){
                     if(!VC||typeof VC.allProducts!=='function')return;
                     var all=VC.allProducts().slice();
@@ -9864,7 +9886,8 @@ window.veroLocalImg = function (key) {
                         var kind=g.getAttribute('data-grid')||'recent';
                         var n=parseInt(g.getAttribute('data-n')||'4',10);
                         var items=(pools[kind]||all).slice(0,n);
-                        g.innerHTML=items.map(cardHTML).join('');
+                        var fn=g.classList.contains('cv-slider')?sliderCardHTML:cardHTML;
+                        g.innerHTML=items.map(fn).join('');
                     });
                     // Sale featured product
                     var sf=document.getElementById('cvSaleFeature');
