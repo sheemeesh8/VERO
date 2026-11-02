@@ -9935,11 +9935,11 @@ window.veroLocalImg = function (key) {
             .cvz-head { font-weight: 700; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #111; }
             .cvz-sub { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #8a8a8a; margin-top: 6px; min-height: 14px; }
             .cvz-row { position: relative; overflow: hidden; margin-top: 12px; }
-            .cvz-track { display: flex; align-items: center; justify-content: flex-start; gap: 3vw; transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
-            .cvz-tile { position: relative; flex: 0 0 82vw; max-width: 520px; aspect-ratio: 5 / 6; border-radius: 10px; overflow: hidden; background: #1b1b1b center / cover no-repeat; display: block; text-decoration: none; cursor: pointer; opacity: 0.5; z-index: 1; transform: scale(0.92); transform-origin: center; box-shadow: 0 6px 16px rgba(0,0,0,0.14); transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s ease, opacity 0.55s ease; }
+            .cvz-track { display: flex; align-items: center; justify-content: flex-start; gap: 6px; transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
+            .cvz-tile { position: relative; flex: 0 0 20%; aspect-ratio: 5 / 6; border-radius: 10px; overflow: hidden; background: #1b1b1b center / cover no-repeat; display: block; text-decoration: none; cursor: pointer; opacity: 0.6; z-index: 1; box-shadow: 0 6px 16px rgba(0,0,0,0.14); transition: flex-basis 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s ease, opacity 0.55s ease; }
             .cvz-tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
             .cvz-tile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 42%, rgba(0,0,0,0.6) 100%); }
-            .cvz-tile.is-active { transform: scale(1); opacity: 1; z-index: 20; box-shadow: 0 20px 44px rgba(0,0,0,0.3); }
+            .cvz-tile.is-active { opacity: 1; z-index: 20; box-shadow: 0 20px 44px rgba(0,0,0,0.3); }
             .cvz-cap { position: absolute; left: 20px; right: 20px; bottom: 7%; z-index: 3; text-align: left; color: #fff; opacity: 0; transition: opacity 0.45s ease 0.15s; }
             .cvz-tile.is-active .cvz-cap { opacity: 1; }
             .cvz-name { display: block; font-weight: 800; font-size: 24px; line-height: 1.05; letter-spacing: 0.4px; text-transform: uppercase; text-shadow: 0 1px 6px rgba(0,0,0,0.5); }
@@ -10070,15 +10070,31 @@ window.veroLocalImg = function (key) {
                         function realOf(p) { return ((p - N) % N + N) % N; }
 
                         function layout(animate) {
+                            var rowW = rowEl.clientWidth;
+                            var gap = 6;
+                            var activeW = Math.min(rowW * 0.6, 430);
+                            var smallW = rowW * 0.2;
                             track.style.transition = animate ? '' : 'none';
-                            var c = all[pos].offsetLeft + all[pos].offsetWidth / 2;
-                            track.style.transform = 'translateX(' + (rowEl.clientWidth / 2 - c) + 'px)';
-                            all.forEach(function (t, idx) { t.classList.toggle('is-active', idx === pos); });
+                            var widths = [], left = 0;
+                            all.forEach(function (t, idx) {
+                                var w = idx === pos ? activeW : smallW;
+                                widths[idx] = w;
+                                t.style.transition = animate ? '' : 'none';
+                                t.style.flex = '0 0 ' + w + 'px';
+                                t.classList.toggle('is-active', idx === pos);
+                            });
+                            for (var k = 0; k < pos; k++) left += widths[k] + gap;
+                            var center = left + activeW / 2;
+                            track.style.transform = 'translateX(' + (rowW / 2 - center) + 'px)';
                             var r = realOf(pos);
                             [].slice.call(dotsWrap.children).forEach(function (d, idx) { d.classList.toggle('on', idx === r); });
                             var key = originals[r].getAttribute('data-key');
                             if (sub && labels[key]) sub.textContent = labels[key];
-                            if (!animate) { void track.offsetWidth; track.style.transition = ''; }
+                            if (!animate) {
+                                void track.offsetWidth;
+                                track.style.transition = '';
+                                all.forEach(function (t) { t.style.transition = ''; });
+                            }
                         }
 
                         function recenter() {
