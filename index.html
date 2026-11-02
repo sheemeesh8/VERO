@@ -9934,11 +9934,11 @@ window.veroLocalImg = function (key) {
             .cvz { margin-top: 30px; padding: 14px 0 34px; background: #fff; text-align: center; }
             .cvz-head { font-weight: 700; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #111; }
             .cvz-sub { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #8a8a8a; margin-top: 6px; min-height: 14px; }
-            .cvz-row { display: flex; align-items: center; justify-content: center; gap: 12px; height: 42svh; min-height: 230px; margin-top: 12px; }
-            .cvz-tile { position: relative; flex: 0 0 20%; max-width: 84px; aspect-ratio: 2 / 3; border-radius: 9px; overflow: hidden; background: #1b1b1b center / cover no-repeat; display: block; text-decoration: none; cursor: pointer; opacity: 0.85; z-index: 1; transform: scale(1); transform-origin: center; box-shadow: 0 4px 12px rgba(0,0,0,0.12); transition: transform 0.55s cubic-bezier(0.34, 1.3, 0.5, 1), box-shadow 0.55s ease, opacity 0.45s ease; }
+            .cvz-row { display: flex; align-items: center; justify-content: center; gap: 2vw; height: 42svh; min-height: 230px; margin-top: 12px; }
+            .cvz-tile { position: relative; flex: 0 0 18vw; max-width: 120px; aspect-ratio: 2 / 3; border-radius: 9px; overflow: hidden; background: #1b1b1b center / cover no-repeat; display: block; text-decoration: none; cursor: pointer; opacity: 0.85; z-index: 1; transform: scale(1); transform-origin: center; box-shadow: 0 4px 12px rgba(0,0,0,0.12); transition: transform 0.55s cubic-bezier(0.34, 1.3, 0.5, 1), box-shadow 0.55s ease, opacity 0.45s ease; }
             .cvz-tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
             .cvz-tile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 42%, rgba(0,0,0,0.6) 100%); }
-            .cvz-tile.is-active { transform: scale(1.9); opacity: 1; z-index: 20; box-shadow: 0 22px 48px rgba(0,0,0,0.34); }
+            .cvz-tile.is-active { transform: scale(2.1); opacity: 1; z-index: 20; box-shadow: 0 22px 48px rgba(0,0,0,0.34); }
             .cvz-cap { position: absolute; left: 0; right: 0; bottom: 9px; z-index: 3; text-align: center; color: #fff; opacity: 0; transition: opacity 0.45s ease 0.15s; }
             .cvz-tile.is-active .cvz-cap { opacity: 1; }
             .cvz-name { display: block; font-weight: 800; font-size: 9px; letter-spacing: 0.4px; text-transform: uppercase; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
@@ -10058,6 +10058,44 @@ window.veroLocalImg = function (key) {
                         }
                         function stop() { if (timer) { clearInterval(timer); timer = null; } }
                         function start() { stop(); timer = setInterval(function () { select(i + 1); }, 2600); }
+
+                        /* Swipe / drag sideways to change gender — the tile you
+                           move toward becomes active and scales up. */
+                        var row = root.querySelector('.cvz-row');
+                        function step(dir) { stop(); select(i + (dir < 0 ? 1 : -1)); }
+                        var sx = 0, sy = 0, tracking = false;
+                        row.addEventListener('touchstart', function (e) {
+                            var t = e.touches[0]; sx = t.clientX; sy = t.clientY; tracking = true;
+                        }, { passive: true });
+                        row.addEventListener('touchend', function (e) {
+                            if (!tracking) return; tracking = false;
+                            var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+                            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) step(dx);
+                        }, { passive: true });
+                        var pdown = false, px = 0, moved = false;
+                        row.addEventListener('pointerdown', function (e) {
+                            if (e.pointerType === 'mouse') { pdown = true; px = e.clientX; moved = false; }
+                        });
+                        window.addEventListener('pointermove', function (e) {
+                            if (pdown && Math.abs(e.clientX - px) > 8) moved = true;
+                        });
+                        window.addEventListener('pointerup', function (e) {
+                            if (!pdown) return; pdown = false;
+                            var dx = e.clientX - px;
+                            if (Math.abs(dx) > 40) step(dx);
+                        });
+                        row.addEventListener('click', function (e) {
+                            if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; }
+                        }, true);
+                        var wheelLock = false;
+                        row.addEventListener('wheel', function (e) {
+                            if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || Math.abs(e.deltaX) < 20) return;
+                            e.preventDefault();
+                            if (wheelLock) return;
+                            wheelLock = true; setTimeout(function () { wheelLock = false; }, 500);
+                            step(-e.deltaX);
+                        }, { passive: false });
+
                         select(i);
                         start();
                         if ('IntersectionObserver' in window) {
