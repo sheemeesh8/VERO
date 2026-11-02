@@ -9935,12 +9935,15 @@ window.veroLocalImg = function (key) {
             .cvz-head { font-weight: 700; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #111; }
             .cvz-sub { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #8a8a8a; margin-top: 6px; min-height: 14px; }
             .cvz-row { position: relative; overflow: hidden; margin-top: 12px; }
-            .cvz-track { display: flex; align-items: center; justify-content: flex-start; gap: 6px; transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
-            .cvz-tile { position: relative; flex: 0 0 20%; aspect-ratio: 5 / 6; border-radius: 10px; overflow: hidden; background: #1b1b1b center / cover no-repeat; display: block; text-decoration: none; cursor: pointer; opacity: 0.6; z-index: 1; box-shadow: 0 6px 16px rgba(0,0,0,0.14); transition: flex-basis 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s ease, opacity 0.55s ease; }
+            .cvz-track { display: flex; align-items: center; height: 100%; transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
+            .cvz-tile { position: relative; flex: 0 0 auto; width: 58vw; max-width: 400px; margin-left: -15vw; aspect-ratio: 5 / 6; border-radius: 10px; overflow: hidden; background: #1b1b1b center / cover no-repeat; display: block; text-decoration: none; cursor: pointer; z-index: 1; transform: scale(1); transform-origin: center center; box-shadow: 0 6px 16px rgba(0,0,0,0.14); transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease; }
+            .cvz-tile:first-child { margin-left: 0; }
             .cvz-tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-            .cvz-tile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 42%, rgba(0,0,0,0.6) 100%); }
-            .cvz-tile.is-active { opacity: 1; z-index: 20; box-shadow: 0 0 0 7px #fff, 0 20px 44px rgba(0,0,0,0.3); }
-            .cvz-cap { position: absolute; left: 20px; right: 20px; bottom: 7%; z-index: 3; text-align: left; color: #fff; opacity: 0; transition: opacity 0.45s ease 0.15s; }
+            .cvz-tile::after { content: ""; position: absolute; inset: 0; z-index: 3; background: linear-gradient(180deg, rgba(0,0,0,0) 42%, rgba(0,0,0,0.6) 100%); }
+            .cvz-tile::before { content: ""; position: absolute; inset: 0; z-index: 4; background: rgba(255,255,255,0.3); opacity: 1; transition: opacity 0.5s ease; }
+            .cvz-tile.is-active { transform: scale(1.28); z-index: 20; box-shadow: 0 0 0 7px #fff, 0 20px 44px rgba(0,0,0,0.3); }
+            .cvz-tile.is-active::before { opacity: 0; }
+            .cvz-cap { position: absolute; left: 20px; right: 20px; bottom: 7%; z-index: 5; text-align: left; color: #fff; opacity: 0; transform: scale(0.78); transform-origin: bottom left; transition: opacity 0.45s ease 0.15s; }
             .cvz-tile.is-active .cvz-cap { opacity: 1; }
             .cvz-name { display: block; font-weight: 800; font-size: 24px; line-height: 1.05; letter-spacing: 0.4px; text-transform: uppercase; text-shadow: 0 1px 6px rgba(0,0,0,0.5); }
             .cvz-air { display: block; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; margin-top: 6px; color: rgba(255,255,255,0.92); text-shadow: 0 1px 6px rgba(0,0,0,0.5); }
@@ -10070,25 +10073,16 @@ window.veroLocalImg = function (key) {
                         function realOf(p) { return ((p - N) % N + N) % N; }
 
                         function layout(animate) {
-                            var rowW = rowEl.clientWidth;
-                            var activeW = Math.min(rowW * 0.74, 520);
-                            var smallW = activeW * 0.8; // background slides at 80% of the active one
-                            var ov = smallW * 0.62; // overlap: small slides tuck behind the active one
                             track.style.transition = animate ? '' : 'none';
-                            track.style.gap = '0px';
-                            var widths = [], left = 0;
                             all.forEach(function (t, idx) {
-                                var w = idx === pos ? activeW : smallW;
-                                widths[idx] = w;
                                 t.style.transition = animate ? '' : 'none';
-                                t.style.flex = '0 0 ' + w + 'px';
-                                t.style.marginLeft = idx === 0 ? '0px' : (-ov) + 'px';
                                 t.classList.toggle('is-active', idx === pos);
                             });
-                            for (var k = 0; k < pos; k++) left += widths[k];
-                            left -= ov * pos;
-                            var center = left + activeW / 2;
-                            track.style.transform = 'translateX(' + (rowW / 2 - center) + 'px)';
+                            // Row tall enough for the scaled-up active slide (plus its
+                            // white frame) so nothing is clipped vertically.
+                            rowEl.style.height = Math.round(all[pos].offsetHeight * 1.28 + 20) + 'px';
+                            var c = all[pos].offsetLeft + all[pos].offsetWidth / 2;
+                            track.style.transform = 'translateX(' + (rowEl.clientWidth / 2 - c) + 'px)';
                             var r = realOf(pos);
                             [].slice.call(dotsWrap.children).forEach(function (d, idx) { d.classList.toggle('on', idx === r); });
                             var key = originals[r].getAttribute('data-key');
