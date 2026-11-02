@@ -525,17 +525,16 @@ h3, h4, h5, h6, p,
         // multiple photos, otherwise a single image (or the emoji stand-in).
         function figHTML(p) {
             const imgs = imgsOf(p);
+            // Single photo: the baseline LV mark comes from .product-image::after.
             if (imgs.length <= 1) {
                 const src = imgs[0];
-                const media = src ? `<img src="${src}" alt="">` : (p.icon || '🛍️');
-                // Single photo: still show the position line inside the image field.
-                return `${media}<div class="pc-bar"><i class="on"></i></div>`;
+                return src ? `<img src="${src}" alt="">` : (p.icon || '🛍️');
             }
             const slides = imgs.map(s => `<div class="pc-slide"><img src="${s}" alt="" loading="lazy"></div>`).join('');
-            const segs = imgs.map((_, i) => `<i${i === 0 ? ' class="on"' : ''}></i>`).join('');
-            return `<div class="pc-slider">${slides}</div><div class="pc-bar">${segs}</div>`;
+            const w = 100 / imgs.length;
+            return `<div class="pc-slider">${slides}</div><div class="pc-bar"><span style="width:${w}%"></span></div>`;
         }
-        // One capture-phase listener keeps every card's bar in sync as it scrolls
+        // One capture-phase listener moves each slider's mark as it scrolls
         // (survives re-renders; no per-card init needed).
         if (!window.__pcBarInit) {
             window.__pcBarInit = 1;
@@ -543,9 +542,10 @@ h3, h4, h5, h6, p,
                 const s = e.target;
                 if (!s || !s.classList || !s.classList.contains('pc-slider')) return;
                 const bar = s.nextElementSibling;
-                if (!bar || !bar.classList.contains('pc-bar')) return;
+                const fill = bar && bar.querySelector('span');
+                if (!fill) return;
                 const i = Math.round(s.scrollLeft / s.clientWidth);
-                [].forEach.call(bar.children, (seg, idx) => seg.classList.toggle('on', idx === i));
+                fill.style.transform = 'translateX(' + (i * 100) + '%)';
             }, true);
         }
         function fmtDate(ts) {
