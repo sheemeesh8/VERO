@@ -9761,10 +9761,17 @@ window.veroLocalImg = function (key) {
             /* Editorial product card — uppercase name, brand line, price with the
                shekel after the number, a hairline, and a SHOW MORE link beneath. */
             .cv-card { text-decoration: none; color: #1b1916; display: block; min-width: 0; }
-            .cv-card-img { position: relative; width: 100%; aspect-ratio: 0.82; background: #efece6; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+            .cv-card-img { position: relative; width: 100%; aspect-ratio: 0.82; background: #F2F2F2; overflow: hidden; display: flex; align-items: center; justify-content: center; }
             .cv-card-img img { width: 100%; height: 100%; object-fit: cover; }
-            /* Slide line at the bottom of the square (LV-style). */
-            .cv-card-img::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #111; z-index: 2; }
+            /* In-card image slider */
+            .cv-card-img .cv-slider { position: absolute; inset: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; z-index: 1; }
+            .cv-card-img .cv-slider::-webkit-scrollbar { display: none; }
+            .cv-card-img .cv-slide { flex: 0 0 100%; scroll-snap-align: center; }
+            .cv-card-img .cv-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+            /* LV-style indicator: light track with a short black mark that
+               moves with the current image. */
+            .cv-card-img .cv-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(0,0,0,0.12); z-index: 3; overflow: hidden; }
+            .cv-card-img .cv-bar span { display: block; height: 100%; background: #111; transition: transform 0.3s ease; }
             .cv-card-emoji { font-size: 48px; opacity: 0.45; }
             .cv-card-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 16px; }
             .cv-card-name { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; line-height: 1.3; font-weight: 400; letter-spacing: 0.4px; text-transform: uppercase; color: #1b1916; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; }
@@ -10235,10 +10242,42 @@ window.veroLocalImg = function (key) {
                     if (p.cover) return '<img src="'+esc(p.cover)+'" alt="'+esc(p.name||'')+'" loading="lazy">';
                     return '<span class="cv-card-emoji">'+esc(p.icon||'🛍️')+'</span>';
                 }
+                // Distinct photos for the in-card slider.
+                function imgsOf(p){
+                    var arr=[];
+                    [p.cover,p.image,p.processed_cover,p.original_cover].forEach(function(s){ if(s&&typeof s==='string') arr.push(s); });
+                    if (Array.isArray(p.photos)) p.photos.forEach(function(s){ if(s&&typeof s==='string') arr.push(s); });
+                    else if (p.photos&&typeof p.photos==='object') Object.keys(p.photos).forEach(function(k){ var s=p.photos[k]; if(s&&typeof s==='string') arr.push(s); });
+                    return arr.filter(function(v,i){ return v&&arr.indexOf(v)===i; }).slice(0,5);
+                }
+                // The image square: a swipeable slider when there are 2+ photos,
+                // plus an LV-style indicator (light track + short black mark that
+                // moves with the current image).
+                function imgArea(p){
+                    var imgs=imgsOf(p), n=imgs.length, inner;
+                    if (n>=2){
+                        inner='<div class="cv-slider">'+imgs.map(function(s){ return '<div class="cv-slide"><img src="'+esc(s)+'" alt="" loading="lazy"></div>'; }).join('')+'</div>';
+                    } else {
+                        inner = imgs[0] ? '<img src="'+esc(imgs[0])+'" alt="'+esc(p.name||'')+'" loading="lazy">' : '<span class="cv-card-emoji">'+esc(p.icon||'🛍️')+'</span>';
+                    }
+                    var w = n>1 ? (100/n) : 34;
+                    var bar='<div class="cv-bar"><span style="width:'+w+'%"></span></div>';
+                    return '<div class="cv-card-img">'+inner+bar+'</div>';
+                }
+                // Keep each card's indicator in sync as its slider scrolls.
+                if (!window.__cvBarInit){
+                    window.__cvBarInit=1;
+                    document.addEventListener('scroll', function(e){
+                        var s=e.target; if(!s||!s.classList||!s.classList.contains('cv-slider')) return;
+                        var fill=s.parentNode.querySelector('.cv-bar span'); if(!fill) return;
+                        var i=Math.round(s.scrollLeft/s.clientWidth);
+                        fill.style.transform='translateX('+(i*100)+'%)';
+                    }, true);
+                }
                 function cardPrice(n){return (Math.round(Number(n)||0)).toLocaleString('en-US').replace(/,/g,' ')+' ₪';}
                 function cardHTML(p){
                     return '<a class="cv-card" href="'+esc(hrefOf(p))+'">'+
-                        '<div class="cv-card-img">'+media(p)+'</div>'+
+                        imgArea(p)+
                         '<div class="cv-card-row"><span class="cv-card-name">'+esc(p.name||p.category)+'</span><span class="cv-card-price">'+cardPrice(p.price)+'</span></div>'+
                         '<div class="cv-card-brand">'+esc(p.seller||'')+'</div>'+
                     '</a>';
