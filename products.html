@@ -512,6 +512,40 @@ h3, h4, h5, h6, p,
             return p.image || p.processed_cover || p.original_cover
                 || (Array.isArray(p.photos) ? p.photos.find(Boolean) : null) || null;
         }
+        // All distinct photos for a listing, for the in-card image slider.
+        function imgsOf(p) {
+            const arr = [];
+            const push = s => { if (s && typeof s === 'string') arr.push(s); };
+            push(p.processed_cover); push(p.original_cover); push(p.image); push(p.cover);
+            if (Array.isArray(p.photos)) p.photos.forEach(push);
+            else if (p.photos && typeof p.photos === 'object') Object.values(p.photos).forEach(push);
+            return arr.filter((v, i) => v && arr.indexOf(v) === i).slice(0, 5);
+        }
+        // Figure markup: a swipeable slider + progress bar when there are
+        // multiple photos, otherwise a single image (or the emoji stand-in).
+        function figHTML(p) {
+            const imgs = imgsOf(p);
+            if (imgs.length <= 1) {
+                const src = imgs[0];
+                return src ? `<img src="${src}" alt="">` : (p.icon || '🛍️');
+            }
+            const slides = imgs.map(s => `<div class="pc-slide"><img src="${s}" alt="" loading="lazy"></div>`).join('');
+            const segs = imgs.map((_, i) => `<i${i === 0 ? ' class="on"' : ''}></i>`).join('');
+            return `<div class="pc-slider">${slides}</div><div class="pc-bar">${segs}</div>`;
+        }
+        // One capture-phase listener keeps every card's bar in sync as it scrolls
+        // (survives re-renders; no per-card init needed).
+        if (!window.__pcBarInit) {
+            window.__pcBarInit = 1;
+            document.addEventListener('scroll', function (e) {
+                const s = e.target;
+                if (!s || !s.classList || !s.classList.contains('pc-slider')) return;
+                const bar = s.nextElementSibling;
+                if (!bar || !bar.classList.contains('pc-bar')) return;
+                const i = Math.round(s.scrollLeft / s.clientWidth);
+                [].forEach.call(bar.children, (seg, idx) => seg.classList.toggle('on', idx === i));
+            }, true);
+        }
         function fmtDate(ts) {
             return ts ? new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
         }
@@ -588,7 +622,7 @@ h3, h4, h5, h6, p,
             // history items so the timeline reads on the card itself.
             const metaLine = past ? dateLine : (p.category || dateLine);
             const editHref = `product-edit.html?i=${idx}${isSeller ? '&from=seller' : ''}`;
-            const fig = src ? `<img src="${src}" alt="">` : (p.icon || '🛍️');
+            const fig = figHTML(p);
             // Live listings open the editor (whole card is the link + a pencil).
             // History items are read-only — no edit link, no pencil.
             const inner = `
