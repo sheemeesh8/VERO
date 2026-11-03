@@ -15,7 +15,7 @@
     <script src="pc-social.js?v=6"></script>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <!-- Page styles, shared by cart-store / cart / wishlist (single source: list-page.css). -->
-    <link rel="stylesheet" href="list-page.css?v=20261005u">
+    <link rel="stylesheet" href="list-page.css?v=20261103l">
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
@@ -30,17 +30,14 @@
     <!-- Shared page header (assets/page-header.css): title left, back arrow right. -->
     <header class="page-header">
         <div class="ph-name" role="heading" aria-level="1">Cart</div>
-        <div class="sh-search-wrap">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="search" id="listSearch" placeholder="Search this cart…" autocomplete="off" aria-label="Search this cart">
-        </div>
         <div class="ph-actions">
-            <button class="tb-ico sh-search-btn" onclick="toggleListSearch(this)" aria-label="Search">
-                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </button>
-            <button class="tb-ico" onclick="openFilters()" aria-label="Filters">
-                <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
-            </button>
+            <div class="mode-toggle">
+                <button class="mode-switch" id="modeSwitch" type="button" aria-label="Switch Clothing / Art"></button>
+                <div class="mode-labels">
+                    <button class="mode-btn active" data-mode="clothing">Clothing</button>
+                    <button class="mode-btn" data-mode="art">Art</button>
+                </div>
+            </div>
             <button class="tb-ico" onclick="shareList()" aria-label="Share">
                 <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
             </button>
@@ -49,16 +46,16 @@
     </header>
 
     <div class="wrap">
-        <!-- Category chips (tap to filter), with the Clothing / Art switch at the end. -->
-        <div class="q-bar">
-            <div class="q-chips" id="qChips"></div>
-            <div class="mode-toggle">
-                <button class="mode-switch" id="modeSwitch" type="button" aria-label="Switch Clothing / Art"></button>
-                <div class="mode-labels">
-                    <button class="mode-btn active" data-mode="clothing">Clothing</button>
-                    <button class="mode-btn" data-mode="art">Art</button>
-                </div>
+        <!-- Search + filter row (moved out of the header), where the Clothing / Art
+             toggle used to be: an always-visible search field with the filter beside it. -->
+        <div class="list-controls">
+            <div class="lc-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="search" id="listSearch" placeholder="Search this cart…" autocomplete="off" aria-label="Search this cart">
             </div>
+            <button class="lc-filter" type="button" onclick="openFilters()" aria-label="Filters">
+                <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"></path><path d="M12 12v8"></path><path d="M8 21h8"></path></svg>
+            </button>
         </div>
         <p class="head-sub" id="headSub" hidden></p>
         <div class="head-total" id="headTotal" hidden></div>
@@ -238,7 +235,7 @@
             const rating = item.rating || 4.5;
             const stars = '\u2605'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '\u2606' : '');
             return `
-                <a href="${productPageUrl(item)}" class="product-card cart-item" data-idx="${idx}">
+                <a href="${productPageUrl(item)}" class="product-card cart-item" data-idx="${idx}" data-pc-foot="1">
                     <div class="product-image">${photo ? `<img class="pc-photo" src="${photo}" alt="${item.name || ''}" loading="lazy" onerror="this.remove()">` : (item.icon || '🛍️')}
                         <button class="pc-check${on}" title="Select" aria-label="Select"
                                 onclick="event.preventDefault(); event.stopPropagation(); toggleSelect(${idx})">
@@ -319,7 +316,7 @@
             document.getElementById('headTotal').innerHTML = '';
             const money = '₪' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             // Checkout pinned at the end, with the ticked items' count + sum beside it.
-            const chosen = mine.filter(({ idx }) => selected.has(idx));
+            const chosen = mine.filter(({ it, idx }) => typeOf(it) === MODE && selected.has(idx));
             const selCount = chosen.reduce((s, { it }) => s + (it.qty || 1), 0);
             const selTotal = chosen.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
             const selTotalStr = selTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
