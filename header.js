@@ -1407,7 +1407,7 @@
             border: 1px solid #111; background: #fff; color: #111;
             border-radius: 10px; padding: 12px 22px; cursor: pointer;
             font-family: inherit; font-size: 12.50px; font-weight: 500; letter-spacing: 0.2px;
-            transition: background 0.2s, color 0.2s, transform 0.15s;
+            transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease, transform 0.15s;
         }
         .vsp-chip:hover { transform: translateY(-1px); }
         .vsp-chip.active { background: #111; color: #fff; border-color: #111; font-weight: 700; }
@@ -1427,8 +1427,8 @@
         .vsp-trow:hover { transform: none; background: #faf9f6; }
         .vsp-trow.active { font-weight: 700; }
         .vsp-trow-right { display: flex; align-items: center; gap: 10px; }
-        .vsp-trow-count { font-size: 12px; color: #8a877f; font-variant-numeric: tabular-nums; }
-        .vsp-trow-chev { font-size: 18px; color: #c3bfb7; line-height: 1; }
+        .vsp-trow-count { font-size: 12px; color: #8a877f; font-variant-numeric: tabular-nums; transition: color 0.35s ease; }
+        .vsp-trow-chev { font-size: 18px; color: #c3bfb7; line-height: 1; transition: color 0.35s ease; }
         .vsp-trow.active .vsp-trow-chev { color: #111; }
 
         /* Final stage: material / price / colour, still stacked. */
@@ -2992,6 +2992,15 @@
             #veroSearchPageRoot .vsp-apply,
             #veroSearchPageRoot .vsp-searchgo,
             #veroSearchPageRoot .vsp-go { background: var(--oak) !important; border-color: var(--oak) !important; color: #fff !important; }
+            /* Selections fade in / out: beat the global .vx-press rule (which forces
+               transition:transform only) so the active fill cross-fades. Keep the
+               press-scale on transform too. */
+            #veroSearchPageRoot .vsp-chip,
+            #veroSearchPageRoot .vsp-trow {
+                transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(.22,1,.36,1) !important;
+            }
+            #veroSearchPageRoot .vsp-trow-chev,
+            #veroSearchPageRoot .vsp-trow-count { transition: color 0.35s ease !important; }
             #veroSearchPageRoot .vsp-searchfield input:focus { outline-color: var(--oak) !important; }
             /* Primary CTA buttons shared across pages — recolour the solid dark fill. */
             .hero-ov-btn--solid,
