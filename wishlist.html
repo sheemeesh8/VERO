@@ -15,7 +15,7 @@
     <script src="pc-social.js?v=6"></script>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <!-- Page styles, shared by cart-store / cart / wishlist (single source: list-page.css). -->
-    <link rel="stylesheet" href="list-page.css?v=20261103d">
+    <link rel="stylesheet" href="list-page.css?v=20261103e">
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
@@ -31,6 +31,13 @@
     <header class="page-header">
         <div class="ph-name" role="heading" aria-level="1">Wishlist</div>
         <div class="ph-actions">
+            <div class="mode-toggle">
+                <button class="mode-switch" id="modeSwitch" type="button" aria-label="Switch Clothing / Art"></button>
+                <div class="mode-labels">
+                    <button class="mode-btn active" data-mode="clothing">Clothing</button>
+                    <button class="mode-btn" data-mode="art">Art</button>
+                </div>
+            </div>
             <button class="tb-ico" onclick="shareList()" aria-label="Share">
                 <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
             </button>
@@ -159,11 +166,11 @@
         };
         // Select / clear every item in the active (Clothing / Art) cart.
         window.selectAllVisible = function () {
-            cart.forEach((it, i) => { selected.add(i); });
+            cart.forEach((it, i) => { if (typeOf(it) === MODE) selected.add(i); });
             render();
         };
         window.deselectAllVisible = function () {
-            cart.forEach((it, i) => { selected.delete(i); });
+            cart.forEach((it, i) => { if (typeOf(it) === MODE) selected.delete(i); });
             render();
         };
 
@@ -235,7 +242,7 @@
             // This list = the items whose type matches the active toggle, and
             // (when searching) whose name / seller / category match the query.
             const term = (document.getElementById('listSearch')?.value || '').trim().toLowerCase();
-            const inMode = cart.map((it, idx) => ({ it, idx }));
+            const inMode = cart.map((it, idx) => ({ it, idx })).filter(({ it }) => typeOf(it) === MODE);
             renderToolbar(inMode);
             renderChips(inMode);
             let mine = term
@@ -250,7 +257,7 @@
             if (!mine.length) {
                 body.innerHTML = filtered
                     ? `<div class="cart-empty">${term ? `No items match “${term}”.` : 'No items match these filters.'}</div>`
-                    : `<div class="cart-empty">Your wishlist is empty — tap the heart on any piece to save it here.</div>`;
+                    : `<div class="cart-empty">Your ${MODE} wishlist is empty — tap the heart on any piece to save it here.</div>`;
                 host.innerHTML = '';
                 document.getElementById('headTotal').innerHTML = '';
                 if (!filtered) document.getElementById('tickerHost').innerHTML = '';
@@ -264,13 +271,13 @@
 
             const count = mine.reduce((s, { it }) => s + (it.qty || 1), 0);
             const total = mine.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
-            sub.textContent = `${count} piece${count === 1 ? '' : 's'} in your wishlist — the ones you keep coming back to.`;
+            sub.textContent = `${count} piece${count === 1 ? '' : 's'} in your ${MODE} wishlist — the ones you keep coming back to.`;
             // Total lives on the auto-rotating ticker (same as the regular cart),
             // keeping the header row clean.
             document.getElementById('headTotal').innerHTML = '';
             const money = '₪' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             // Checkout pinned at the end, with the ticked items' count + sum beside it.
-            const chosen = mine.filter(({ idx }) => selected.has(idx));
+            const chosen = mine.filter(({ it, idx }) => typeOf(it) === MODE && selected.has(idx));
             const selCount = chosen.reduce((s, { it }) => s + (it.qty || 1), 0);
             const selTotal = chosen.reduce((s, { it }) => s + priceNum(it.price) * (it.qty || 1), 0);
             const selTotalStr = selTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -304,7 +311,7 @@
         // wishlist too — saving and buying aren't mutually exclusive), then opens it.
         window.veroCheckout = function () {
             const mine = cart.map((it, idx) => ({ it, idx }))
-                .filter(({ idx }) => selected.has(idx));
+                .filter(({ it, idx }) => typeOf(it) === MODE && selected.has(idx));
             if (!mine.length) return;
 
             let bag = readJSON('vero_cart', []);
