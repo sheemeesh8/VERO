@@ -244,25 +244,15 @@
     }
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
 
-    // The same flip card the home feed uses: a front face (cover image, hold
-    // hint, price / seller / name) and a frosted-glass back with the wishlist +
-    // cart icons, revealed on press-and-hold (see feed-card.css / feed-card.js).
-    // Deterministic size label (no real size data exists yet): clothing gets a
-    // letter size derived from its name so it stays stable per product; art has none.
-    var E_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
-    function sizeFor(p) {
-        if ((p.type || '') === 'art' || p.collection === 'interiors') return '';
-        var s = String((p.name || '') + (p.id || '')), h = 0;
-        for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-        return E_SIZES[h % E_SIZES.length];
-    }
-
+    // The editorial feed tile (matches index.html .cv-card and the rest of the
+    // site): a clean image square, then a name + price row and the brand below.
+    // The shared product-card.css editorial layer lays this markup out; no flip
+    // face, size mark or press-and-hold overlay (the feed card carries none).
     function cardHTML(p, now) {
         var d = p._d || discountOf(p._raw, now);
         var media = p.cover
             ? '<img class="pc-photo" src="' + esc(p.cover) + '" alt="' + esc(p.name) + '">'
             : esc(p.icon);
-        var sz = sizeFor(p);
         var priceNum = toNum(d.onSale ? d.price : d.original);
         // Carry the product itself in the link so the product page renders it,
         // rather than falling back to its "Product name" placeholder. Same
@@ -276,32 +266,13 @@
         var data = ' data-name="' + esc(p.name) + '" data-seller="' + esc(p.seller) + '"' +
                    ' data-price="' + priceNum + '" data-icon="' + esc(p.icon) + '" data-cover="' + esc(p.cover || '') + '"' +
                    " data-product='" + esc(productData) + "'";
-        return '<a class="product-card pc-e' + (d.onSale ? ' is-sale' : '') + '" href="' + esc(href) + '" title="' + esc(p.name) + '"' + data + '>' +
-                    '<div class="pc-flip">' +
-                        '<div class="pc-face pc-front">' +
-                            '<div class="product-image">' + media +
-                                (sz ? '<span class="pc-size">Size ' + esc(sz) + '</span>' : '') +
-                                '<div class="pc-left pc-price-top"><div class="product-price">' + priceBlock(d) + '</div></div>' +
-                                '<button class="pc-front-heart" type="button" aria-label="Add to wishlist" ' +
-                                    'onclick="event.preventDefault();event.stopPropagation();this.classList.toggle(\'wish-on\');">' +
-                                    '<svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>' +
-                                '</button>' +
-                            '</div>' +
-                            '<div class="pc-holdhint">hold to add to</div>' +
-                            '<div class="product-info">' +
-                                '<div class="pc-right">' +
-                                    '<div class="product-name">' + esc(p.name) + '</div>' +
-                                    '<div class="product-seller">' + esc(p.seller) + '</div>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="pc-face pc-back">' +
-                            '<button class="product-icon heart" type="button" data-action="wishlist" aria-label="Add to wishlist">' +
-                                '<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>' +
-                            '</button>' +
-                            '<button class="product-icon cart" type="button" data-action="cart" aria-label="Add to cart">' +
-                                '<svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle><path d="M2 3h3l2.4 12a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L22 7H6"></path></svg>' +
-                            '</button>' +
+        return '<a class="product-card' + (d.onSale ? ' is-sale' : '') + '" href="' + esc(href) + '" title="' + esc(p.name) + '"' + data + '>' +
+                    '<div class="product-image">' + media + '</div>' +
+                    '<div class="product-info">' +
+                        '<div class="pc-left"><div class="product-price">' + priceBlock(d) + '</div></div>' +
+                        '<div class="pc-right">' +
+                            '<div class="product-name">' + esc(p.name) + '</div>' +
+                            '<div class="product-seller">' + esc(p.seller) + '</div>' +
                         '</div>' +
                     '</div>' +
                 '</a>';
