@@ -1640,6 +1640,15 @@
             box-shadow: -6px 0 24px rgba(0,0,0,0.12) !important;
         }
         #siteHeader .toggle-category:not(#z):hover { border: none !important; }
+        /* No blue tap-highlight / focus box when the switch is pressed. */
+        #siteHeader .toggle-category:not(#z) {
+            -webkit-tap-highlight-color: transparent !important;
+            outline: none !important; -webkit-user-select: none; user-select: none;
+            -webkit-touch-callout: none;
+        }
+        #siteHeader .toggle-category:not(#z):focus,
+        #siteHeader .toggle-category:not(#z):focus-visible { outline: none !important; }
+        #siteHeader .toggle-category:not(#z) .seg { -webkit-tap-highlight-color: transparent !important; }
 `;
 
     // ---- Markup (identical everywhere) ----
