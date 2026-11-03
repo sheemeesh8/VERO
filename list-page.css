@@ -339,45 +339,139 @@ html.embed .wrap { padding-top: 40px; }
 .q-meta button { font-family: inherit; font-size: 11px; color: #1c1c1c; background: none; border: none; padding: 0;
     text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
-/* The cards are the site's own feed product cards (.product-card .cart-item,
-   styled in product-card.css): cut-out photo on a card ground, price top-right,
-   seller + name below. Selection shows on the ✓ control (pc-check.on), the
-   remove × keeps its red.
+/* ======================================================================
+   Cart & wishlist cards — the collections-feed card form.
 
-   We DON'T re-size the image field here: the standard card already insets the
-   photo from the foot (inset: 0 0 var(--foot-h) 0). An earlier `aspect-ratio:
-   3/4` override made the photo taller than that field, so it spilled over the
-   foot and its bottom indicator bar cut straight through the name + seller.
-   Letting the photo keep the feed's own field puts the copy cleanly below it. */
+   These rows reuse the site's .product-card, but we give them the exact
+   shape of the collections feed (collections.html, .cv-card): a clean
+   full-bleed image on a light ground, then — BELOW the image — the item
+   name in uppercase on the left with the price on the right of the same
+   row, and the seller in quiet grey underneath. No size mark, no price
+   floating over the photo, no wishlist heart.
 
-/* ----------------------------------------------------------------------
-   Cart & wishlist cards — make them read exactly like the feed.
+   The card markup carries data-pc-foot="1", which tells pc-social.js to
+   leave it alone (so the price is NOT lifted into the photo and no size /
+   heart is injected); everything below just restyles the authored markup
+   into the collections foot. Scoped to .cart-item, loaded only by the
+   cart / cart-store / wishlist pages, so the feed itself is untouched.
+   ====================================================================== */
 
-   pc-social.js decorates EVERY product card on the site: it lifts the price
-   into the top-right corner, writes a SIZE mark top-left, and injects a
-   wishlist heart bottom-right. The cart / wishlist rows carry two controls the
-   feed does not — a select tick and a remove trash — and those landed on top
-   of the injected decorations (tick over the size, price under the trash) with
-   a stray filled heart left over. So here we keep the feed's price corner,
-   drop the decorations that make no sense in a bag / saved list, and tuck the
-   two controls into the corners the feed leaves free. The result matches the
-   feed card: photo on the card ground, price top-right, name over seller below.
-   ---------------------------------------------------------------------- */
-/* The injected wishlist heart is redundant inside the bag / wishlist — drop it. */
-.cart-item .pc-wish { display: none !important; }
-/* The demo SIZE mark shares the top-left corner with the select tick; the tick
-   is the control that has to be here, so the size steps aside. */
-.cart-item .pc-size { display: none !important; }
-/* Select tick stays top-left; the price keeps the top-right corner (as on the
-   feed), now on its own. */
-.cart-item .pc-check { top: 10px; left: 10px; }
-/* Remove drops to the bottom-right corner of the photo — the spot the feed's
-   heart used — so nothing sits over the price in the top-right. */
-.cart-item .product-image .product-icon.remove {
+/* The card is now image + a normal foot beneath it, not a fixed overlay
+   box: drop the portrait aspect-ratio lock and let the foot flow below. */
+.product-card.cart-item {
+    aspect-ratio: auto;
+    overflow: visible;
+    background: none;
+    display: block;
+}
+
+/* Image: a clean full-bleed field on the collections ground (#efece6),
+   same 0.82 portrait proportion as .cv-card-img. */
+.cart-item .product-image {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    aspect-ratio: 0.82;
+    padding: 0;
+    background: #efece6;
+    transform: none;
+    border-radius: 2px;
+    overflow: hidden;
+}
+/* A cover photo fills the field; the emoji / icon fallback sits centred. */
+.cart-item .product-image .pc-photo,
+.cart-item .product-image img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+    filter: none;
+}
+.cart-item .product-image .vli,
+.cart-item .product-image { font-size: 46px; }
+
+/* Foot: a two-column row under the image — name (left) + price (right),
+   with the seller spanning the line beneath. */
+.cart-item .product-info {
+    position: static;
+    inset: auto;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 10px;
+    align-items: baseline;
+    padding: 0;
+    margin-top: 9px;
+    background: none;
+    row-gap: 2px;
+}
+.cart-item .pc-left,
+.cart-item .pc-right { display: contents; }
+
+/* Item name — uppercase Archivo, dark, one line (the loud line). */
+.cart-item .product-name:not(#zzzz):not(#zzzz) {
+    grid-column: 1;
+    grid-row: 1;
+    order: 0;
+    width: auto;
+    font-family: 'Archivo', 'Inter', 'Segoe UI', sans-serif !important;
+    font-style: normal !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: #1b1916 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Price — Archivo, dark, on the right of the name's row (not over the photo). */
+.cart-item .product-info .product-price {
+    grid-column: 2;
+    grid-row: 1;
+    position: static !important;
     top: auto;
-    bottom: 10px;
+    right: auto;
+    order: 0;
+    display: block;
+    font-family: 'Archivo', 'Inter', 'Segoe UI', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.3px;
+    color: #1b1916 !important;
+    white-space: nowrap;
+}
+.cart-item .product-info .product-price .vprice { font-weight: 400; }
+/* Seller — the quiet grey line beneath, in sentence case (not the caps the
+   feed card uses elsewhere). */
+.cart-item .product-seller:not(#zzzz):not(#zzzz):not(#zzzz) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    order: 0;
+    width: auto;
+    font-family: 'Arimo', 'Inter', 'Segoe UI', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    color: #8a857c !important;
+    margin: 0;
+}
+.cart-item .product-rating { display: none !important; }
+
+/* The two controls these rows need, kept minimal over the photo: the select
+   tick top-left, the remove trash top-right — small, out of the way. */
+.cart-item .pc-check { top: 10px; left: 10px; }
+.cart-item .product-image .product-icon.remove {
+    top: 10px;
+    bottom: auto;
     right: 10px;
 }
+/* Any stray injected decorations (if pc-social ever runs) stay hidden. */
+.cart-item .pc-wish,
+.cart-item .pc-size { display: none !important; }
 
 /* One black pill: selected count + total on the left, the white action on the right. */
 .cart-actionbar.q-pill { width: min(92vw, 520px); background: rgba(255,255,255,0.86); border-color: rgba(0,0,0,0.1); align-items: center; padding: 6px 6px 6px 22px; }
