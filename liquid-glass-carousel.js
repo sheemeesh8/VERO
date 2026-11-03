@@ -1191,12 +1191,21 @@ async function mountLiquidGenderCarousel() {
     return;
   }
 
+  // Load Three + GSAP from the self-hosted copies next to this module (so the
+  // carousel never depends on an external CDN being reachable). If those are
+  // somehow missing, fall back to the jsdelivr ESM CDN.
   let THREE, gsapMod;
+  const threeLocal = new URL("./vendor/three.module.js", import.meta.url).href;
+  const gsapLocal = new URL("./vendor/gsap/index.js", import.meta.url).href;
   try {
-    [THREE, gsapMod] = await Promise.all([
-      import(`/__vendor/three/package/build/three.module.js`),
-      import(`/__vendor/gsap/package/index.js`),
-    ]);
+    try {
+      [THREE, gsapMod] = await Promise.all([import(threeLocal), import(gsapLocal)]);
+    } catch {
+      [THREE, gsapMod] = await Promise.all([
+        import(`https://cdn.jsdelivr.net/npm/three@${THREE_VERSION}/build/three.module.js`),
+        import(`https://cdn.jsdelivr.net/npm/gsap@${GSAP_VERSION}/+esm`),
+      ]);
+    }
   } catch {
     fail("Couldn't load the carousel. Check your connection and refresh.");
     return;
