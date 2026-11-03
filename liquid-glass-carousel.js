@@ -18,7 +18,7 @@ const PORTRAIT_ASPECT = 3 / 4;
 
 const LENS = {
   sizeX: 0.565, sizeY: 1, posX: 0.5, posY: 0.5, rotation: 65, spin: 0, zoom: 0,
-  dispersion: 11, blur: 0, glow: 4.2, whiteGlow: 0.24, novaSize: 12, blueRing: 6,
+  dispersion: 0, blur: 0, glow: 4.2, whiteGlow: 0.24, novaSize: 12, blueRing: 0,
   ringRadius: 0.49, ringWidth: 0.014, shimmer: true, shimmerFreq: 12,
   shimmerSpeed: 3.5, shimmerDepth: 0.12, rimStart: 0.578, rimTangential: 0.6,
   rimInward: 0, rimFreq1: 2, rimFreq2: 1, blueColor: "#009dff", rimLine: 1.4,
@@ -1194,8 +1194,8 @@ async function mountLiquidGenderCarousel() {
   let THREE, gsapMod;
   try {
     [THREE, gsapMod] = await Promise.all([
-      import(`https://cdn.jsdelivr.net/npm/three@${THREE_VERSION}/build/three.module.js`),
-      import(`https://cdn.jsdelivr.net/npm/gsap@${GSAP_VERSION}/+esm`),
+      import(`/__vendor/three/package/build/three.module.js`),
+      import(`/__vendor/gsap/package/index.js`),
     ]);
   } catch {
     fail("Couldn't load the carousel. Check your connection and refresh.");
@@ -1216,7 +1216,7 @@ async function mountLiquidGenderCarousel() {
     items,
     panelHeight: 460,
     gap: 14,
-    background: host.getAttribute("data-bg") || "#f4f1ea",
+    background: host.getAttribute("data-bg") || "#ffffff",
     entry: host.getAttribute("data-entry") === "true",
     onActiveChange: setSub,
     // Clicking / zooming the centred gender tile navigates to its collection.
