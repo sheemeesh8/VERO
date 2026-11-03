@@ -287,10 +287,16 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
   const loader = new THREE.TextureLoader();
   loader.setCrossOrigin("anonymous");
   const sources = items.map((img) => {
+    // Every card uses the SAME display aspect (a portrait frame), so the cards
+    // are a uniform size regardless of each source image's own proportions.
+    // The source — which may be landscape, square or portrait — is center-
+    // cropped to fill that frame (object-fit: cover) rather than stretched, so
+    // nothing is distorted and no card bleeds wider/narrower than the rest.
+    const frame = img.aspect || PORTRAIT_ASPECT;
     const s = {
       tex: null,
-      aspect: img.aspect || PORTRAIT_ASPECT,
-      locked: img.aspect != null,
+      aspect: frame,
+      locked: true,
     };
     loader.load(
       img.src,
@@ -300,8 +306,21 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
         tex.generateMipmaps = true;
         tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
         tex.colorSpace = THREE.SRGBColorSpace;
-        if (!s.locked && tex.image) {
-          s.aspect = tex.image.width / tex.image.height;
+        // Center-crop the texture to the fixed frame aspect (cover fit).
+        if (tex.image && tex.image.width && tex.image.height) {
+          const nat = tex.image.width / tex.image.height;
+          tex.wrapS = THREE.ClampToEdgeWrapping;
+          tex.wrapT = THREE.ClampToEdgeWrapping;
+          if (nat > frame) {
+            const r = frame / nat;            // image wider than frame → crop sides
+            tex.repeat.set(r, 1);
+            tex.offset.set((1 - r) / 2, 0);
+          } else {
+            const r = nat / frame;            // image taller than frame → crop top/bottom
+            tex.repeat.set(1, r);
+            tex.offset.set(0, (1 - r) / 2);
+          }
+          tex.needsUpdate = true;
         }
         s.tex = tex;
         recomputeTotal();
