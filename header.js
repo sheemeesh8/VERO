@@ -1662,17 +1662,17 @@
                         <line x1="3" y1="17" x2="21" y2="17"></line>
                     </svg>
                 </a>
+                <a class="logo logo-peacock-wrap" href="index.html" aria-label="moravchick — home">
+                    <span class="logo-script" aria-hidden="true">moravchick</span>
+                </a>
+            </div>
+            <div class="header-right">
                 <span class="hdr-mode-pair" data-icon="mode">
                     <div class="toggle-category" id="categoryToggleBtn" onclick="toggleSwitch()">
                         <span class="seg active" id="segArt">Art</span>
                         <span class="seg" id="segFashion">Fashion</span>
                     </div>
                 </span>
-                <a class="logo logo-peacock-wrap" href="index.html" aria-label="moravchick — home">
-                    <span class="logo-script" aria-hidden="true">moravchick</span>
-                </a>
-            </div>
-            <div class="header-right">
                 <a class="icon-btn" onclick="veroOpenSearchPage()" aria-label="Search" role="button" tabindex="0" data-icon="search" title="Search">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
