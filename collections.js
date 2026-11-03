@@ -283,7 +283,7 @@
                                 (sz ? '<span class="pc-size">Size ' + esc(sz) + '</span>' : '') +
                                 '<div class="pc-left pc-price-top"><div class="product-price">' + priceBlock(d) + '</div></div>' +
                                 '<button class="pc-front-heart" type="button" aria-label="Add to wishlist" ' +
-                                    'onclick="(window.veroWishHeart||function(){})(this,event)">' +
+                                    'onclick="event.preventDefault();event.stopPropagation();this.classList.toggle(\'wish-on\');">' +
                                     '<svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>' +
                                 '</button>' +
                             '</div>' +
