@@ -1,0 +1,106 @@
+/* ============================================================================
+ * search-box.css — the shared animated search field for VERO.
+ * Based on the Uiverse.io search input by @satyamchaudharydev (WhatsApp-style):
+ * the magnifier rotates into a green arrow while typing/focused, and a round
+ * close button appears to clear the field.
+ *
+ * Driven by classes added by search-box.js (which upgrades every search input
+ * on the page), not by :valid, so it never blocks form submission and works
+ * for any input type. The icon and clear button are laid out as flex items —
+ * they sit exactly where each field's original icon sat, so vertical centering
+ * is correct in every search bar. Logical properties keep it right in RTL.
+ * ==========================================================================*/
+
+.usearch {
+    --usearch-accent: #15A986;   /* the colour the icon turns while active */
+    position: relative;
+    display: flex !important;
+    align-items: center;
+}
+.usearch > input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* ---- the swap icon (search <-> arrow), leading flex item ---- */
+.usearch-icon {
+    order: -1;
+    flex: none;
+    position: relative;
+    width: 16px; height: 16px;
+    margin-inline-end: 9px;
+    display: flex; align-items: center; justify-content: center;
+    color: #111;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+}
+.usearch-icon svg {
+    position: absolute;
+    width: 16px; height: 16px;
+    transition: opacity 0.3s cubic-bezier(.4,0,.2,1), color 0.3s, visibility 0.3s;
+}
+.usearch-icon .swap-off {   /* the arrow, hidden by default */
+    opacity: 0;
+    visibility: hidden;
+    color: var(--usearch-accent);
+    /* Counter the container's rotation so the arrow itself stays upright while
+       the icon swings — exactly like the original Uiverse component. */
+    transform: rotate(-80deg);
+}
+
+/* Active (focused or has text): rotate + enlarge, reveal the green arrow. */
+.usearch:focus-within .usearch-icon,
+.usearch.has-value .usearch-icon {
+    transform: rotate(80deg) scale(1.25);
+}
+.usearch:focus-within .usearch-icon .swap-off,
+.usearch.has-value .usearch-icon .swap-off {
+    opacity: 1;
+    visibility: visible;
+}
+.usearch:focus-within .usearch-icon .swap-on,
+.usearch.has-value .usearch-icon .swap-on {
+    opacity: 0;
+}
+
+/* ---- the clear (close) button, trailing flex item (keeps its slot) ---- */
+.usearch-close {
+    order: 99;
+    flex: none;
+    width: 20px; height: 20px;
+    margin-inline-start: 8px;
+    border-radius: 50%;
+    background: none;
+    border: none;
+    padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #111;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0);
+    visibility: hidden;
+    transition: transform 0.3s, opacity 0.3s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.usearch-close:hover { background: rgba(0,0,0,0.06); }
+.usearch-close svg { width: 12px; height: 12px; }
+
+/* Visible only once there is text. */
+.usearch.has-value .usearch-close {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    transition: opacity 0s;
+}
+
+/* Hide the field's original (static) search icon so ours is the only one. */
+.usearch > svg.usearch-legacy-hide,
+.usearch > .usearch-legacy-hide { display: none !important; }
+
+/* Hide the browser's native clear (×) on type=search so ours is the only one. */
+.usearch > input::-webkit-search-cancel-button,
+.usearch > input::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+}
