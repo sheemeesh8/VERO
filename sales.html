@@ -370,6 +370,65 @@
         }
         .prod-grid .product-card.is-sale .vprice-sale { height: auto !important; }
         .prod-grid .product-card.is-sale .vprice-was { height: auto !important; order: 2; }
+
+        /* ===== Living-glass sale card (adapted from a Uiverse card by
+           dylanharriscameron) — an animated red blob glowing behind a frosted
+           panel, with the product sitting on top. The blob + .sale-bg layers
+           are injected in render(); the card itself becomes a rounded,
+           soft-shadowed glass tile and the flip content is inset so the red
+           glow reads as a living frame around each piece on sale. ===== */
+        .prod-grid .product-card.is-sale {
+            border-radius: 14px;
+            overflow: hidden;
+            background: #ededed;
+            box-shadow: 10px 10px 30px #d4d4d2, -10px -10px 30px #ffffff;
+        }
+        .prod-grid .product-card.is-sale .sale-blob {
+            position: absolute;
+            z-index: 1;
+            top: 50%; left: 50%;
+            width: 60%; height: 60%;
+            border-radius: 50%;
+            background-color: #ff2d2d;
+            opacity: 1;
+            filter: blur(26px);
+            pointer-events: none;
+            animation: saleBlobBounce 5s infinite ease;
+        }
+        .prod-grid .product-card.is-sale .sale-bg {
+            position: absolute;
+            z-index: 2;
+            inset: 5px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.92);
+            -webkit-backdrop-filter: blur(22px);
+            backdrop-filter: blur(22px);
+            outline: 2px solid #fff;
+            pointer-events: none;
+        }
+        /* The real card content sits on the glass, inset so the blob glows in
+           the frame around it. */
+        .prod-grid .product-card.is-sale .pc-flip {
+            z-index: 3;
+            inset: 7px;
+            border-radius: 9px;
+            overflow: hidden;
+        }
+        /* Let the frosted red glow bleed through the product panels. */
+        .prod-grid .product-card.is-sale .product-image,
+        .prod-grid .product-card.is-sale .product-info { background: transparent; }
+        .prod-grid .product-card.is-sale:hover .product-image { background: transparent; }
+
+        @keyframes saleBlobBounce {
+            0%   { transform: translate(-100%, -100%) translate3d(0, 0, 0); }
+            25%  { transform: translate(-100%, -100%) translate3d(100%, 0, 0); }
+            50%  { transform: translate(-100%, -100%) translate3d(100%, 100%, 0); }
+            75%  { transform: translate(-100%, -100%) translate3d(0, 100%, 0); }
+            100% { transform: translate(-100%, -100%) translate3d(0, 0, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .prod-grid .product-card.is-sale .sale-blob { animation: none; }
+        }
         .cart-empty {
             margin-top: 52px; border: 1px solid #ecebe7; border-radius: 18px; background: #fff;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 10px 34px rgba(0,0,0,0.045);
@@ -754,6 +813,18 @@ h3, h4, h5, h6, p,
 
                 body.innerHTML =
                     '<div class="prod-grid">' + items.map(function (p) { return VC.cardHTML(p); }).join('') + '</div>';
+
+                // Give every sale card the living-glass treatment: a frosted
+                // panel (.sale-bg) with an animated red blob (.sale-blob)
+                // glowing behind it, around the product. Pure decoration,
+                // injected here so cardHTML stays shared with the feed.
+                body.querySelectorAll('.product-card.is-sale').forEach(function (card) {
+                    if (card.querySelector('.sale-blob')) return;
+                    var blob = document.createElement('span'); blob.className = 'sale-blob';
+                    var bg = document.createElement('span'); bg.className = 'sale-bg';
+                    card.insertBefore(bg, card.firstChild);
+                    card.insertBefore(blob, card.firstChild);
+                });
             }
 
             // ---- Two-step filter sheet: 1) product type, 2) discount slider. ----
