@@ -83,31 +83,14 @@
         var info = card.querySelector('.product-info');
         if (!image) return;
 
-        // Lift the price into the image's top-right corner.
-        var price = info && info.querySelector('.product-price');
-        if (price && price.parentElement !== image) image.appendChild(price);
+        // VC.cardHTML flip cards (.pc-e, used by the feed-style grids) build
+        // their own foot — leave them exactly as they are.
+        if (card.classList.contains('pc-e')) return;
 
-        // Size, top-left.
-        if (!image.querySelector('.pc-size')) {
-            var size = document.createElement('span');
-            size.className = 'pc-size';
-            size.textContent = sizeOf(card);
-            image.appendChild(size);
-        }
-
-        // Wishlist heart, bottom-right — where the price used to be.
-        if (!card.querySelector('.pc-wish')) {
-            var btn = document.createElement('button');
-            btn.className = 'pc-wish' + (isSaved(card) ? ' saved' : '');
-            btn.type = 'button';
-            btn.setAttribute('aria-label', 'Add to wishlist');
-            btn.innerHTML = '<svg viewBox="0 0 24 24">' + HEART + '</svg>';
-            btn.addEventListener('click', function (e) {
-                e.preventDefault(); e.stopPropagation();
-                toggleSave(card, btn);
-            });
-            card.appendChild(btn);
-        }
+        // Editorial foot (matches the home feed's .cv-card): the price belongs
+        // in the footer beside the name, not floated in the image corner. Keep
+        // it in .product-info; no size mark and no front wishlist heart — the
+        // feed card carries neither (wishlist lives on the product page).
     }
 
     function fill(root) {
