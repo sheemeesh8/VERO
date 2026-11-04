@@ -9976,6 +9976,10 @@ window.veroLocalImg = function (key) {
                     #genderCover .gc-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
                     #genderCover .gc-dots button { width: 8px; height: 8px; padding: 0; border: none; border-radius: 9999px; background: #111; opacity: 0.25; cursor: pointer; transition: opacity .25s ease, width .25s ease; }
                     #genderCover .gc-dots button.on { opacity: 1; width: 22px; }
+                    /* Single featured product below the caption — same card as the
+                       hero's product slider; swaps with the selected gender. */
+                    #genderCover .gc-product { width: 190px; margin: 20px auto 0; }
+                    #genderCover .gc-product .cv-card { display: block; }
                 </style>
                 <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
                     <p class="gc-head">Choose by category</p>
@@ -9997,6 +10001,7 @@ window.veroLocalImg = function (key) {
                         <a class="gc-shop" href="products.html?gender=men">Shop Men</a>
                     </div>
                     <div class="gc-dots"></div>
+                    <div class="gc-product" id="gcProduct" aria-live="polite"></div>
                 </div>
                 <script>
                 (function () {
@@ -10052,6 +10057,10 @@ window.veroLocalImg = function (key) {
                         if (sub) sub.textContent = card.getAttribute('data-sub') || nm;
                         if (nameEl) nameEl.textContent = nm;
                         if (shopEl) { shopEl.textContent = 'Shop ' + nm; shopEl.setAttribute('href', href); }
+                        // Publish the selected gender and refresh the featured product
+                        // card below the caption (filled once product data is ready).
+                        window.__gcGender = { gender: nm.toLowerCase(), idx: a };
+                        if (window.veroFillGenderCard) window.veroFillGenderCard();
                         // Play only the centred card's video; keep the rest on their poster.
                         cards.forEach(function (c, i) {
                             var v = c.querySelector('video'); if (!v) return;
@@ -10456,7 +10465,28 @@ window.veroLocalImg = function (key) {
                     fitNames();
                     // Turn the New Arrivals / Sale grids into centered product sliders.
                     if (window.veroCenterSliders) window.veroCenterSliders();
+                    // Fill the gender coverflow's featured product card.
+                    if (window.veroFillGenderCard) window.veroFillGenderCard();
                 }
+                // Featured product for the gender coverflow: the most-liked piece for
+                // the selected gender (falls back to a distinct top pick per gender
+                // when the data carries no gender). Rendered with the hero slider's card.
+                window.veroFillGenderCard = function () {
+                    var el = document.getElementById('gcProduct');
+                    if (!el || !VC || typeof VC.allProducts !== 'function') return;
+                    var all = VC.allProducts(); if (!all.length) return;
+                    var sel = window.__gcGender || { gender: 'men', idx: 0 };
+                    var g = String(sel.gender || '').toLowerCase();
+                    var filtered = (g && g !== 'unisex') ? all.filter(function (p) {
+                        return String(p.gender || (p._raw && p._raw.gender) || '').toLowerCase() === g;
+                    }) : [];
+                    var pool, pick;
+                    if (filtered.length) { pool = filtered.slice(); pick = 0; }
+                    else { pool = all.slice(); pick = sel.idx || 0; }
+                    pool.sort(function (a, b) { return likesOf(b) - likesOf(a); });
+                    var p = pool[Math.min(pick, pool.length - 1)];
+                    if (p) el.innerHTML = sliderCardHTML(p);
+                };
                 // Keep every product name on one line — shrink the font to fit the
                 // space left of the price (down to a floor) instead of wrapping.
                 function fitNames(){
