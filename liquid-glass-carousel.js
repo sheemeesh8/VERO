@@ -248,7 +248,7 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
   let W = Math.max(1, mount.clientWidth);
   let H = Math.max(1, mount.clientHeight);
   const panelHFor = () =>
-    Math.max(120, Math.min(options.panelHeight, Math.round(H * 0.72)));
+    Math.max(120, Math.min(options.panelHeight, Math.round(H * 0.88)));
   let PANEL_H = panelHFor();
   const GAP = options.gap;
   const EASE = reduced ? 0.28 : 0.09;
@@ -1305,8 +1305,8 @@ async function mountLiquidGenderCarousel() {
 
   const engine = createCarousel(THREE, gsap, stage, cursor, {
     items,
-    panelHeight: 460,
-    gap: 6,
+    panelHeight: 600,
+    gap: 0,
     background: host.getAttribute("data-bg") || "#ffffff",
     entry: host.getAttribute("data-entry") === "true",
     onActiveChange: setSub,
