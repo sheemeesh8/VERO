@@ -9954,218 +9954,283 @@ window.veroLocalImg = function (key) {
                      video filter did not render). If the canvas can't run, the raw
                      video shows underneath, so the slider always appears. -->
                 <style>
-                    #genderSlider { position: relative; margin: 0 -10px 12px; }
-                    #genderSlider .gs-head { font-family: 'Poppins','Inter',sans-serif; font-weight: 300; letter-spacing: 0.01em; font-size: 15px; color: #111; text-align: center; margin: 0 0 2px; }
-                    #genderSlider .gs-sub { font-family: 'Poppins','Inter',sans-serif; font-weight: 400; font-size: 12px; color: #6b6a64; text-align: center; margin: 0 0 10px; min-height: 16px; }
-                    #genderSlider .gs-viewport { position: relative; overflow: hidden; border-radius: 16px; }
-                    #genderSlider .gs-track { display: flex; will-change: transform; touch-action: pan-y; }
-                    #genderSlider .gs-slide { position: relative; flex: 0 0 100%; width: 100%; height: clamp(360px, 62vh, 560px); overflow: hidden; display: block; text-decoration: none; background: #efede8; }
-                    #genderSlider .gs-slide video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-                    #genderSlider .gs-slide canvas.gs-liquid { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; opacity: 0; transition: opacity .3s ease; }
-                    #genderSlider .gs-slide::after { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(180deg, rgba(0,0,0,0) 42%, rgba(0,0,0,0.5) 100%); }
-                    #genderSlider .gs-cap { position: absolute; left: 20px; right: 20px; bottom: 20px; z-index: 3; color: #fff; }
-                    #genderSlider .gs-name { display: block; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 36px; line-height: 1; text-transform: uppercase; letter-spacing: -0.5px; }
-                    #genderSlider .gs-shop { display: inline-block; margin-top: 10px; font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.85); padding-bottom: 2px; }
-                    /* Framer-style arrow navigation */
-                    #genderSlider .gs-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 40px; height: 40px; padding: 0; border: none; border-radius: 9999px; background: #fff; color: #111; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0,0,0,0.18); cursor: pointer; opacity: 0.7; transition: opacity .2s ease, transform .2s ease; }
-                    #genderSlider .gs-nav:not(:disabled):hover { opacity: 1; transform: translateY(-50%) scale(1.1); }
-                    #genderSlider .gs-nav:disabled { opacity: 0.4; cursor: not-allowed; }
-                    #genderSlider .gs-prev { left: 16px; }
-                    #genderSlider .gs-next { right: 16px; }
-                    #genderSlider .gs-nav svg { width: 22px; height: 22px; }
-                    /* Framer-style progress dots, overlaid on the slide */
-                    #genderSlider .gs-dots { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 4; display: flex; gap: 8px; padding: 0; }
-                    #genderSlider .gs-dots button { height: 8px; width: 8px; padding: 0; border: none; border-radius: 9999px; background: rgba(255,255,255,0.5); cursor: pointer; transition: width .3s ease, background .3s ease; }
-                    #genderSlider .gs-dots button.on { width: 32px; background: #fff; }
+                    /* ===== Coverflow gender carousel (ported from coverflow-carousel.tsx) ===== */
+                    #genderCover { position: relative; margin: 0 0 14px; --gc-card: clamp(150px, 46vw, 240px); }
+                    #genderCover .gc-head { font-family: 'Poppins','Inter',sans-serif; font-weight: 300; letter-spacing: 0.01em; font-size: 15px; color: #111; text-align: center; margin: 0 0 2px; }
+                    #genderCover .gc-sub { font-family: 'Poppins','Inter',sans-serif; font-weight: 400; font-size: 12px; color: #6b6a64; text-align: center; margin: 0 0 4px; min-height: 16px; }
+                    #genderCover .gc-rel { position: relative; }
+                    #genderCover .gc-frame { perspective: calc(var(--gc-card) * 3); overflow: hidden; padding: 34px 0 30px; outline: none; cursor: grab; touch-action: pan-y; }
+                    #genderCover .gc-frame:active { cursor: grabbing; }
+                    #genderCover .gc-stage { position: relative; height: var(--gc-card); transform-style: preserve-3d; }
+                    #genderCover .gc-card { position: absolute; left: 50%; top: 0; width: var(--gc-card); height: var(--gc-card); border-radius: 18px; overflow: hidden; background: #efede8; box-shadow: 0 18px 40px rgba(0,0,0,0.28); will-change: transform; }
+                    #genderCover .gc-card img { width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; user-select: none; pointer-events: none; }
+                    #genderCover .gc-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 54%, rgba(0,0,0,0.42)); }
+                    #genderCover .gc-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 200; width: 38px; height: 38px; padding: 0; border: none; border-radius: 9999px; background: rgba(255,255,255,0.82); color: #111; display: flex; align-items: center; justify-content: center; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 6px 16px rgba(0,0,0,0.16); cursor: pointer; transition: background .2s ease; }
+                    #genderCover .gc-nav:hover { background: #fff; }
+                    #genderCover .gc-prev { left: 10px; }
+                    #genderCover .gc-next { right: 10px; }
+                    #genderCover .gc-nav svg { width: 20px; height: 20px; }
+                    #genderCover .gc-cap { display: flex; flex-direction: column; align-items: center; margin-top: 2px; }
+                    #genderCover .gc-cap .gc-name { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 20px; text-transform: uppercase; letter-spacing: -0.3px; color: #111; }
+                    #genderCover .gc-cap .gc-shop { margin-top: 4px; font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #111; border-bottom: 1px solid #111; padding-bottom: 2px; text-decoration: none; }
+                    #genderCover .gc-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+                    #genderCover .gc-dots button { width: 8px; height: 8px; padding: 0; border: none; border-radius: 9999px; background: #111; opacity: 0.25; cursor: pointer; transition: opacity .25s ease, width .25s ease; }
+                    #genderCover .gc-dots button.on { opacity: 1; width: 22px; }
                 </style>
-                <div id="genderSlider" role="region" aria-roledescription="carousel" aria-label="Choose by category">
-                    <p class="gs-head">Choose by category</p>
-                    <p class="gs-sub" aria-live="polite">Men&#39;s collection</p>
-                    <div class="gs-viewport">
-                    <div class="gs-track">
-                        <a class="gs-slide" href="products.html?gender=men" data-name="Men&#39;s collection">
-                            <video src="assets/hero/men.mp4" poster="men-hero.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
-                            <canvas class="gs-liquid" aria-hidden="true"></canvas>
-                            <span class="gs-cap"><span class="gs-name">Men</span><span class="gs-shop">Shop Men</span></span>
-                        </a>
-                        <a class="gs-slide" href="products.html?gender=women" data-name="Women&#39;s collection">
-                            <video src="assets/hero/hero-clothing.mp4" poster="assets/hero/women-editorial.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
-                            <canvas class="gs-liquid" aria-hidden="true"></canvas>
-                            <span class="gs-cap"><span class="gs-name">Women</span><span class="gs-shop">Shop Women</span></span>
-                        </a>
-                        <a class="gs-slide" href="products.html?gender=unisex" data-name="Unisex collection">
-                            <video src="assets/hero/unisex.mp4" poster="hero-beach.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
-                            <canvas class="gs-liquid" aria-hidden="true"></canvas>
-                            <span class="gs-cap"><span class="gs-name">Unisex</span><span class="gs-shop">Shop Unisex</span></span>
-                        </a>
-                        <a class="gs-slide" href="products.html?gender=kids" data-name="Kids collection">
-                            <video src="assets/hero/kids.mp4" poster="clothing-hero.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
-                            <canvas class="gs-liquid" aria-hidden="true"></canvas>
-                            <span class="gs-cap"><span class="gs-name">Kids</span><span class="gs-shop">Shop Kids</span></span>
-                        </a>
+                <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
+                    <p class="gc-head">Choose by category</p>
+                    <p class="gc-sub" aria-live="polite">Men&#39;s collection</p>
+                    <div class="gc-rel">
+                        <div class="gc-frame" tabindex="0">
+                            <div class="gc-stage">
+                                <div class="gc-card" data-href="products.html?gender=men" data-name="Men" data-sub="Men&#39;s collection"><img src="men-hero.jpg" alt="Men's collection"></div>
+                                <div class="gc-card" data-href="products.html?gender=women" data-name="Women" data-sub="Women&#39;s collection"><img src="assets/hero/women-editorial.jpg" alt="Women's collection"></div>
+                                <div class="gc-card" data-href="products.html?gender=unisex" data-name="Unisex" data-sub="Unisex collection"><img src="hero-beach.jpg" alt="Unisex collection"></div>
+                                <div class="gc-card" data-href="products.html?gender=kids" data-name="Kids" data-sub="Kids collection"><img src="clothing-hero.jpg" alt="Kids collection"></div>
+                            </div>
+                        </div>
+                        <button type="button" class="gc-nav gc-prev" aria-label="Previous category"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+                        <button type="button" class="gc-nav gc-next" aria-label="Next category"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
                     </div>
-                    <button type="button" class="gs-nav gs-prev" aria-label="Previous category" disabled>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    </button>
-                    <button type="button" class="gs-nav gs-next" aria-label="Next category">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                    <div class="gs-dots">
-                        <button type="button" class="on" aria-label="Go to Men's collection"></button>
-                        <button type="button" aria-label="Go to Women's collection"></button>
-                        <button type="button" aria-label="Go to Unisex collection"></button>
-                        <button type="button" aria-label="Go to Kids collection"></button>
+                    <div class="gc-cap">
+                        <span class="gc-name">Men</span>
+                        <a class="gc-shop" href="products.html?gender=men">Shop Men</a>
                     </div>
-                    </div>
+                    <div class="gc-dots"></div>
                 </div>
                 <script>
-                    (function () {
-                        var gs = document.getElementById('genderSlider');
-                        if (!gs) return;
-                        var viewport = gs.querySelector('.gs-viewport');
-                        var track = gs.querySelector('.gs-track');
-                        var slides = [].slice.call(gs.querySelectorAll('.gs-slide'));
-                        var dots = [].slice.call(gs.querySelectorAll('.gs-dots button'));
-                        var prevBtn = gs.querySelector('.gs-prev');
-                        var nextBtn = gs.querySelector('.gs-next');
-                        var sub = gs.querySelector('.gs-sub');
-                        var fx = [];
+                (function () {
+                    var root = document.getElementById('genderCover');
+                    if (!root) return;
+                    var frame = root.querySelector('.gc-frame');
+                    var cards = [].slice.call(root.querySelectorAll('.gc-card'));
+                    var count = cards.length;
+                    if (!count) return;
+                    var sub = root.querySelector('.gc-sub');
+                    var nameEl = root.querySelector('.gc-cap .gc-name');
+                    var shopEl = root.querySelector('.gc-cap .gc-shop');
+                    var dotsWrap = root.querySelector('.gc-dots');
+                    var prevBtn = root.querySelector('.gc-prev');
+                    var nextBtn = root.querySelector('.gc-next');
 
-                        // Canvas-2D liquid ripple: draw the playing video in horizontal
-                        // strips, each shifted sideways by a moving sine wave, so the
-                        // picture ripples like water. Pure 2D canvas, so it runs where
-                        // WebGL does not; if there's no 2D context the raw <video>
-                        // underneath stays visible.
-                        function makeFx(slide) {
-                            var video = slide.querySelector('video');
-                            var canvas = slide.querySelector('canvas.gs-liquid');
-                            if (!video || !canvas) return null;
-                            var ctx = null;
-                            try { ctx = canvas.getContext('2d'); } catch (e) {}
-                            if (!ctx) { canvas.style.display = 'none'; return null; }
-                            var running = false, rid = 0, t0 = 0;
-                            function draw() {
-                                if (!running) return;
-                                var dpr = Math.min(window.devicePixelRatio || 1, 2);
-                                var cw = Math.max(1, Math.round(canvas.clientWidth * dpr));
-                                var ch = Math.max(1, Math.round(canvas.clientHeight * dpr));
-                                if (canvas.width !== cw) canvas.width = cw;
-                                if (canvas.height !== ch) canvas.height = ch;
-                                if (video.readyState >= 2 && video.videoWidth) {
-                                    var vw = video.videoWidth, vh = video.videoHeight;
-                                    var scale = Math.max(cw / vw, ch / vh);   // cover
-                                    var sW = cw / scale, sH = ch / scale;
-                                    var sx = (vw - sW) / 2, sy = (vh - sH) / 2;
-                                    var t = (performance.now() - t0) / 1000;
-                                    var strips = 24, amp = Math.max(3, cw * 0.012);
-                                    var dStrip = ch / strips, sStrip = sH / strips;
-                                    try {
-                                        ctx.clearRect(0, 0, cw, ch);
-                                        for (var i = 0; i < strips; i++) {
-                                            var f = i / strips;
-                                            var dx = amp * Math.sin(f * 9.4 + t * 1.1) + amp * 0.5 * Math.sin(f * 19.0 - t * 0.7);
-                                            ctx.drawImage(video,
-                                                sx, sy + i * sStrip, sW, sStrip + 1,
-                                                dx - amp, i * dStrip, cw + 2 * amp, dStrip + 1);
-                                        }
-                                        canvas.style.opacity = '1';
-                                    } catch (e) {}
-                                }
-                                rid = requestAnimationFrame(draw);
-                            }
-                            return {
-                                start: function () { if (running) return; running = true; t0 = performance.now(); rid = requestAnimationFrame(draw); },
-                                stop: function () { running = false; if (rid) cancelAnimationFrame(rid); canvas.style.opacity = '0'; }
-                            };
+                    // Coverflow parameters (from the reference component's defaults).
+                    var ROTATE = 44, DEPTH = 0.6, FALLOFF = 0.56, FADE = 0.1, GAP = 0.08, LOOP = true;
+                    var pos = 0, target = 0, width = 0, rafId = null, selected = 0, drag = null;
+
+                    dotsWrap.innerHTML = cards.map(function (c, i) {
+                        return '<button type="button" class="' + (i ? '' : 'on') + '" aria-label="Go to ' + (c.getAttribute('data-name') || ('slide ' + (i + 1))) + '"></button>';
+                    }).join('');
+                    var dots = [].slice.call(dotsWrap.querySelectorAll('button'));
+
+                    function indexAt(p) { return ((Math.round(p) % count) + count) % count; }
+                    function sign(n) { return n < 0 ? -1 : (n > 0 ? 1 : 0); }
+
+                    function paint() {
+                        if (!width) return;
+                        var pitch = width * (1 + GAP);
+                        for (var i = 0; i < count; i++) {
+                            var card = cards[i];
+                            var offset = i - pos;
+                            if (LOOP) { offset = ((offset % count) + count) % count; if (offset > count / 2) offset -= count; }
+                            var dist = Math.abs(offset);
+                            var ramp = Math.pow(dist, FALLOFF);
+                            var tilt = Math.min(ROTATE * ramp, 82) * sign(offset);
+                            card.style.transform = 'translateX(calc(-50% + ' + (offset * pitch) + 'px)) translateZ(' + (-DEPTH * width * ramp) + 'px) rotateY(' + (-tilt) + 'deg)';
+                            var edge = LOOP ? Math.min(1, Math.max(0, count / 2 - dist)) : 1;
+                            card.style.opacity = String(Math.max(0, 1 - FADE * dist) * edge);
+                            card.style.zIndex = String(100 - Math.round(dist));
                         }
+                    }
 
-                        // Carousel state: one full-width slide per step, driven by the
-                        // prev/next buttons and dots (the "framer" normal-carousel format).
-                        var index = 0, width = 0;
-                        function measure() { width = viewport.clientWidth || track.clientWidth || 1; }
+                    function render() {
+                        var a = indexAt(target);
+                        selected = a;
+                        dots.forEach(function (d, i) { d.classList.toggle('on', i === a); });
+                        var card = cards[a];
+                        var nm = card.getAttribute('data-name') || '';
+                        var href = card.getAttribute('data-href') || '#';
+                        if (sub) sub.textContent = card.getAttribute('data-sub') || nm;
+                        if (nameEl) nameEl.textContent = nm;
+                        if (shopEl) { shopEl.textContent = 'Shop ' + nm; shopEl.setAttribute('href', href); }
+                    }
 
-                        // Spring-driven translate, matching the reference component's
-                        // motion spring (stiffness 300, damping 30, mass 1). A small
-                        // numeric integrator stands in for the motion library on this
-                        // plain HTML page.
-                        var pos = 0, vel = 0, target = 0, rafId = 0, last = 0;
-                        function setX(x) { pos = x; track.style.transform = 'translate3d(' + x + 'px,0,0)'; }
-                        function step(now) {
-                            if (!last) last = now;
-                            var dt = Math.min((now - last) / 1000, 1 / 30); last = now;
-                            var a = (-300 * (pos - target) - 30 * vel) / 1;
-                            vel += a * dt; pos += vel * dt;
-                            if (Math.abs(vel) < 0.5 && Math.abs(pos - target) < 0.5) {
-                                setX(target); vel = 0; rafId = 0; last = 0; return;
-                            }
-                            track.style.transform = 'translate3d(' + pos + 'px,0,0)';
+                    function clampPos(p) { return LOOP ? p : Math.max(0, Math.min(count - 1, p)); }
+
+                    function settle(t) {
+                        if (rafId !== null) cancelAnimationFrame(rafId);
+                        target = t; render();
+                        function step() {
+                            var remaining = target - pos;
+                            if (Math.abs(remaining) < 0.0004) { pos = target; paint(); rafId = null; return; }
+                            pos += remaining * 0.16; paint();
                             rafId = requestAnimationFrame(step);
                         }
-                        function animateTo(x) { target = x; last = 0; if (!rafId) rafId = requestAnimationFrame(step); }
+                        rafId = requestAnimationFrame(step);
+                    }
 
-                        function render() {
-                            dots.forEach(function (d, i) { d.classList.toggle('on', i === index); });
-                            if (prevBtn) prevBtn.disabled = index === 0;
-                            if (nextBtn) nextBtn.disabled = index === slides.length - 1;
-                            if (sub && slides[index]) sub.textContent = slides[index].getAttribute('data-name') || '';
-                            slides.forEach(function (s, i) {
-                                var v = s.querySelector('video');
-                                if (!v) return;
-                                v.muted = true; v.defaultMuted = true;
-                                if (i === index) {
-                                    if (v.preload === 'none') { v.preload = 'auto'; v.load(); }
-                                    var p = v.play(); if (p && p.catch) p.catch(function () {});
-                                    if (fx[i] === undefined) fx[i] = makeFx(s);
-                                    if (fx[i]) fx[i].start();
-                                } else {
-                                    v.pause();
-                                    if (fx[i]) fx[i].stop();
-                                }
+                    function goTo(index) {
+                        var t = LOOP ? index + Math.round((target - index) / count) * count : index;
+                        settle(clampPos(t));
+                    }
+                    function nudge(by) { settle(clampPos(Math.round(target) + by)); }
+
+                    frame.addEventListener('pointerdown', function (e) {
+                        if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+                        try { frame.setPointerCapture(e.pointerId); } catch (x) {}
+                        target = pos;
+                        drag = { id: e.pointerId, x: e.clientX, pos: pos, v: 0, t: performance.now(), moved: false };
+                    });
+                    frame.addEventListener('pointermove', function (e) {
+                        if (!drag || drag.id !== e.pointerId) return;
+                        var pitch = width * (1 + GAP); if (!pitch) return;
+                        var now = performance.now(), prev = pos;
+                        pos = clampPos(drag.pos - (e.clientX - drag.x) / pitch);
+                        if (Math.abs(e.clientX - drag.x) > 4) drag.moved = true;
+                        drag.v = ((pos - prev) / Math.max(now - drag.t, 1)) * 1000; drag.t = now;
+                        var idx = indexAt(pos); if (idx !== selected) { selected = idx; render(); }
+                        paint();
+                    });
+                    function endDrag(e) {
+                        if (!drag || drag.id !== e.pointerId) return;
+                        var carried = Math.max(-2, Math.min(2, drag.v * 0.18));
+                        frame.__moved = drag.moved; drag = null;
+                        settle(clampPos(Math.round(pos + carried)));
+                    }
+                    frame.addEventListener('pointerup', endDrag);
+                    frame.addEventListener('pointercancel', endDrag);
+
+                    cards.forEach(function (card, i) {
+                        card.addEventListener('click', function () {
+                            if (frame.__moved) { frame.__moved = false; return; }
+                            if (indexAt(target) === i) { window.location.href = card.getAttribute('data-href'); }
+                            else goTo(i);
+                        });
+                    });
+
+                    frame.addEventListener('keydown', function (e) {
+                        if (e.key === 'ArrowLeft') { e.preventDefault(); nudge(-1); }
+                        else if (e.key === 'ArrowRight') { e.preventDefault(); nudge(1); }
+                    });
+                    if (prevBtn) prevBtn.addEventListener('click', function () { nudge(-1); });
+                    if (nextBtn) nextBtn.addEventListener('click', function () { nudge(1); });
+                    dots.forEach(function (d, i) { d.addEventListener('click', function () { goTo(i); }); });
+
+                    function measure() { width = cards[0] ? cards[0].offsetWidth : 0; paint(); }
+                    if (window.ResizeObserver) { try { new ResizeObserver(measure).observe(frame); } catch (x) {} }
+                    window.addEventListener('resize', measure);
+                    cards.forEach(function (c) { var im = c.querySelector('img'); if (im && !im.complete) im.addEventListener('load', measure); });
+
+                    function init() { measure(); render(); paint(); }
+                    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+                })();
+                </script>
+
+                <style>
+                    /* ===== Centered product slider (reuses the earlier framer-style carousel)
+                         applied to the New Arrivals and Sale grids. ===== */
+                    .cv-feed .pc-viewport { position: relative; overflow: hidden; margin: 22px -12px 0; }
+                    .cv-feed .cv-grid.pc-track { display: flex !important; grid-template-columns: none !important; gap: 0 !important; margin: 0 !important; padding: 4px 0 8px; will-change: transform; touch-action: pan-y; }
+                    .cv-feed .cv-grid.pc-track > .cv-card { flex: 0 0 72%; width: 72%; max-width: 72%; margin: 0 7px; transition: transform .35s ease, opacity .35s ease; transform: scale(0.88); opacity: 0.5; }
+                    .cv-feed .cv-grid.pc-track > .cv-card.pc-active { transform: scale(1); opacity: 1; }
+                    .cv-feed .pc-nav { position: absolute; top: 42%; transform: translateY(-50%); z-index: 20; width: 34px; height: 34px; padding: 0; border: none; border-radius: 9999px; background: rgba(255,255,255,0.85); color: #111; display: flex; align-items: center; justify-content: center; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 6px 16px rgba(0,0,0,0.16); cursor: pointer; transition: opacity .2s ease, background .2s ease; }
+                    .cv-feed .pc-nav:hover:not(:disabled) { background: #fff; }
+                    .cv-feed .pc-nav:disabled { opacity: 0.35; cursor: not-allowed; }
+                    .cv-feed .pc-prev { left: 8px; }
+                    .cv-feed .pc-next { right: 8px; }
+                    .cv-feed .pc-nav svg { width: 18px; height: 18px; }
+                    .cv-feed .pc-dots { display: flex; justify-content: center; gap: 7px; margin: 12px 0 0; }
+                    .cv-feed .pc-dots button { width: 7px; height: 7px; padding: 0; border: none; border-radius: 9999px; background: #111; opacity: 0.22; cursor: pointer; transition: opacity .25s ease, width .25s ease; }
+                    .cv-feed .pc-dots button.on { opacity: 1; width: 20px; }
+                </style>
+                <script>
+                (function () {
+                    function svg(d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="' + d + '"/></svg>'; }
+
+                    function build(grid) {
+                        var cards = [].slice.call(grid.children).filter(function (c) { return c.classList && c.classList.contains('cv-card'); });
+                        if (cards.length < 2) return;
+                        grid.classList.add('pc-track');
+
+                        var vp = grid.parentNode && grid.parentNode.classList && grid.parentNode.classList.contains('pc-viewport') ? grid.parentNode : null;
+                        if (!vp) {
+                            vp = document.createElement('div'); vp.className = 'pc-viewport';
+                            grid.parentNode.insertBefore(vp, grid); vp.appendChild(grid);
+                            var prev = document.createElement('button'); prev.type = 'button'; prev.className = 'pc-nav pc-prev'; prev.setAttribute('aria-label', 'Previous'); prev.innerHTML = svg('M15 19l-7-7 7-7');
+                            var next = document.createElement('button'); next.type = 'button'; next.className = 'pc-nav pc-next'; next.setAttribute('aria-label', 'Next'); next.innerHTML = svg('M9 5l7 7-7 7');
+                            vp.appendChild(prev); vp.appendChild(next);
+                            var dotsWrap = document.createElement('div'); dotsWrap.className = 'pc-dots';
+                            vp.parentNode.insertBefore(dotsWrap, vp.nextSibling);
+                            vp._prev = prev; vp._next = next; vp._dots = dotsWrap; vp._index = 0; vp._pos = 0; vp._raf = null;
+
+                            vp._cards = function () { return [].slice.call(grid.children).filter(function (c) { return c.classList && c.classList.contains('cv-card'); }); };
+                            vp._targetX = function (i) { var cs = vp._cards(); var c = cs[i]; if (!c) return 0; return vp.clientWidth / 2 - (c.offsetLeft + c.offsetWidth / 2); };
+                            vp._apply = function (x) { vp._pos = x; grid.style.transform = 'translate3d(' + x + 'px,0,0)'; };
+                            vp._animate = function (x) {
+                                if (vp._raf !== null) cancelAnimationFrame(vp._raf);
+                                var step = function () {
+                                    var rem = x - vp._pos;
+                                    if (Math.abs(rem) < 0.5) { vp._apply(x); vp._raf = null; return; }
+                                    vp._apply(vp._pos + rem * 0.18); vp._raf = requestAnimationFrame(step);
+                                };
+                                vp._raf = requestAnimationFrame(step);
+                            };
+                            vp._render = function () {
+                                var cs = vp._cards(), n = cs.length;
+                                cs.forEach(function (c, i) { c.classList.toggle('pc-active', i === vp._index); });
+                                [].slice.call(vp._dots.children).forEach(function (d, i) { d.classList.toggle('on', i === vp._index); });
+                                vp._prev.disabled = vp._index === 0;
+                                vp._next.disabled = vp._index === n - 1;
+                            };
+                            vp._go = function (i, animate) {
+                                var n = vp._cards().length;
+                                vp._index = Math.max(0, Math.min(n - 1, i));
+                                vp._render();
+                                var x = vp._targetX(vp._index);
+                                if (animate === false) vp._apply(x); else vp._animate(x);
+                            };
+
+                            prev.addEventListener('click', function () { vp._go(vp._index - 1, true); });
+                            next.addEventListener('click', function () { vp._go(vp._index + 1, true); });
+
+                            // touch swipe
+                            var sx = 0, spos = 0, dragging = false, moved = false;
+                            vp.addEventListener('touchstart', function (e) {
+                                if (vp._raf !== null) { cancelAnimationFrame(vp._raf); vp._raf = null; }
+                                sx = e.touches[0].clientX; spos = vp._pos; dragging = true; moved = false;
+                            }, { passive: true });
+                            vp.addEventListener('touchmove', function (e) {
+                                if (!dragging) return;
+                                var dx = e.touches[0].clientX - sx; if (Math.abs(dx) > 6) moved = true;
+                                vp._apply(spos + dx);
+                            }, { passive: true });
+                            vp.addEventListener('touchend', function () {
+                                if (!dragging) return; dragging = false;
+                                if (!moved) return;
+                                // snap to the card whose centre is nearest the viewport centre
+                                var cs = vp._cards(), mid = vp.clientWidth / 2 - vp._pos, best = 0, bd = Infinity;
+                                cs.forEach(function (c, i) { var cc = c.offsetLeft + c.offsetWidth / 2, d = Math.abs(cc - mid); if (d < bd) { bd = d; best = i; } });
+                                vp._go(best, true);
                             });
-                        }
-                        function go(i) {
-                            index = Math.max(0, Math.min(slides.length - 1, i));
-                            animateTo(-index * width);
-                            render();
+                            window.addEventListener('resize', function () { vp._go(vp._index, false); });
                         }
 
-                        if (prevBtn) prevBtn.addEventListener('click', function () { go(index - 1); });
-                        if (nextBtn) nextBtn.addEventListener('click', function () { go(index + 1); });
-                        dots.forEach(function (d, i) { d.addEventListener('click', function () { go(i); }); });
+                        // (re)build dots to match the current card count
+                        var dots = vp._dots;
+                        if (dots.children.length !== cards.length) {
+                            dots.innerHTML = cards.map(function (_, i) { return '<button type="button" class="' + (i ? '' : 'on') + '" aria-label="Go to item ' + (i + 1) + '"></button>'; }).join('');
+                            [].slice.call(dots.children).forEach(function (d, i) { d.addEventListener('click', function () { vp._go(i, true); }); });
+                        }
+                        if (vp._index > cards.length - 1) vp._index = 0;
+                        vp._go(vp._index, false);
+                    }
 
-                        // Touch swipe — kept so the slider still feels native on phones.
-                        var dragX = 0, dragPos = 0, dragging = false, moved = false;
-                        viewport.addEventListener('touchstart', function (e) {
-                            if (rafId) { cancelAnimationFrame(rafId); rafId = 0; last = 0; vel = 0; }
-                            dragX = e.touches[0].clientX; dragPos = pos; dragging = true; moved = false;
-                        }, { passive: true });
-                        viewport.addEventListener('touchmove', function (e) {
-                            if (!dragging) return;
-                            var dx = e.touches[0].clientX - dragX;
-                            if (Math.abs(dx) > 6) moved = true;
-                            var x = dragPos + dx, min = -(slides.length - 1) * width, max = 0;
-                            if (x > max) x = max + (x - max) * 0.35;
-                            if (x < min) x = min + (x - min) * 0.35;
-                            setX(x);
-                        }, { passive: true });
-                        viewport.addEventListener('touchend', function () {
-                            if (!dragging) return; dragging = false;
-                            var delta = pos - (-index * width), th = width * 0.2;
-                            if (delta < -th) go(index + 1);
-                            else if (delta > th) go(index - 1);
-                            else go(index);
+                    window.veroCenterSliders = function () {
+                        ['newest', 'sale'].forEach(function (kind) {
+                            var grid = document.querySelector('.cv-feed .cv-grid[data-grid="' + kind + '"]');
+                            if (grid) { try { build(grid); } catch (e) {} }
                         });
-                        // A swipe shouldn't also open the slide's link.
-                        slides.forEach(function (s) {
-                            s.addEventListener('click', function (e) { if (moved) e.preventDefault(); }, true);
-                        });
-
-                        window.addEventListener('resize', function () { measure(); setX(-index * width); target = -index * width; });
-
-                        function init() { measure(); setX(-index * width); target = -index * width; render(); }
-                        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-                        else init();
-                    })();
+                    };
+                })();
                 </script>
 
                     <!-- grid #1 — a taste of the current collection -->
@@ -10382,6 +10447,8 @@ window.veroLocalImg = function (key) {
                     // live counts
                     var air=document.getElementById('cvAir'); if(air) air.textContent=all.length.toLocaleString('en-US');
                     fitNames();
+                    // Turn the New Arrivals / Sale grids into centered product sliders.
+                    if (window.veroCenterSliders) window.veroCenterSliders();
                 }
                 // Keep every product name on one line — shrink the font to fit the
                 // space left of the price (down to a floor) instead of wrapping.
