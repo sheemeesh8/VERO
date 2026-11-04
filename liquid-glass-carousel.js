@@ -248,7 +248,7 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
   let W = Math.max(1, mount.clientWidth);
   let H = Math.max(1, mount.clientHeight);
   const panelHFor = () =>
-    Math.max(120, Math.min(options.panelHeight, Math.round(H * 0.72)));
+    Math.max(120, Math.min(options.panelHeight, Math.round(H * 0.88)));
   let PANEL_H = panelHFor();
   const GAP = options.gap;
   const EASE = reduced ? 0.28 : 0.09;
@@ -288,7 +288,29 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
 
   const loader = new THREE.TextureLoader();
   loader.setCrossOrigin("anonymous");
+
+  // Center-crop a texture (image or video) to the card's fixed frame aspect so
+  // every card is the same uniform size, cover-filled, with no distortion.
+  function coverCrop(tex, natAspect, frame) {
+    if (!tex || !natAspect || !frame) return;
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    if (natAspect > frame) {
+      const r = frame / natAspect;          // source wider → crop sides
+      tex.repeat.set(r, 1);
+      tex.offset.set((1 - r) / 2, 0);
+    } else {
+      const r = natAspect / frame;          // source taller → crop top/bottom
+      tex.repeat.set(1, r);
+      tex.offset.set(0, (1 - r) / 2);
+    }
+    tex.needsUpdate = true;
+  }
+
   const sources = items.map((img) => {
+    // Lock every card to one uniform frame aspect; the source is cover-cropped
+    // to it, so all the cards (images and videos) are the same size.
+    const frame = img.aspect || PORTRAIT_ASPECT;
     const s = {
       tex: null,        // texture currently shown (poster image, then video)
       imgTex: null,
@@ -296,8 +318,8 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
       video: null,
       hasVideo: !!img.video,
       playing: false,
-      aspect: img.aspect || PORTRAIT_ASPECT,
-      locked: img.aspect != null,
+      aspect: frame,
+      locked: true,
     };
 
     // Poster / still image: shown immediately, and used by video cards until
@@ -311,9 +333,7 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
           tex.generateMipmaps = true;
           tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
           tex.colorSpace = THREE.SRGBColorSpace;
-          if (!s.locked && tex.image) {
-            s.aspect = tex.image.width / tex.image.height;
-          }
+          if (tex.image) coverCrop(tex, tex.image.width / tex.image.height, frame);
           s.imgTex = tex;
           if (!s.tex) s.tex = tex;   // don't override a live video texture
           recomputeTotal();
@@ -352,7 +372,7 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
       s.video = vid;
       s.videoTex = vtex;
       vid.addEventListener("loadedmetadata", () => {
-        if (!s.locked && vid.videoWidth) s.aspect = vid.videoWidth / vid.videoHeight;
+        if (vid.videoWidth) coverCrop(vtex, vid.videoWidth / vid.videoHeight, frame);
         recomputeTotal();
       });
       // Swap to the live video texture only once there's a frame to show.
@@ -1285,8 +1305,8 @@ async function mountLiquidGenderCarousel() {
 
   const engine = createCarousel(THREE, gsap, stage, cursor, {
     items,
-    panelHeight: 460,
-    gap: 14,
+    panelHeight: 600,
+    gap: 0,
     background: host.getAttribute("data-bg") || "#ffffff",
     entry: host.getAttribute("data-entry") === "true",
     onActiveChange: setSub,
