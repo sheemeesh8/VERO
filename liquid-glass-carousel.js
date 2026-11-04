@@ -1250,7 +1250,7 @@ async function mountLiquidGenderCarousel() {
   const engine = createCarousel(THREE, gsap, stage, cursor, {
     items,
     panelHeight: 460,
-    gap: 14,
+    gap: 0,
     background: host.getAttribute("data-bg") || "#ffffff",
     entry: host.getAttribute("data-entry") === "true",
     onActiveChange: setSub,
