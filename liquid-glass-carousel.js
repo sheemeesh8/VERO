@@ -20,8 +20,10 @@ const LENS = {
   sizeX: 0.565, sizeY: 1, posX: 0.5, posY: 0.5, rotation: 65, spin: 0, zoom: 0,
   dispersion: 0, blur: 0, glow: 4.2, whiteGlow: 0.24, novaSize: 12, blueRing: 0,
   ringRadius: 0.49, ringWidth: 0.014, shimmer: true, shimmerFreq: 12,
-  shimmerSpeed: 3.5, shimmerDepth: 0.12, rimStart: 0.578, rimTangential: 0.6,
+  shimmerSpeed: 3.5, shimmerDepth: 0.12, rimStart: 0.578, rimTangential: 0.3,
   rimInward: 0, rimFreq1: 2, rimFreq2: 1, blueColor: "#009dff", rimLine: 1.4,
+  // rimTangential drives the tangential "liquid" wave at the lens rim. Lowered
+  // from 0.6 for a gentler, more subtle flow.
   rimLinePos: 0.488, rimLineWidth: 0.003, vignette: 0, vignetteSize: 0.3, samples: 16,
 };
 
@@ -288,35 +290,93 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
   loader.setCrossOrigin("anonymous");
   const sources = items.map((img) => {
     const s = {
-      tex: null,
+      tex: null,        // texture currently shown (poster image, then video)
+      imgTex: null,
+      videoTex: null,
+      video: null,
+      hasVideo: !!img.video,
+      playing: false,
       aspect: img.aspect || PORTRAIT_ASPECT,
       locked: img.aspect != null,
     };
-    loader.load(
-      img.src,
-      (tex) => {
-        tex.minFilter = THREE.LinearMipmapLinearFilter;
-        tex.magFilter = THREE.LinearFilter;
-        tex.generateMipmaps = true;
-        tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-        tex.colorSpace = THREE.SRGBColorSpace;
-        if (!s.locked && tex.image) {
-          s.aspect = tex.image.width / tex.image.height;
-        }
-        s.tex = tex;
+
+    // Poster / still image: shown immediately, and used by video cards until
+    // their clip starts playing (so a card never flashes black).
+    if (img.src) {
+      loader.load(
+        img.src,
+        (tex) => {
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.magFilter = THREE.LinearFilter;
+          tex.generateMipmaps = true;
+          tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          tex.colorSpace = THREE.SRGBColorSpace;
+          if (!s.locked && tex.image) {
+            s.aspect = tex.image.width / tex.image.height;
+          }
+          s.imgTex = tex;
+          if (!s.tex) s.tex = tex;   // don't override a live video texture
+          recomputeTotal();
+          if (!userInteracted) {
+            scroll = centerForIndex(0);
+            target = scroll;
+          }
+        },
+        undefined,
+        () => {
+          s.aspect = s.aspect || PORTRAIT_ASPECT;
+        },
+      );
+    }
+
+    // Video card: a muted, looping clip played through a VideoTexture. Only the
+    // centred card is actually played (see playCentered), so we never decode
+    // every clip at once; it swaps in over the poster once it starts playing.
+    if (img.video) {
+      const vid = document.createElement("video");
+      vid.muted = true;
+      vid.defaultMuted = true;
+      vid.loop = true;
+      vid.playsInline = true;
+      vid.setAttribute("playsinline", "");
+      vid.setAttribute("muted", "");
+      vid.preload = "none";
+      vid.crossOrigin = "anonymous";
+      if (img.src) vid.poster = img.src;
+      vid.src = img.video;
+      const vtex = new THREE.VideoTexture(vid);
+      vtex.minFilter = THREE.LinearFilter;
+      vtex.magFilter = THREE.LinearFilter;
+      vtex.generateMipmaps = false;
+      vtex.colorSpace = THREE.SRGBColorSpace;
+      s.video = vid;
+      s.videoTex = vtex;
+      vid.addEventListener("loadedmetadata", () => {
+        if (!s.locked && vid.videoWidth) s.aspect = vid.videoWidth / vid.videoHeight;
         recomputeTotal();
-        if (!userInteracted) {
-          scroll = centerForIndex(0);
-          target = scroll;
-        }
-      },
-      undefined,
-      () => {
-        s.aspect = s.aspect || PORTRAIT_ASPECT;
-      },
-    );
+      });
+      // Swap to the live video texture only once there's a frame to show.
+      vid.addEventListener("playing", () => { s.tex = vtex; });
+    }
+
     return s;
   });
+
+  // Play only the centred card's video; pause (and lazily load) the rest.
+  function playCentered(ci) {
+    const n = sources.length;
+    const c = ((ci % n) + n) % n;
+    sources.forEach((s, i) => {
+      if (!s.hasVideo || !s.video) return;
+      if (i === c) {
+        if (s.video.preload === "none") { s.video.preload = "auto"; s.video.load(); }
+        const p = s.video.play();
+        if (p && p.catch) p.catch(() => {});
+      } else if (!s.video.paused) {
+        s.video.pause();
+      }
+    });
+  }
 
   function slotWidth(srcIndex) {
     return at(sources, srcIndex).aspect * PANEL_H + GAP;
@@ -503,7 +563,8 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
       const h = PANEL_H * shrink;
       const wPx = src.aspect * PANEL_H * shrink;
 
-      if (src.tex && !p.bound) {
+      // Bind the current texture, and rebind when it changes (poster → video).
+      if (src.tex && p.mat.map !== src.tex) {
         p.mat.map = src.tex;
         p.mat.color.set(0xffffff);
         p.mat.needsUpdate = true;
@@ -1032,6 +1093,7 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
     if (ci !== lastCenter) {
       lastCenter = ci;
       options.onActiveChange(ci);
+      playCentered(ci);
     }
 
     const rawSpeed = scroll - prevScroll;
