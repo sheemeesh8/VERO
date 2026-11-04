@@ -16,13 +16,6 @@ const GSAP_VERSION = "3.12.5";
 
 const PORTRAIT_ASPECT = 3 / 4;
 
-// Uniform display frame (width / height) every card is cropped to. The source
-// photos are mostly landscape (~1.33), so a narrow 3/4 portrait frame cut them
-// too hard at the sides; a squarer frame keeps the cards uniform while showing
-// much more of each image. Raise toward the images' own ratio to crop less,
-// lower toward portrait to crop more.
-const DISPLAY_ASPECT = 1;
-
 const LENS = {
   sizeX: 0.565, sizeY: 1, posX: 0.5, posY: 0.5, rotation: 65, spin: 0, zoom: 0,
   dispersion: 0, blur: 0, glow: 4.2, whiteGlow: 0.24, novaSize: 12, blueRing: 0,
@@ -252,12 +245,8 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
 
   let W = Math.max(1, mount.clientWidth);
   let H = Math.max(1, mount.clientHeight);
-  // Fill the whole stage, with a little overscan: the centred card spans the
-  // full width (edge to edge) and more than the full height, so the liquid-glass
-  // lens distorts WITHIN the image. The stage clips the overscanned edges to a
-  // clean rectangle, so the wave never pulls in from the white background.
-  const PANEL_OVERSCAN = 1.16;
-  const panelHFor = () => Math.max(120, Math.round(H * PANEL_OVERSCAN));
+  const panelHFor = () =>
+    Math.max(120, Math.min(options.panelHeight, Math.round(H * 0.72)));
   let PANEL_H = panelHFor();
   const GAP = options.gap;
   const EASE = reduced ? 0.28 : 0.09;
@@ -298,18 +287,10 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
   const loader = new THREE.TextureLoader();
   loader.setCrossOrigin("anonymous");
   const sources = items.map((img) => {
-    // Every card uses the SAME display aspect (a portrait frame), so the cards
-    // are a uniform size regardless of each source image's own proportions.
-    // The source — which may be landscape, square or portrait — is center-
-    // cropped to fill that frame (object-fit: cover) rather than stretched, so
-    // nothing is distorted and no card bleeds wider/narrower than the rest.
-    // Crop each card to the stage's own aspect so, at PANEL_H = stage height,
-    // the card fills the stage edge to edge (full-bleed) with no distortion.
-    const frame = img.aspect || (W / H) || DISPLAY_ASPECT;
     const s = {
       tex: null,
-      aspect: frame,
-      locked: true,
+      aspect: img.aspect || PORTRAIT_ASPECT,
+      locked: img.aspect != null,
     };
     loader.load(
       img.src,
@@ -319,21 +300,8 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
         tex.generateMipmaps = true;
         tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
         tex.colorSpace = THREE.SRGBColorSpace;
-        // Center-crop the texture to the fixed frame aspect (cover fit).
-        if (tex.image && tex.image.width && tex.image.height) {
-          const nat = tex.image.width / tex.image.height;
-          tex.wrapS = THREE.ClampToEdgeWrapping;
-          tex.wrapT = THREE.ClampToEdgeWrapping;
-          if (nat > frame) {
-            const r = frame / nat;            // image wider than frame → crop sides
-            tex.repeat.set(r, 1);
-            tex.offset.set((1 - r) / 2, 0);
-          } else {
-            const r = nat / frame;            // image taller than frame → crop top/bottom
-            tex.repeat.set(1, r);
-            tex.offset.set(0, (1 - r) / 2);
-          }
-          tex.needsUpdate = true;
+        if (!s.locked && tex.image) {
+          s.aspect = tex.image.width / tex.image.height;
         }
         s.tex = tex;
         recomputeTotal();
@@ -1256,7 +1224,7 @@ async function mountLiquidGenderCarousel() {
   const engine = createCarousel(THREE, gsap, stage, cursor, {
     items,
     panelHeight: 460,
-    gap: 0,
+    gap: 14,
     background: host.getAttribute("data-bg") || "#ffffff",
     entry: host.getAttribute("data-entry") === "true",
     onActiveChange: setSub,
