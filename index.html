@@ -10108,9 +10108,17 @@ window.veroLocalImg = function (key) {
                     });
                     function endDrag(e) {
                         if (!drag || drag.id !== e.pointerId) return;
-                        var carried = Math.max(-2, Math.min(2, drag.v * 0.18));
+                        // Sticky snap: each gesture locks onto a single card. Move one
+                        // step in the drag direction past a small threshold (or a flick),
+                        // otherwise snap back to where it started — never more than one.
+                        var startIdx = Math.round(drag.pos);
+                        var moved = pos - drag.pos;
+                        var dir = moved > 0 ? 1 : (moved < 0 ? -1 : 0);
+                        var dest = startIdx;
+                        if (Math.abs(moved) > 0.12 || (Math.abs(drag.v) > 0.5 && Math.abs(moved) > 0.03)) dest = startIdx + dir;
+                        dest = Math.max(startIdx - 1, Math.min(startIdx + 1, dest));
                         frame.__moved = drag.moved; drag = null;
-                        settle(clampPos(Math.round(pos + carried)));
+                        settle(clampPos(dest));
                     }
                     frame.addEventListener('pointerup', endDrag);
                     frame.addEventListener('pointercancel', endDrag);
