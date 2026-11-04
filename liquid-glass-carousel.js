@@ -252,8 +252,12 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
 
   let W = Math.max(1, mount.clientWidth);
   let H = Math.max(1, mount.clientHeight);
-  const panelHFor = () =>
-    Math.max(120, Math.min(options.panelHeight, Math.round(H * 0.72)));
+  // Fill the whole stage, with a little overscan: the centred card spans the
+  // full width (edge to edge) and more than the full height, so the liquid-glass
+  // lens distorts WITHIN the image. The stage clips the overscanned edges to a
+  // clean rectangle, so the wave never pulls in from the white background.
+  const PANEL_OVERSCAN = 1.16;
+  const panelHFor = () => Math.max(120, Math.round(H * PANEL_OVERSCAN));
   let PANEL_H = panelHFor();
   const GAP = options.gap;
   const EASE = reduced ? 0.28 : 0.09;
@@ -299,7 +303,9 @@ function createCarousel(THREE, gsap, mount, cursorElement, options) {
     // The source — which may be landscape, square or portrait — is center-
     // cropped to fill that frame (object-fit: cover) rather than stretched, so
     // nothing is distorted and no card bleeds wider/narrower than the rest.
-    const frame = img.aspect || DISPLAY_ASPECT;
+    // Crop each card to the stage's own aspect so, at PANEL_H = stage height,
+    // the card fills the stage edge to edge (full-bleed) with no distortion.
+    const frame = img.aspect || (W / H) || DISPLAY_ASPECT;
     const s = {
       tex: null,
       aspect: frame,
