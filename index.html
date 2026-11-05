@@ -96,6 +96,11 @@
         .fcard-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #777; }
         .fcard-price { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 13px; margin-top: 2px; }
         .feed-enter { display: inline-block; margin-top: 30px; }
+        /* Feed screen scrolls as a real feed; aligned to the top, not centred. */
+        #scrFeed { align-items: flex-start; }
+        .screen-inner--feed { max-width: 720px; padding-bottom: 60px; }
+        .feed-top { padding: 4vh 0 30px; border-bottom: 1px solid #ececec; margin-bottom: 30px; }
+        .feed-subhead { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: clamp(18px,4.5vw,24px); color: #111; letter-spacing: -0.01em; margin: 0 0 18px; text-align: left; }
 
         /* ===== Entrance animations ===== */
         /* Hero copy rises in on load. */
@@ -227,12 +232,21 @@
         </div>
     </section>
 
-    <!-- ===== STEP · FEED (top 6 matched products) ===== -->
+    <!-- ===== STEP · FEED (search-result matches pinned at the top, full feed below) ===== -->
     <section class="screen" id="scrFeed" aria-label="Your feed">
-        <div class="screen-inner">
-            <h2 class="feed-head">Your edit</h2>
-            <p class="feed-note" id="feedNote">Picked for you</p>
-            <div class="feed-grid" id="feedGrid"></div>
+        <div class="screen-inner screen-inner--feed">
+            <!-- Search results — the matched products, at the very top of the feed. -->
+            <div class="feed-top">
+                <span class="scr-kicker">Your results</span>
+                <h2 class="feed-head">Your edit</h2>
+                <p class="feed-note" id="feedNote">Matched to your picks</p>
+                <div class="feed-grid" id="feedGrid"></div>
+            </div>
+            <!-- The feed. -->
+            <div class="feed-rest">
+                <h3 class="feed-subhead">The feed</h3>
+                <div class="feed-grid" id="feedAll"></div>
+            </div>
             <a class="step-btn feed-enter" id="enterFeed" href="products.html">Explore the full feed</a>
         </div>
     </section>
@@ -462,8 +476,7 @@
                 // Top up with the rest so there are always 6.
                 all.forEach(function (p) { if (matched.indexOf(p) === -1) matched.push(p); });
             }
-            var six = matched.slice(0, 6);
-            grid.innerHTML = six.map(function (p) {
+            function card(p) {
                 var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">' : esc(p.icon || '🛍️');
                 return '<a class="fcard" href="products.html">' +
                     '<div class="fcard-img">' + inner + '</div>' +
@@ -471,7 +484,16 @@
                     '<div class="fcard-brand">' + esc(p.seller) + '</div>' +
                     '<div class="fcard-price">' + money(p.price) + '</div>' +
                 '</a>';
-            }).join('');
+            }
+            var six = matched.slice(0, 6);
+            grid.innerHTML = six.map(card).join('');
+            // The feed itself — the matched results first, then the rest of the catalogue.
+            var feedAll = document.getElementById('feedAll');
+            if (feedAll) {
+                var rest = all.filter(function (p) { return six.indexOf(p) === -1; });
+                var feed = six.concat(rest);
+                feedAll.innerHTML = feed.map(card).join('');
+            }
             if (note) {
                 var bits = [];
                 if (sel.gender) bits.push(sel.gender);
