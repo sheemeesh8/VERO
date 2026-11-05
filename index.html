@@ -9942,7 +9942,7 @@ window.veroLocalImg = function (key) {
 
                 <!-- STEP · CHOOSE YOUR CATEGORY — full-screen white panel that fades in
                      as you scroll down from the hero; holds the gender slider. -->
-                <section class="cv-pick" id="cvPick" data-no-reveal aria-label="Choose your category">
+                <section class="cv-pick cv-fadestep" id="cvPick" data-no-reveal aria-label="Choose your category">
                     <div class="cv-pick-inner">
                         <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
                             <p class="gc-head">Choose by category</p>
@@ -9968,28 +9968,25 @@ window.veroLocalImg = function (key) {
                 </section>
                 <script>
                 (function () {
-                    var sec = document.getElementById('cvPick');
-                    if (!sec) return;
-                    if (typeof IntersectionObserver === 'undefined') { sec.classList.add('is-in'); return; }
+                    // Shared fade-in / fade-out for every full-screen step in the flow.
+                    var steps = [].slice.call(document.querySelectorAll('.cv-fadestep'));
+                    if (!steps.length) return;
+                    if (typeof IntersectionObserver === 'undefined') {
+                        steps.forEach(function (s) { s.classList.add('is-in'); });
+                        return;
+                    }
                     var io = new IntersectionObserver(function (entries) {
                         entries.forEach(function (e) {
-                            if (e.isIntersecting) { sec.classList.add('is-in'); io.disconnect(); }
+                            e.target.classList.toggle('is-in', e.isIntersecting);
                         });
-                    }, { threshold: 0.18 });
-                    io.observe(sec);
+                    }, { threshold: 0.3 });
+                    steps.forEach(function (s) { io.observe(s); });
                 })();
                 </script>
 
-                <div class="cv-wrap">
-                    <!-- Search + slider defined as one component -->
-                    <div class="cv-findbar" role="group" aria-label="Search and featured products">
-                        <form class="cv-search" role="search" onsubmit="return heroSearch(this)">
-                            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-                            <input type="search" name="q" placeholder="Search products, brands, categories" aria-label="Search" autocomplete="off" enterkeyhint="search">
-                        </form>
-                        <!-- horizontal slider of ten product cards, part of the search component -->
-                        <div class="cv-grid cv-slider" data-grid="foryou" data-n="10"></div>
-                    </div>
+                <!-- Hidden holder: keeps the gender-slider style + script alive (the
+                     slider itself was moved up into the full-screen #cvPick step). -->
+                <div class="cv-wrap" style="display:none" aria-hidden="true">
 
                 <!-- 2 · CHOOSE BY CATEGORY — full-width gender video slider with a
                      liquid ripple. The ripple is drawn on a 2D canvas from the
@@ -10297,53 +10294,113 @@ window.veroLocalImg = function (key) {
                     </div>
                 </div>
 
-                <div class="cv-wrap">
-                    <div class="cv-grid" data-grid="women" data-n="4"></div>
-                    <a class="cv-showmore" href="products.html"><span>Show more</span></a>
-                </div>
+                <!-- ====== FIND-YOUR-ITEM FLOW · full-screen question steps ====== -->
+                <style>
+                    .cv-step { position: relative; width: 100%; min-height: 100svh; background: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 10svh 24px; box-sizing: border-box; }
+                    .cv-step-inner { width: 100%; max-width: 560px; margin: 0 auto;
+                        opacity: 0; transform: translateY(40px);
+                        transition: opacity 1s cubic-bezier(.22,1,.36,1), transform 1s cubic-bezier(.22,1,.36,1); }
+                    .cv-step.is-in .cv-step-inner { opacity: 1; transform: none; }
+                    .cv-step-kicker { font-family: 'Archivo','Inter',sans-serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #8a857c; }
+                    .cv-step-q { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: clamp(28px, 7vw, 46px); line-height: 1.03; letter-spacing: -0.02em; color: #111; margin: 14px 0 32px; }
+                    .cv-step-opts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+                    .cv-chip { font-family: 'Arimo','Inter',sans-serif; font-size: 15px; letter-spacing: 0.3px; color: #111; background: #fff; border: 1.5px solid #111; border-radius: 999px; padding: 13px 22px; cursor: pointer; transition: background .2s ease, color .2s ease, transform .2s ease; }
+                    .cv-chip:hover { transform: translateY(-2px); }
+                    .cv-chip.sel { background: #111; color: #fff; }
+                    .cv-step-next { margin-top: 36px; font-family: 'Archivo','Poppins',sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase; color: #fff; background: #111; border: none; padding: 16px 40px; cursor: pointer; opacity: 0.3; pointer-events: none; transition: opacity .25s ease; }
+                    .cv-step-next.ready { opacity: 1; pointer-events: auto; }
+                    .cv-step-note { font-family: 'Arimo','Inter',sans-serif; font-size: 15px; color: #555; margin: 12px 0 30px; }
+                    .cv-step-cta { display: inline-block; font-family: 'Archivo','Poppins',sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1.6px; text-transform: uppercase; color: #fff; background: #111; text-decoration: none; padding: 18px 46px; }
+                    @media (prefers-reduced-motion: reduce) {
+                        .cv-step-inner { opacity: 1; transform: none; transition: none; }
+                    }
+                </style>
 
-                <!-- 3 · NEW ARRIVALS — editorial panel hero -->
-                <div class="cv-coll cv-panel">
-                    <img class="cv-coll-bg" src="assets/hero/art-section-poster.jpg" alt="" aria-hidden="true">
-                    <a class="cvp-box" href="products.html?sort=recent">
-                        <h1 class="cvp-title">New<br>Arrivals</h1>
-                        <div class="cvp-stat">
-                            <span class="cvp-num" data-count="newest">124</span>
-                            <span class="cvp-air">Just dropped</span>
+                <!-- STEP · WHAT — the product the shopper wants -->
+                <section class="cv-step cv-fadestep" id="stepProduct" data-no-reveal aria-label="What are you looking for">
+                    <div class="cv-step-inner">
+                        <span class="cv-step-kicker">Step 02</span>
+                        <h2 class="cv-step-q">What are you<br>looking for?</h2>
+                        <div class="cv-step-opts" data-key="product">
+                            <button type="button" class="cv-chip" data-val="clothing">Clothing</button>
+                            <button type="button" class="cv-chip" data-val="shoes">Shoes</button>
+                            <button type="button" class="cv-chip" data-val="bags">Bags</button>
+                            <button type="button" class="cv-chip" data-val="accessories">Accessories</button>
+                            <button type="button" class="cv-chip" data-val="jewelry">Jewelry</button>
+                            <button type="button" class="cv-chip" data-val="outerwear">Outerwear</button>
                         </div>
-                    </a>
-                    <p class="cvp-tag">Fresh drops, curated for you</p>
-                </div>
-                <div class="cv-wrap">
-                    <p class="cv-na-intro">Our latest collection has officially arrived. From standout statement pieces to elevated everyday essentials, we've curated a fresh selection designed to update your wardrobe effortless style. Explore the newest drops and find your next favorite piece before it's gone.</p>
-                    <div class="cv-grid" data-grid="newest" data-n="4"></div>
-                    <a class="cv-showmore" href="products.html?sort=recent"><span>Show more</span></a>
-                </div>
+                        <button class="cv-step-next" type="button">Continue</button>
+                    </div>
+                </section>
 
-                <!-- 4 · SALE — editorial panel hero -->
-                <div class="cv-coll cv-panel">
-                    <img class="cv-coll-bg" src="assets/hero/sale-clothing.webp" alt="" aria-hidden="true">
-                    <a class="cvp-box" href="sales.html">
-                        <h1 class="cvp-title">The<br>Sale</h1>
-                        <div class="cvp-stat">
-                            <span class="cvp-num" data-count="sale">312</span>
-                            <span class="cvp-air">On sale now</span>
+                <!-- STEP · STYLE — the aesthetic the shopper is after -->
+                <section class="cv-step cv-fadestep" id="stepStyle" data-no-reveal aria-label="What is your style">
+                    <div class="cv-step-inner">
+                        <span class="cv-step-kicker">Step 03</span>
+                        <h2 class="cv-step-q">What's your<br>style?</h2>
+                        <div class="cv-step-opts" data-key="style">
+                            <button type="button" class="cv-chip" data-val="minimal">Minimal</button>
+                            <button type="button" class="cv-chip" data-val="elegant">Elegant</button>
+                            <button type="button" class="cv-chip" data-val="streetwear">Streetwear</button>
+                            <button type="button" class="cv-chip" data-val="vintage">Vintage</button>
+                            <button type="button" class="cv-chip" data-val="boho">Boho</button>
+                            <button type="button" class="cv-chip" data-val="classic">Classic</button>
                         </div>
-                    </a>
-                    <p class="cvp-tag">Discover the best sales</p>
-                </div>
-                <div class="cv-wrap">
-                    <div class="cv-feature" id="cvSaleFeature"></div>
-                    <div class="cv-grid" data-grid="sale" data-n="4"></div>
-                    <a class="cv-showmore" href="sales.html"><span>Show more</span></a>
-                </div>
+                        <button class="cv-step-next" type="button">Continue</button>
+                    </div>
+                </section>
 
-                <!-- 5 · SPECIAL FOR YOU (promoted) -->
-                <div class="cv-wrap">
-                    <div class="cv-special" id="cvSpecial"></div>
-                    <a class="cv-showmore" href="products.html"><span>Show more</span></a>
-                    <div class="cv-grid" data-grid="foryou" data-n="4"></div>
-                </div>
+                <!-- STEP · DONE — hand off into the feed -->
+                <section class="cv-step cv-fadestep" id="stepDone" data-no-reveal aria-label="Your edit is ready">
+                    <div class="cv-step-inner">
+                        <span class="cv-step-kicker">Your edit</span>
+                        <h2 class="cv-step-q">Your pieces<br>are ready</h2>
+                        <p class="cv-step-note">A feed, curated around everything you just told us.</p>
+                        <a class="cv-step-cta" id="enterFeed" href="products.html">Enter the feed</a>
+                    </div>
+                </section>
+
+                <script>
+                (function () {
+                    var sel = {};
+                    // Single-select chips per question; selecting one unlocks Continue.
+                    [].slice.call(document.querySelectorAll('.cv-step-opts')).forEach(function (group) {
+                        var key = group.getAttribute('data-key');
+                        var chips = [].slice.call(group.querySelectorAll('.cv-chip'));
+                        chips.forEach(function (ch) {
+                            ch.addEventListener('click', function () {
+                                chips.forEach(function (c) { c.classList.remove('sel'); });
+                                ch.classList.add('sel');
+                                sel[key] = ch.getAttribute('data-val');
+                                var sec = ch.closest('.cv-step');
+                                var nx = sec && sec.querySelector('.cv-step-next');
+                                if (nx) nx.classList.add('ready');
+                            });
+                        });
+                    });
+                    // Continue → smooth-scroll to the next full-screen step.
+                    [].slice.call(document.querySelectorAll('.cv-step-next')).forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            var sec = btn.closest('.cv-fadestep');
+                            var next = sec && sec.nextElementSibling;
+                            while (next && !(next.classList && next.classList.contains('cv-fadestep'))) {
+                                next = next.nextElementSibling;
+                            }
+                            if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        });
+                    });
+                    // Carry the shopper's choices into the feed as query params.
+                    var enter = document.getElementById('enterFeed');
+                    if (enter) {
+                        enter.addEventListener('click', function () {
+                            var q = [];
+                            if (sel.product) q.push('category=' + encodeURIComponent(sel.product));
+                            if (sel.style) q.push('style=' + encodeURIComponent(sel.style));
+                            enter.setAttribute('href', 'products.html' + (q.length ? ('?' + q.join('&')) : ''));
+                        });
+                    }
+                })();
+                </script>
 
             </section>
 
