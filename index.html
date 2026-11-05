@@ -9728,6 +9728,16 @@ window.veroLocalImg = function (key) {
             .nf-card-brand { margin: 1px 0 0; font-family: 'Arimo','Inter',sans-serif; font-size: 11px; color: #8a897f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .nf-card-price { margin: 4px 0 0; font-family: 'Archivo','Inter',sans-serif; font-size: 13.5px; font-weight: 800; color: #111; }
 
+            /* ---- horizontal rails (new arrivals / on sale) ---- */
+            .nf-rail { display: flex; gap: 14px; overflow-x: auto; padding: 0 18px 6px; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+            .nf-rail::-webkit-scrollbar { display: none; }
+            .nf-rail .nf-card { flex: 0 0 150px; width: 150px; scroll-snap-align: start; }
+            .nf-rail .nf-card-media { aspect-ratio: 4 / 5; }
+            .nf-pct { position: absolute; top: 10px; left: 10px; z-index: 2; height: 24px; display: inline-flex; align-items: center; padding: 0 9px; border-radius: 6px; background: #B3433B; color: #fff; font-family: 'Archivo','Inter',sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; }
+            .nf-priceline { display: flex; align-items: baseline; gap: 7px; margin: 4px 0 0; }
+            .nf-priceline .nf-card-price { margin: 0; color: #B3433B; }
+            .nf-was { font-family: 'Arimo','Inter',sans-serif; font-size: 11.5px; color: #a3a298; text-decoration: line-through; }
+
             /* ---- load more ---- */
             .nf-more { display: flex; justify-content: center; margin: 34px 0 6px; }
             .nf-more button { font-family: 'Archivo','Inter',sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #111; background: transparent; border: 1.5px solid #111; border-radius: 9999px; padding: 14px 40px; cursor: pointer; transition: background .2s ease, color .2s ease; }
@@ -9767,6 +9777,24 @@ window.veroLocalImg = function (key) {
                     <a class="nf-chip" href="sales.html" data-filter="sale">Sale</a>
                     <a class="nf-chip" href="collections.html" data-filter="collections">Collections</a>
                 </nav>
+
+                <!-- New arrivals — horizontal rail of the most recent listings -->
+                <div class="nf-wrap">
+                    <div class="nf-section-head">
+                        <h2>New arrivals</h2>
+                        <a href="products.html?sort=recent">See all</a>
+                    </div>
+                </div>
+                <div class="nf-rail" id="nfNew" aria-label="New arrivals"></div>
+
+                <!-- On sale — horizontal rail of every discounted piece -->
+                <div class="nf-wrap">
+                    <div class="nf-section-head">
+                        <h2>On sale</h2>
+                        <a href="sales.html">See all</a>
+                    </div>
+                </div>
+                <div class="nf-rail" id="nfSale" aria-label="On sale"></div>
 
                 <!-- main product feed -->
                 <div class="nf-wrap">
@@ -9826,6 +9854,51 @@ window.veroLocalImg = function (key) {
                     '</a>';
                 }
 
+                // Rail card: compact card for the horizontal "new arrivals" / "on
+                // sale" rows. In sale mode it shows the discount badge + was/now price.
+                function railCardHTML(p, saleMode){
+                    var img = photoOf(p);
+                    var media = img
+                        ? '<img src="'+esc(img)+'" alt="'+esc(p.name||'')+'" loading="lazy">'
+                        : '<span class="nf-card-emoji">'+esc(p.icon||'🛍️')+'</span>';
+                    var priceBlock, badge;
+                    if (saleMode && p._d && p._d.onSale){
+                        badge = '<span class="nf-pct">-'+p._d.percent+'%</span>';
+                        priceBlock = '<div class="nf-priceline"><span class="nf-card-price">'+price(p._d.price)+'</span><span class="nf-was">'+price(p._d.original)+'</span></div>';
+                    } else {
+                        badge = isSale(p) ? '<span class="nf-tag">Sale</span>' : '';
+                        priceBlock = '<div class="nf-card-price">'+price(p.price)+'</div>';
+                    }
+                    return '<a class="nf-card" href="'+esc(hrefOf(p))+'">'+
+                        '<div class="nf-card-media">'+badge+media+'</div>'+
+                        '<div class="nf-card-name">'+esc(p.name||p.category||'Listing')+'</div>'+
+                        '<div class="nf-card-brand">'+esc(p.seller||'moravchick')+'</div>'+
+                        priceBlock+
+                    '</a>';
+                }
+
+                function renderRails(all){
+                    var newEl = document.getElementById('nfNew');
+                    if (newEl){
+                        var recent = all.slice().sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); }).slice(0, 10);
+                        newEl.innerHTML = recent.length ? recent.map(function(p){ return railCardHTML(p, false); }).join('')
+                            : '<div class="nf-empty">Nothing new yet.</div>';
+                    }
+                    var saleEl = document.getElementById('nfSale');
+                    if (saleEl){
+                        var sale = (typeof VC.onSale === 'function') ? VC.onSale().slice(0, 12) : [];
+                        if (sale.length){
+                            saleEl.innerHTML = sale.map(function(p){ return railCardHTML(p, true); }).join('');
+                            saleEl.style.display = '';
+                        } else {
+                            // No discounts on air — hide the whole sale block (head + rail).
+                            saleEl.style.display = 'none';
+                            var head = saleEl.previousElementSibling;
+                            if (head && head.classList.contains('nf-wrap')) head.style.display = 'none';
+                        }
+                    }
+                }
+
                 function renderNext(){
                     var slice = items.slice(shown, shown + PAGE);
                     if (slice.length){
@@ -9846,6 +9919,7 @@ window.veroLocalImg = function (key) {
                     grid.innerHTML = '';
                     if (moreWrap) moreWrap.classList.remove('done');
                     renderNext();
+                    renderRails(all);
                     return true;
                 }
 
