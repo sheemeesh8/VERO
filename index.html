@@ -66,6 +66,17 @@
         .step-btn.locked { opacity: 0.3; pointer-events: none; }
         .pick-inner, .screen-inner { text-align: center; }
 
+        /* Action row: back arrow on the left of Continue. */
+        .step-actions { display: flex; align-items: stretch; justify-content: center; gap: 12px; margin-top: 30px; }
+        .step-actions .step-btn { margin: 0; }
+        .step-back {
+            flex: 0 0 auto; width: 56px; display: inline-flex; align-items: center; justify-content: center;
+            background: #fff; border: 1.5px solid #111; color: #111; cursor: pointer;
+            transition: background .2s ease, color .2s ease, transform .2s ease;
+        }
+        .step-back:hover { background: #111; color: #fff; transform: translateY(-2px); }
+        .step-back svg { width: 20px; height: 20px; display: block; }
+
         /* ===== Stacked full-screen step overlays — each fades IN over the previous ===== */
         .screen {
             position: fixed; inset: 0; background: #fff;
@@ -73,6 +84,9 @@
             opacity: 0; pointer-events: none; transition: opacity 1.5s cubic-bezier(0.83, 0, 0.17, 1); overflow-y: auto;
         }
         .screen.show { opacity: 1; pointer-events: auto; }
+        /* The whole screen content gently zooms in, so each transition reads clearly. */
+        .screen .screen-inner { transform: scale(0.96); transition: transform 1.2s cubic-bezier(.16,1,.3,1); }
+        .screen.show .screen-inner { transform: scale(1); }
         #scrProduct { z-index: 3; }
         #scrStyle { z-index: 4; }
         #scrFeed { z-index: 5; }
@@ -113,13 +127,13 @@
         .hero-slogan { opacity: 0; animation: heroIn 1.3s cubic-bezier(.16,1,.3,1) .6s forwards; }
 
         /* Step screens: inner blocks stagger up once the screen shows. */
-        .screen .scr-kicker, .screen .scr-q, .screen .step-btn,
+        .screen .scr-kicker, .screen .scr-q, .screen .step-btn, .screen .step-back,
         .screen .feed-head, .screen .feed-note, .screen .feed-grid,
         .screen .scr-opts .chip {
             opacity: 0; transform: translateY(22px);
             transition: opacity .85s cubic-bezier(.16,1,.3,1), transform .85s cubic-bezier(.16,1,.3,1);
         }
-        .screen.show .scr-kicker, .screen.show .scr-q, .screen.show .step-btn,
+        .screen.show .scr-kicker, .screen.show .scr-q, .screen.show .step-btn, .screen.show .step-back,
         .screen.show .feed-head, .screen.show .feed-note, .screen.show .feed-grid,
         .screen.show .scr-opts .chip { opacity: 1; transform: none; }
 
@@ -141,7 +155,7 @@
         .screen.show .scr-opts .chip:nth-child(10) { transition-delay: 1.05s; }
         .screen.show .scr-opts .chip:nth-child(11) { transition-delay: 1.10s; }
         .screen.show .scr-opts .chip:nth-child(12) { transition-delay: 1.15s; }
-        .screen.show .step-btn { transition-delay: 1.25s; }
+        .screen.show .step-btn, .screen.show .step-back { transition-delay: 1.25s; }
 
         /* Feed screen reveal order + per-card stagger. */
         .screen.show .feed-head { transition-delay: .3s; }
@@ -159,9 +173,9 @@
 
         @media (prefers-reduced-motion: reduce) {
             .hero-welcome, .hero-slogan { opacity: 1; animation: none; }
-            .screen .scr-kicker, .screen .scr-q, .screen .step-btn,
+            .screen .scr-kicker, .screen .scr-q, .screen .step-btn, .screen .step-back,
             .screen .feed-head, .screen .feed-note, .screen .feed-grid,
-            .screen .scr-opts .chip, .feed-grid .cv-card {
+            .screen .scr-opts .chip, .feed-grid .cv-card, .screen .screen-inner {
                 opacity: 1; transform: none; transition: none;
             }
         }
@@ -227,7 +241,10 @@
                 <button type="button" class="chip" data-val="activewear">Activewear</button>
                 <button type="button" class="chip" data-val="swimwear">Swimwear</button>
             </div>
-            <button class="step-btn locked" type="button" id="toStyle">Continue</button>
+            <div class="step-actions">
+                <button class="step-back" type="button" data-back="scrProduct" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+                <button class="step-btn locked" type="button" id="toStyle">Continue</button>
+            </div>
         </div>
     </section>
 
@@ -250,7 +267,10 @@
                 <button type="button" class="chip" data-val="sporty">Sporty</button>
                 <button type="button" class="chip" data-val="formal">Formal</button>
             </div>
-            <button class="step-btn locked" type="button" id="toFeed">See my edit</button>
+            <div class="step-actions">
+                <button class="step-back" type="button" data-back="scrStyle" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+                <button class="step-btn locked" type="button" id="toFeed">See my edit</button>
+            </div>
         </div>
     </section>
 
@@ -269,7 +289,10 @@
                 <h3 class="feed-subhead">The feed</h3>
                 <div class="feed-grid" id="feedAll"></div>
             </div>
-            <a class="step-btn feed-enter" id="enterFeed" href="products.html">Explore the full feed</a>
+            <div class="step-actions">
+                <button class="step-back" type="button" data-back="scrFeed" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+                <a class="step-btn feed-enter" id="enterFeed" href="products.html">Explore the full feed</a>
+            </div>
         </div>
     </section>
 
@@ -439,19 +462,28 @@
             var el = document.getElementById(id);
             if (el) { el.classList.add('show'); el.scrollTop = 0; }
         }
-        // Chip single-select; unlock that screen's Continue button.
+        // Chip multi-select; unlock Continue once at least one is chosen.
         [].slice.call(document.querySelectorAll('.scr-opts')).forEach(function (group) {
             var key = group.getAttribute('data-key');
             var chips = [].slice.call(group.querySelectorAll('.chip'));
             chips.forEach(function (ch) {
                 ch.addEventListener('click', function () {
-                    chips.forEach(function (c) { c.classList.remove('sel'); });
-                    ch.classList.add('sel');
-                    sel[key] = ch.getAttribute('data-val');
+                    ch.classList.toggle('sel');
+                    var chosen = chips.filter(function (c) { return c.classList.contains('sel'); })
+                                      .map(function (c) { return c.getAttribute('data-val'); });
+                    sel[key] = chosen;
                     var scr = ch.closest('.screen');
                     var btn = scr && scr.querySelector('.step-btn');
-                    if (btn) btn.classList.remove('locked');
+                    if (btn) btn.classList.toggle('locked', chosen.length === 0);
                 });
+            });
+        });
+
+        // Back arrows: hide the current screen to reveal the previous one.
+        [].slice.call(document.querySelectorAll('.step-back')).forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var el = document.getElementById(btn.getAttribute('data-back'));
+                if (el) el.classList.remove('show');
             });
         });
 
@@ -493,7 +525,14 @@
             var all = (window.veroCollections && window.veroCollections.allProducts) ? window.veroCollections.allProducts() : [];
             // Clothing / fashion only (drop the interior-design art pieces).
             all = all.filter(function (p) { return !(p._raw && p._raw.type === 'art'); });
-            var wanted = CAT_MAP[sel.product] || null;
+            var wanted = null;
+            if (sel.product && sel.product.length) {
+                wanted = [];
+                sel.product.forEach(function (v) {
+                    (CAT_MAP[v] || []).forEach(function (c) { if (wanted.indexOf(c) === -1) wanted.push(c); });
+                });
+                if (!wanted.length) wanted = null;
+            }
             var matched = all;
             if (wanted) {
                 matched = all.filter(function (p) {
@@ -527,8 +566,8 @@
             if (note) {
                 var bits = [];
                 if (sel.gender) bits.push(sel.gender);
-                if (sel.style) bits.push(sel.style);
-                if (sel.product) bits.push(sel.product);
+                (sel.product || []).forEach(function (v) { bits.push(v); });
+                (sel.style || []).forEach(function (v) { bits.push(v); });
                 note.textContent = bits.length ? ('Matched to: ' + bits.join(' · ')) : 'Picked for you';
             }
             // Carry the selections into the full feed.
@@ -536,8 +575,8 @@
             if (enter) {
                 var q = [];
                 if (sel.gender) q.push('gender=' + encodeURIComponent(sel.gender));
-                if (sel.product) q.push('category=' + encodeURIComponent(sel.product));
-                if (sel.style) q.push('style=' + encodeURIComponent(sel.style));
+                if (sel.product && sel.product.length) q.push('category=' + encodeURIComponent(sel.product.join(',')));
+                if (sel.style && sel.style.length) q.push('style=' + encodeURIComponent(sel.style.join(',')));
                 enter.setAttribute('href', 'products.html' + (q.length ? ('?' + q.join('&')) : ''));
             }
         }
