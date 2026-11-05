@@ -54,6 +54,48 @@
         #genderCover .gc-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
         #genderCover .gc-dots button { width: 8px; height: 8px; padding: 0; border: none; border-radius: 9999px; background: #111; opacity: 0.25; cursor: pointer; transition: opacity .25s ease, width .25s ease; }
         #genderCover .gc-dots button.on { opacity: 1; width: 22px; }
+
+        /* ===== Shared step button ===== */
+        .step-btn {
+            display: inline-block; margin: 30px auto 0;
+            font-family: 'Archivo','Poppins',sans-serif; font-weight: 700; font-size: 12px;
+            letter-spacing: 1.6px; text-transform: uppercase; color: #fff; background: #111;
+            border: none; padding: 16px 44px; cursor: pointer; transition: opacity .25s ease, transform .2s ease;
+        }
+        .step-btn:hover { transform: translateY(-2px); }
+        .step-btn.locked { opacity: 0.3; pointer-events: none; }
+        .pick-inner, .screen-inner { text-align: center; }
+
+        /* ===== Stacked full-screen step overlays — each fades IN over the previous ===== */
+        .screen {
+            position: fixed; inset: 0; background: #fff;
+            display: flex; align-items: center; justify-content: center; padding: 10vh 20px;
+            opacity: 0; pointer-events: none; transition: opacity .8s ease; overflow-y: auto;
+        }
+        .screen.show { opacity: 1; pointer-events: auto; }
+        #scrProduct { z-index: 3; }
+        #scrStyle { z-index: 4; }
+        #scrFeed { z-index: 5; }
+        .screen-inner { width: 100%; max-width: 620px; margin: 0 auto; }
+        .scr-kicker { font-family: 'Archivo','Inter',sans-serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #8a857c; }
+        .scr-q { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: clamp(28px, 7vw, 46px); line-height: 1.03; letter-spacing: -0.02em; color: #111; margin: 14px 0 32px; }
+        .scr-opts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .chip { font-family: 'Arimo','Inter',sans-serif; font-size: 15px; letter-spacing: 0.3px; color: #111; background: #fff; border: 1.5px solid #111; border-radius: 999px; padding: 13px 22px; cursor: pointer; transition: background .2s ease, color .2s ease, transform .2s ease; }
+        .chip:hover { transform: translateY(-2px); }
+        .chip.sel { background: #111; color: #fff; }
+
+        /* ===== Feed top strip — 6 matched products ===== */
+        .feed-head { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: clamp(22px,5vw,32px); color: #111; margin: 0 0 6px; letter-spacing: -0.02em; }
+        .feed-note { font-family: 'Arimo','Inter',sans-serif; font-size: 14px; color: #666; margin: 0 0 26px; }
+        .feed-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        @media (min-width: 620px) { .feed-grid { grid-template-columns: repeat(3, 1fr); } }
+        .fcard { display: block; text-decoration: none; color: #111; }
+        .fcard-img { position: relative; width: 100%; aspect-ratio: 0.8; background: #f0eee9; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 48px; }
+        .fcard-img img { width: 100%; height: 100%; object-fit: cover; }
+        .fcard-name { font-family: 'Arimo','Inter',sans-serif; font-size: 13px; margin: 8px 0 0; }
+        .fcard-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #777; }
+        .fcard-price { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 13px; margin-top: 2px; }
+        .feed-enter { display: inline-block; margin-top: 30px; }
     </style>
 </head>
 <body>
@@ -90,11 +132,56 @@
                 </div>
                 <div class="gc-dots"></div>
             </div>
+            <button class="step-btn" type="button" id="toProduct">Continue</button>
         </div>
     </section>
 
     <!-- Scroll room so the overlay has distance to fade in across -->
     <div class="scroll-space" aria-hidden="true"></div>
+
+    <!-- ===== STEP · PICK A PRODUCT ===== -->
+    <section class="screen" id="scrProduct" aria-label="What are you looking for">
+        <div class="screen-inner">
+            <span class="scr-kicker">Step 02</span>
+            <h2 class="scr-q">What are you<br>looking for?</h2>
+            <div class="scr-opts" data-key="product">
+                <button type="button" class="chip" data-val="clothing">Clothing</button>
+                <button type="button" class="chip" data-val="shoes">Shoes</button>
+                <button type="button" class="chip" data-val="bags">Bags</button>
+                <button type="button" class="chip" data-val="accessories">Accessories</button>
+                <button type="button" class="chip" data-val="jewelry">Jewelry</button>
+                <button type="button" class="chip" data-val="outerwear">Outerwear</button>
+            </div>
+            <button class="step-btn locked" type="button" id="toStyle">Continue</button>
+        </div>
+    </section>
+
+    <!-- ===== STEP · PICK A STYLE ===== -->
+    <section class="screen" id="scrStyle" aria-label="What is your style">
+        <div class="screen-inner">
+            <span class="scr-kicker">Step 03</span>
+            <h2 class="scr-q">What's your<br>style?</h2>
+            <div class="scr-opts" data-key="style">
+                <button type="button" class="chip" data-val="minimal">Minimal</button>
+                <button type="button" class="chip" data-val="elegant">Elegant</button>
+                <button type="button" class="chip" data-val="streetwear">Streetwear</button>
+                <button type="button" class="chip" data-val="vintage">Vintage</button>
+                <button type="button" class="chip" data-val="boho">Boho</button>
+                <button type="button" class="chip" data-val="classic">Classic</button>
+            </div>
+            <button class="step-btn locked" type="button" id="toFeed">See my edit</button>
+        </div>
+    </section>
+
+    <!-- ===== STEP · FEED (top 6 matched products) ===== -->
+    <section class="screen" id="scrFeed" aria-label="Your feed">
+        <div class="screen-inner">
+            <h2 class="feed-head">Your edit</h2>
+            <p class="feed-note" id="feedNote">Picked for you</p>
+            <div class="feed-grid" id="feedGrid"></div>
+            <a class="step-btn feed-enter" id="enterFeed" href="products.html">Explore the full feed</a>
+        </div>
+    </section>
 
     <!-- White overlay fades IN over the hero as you scroll down -->
     <script>
@@ -248,6 +335,106 @@
 
         function init() { measure(); render(); paint(); }
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+    })();
+    </script>
+
+    <!-- Product data (demo seed included) -->
+    <script src="collections.js"></script>
+
+    <!-- Step navigation + matched feed -->
+    <script>
+    (function () {
+        var sel = {};
+        function show(id) {
+            var el = document.getElementById(id);
+            if (el) { el.classList.add('show'); el.scrollTop = 0; }
+        }
+        // Chip single-select; unlock that screen's Continue button.
+        [].slice.call(document.querySelectorAll('.scr-opts')).forEach(function (group) {
+            var key = group.getAttribute('data-key');
+            var chips = [].slice.call(group.querySelectorAll('.chip'));
+            chips.forEach(function (ch) {
+                ch.addEventListener('click', function () {
+                    chips.forEach(function (c) { c.classList.remove('sel'); });
+                    ch.classList.add('sel');
+                    sel[key] = ch.getAttribute('data-val');
+                    var scr = ch.closest('.screen');
+                    var btn = scr && scr.querySelector('.step-btn');
+                    if (btn) btn.classList.remove('locked');
+                });
+            });
+        });
+
+        // Gender → product
+        var toProduct = document.getElementById('toProduct');
+        if (toProduct) toProduct.addEventListener('click', function () {
+            if (window.__gcGender) sel.gender = window.__gcGender.gender;
+            show('scrProduct');
+        });
+        // Product → style
+        var toStyle = document.getElementById('toStyle');
+        if (toStyle) toStyle.addEventListener('click', function () { show('scrStyle'); });
+        // Style → feed (build the 6 matched products)
+        var toFeed = document.getElementById('toFeed');
+        if (toFeed) toFeed.addEventListener('click', function () { buildFeed(); show('scrFeed'); });
+
+        // Map the shopper's product choice onto the demo catalogue's categories.
+        var CAT_MAP = {
+            clothing: ['shirts', 'dresses', 'knitwear', 'sets', 'tops'],
+            shoes: ['shoes'],
+            bags: ['bags', 'totes'],
+            accessories: ['accessories'],
+            jewelry: ['jewelry'],
+            outerwear: ['outerwear']
+        };
+        function money(n) { return (Math.round(Number(n) || 0)).toLocaleString('en-US') + ' ₪'; }
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+
+        function buildFeed() {
+            var grid = document.getElementById('feedGrid');
+            var note = document.getElementById('feedNote');
+            if (!grid) return;
+            var all = (window.veroCollections && window.veroCollections.allProducts) ? window.veroCollections.allProducts() : [];
+            // Clothing / fashion only (drop the interior-design art pieces).
+            all = all.filter(function (p) { return !(p._raw && p._raw.type === 'art'); });
+            var wanted = CAT_MAP[sel.product] || null;
+            var matched = all;
+            if (wanted) {
+                matched = all.filter(function (p) {
+                    return wanted.indexOf(String(p.category || '').toLowerCase()) !== -1;
+                });
+            }
+            if (matched.length < 6) {
+                // Top up with the rest so there are always 6.
+                all.forEach(function (p) { if (matched.indexOf(p) === -1) matched.push(p); });
+            }
+            var six = matched.slice(0, 6);
+            grid.innerHTML = six.map(function (p) {
+                var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">' : esc(p.icon || '🛍️');
+                return '<a class="fcard" href="products.html">' +
+                    '<div class="fcard-img">' + inner + '</div>' +
+                    '<div class="fcard-name">' + esc(p.name) + '</div>' +
+                    '<div class="fcard-brand">' + esc(p.seller) + '</div>' +
+                    '<div class="fcard-price">' + money(p.price) + '</div>' +
+                '</a>';
+            }).join('');
+            if (note) {
+                var bits = [];
+                if (sel.gender) bits.push(sel.gender);
+                if (sel.style) bits.push(sel.style);
+                if (sel.product) bits.push(sel.product);
+                note.textContent = bits.length ? ('Matched to: ' + bits.join(' · ')) : 'Picked for you';
+            }
+            // Carry the selections into the full feed.
+            var enter = document.getElementById('enterFeed');
+            if (enter) {
+                var q = [];
+                if (sel.gender) q.push('gender=' + encodeURIComponent(sel.gender));
+                if (sel.product) q.push('category=' + encodeURIComponent(sel.product));
+                if (sel.style) q.push('style=' + encodeURIComponent(sel.style));
+                enter.setAttribute('href', 'products.html' + (q.length ? ('?' + q.join('&')) : ''));
+            }
+        }
     })();
     </script>
 
