@@ -9666,915 +9666,204 @@ window.veroLocalImg = function (key) {
                  .cv-feed; product grids are rendered from veroCollections.
                  The legacy feed below is hidden (see the ~ * rule). ============= -->
             <style>
-            .cv-feed { direction: ltr; background: #f4f1ea; color: #111; margin: -20px 0 0; max-width: 100%; overflow-x: clip; }
+            /* =====================================================================
+               FEED — rebuilt from scratch. A clean, modern marketplace home:
+               search · category chips · a featured editorial banner · and the main
+               two-up product feed with client-side "load more". Product data comes
+               from window.veroCollections (collections.js); the card link, media and
+               photo helpers are self-contained below. Scoped to .cv-feed.
+               ===================================================================== */
+            .cv-feed { direction: ltr; background: #f4f1ea; color: #111; margin: -20px 0 0; max-width: 100%; overflow-x: clip; padding-bottom: 92px; }
             .cv-feed * { box-sizing: border-box; }
-            .cv-feed .cv-wrap { padding: 0 20px; }
-            /* Hide every legacy feed block that follows the Canva feed. */
+            .cv-feed a { text-decoration: none; color: inherit; }
+
+            /* Hide every legacy feed block that follows this feed in the container. */
             .feed-section .container > .cv-feed ~ *:not(script):not(style) { display: none !important; }
 
-            /* ---- shared type ---- */
-            .cv-feed .cv-h1 { font-family: 'Poppins','Archivo',sans-serif; font-weight: 700; color: #fff; line-height: 0.88; letter-spacing: -0.5px; }
-            .cv-feed .cv-mega { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; color: #fff; line-height: 0.92; letter-spacing: -1px; }
-            .cv-feed .cv-body { font-family: 'Arimo','Inter',sans-serif; font-size: 13px; line-height: 1.5; color: #1b1b1b; }
-            .cv-feed .cv-eyebrow { font-family: 'Arimo','Inter',sans-serif; letter-spacing: 3px; text-transform: uppercase; font-size: 12px; color: #fff; }
+            /* ---- outer rhythm ---- */
+            .nf-wrap { padding: 0 18px; }
+            .nf-section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 30px 0 14px; }
+            .nf-section-head h2 { margin: 0; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px; text-transform: uppercase; color: #111; }
+            .nf-section-head a { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #6b6a64; }
+            .nf-section-head a:hover { color: #B3433B; }
 
-            /* ---- SHOW MORE / SLIDE divider ---- */
-            .cv-feed .cv-showmore { display: none !important; }
-            .cv-feed .cv-showmore--legacy { display: flex; align-items: center; gap: 16px; margin: 40px 0 44px; text-decoration: none; }
-            .cv-feed .cv-showmore::before, .cv-feed .cv-showmore::after { content: ""; flex: 1 1 0; height: 1.5px; background: #111; }
-            .cv-feed .cv-showmore span { font-family: 'Archivo','Inter',sans-serif; font-size: 8.7px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #111; white-space: nowrap; }
-            .cv-feed .cv-showmore:hover span { color: #B3433B; }
+            /* ---- search ---- */
+            .nf-top { padding: 16px 18px 2px; }
+            .nf-search { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e4e0d6; border-radius: 9999px; padding: 13px 18px; }
+            .nf-search svg { width: 19px; height: 19px; flex: none; stroke: #9a998f; }
+            .nf-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-family: 'Arimo','Inter',sans-serif; font-size: 14px; color: #111; }
+            .nf-search input::placeholder { color: #a3a298; }
 
-            /* ---- product grid ---- */
-            /* Pull the grid out of the wrap's 20px gutter so the side margin (8px)
-               matches the gap between the two cards — making the cards larger. */
-            .cv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px 8px; margin: 22px -12px 0; }
-            /* Search + slider as one component. */
-            .cv-findbar { display: block; }
-            .cv-findbar .cv-search { margin-bottom: 0; }
-            .cv-findbar .cv-slider { margin-top: 16px; }
-            /* Horizontal slider variant — same card size as the 2-up grid, two cards
-               fully visible per view (no cut-off peek), snapping in pairs. */
-            .cv-grid.cv-slider {
-                display: flex; grid-template-columns: none; flex-wrap: nowrap;
-                overflow-x: auto; gap: 8px; margin: 22px -12px 0;
-                scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-            }
-            .cv-grid.cv-slider::-webkit-scrollbar { display: none; }
-            .cv-grid.cv-slider .cv-card { flex: 0 0 calc((100% - 8px) / 2); scroll-snap-align: start; }
-            /* Slider card: transparent image area (icon only), three centred lines. */
-            .cv-scard-img { background: transparent !important; }
-            .cv-scard-meta { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; margin-top: 12px; }
-            .cv-scard-name { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 0.4px; text-transform: uppercase; color: #1b1916; }
-            .cv-scard-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #8a857c; }
-            .cv-scard-likes { display: inline-flex; align-items: center; gap: 5px; font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #1b1916; }
-            .cv-scard-likes svg { width: 13px; height: 13px; }
-            /* Editorial product card — uppercase name, brand line, price with the
-               shekel after the number, a hairline, and a SHOW MORE link beneath. */
-            .cv-card { text-decoration: none; color: #1b1916; display: block; min-width: 0; }
-            .cv-card-img { position: relative; width: 100%; aspect-ratio: 0.82; background: #F2F2F2; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-            .cv-card-img img { width: 100%; height: 100%; object-fit: cover; }
-            /* In-card image slider */
-            .cv-card-img .cv-slider { position: absolute; inset: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; z-index: 1; }
-            .cv-card-img .cv-slider::-webkit-scrollbar { display: none; }
-            .cv-card-img .cv-slide { flex: 0 0 100%; scroll-snap-align: center; }
-            .cv-card-img .cv-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
-            /* LV-style indicator: light track with a short black mark that
-               moves with the current image. */
-            .cv-card-img .cv-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(0,0,0,0.12); z-index: 3; overflow: hidden; }
-            .cv-card-img .cv-bar span { display: block; height: 100%; background: #111; transition: transform 0.3s ease; }
-            /* Baseline LV mark for any card image that has no slider bar element. */
-            .cv-card-img:not(:has(.cv-bar))::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; z-index: 3; background: linear-gradient(to right, #111 0 34%, rgba(0,0,0,0.12) 34% 100%); }
-            /* No indicator on the horizontal product slider under the hero. */
-            .cv-card-img.cv-scard-img::after { display: none; }
-            .cv-card-emoji { font-size: 48px; opacity: 0.45; }
-            .cv-card-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 16px; }
-            .cv-card-name { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; line-height: 1.3; font-weight: 400; letter-spacing: 0.4px; text-transform: uppercase; color: #1b1916; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; }
-            .cv-card-price { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 0.3px; color: #1b1916; white-space: nowrap; flex: 0 0 auto; }
-            .cv-card-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #8a857c; margin-top: 2px; }
-            /* ===== Living-glass sale card (feed) — an animated red blob glowing
-               behind a frosted panel, framing each on-sale piece. Adapted from
-               the sales.html treatment to the editorial cv-card; the blob + face
-               layers are injected in build(). Respects reduced motion. ===== */
-            .cv-feed .cv-card.is-sale .cv-card-img { border-radius: 14px; background: #ededed; box-shadow: 8px 8px 22px #d4d4d2, -8px -8px 22px #ffffff; }
-            .cv-feed .cv-card.is-sale .sale-blob { position: absolute; z-index: 1; top: 50%; left: 50%; width: 60%; height: 60%; border-radius: 50%; background-color: #ff2d2d; filter: blur(26px); pointer-events: none; animation: cvSaleBlob 5s infinite ease; }
-            .cv-feed .cv-card.is-sale .sale-bg { position: absolute; z-index: 2; inset: 5px; border-radius: 10px; background: rgba(255,255,255,0.92); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); outline: 2px solid #fff; pointer-events: none; }
-            .cv-feed .cv-card.is-sale .sale-face { position: absolute; z-index: 3; inset: 7px; border-radius: 9px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-            .cv-feed .cv-card.is-sale .sale-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
-            @keyframes cvSaleBlob {
-                0%   { transform: translate(-100%, -100%) translate3d(0, 0, 0); }
-                25%  { transform: translate(-100%, -100%) translate3d(100%, 0, 0); }
-                50%  { transform: translate(-100%, -100%) translate3d(100%, 100%, 0); }
-                75%  { transform: translate(-100%, -100%) translate3d(0, 100%, 0); }
-                100% { transform: translate(-100%, -100%) translate3d(0, 0, 0); }
-            }
-            @media (prefers-reduced-motion: reduce) { .cv-feed .cv-card.is-sale .sale-blob { animation: none; } }
-            .cv-card-more { display: flex; align-items: center; gap: 11px; margin-top: 9px; padding-top: 9px; border-top: 1px solid #ddd8ce; font-family: 'Archivo','Inter',sans-serif; font-weight: 400; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #1b1916; }
-            .cv-card-arw { width: 38px; height: 1.5px; background: currentColor; position: relative; }
-            .cv-card-arw::after { content: ""; position: absolute; right: 0; top: -3px; width: 6px; height: 6px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: rotate(45deg); }
+            /* ---- category chips ---- */
+            .nf-chips { display: flex; gap: 9px; overflow-x: auto; padding: 16px 18px 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+            .nf-chips::-webkit-scrollbar { display: none; }
+            .nf-chip { flex: none; display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 9999px; background: #fff; border: 1px solid #e4e0d6; font-family: 'Arimo','Inter',sans-serif; font-size: 12.5px; letter-spacing: 1px; text-transform: uppercase; color: #3a3a34; white-space: nowrap; transition: background .18s ease, color .18s ease, border-color .18s ease; }
+            .nf-chip:hover { border-color: #111; }
+            .nf-chip.is-active { background: #111; color: #fff; border-color: #111; }
 
-            /* ===== 1. AUTUMN COLLECTION HERO ===== */
-            .cv-coll { position: relative; width: 100%; min-height: 75svh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 15% 26px 0; overflow: hidden; }
-            .cv-coll-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-            .cv-coll::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.30) 55%, rgba(0,0,0,0.50) 100%); }
-            .cv-coll > *:not(.cv-coll-bg):not(.cv-coll-cta) { position: relative; z-index: 2; }
-            .cv-coll .cv-h1 { font-size: 15vw; max-width: 9ch; }
-            .cv-coll-sub { font-family: 'Arimo','Inter',sans-serif; color: #fff; font-size: 15px; margin-top: 8px; max-width: 18ch; }
-            .cv-coll-rule { width: 62%; max-width: 420px; height: 1.5px; background: rgba(255,255,255,0.85); margin: 18px 0; }
-            /* Sale band: no divider line under the subtitle. */
-            .cv-coll--sale .cv-coll-rule { display: none; }
-            .cv-coll-cta { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); top: 54%; bottom: 0; width: 36%; max-width: 180px; background: rgba(120,116,110,0.72); color: #fff; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 19px; line-height: 1.05; text-transform: uppercase; text-decoration: none; padding: 22px 14px; display: flex; align-items: flex-start; justify-content: center; text-align: center; transition: filter 0.2s; }
-            .cv-coll-cta:hover { filter: brightness(0.9); }
-            .cv-coll-foot { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 20px 0 6px; }
-            .cv-coll-foot p { font-family: 'Arimo','Inter',sans-serif; font-size: 12.5px; line-height: 1.35; color: #1b1b1b; max-width: 60%; margin: 0; }
-            .cv-coll-foot .cv-air { text-align: right; }
-            .cv-coll-foot .cv-air b { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; display: block; }
-            .cv-coll-foot .cv-air span { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 15px; }
+            /* ---- featured editorial banner ---- */
+            .nf-feature { position: relative; display: block; margin: 20px 18px 6px; height: 380px; border-radius: 22px; overflow: hidden; background: #e7e3da; }
+            /* Hero variant: full-bleed at the very top, with the transparent site
+               header riding over it (top darkening keeps the white icons legible). */
+            .nf-feature.nf-hero { margin: 0 0 6px; height: clamp(440px, 72vh, 580px); border-radius: 0 0 26px 26px; }
+            .nf-feature video, .nf-feature img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+            .nf-feature::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 38%, rgba(0,0,0,0.58) 100%); }
+            .nf-feature.nf-hero::after { background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 24%, rgba(0,0,0,0) 44%, rgba(0,0,0,0.62) 100%); }
+            .nf-feature-body { position: absolute; left: 22px; right: 22px; bottom: 26px; z-index: 2; color: #fff; }
+            .nf-feature.nf-hero .nf-feature-title { font-size: 46px; }
+            .nf-feature-eyebrow { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; margin: 0 0 6px; }
+            .nf-feature-title { margin: 0; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 40px; line-height: 0.92; text-transform: uppercase; letter-spacing: -1px; }
+            .nf-feature-cta { display: inline-block; margin-top: 14px; font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.85); padding-bottom: 3px; }
 
-            /* ---- 02d · Caption-rail hero (Autumn only) -------------------
-               Full-bleed media, headline anchored bottom-left, a hairline
-               data rail down the right. Scoped to --hero so New Arrivals and
-               Sale keep the shared centred treatment. --------------------- */
-            .cv-coll--hero { justify-content: stretch; align-items: stretch; text-align: left; padding: 0; min-height: 86svh; }
-            .cv-coll--hero::before { background: linear-gradient(0deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.30) 42%, rgba(0,0,0,0.05) 72%), linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.10) 55%, rgba(0,0,0,0) 100%); }
-            .cv-feed .cv-coll--hero .cvh-layer { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; justify-content: flex-end; }
-            .cv-coll--hero .cvh-main { padding: 0 clamp(16px,4vw,40px) clamp(10px,2vw,14px); padding-left: clamp(24px, 6vw, 72px); }
-            .cv-coll--hero .cvh-eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: 'Archivo','Inter',sans-serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-weight: 800; color: #fff; }
-            .cv-coll--hero .cvh-eyebrow::before { content: ""; width: 26px; height: 2px; background: #EB2323; display: inline-block; }
-            .cv-feed .cv-coll--hero .cv-h1 { font-size: clamp(40px, 7.5vw, 86px); max-width: 16ch; margin: 20px 0 28px; line-height: 0.96; letter-spacing: -0.03em; text-transform: none; }
-            .cv-coll--hero .cv-h1 em { font-style: normal; color: #EB2323; }
-            .cv-coll--hero .cvh-cta { display: inline-block; background: #EB2323; color: #fff; font-family: 'Archivo','Poppins',sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase; text-decoration: none; padding: 16px 34px; transition: background 0.2s; }
-            .cv-coll--hero .cvh-cta:hover { background: #c81717; }
-            /* Stat cards — three in a row along the bottom of the hero; the left one solid white. */
-            .cv-coll--hero .cvh-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(3px,0.8vw,6px); padding: 0 clamp(10px,2vw,16px) clamp(26px,5vw,44px); }
-            .cv-coll--hero .cvh-card { border-radius: 16px; padding: clamp(10px,2vw,16px); min-height: 86px; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 2px; background: rgba(18,22,18,0.42); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #fff; }
-            .cv-coll--hero .cvh-crow { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
-            .cv-coll--hero .cvh-card .n { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: clamp(19px,4.6vw,32px); letter-spacing: -0.03em; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
-            .cv-coll--hero .cvh-card .n .u { color: #EB2323; }
-            .cv-coll--hero .cvh-card .l { font-family: 'Arimo','Inter',sans-serif; font-size: clamp(8px,1.7vw,10px); letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.65); }
-            .cv-coll--hero .cvh-ico { width: clamp(28px,6vw,36px); height: clamp(28px,6vw,36px); background: #EB2323; color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 10px; }
-            .cv-coll--hero .cvh-ico svg { width: 14px; height: 14px; }
-            .cv-coll--hero .cvh-tag { font-family: 'Archivo','Inter',sans-serif; font-size: clamp(7px,1.5vw,9px); letter-spacing: 1px; text-transform: uppercase; font-weight: 700; background: rgba(255,255,255,0.14); color: #fff; padding: 3px 7px; border-radius: 999px; white-space: nowrap; }
-            .cv-coll--hero .cvh-card.white { background: #fff; color: #141414; }
-            .cv-coll--hero .cvh-card.white .n { color: #141414; }
-            .cv-coll--hero .cvh-card.white .l { color: #6d6d6d; }
-            .cv-coll--hero .cvh-card.white .cvh-ico { background: #141414; color: #fff; }
-            @media (max-width: 720px) {
-              .cv-coll--hero { min-height: 78svh; }
-            }
-            /* Search bar — replaces the "Items on air" footer under the hero. */
-            .cv-search { display: flex; align-items: center; gap: 11px; width: 100%; max-width: 560px; margin: 20px auto 6px; padding: 14px 16px; border: 1px solid #1b1916; background: #fff; }
-            .cv-search svg { width: 18px; height: 18px; stroke: #1b1916; fill: none; flex: none; }
-            .cv-search input { flex: 1; min-width: 0; border: none; outline: none; background: none; font-family: 'Arimo','Inter',sans-serif; font-size: 14px; color: #1b1916; letter-spacing: 0.3px; }
-            .cv-search input::placeholder { color: #8a857c; }
+            /* ---- product feed grid ---- */
+            .nf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 12px; padding: 0 18px; }
+            .nf-card { display: block; }
+            .nf-card-media { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 16px; overflow: hidden; background: #e9e5dc; display: flex; align-items: center; justify-content: center; }
+            .nf-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+            .nf-card-emoji { font-size: 54px; line-height: 1; filter: grayscale(0.1); }
+            .nf-like { position: absolute; top: 10px; right: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 9px; border-radius: 9999px; background: rgba(255,255,255,0.9); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font-family: 'Arimo','Inter',sans-serif; font-size: 11px; font-weight: 600; color: #111; }
+            .nf-like svg { width: 13px; height: 13px; stroke: #B3433B; fill: none; }
+            .nf-tag { position: absolute; top: 10px; left: 10px; z-index: 2; height: 24px; display: inline-flex; align-items: center; padding: 0 9px; border-radius: 6px; background: #B3433B; color: #fff; font-family: 'Arimo','Inter',sans-serif; font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+            .nf-card-name { margin: 9px 0 0; font-family: 'Arimo','Inter',sans-serif; font-size: 13px; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .nf-card-brand { margin: 1px 0 0; font-family: 'Arimo','Inter',sans-serif; font-size: 11px; color: #8a897f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .nf-card-price { margin: 4px 0 0; font-family: 'Archivo','Inter',sans-serif; font-size: 13.5px; font-weight: 800; color: #111; }
 
-            /* category band under grid #1 */
-            .cv-catband { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-top: 26px; }
-            .cv-catband p { font-family: 'Arimo','Inter',sans-serif; font-size: 12.5px; line-height: 1.3; color: #1b1b1b; max-width: 56%; margin: 0; }
-            .cv-catband .cv-cat-r { text-align: right; }
-            .cv-catband .cv-cat-r b { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; display: block; }
-            .cv-catband .cv-cat-r span { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #6a6a66; }
-
-            /* ===== 2. GENDER SLIDER — Unisex · Men · Women · Kids ===== */
-            .cv-gender { display: flex; gap: 0; margin-top: 30px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-            .cv-gender::-webkit-scrollbar { display: none; }
-            .cv-gender a { position: relative; flex: 0 0 50%; height: 62svh; overflow: hidden; display: block; text-decoration: none; scroll-snap-align: start; }
-            .cv-gender a video, .cv-gender a img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-            .cv-gender a::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.35) 100%); }
-            .cv-gender .cv-g-label { position: absolute; left: 14px; bottom: 54px; z-index: 2; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 34px; color: #fff; text-transform: uppercase; letter-spacing: -0.5px; }
-            .cv-gender .cv-g-hint { position: absolute; left: 12px; right: 12px; bottom: 16px; z-index: 2; display: flex; align-items: center; gap: 8px; font-family: 'Arimo','Inter',sans-serif; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.9); }
-            .cv-gender .cv-g-hint .ln { flex: 1 1 0; height: 1px; background: rgba(255,255,255,0.8); }
-            .cv-gender .cv-g-left .cv-g-hint { justify-content: flex-end; }
-            .cv-gender .cv-g-left .cv-g-hint .ln { order: -1; }
-
-            /* ===== 3. NEW ARRIVALS HERO ===== */
-            .cv-na { position: relative; width: 100%; min-height: 72svh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 13% 26px 0; overflow: hidden; background: linear-gradient(160deg,#6f7d4f 0%, #8a9766 45%, #9fa877 100%); }
-            .cv-na-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: 0.9; }
-            .cv-na::before { content: ""; position: absolute; inset: 0; z-index: 1; background: rgba(60,72,38,0.28); }
-            .cv-na > *:not(.cv-na-bg):not(.cv-na-box) { position: relative; z-index: 2; }
-            .cv-na .cv-mega { font-size: 17vw; }
-            .cv-na-box { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); top: 48%; bottom: 6%; width: 40%; max-width: 200px; background: rgba(92,104,62,0.55); display: flex; align-items: flex-start; justify-content: center; padding: 24px 10px; transition: filter 0.2s; }
-            .cv-na-box:hover { filter: brightness(0.9); }
-            .cv-na-box span { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 26px; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
-            .cv-na-intro { font-family: 'Arimo','Inter',sans-serif; font-size: 8.3px; line-height: 1.5; color: #1b1b1b; margin: 24px 0 0; }
-
-            /* ===== 4. SALE HERO ===== */
-            .cv-sale { position: relative; width: 100%; min-height: 74svh; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; padding: 18% 24px 0; }
-            .cv-sale-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(2px); transform: scale(1.05); z-index: 0; }
-            .cv-sale::before { content: ""; position: absolute; inset: 0; z-index: 1; background: rgba(0,0,0,0.12); }
-            .cv-sale > *:not(.cv-sale-bg):not(.cv-sale-disc) { position: relative; z-index: 2; }
-            .cv-sale .cv-sale-title { position: relative; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 26vw; line-height: 0.9; color: #fff; letter-spacing: -2px; }
-            .cv-sale .cv-sale-title i { position: absolute; top: 0; right: 0; width: 26px; height: 26px; background: #B3433B; clip-path: polygon(100% 0, 0 0, 100% 100%); }
-            .cv-sale-row { display: flex; align-items: center; gap: 0; margin-top: 10px; }
-            .cv-sale-row .cv-sale-cap { font-family: 'Arimo','Inter',sans-serif; letter-spacing: 1px; text-transform: uppercase; font-size: 13px; color: #fff; flex: 1; }
-            .cv-sale-disc { position: absolute; z-index: 2; right: 15%; top: 46%; bottom: 5%; width: 33%; max-width: 165px; background: rgba(190,180,164,0.82); display: flex; align-items: flex-start; justify-content: center; padding: 22px 8px; transition: filter 0.2s; }
-            .cv-sale-disc:hover { filter: brightness(0.92); }
-            .cv-sale-disc span { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 24px; letter-spacing: 1px; text-transform: uppercase; color: #fff; }
-
-            /* featured product detail (Sale + Special) */
-            .cv-feature { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; align-items: start; }
-            .cv-feature-img { position: relative; width: 100%; aspect-ratio: 0.62; background: #efeeea; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-            .cv-feature-img img { width: 100%; height: 100%; object-fit: cover; }
-            .cv-feature-img .cv-corner { position: absolute; top: 0; right: 0; width: 34px; height: 34px; background: #B3433B; clip-path: polygon(100% 0, 0 0, 100% 100%); }
-            .cv-feature-img .cv-card-emoji { font-size: 60px; }
-            .cv-feature-info .cv-fi-name { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 15px; text-transform: uppercase; }
-            .cv-feature-info .cv-fi-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 13px; color: #6a6a66; margin-top: 2px; }
-            .cv-feature-info .cv-fi-spec { font-family: 'Poppins','Inter',sans-serif; font-weight: 300; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; margin-top: 18px; }
-            .cv-feature-info .cv-fi-price { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 14px; margin-top: 8px; }
-            .cv-feature-info .cv-fi-desc { font-family: 'Arimo','Inter',sans-serif; font-size: 12.5px; line-height: 1.45; color: #1b1b1b; margin-top: 22px; }
-            .cv-feature-info .cv-fi-more { display: inline-block; font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; margin-top: 22px; text-decoration: none; color: #111; }
-
-            /* ===== SPECIAL FOR YOU (centered variant) ===== */
-            .cv-special { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 44px; align-items: center; }
-            .cv-special .cv-sp-info { text-align: center; }
-            .cv-special .cv-sp-eyebrow { font-family: 'Arimo','Inter',sans-serif; letter-spacing: 2px; text-transform: uppercase; font-size: 12px; color: #111; }
-            .cv-special .cv-sp-name { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; font-size: 16px; text-transform: uppercase; margin-top: 10px; }
-            .cv-special .cv-sp-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 14px; color: #3a3a37; margin-top: 2px; }
-            .cv-special .cv-sp-desc { font-family: 'Arimo','Inter',sans-serif; font-size: 8.3px; line-height: 1.5; color: #1b1b1b; margin: 34px 0; }
-            .cv-special .cv-sp-specrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1.5px solid #111; padding-top: 10px; font-family: 'Poppins','Inter',sans-serif; font-weight: 300; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
-            .cv-special .cv-sp-specrow b { font-family: 'Archivo','Inter',sans-serif; font-weight: 800; }
-            .cv-special .cv-sp-more { display: none !important; }
-            .cv-special .cv-sp-more i { width: 150px; height: 1.5px; background: #111; }
-
-            /* Link reset — kill the default blue/underline inside the feed. */
-            .cv-feed a, .cv-feed a:link, .cv-feed a:visited, .cv-feed a:hover, .cv-feed a:active { text-decoration: none !important; }
-            .cv-feed a, .cv-feed a:link, .cv-feed a:visited { color: #111; }
-            .cv-feed .cv-card-emoji, .cv-feed .cv-card-img { color: #333; }
-            .cv-coll-cta, .cv-coll-cta span, .cv-na-box, .cv-na-box span, .cv-sale-disc, .cv-sale-disc span { color: #fff !important; }
-
-            @media (min-width: 560px) {
-              .cv-grid { grid-template-columns: repeat(3, 1fr); }
-              .cv-grid--two { grid-template-columns: 1fr 1fr; }
-              .cv-coll .cv-h1 { font-size: 90px; }
-              .cv-sale .cv-sale-title { font-size: 150px; }
-              .cv-na .cv-mega { font-size: 110px; }
-            }
-
-            /* ===== EDITORIAL PANEL HERO — centred frosted panel over a
-               full-bleed image. One component, reused by Autumn / New
-               Arrivals / Sale so every section image reads the same way. === */
-            .cv-panel { position: relative; width: 100%; min-height: 86svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 11% 22px; overflow: hidden; background: #cfcac2; }
-            .cv-panel .cv-coll-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-            .cv-panel::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.06) 45%, rgba(0,0,0,0.22) 100%); }
-            .cv-panel > * { position: relative; z-index: 2; }
-            .cv-panel .cvp-box { width: min(68%, 360px); aspect-ratio: 0.72; background: rgba(226,224,220,0.24); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); display: flex; flex-direction: column; align-items: center; padding: 13% 8% 11%; text-decoration: none; transition: background 0.2s; }
-            .cv-panel .cvp-box:hover { background: rgba(226,224,220,0.34); }
-            .cv-panel .cvp-title { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; text-transform: uppercase; color: #fff; font-size: clamp(30px, 8.6vw, 60px); line-height: 0.97; letter-spacing: -0.015em; margin: 0; }
-            .cv-panel .cvp-stat { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 7px; padding-bottom: 6%; }
-            .cv-panel .cvp-num { font-family: 'Arimo','Inter',sans-serif; font-size: 13px; letter-spacing: 1px; color: #fff; }
-            .cv-panel .cvp-air { font-family: 'Archivo','Inter',sans-serif; font-weight: 500; font-size: 15px; letter-spacing: 3px; text-transform: uppercase; color: #fff; }
-            .cv-panel .cvp-tag { font-family: 'Arimo','Inter',sans-serif; color: #fff; font-size: 15px; letter-spacing: 0.3px; margin: 22px 0 0; max-width: 32ch; }
-            /* ---- Hero entrance: the data (frosted panel + tagline) rises in a
-               slide-up over the playing video, once on load. Scoped to the first
-               Autumn panel via .cvp-entry so the Sale / New-Arrivals panels further
-               down the feed are unaffected. ---- */
-            @keyframes cvpRise {
-                from { opacity: 0; transform: translateY(54px); }
-                to   { opacity: 1; transform: translateY(0); }
-            }
-            .cvp-entry .cvp-box { animation: cvpRise 1.1s cubic-bezier(.22,1,.36,1) .25s both; }
-            .cvp-entry .cvp-tag { animation: cvpRise 1.1s cubic-bezier(.22,1,.36,1) .55s both; }
-            @media (prefers-reduced-motion: reduce) {
-                .cvp-entry .cvp-box, .cvp-entry .cvp-tag { animation: none; }
-            }
-            @media (min-width: 560px) {
-              .cv-panel .cvp-title { font-size: 52px; }
-            }
+            /* ---- load more ---- */
+            .nf-more { display: flex; justify-content: center; margin: 34px 0 6px; }
+            .nf-more button { font-family: 'Archivo','Inter',sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #111; background: transparent; border: 1.5px solid #111; border-radius: 9999px; padding: 14px 40px; cursor: pointer; transition: background .2s ease, color .2s ease; }
+            .nf-more button:hover { background: #111; color: #fff; }
+            .nf-more.done { display: none; }
+            .nf-empty { text-align: center; padding: 60px 20px; font-family: 'Arimo','Inter',sans-serif; color: #8a897f; font-size: 14px; }
             </style>
 
             <section class="cv-feed" aria-label="moravchick homepage">
 
-                <!-- 1 · AUTUMN COLLECTION — editorial panel hero -->
-                <div class="cv-coll cv-panel cvp-entry">
-                    <video class="cv-coll-bg" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline aria-hidden="true"></video>
-                    <a class="cvp-box" href="collections.html">
-                        <h1 class="cvp-title">Autumn<br>Collection</h1>
-                        <div class="cvp-stat">
-                            <span class="cvp-num" data-count="all">1939</span>
-                            <span class="cvp-air">Items on air</span>
-                        </div>
-                    </a>
-                    <p class="cvp-tag">Wrapped in warmth, defined by elegance</p>
+                <!-- featured editorial hero — leads the page full-bleed; the
+                     transparent site header rides over it. -->
+                <a class="nf-feature nf-hero" href="collections.html">
+                    <video src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline aria-hidden="true"></video>
+                    <div class="nf-feature-body">
+                        <p class="nf-feature-eyebrow">Autumn collection</p>
+                        <h2 class="nf-feature-title">Wrapped<br>in warmth</h2>
+                        <span class="nf-feature-cta">Explore the edit</span>
+                    </div>
+                </a>
+
+                <!-- search -->
+                <div class="nf-top">
+                    <form class="nf-search" role="search" onsubmit="return heroSearch(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                        <input type="search" name="q" placeholder="Search products, brands, categories" aria-label="Search" autocomplete="off" enterkeyhint="search">
+                    </form>
                 </div>
-                <div class="cv-wrap">
-                    <!-- Search + slider defined as one component -->
-                    <div class="cv-findbar" role="group" aria-label="Search and featured products">
-                        <form class="cv-search" role="search" onsubmit="return heroSearch(this)">
-                            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-                            <input type="search" name="q" placeholder="Search products, brands, categories" aria-label="Search" autocomplete="off" enterkeyhint="search">
-                        </form>
-                        <!-- horizontal slider of ten product cards, part of the search component -->
-                        <div class="cv-grid cv-slider" data-grid="foryou" data-n="10"></div>
-                    </div>
 
-                <!-- 2 · CHOOSE BY CATEGORY — full-width gender video slider with a
-                     liquid ripple. The ripple is drawn on a 2D canvas from the
-                     playing video (works on iOS, where a WebGL carousel / SVG
-                     video filter did not render). If the canvas can't run, the raw
-                     video shows underneath, so the slider always appears. -->
-                <style>
-                    /* ===== Coverflow gender carousel (ported from coverflow-carousel.tsx) ===== */
-                    #genderCover { position: relative; margin: 0 -20px 14px; --gc-card: clamp(260px, 82vw, 430px); }
-                    #genderCover .gc-head { font-family: 'Poppins','Inter',sans-serif; font-weight: 300; letter-spacing: 0.01em; font-size: 15px; color: #111; text-align: center; margin: 0 0 2px; }
-                    #genderCover .gc-sub { font-family: 'Poppins','Inter',sans-serif; font-weight: 400; font-size: 12px; color: #6b6a64; text-align: center; margin: 0 0 4px; min-height: 16px; }
-                    #genderCover .gc-rel { position: relative; }
-                    #genderCover .gc-frame { perspective: calc(var(--gc-card) * 3); overflow: hidden; padding: 34px 0 30px; outline: none; cursor: grab; touch-action: pan-y; }
-                    #genderCover .gc-frame:active { cursor: grabbing; }
-                    #genderCover .gc-stage { position: relative; height: var(--gc-card); transform-style: preserve-3d; }
-                    #genderCover .gc-card { position: absolute; left: 50%; top: 0; width: var(--gc-card); height: var(--gc-card); border-radius: 18px; overflow: hidden; background: #efede8; box-shadow: 0 18px 40px rgba(0,0,0,0.28); will-change: transform; }
-                    #genderCover .gc-card img, #genderCover .gc-card video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; user-select: none; pointer-events: none; }
-                    #genderCover .gc-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 54%, rgba(0,0,0,0.42)); }
-                    #genderCover .gc-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 200; width: 38px; height: 38px; padding: 0; border: none; border-radius: 9999px; background: rgba(255,255,255,0.82); color: #111; display: flex; align-items: center; justify-content: center; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 6px 16px rgba(0,0,0,0.16); cursor: pointer; transition: background .2s ease; }
-                    #genderCover .gc-nav:hover { background: #fff; }
-                    #genderCover .gc-prev { left: 10px; }
-                    #genderCover .gc-next { right: 10px; }
-                    #genderCover .gc-nav svg { width: 20px; height: 20px; }
-                    #genderCover .gc-cap { display: flex; flex-direction: column; align-items: center; margin-top: 2px; }
-                    #genderCover .gc-cap .gc-name { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: -0.3px; color: #111; }
-                    #genderCover .gc-cap .gc-shop { margin-top: 4px; font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #111; border-bottom: 1px solid #111; padding-bottom: 2px; text-decoration: none; }
-                    #genderCover .gc-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
-                    #genderCover .gc-dots button { width: 8px; height: 8px; padding: 0; border: none; border-radius: 9999px; background: #111; opacity: 0.25; cursor: pointer; transition: opacity .25s ease, width .25s ease; }
-                    #genderCover .gc-dots button.on { opacity: 1; width: 22px; }
-                    /* Single featured product below the caption — same card as the
-                       hero's product slider; swaps with the selected gender. */
-                    #genderCover .gc-product { width: 190px; margin: 20px auto 0; }
-                    #genderCover .gc-product .cv-card { display: block; }
-                </style>
-                <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
-                    <p class="gc-head">Choose by category</p>
-                    <p class="gc-sub" aria-live="polite">Men&#39;s collection</p>
-                    <div class="gc-rel">
-                        <div class="gc-frame" tabindex="0">
-                            <div class="gc-stage">
-                                <div class="gc-card" data-href="products.html?gender=men" data-name="Men" data-sub="Men&#39;s collection"><video class="gc-media" src="assets/hero/men.mp4" poster="men-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
-                                <div class="gc-card" data-href="products.html?gender=women" data-name="Women" data-sub="Women&#39;s collection"><video class="gc-media" src="assets/hero/hero-clothing.mp4" poster="assets/hero/women-editorial.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
-                                <div class="gc-card" data-href="products.html?gender=unisex" data-name="Unisex" data-sub="Unisex collection"><video class="gc-media" src="assets/hero/unisex.mp4" poster="hero-beach.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
-                                <div class="gc-card" data-href="products.html?gender=kids" data-name="Kids" data-sub="Kids collection"><video class="gc-media" src="assets/hero/kids.mp4" poster="clothing-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="gc-cap">
-                        <span class="gc-name">Men</span>
-                        <a class="gc-shop" href="products.html?gender=men">Shop Men</a>
-                    </div>
-                    <div class="gc-dots"></div>
-                    <div class="gc-product" id="gcProduct" aria-live="polite"></div>
-                </div>
-                <script>
-                (function () {
-                    var root = document.getElementById('genderCover');
-                    if (!root) return;
-                    var frame = root.querySelector('.gc-frame');
-                    var cards = [].slice.call(root.querySelectorAll('.gc-card'));
-                    var count = cards.length;
-                    if (!count) return;
-                    var sub = root.querySelector('.gc-sub');
-                    var nameEl = root.querySelector('.gc-cap .gc-name');
-                    var shopEl = root.querySelector('.gc-cap .gc-shop');
-                    var dotsWrap = root.querySelector('.gc-dots');
-                    var prevBtn = root.querySelector('.gc-prev');
-                    var nextBtn = root.querySelector('.gc-next');
+                <!-- category chips -->
+                <nav class="nf-chips" id="nfChips" aria-label="Browse categories">
+                    <a class="nf-chip is-active" href="#nfFeed" data-filter="all">All</a>
+                    <a class="nf-chip" href="products.html?gender=women" data-filter="women">Women</a>
+                    <a class="nf-chip" href="products.html?gender=men" data-filter="men">Men</a>
+                    <a class="nf-chip" href="products.html?gender=unisex" data-filter="unisex">Unisex</a>
+                    <a class="nf-chip" href="products.html?gender=kids" data-filter="kids">Kids</a>
+                    <a class="nf-chip" href="sales.html" data-filter="sale">Sale</a>
+                    <a class="nf-chip" href="collections.html" data-filter="collections">Collections</a>
+                </nav>
 
-                    // Coverflow parameters (from the reference component's defaults).
-                    var ROTATE = 44, DEPTH = 0.6, FALLOFF = 0.56, FADE = 0.1, GAP = 0.08, LOOP = true;
-                    var pos = 0, target = 0, width = 0, rafId = null, selected = 0, drag = null;
-
-                    dotsWrap.innerHTML = cards.map(function (c, i) {
-                        return '<button type="button" class="' + (i ? '' : 'on') + '" aria-label="Go to ' + (c.getAttribute('data-name') || ('slide ' + (i + 1))) + '"></button>';
-                    }).join('');
-                    var dots = [].slice.call(dotsWrap.querySelectorAll('button'));
-
-                    function indexAt(p) { return ((Math.round(p) % count) + count) % count; }
-                    function sign(n) { return n < 0 ? -1 : (n > 0 ? 1 : 0); }
-
-                    function paint() {
-                        if (!width) return;
-                        var pitch = width * (1 + GAP);
-                        for (var i = 0; i < count; i++) {
-                            var card = cards[i];
-                            var offset = i - pos;
-                            if (LOOP) { offset = ((offset % count) + count) % count; if (offset > count / 2) offset -= count; }
-                            var dist = Math.abs(offset);
-                            var ramp = Math.pow(dist, FALLOFF);
-                            var tilt = Math.min(ROTATE * ramp, 82) * sign(offset);
-                            card.style.transform = 'translateX(calc(-50% + ' + (offset * pitch) + 'px)) translateZ(' + (-DEPTH * width * ramp) + 'px) rotateY(' + (-tilt) + 'deg)';
-                            var edge = LOOP ? Math.min(1, Math.max(0, count / 2 - dist)) : 1;
-                            card.style.opacity = String(Math.max(0, 1 - FADE * dist) * edge);
-                            card.style.zIndex = String(100 - Math.round(dist));
-                        }
-                    }
-
-                    function render() {
-                        var a = indexAt(target);
-                        selected = a;
-                        dots.forEach(function (d, i) { d.classList.toggle('on', i === a); });
-                        var card = cards[a];
-                        var nm = card.getAttribute('data-name') || '';
-                        var href = card.getAttribute('data-href') || '#';
-                        if (sub) sub.textContent = card.getAttribute('data-sub') || nm;
-                        if (nameEl) nameEl.textContent = nm;
-                        if (shopEl) { shopEl.textContent = 'Shop ' + nm; shopEl.setAttribute('href', href); }
-                        // Publish the selected gender and refresh the featured product
-                        // card below the caption (filled once product data is ready).
-                        window.__gcGender = { gender: nm.toLowerCase(), idx: a };
-                        if (window.veroFillGenderCard) window.veroFillGenderCard();
-                        // Play only the centred card's video; keep the rest on their poster.
-                        cards.forEach(function (c, i) {
-                            var v = c.querySelector('video'); if (!v) return;
-                            v.muted = true; v.defaultMuted = true;
-                            if (i === a) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
-                            else { try { v.pause(); } catch (x) {} }
-                        });
-                    }
-
-                    function clampPos(p) { return LOOP ? p : Math.max(0, Math.min(count - 1, p)); }
-
-                    function settle(t) {
-                        if (rafId !== null) cancelAnimationFrame(rafId);
-                        target = t; render();
-                        function step() {
-                            var remaining = target - pos;
-                            if (Math.abs(remaining) < 0.0004) { pos = target; paint(); rafId = null; return; }
-                            pos += remaining * 0.16; paint();
-                            rafId = requestAnimationFrame(step);
-                        }
-                        rafId = requestAnimationFrame(step);
-                    }
-
-                    function goTo(index) {
-                        var t = LOOP ? index + Math.round((target - index) / count) * count : index;
-                        settle(clampPos(t));
-                    }
-                    function nudge(by) { settle(clampPos(Math.round(target) + by)); }
-
-                    frame.addEventListener('pointerdown', function (e) {
-                        if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
-                        try { frame.setPointerCapture(e.pointerId); } catch (x) {}
-                        target = pos;
-                        drag = { id: e.pointerId, x: e.clientX, pos: pos, v: 0, t: performance.now(), moved: false };
-                    });
-                    frame.addEventListener('pointermove', function (e) {
-                        if (!drag || drag.id !== e.pointerId) return;
-                        var pitch = width * (1 + GAP); if (!pitch) return;
-                        var now = performance.now(), prev = pos;
-                        pos = clampPos(drag.pos - (e.clientX - drag.x) / pitch);
-                        if (Math.abs(e.clientX - drag.x) > 4) drag.moved = true;
-                        drag.v = ((pos - prev) / Math.max(now - drag.t, 1)) * 1000; drag.t = now;
-                        var idx = indexAt(pos); if (idx !== selected) { selected = idx; render(); }
-                        paint();
-                    });
-                    function endDrag(e) {
-                        if (!drag || drag.id !== e.pointerId) return;
-                        // Sticky snap: each gesture locks onto a single card. Move one
-                        // step in the drag direction past a small threshold (or a flick),
-                        // otherwise snap back to where it started — never more than one.
-                        var startIdx = Math.round(drag.pos);
-                        var moved = pos - drag.pos;
-                        var dir = moved > 0 ? 1 : (moved < 0 ? -1 : 0);
-                        var dest = startIdx;
-                        if (Math.abs(moved) > 0.12 || (Math.abs(drag.v) > 0.5 && Math.abs(moved) > 0.03)) dest = startIdx + dir;
-                        dest = Math.max(startIdx - 1, Math.min(startIdx + 1, dest));
-                        frame.__moved = drag.moved; drag = null;
-                        settle(clampPos(dest));
-                    }
-                    frame.addEventListener('pointerup', endDrag);
-                    frame.addEventListener('pointercancel', endDrag);
-
-                    cards.forEach(function (card, i) {
-                        card.addEventListener('click', function () {
-                            if (frame.__moved) { frame.__moved = false; return; }
-                            if (indexAt(target) === i) { window.location.href = card.getAttribute('data-href'); }
-                            else goTo(i);
-                        });
-                    });
-
-                    frame.addEventListener('keydown', function (e) {
-                        if (e.key === 'ArrowLeft') { e.preventDefault(); nudge(-1); }
-                        else if (e.key === 'ArrowRight') { e.preventDefault(); nudge(1); }
-                    });
-                    if (prevBtn) prevBtn.addEventListener('click', function () { nudge(-1); });
-                    if (nextBtn) nextBtn.addEventListener('click', function () { nudge(1); });
-                    dots.forEach(function (d, i) { d.addEventListener('click', function () { goTo(i); }); });
-
-                    function measure() { width = cards[0] ? cards[0].offsetWidth : 0; paint(); }
-                    if (window.ResizeObserver) { try { new ResizeObserver(measure).observe(frame); } catch (x) {} }
-                    window.addEventListener('resize', measure);
-                    cards.forEach(function (c) { var im = c.querySelector('img'); if (im && !im.complete) im.addEventListener('load', measure); });
-
-                    function init() { measure(); render(); paint(); }
-                    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
-                })();
-                </script>
-
-                <style>
-                    /* ===== Centered product slider (reuses the earlier framer-style carousel)
-                         applied to the New Arrivals and Sale grids. ===== */
-                    .cv-feed .pc-viewport { position: relative; overflow: hidden; margin: 22px -12px 0; }
-                    .cv-feed .cv-grid.pc-track { display: flex !important; grid-template-columns: none !important; gap: 0 !important; margin: 0 !important; padding: 4px 0 8px; will-change: transform; touch-action: pan-y; }
-                    .cv-feed .cv-grid.pc-track > .cv-card { flex: 0 0 72%; width: 72%; max-width: 72%; margin: 0 7px; transition: transform .35s ease, opacity .35s ease; transform: scale(0.88); opacity: 0.5; }
-                    .cv-feed .cv-grid.pc-track > .cv-card.pc-active { transform: scale(1); opacity: 1; }
-                    .cv-feed .pc-nav { position: absolute; top: 42%; transform: translateY(-50%); z-index: 20; width: 34px; height: 34px; padding: 0; border: none; border-radius: 9999px; background: rgba(255,255,255,0.85); color: #111; display: flex; align-items: center; justify-content: center; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 6px 16px rgba(0,0,0,0.16); cursor: pointer; transition: opacity .2s ease, background .2s ease; }
-                    .cv-feed .pc-nav:hover:not(:disabled) { background: #fff; }
-                    .cv-feed .pc-nav:disabled { opacity: 0.35; cursor: not-allowed; }
-                    .cv-feed .pc-prev { left: 8px; }
-                    .cv-feed .pc-next { right: 8px; }
-                    .cv-feed .pc-nav svg { width: 18px; height: 18px; }
-                    .cv-feed .pc-dots { display: flex; justify-content: center; gap: 7px; margin: 12px 0 0; }
-                    .cv-feed .pc-dots button { width: 7px; height: 7px; padding: 0; border: none; border-radius: 9999px; background: #111; opacity: 0.22; cursor: pointer; transition: opacity .25s ease, width .25s ease; }
-                    .cv-feed .pc-dots button.on { opacity: 1; width: 20px; }
-                </style>
-                <script>
-                (function () {
-                    function svg(d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="' + d + '"/></svg>'; }
-
-                    function build(grid) {
-                        var cards = [].slice.call(grid.children).filter(function (c) { return c.classList && c.classList.contains('cv-card'); });
-                        if (cards.length < 2) return;
-                        grid.classList.add('pc-track');
-
-                        var vp = grid.parentNode && grid.parentNode.classList && grid.parentNode.classList.contains('pc-viewport') ? grid.parentNode : null;
-                        if (!vp) {
-                            vp = document.createElement('div'); vp.className = 'pc-viewport';
-                            grid.parentNode.insertBefore(vp, grid); vp.appendChild(grid);
-                            var prev = document.createElement('button'); prev.type = 'button'; prev.className = 'pc-nav pc-prev'; prev.setAttribute('aria-label', 'Previous'); prev.innerHTML = svg('M15 19l-7-7 7-7');
-                            var next = document.createElement('button'); next.type = 'button'; next.className = 'pc-nav pc-next'; next.setAttribute('aria-label', 'Next'); next.innerHTML = svg('M9 5l7 7-7 7');
-                            vp.appendChild(prev); vp.appendChild(next);
-                            var dotsWrap = document.createElement('div'); dotsWrap.className = 'pc-dots';
-                            vp.parentNode.insertBefore(dotsWrap, vp.nextSibling);
-                            vp._prev = prev; vp._next = next; vp._dots = dotsWrap; vp._index = 0; vp._pos = 0; vp._raf = null;
-
-                            vp._cards = function () { return [].slice.call(grid.children).filter(function (c) { return c.classList && c.classList.contains('cv-card'); }); };
-                            vp._targetX = function (i) { var cs = vp._cards(); var c = cs[i]; if (!c) return 0; return vp.clientWidth / 2 - (c.offsetLeft + c.offsetWidth / 2); };
-                            vp._apply = function (x) { vp._pos = x; grid.style.transform = 'translate3d(' + x + 'px,0,0)'; };
-                            vp._animate = function (x) {
-                                if (vp._raf !== null) cancelAnimationFrame(vp._raf);
-                                var step = function () {
-                                    var rem = x - vp._pos;
-                                    if (Math.abs(rem) < 0.5) { vp._apply(x); vp._raf = null; return; }
-                                    vp._apply(vp._pos + rem * 0.18); vp._raf = requestAnimationFrame(step);
-                                };
-                                vp._raf = requestAnimationFrame(step);
-                            };
-                            vp._render = function () {
-                                var cs = vp._cards(), n = cs.length;
-                                cs.forEach(function (c, i) { c.classList.toggle('pc-active', i === vp._index); });
-                                [].slice.call(vp._dots.children).forEach(function (d, i) { d.classList.toggle('on', i === vp._index); });
-                                vp._prev.disabled = vp._index === 0;
-                                vp._next.disabled = vp._index === n - 1;
-                            };
-                            vp._go = function (i, animate) {
-                                var n = vp._cards().length;
-                                vp._index = Math.max(0, Math.min(n - 1, i));
-                                vp._render();
-                                var x = vp._targetX(vp._index);
-                                if (animate === false) vp._apply(x); else vp._animate(x);
-                            };
-
-                            prev.addEventListener('click', function () { vp._go(vp._index - 1, true); });
-                            next.addEventListener('click', function () { vp._go(vp._index + 1, true); });
-
-                            // touch swipe
-                            var sx = 0, spos = 0, dragging = false, moved = false;
-                            vp.addEventListener('touchstart', function (e) {
-                                if (vp._raf !== null) { cancelAnimationFrame(vp._raf); vp._raf = null; }
-                                sx = e.touches[0].clientX; spos = vp._pos; dragging = true; moved = false;
-                            }, { passive: true });
-                            vp.addEventListener('touchmove', function (e) {
-                                if (!dragging) return;
-                                var dx = e.touches[0].clientX - sx; if (Math.abs(dx) > 6) moved = true;
-                                vp._apply(spos + dx);
-                            }, { passive: true });
-                            vp.addEventListener('touchend', function () {
-                                if (!dragging) return; dragging = false;
-                                if (!moved) return;
-                                // snap to the card whose centre is nearest the viewport centre
-                                var cs = vp._cards(), mid = vp.clientWidth / 2 - vp._pos, best = 0, bd = Infinity;
-                                cs.forEach(function (c, i) { var cc = c.offsetLeft + c.offsetWidth / 2, d = Math.abs(cc - mid); if (d < bd) { bd = d; best = i; } });
-                                vp._go(best, true);
-                            });
-                            window.addEventListener('resize', function () { vp._go(vp._index, false); });
-                        }
-
-                        // (re)build dots to match the current card count
-                        var dots = vp._dots;
-                        if (dots.children.length !== cards.length) {
-                            dots.innerHTML = cards.map(function (_, i) { return '<button type="button" class="' + (i ? '' : 'on') + '" aria-label="Go to item ' + (i + 1) + '"></button>'; }).join('');
-                            [].slice.call(dots.children).forEach(function (d, i) { d.addEventListener('click', function () { vp._go(i, true); }); });
-                        }
-                        if (vp._index > cards.length - 1) vp._index = 0;
-                        vp._go(vp._index, false);
-                    }
-
-                    window.veroCenterSliders = function () {
-                        ['newest', 'sale'].forEach(function (kind) {
-                            var grid = document.querySelector('.cv-feed .cv-grid[data-grid="' + kind + '"]');
-                            if (grid) { try { build(grid); } catch (e) {} }
-                        });
-                    };
-                })();
-                </script>
-
-                    <!-- grid #1 — a taste of the current collection -->
-                    <div class="cv-grid" data-grid="collection" data-n="4"></div>
-
-                    <!-- category band -->
-                    <div class="cv-catband">
-                        <p>clothing, footwear, accessories, and grooming tailored for adults. It combines tailored fits, functional design,</p>
+                <!-- main product feed -->
+                <div class="nf-wrap">
+                    <div class="nf-section-head" id="nfFeed">
+                        <h2>Just for you</h2>
+                        <a href="products.html">See all</a>
                     </div>
                 </div>
-
-                <div class="cv-wrap">
-                    <div class="cv-grid" data-grid="women" data-n="4"></div>
-                    <a class="cv-showmore" href="products.html"><span>Show more</span></a>
-                </div>
-
-                <!-- 3 · NEW ARRIVALS — editorial panel hero -->
-                <div class="cv-coll cv-panel">
-                    <img class="cv-coll-bg" src="assets/hero/art-section-poster.jpg" alt="" aria-hidden="true">
-                    <a class="cvp-box" href="products.html?sort=recent">
-                        <h1 class="cvp-title">New<br>Arrivals</h1>
-                        <div class="cvp-stat">
-                            <span class="cvp-num" data-count="newest">124</span>
-                            <span class="cvp-air">Just dropped</span>
-                        </div>
-                    </a>
-                    <p class="cvp-tag">Fresh drops, curated for you</p>
-                </div>
-                <div class="cv-wrap">
-                    <p class="cv-na-intro">Our latest collection has officially arrived. From standout statement pieces to elevated everyday essentials, we've curated a fresh selection designed to update your wardrobe effortless style. Explore the newest drops and find your next favorite piece before it's gone.</p>
-                    <div class="cv-grid" data-grid="newest" data-n="4"></div>
-                    <a class="cv-showmore" href="products.html?sort=recent"><span>Show more</span></a>
-                </div>
-
-                <!-- 4 · SALE — editorial panel hero -->
-                <div class="cv-coll cv-panel">
-                    <img class="cv-coll-bg" src="assets/hero/sale-clothing.webp" alt="" aria-hidden="true">
-                    <a class="cvp-box" href="sales.html">
-                        <h1 class="cvp-title">The<br>Sale</h1>
-                        <div class="cvp-stat">
-                            <span class="cvp-num" data-count="sale">312</span>
-                            <span class="cvp-air">On sale now</span>
-                        </div>
-                    </a>
-                    <p class="cvp-tag">Discover the best sales</p>
-                </div>
-                <div class="cv-wrap">
-                    <div class="cv-feature" id="cvSaleFeature"></div>
-                    <div class="cv-grid" data-grid="sale" data-n="4"></div>
-                    <a class="cv-showmore" href="sales.html"><span>Show more</span></a>
-                </div>
-
-                <!-- 5 · SPECIAL FOR YOU (promoted) -->
-                <div class="cv-wrap">
-                    <div class="cv-special" id="cvSpecial"></div>
-                    <a class="cv-showmore" href="products.html"><span>Show more</span></a>
-                    <div class="cv-grid" data-grid="foryou" data-n="4"></div>
-                </div>
+                <div class="nf-grid" id="nfGrid" aria-live="polite"></div>
+                <div class="nf-more" id="nfMore"><button type="button">Load more</button></div>
 
             </section>
 
             <script>
             (function () {
                 var VC = window.veroCollections;
-                function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];});}
-                function money(n){return Math.round(Number(n)||0).toLocaleString('en-US')+'₪';}
-                function hash(s){s=String(s);var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;}
-                var CONDS=['Like New','Excellent','Very Good'];
-                var SIZES=['Small','Medium','Large'];
-                function condOf(p){return CONDS[hash('c'+(p.id||p.name))%CONDS.length];}
-                function sizeOf(p){return SIZES[hash('s'+(p.id||p.name))%SIZES.length];}
+                var grid = document.getElementById('nfGrid');
+                var moreWrap = document.getElementById('nfMore');
+                var moreBtn = moreWrap ? moreWrap.querySelector('button') : null;
+                var PAGE = 8;
+                var shown = 0;
+                var items = [];
+
+                function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+                function hash(s){ s=String(s); var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+                function price(n){ return (Math.round(Number(n)||0)).toLocaleString('en-US').replace(/,/g,' ') + ' ₪'; }
+                function likesOf(p){ return hash('like'+(p.id||p.name))%480 + 12; }
+
+                // product-showcase link, matching the rest of the app.
                 function hrefOf(p){
-                    var o={name:p.name,price:p.price,icon:p.icon,category:p.category,seller:p.seller,rating:4.7,type:((p._raw&&p._raw.type==='art')?'art':'clothing')};
-                    return 'product-showcase.html?product='+encodeURIComponent(JSON.stringify(o));
+                    var o = { name:p.name, price:p.price, icon:p.icon, category:p.category, seller:p.seller, rating:4.7,
+                              type:((p._raw&&p._raw.type==='art')?'art':'clothing') };
+                    return 'product-showcase.html?product=' + encodeURIComponent(JSON.stringify(o));
                 }
-                var CARD_IMGS=['assets/hero/women-editorial.jpg','women-hero.jpg','men-hero.jpg','clothing-hero.jpg','hero-beach.jpg','gallery-hero.jpg'];
-                function media(p,cls){
-                    // A real cover photo is shown as-is; otherwise the card is just the
-                    // ground with the product's icon on it (no random stock fill).
-                    if (p.cover) return '<img src="'+esc(p.cover)+'" alt="'+esc(p.name||'')+'" loading="lazy">';
-                    return '<span class="cv-card-emoji">'+esc(p.icon||'🛍️')+'</span>';
+                // First usable photo for a product, else null.
+                function photoOf(p){
+                    var c = [p.cover,p.image,p.processed_cover,p.original_cover];
+                    if (Array.isArray(p.photos)) c = c.concat(p.photos);
+                    else if (p.photos && typeof p.photos==='object') c = c.concat(Object.keys(p.photos).map(function(k){return p.photos[k];}));
+                    for (var i=0;i<c.length;i++){ if (c[i] && typeof c[i]==='string') return c[i]; }
+                    return null;
                 }
-                // Distinct photos for the in-card slider.
-                function imgsOf(p){
-                    var arr=[];
-                    [p.cover,p.image,p.processed_cover,p.original_cover].forEach(function(s){ if(s&&typeof s==='string') arr.push(s); });
-                    if (Array.isArray(p.photos)) p.photos.forEach(function(s){ if(s&&typeof s==='string') arr.push(s); });
-                    else if (p.photos&&typeof p.photos==='object') Object.keys(p.photos).forEach(function(k){ var s=p.photos[k]; if(s&&typeof s==='string') arr.push(s); });
-                    return arr.filter(function(v,i){ return v&&arr.indexOf(v)===i; }).slice(0,5);
-                }
-                // The image square: a swipeable slider when there are 2+ photos,
-                // plus an LV-style indicator (light track + short black mark that
-                // moves with the current image).
-                function imgArea(p){
-                    var imgs=imgsOf(p), n=imgs.length, inner;
-                    if (n>=2){
-                        inner='<div class="cv-slider">'+imgs.map(function(s){ return '<div class="cv-slide"><img src="'+esc(s)+'" alt="" loading="lazy"></div>'; }).join('')+'</div>';
-                    } else {
-                        inner = imgs[0] ? '<img src="'+esc(imgs[0])+'" alt="'+esc(p.name||'')+'" loading="lazy">' : '<span class="cv-card-emoji">'+esc(p.icon||'🛍️')+'</span>';
-                    }
-                    var w = n>1 ? (100/n) : 34;
-                    var bar='<div class="cv-bar"><span style="width:'+w+'%"></span></div>';
-                    return '<div class="cv-card-img">'+inner+bar+'</div>';
-                }
-                // Keep each card's indicator in sync as its slider scrolls.
-                if (!window.__cvBarInit){
-                    window.__cvBarInit=1;
-                    document.addEventListener('scroll', function(e){
-                        var s=e.target; if(!s||!s.classList||!s.classList.contains('cv-slider')) return;
-                        var fill=s.parentNode.querySelector('.cv-bar span'); if(!fill) return;
-                        var i=Math.round(s.scrollLeft/s.clientWidth);
-                        fill.style.transform='translateX('+(i*100)+'%)';
-                    }, true);
-                }
-                function cardPrice(n){return (Math.round(Number(n)||0)).toLocaleString('en-US').replace(/,/g,' ')+' ₪';}
+                function isSale(p){ return !!(p.onSale || p.sale || (p._raw && (p._raw.onSale||p._raw.sale))); }
+
                 function cardHTML(p){
-                    return '<a class="cv-card" href="'+esc(hrefOf(p))+'">'+
-                        imgArea(p)+
-                        '<div class="cv-card-row"><span class="cv-card-name">'+esc(p.name||p.category)+'</span><span class="cv-card-price">'+cardPrice(p.price)+'</span></div>'+
-                        '<div class="cv-card-brand">'+esc(p.seller||'')+'</div>'+
+                    var img = photoOf(p);
+                    var media = img
+                        ? '<img src="'+esc(img)+'" alt="'+esc(p.name||'')+'" loading="lazy">'
+                        : '<span class="nf-card-emoji">'+esc(p.icon||'🛍️')+'</span>';
+                    var tag = isSale(p) ? '<span class="nf-tag">Sale</span>' : '';
+                    var heart = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>';
+                    return '<a class="nf-card" href="'+esc(hrefOf(p))+'">'+
+                        '<div class="nf-card-media">'+tag+'<span class="nf-like">'+heart+likesOf(p)+'</span>'+media+'</div>'+
+                        '<div class="nf-card-name">'+esc(p.name||p.category||'Listing')+'</div>'+
+                        '<div class="nf-card-brand">'+esc(p.seller||'moravchick')+'</div>'+
+                        '<div class="nf-card-price">'+price(p.price)+'</div>'+
                     '</a>';
                 }
-                // Likes count for a product — derived deterministically until a real
-                // likes field exists on the data.
-                function likesOf(p){return hash('like'+(p.id||p.name))%480+12;}
-                // Slider card: transparent (no ground) image, just the icon, then three
-                // centred lines — product name, company (seller), and the like count.
-                function sliderCardHTML(p){
-                    return '<a class="cv-card cv-scard" href="'+esc(hrefOf(p))+'">'+
-                        '<div class="cv-card-img cv-scard-img">'+media(p)+'</div>'+
-                        '<div class="cv-scard-meta">'+
-                            '<span class="cv-scard-name">'+esc(p.name||p.category)+'</span>'+
-                            '<span class="cv-scard-brand">'+esc(p.seller||'')+'</span>'+
-                            '<span class="cv-scard-likes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>'+likesOf(p)+'</span>'+
-                        '</div>'+
-                    '</a>';
-                }
-                function build(){
-                    if(!VC||typeof VC.allProducts!=='function')return;
-                    var all=VC.allProducts().slice();
-                    if(!all.length)return;
-                    var onSale=(typeof VC.onSale==='function')?VC.onSale().slice():all.slice();
-                    var byRecent=all.slice().sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);});
-                    // A taste of the current in-season collection.
-                    var currKey=(typeof VC.currentKey==='function')?VC.currentKey():null;
-                    var collectionPool=(currKey&&typeof VC.byCollection==='function')?VC.byCollection(currKey):[];
-                    var pools={
-                        recent:byRecent,
-                        collection:collectionPool.length?collectionPool:byRecent,
-                        newest:byRecent,
-                        women:all.slice().sort(function(a,b){return (hash('w'+(a.id||a.name))%997)-(hash('w'+(b.id||b.name))%997);}),
-                        sale:onSale.length?onSale:all,
-                        foryou:all.slice().sort(function(a,b){return (hash('f'+(a.id||a.name))%997)-(hash('f'+(b.id||b.name))%997);})
-                    };
-                    document.querySelectorAll('.cv-feed .cv-grid').forEach(function(g){
-                        var kind=g.getAttribute('data-grid')||'recent';
-                        var n=parseInt(g.getAttribute('data-n')||'4',10);
-                        var items=(pools[kind]||all).slice(0,n);
-                        var fn=g.classList.contains('cv-slider')?sliderCardHTML:cardHTML;
-                        g.innerHTML=items.map(fn).join('');
-                    });
-                    // Living-glass treatment for the feed's sale cards: a frosted
-                    // panel with an animated red blob glowing behind each piece.
-                    // Injected here so the shared cardHTML renderer stays untouched.
-                    document.querySelectorAll('.cv-feed .cv-grid[data-grid="sale"] .cv-card').forEach(function(card){
-                        var box=card.querySelector('.cv-card-img'); if(!box||box.querySelector('.sale-blob'))return;
-                        card.classList.add('is-sale');
-                        var face=document.createElement('div'); face.className='sale-face';
-                        while(box.firstChild) face.appendChild(box.firstChild);
-                        var blob=document.createElement('span'); blob.className='sale-blob';
-                        var bg=document.createElement('span'); bg.className='sale-bg';
-                        box.appendChild(blob); box.appendChild(bg); box.appendChild(face);
-                    });
-                    // Panel-hero "items on air" counts — live totals per section.
-                    var panelCounts={ all: all.length, newest: byRecent.length, sale: (onSale.length?onSale:all).length };
-                    document.querySelectorAll('.cv-panel .cvp-num[data-count]').forEach(function(el){
-                        var k=el.getAttribute('data-count');
-                        if(panelCounts[k]!=null) el.textContent=panelCounts[k].toLocaleString('en-US');
-                    });
-                    // "Choose by category" bars — live per-gender totals when the
-                    // data carries a gender; otherwise the static copy stands.
-                    var gc={unisex:0,men:0,women:0,kids:0};
-                    all.forEach(function(p){var g=String(p.gender||(p._raw&&p._raw.gender)||'').toLowerCase(); if(gc[g]!=null) gc[g]++;});
-                    gc.unisex=all.length;
-                    document.querySelectorAll('#cvCatZoom b[data-g]').forEach(function(el){
-                        var g=el.getAttribute('data-g'); if(gc[g]>0) el.textContent=gc[g].toLocaleString('en-US');
-                    });
-                    // Sale featured product
-                    var sf=document.getElementById('cvSaleFeature');
-                    if(sf){var p=(pools.sale[0]||all[0]);sf.innerHTML=
-                        '<a class="cv-feature-img" href="'+esc(hrefOf(p))+'"><span class="cv-corner"></span>'+media(p)+'</a>'+
-                        '<div class="cv-feature-info">'+
-                            '<div class="cv-fi-name">'+esc(p.category||p.name)+'</div>'+
-                            '<div class="cv-fi-brand">'+esc(p.seller||'')+'</div>'+
-                            '<div class="cv-fi-spec">'+esc(sizeOf(p))+'<br>'+esc(condOf(p))+'</div>'+
-                            '<div class="cv-fi-price">'+money(p.price)+'</div>'+
-                            '<div class="cv-fi-desc">A standout piece in pristine condition. Add an instant edge to any outfit, with a comfortable fit and a flattering silhouette.</div>'+
-                            '<a class="cv-fi-more" href="'+esc(hrefOf(p))+'">Slide for more</a>'+
-                        '</div>';
-                    }
-                    // Special for you
-                    var sp=document.getElementById('cvSpecial');
-                    if(sp){var q=(pools.foryou[0]||all[0]);sp.innerHTML=
-                        '<a class="cv-feature-img" href="'+esc(hrefOf(q))+'">'+media(q)+'</a>'+
-                        '<div class="cv-sp-info">'+
-                            '<div class="cv-sp-eyebrow">Special for you</div>'+
-                            '<div class="cv-sp-name">'+esc(q.category||q.name)+'</div>'+
-                            '<div class="cv-sp-brand">'+esc(q.seller||'')+'</div>'+
-                            '<div class="cv-sp-desc">Thoughtfully crafted for the cooler days ahead, each piece blends timeless warmth with modern ease.</div>'+
-                            '<div class="cv-sp-specrow"><span>'+esc(sizeOf(q))+'</span><span>'+esc(condOf(q))+'</span><b>'+money(q.price)+'</b></div>'+
-                            '<a class="cv-sp-more" href="'+esc(hrefOf(q))+'">Show more<i></i></a>'+
-                        '</div>';
-                    }
-                    // live counts
-                    var air=document.getElementById('cvAir'); if(air) air.textContent=all.length.toLocaleString('en-US');
-                    fitNames();
-                    // Turn the New Arrivals / Sale grids into centered product sliders.
-                    if (window.veroCenterSliders) window.veroCenterSliders();
-                    // Fill the gender coverflow's featured product card.
-                    if (window.veroFillGenderCard) window.veroFillGenderCard();
-                }
-                // Featured product for the gender coverflow: the most-liked piece for
-                // the selected gender (falls back to a distinct top pick per gender
-                // when the data carries no gender). Rendered with the hero slider's card.
-                window.veroFillGenderCard = function () {
-                    var el = document.getElementById('gcProduct');
-                    if (!el || !VC || typeof VC.allProducts !== 'function') return;
-                    var all = VC.allProducts(); if (!all.length) return;
-                    var sel = window.__gcGender || { gender: 'men', idx: 0 };
-                    var g = String(sel.gender || '').toLowerCase();
-                    var filtered = (g && g !== 'unisex') ? all.filter(function (p) {
-                        return String(p.gender || (p._raw && p._raw.gender) || '').toLowerCase() === g;
-                    }) : [];
-                    var pool, pick;
-                    if (filtered.length) { pool = filtered.slice(); pick = 0; }
-                    else { pool = all.slice(); pick = sel.idx || 0; }
-                    pool.sort(function (a, b) { return likesOf(b) - likesOf(a); });
-                    var p = pool[Math.min(pick, pool.length - 1)];
-                    if (p) el.innerHTML = sliderCardHTML(p);
-                };
-                // Keep every product name on one line — shrink the font to fit the
-                // space left of the price (down to a floor) instead of wrapping.
-                function fitNames(){
-                    document.querySelectorAll('.cv-feed .cv-card-name').forEach(function(el){
-                        el.style.fontSize='';
-                        var size=13, guard=0;
-                        el.style.fontSize=size+'px';
-                        while(el.scrollWidth>el.clientWidth+0.5 && size>8 && guard<24){ size-=0.5; el.style.fontSize=size+'px'; guard++; }
-                    });
-                }
-                var rzT; window.addEventListener('resize',function(){clearTimeout(rzT);rzT=setTimeout(fitNames,120);});
-                if(window.FontFace && document.fonts && document.fonts.ready){ document.fonts.ready.then(fitNames); }
-                if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
-                // veroCollections may hydrate late — retry briefly.
-                var tries=0,t=setInterval(function(){VC=window.veroCollections;if((VC&&VC.allProducts&&VC.allProducts().length)||tries++>20){clearInterval(t);if(VC)build();}},200);
-            })();
-            </script>
 
-            <!-- Tint each hero CTA box with the dominant colour of that hero's
-                 image / video, so the button always reads as part of the media. -->
-            <script>
-            (function () {
-                // Average the visible pixels of a drawable source, biased toward
-                // more saturated pixels so the result reads as the "dominant" hue
-                // rather than a muddy grey. Returns [r,g,b] or null.
-                function dominantOf(src, draw) {
-                    try {
-                        var n = 44, c = document.createElement('canvas'); c.width = n; c.height = n;
-                        var x = c.getContext('2d'); draw(x, n);
-                        var d = x.getImageData(0, 0, n, n).data;
-                        var r = 0, g = 0, b = 0, wsum = 0;
-                        for (var i = 0; i < d.length; i += 4) {
-                            if (d[i + 3] < 125) continue;
-                            var R = d[i], G = d[i + 1], B = d[i + 2];
-                            var mx = Math.max(R, G, B), mn = Math.min(R, G, B);
-                            var sat = mx === 0 ? 0 : (mx - mn) / mx;      // 0..1
-                            var w = 0.35 + sat;                           // weight saturated pixels more
-                            r += R * w; g += G * w; b += B * w; wsum += w;
+                function renderNext(){
+                    var slice = items.slice(shown, shown + PAGE);
+                    if (slice.length){
+                        grid.insertAdjacentHTML('beforeend', slice.map(cardHTML).join(''));
+                        shown += slice.length;
+                    }
+                    if (shown >= items.length && moreWrap) moreWrap.classList.add('done');
+                }
+
+                function start(){
+                    if (!VC || typeof VC.allProducts !== 'function') return false;
+                    var all = VC.allProducts().slice();
+                    if (!all.length) return false;
+                    // Deterministic shuffle so the feed order is stable across reloads.
+                    all.sort(function(a,b){ return (hash('feed'+(a.id||a.name))%99991) - (hash('feed'+(b.id||b.name))%99991); });
+                    items = all;
+                    shown = 0;
+                    grid.innerHTML = '';
+                    if (moreWrap) moreWrap.classList.remove('done');
+                    renderNext();
+                    return true;
+                }
+
+                if (moreBtn) moreBtn.addEventListener('click', renderNext);
+
+                function boot(){ if (!start()){ return false; } return true; }
+                if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+                // veroCollections may hydrate late — retry briefly, then give up gracefully.
+                var tries = 0, t = setInterval(function(){
+                    VC = window.veroCollections;
+                    if (boot() || tries++ > 25){
+                        clearInterval(t);
+                        if (!items.length && grid && !grid.children.length){
+                            grid.innerHTML = '<div class="nf-empty">No products to show yet.</div>';
+                            if (moreWrap) moreWrap.classList.add('done');
                         }
-                        if (!wsum) return null;
-                        r = r / wsum; g = g / wsum; b = b / wsum;
-                        // Keep white text legible: pull very light results down to a
-                        // mid tone, nudge very dark ones up.
-                        var lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                        if (lum > 165) { var k = 150 / lum; r *= k; g *= k; b *= k; }
-                        else if (lum < 55) { var k2 = 70 / (lum || 1); r = Math.min(255, r * k2); g = Math.min(255, g * k2); b = Math.min(255, b * k2); }
-                        return [Math.round(r), Math.round(g), Math.round(b)];
-                    } catch (e) { return null; }
-                }
-                function tint(box, rgb, alpha) { if (box && rgb) box.style.background = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + alpha + ')'; }
-
-                function fromImage(url, box, alpha) {
-                    var img = new Image(); img.crossOrigin = 'anonymous';
-                    img.onload = function () { tint(box, dominantOf(url, function (x, n) { x.drawImage(img, 0, 0, n, n); }), alpha); };
-                    img.src = url;
-                }
-                function fromVideo(video, box, alpha) {
-                    if (!video) return;
-                    var done = false;
-                    var grab = function () {
-                        if (done) return;
-                        var rgb = dominantOf(null, function (x, n) { x.drawImage(video, 0, 0, n, n); });
-                        if (rgb) { done = true; tint(box, rgb, alpha); }
-                    };
-                    video.addEventListener('loadeddata', grab);
-                    video.addEventListener('canplay', grab);
-                    // Fallback to the poster image if the frame can't be read.
-                    setTimeout(function () { if (!done && video.poster) fromImage(video.poster, box, alpha); }, 1200);
-                    grab();
-                }
-
-                function run() {
-                    // Every hero-structured section tints its own CTA box from its media.
-                    document.querySelectorAll('.cv-coll').forEach(function (sec) {
-                        var box = sec.querySelector('.cv-coll-cta');
-                        var bg = sec.querySelector('.cv-coll-bg');
-                        if (!box || !bg) return;
-                        if (bg.tagName === 'VIDEO') fromVideo(bg, box, 0.74);
-                        else fromImage(bg.currentSrc || bg.src, box, 0.74);
-                    });
-                }
-                if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+                    }
+                }, 200);
             })();
             </script>
 
