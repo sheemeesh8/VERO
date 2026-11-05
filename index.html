@@ -5,53 +5,239 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>moravchick</title>
     <style>
-        html, body { margin: 0; padding: 0; height: 100%; background: #000; }
-        .hero-video {
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 0;
-        }
+        html, body { margin: 0; padding: 0; background: #000; }
+        * { box-sizing: border-box; }
+
+        /* ===== Full-screen hero video ===== */
+        .hero { position: relative; width: 100%; height: 100vh; overflow: hidden; background: #000; }
+        .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
         .hero-copy {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
+            position: absolute; top: 0; left: 0; right: 0; z-index: 1;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
             padding-top: clamp(60px, 14vh, 160px);
-            color: #fff;
-            font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+            color: #fff; font-family: 'Poppins', 'Inter', system-ui, sans-serif;
         }
-        .hero-welcome {
-            font-size: clamp(22px, 6vw, 40px);
-            font-weight: 300;
-            letter-spacing: 0.02em;
-        }
-        .hero-welcome b {
-            font-weight: 700;
-        }
-        .hero-slogan {
-            margin-top: 14px;
-            font-size: clamp(12px, 3vw, 16px);
-            font-weight: 400;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            opacity: 0.9;
-        }
+        .hero-welcome { font-size: clamp(22px, 6vw, 40px); font-weight: 300; letter-spacing: 0.02em; }
+        .hero-welcome b { font-weight: 700; }
+        .hero-slogan { margin-top: 14px; font-size: clamp(12px, 3vw, 16px); font-weight: 400; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
+
+        /* ===== White gender-slider screen — fades in on scroll over the hero ===== */
+        .pick { position: relative; width: 100%; min-height: 100vh; background: #fff; display: flex; align-items: center; justify-content: center; padding: 10vh 20px; }
+        .pick-inner { width: 100%; max-width: 560px; margin: 0 auto; opacity: 0; transition: opacity 0.9s ease; }
+        .pick.is-in .pick-inner { opacity: 1; }
+        @media (prefers-reduced-motion: reduce) { .pick-inner { opacity: 1; transition: none; } }
+
+        /* ===== Coverflow gender carousel (ported from coverflow-carousel.tsx) ===== */
+        #genderCover { position: relative; margin: 0 -20px 14px; --gc-card: clamp(260px, 82vw, 430px); }
+        #genderCover .gc-head { font-family: 'Poppins','Inter',sans-serif; font-weight: 300; letter-spacing: 0.01em; font-size: 15px; color: #111; text-align: center; margin: 0 0 2px; }
+        #genderCover .gc-sub { font-family: 'Poppins','Inter',sans-serif; font-weight: 400; font-size: 12px; color: #6b6a64; text-align: center; margin: 0 0 4px; min-height: 16px; }
+        #genderCover .gc-rel { position: relative; }
+        #genderCover .gc-frame { perspective: calc(var(--gc-card) * 3); overflow: hidden; padding: 34px 0 30px; outline: none; cursor: grab; touch-action: pan-y; }
+        #genderCover .gc-frame:active { cursor: grabbing; }
+        #genderCover .gc-stage { position: relative; height: var(--gc-card); transform-style: preserve-3d; }
+        #genderCover .gc-card { position: absolute; left: 50%; top: 0; width: var(--gc-card); height: var(--gc-card); border-radius: 18px; overflow: hidden; background: #efede8; box-shadow: 0 18px 40px rgba(0,0,0,0.28); will-change: transform; }
+        #genderCover .gc-card img, #genderCover .gc-card video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; user-select: none; pointer-events: none; }
+        #genderCover .gc-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 54%, rgba(0,0,0,0.42)); }
+        #genderCover .gc-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 200; width: 38px; height: 38px; padding: 0; border: none; border-radius: 9999px; background: rgba(255,255,255,0.82); color: #111; display: flex; align-items: center; justify-content: center; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 6px 16px rgba(0,0,0,0.16); cursor: pointer; transition: background .2s ease; }
+        #genderCover .gc-nav:hover { background: #fff; }
+        #genderCover .gc-prev { left: 10px; }
+        #genderCover .gc-next { right: 10px; }
+        #genderCover .gc-nav svg { width: 20px; height: 20px; }
+        #genderCover .gc-cap { display: flex; flex-direction: column; align-items: center; margin-top: 2px; }
+        #genderCover .gc-cap .gc-name { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: -0.3px; color: #111; }
+        #genderCover .gc-cap .gc-shop { margin-top: 4px; font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #111; border-bottom: 1px solid #111; padding-bottom: 2px; text-decoration: none; }
+        #genderCover .gc-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+        #genderCover .gc-dots button { width: 8px; height: 8px; padding: 0; border: none; border-radius: 9999px; background: #111; opacity: 0.25; cursor: pointer; transition: opacity .25s ease, width .25s ease; }
+        #genderCover .gc-dots button.on { opacity: 1; width: 22px; }
     </style>
 </head>
 <body>
-    <video class="hero-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg"
-           autoplay muted loop playsinline></video>
-    <div class="hero-copy">
-        <div class="hero-welcome">welcome to <b>moravchick</b></div>
-        <div class="hero-slogan">straight elegance</div>
-    </div>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+        <video class="hero-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg"
+               autoplay muted loop playsinline></video>
+        <div class="hero-copy">
+            <div class="hero-welcome">welcome to <b>moravchick</b></div>
+            <div class="hero-slogan">straight elegance</div>
+        </div>
+    </section>
+
+    <!-- ===== WHITE GENDER-SLIDER SCREEN (fades in on scroll) ===== -->
+    <section class="pick" id="pick">
+        <div class="pick-inner">
+            <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
+                <p class="gc-head">Choose by category</p>
+                <p class="gc-sub" aria-live="polite">Men&#39;s collection</p>
+                <div class="gc-rel">
+                    <div class="gc-frame" tabindex="0">
+                        <div class="gc-stage">
+                            <div class="gc-card" data-href="products.html?gender=men" data-name="Men" data-sub="Men&#39;s collection"><video class="gc-media" src="assets/hero/men.mp4" poster="men-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
+                            <div class="gc-card" data-href="products.html?gender=women" data-name="Women" data-sub="Women&#39;s collection"><video class="gc-media" src="assets/hero/hero-clothing.mp4" poster="assets/hero/women-editorial.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
+                            <div class="gc-card" data-href="products.html?gender=unisex" data-name="Unisex" data-sub="Unisex collection"><video class="gc-media" src="assets/hero/unisex.mp4" poster="hero-beach.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
+                            <div class="gc-card" data-href="products.html?gender=kids" data-name="Kids" data-sub="Kids collection"><video class="gc-media" src="assets/hero/kids.mp4" poster="clothing-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="gc-cap">
+                    <span class="gc-name">Men</span>
+                    <a class="gc-shop" href="products.html?gender=men">Shop Men</a>
+                </div>
+                <div class="gc-dots"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fade-in on scroll -->
+    <script>
+    (function () {
+        var sec = document.getElementById('pick');
+        if (!sec) return;
+        if (typeof IntersectionObserver === 'undefined') { sec.classList.add('is-in'); return; }
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) { sec.classList.toggle('is-in', e.isIntersecting); });
+        }, { threshold: 0.3 });
+        io.observe(sec);
+    })();
+    </script>
+
+    <!-- Gender coverflow carousel -->
+    <script>
+    (function () {
+        var root = document.getElementById('genderCover');
+        if (!root) return;
+        var frame = root.querySelector('.gc-frame');
+        var cards = [].slice.call(root.querySelectorAll('.gc-card'));
+        var count = cards.length;
+        if (!count) return;
+        var sub = root.querySelector('.gc-sub');
+        var nameEl = root.querySelector('.gc-cap .gc-name');
+        var shopEl = root.querySelector('.gc-cap .gc-shop');
+        var dotsWrap = root.querySelector('.gc-dots');
+        var prevBtn = root.querySelector('.gc-prev');
+        var nextBtn = root.querySelector('.gc-next');
+
+        var ROTATE = 44, DEPTH = 0.6, FALLOFF = 0.56, FADE = 0.1, GAP = 0.08, LOOP = true;
+        var pos = 0, target = 0, width = 0, rafId = null, selected = 0, drag = null;
+
+        dotsWrap.innerHTML = cards.map(function (c, i) {
+            return '<button type="button" class="' + (i ? '' : 'on') + '" aria-label="Go to ' + (c.getAttribute('data-name') || ('slide ' + (i + 1))) + '"></button>';
+        }).join('');
+        var dots = [].slice.call(dotsWrap.querySelectorAll('button'));
+
+        function indexAt(p) { return ((Math.round(p) % count) + count) % count; }
+        function sign(n) { return n < 0 ? -1 : (n > 0 ? 1 : 0); }
+
+        function paint() {
+            if (!width) return;
+            var pitch = width * (1 + GAP);
+            for (var i = 0; i < count; i++) {
+                var card = cards[i];
+                var offset = i - pos;
+                if (LOOP) { offset = ((offset % count) + count) % count; if (offset > count / 2) offset -= count; }
+                var dist = Math.abs(offset);
+                var ramp = Math.pow(dist, FALLOFF);
+                var tilt = Math.min(ROTATE * ramp, 82) * sign(offset);
+                card.style.transform = 'translateX(calc(-50% + ' + (offset * pitch) + 'px)) translateZ(' + (-DEPTH * width * ramp) + 'px) rotateY(' + (-tilt) + 'deg)';
+                var edge = LOOP ? Math.min(1, Math.max(0, count / 2 - dist)) : 1;
+                card.style.opacity = String(Math.max(0, 1 - FADE * dist) * edge);
+                card.style.zIndex = String(100 - Math.round(dist));
+            }
+        }
+
+        function render() {
+            var a = indexAt(target);
+            selected = a;
+            dots.forEach(function (d, i) { d.classList.toggle('on', i === a); });
+            var card = cards[a];
+            var nm = card.getAttribute('data-name') || '';
+            var href = card.getAttribute('data-href') || '#';
+            if (sub) sub.textContent = card.getAttribute('data-sub') || nm;
+            if (nameEl) nameEl.textContent = nm;
+            if (shopEl) { shopEl.textContent = 'Shop ' + nm; shopEl.setAttribute('href', href); }
+            cards.forEach(function (c, i) {
+                var v = c.querySelector('video'); if (!v) return;
+                v.muted = true; v.defaultMuted = true;
+                if (i === a) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+                else { try { v.pause(); } catch (x) {} }
+            });
+        }
+
+        function clampPos(p) { return LOOP ? p : Math.max(0, Math.min(count - 1, p)); }
+
+        function settle(t) {
+            if (rafId !== null) cancelAnimationFrame(rafId);
+            target = t; render();
+            function step() {
+                var remaining = target - pos;
+                if (Math.abs(remaining) < 0.0004) { pos = target; paint(); rafId = null; return; }
+                pos += remaining * 0.16; paint();
+                rafId = requestAnimationFrame(step);
+            }
+            rafId = requestAnimationFrame(step);
+        }
+
+        function goTo(index) {
+            var t = LOOP ? index + Math.round((target - index) / count) * count : index;
+            settle(clampPos(t));
+        }
+        function nudge(by) { settle(clampPos(Math.round(target) + by)); }
+
+        frame.addEventListener('pointerdown', function (e) {
+            if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+            try { frame.setPointerCapture(e.pointerId); } catch (x) {}
+            target = pos;
+            drag = { id: e.pointerId, x: e.clientX, pos: pos, v: 0, t: performance.now(), moved: false };
+        });
+        frame.addEventListener('pointermove', function (e) {
+            if (!drag || drag.id !== e.pointerId) return;
+            var pitch = width * (1 + GAP); if (!pitch) return;
+            var now = performance.now(), prev = pos;
+            pos = clampPos(drag.pos - (e.clientX - drag.x) / pitch);
+            if (Math.abs(e.clientX - drag.x) > 4) drag.moved = true;
+            drag.v = ((pos - prev) / Math.max(now - drag.t, 1)) * 1000; drag.t = now;
+            var idx = indexAt(pos); if (idx !== selected) { selected = idx; render(); }
+            paint();
+        });
+        function endDrag(e) {
+            if (!drag || drag.id !== e.pointerId) return;
+            var startIdx = Math.round(drag.pos);
+            var moved = pos - drag.pos;
+            var dir = moved > 0 ? 1 : (moved < 0 ? -1 : 0);
+            var dest = startIdx;
+            if (Math.abs(moved) > 0.12 || (Math.abs(drag.v) > 0.5 && Math.abs(moved) > 0.03)) dest = startIdx + dir;
+            dest = Math.max(startIdx - 1, Math.min(startIdx + 1, dest));
+            frame.__moved = drag.moved; drag = null;
+            settle(clampPos(dest));
+        }
+        frame.addEventListener('pointerup', endDrag);
+        frame.addEventListener('pointercancel', endDrag);
+
+        cards.forEach(function (card, i) {
+            card.addEventListener('click', function () {
+                if (frame.__moved) { frame.__moved = false; return; }
+                if (indexAt(target) === i) { window.location.href = card.getAttribute('data-href'); }
+                else goTo(i);
+            });
+        });
+
+        frame.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowLeft') { e.preventDefault(); nudge(-1); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); nudge(1); }
+        });
+        if (prevBtn) prevBtn.addEventListener('click', function () { nudge(-1); });
+        if (nextBtn) nextBtn.addEventListener('click', function () { nudge(1); });
+        dots.forEach(function (d, i) { d.addEventListener('click', function () { goTo(i); }); });
+
+        function measure() { width = cards[0] ? cards[0].offsetWidth : 0; paint(); }
+        if (window.ResizeObserver) { try { new ResizeObserver(measure).observe(frame); } catch (x) {} }
+        window.addEventListener('resize', measure);
+        cards.forEach(function (c) { var im = c.querySelector('img'); if (im && !im.complete) im.addEventListener('load', measure); });
+
+        function init() { measure(); render(); paint(); }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+    })();
+    </script>
+
 </body>
 </html>
