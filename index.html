@@ -112,6 +112,22 @@
         .cv-card-name { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; line-height: 1.3; font-weight: 400; letter-spacing: 0.4px; text-transform: uppercase; color: #1b1916; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; }
         .cv-card-price { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 0.3px; color: #1b1916; white-space: nowrap; flex: 0 0 auto; }
         .cv-card-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #8a857c; margin-top: 2px; }
+        /* On-sale pricing: red reduced price, struck original, a -% badge. */
+        .cv-card.is-sale .cv-card-price { color: #B3433B; }
+        .cv-card-was { font-family: 'Arimo','Inter',sans-serif; font-size: 11.5px; color: #a3a298; text-decoration: line-through; margin-right: 6px; }
+        .cv-card-pct { position: absolute; top: 10px; right: 10px; z-index: 4; height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border-radius: 5px; background: #B3433B; color: #fff; font-family: 'Archivo','Inter',sans-serif; font-size: 10.5px; font-weight: 800; letter-spacing: 0.5px; }
+        /* Browse chips + horizontal rails (New arrivals / On sale) in the feed step. */
+        .feed-chips { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 8px; margin: 0 0 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .feed-chips::-webkit-scrollbar { display: none; }
+        .feed-chip { flex: none; display: inline-flex; align-items: center; height: 36px; padding: 0 17px; border-radius: 9999px; background: #fff; border: 1px solid #e4e0d6; font-family: 'Arimo','Inter',sans-serif; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #3a3a34; white-space: nowrap; text-decoration: none; }
+        .feed-chip:hover { border-color: #111; }
+        .rail-head { display: flex; align-items: baseline; justify-content: space-between; margin: 26px 0 12px; }
+        .rail-head h3 { margin: 0; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; text-transform: uppercase; color: #1b1916; }
+        .rail-head a { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #8a857c; text-decoration: none; }
+        .nf-rail { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 6px; margin: 0 -12px; padding-left: 12px; padding-right: 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .nf-rail::-webkit-scrollbar { display: none; }
+        .nf-rail .cv-card { flex: 0 0 150px; width: 150px; }
+        .nf-rail .cv-card-row { margin-top: 12px; }
         .feed-enter { display: inline-block; margin-top: 30px; }
         /* Feed screen scrolls as a real feed; aligned to the top, not centred. */
         #scrFeed { align-items: flex-start; }
@@ -283,6 +299,28 @@
                 <p class="feed-note" id="feedNote">Matched to your picks</p>
                 <div class="feed-grid" id="feedGrid"></div>
             </div>
+
+            <!-- Browse chips -->
+            <nav class="feed-chips" aria-label="Browse categories">
+                <a class="feed-chip" href="products.html">All</a>
+                <a class="feed-chip" href="products.html?gender=women">Women</a>
+                <a class="feed-chip" href="products.html?gender=men">Men</a>
+                <a class="feed-chip" href="products.html?gender=unisex">Unisex</a>
+                <a class="feed-chip" href="products.html?gender=kids">Kids</a>
+                <a class="feed-chip" href="sales.html">Sale</a>
+                <a class="feed-chip" href="collections.html">Collections</a>
+            </nav>
+
+            <!-- New arrivals — horizontal rail of the most recent listings -->
+            <div class="rail-head"><h3>New arrivals</h3><a href="products.html?sort=recent">See all</a></div>
+            <div class="nf-rail" id="feedNew"></div>
+
+            <!-- On sale — horizontal rail of every discounted piece -->
+            <div id="feedSaleWrap">
+                <div class="rail-head"><h3>On sale</h3><a href="sales.html">See all</a></div>
+                <div class="nf-rail" id="feedSale"></div>
+            </div>
+
             <!-- The feed. -->
             <div class="feed-rest">
                 <h3 class="feed-subhead">The feed</h3>
@@ -561,6 +599,39 @@
                 var rest = all.filter(function (p) { return six.indexOf(p) === -1; });
                 var feed = six.concat(rest);
                 feedAll.innerHTML = feed.map(card).join('');
+            }
+            // Sale card — same cv-card, with a -% badge and was/now pricing.
+            function saleCard(p) {
+                var d = p._d || {};
+                var inner = p.cover
+                    ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
+                    : '<span class="cv-card-emoji">' + esc(p.icon || '🛍️') + '</span>';
+                return '<a class="cv-card is-sale" href="products.html">' +
+                    '<div class="cv-card-img"><span class="cv-card-pct">-' + (d.percent || 0) + '%</span>' + inner + '</div>' +
+                    '<div class="cv-card-row"><span class="cv-card-name">' + esc(p.name) + '</span>' +
+                    '<span class="cv-card-price"><span class="cv-card-was">' + money(d.original) + '</span>' + money(d.price) + '</span></div>' +
+                    '<div class="cv-card-brand">' + esc(p.seller) + '</div>' +
+                '</a>';
+            }
+            // New arrivals rail — most recent listings first.
+            var newEl = document.getElementById('feedNew');
+            if (newEl) {
+                var recent = all.slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); }).slice(0, 10);
+                newEl.innerHTML = recent.map(card).join('');
+            }
+            // On sale rail — every discounted piece, deepest cut first (clothing only).
+            var saleEl = document.getElementById('feedSale');
+            var saleWrap = document.getElementById('feedSaleWrap');
+            if (saleEl) {
+                var sale = (window.veroCollections && window.veroCollections.onSale)
+                    ? window.veroCollections.onSale().filter(function (p) { return !(p._raw && p._raw.type === 'art'); }).slice(0, 12)
+                    : [];
+                if (sale.length) {
+                    saleEl.innerHTML = sale.map(saleCard).join('');
+                    if (saleWrap) saleWrap.style.display = '';
+                } else if (saleWrap) {
+                    saleWrap.style.display = 'none';
+                }
             }
             if (note) {
                 var bits = [];
