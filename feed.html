@@ -49,6 +49,17 @@
         .feed-search input:focus { border-color: #111; }
         .feed-search input::placeholder { color: #a3a298; }
 
+        /* ===== Section banner — full-bleed image strip with centred title ===== */
+        .feed-banner { position: relative; width: calc(100% + 40px); margin: 0 -20px 18px; aspect-ratio: 20 / 7; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; text-align: center; background: #e9e7e2; }
+        .feed-banner .fb-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transform: scale(1.02); transition: opacity .3s; }
+        .feed-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.42)); }
+        .feed-banner .fb-txt { position: relative; z-index: 2; color: #fff; padding: 0 20px; }
+        .feed-banner .fb-title { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: clamp(22px, 6vw, 34px); letter-spacing: -0.02em; text-transform: uppercase; line-height: 1; text-shadow: 0 2px 14px rgba(0,0,0,0.3); }
+        .feed-banner .fb-sub { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-top: 8px; color: rgba(255,255,255,0.92); }
+        .feed-banner.is-sale .fb-title { color: #fff; }
+        .feed-banner.is-sale::after { background: linear-gradient(180deg, rgba(123,30,27,0.30), rgba(123,30,27,0.55)); }
+
         /* ===== Gender coverflow carousel (ported 1:1 from the old home) ===== */
         #genderCover { position: relative; margin: 0 -20px 8px; --gc-card: clamp(240px, 78vw, 420px); }
         #genderCover .gc-head { font-family: 'Poppins','Inter',sans-serif; font-weight: 300; letter-spacing: 0.01em; font-size: 15px; color: #111; text-align: center; margin: 0 0 2px; }
@@ -157,6 +168,9 @@
 
         <!-- The structured feed (hidden while a search is active). -->
         <div id="feedStructured">
+            <!-- Banner · shop by category -->
+            <div class="feed-banner" id="bannerFeature"><div class="fb-bg"></div><div class="fb-txt"><div class="fb-title">Shop by category</div><div class="fb-sub">Find your edit</div></div></div>
+
             <!-- 2 · Gender slider -->
             <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
                 <p class="gc-head">Choose by category</p>
@@ -184,18 +198,18 @@
             <!-- 4 · 4-card separator -->
             <div class="feed-sep"><div class="sep-grid" id="sepA"></div></div>
 
-            <!-- 5 · Sales section — 10-card transparent rail -->
+            <!-- 5 · Sales section — banner + 10-card transparent rail -->
             <section>
-                <div class="sec-head"><h3>On sale</h3><span class="sec-sub">Up to 50% off</span></div>
+                <div class="feed-banner is-sale" id="bannerSale"><div class="fb-bg"></div><div class="fb-txt"><div class="fb-title">On sale</div><div class="fb-sub">Up to 50% off</div></div></div>
                 <div class="rail-trans" id="railSale"></div>
             </section>
 
             <!-- 6 · 4-card separator -->
             <div class="feed-sep"><div class="sep-grid" id="sepB"></div></div>
 
-            <!-- 7 · New arrivals section — 10-card transparent rail -->
+            <!-- 7 · New arrivals section — banner + 10-card transparent rail -->
             <section>
-                <div class="sec-head"><h3>New arrivals</h3><span class="sec-sub">Just listed</span></div>
+                <div class="feed-banner" id="bannerNew"><div class="fb-bg"></div><div class="fb-txt"><div class="fb-title">New arrivals</div><div class="fb-sub">Just listed</div></div></div>
                 <div class="rail-trans" id="railNew"></div>
             </section>
         </div>
@@ -302,9 +316,24 @@
 
         function fill(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
 
+        // ----- Section banners (backgrounds swap with Art / Fashion) ------
+        var BANNERS = {
+            bannerFeature: { fashion: 'clothing-hero.jpg',               art: 'art-hero.jpg' },
+            bannerSale:    { fashion: 'assets/hero/sale-clothing.webp',  art: 'assets/hero/sale-art.webp' },
+            bannerNew:     { fashion: 'gallery-hero.jpg',                art: 'magazine-hero.jpg' }
+        };
+        function applyBanners(art) {
+            Object.keys(BANNERS).forEach(function (id) {
+                var el = document.getElementById(id); if (!el) return;
+                var bg = el.querySelector('.fb-bg'); if (!bg) return;
+                bg.style.backgroundImage = 'url("' + BANNERS[id][art ? 'art' : 'fashion'] + '")';
+            });
+        }
+
         // ----- Build the structured feed ----------------------------------
         function buildStructured() {
             var list = modeList();
+            applyBanners(state.mode === 'art');
 
             // Featured single card, by the chosen gender.
             var pool = byGender(list, state.gender);
