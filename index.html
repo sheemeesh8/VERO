@@ -22,15 +22,36 @@
         .hero-welcome { font-size: clamp(22px, 6vw, 40px); font-weight: 300; letter-spacing: 0.02em; }
         .hero-welcome b { font-weight: 700; }
         .hero-slogan { margin-top: 14px; font-size: clamp(12px, 3vw, 16px); font-weight: 400; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
+        /* Hero CTA → opens the find-a-product flow. */
+        .hero-find {
+            margin-top: 28px; font-family: 'Archivo','Poppins',sans-serif; font-weight: 700;
+            font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase;
+            color: #111; background: #fff; border: none; padding: 16px 40px; cursor: pointer;
+            transition: transform .2s ease, background .2s ease, color .2s ease;
+        }
+        .hero-find:hover { transform: translateY(-2px); background: #111; color: #fff; }
+        /* Scroll cue below the CTA. */
+        .hero-scroll { margin-top: 18px; font-family: 'Poppins','Inter',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.75; }
 
         /* ===== White gender-slider screen — a fixed overlay that fades in OVER the
            hero as you scroll down (opacity driven by scroll position). ===== */
         .pick {
             position: fixed; inset: 0; z-index: 2; background: #fff;
             display: flex; align-items: center; justify-content: center; padding: 10vh 20px;
-            opacity: 0; pointer-events: none;
+            opacity: 0; pointer-events: none; transition: opacity .55s ease;
         }
-        .pick-inner { width: 100%; max-width: 560px; margin: 0 auto; }
+        /* Launched from the hero's "Find a product" button. */
+        .pick.open { opacity: 1; pointer-events: auto; }
+        .pick-inner { width: 100%; max-width: 560px; margin: 0 auto; position: relative; }
+        /* Close the find-a-product flow and return to the hero. */
+        .pick-close {
+            position: fixed; top: 16px; left: 16px; z-index: 7; width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            background: #fff; border: 1.5px solid #111; color: #111; cursor: pointer;
+            border-radius: 9999px; transition: background .2s ease, color .2s ease;
+        }
+        .pick-close:hover { background: #111; color: #fff; }
+        .pick-close svg { width: 20px; height: 20px; display: block; }
 
         /* ===== Coverflow gender carousel (ported from coverflow-carousel.tsx) ===== */
         #genderCover { position: relative; margin: 0 -20px 14px; --gc-card: clamp(260px, 82vw, 430px); }
@@ -91,7 +112,7 @@
 
         /* ===== Stacked full-screen step overlays — each fades IN over the previous ===== */
         .screen {
-            position: fixed; inset: 0; background: #fff;
+            position: fixed; inset: 0; background: #fff; z-index: 3;
             display: flex; align-items: center; justify-content: center; padding: 10vh 20px;
             opacity: 0; pointer-events: none; transition: opacity 1.5s cubic-bezier(0.83, 0, 0.17, 1); overflow-y: auto;
         }
@@ -218,11 +239,14 @@
         <div class="hero-copy">
             <div class="hero-welcome">welcome to <b>moravchick</b></div>
             <div class="hero-slogan">straight elegance</div>
+            <button class="hero-find" type="button" id="heroFind">Find a product</button>
+            <div class="hero-scroll">Scroll for the feed ↓</div>
         </div>
     </section>
 
     <!-- ===== WHITE GENDER-SLIDER SCREEN (fades in on scroll) ===== -->
     <section class="pick" id="pick">
+        <button class="pick-close" type="button" id="pickClose" aria-label="Back to home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
         <div class="pick-inner">
             <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
                 <p class="gc-head">Choose by category</p>
@@ -347,16 +371,40 @@
         </div>
     </section>
 
-    <!-- White overlay fades IN over the hero as you scroll down -->
+    <!-- Hero: "Find a product" opens the picker flow; scrolling down reveals the feed. -->
     <script>
     (function () {
-        var sec = document.getElementById('pick');
-        if (!sec) return;
+        var pick = document.getElementById('pick');
+        var feed = document.getElementById('scrFeed');
+        var findBtn = document.getElementById('heroFind');
+        var closeBtn = document.getElementById('pickClose');
+
+        // Launch the find-a-product flow from the hero button.
+        function openPicker() {
+            window.__flowOpen = true;
+            if (feed) feed.classList.remove('show');
+            if (pick) pick.classList.add('open');
+            window.scrollTo(0, 0);
+        }
+        function closePicker() {
+            if (pick) pick.classList.remove('open');
+            window.__flowOpen = false;
+        }
+        if (findBtn) findBtn.addEventListener('click', openPicker);
+        if (closeBtn) closeBtn.addEventListener('click', closePicker);
+
+        // Scroll down from the hero → straight to the feed (no picks).
+        var built = false;
         function onScroll() {
+            if (window.__flowOpen) return;
             var vh = window.innerHeight || 1;
-            var t = Math.min(1, Math.max(0, window.pageYOffset / vh));
-            sec.style.opacity = String(t);
-            sec.style.pointerEvents = t > 0.6 ? 'auto' : 'none';
+            var t = window.pageYOffset / vh;
+            if (t > 0.5) {
+                if (!built && typeof window.__buildFeed === 'function') { window.__buildFeed(); built = true; }
+                if (feed) feed.classList.add('show');
+            } else if (t < 0.35) {
+                if (feed) feed.classList.remove('show');
+            }
         }
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', onScroll);
@@ -676,6 +724,8 @@
                 enter.setAttribute('href', 'products.html' + (q.length ? ('?' + q.join('&')) : ''));
             }
         }
+        // Let the hero's scroll-to-feed reuse the same builder (with no picks).
+        window.__buildFeed = buildFeed;
     })();
     </script>
 
