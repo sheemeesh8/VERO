@@ -243,6 +243,26 @@
         #siteHeader.scrolled:not(.over-dark) .header-right .icon-btn,
         #siteHeader.scrolled:not(.over-dark) .hdr-account { color: #1b1916 !important; }
         #siteHeader.scrolled:not(.over-dark) .hdr-avatar { border-color: rgba(0,0,0,0.3) !important; }
+        /* Remove the magnifier (search) icon from the header on the home page. */
+        #siteHeader [data-icon="search"] { display: none !important; }
+
+        /* ===== Art / Fashion pill — always pinned just under the header ===== */
+        .mode-pop {
+            position: fixed; left: 50%; transform: translateX(-50%);
+            top: calc(env(safe-area-inset-top, 0px) + 72px); z-index: 99;
+            display: inline-flex; gap: 2px; padding: 3px;
+            border-radius: 999px; background: rgba(255,255,255,0.82);
+            -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px);
+            border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+        }
+        .mp-seg {
+            border: none; background: none; cursor: pointer; padding: 7px 18px; border-radius: 999px;
+            font-family: 'Archivo','Poppins',sans-serif; font-weight: 700; font-size: 11px;
+            letter-spacing: 1.4px; text-transform: uppercase; color: #6b6b6b;
+            transition: background .25s ease, color .25s ease;
+        }
+        .mp-seg.on { background: var(--oak, #2A331B); color: #fff; }
+        .mp-seg:not(.on):hover { color: #1b1916; }
     </style>
     <link rel="stylesheet" href="wishlist-heart.css?v=20261103c">
     <script defer src="wishlist-heart.js?v=20261103c"></script>
@@ -264,6 +284,40 @@
     <script>
         // Wear the sticky (over-hero) look from the very top, like the home page.
         (function () { var h = document.getElementById('siteHeader'); if (h) h.classList.add('sticky-look'); })();
+    </script>
+
+    <!-- Art / Fashion switch — a small pill pinned just under the header -->
+    <div class="mode-pop" id="modePop" role="tablist" aria-label="Browse art or fashion">
+        <button class="mp-seg" type="button" data-mode="clothing" role="tab">Fashion</button>
+        <button class="mp-seg" type="button" data-mode="art" role="tab">Art</button>
+    </div>
+    <script>
+        (function () {
+            var pop = document.getElementById('modePop');
+            if (!pop) return;
+            function curMode() { return localStorage.getItem('vero_category') === 'art' ? 'art' : 'clothing'; }
+            function render() {
+                var m = curMode();
+                if (m === 'art') document.body.setAttribute('data-mode', 'art');
+                else document.body.removeAttribute('data-mode');
+                [].forEach.call(pop.querySelectorAll('.mp-seg'), function (b) {
+                    b.classList.toggle('on', b.getAttribute('data-mode') === m);
+                    b.setAttribute('aria-selected', b.getAttribute('data-mode') === m ? 'true' : 'false');
+                });
+                // Keep the header's own Art/Fashion switch in sync.
+                var art = document.getElementById('segArt'), fash = document.getElementById('segFashion');
+                if (art && fash) { art.classList.toggle('active', m === 'art'); fash.classList.toggle('active', m !== 'art'); }
+            }
+            pop.addEventListener('click', function (e) {
+                var b = e.target.closest && e.target.closest('.mp-seg');
+                if (!b) return;
+                localStorage.setItem('vero_category', b.getAttribute('data-mode'));
+                render();
+                if (typeof window.__buildFeed === 'function') window.__buildFeed();
+            });
+            render();
+            window.__renderMode = render;
+        })();
     </script>
 
     <!-- ===== HERO ===== -->
@@ -678,8 +732,10 @@
             var feedTop = document.querySelector('#scrFeed .feed-top');
             if (feedTop) feedTop.style.display = hasPicks ? '' : 'none';
             var all = (window.veroCollections && window.veroCollections.allProducts) ? window.veroCollections.allProducts() : [];
-            // Clothing / fashion only (drop the interior-design art pieces).
-            all = all.filter(function (p) { return !(p._raw && p._raw.type === 'art'); });
+            // Art vs Fashion mode (the pill under the header): show one or the other.
+            var artMode = (localStorage.getItem('vero_category') === 'art');
+            var isArt = function (p) { return !!(p._raw && p._raw.type === 'art'); };
+            all = all.filter(artMode ? isArt : function (p) { return !isArt(p); });
             var wanted = null;
             if (sel.product && sel.product.length) {
                 wanted = [];
@@ -741,7 +797,7 @@
             var saleEl = document.getElementById('feedSale');
             var saleWrap = document.getElementById('feedSaleWrap');
             if (saleEl) {
-                var sale = (window.veroCollections && window.veroCollections.onSale)
+                var sale = (!artMode && window.veroCollections && window.veroCollections.onSale)
                     ? window.veroCollections.onSale().filter(function (p) { return !(p._raw && p._raw.type === 'art'); }).slice(0, 12)
                     : [];
                 if (sale.length) {
