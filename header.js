@@ -3235,7 +3235,7 @@
     // near-instant. Keeps the list small so it doesn't hog bandwidth.
     function warmCommonPages() {
         [
-            'index.html', 'profile.html', 'products.html', 'seller-area.html',
+            'index.html', 'feed.html', 'profile.html', 'products.html', 'seller-area.html',
             'chats.html', 'cart-store.html', 'cart.html', 'wishlist.html',
             'buyer-profile.html', 'drafts.html',
             'offers-received.html', 'saved.html', 'follows.html'

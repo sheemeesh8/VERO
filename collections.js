@@ -6,11 +6,9 @@
    month), which one is running its end-of-season sale, and how a
    product's effective discount is worked out.
 
-   Every collections/sales surface reads through here so the same product
-   shows the same collection and the same price everywhere:
-       collections.html   — the four collections, ordered by the calendar
-       collection.html    — one collection's pieces
-       sales.html         — every discounted piece, deepest cut first
+   Every feed surface reads through here so the same product shows the same
+   collection and the same price everywhere:
+       feed.html          — the single site feed (All / New / Sale, by category)
 
    Usage:
      <script src="product-overrides.js"></script>   (optional, folds in seller edits)
