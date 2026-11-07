@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="The moravchick feed — one place for every piece. Browse pre-loved fashion and art, and open any item to chat with the seller.">
+    <meta name="description" content="The moravchick feed — search, browse by category, and discover what's on sale and newly listed, all in one place.">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
     <title>moravchick — Feed</title>
     <script src="vero-theme.js"></script>
@@ -11,28 +11,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Arimo:wght@400;500;600;700&family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="design-system.css">
+    <link rel="stylesheet" href="search-box.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: auto; }
         body { background: #fff; color: #111; -webkit-font-smoothing: antialiased; direction: ltr; }
 
-        /* ===== Feed shell — nothing but the cards =====
-           The top padding is set from JS so the grid clears the header plus the
-           attached Art/Fashion bar (both fixed). This value is only a fallback. */
+        /* ===== Feed shell — top padding set from JS to clear header + mode bar. */
         .feed-wrap { max-width: 720px; margin: 0 auto; padding: 132px 20px 120px; }
 
-        /* The site header already carries its own Art/Fashion toggle on the right.
-           On the feed we present that control as an attached bar instead, so hide
-           the in-header pill here to avoid a duplicate. */
+        /* Hide the header's own Art/Fashion pill here — the attached bar replaces it. */
         #siteHeader .hdr-mode-pair { display: none !important; }
 
-        /* ===== Art / Fashion bar — attached to the bottom edge of the header =====
-           Fixed, full-width, a continuation of the header: same white ground, a
-           hairline divider below, a centred segmented toggle. */
+        /* ===== Art / Fashion bar — attached to the bottom edge of the header. */
         .feed-modebar {
             position: fixed; left: 0; right: 0; top: 64px; z-index: 99;
-            display: flex; justify-content: center; align-items: center;
-            padding: 7px 12px;
+            display: flex; justify-content: center; align-items: center; padding: 7px 12px;
             background: rgba(255,255,255,0.92);
             -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px);
             border-bottom: 1px solid #ececec;
@@ -44,33 +38,99 @@
         .feed-mode button.on { background: var(--oak, #2A331B); color: #fff; }
         .feed-mode button:not(.on):hover { color: #1b1916; }
 
-        /* ===== Product grid (the home-feed editorial card) ===== */
-        .feed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px 8px; margin: 0 -4px; }
+        /* ===== Search bar ===== */
+        .feed-search { position: relative; margin: 0 0 26px; }
+        .feed-search input {
+            width: 100%; height: 48px; border: 1px solid #e4e0d6; border-radius: 9999px;
+            background: #fff; padding: 0 20px 0 46px;
+            font-family: 'Arimo','Inter',sans-serif; font-size: 15px; color: #1b1916; outline: none;
+            transition: border-color .2s;
+        }
+        .feed-search input:focus { border-color: #111; }
+        .feed-search input::placeholder { color: #a3a298; }
+
+        /* ===== Gender coverflow carousel (ported 1:1 from the old home) ===== */
+        #genderCover { position: relative; margin: 0 -20px 8px; --gc-card: clamp(240px, 78vw, 420px); }
+        #genderCover .gc-head { font-family: 'Poppins','Inter',sans-serif; font-weight: 300; letter-spacing: 0.01em; font-size: 15px; color: #111; text-align: center; margin: 0 0 2px; }
+        #genderCover .gc-sub { font-family: 'Poppins','Inter',sans-serif; font-weight: 400; font-size: 12px; color: #6b6a64; text-align: center; margin: 0 0 4px; min-height: 16px; }
+        #genderCover .gc-rel { position: relative; }
+        #genderCover .gc-frame { perspective: calc(var(--gc-card) * 3); overflow: hidden; padding: 30px 0 26px; outline: none; cursor: grab; touch-action: pan-y; }
+        #genderCover .gc-frame:active { cursor: grabbing; }
+        #genderCover .gc-stage { position: relative; height: var(--gc-card); transform-style: preserve-3d; }
+        #genderCover .gc-card { position: absolute; left: 50%; top: 0; width: var(--gc-card); height: var(--gc-card); overflow: hidden; background: #fff; will-change: transform; }
+        #genderCover .gc-card img, #genderCover .gc-card video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; user-select: none; pointer-events: none; }
+        #genderCover .gc-cap { display: flex; flex-direction: column; align-items: center; margin-top: 2px; }
+        #genderCover .gc-cap .gc-name { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: -0.3px; color: #111; }
+        #genderCover .gc-cap .gc-shop { margin-top: 4px; font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #111; border-bottom: 1px solid #111; padding-bottom: 2px; text-decoration: none; cursor: pointer; background: none; border-left: 0; border-right: 0; border-top: 0; }
+        #genderCover .gc-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+        #genderCover .gc-dots button { width: 8px; height: 8px; padding: 0; border: none; border-radius: 9999px; background: #111; opacity: 0.25; cursor: pointer; transition: opacity .25s ease, width .25s ease; }
+        #genderCover .gc-dots button.on { opacity: 1; width: 22px; }
+
+        /* ===== Single featured product card (follows the chosen gender) ===== */
+        .feature-card { display: block; text-decoration: none; color: #1b1916; margin: 6px 0 4px; }
+        .feature-card .fc-img { position: relative; width: 100%; aspect-ratio: 1.3; background: #F2F2F2; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .feature-card .fc-img img { width: 100%; height: 100%; object-fit: cover; }
+        .feature-card .fc-emoji { font-size: 72px; opacity: .45; }
+        .feature-card .fc-pct { position: absolute; top: 12px; right: 12px; z-index: 3; height: 24px; display: inline-flex; align-items: center; padding: 0 9px; border-radius: 5px; background: #B3433B; color: #fff; font-family: 'Archivo',sans-serif; font-size: 11px; font-weight: 800; letter-spacing: .5px; }
+        .feature-card .fc-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 14px; }
+        .feature-card .fc-name { font-family: 'Archivo','Inter',sans-serif; font-size: 15px; font-weight: 500; letter-spacing: .4px; text-transform: uppercase; }
+        .feature-card .fc-price { font-family: 'Archivo','Inter',sans-serif; font-size: 15px; }
+        .feature-card.is-sale .fc-price { color: #B3433B; }
+        .feature-card .fc-was { font-family: 'Arimo',sans-serif; font-size: 12px; color: #a3a298; text-decoration: line-through; margin-right: 6px; }
+        .feature-card .fc-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #8a857c; margin-top: 3px; }
+
+        /* ===== Section heading ===== */
+        .sec-head { display: flex; align-items: baseline; justify-content: space-between; margin: 34px 0 14px; }
+        .sec-head h3 { margin: 0; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.3px; text-transform: uppercase; color: #1b1916; }
+        .sec-head .sec-sub { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #a3a298; }
+
+        /* ===== 4-card separator block ===== */
+        .feed-sep { margin: 30px -4px; padding: 26px 0; border-top: 1px solid #ececec; border-bottom: 1px solid #ececec; }
+        .sep-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+        /* The editorial card, shared by the separator block + search results. */
         .cv-card { text-decoration: none; color: #1b1916; display: block; min-width: 0; text-align: left; }
         .cv-card-img { position: relative; width: 100%; aspect-ratio: 0.82; background: #F2F2F2; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .cv-card-img img { width: 100%; height: 100%; object-fit: cover; }
-        .cv-card-img::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; z-index: 3; background: linear-gradient(to right, #111 0 34%, rgba(0,0,0,0.12) 34% 100%); }
-        .cv-card-emoji { font-size: 48px; opacity: 0.45; }
-        .cv-card-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 16px; }
-        .cv-card-name { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; line-height: 1.3; font-weight: 400; letter-spacing: 0.4px; text-transform: uppercase; color: #1b1916; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; }
-        .cv-card-price { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 0.3px; color: #1b1916; white-space: nowrap; flex: 0 0 auto; }
-        .cv-card-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; color: #8a857c; margin-top: 2px; }
+        .cv-card-emoji { font-size: 34px; opacity: 0.45; }
+        .cv-card-row { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-top: 10px; }
+        .cv-card-name { font-family: 'Archivo','Inter',sans-serif; font-size: 11px; line-height: 1.3; letter-spacing: 0.3px; text-transform: uppercase; color: #1b1916; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; }
+        .cv-card-price { font-family: 'Archivo','Inter',sans-serif; font-size: 11px; color: #1b1916; white-space: nowrap; flex: 0 0 auto; }
+        .cv-card-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 10.5px; color: #8a857c; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cv-card.is-sale .cv-card-price { color: #B3433B; }
-        .cv-card-was { font-family: 'Arimo','Inter',sans-serif; font-size: 11.5px; color: #a3a298; text-decoration: line-through; margin-right: 6px; }
-        .cv-card-pct { position: absolute; top: 10px; right: 10px; z-index: 4; height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border-radius: 5px; background: #B3433B; color: #fff; font-family: 'Archivo','Inter',sans-serif; font-size: 10.5px; font-weight: 800; letter-spacing: 0.5px; }
+        .cv-card-was { font-family: 'Arimo',sans-serif; font-size: 10px; color: #a3a298; text-decoration: line-through; margin-right: 4px; }
 
-        /* Per-card entrance */
-        .cv-card { opacity: 0; transform: translateY(20px); animation: cardIn .7s cubic-bezier(.16,1,.3,1) forwards; }
-        @keyframes cardIn { to { opacity: 1; transform: none; } }
+        /* ===== Transparent 10-card rail (Sales / New) =====
+           Cards have no card ground — just the piece on the page, with the brand,
+           name and price centred beneath it. */
+        .rail-trans { display: flex; gap: 18px; overflow-x: auto; padding: 4px 0 10px; margin: 0 -4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .rail-trans::-webkit-scrollbar { display: none; }
+        .rt-card { flex: 0 0 160px; width: 160px; text-decoration: none; color: #1b1916; }
+        .rt-img { position: relative; width: 100%; aspect-ratio: 0.9; background: transparent; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .rt-img img { width: 100%; height: 100%; object-fit: contain; }
+        .rt-emoji { font-size: 54px; opacity: .5; }
+        .rt-pct { position: absolute; top: 4px; right: 10px; z-index: 3; height: 20px; display: inline-flex; align-items: center; padding: 0 7px; border-radius: 5px; background: #B3433B; color: #fff; font-family: 'Archivo',sans-serif; font-size: 10px; font-weight: 800; }
+        .rt-cap { text-align: center; margin-top: 10px; }
+        .rt-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #8a857c; }
+        .rt-name { font-family: 'Archivo','Inter',sans-serif; font-size: 12px; letter-spacing: .4px; text-transform: uppercase; color: #1b1916; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rt-price { font-family: 'Archivo','Inter',sans-serif; font-size: 12px; color: #1b1916; margin-top: 3px; }
+        .rt-card.is-sale .rt-price { color: #B3433B; }
+        .rt-was { font-family: 'Arimo',sans-serif; font-size: 10.5px; color: #a3a298; text-decoration: line-through; margin-right: 5px; }
 
-        .feed-empty { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #8a857c;
-            font-family: 'Arimo','Inter',sans-serif; font-size: 14px; }
+        /* ===== Search results grid ===== */
+        .feed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 8px; margin: 0 -4px; }
+        .feed-grid .cv-card-emoji { font-size: 48px; }
+        .feed-grid .cv-card-name { font-size: 13px; letter-spacing: .4px; }
+        .feed-grid .cv-card-price { font-size: 13px; }
+        .feed-grid .cv-card-brand { font-size: 12px; }
+        .feed-empty { text-align: center; padding: 50px 20px; color: #8a857c; font-family: 'Arimo','Inter',sans-serif; font-size: 14px; }
 
         @media (min-width: 560px) {
             .feed-grid { grid-template-columns: repeat(3, 1fr); }
+            #genderCover { --gc-card: clamp(260px, 60vw, 420px); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .cv-card { opacity: 1; transform: none; animation: none; }
+            #genderCover .gc-card { transition: none !important; }
         }
     </style>
 </head>
@@ -78,7 +138,6 @@
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=60"></script>
     <script>
-        // Keep the header in its solid/sticky look over the white feed.
         (function () { var h = document.getElementById('siteHeader'); if (h) h.classList.add('sticky-look'); })();
     </script>
 
@@ -90,46 +149,87 @@
         </div>
     </div>
 
-    <!-- The feed: product cards only. -->
     <main class="feed-wrap">
-        <div class="feed-grid" id="feedGrid" aria-live="polite"></div>
+        <!-- 1 · Search -->
+        <form class="feed-search" role="search" onsubmit="return false;">
+            <input type="search" id="feedSearchInput" placeholder="Search the feed…" autocomplete="off" aria-label="Search the feed">
+        </form>
+
+        <!-- The structured feed (hidden while a search is active). -->
+        <div id="feedStructured">
+            <!-- 2 · Gender slider -->
+            <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
+                <p class="gc-head">Choose by category</p>
+                <p class="gc-sub" aria-live="polite">Women's collection</p>
+                <div class="gc-rel">
+                    <div class="gc-frame" tabindex="0">
+                        <div class="gc-stage">
+                            <div class="gc-card" data-gender="women" data-name="Women" data-sub="Women's collection"><video class="gc-media" src="assets/hero/hero-clothing.mp4" poster="assets/hero/women-editorial.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
+                            <div class="gc-card" data-gender="men" data-name="Men" data-sub="Men's collection"><video class="gc-media" src="assets/hero/men.mp4" poster="men-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
+                            <div class="gc-card" data-gender="unisex" data-name="Unisex" data-sub="Unisex collection"><video class="gc-media" src="assets/hero/unisex.mp4" poster="hero-beach.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
+                            <div class="gc-card" data-gender="kids" data-name="Kids" data-sub="Kids collection"><video class="gc-media" src="assets/hero/kids.mp4" poster="clothing-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="gc-cap">
+                    <span class="gc-name">Women</span>
+                    <button type="button" class="gc-shop">Shop Women</button>
+                </div>
+                <div class="gc-dots"></div>
+            </div>
+
+            <!-- 3 · Single featured product card, by the chosen gender -->
+            <a class="feature-card" id="genderFeature" href="#"></a>
+
+            <!-- 4 · 4-card separator -->
+            <div class="feed-sep"><div class="sep-grid" id="sepA"></div></div>
+
+            <!-- 5 · Sales section — 10-card transparent rail -->
+            <section>
+                <div class="sec-head"><h3>On sale</h3><span class="sec-sub">Up to 50% off</span></div>
+                <div class="rail-trans" id="railSale"></div>
+            </section>
+
+            <!-- 6 · 4-card separator -->
+            <div class="feed-sep"><div class="sep-grid" id="sepB"></div></div>
+
+            <!-- 7 · New arrivals section — 10-card transparent rail -->
+            <section>
+                <div class="sec-head"><h3>New arrivals</h3><span class="sec-sub">Just listed</span></div>
+                <div class="rail-trans" id="railNew"></div>
+            </section>
+        </div>
+
+        <!-- Search results (shown only while typing). -->
+        <div class="feed-grid" id="searchResults" hidden></div>
     </main>
 
     <!-- Product data layer (shared across the site). -->
     <script src="collections.js"></script>
 
-    <!-- The one feed: filtering (via URL only) + rendering. -->
+    <!-- Feed assembly. -->
     <script>
     (function () {
         'use strict';
         var VC = window.veroCollections;
         if (!VC) return;
 
-        // ----- State -------------------------------------------------------
-        // The grid shows every piece. Optional deep-links still work so the
-        // footer / 404 shortcuts land on a filtered view, but the feed itself
-        // carries no visible controls beyond the header's Art/Fashion toggle.
         var params = new URLSearchParams(location.search);
-        var urlMode = params.get('mode');                 // art | fashion (optional)
+        var urlMode = params.get('mode');
         if (urlMode === 'art' || urlMode === 'fashion') {
             try { localStorage.setItem('vero_category', urlMode === 'art' ? 'art' : 'clothing'); } catch (e) {}
         }
         var state = {
             mode: ((urlMode === 'art' || urlMode === 'fashion') ? urlMode
                    : (localStorage.getItem('vero_category') === 'art' ? 'art' : 'fashion')),
-            view: params.get('view') || 'all',            // all | new | sale
-            gender: params.get('gender') || ''            // women | men | unisex | kids | ''
+            gender: params.get('gender') || 'women'
         };
-        if (params.get('sort') === 'recent') state.view = 'new';
 
         // ----- Helpers -----------------------------------------------------
         function money(n) { return (Math.round(Number(n) || 0)).toLocaleString('en-US') + ' ₪'; }
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
         function isArt(p) { return !!(p._raw && (p._raw.type === 'art' || p.collection === 'interiors')); }
-        function genderOf(p) {
-            var g = (p._raw && (p._raw.gender || p._raw.audience)) || '';
-            return String(g).toLowerCase();
-        }
+        function genderOf(p) { return String((p._raw && (p._raw.gender || p._raw.audience)) || '').toLowerCase(); }
 
         function hrefOf(p, d) {
             var priceNum = VC.toNum(d && d.onSale ? d.price : (d ? d.original : p.price));
@@ -141,98 +241,269 @@
             return 'product-showcase.html?product=' + encodeURIComponent(payload);
         }
 
-        function card(p) {
-            var d = VC.discountOf(p._raw);
-            var inner = p.cover
-                ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
-                : '<span class="cv-card-emoji">' + esc(p.icon || '🛍️') + '</span>';
-            var priceHTML, pct = '';
-            if (d && d.onSale) {
-                pct = '<span class="cv-card-pct">-' + d.percent + '%</span>';
-                priceHTML = '<span class="cv-card-was">' + money(d.original) + '</span>' + money(d.price);
-            } else {
-                priceHTML = money(p.price);
-            }
-            return '<a class="cv-card' + (d && d.onSale ? ' is-sale' : '') + '" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
-                '<div class="cv-card-img">' + pct + inner + '</div>' +
-                '<div class="cv-card-row"><span class="cv-card-name">' + esc(p.name) + '</span>' +
-                '<span class="cv-card-price">' + priceHTML + '</span></div>' +
-                '<div class="cv-card-brand">' + esc(p.seller) + '</div>' +
-            '</a>';
-        }
-
-        // ----- Render ------------------------------------------------------
-        var gridEl = document.getElementById('feedGrid');
-
-        function render() {
-            var list;
-            if (state.view === 'sale') {
-                list = VC.onSale();                         // deepest cut first
-            } else {
-                list = VC.allProducts();
-                if (state.view === 'new') {
-                    list = list.slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
-                }
-            }
-
+        function modeList() {
             var art = (state.mode === 'art');
-            list = list.filter(function (p) { return art ? isArt(p) : !isArt(p); });
-
-            if (state.gender) {
-                var byGender = list.filter(function (p) { return genderOf(p) === state.gender; });
-                if (byGender.length) list = byGender;
-            }
-
-            gridEl.innerHTML = list.length
-                ? list.map(card).join('')
-                : '<div class="feed-empty">Nothing here yet.</div>';
-
-            syncMode();
+            return VC.allProducts().filter(function (p) { return art ? isArt(p) : !isArt(p); });
         }
+        function byGender(list, gender) {
+            if (!gender) return list;
+            var g = list.filter(function (p) { return genderOf(p) === gender; });
+            return g.length ? g : list;         // demo data carries no gender → fall back
+        }
+
+        // ----- Card renderers ---------------------------------------------
+        function cvCard(p) {
+            var d = VC.discountOf(p._raw);
+            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
+                                : '<span class="cv-card-emoji">' + esc(p.icon || '🛍️') + '</span>';
+            var price = d && d.onSale
+                ? '<span class="cv-card-was">' + money(d.original) + '</span>' + money(d.price)
+                : money(p.price);
+            return '<a class="cv-card' + (d && d.onSale ? ' is-sale' : '') + '" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
+                '<div class="cv-card-img">' + inner + '</div>' +
+                '<div class="cv-card-row"><span class="cv-card-name">' + esc(p.name) + '</span><span class="cv-card-price">' + price + '</span></div>' +
+                '<div class="cv-card-brand">' + esc(p.seller) + '</div></a>';
+        }
+
+        function transCard(p) {
+            var d = VC.discountOf(p._raw);
+            var pct = d && d.onSale ? '<span class="rt-pct">-' + d.percent + '%</span>' : '';
+            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
+                                : '<span class="rt-emoji">' + esc(p.icon || '🛍️') + '</span>';
+            var price = d && d.onSale
+                ? '<span class="rt-was">' + money(d.original) + '</span>' + money(d.price)
+                : money(p.price);
+            return '<a class="rt-card' + (d && d.onSale ? ' is-sale' : '') + '" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
+                '<div class="rt-img">' + pct + inner + '</div>' +
+                '<div class="rt-cap"><div class="rt-brand">' + esc(p.seller) + '</div>' +
+                '<div class="rt-name">' + esc(p.name) + '</div>' +
+                '<div class="rt-price">' + price + '</div></div></a>';
+        }
+
+        function renderFeature(p) {
+            var el = document.getElementById('genderFeature');
+            if (!el) return;
+            if (!p) { el.style.display = 'none'; return; }
+            el.style.display = 'block';
+            var d = VC.discountOf(p._raw);
+            var pct = d && d.onSale ? '<span class="fc-pct">-' + d.percent + '%</span>' : '';
+            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '">'
+                                : '<span class="fc-emoji">' + esc(p.icon || '🛍️') + '</span>';
+            var price = d && d.onSale
+                ? '<span class="fc-was">' + money(d.original) + '</span>' + money(d.price)
+                : money(p.price);
+            el.className = 'feature-card' + (d && d.onSale ? ' is-sale' : '');
+            el.setAttribute('href', hrefOf(p, d));
+            el.innerHTML =
+                '<div class="fc-img">' + pct + inner + '</div>' +
+                '<div class="fc-row"><span class="fc-name">' + esc(p.name) + '</span><span class="fc-price">' + price + '</span></div>' +
+                '<div class="fc-brand">' + esc(p.seller) + '</div>';
+        }
+
+        function fill(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+        // ----- Build the structured feed ----------------------------------
+        function buildStructured() {
+            var list = modeList();
+
+            // Featured single card, by the chosen gender.
+            var pool = byGender(list, state.gender);
+            renderFeature(pool[0] || list[0] || null);
+
+            // Separator A — 4 cards (the next of the gender pool, else the list).
+            fill('sepA', pool.slice(1, 5).concat(list).slice(0, 4).map(cvCard).join(''));
+
+            // Sales rail — up to 10 discounted pieces (mode-filtered), deepest cut first.
+            var art = (state.mode === 'art');
+            var sale = VC.onSale().filter(function (p) { return art ? isArt(p) : !isArt(p); }).slice(0, 10);
+            fill('railSale', sale.length ? sale.map(transCard).join('') : '<div class="feed-empty">Nothing on sale right now.</div>');
+
+            // Separator B — 4 more cards.
+            fill('sepB', list.slice(4, 8).concat(list).slice(0, 4).map(cvCard).join(''));
+
+            // New arrivals rail — up to 10 most recent (mode-filtered).
+            var recent = list.slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); }).slice(0, 10);
+            fill('railNew', recent.length ? recent.map(transCard).join('') : '<div class="feed-empty">No new pieces yet.</div>');
+        }
+
+        // ----- Search ------------------------------------------------------
+        var input = document.getElementById('feedSearchInput');
+        var structured = document.getElementById('feedStructured');
+        var results = document.getElementById('searchResults');
+        function runSearch(q) {
+            q = (q || '').trim().toLowerCase();
+            if (!q) { results.hidden = true; structured.style.display = ''; return; }
+            var matches = modeList().filter(function (p) {
+                return (p.name + ' ' + p.seller + ' ' + (p.category || '')).toLowerCase().indexOf(q) !== -1;
+            });
+            structured.style.display = 'none';
+            results.hidden = false;
+            results.innerHTML = matches.length ? matches.map(cvCard).join('')
+                : '<div class="feed-empty" style="grid-column:1/-1">No matches for "' + esc(q) + '".</div>';
+        }
+        if (input) input.addEventListener('input', function () { runSearch(input.value); });
 
         // ----- Art / Fashion toggle ---------------------------------------
         var modeEl = document.getElementById('feedMode');
         function syncMode() {
-            [].slice.call(modeEl.querySelectorAll('button')).forEach(function (b) {
-                b.classList.toggle('on', b.dataset.mode === state.mode);
-            });
+            [].slice.call(modeEl.querySelectorAll('button')).forEach(function (b) { b.classList.toggle('on', b.dataset.mode === state.mode); });
         }
         modeEl.addEventListener('click', function (e) {
             var b = e.target.closest ? e.target.closest('button') : null;
             if (!b) return;
             state.mode = b.dataset.mode;
             try { localStorage.setItem('vero_category', state.mode === 'art' ? 'art' : 'clothing'); } catch (err) {}
-            render();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            syncMode(); buildStructured();
+            if (input && input.value.trim()) runSearch(input.value);
         });
 
-        // ----- Keep the bar glued to the header's bottom edge -------------
+        // ----- Gender slider → feature card -------------------------------
+        window.__onGenderChange = function (gender) {
+            if (!gender || gender === state.gender) return;
+            state.gender = gender;
+            var list = modeList();
+            renderFeature(byGender(list, gender)[0] || list[0] || null);
+        };
+
+        // ----- Keep the mode bar glued to the header bottom ---------------
         var modeBar = document.getElementById('feedModeBar');
         var wrap = document.querySelector('.feed-wrap');
         function placeBar() {
             var hdr = document.getElementById('siteHeader');
             if (!hdr || !modeBar) return;
-            var hb = hdr.getBoundingClientRect().bottom;      // header is fixed at top
-            if (hb < 0) hb = 0;
+            var hb = hdr.getBoundingClientRect().bottom; if (hb < 0) hb = 0;
             modeBar.style.top = hb + 'px';
             if (wrap) wrap.style.paddingTop = (hb + modeBar.offsetHeight + 18) + 'px';
         }
-        var raf;
-        function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeBar); }
+        var raf; function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeBar); }
         window.addEventListener('scroll', schedulePlace, { passive: true });
         window.addEventListener('resize', schedulePlace);
-        if (window.ResizeObserver) {
-            var hdrEl = document.getElementById('siteHeader');
-            if (hdrEl) { try { new ResizeObserver(schedulePlace).observe(hdrEl); } catch (e) {} }
-        }
-        var tries = 0;
-        (function settle() { placeBar(); if (++tries < 40) setTimeout(settle, 100); })();
+        if (window.ResizeObserver) { var he = document.getElementById('siteHeader'); if (he) { try { new ResizeObserver(schedulePlace).observe(he); } catch (e) {} } }
+        var tries = 0; (function settle() { placeBar(); if (++tries < 40) setTimeout(settle, 100); })();
 
-        render();
+        syncMode();
+        buildStructured();
     })();
     </script>
 
-    <!-- Shared footer + reveal, as on the rest of the site. -->
+    <!-- Gender coverflow carousel (ported 1:1 from the old home feed). -->
+    <script>
+    (function () {
+        var root = document.getElementById('genderCover');
+        if (!root) return;
+        var frame = root.querySelector('.gc-frame');
+        var cards = [].slice.call(root.querySelectorAll('.gc-card'));
+        var count = cards.length;
+        if (!count) return;
+        var sub = root.querySelector('.gc-sub');
+        var nameEl = root.querySelector('.gc-cap .gc-name');
+        var shopEl = root.querySelector('.gc-cap .gc-shop');
+        var dotsWrap = root.querySelector('.gc-dots');
+
+        var DEPTH = 0.6, FALLOFF = 0.56, FADE = 0.1, GAP = 0.08, ROTATE = 44, LOOP = true;
+        var pos = 0, target = 0, width = 0, rafId = null, selected = 0, drag = null;
+
+        dotsWrap.innerHTML = cards.map(function (c, i) {
+            return '<button type="button" class="' + (i ? '' : 'on') + '" aria-label="Go to ' + (c.getAttribute('data-name') || ('slide ' + (i + 1))) + '"></button>';
+        }).join('');
+        var dots = [].slice.call(dotsWrap.querySelectorAll('button'));
+
+        function indexAt(p) { return ((Math.round(p) % count) + count) % count; }
+        function sign(n) { return n < 0 ? -1 : (n > 0 ? 1 : 0); }
+
+        function paint() {
+            if (!width) return;
+            var pitch = width * (1 + GAP);
+            for (var i = 0; i < count; i++) {
+                var card = cards[i], offset = i - pos;
+                if (LOOP) { offset = ((offset % count) + count) % count; if (offset > count / 2) offset -= count; }
+                var dist = Math.abs(offset), ramp = Math.pow(dist, FALLOFF);
+                var tilt = Math.min(ROTATE * ramp, 82) * sign(offset);
+                card.style.transform = 'translateX(calc(-50% + ' + (offset * pitch) + 'px)) translateZ(' + (-DEPTH * width * ramp) + 'px) rotateY(' + (-tilt) + 'deg)';
+                var edge = LOOP ? Math.min(1, Math.max(0, count / 2 - dist)) : 1;
+                card.style.opacity = String(Math.max(0, 1 - FADE * dist) * edge);
+                card.style.zIndex = String(100 - Math.round(dist));
+            }
+        }
+        function render() {
+            var a = indexAt(target); selected = a;
+            dots.forEach(function (d, i) { d.classList.toggle('on', i === a); });
+            var card = cards[a];
+            var nm = card.getAttribute('data-name') || '';
+            if (sub) sub.textContent = card.getAttribute('data-sub') || nm;
+            if (nameEl) nameEl.textContent = nm;
+            if (shopEl) shopEl.textContent = 'Shop ' + nm;
+            if (typeof window.__onGenderChange === 'function') window.__onGenderChange(card.getAttribute('data-gender') || '');
+            cards.forEach(function (c, i) {
+                var v = c.querySelector('video'); if (!v) return;
+                v.muted = true; v.defaultMuted = true;
+                if (i === a) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else { try { v.pause(); } catch (x) {} }
+            });
+        }
+        function clampPos(p) { return LOOP ? p : Math.max(0, Math.min(count - 1, p)); }
+        function settle(t) {
+            if (rafId !== null) cancelAnimationFrame(rafId);
+            target = t; render();
+            function step() {
+                var remaining = target - pos;
+                if (Math.abs(remaining) < 0.0004) { pos = target; paint(); rafId = null; return; }
+                pos += remaining * 0.16; paint(); rafId = requestAnimationFrame(step);
+            }
+            rafId = requestAnimationFrame(step);
+        }
+        function goTo(index) { var t = LOOP ? index + Math.round((target - index) / count) * count : index; settle(clampPos(t)); }
+        function nudge(by) { settle(clampPos(Math.round(target) + by)); }
+
+        frame.addEventListener('pointerdown', function (e) {
+            if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+            try { frame.setPointerCapture(e.pointerId); } catch (x) {}
+            target = pos; drag = { id: e.pointerId, x: e.clientX, pos: pos, v: 0, t: performance.now(), moved: false };
+        });
+        frame.addEventListener('pointermove', function (e) {
+            if (!drag || drag.id !== e.pointerId) return;
+            var pitch = width * (1 + GAP); if (!pitch) return;
+            var now = performance.now(), prev = pos;
+            pos = clampPos(drag.pos - (e.clientX - drag.x) / pitch);
+            if (Math.abs(e.clientX - drag.x) > 4) drag.moved = true;
+            drag.v = ((pos - prev) / Math.max(now - drag.t, 1)) * 1000; drag.t = now;
+            var idx = indexAt(pos); if (idx !== selected) { selected = idx; render(); }
+            paint();
+        });
+        function endDrag(e) {
+            if (!drag || drag.id !== e.pointerId) return;
+            var startIdx = Math.round(drag.pos), moved = pos - drag.pos;
+            var dir = moved > 0 ? 1 : (moved < 0 ? -1 : 0), dest = startIdx;
+            if (Math.abs(moved) > 0.12 || (Math.abs(drag.v) > 0.5 && Math.abs(moved) > 0.03)) dest = startIdx + dir;
+            dest = Math.max(startIdx - 1, Math.min(startIdx + 1, dest));
+            frame.__moved = drag.moved; drag = null; settle(clampPos(dest));
+        }
+        frame.addEventListener('pointerup', endDrag);
+        frame.addEventListener('pointercancel', endDrag);
+        cards.forEach(function (card, i) {
+            card.addEventListener('click', function () {
+                if (frame.__moved) { frame.__moved = false; return; }
+                goTo(i);          // selecting a card just centres it (updates the feature card)
+            });
+        });
+        frame.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowLeft') { e.preventDefault(); nudge(-1); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); nudge(1); }
+        });
+        if (shopEl) shopEl.addEventListener('click', function () {
+            var el = document.getElementById('genderFeature'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+        dots.forEach(function (d, i) { d.addEventListener('click', function () { goTo(i); }); });
+
+        function measure() { width = cards[0] ? cards[0].offsetWidth : 0; paint(); }
+        if (window.ResizeObserver) { try { new ResizeObserver(measure).observe(frame); } catch (x) {} }
+        window.addEventListener('resize', measure);
+
+        function init() { measure(); render(); paint(); }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+    })();
+    </script>
+
+    <script src="search-box.js" defer></script>
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
 </body>
