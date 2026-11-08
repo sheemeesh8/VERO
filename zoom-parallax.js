@@ -135,30 +135,43 @@
 		var centreSide = Math.min(winW, winH) * 0.42;
 		var centreMax = (Math.max(winW, winH) / centreSide) * 0.82;
 
+		// Nudge the resting collage down so the top circle's outer caption clears
+		// the welcome copy. The centre un-nudges as it grows so it ends centred.
+		var cy = winH * 0.05;
+
 		for (var i = 0; i < tiles.length; i++) {
 			var tile = tiles[i];
 			var isCentre = tile.getAttribute('data-zp') === '0';
 			var max = isCentre
 				? centreMax
 				: (parseFloat(getComputedStyle(tile).getPropertyValue('--zp-max')) || 4);
-			tile.style.setProperty('--zp-s', String(1 + (max - 1) * p));
+			var s = 1 + (max - 1) * p;
+			tile.style.setProperty('--zp-s', String(s));
 
 			if (isCentre) {
 				// Centre starts as a circle and squares off completely as it grows.
 				tile.style.setProperty('--zp-r', (50 - 50 * clamp(p * 1.2, 0, 1)) + '%');
+				tile.style.setProperty('--zp-tx', '0px');
+				// Offset is multiplied by scale in CSS, so divide to keep it in px.
+				tile.style.setProperty('--zp-ty', (cy * (1 - p) / s).toFixed(2) + 'px');
 			} else {
 				// Place outer circles evenly on the ring, starting at the top.
 				var angle = (outerIndex / 6) * Math.PI * 2 - Math.PI / 2;
 				var tx = Math.cos(angle) * ring;
-				var ty = Math.sin(angle) * ring;
+				var ringY = Math.sin(angle) * ring;
+				var ty = ringY + cy;
 				tile.style.setProperty('--zp-tx', tx.toFixed(1) + 'px');
 				tile.style.setProperty('--zp-ty', ty.toFixed(1) + 'px');
-				// Caption sits just under its circle (at the resting position).
+				// Caption sits on the OUTER side of its circle: above the circles
+				// in the upper half, below the ones in the lower half.
 				var cap = caps[outerIndex];
 				if (cap) {
+					var capY = ringY < 0
+						? ty - outerRadius - 24
+						: ty + outerRadius + 24;
 					cap.style.transform =
 						'translate(calc(-50% + ' + tx.toFixed(1) + 'px), calc(-50% + ' +
-						(ty + outerRadius + 30).toFixed(1) + 'px))';
+						capY.toFixed(1) + 'px))';
 				}
 				outerIndex++;
 			}
