@@ -50,7 +50,7 @@
 	// The hero grows over ZOOM_VH viewports of scroll, reaching full size while
 	// the feed is still off-screen below (feed-scroll margin-top = ZOOM_VH + 1
 	// screens), so it fills the viewport before the feed rises over it.
-	var ZOOM_VH = 1.6;
+	var ZOOM_VH = 1;
 
 	function apply() {
 		var p = clamp(window.scrollY / Math.max(1, window.innerHeight * ZOOM_VH), 0, 1);

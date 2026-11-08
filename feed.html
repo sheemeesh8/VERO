@@ -16,6 +16,12 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: auto; }
+        /* Scroll-snap: once you reach the hero, the scroll sticks to either the
+           hero or the feed — it won't rest mid-zoom. */
+        html { scroll-snap-type: y mandatory; }
+        @media (prefers-reduced-motion: reduce) { html { scroll-snap-type: none; } }
+        /* Zero-height anchor at the very top so the hero is itself a snap stop. */
+        .zp-snap-top { scroll-snap-align: start; scroll-snap-stop: always; height: 0; }
         body { background: #fff; color: #111; -webkit-font-smoothing: antialiased; direction: ltr; }
 
         /* ===== Feed shell — top padding set from JS to clear header + subnav. */
@@ -171,9 +177,11 @@
         @keyframes cueBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
 
         /* The scrolling feed layer sits above the hero and starts one screen down. */
-        /* The feed waits below the zoom region (ZOOM_VH + 1 screens in zoom-parallax.js)
-           so the hero image finishes growing to full-screen before the feed rises over it. */
-        .feed-scroll { position: relative; z-index: 1; background: #fff; margin-top: 260vh; min-height: 100vh; }
+        /* The feed waits one screen below the hero; the hero grows to full size
+           over that screen of scroll (ZOOM_VH in zoom-parallax.js). The feed is a
+           snap stop, so the scroll sticks here once you leave the hero. */
+        .feed-scroll { position: relative; z-index: 1; background: #fff; margin-top: 100vh; min-height: 100vh;
+            scroll-snap-align: start; scroll-snap-stop: always; }
         /* The shared footer also rides above the fixed hero. */
         #siteFooter { position: relative; z-index: 1; }
 
@@ -185,10 +193,13 @@
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
     <script>
-        window.veroHeaderScrolled = function () { return window.scrollY > (window.innerHeight * 2); };
+        window.veroHeaderScrolled = function () { return window.scrollY > (window.innerHeight * 0.6); };
     </script>
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=60"></script>
+
+    <!-- Snap anchor: makes the hero (top of page) a scroll-snap stop. -->
+    <div class="zp-snap-top" aria-hidden="true"></div>
 
     <!-- Hero — a fixed backdrop. Scroll down to enter the feed, up to return here. -->
     <section class="hero" id="feedHero">
@@ -482,7 +493,7 @@
             var sh = subnav ? subnav.offsetHeight : 0;
             wrap.style.paddingTop = (hb + sh + 20) + 'px';
             // Reveal the gender sub-header only once the feed has risen over the hero.
-            if (subnav) subnav.classList.toggle('is-hero', window.scrollY <= window.innerHeight * 2);
+            if (subnav) subnav.classList.toggle('is-hero', window.scrollY <= window.innerHeight * 0.6);
         }
         var raf; function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeContent); }
         window.addEventListener('scroll', schedulePlace, { passive: true });
