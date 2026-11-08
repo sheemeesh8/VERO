@@ -82,7 +82,8 @@
 	function openTile(tile, href) {
 		if (transitioning) return;
 		transitioning = true;
-		var winW = window.innerWidth, winH = window.innerHeight;
+		var srect = stage.getBoundingClientRect();
+		var winW = srect.width || window.innerWidth, winH = srect.height || window.innerHeight;
 		var side = tile.offsetWidth || Math.min(winW, winH) * 0.25; // circle diameter
 		var cover = (Math.max(winW, winH) / side) * 1.06;
 		stage.classList.add('zp-opening');
@@ -123,10 +124,13 @@
 
 	function apply() {
 		if (transitioning) return; // don't fight the click-open animation
-		var winH = window.innerHeight;
-		var winW = window.innerWidth;
-		var pinned = Math.max(1, wrap.offsetHeight - winH);
+		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight);
 		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
+		// Size the collage from the stage box (the hero's image region), which may
+		// be only part of the viewport (e.g. the top 75%).
+		var srect = stage.getBoundingClientRect();
+		var winW = srect.width || window.innerWidth;
+		var winH = srect.height || window.innerHeight;
 
 		// Size the whole collage so it always fits the viewport — both width and
 		// height — whatever the aspect ratio (fixes overflow on wide/landscape).
@@ -149,7 +153,7 @@
 
 		// Nudge the resting collage down so the top circle's outer caption clears
 		// the welcome copy. The centre un-nudges as it grows so it ends centred.
-		var cy = winH * 0.05;
+		var cy = winH * 0.13;
 
 		for (var i = 0; i < tiles.length; i++) {
 			var tile = tiles[i];
