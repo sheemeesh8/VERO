@@ -83,7 +83,7 @@
 		if (transitioning) return;
 		transitioning = true;
 		var winW = window.innerWidth, winH = window.innerHeight;
-		var side = Math.min(winW, winH) * 0.26; // outer circle base diameter
+		var side = tile.offsetWidth || Math.min(winW, winH) * 0.25; // circle diameter
 		var cover = (Math.max(winW, winH) / side) * 1.06;
 		stage.classList.add('zp-opening');
 		tile.classList.add('zp-anim');
@@ -124,16 +124,25 @@
 		var pinned = Math.max(1, wrap.offsetHeight - winH);
 		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
 
-		// Ring radius for the outer circles (px) — keep it circular on any screen.
-		// Sized to leave a clear gap between the ring and the centre circle.
-		var ring = Math.min(winW, winH) * 0.42;
-		var outerRadius = Math.min(winW, winH) * 0.13; // 26vmin / 2
+		// Size the whole collage so it always fits the viewport — both width and
+		// height — whatever the aspect ratio (fixes overflow on wide/landscape).
+		var k = Math.min(winW * 0.40, winH * 0.28);
+		var ring = k;                  // distance centre -> outer circle
+		var centreD = k;               // centre circle diameter
+		var outerD = k * 0.62;         // outer circle diameter
+		var outerRadius = outerD / 2;
 		var outerIndex = 0;
+
+		// Apply the computed sizes to the tiles (overrides the CSS defaults).
+		for (var t = 0; t < tiles.length; t++) {
+			var sz = tiles[t].getAttribute('data-zp') === '0' ? centreD : outerD;
+			tiles[t].style.width = sz.toFixed(1) + 'px';
+			tiles[t].style.height = sz.toFixed(1) + 'px';
+		}
 
 		// Centre's final scale: a large centred hero, deliberately smaller than a
 		// full crop so the (landscape) video isn't blown up on a tall screen.
-		var centreSide = Math.min(winW, winH) * 0.42;
-		var centreMax = (Math.max(winW, winH) / centreSide) * 0.82;
+		var centreMax = (Math.max(winW, winH) / centreD) * 0.82;
 
 		// Nudge the resting collage down so the top circle's outer caption clears
 		// the welcome copy. The centre un-nudges as it grows so it ends centred.
