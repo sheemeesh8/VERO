@@ -191,7 +191,14 @@
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
     <script>
-        window.veroHeaderScrolled = function () { return window.scrollY > (window.innerHeight * 0.9); };
+        // Only one transparent header through the whole hero effect; the header
+        // goes solid (white) only once we've crossed past the hero's sticky track.
+        window.veroHeroPassed = function () {
+            var w = document.getElementById('feedHeroWrap');
+            var release = w ? (w.offsetTop + w.offsetHeight - window.innerHeight) : window.innerHeight;
+            return window.scrollY >= release - 4;
+        };
+        window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
     </script>
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=60"></script>
@@ -490,8 +497,8 @@
             if (subnav) subnav.style.top = hb + 'px';
             var sh = subnav ? subnav.offsetHeight : 0;
             wrap.style.paddingTop = (hb + sh + 20) + 'px';
-            // Reveal the gender sub-header only once the feed has risen over the hero.
-            if (subnav) subnav.classList.toggle('is-hero', window.scrollY <= window.innerHeight * 0.9);
+            // Open the second header (gender sub-nav) only after we cross the hero.
+            if (subnav) subnav.classList.toggle('is-hero', !window.veroHeroPassed());
         }
         var raf; function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeContent); }
         window.addEventListener('scroll', schedulePlace, { passive: true });

@@ -81,16 +81,33 @@
 	var wrap = document.getElementById('feedHeroWrap') || hero.parentNode;
 
 	function apply() {
-		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight);
+		var winH = window.innerHeight;
+		var winW = window.innerWidth;
+		var pinned = Math.max(1, wrap.offsetHeight - winH);
 		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
+
+		// Ring radius for the outer circles (px) — keep it circular on any screen.
+		var ring = Math.min(winW, winH) * 0.34;
+		var outerIndex = 0;
 
 		for (var i = 0; i < tiles.length; i++) {
 			var tile = tiles[i];
 			var max = parseFloat(getComputedStyle(tile).getPropertyValue('--zp-max')) || 4;
 			tile.style.setProperty('--zp-s', String(1 + (max - 1) * p));
+
+			if (tile.getAttribute('data-zp') === '0') {
+				// Centre circle morphs to a full-bleed square as it grows.
+				tile.style.setProperty('--zp-r', (50 - 50 * clamp(p * 1.2, 0, 1)) + '%');
+			} else {
+				// Place outer circles evenly on the ring, starting at the top.
+				var angle = (outerIndex / 6) * Math.PI * 2 - Math.PI / 2;
+				tile.style.setProperty('--zp-tx', (Math.cos(angle) * ring).toFixed(1) + 'px');
+				tile.style.setProperty('--zp-ty', (Math.sin(angle) * ring).toFixed(1) + 'px');
+				outerIndex++;
+			}
 		}
 
-		// Fade the welcome copy + cue out as the collage opens into the hero.
+		// Fade the welcome copy + cue out as the ring opens into the hero.
 		var fade = clamp(1 - p * 1.8, 0, 1);
 		if (copy) copy.style.opacity = fade;
 		if (cue) cue.style.opacity = String(0.85 * fade);

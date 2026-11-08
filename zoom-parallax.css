@@ -1,9 +1,9 @@
 /* ==========================================================================
    Zoom Parallax — hero → feed transition on feed.html
-   A collage of 7 tiles that, on scroll, opens up: the off-centre tiles fly
-   outward while the centre tile (the hero) grows to fill the viewport — then
-   the feed follows. Scroll-driven through the hero's sticky track
-   (see zoom-parallax.js).
+   A ring of circular images around a central hero circle. On scroll the ring
+   opens: the outer circles fly outward while the centre circle grows and
+   squares off to fill the viewport — then the feed begins. Scroll-driven
+   through the hero's sticky track (see zoom-parallax.js).
    ========================================================================== */
 
 .zp-stage {
@@ -14,18 +14,16 @@
 	background: #fff;
 }
 
-/* Each tile is centred, then nudged by its offset and scaled on scroll.
-   The offset scales with the zoom so off-centre tiles fly outward off-screen,
-   leaving the centre tile (offset 0) to fill the viewport. */
+/* Every tile is a circle, centred, then offset (set per-frame in JS, in px) and
+   scaled on scroll. The offset scales with the zoom so outer circles fly out. */
 .zp-tile {
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	--zp-tx: 0vw;
-	--zp-ty: 0vh;
+	--zp-tx: 0px;
+	--zp-ty: 0px;
 	--zp-s: 1;
-	width: 25vw;
-	height: 25vh;
+	border-radius: 50%;
 	transform: translate(
 			calc(-50% + var(--zp-tx) * var(--zp-s)),
 			calc(-50% + var(--zp-ty) * var(--zp-s))
@@ -45,17 +43,35 @@
 	display: block;
 }
 
-/* Per-tile geometry + target scale (mirrors the original component). */
-.zp-tile[data-zp="0"] { width: 25vw; height: 25vh; --zp-tx: 0vw;     --zp-ty: 0vh;    --zp-max: 4; }
-.zp-tile[data-zp="1"] { width: 35vw; height: 30vh; --zp-tx: 5vw;     --zp-ty: -30vh;  --zp-max: 5; }
-.zp-tile[data-zp="2"] { width: 20vw; height: 45vh; --zp-tx: -25vw;   --zp-ty: -10vh;  --zp-max: 6; }
-.zp-tile[data-zp="3"] { width: 25vw; height: 25vh; --zp-tx: 27.5vw;  --zp-ty: 0vh;    --zp-max: 5; }
-.zp-tile[data-zp="4"] { width: 20vw; height: 25vh; --zp-tx: 5vw;     --zp-ty: 27.5vh; --zp-max: 6; }
-.zp-tile[data-zp="5"] { width: 30vw; height: 25vh; --zp-tx: -22.5vw; --zp-ty: 27.5vh; --zp-max: 8; }
-.zp-tile[data-zp="6"] { width: 15vw; height: 15vh; --zp-tx: 25vw;    --zp-ty: 22.5vh; --zp-max: 9; }
+/* Centre = the hero. A circle that morphs to a full-bleed square as it grows
+   (--zp-r is driven 50% → 0 in JS). */
+.zp-tile[data-zp="0"] {
+	width: 42vmin;
+	height: 42vmin;
+	--zp-max: 6;
+	--zp-r: 50%;
+	border-radius: var(--zp-r);
+}
 
-/* Reduced-motion: show the hero full-bleed, hide the collage. */
+/* Outer circles — equal diameter; positioned on the ring by JS. */
+.zp-tile[data-zp="1"],
+.zp-tile[data-zp="2"],
+.zp-tile[data-zp="3"],
+.zp-tile[data-zp="4"],
+.zp-tile[data-zp="5"],
+.zp-tile[data-zp="6"] {
+	width: 26vmin;
+	height: 26vmin;
+}
+.zp-tile[data-zp="1"] { --zp-max: 5; }
+.zp-tile[data-zp="2"] { --zp-max: 6; }
+.zp-tile[data-zp="3"] { --zp-max: 5; }
+.zp-tile[data-zp="4"] { --zp-max: 6; }
+.zp-tile[data-zp="5"] { --zp-max: 7; }
+.zp-tile[data-zp="6"] { --zp-max: 8; }
+
+/* Reduced-motion: show the hero full-bleed (square), hide the ring. */
 @media (prefers-reduced-motion: reduce) {
-	.zp-tile[data-zp="0"] { width: 100%; height: 100%; transform: translate(-50%, -50%); }
+	.zp-tile[data-zp="0"] { width: 100%; height: 100%; border-radius: 0; transform: translate(-50%, -50%); }
 	.zp-tile:not([data-zp="0"]) { display: none; }
 }
