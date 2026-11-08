@@ -16,15 +16,15 @@
 		window.matchMedia &&
 		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-	// Centre tile reuses the hero video; the six outer tiles use editorial
-	// stills that ship with the repo.
+	// Centre tile reuses the hero video; the six outer circles are category
+	// shortcuts, each with a caption and a link to the relevant page.
 	var OUTER = [
-		{ src: 'women-hero.jpg', alt: "Women's editorial" },
-		{ src: 'men-hero.jpg', alt: "Men's editorial" },
-		{ src: 'gallery-hero.jpg', alt: 'Gallery pieces' },
-		{ src: 'magazine-hero.jpg', alt: 'Magazine spread' },
-		{ src: 'art-hero.jpg', alt: 'Original art' },
-		{ src: 'clothing-hero.jpg', alt: 'Seasonal clothing' }
+		{ src: 'magazine-hero.jpg',  label: 'Magazine',    href: 'index.html?open=magazine' },
+		{ src: 'gallery-hero.jpg',   label: 'Collections', href: 'products.html' },
+		{ src: 'women-hero.jpg',     label: 'Gender',      href: '#genderCover' },
+		{ src: 'sale-hero.jpg',      label: 'Sale',        href: 'products.html?sale=1' },
+		{ src: 'clothing-hero.jpg',  label: 'New In',      href: 'products.html?new=1' },
+		{ src: 'art-hero.jpg',       label: 'Events',      href: 'events.html' }
 	];
 
 	// ---- Build the stage ---------------------------------------------------
@@ -46,19 +46,28 @@
 	}
 	stage.appendChild(centre);
 
-	// Tiles 1..6 — outer editorial stills.
+	// Tiles 1..6 — outer category circles (clickable) + a caption under each.
+	var caps = [];
 	OUTER.forEach(function (item, i) {
-		var tile = document.createElement('div');
-		tile.className = 'zp-tile';
+		var tile = document.createElement('a');
+		tile.className = 'zp-tile zp-link';
 		tile.setAttribute('data-zp', String(i + 1));
-		tile.setAttribute('aria-hidden', 'true');
+		tile.setAttribute('href', item.href);
+		tile.setAttribute('aria-label', item.label);
 		var img = document.createElement('img');
 		img.src = item.src;
-		img.alt = item.alt;
+		img.alt = item.label;
 		img.loading = 'eager';
 		img.decoding = 'async';
 		tile.appendChild(img);
 		stage.appendChild(tile);
+
+		var cap = document.createElement('a');
+		cap.className = 'zp-cap';
+		cap.setAttribute('href', item.href);
+		cap.textContent = item.label;
+		stage.appendChild(cap);
+		caps.push(cap);
 	});
 
 	// Insert the stage as the hero backdrop (behind copy + scroll cue).
@@ -89,6 +98,7 @@
 		// Ring radius for the outer circles (px) — keep it circular on any screen.
 		// Sized to leave a clear gap between the ring and the centre circle.
 		var ring = Math.min(winW, winH) * 0.42;
+		var outerRadius = Math.min(winW, winH) * 0.13; // 26vmin / 2
 		var outerIndex = 0;
 
 		for (var i = 0; i < tiles.length; i++) {
@@ -102,8 +112,17 @@
 			} else {
 				// Place outer circles evenly on the ring, starting at the top.
 				var angle = (outerIndex / 6) * Math.PI * 2 - Math.PI / 2;
-				tile.style.setProperty('--zp-tx', (Math.cos(angle) * ring).toFixed(1) + 'px');
-				tile.style.setProperty('--zp-ty', (Math.sin(angle) * ring).toFixed(1) + 'px');
+				var tx = Math.cos(angle) * ring;
+				var ty = Math.sin(angle) * ring;
+				tile.style.setProperty('--zp-tx', tx.toFixed(1) + 'px');
+				tile.style.setProperty('--zp-ty', ty.toFixed(1) + 'px');
+				// Caption sits just under its circle (at the resting position).
+				var cap = caps[outerIndex];
+				if (cap) {
+					cap.style.transform =
+						'translate(calc(-50% + ' + tx.toFixed(1) + 'px), calc(-50% + ' +
+						(ty + outerRadius + 16).toFixed(1) + 'px))';
+				}
 				outerIndex++;
 			}
 		}
@@ -112,6 +131,13 @@
 		var fade = clamp(1 - p * 1.8, 0, 1);
 		if (copy) copy.style.opacity = fade;
 		if (cue) cue.style.opacity = String(0.85 * fade);
+
+		// Captions belong to the resting collage — fade them quickly on scroll.
+		var capFade = clamp(1 - p * 3, 0, 1);
+		for (var c = 0; c < caps.length; c++) {
+			caps[c].style.opacity = capFade;
+			caps[c].style.pointerEvents = capFade > 0.6 ? 'auto' : 'none';
+		}
 	}
 
 	var ticking = false;
