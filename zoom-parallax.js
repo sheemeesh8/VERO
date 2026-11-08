@@ -126,6 +126,10 @@
 		if (transitioning) return; // don't fight the click-open animation
 		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight);
 		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
+		// Eased progress (smoothstep) so the collage grows and flies out on a
+		// gentle curve instead of tracking the raw scroll linearly — the motion
+		// reads much smoother, with soft ease-in and ease-out.
+		var pe = p * p * (3 - 2 * p);
 		// Size the collage from the stage box (the hero's image region), which may
 		// be only part of the viewport (e.g. the top 75%).
 		var srect = stage.getBoundingClientRect();
@@ -151,9 +155,9 @@
 		// Centre's final scale: grow until it fully covers the viewport (full-screen).
 		var centreMax = (Math.max(winW, winH) / centreD) * 1.04;
 
-		// Nudge the resting collage down so the top circle's outer caption clears
-		// the welcome copy. The centre un-nudges as it grows so it ends centred.
-		var cy = winH * 0.13;
+		// A small downward nudge so the resting collage clears the welcome copy
+		// at the top. The centre un-nudges as it grows so it ends centred.
+		var cy = winH * 0.07;
 
 		for (var i = 0; i < tiles.length; i++) {
 			var tile = tiles[i];
@@ -161,25 +165,27 @@
 			var max = isCentre
 				? centreMax
 				: (parseFloat(getComputedStyle(tile).getPropertyValue('--zp-max')) || 4);
-			var s = 1 + (max - 1) * p;
+			var s = 1 + (max - 1) * pe;
 			tile.style.setProperty('--zp-s', String(s));
 
 			if (isCentre) {
 				// Centre starts as a circle and squares off completely as it grows.
-				tile.style.setProperty('--zp-r', (50 - 50 * clamp(p * 1.2, 0, 1)) + '%');
+				tile.style.setProperty('--zp-r', (50 - 50 * clamp(pe * 1.2, 0, 1)) + '%');
 				tile.style.setProperty('--zp-tx', '0px');
 				// Offset is multiplied by scale in CSS, so divide to keep it in px.
-				tile.style.setProperty('--zp-ty', (cy * (1 - p) / s).toFixed(2) + 'px');
+				tile.style.setProperty('--zp-ty', (cy * (1 - pe) / s).toFixed(2) + 'px');
 			} else {
-				// Place outer circles evenly on the ring, starting at the top.
-				var angle = (outerIndex / 6) * Math.PI * 2 - Math.PI / 2;
+				// Place the outer circles evenly on the ring, rotated half a step
+				// off the top so a clear gap is left at dead-centre-top for the
+				// welcome copy — no circle sits over the title.
+				var angle = (outerIndex / 6) * Math.PI * 2 - Math.PI / 2 + Math.PI / 6;
 				var tx = Math.cos(angle) * ring;
 				var ringY = Math.sin(angle) * ring;
 				var ty = ringY + cy;
 				tile.style.setProperty('--zp-tx', tx.toFixed(1) + 'px');
 				tile.style.setProperty('--zp-ty', ty.toFixed(1) + 'px');
 				// Fade outer circles as they fly out so none linger over the hero.
-				tile.style.opacity = clamp(1 - p * 1.6, 0, 1);
+				tile.style.opacity = clamp(1 - pe * 1.6, 0, 1);
 				// Caption sits on the OUTER side of its circle: above the circles
 				// in the upper half, below the ones in the lower half.
 				var cap = caps[outerIndex];
@@ -196,7 +202,7 @@
 		}
 
 		// Fade the welcome copy + cue out as the ring opens into the hero.
-		var fade = clamp(1 - p * 1.8, 0, 1);
+		var fade = clamp(1 - pe * 1.8, 0, 1);
 		if (copy) copy.style.opacity = fade;
 		if (cue) cue.style.opacity = String(0.85 * fade);
 
