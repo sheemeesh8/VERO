@@ -20,24 +20,6 @@
         /* ===== Feed shell — top padding set from JS to clear header + mode bar. */
         .feed-wrap { max-width: 720px; margin: 0 auto; padding: 132px 20px 120px; }
 
-        /* Hide the header's own Art/Fashion pill here — the attached bar replaces it. */
-        #siteHeader .hdr-mode-pair { display: none !important; }
-
-        /* ===== Art / Fashion bar — attached to the bottom edge of the header. */
-        .feed-modebar {
-            position: fixed; left: 0; right: 0; top: 64px; z-index: 99;
-            display: flex; justify-content: center; align-items: center; padding: 7px 12px;
-            background: rgba(255,255,255,0.92);
-            -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px);
-            border-bottom: 1px solid #ececec;
-        }
-        .feed-mode { display: inline-flex; gap: 2px; padding: 3px; border-radius: 9999px; background: #f2f0ef; border: 1px solid #e4e0d6; }
-        .feed-mode button { appearance: none; border: 0; background: transparent; cursor: pointer;
-            font-family: 'Archivo','Poppins',sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
-            color: #6b6b6b; padding: 7px 22px; border-radius: 9999px; transition: background .25s, color .25s; }
-        .feed-mode button.on { background: var(--oak, #2A331B); color: #fff; }
-        .feed-mode button:not(.on):hover { color: #1b1916; }
-
         /* ===== Search bar ===== */
         .feed-search { position: relative; margin: 0 0 26px; }
         .feed-search input {
@@ -151,14 +133,6 @@
     <script>
         (function () { var h = document.getElementById('siteHeader'); if (h) h.classList.add('sticky-look'); })();
     </script>
-
-    <!-- Art / Fashion — attached to the bottom of the header. -->
-    <div class="feed-modebar" id="feedModeBar">
-        <div class="feed-mode" id="feedMode" role="tablist" aria-label="Browse fashion or art">
-            <button type="button" data-mode="art" role="tab">Art</button>
-            <button type="button" data-mode="fashion" role="tab">Fashion</button>
-        </div>
-    </div>
 
     <main class="feed-wrap">
         <!-- 1 · Search -->
@@ -372,18 +346,14 @@
         }
         if (input) input.addEventListener('input', function () { runSearch(input.value); });
 
-        // ----- Art / Fashion toggle ---------------------------------------
-        var modeEl = document.getElementById('feedMode');
-        function syncMode() {
-            [].slice.call(modeEl.querySelectorAll('button')).forEach(function (b) { b.classList.toggle('on', b.dataset.mode === state.mode); });
-        }
-        modeEl.addEventListener('click', function (e) {
-            var b = e.target.closest ? e.target.closest('button') : null;
-            if (!b) return;
-            state.mode = b.dataset.mode;
-            try { localStorage.setItem('vero_category', state.mode === 'art' ? 'art' : 'clothing'); } catch (err) {}
-            syncMode(); buildStructured();
-            if (input && input.value.trim()) runSearch(input.value);
+        // Art / Fashion is driven by the header's own built-in toggle (header.js).
+        // It stores vero_category and reloads, so the feed reflects the latest
+        // choice on load. As a belt-and-braces measure, re-sync if the stored
+        // mode changed while the page stayed open (e.g. bfcache restore).
+        function currentMode() { return (localStorage.getItem('vero_category') === 'art') ? 'art' : 'fashion'; }
+        window.addEventListener('pageshow', function () {
+            var m = currentMode();
+            if (m !== state.mode) { state.mode = m; buildStructured(); if (input && input.value.trim()) runSearch(input.value); }
         });
 
         // ----- Gender slider → feature card -------------------------------
@@ -394,23 +364,20 @@
             renderFeature(byGender(list, gender)[0] || list[0] || null);
         };
 
-        // ----- Keep the mode bar glued to the header bottom ---------------
-        var modeBar = document.getElementById('feedModeBar');
+        // ----- Keep the feed clear of the fixed header --------------------
         var wrap = document.querySelector('.feed-wrap');
-        function placeBar() {
+        function placeContent() {
             var hdr = document.getElementById('siteHeader');
-            if (!hdr || !modeBar) return;
+            if (!hdr || !wrap) return;
             var hb = hdr.getBoundingClientRect().bottom; if (hb < 0) hb = 0;
-            modeBar.style.top = hb + 'px';
-            if (wrap) wrap.style.paddingTop = (hb + modeBar.offsetHeight + 18) + 'px';
+            wrap.style.paddingTop = (hb + 22) + 'px';
         }
-        var raf; function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeBar); }
+        var raf; function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeContent); }
         window.addEventListener('scroll', schedulePlace, { passive: true });
         window.addEventListener('resize', schedulePlace);
         if (window.ResizeObserver) { var he = document.getElementById('siteHeader'); if (he) { try { new ResizeObserver(schedulePlace).observe(he); } catch (e) {} } }
-        var tries = 0; (function settle() { placeBar(); if (++tries < 40) setTimeout(settle, 100); })();
+        var tries = 0; (function settle() { placeContent(); if (++tries < 40) setTimeout(settle, 100); })();
 
-        syncMode();
         buildStructured();
     })();
     </script>
