@@ -17,8 +17,31 @@
         html, body { height: auto; }
         body { background: #fff; color: #111; -webkit-font-smoothing: antialiased; direction: ltr; }
 
-        /* ===== Feed shell — top padding set from JS to clear header + mode bar. */
-        .feed-wrap { max-width: 720px; margin: 0 auto; padding: 132px 20px 120px; }
+        /* ===== Feed shell — top padding set from JS to clear header + subnav. */
+        .feed-wrap { max-width: 720px; margin: 0 auto; padding: 150px 20px 120px; }
+
+        /* Keep the shared header pinned and visible at all times. */
+        #siteHeader { position: fixed !important; transform: none !important; }
+
+        /* ===== Gender category sub-header — a small bar under the main header ===== */
+        .feed-subnav {
+            position: fixed; left: 0; right: 0; top: 64px; z-index: 98;
+            display: flex; justify-content: center; gap: 4px; align-items: center;
+            padding: 8px 12px; overflow-x: auto; scrollbar-width: none;
+            background: rgba(255,255,255,0.94);
+            -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px);
+            border-bottom: 1px solid #ececec;
+        }
+        .feed-subnav::-webkit-scrollbar { display: none; }
+        .fsn-item {
+            flex: none; appearance: none; border: 0; background: transparent; cursor: pointer;
+            font-family: 'Archivo','Poppins',sans-serif; font-weight: 700; font-size: 12px;
+            letter-spacing: 1.2px; text-transform: uppercase; color: #8a857c;
+            padding: 6px 14px; border-radius: 9999px; white-space: nowrap;
+            transition: color .2s, background .2s;
+        }
+        .fsn-item:hover { color: #1b1916; }
+        .fsn-item.on { color: #fff; background: var(--oak, #2A331B); }
 
         /* ===== Search bar ===== */
         .feed-search { position: relative; margin: 0 0 26px; }
@@ -133,6 +156,14 @@
     <script>
         (function () { var h = document.getElementById('siteHeader'); if (h) h.classList.add('sticky-look'); })();
     </script>
+
+    <!-- Gender category sub-header — a small bar pinned under the main header. -->
+    <nav class="feed-subnav" id="feedSubnav" aria-label="Shop by gender">
+        <button type="button" class="fsn-item" data-gender="women">Women</button>
+        <button type="button" class="fsn-item" data-gender="men">Men</button>
+        <button type="button" class="fsn-item" data-gender="unisex">Unisex</button>
+        <button type="button" class="fsn-item" data-gender="kids">Kids</button>
+    </nav>
 
     <main class="feed-wrap">
         <!-- 1 · Search -->
@@ -356,21 +387,43 @@
             if (m !== state.mode) { state.mode = m; buildStructured(); if (input && input.value.trim()) runSearch(input.value); }
         });
 
-        // ----- Gender slider → feature card -------------------------------
+        // ----- Gender category sub-header + slider → feature card ----------
+        var subnav = document.getElementById('feedSubnav');
+        function syncSubnav() {
+            if (!subnav) return;
+            [].slice.call(subnav.querySelectorAll('.fsn-item')).forEach(function (b) {
+                b.classList.toggle('on', b.dataset.gender === state.gender);
+            });
+        }
+        // The gender slider announces its centred gender through this hook.
         window.__onGenderChange = function (gender) {
-            if (!gender || gender === state.gender) return;
+            if (!gender) return;
+            var changed = (gender !== state.gender);
             state.gender = gender;
-            var list = modeList();
-            renderFeature(byGender(list, gender)[0] || list[0] || null);
+            syncSubnav();
+            if (changed) {
+                var list = modeList();
+                renderFeature(byGender(list, gender)[0] || list[0] || null);
+            }
         };
+        // Tapping a category drives the slider (which then updates everything).
+        if (subnav) subnav.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('.fsn-item') : null;
+            if (!b) return;
+            var g = b.dataset.gender;
+            if (typeof window.__gcGoToGender === 'function') window.__gcGoToGender(g);
+            else window.__onGenderChange(g);
+        });
 
-        // ----- Keep the feed clear of the fixed header --------------------
+        // ----- Keep the feed + sub-header clear of the fixed header --------
         var wrap = document.querySelector('.feed-wrap');
         function placeContent() {
             var hdr = document.getElementById('siteHeader');
             if (!hdr || !wrap) return;
             var hb = hdr.getBoundingClientRect().bottom; if (hb < 0) hb = 0;
-            wrap.style.paddingTop = (hb + 22) + 'px';
+            if (subnav) subnav.style.top = hb + 'px';
+            var sh = subnav ? subnav.offsetHeight : 0;
+            wrap.style.paddingTop = (hb + sh + 20) + 'px';
         }
         var raf; function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeContent); }
         window.addEventListener('scroll', schedulePlace, { passive: true });
@@ -378,6 +431,7 @@
         if (window.ResizeObserver) { var he = document.getElementById('siteHeader'); if (he) { try { new ResizeObserver(schedulePlace).observe(he); } catch (e) {} } }
         var tries = 0; (function settle() { placeContent(); if (++tries < 40) setTimeout(settle, 100); })();
 
+        syncSubnav();
         buildStructured();
     })();
     </script>
@@ -449,6 +503,13 @@
         }
         function goTo(index) { var t = LOOP ? index + Math.round((target - index) / count) * count : index; settle(clampPos(t)); }
         function nudge(by) { settle(clampPos(Math.round(target) + by)); }
+
+        // Let the gender sub-header drive the slider to a given gender.
+        window.__gcGoToGender = function (gender) {
+            for (var i = 0; i < count; i++) {
+                if (cards[i].getAttribute('data-gender') === gender) { goTo(i); return; }
+            }
+        };
 
         frame.addEventListener('pointerdown', function (e) {
             if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
