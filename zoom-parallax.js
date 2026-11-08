@@ -19,12 +19,12 @@
 	// Centre tile reuses the hero video; the six outer circles are category
 	// shortcuts, each with a caption and a link to the relevant page.
 	var OUTER = [
-		{ src: 'magazine-hero.jpg',  label: 'Magazine',    href: 'index.html?open=magazine' },
-		{ src: 'gallery-hero.jpg',   label: 'Collections', href: 'products.html' },
-		{ src: 'women-hero.jpg',     label: 'Gender',      href: '#genderCover' },
-		{ src: 'sale-hero.jpg',      label: 'Sale',        href: 'products.html?sale=1' },
-		{ src: 'clothing-hero.jpg',  label: 'New In',      href: 'products.html?new=1' },
-		{ src: 'art-hero.jpg',       label: 'Events',      href: 'events.html' }
+		{ src: 'magazine-hero.jpg',  label: 'Magazine',          href: 'index.html?open=magazine' },
+		{ src: 'clothing-hero.jpg',  label: 'Autumn Collection', href: 'index.html?collection=autumn' },
+		{ src: 'women-hero.jpg',     label: 'Gender',            href: '#genderCover' },
+		{ src: 'sale-hero.jpg',      label: 'Sale',              href: 'products.html?sale=1' },
+		{ src: 'gallery-hero.jpg',   label: 'New In',            href: 'products.html?new=1' },
+		{ src: 'art-hero.jpg',       label: 'Events',            href: 'events.html' }
 	];
 
 	// ---- Build the stage ---------------------------------------------------
@@ -77,6 +77,34 @@
 	var copy = hero.querySelector('.hero-copy');
 	var cue = hero.querySelector('.hero-scroll-cue');
 
+	// ---- Click a circle -> open it with the hero's zoom, then navigate ------
+	var transitioning = false;
+	function openTile(tile, href) {
+		if (transitioning) return;
+		transitioning = true;
+		var winW = window.innerWidth, winH = window.innerHeight;
+		var side = Math.min(winW, winH) * 0.26; // outer circle base diameter
+		var cover = (Math.max(winW, winH) / side) * 1.06;
+		stage.classList.add('zp-opening');
+		tile.classList.add('zp-anim');
+		tile.style.zIndex = '6';
+		tile.style.setProperty('--zp-tx', '0px');
+		tile.style.setProperty('--zp-ty', '0px');
+		tile.style.setProperty('--zp-s', String(cover));
+		tile.style.setProperty('--zp-r', '0%');
+		if (copy) copy.style.opacity = '0';
+		if (cue) cue.style.opacity = '0';
+		for (var k = 0; k < caps.length; k++) caps[k].style.opacity = '0';
+		setTimeout(function () { window.location.href = href; }, 560);
+	}
+
+	OUTER.forEach(function (item, i) {
+		var tile = stage.querySelector('.zp-tile[data-zp="' + (i + 1) + '"]');
+		function go(ev) { ev.preventDefault(); openTile(tile, item.href); }
+		if (tile) tile.addEventListener('click', go);
+		if (caps[i]) caps[i].addEventListener('click', go);
+	});
+
 	if (reduceMotion) return; // CSS handles the static (full-bleed) fallback.
 
 	// ---- Scroll -> scale ---------------------------------------------------
@@ -90,6 +118,7 @@
 	var wrap = document.getElementById('feedHeroWrap') || hero.parentNode;
 
 	function apply() {
+		if (transitioning) return; // don't fight the click-open animation
 		var winH = window.innerHeight;
 		var winW = window.innerWidth;
 		var pinned = Math.max(1, wrap.offsetHeight - winH);
@@ -101,10 +130,10 @@
 		var outerRadius = Math.min(winW, winH) * 0.13; // 26vmin / 2
 		var outerIndex = 0;
 
-		// Centre's final scale = just enough to cover the viewport (no more), so
-		// it fills the screen without over-zooming. 42vmin base, +3% safety.
+		// Centre's final scale: a large centred hero, deliberately smaller than a
+		// full crop so the (landscape) video isn't blown up on a tall screen.
 		var centreSide = Math.min(winW, winH) * 0.42;
-		var centreMax = (Math.max(winW, winH) / centreSide) * 1.03;
+		var centreMax = (Math.max(winW, winH) / centreSide) * 0.82;
 
 		for (var i = 0; i < tiles.length; i++) {
 			var tile = tiles[i];
@@ -115,8 +144,8 @@
 			tile.style.setProperty('--zp-s', String(1 + (max - 1) * p));
 
 			if (isCentre) {
-				// Centre circle morphs to a full-bleed square as it grows.
-				tile.style.setProperty('--zp-r', (50 - 50 * clamp(p * 1.2, 0, 1)) + '%');
+				// Centre circle morphs toward a softly-rounded card as it grows.
+				tile.style.setProperty('--zp-r', (50 - 44 * clamp(p * 1.2, 0, 1)) + '%');
 			} else {
 				// Place outer circles evenly on the ring, starting at the top.
 				var angle = (outerIndex / 6) * Math.PI * 2 - Math.PI / 2;
