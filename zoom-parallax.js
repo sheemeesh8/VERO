@@ -101,12 +101,20 @@
 		var outerRadius = Math.min(winW, winH) * 0.13; // 26vmin / 2
 		var outerIndex = 0;
 
+		// Centre's final scale = just enough to cover the viewport (no more), so
+		// it fills the screen without over-zooming. 42vmin base, +3% safety.
+		var centreSide = Math.min(winW, winH) * 0.42;
+		var centreMax = (Math.max(winW, winH) / centreSide) * 1.03;
+
 		for (var i = 0; i < tiles.length; i++) {
 			var tile = tiles[i];
-			var max = parseFloat(getComputedStyle(tile).getPropertyValue('--zp-max')) || 4;
+			var isCentre = tile.getAttribute('data-zp') === '0';
+			var max = isCentre
+				? centreMax
+				: (parseFloat(getComputedStyle(tile).getPropertyValue('--zp-max')) || 4);
 			tile.style.setProperty('--zp-s', String(1 + (max - 1) * p));
 
-			if (tile.getAttribute('data-zp') === '0') {
+			if (isCentre) {
 				// Centre circle morphs to a full-bleed square as it grows.
 				tile.style.setProperty('--zp-r', (50 - 50 * clamp(p * 1.2, 0, 1)) + '%');
 			} else {
