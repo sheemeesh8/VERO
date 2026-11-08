@@ -158,7 +158,7 @@
 				if (cap) {
 					cap.style.transform =
 						'translate(calc(-50% + ' + tx.toFixed(1) + 'px), calc(-50% + ' +
-						(ty + outerRadius + 16).toFixed(1) + 'px))';
+						(ty + outerRadius + 30).toFixed(1) + 'px))';
 				}
 				outerIndex++;
 			}
