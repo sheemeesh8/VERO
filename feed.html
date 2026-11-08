@@ -154,23 +154,26 @@
 
         /* ===== Hero — a fixed full-screen backdrop ===== */
         /* The feed scrolls up over it; scrolling back up re-reveals the hero. */
-        .hero { position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #000; z-index: 0; }
+        .hero { position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; z-index: 0; }
         .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
         .hero-copy { position: absolute; top: 0; left: 0; right: 0; z-index: 1;
             display: flex; flex-direction: column; align-items: center; text-align: center;
-            padding-top: clamp(80px, 16vh, 180px); color: #fff; font-family: 'Poppins','Inter',system-ui,sans-serif; }
+            padding-top: clamp(80px, 16vh, 180px); color: #141414; font-family: 'Poppins','Inter',system-ui,sans-serif;
+            text-shadow: 0 1px 24px rgba(255,255,255,0.65); }
         .hero-welcome { font-size: clamp(22px, 6vw, 40px); font-weight: 300; letter-spacing: 0.02em; }
         .hero-welcome b { font-weight: 700; }
         .hero-slogan { margin-top: 14px; font-size: clamp(12px, 3vw, 16px); font-weight: 400; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
         .hero-scroll-cue { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 1;
-            color: #fff; opacity: 0.85; display: flex; flex-direction: column; align-items: center; gap: 6px;
+            color: #141414; opacity: 0.85; display: flex; flex-direction: column; align-items: center; gap: 6px;
             font-family: 'Arimo','Inter',sans-serif; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-            animation: cueBob 1.8s ease-in-out infinite; }
-        .hero-scroll-cue svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 1.6; }
+            text-shadow: 0 1px 16px rgba(255,255,255,0.65); animation: cueBob 1.8s ease-in-out infinite; }
+        .hero-scroll-cue svg { width: 20px; height: 20px; stroke: #141414; fill: none; stroke-width: 1.6; }
         @keyframes cueBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
 
         /* The scrolling feed layer sits above the hero and starts one screen down. */
-        .feed-scroll { position: relative; z-index: 1; background: #fff; margin-top: 100vh; min-height: 100vh; }
+        /* The feed waits below the zoom region (ZOOM_VH + 1 screens in zoom-parallax.js)
+           so the hero image finishes zooming to full-screen before the feed rises over it. */
+        .feed-scroll { position: relative; z-index: 1; background: #fff; margin-top: 300vh; min-height: 100vh; }
         /* The shared footer also rides above the fixed hero. */
         #siteFooter { position: relative; z-index: 1; }
 
@@ -182,7 +185,7 @@
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
     <script>
-        window.veroHeaderScrolled = function () { return window.scrollY > (window.innerHeight * 0.5); };
+        window.veroHeaderScrolled = function () { return window.scrollY > (window.innerHeight * 2); };
     </script>
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=60"></script>
@@ -479,7 +482,7 @@
             var sh = subnav ? subnav.offsetHeight : 0;
             wrap.style.paddingTop = (hb + sh + 20) + 'px';
             // Reveal the gender sub-header only once the feed has risen over the hero.
-            if (subnav) subnav.classList.toggle('is-hero', window.scrollY <= window.innerHeight * 0.5);
+            if (subnav) subnav.classList.toggle('is-hero', window.scrollY <= window.innerHeight * 2);
         }
         var raf; function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeContent); }
         window.addEventListener('scroll', schedulePlace, { passive: true });

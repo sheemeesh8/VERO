@@ -75,8 +75,13 @@
 		return v < lo ? lo : v > hi ? hi : v;
 	}
 
+	// The zoom runs over ZOOM_VH viewports of scroll, completing while the feed
+	// is still off-screen below (feed-scroll margin-top is ZOOM_VH + 1 screens),
+	// so the centre image fills the viewport fully before the feed rises over it.
+	var ZOOM_VH = 2;
+
 	function apply() {
-		var p = clamp(window.scrollY / Math.max(1, window.innerHeight), 0, 1);
+		var p = clamp(window.scrollY / Math.max(1, window.innerHeight * ZOOM_VH), 0, 1);
 
 		for (var i = 0; i < tiles.length; i++) {
 			var tile = tiles[i];
