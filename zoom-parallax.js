@@ -144,8 +144,8 @@
 			tile.style.setProperty('--zp-s', String(1 + (max - 1) * p));
 
 			if (isCentre) {
-				// Centre circle morphs toward a softly-rounded card as it grows.
-				tile.style.setProperty('--zp-r', (50 - 44 * clamp(p * 1.2, 0, 1)) + '%');
+				// Centre starts as a circle and squares off completely as it grows.
+				tile.style.setProperty('--zp-r', (50 - 50 * clamp(p * 1.2, 0, 1)) + '%');
 			} else {
 				// Place outer circles evenly on the ring, starting at the top.
 				var angle = (outerIndex / 6) * Math.PI * 2 - Math.PI / 2;
