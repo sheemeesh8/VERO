@@ -197,6 +197,10 @@
         /* The gender sub-header fades away while the hero is in view. */
         .feed-subnav { transition: opacity .3s ease, transform .3s ease; }
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; transform: translateY(-10px); }
+        /* The feed search stays hidden until we've officially crossed the hero
+           into the feed — it only reveals once the zoom has released. */
+        .feed-search { transition: opacity .3s ease, transform .3s ease; }
+        .feed-search.is-hero { opacity: 0; pointer-events: none; transform: translateY(-10px); }
     </style>
 </head>
 <body>
@@ -241,8 +245,8 @@
 
     <div class="feed-scroll">
     <main class="feed-wrap">
-        <!-- 1 · Search -->
-        <form class="feed-search" role="search" onsubmit="return false;">
+        <!-- 1 · Search (hidden until the hero has officially been crossed) -->
+        <form class="feed-search is-hero" role="search" onsubmit="return false;">
             <input type="search" id="feedSearchInput" placeholder="Search the feed…" autocomplete="off" aria-label="Search the feed">
         </form>
 
@@ -519,8 +523,12 @@
             if (subnav) subnav.style.top = hb + 'px';
             var sh = subnav ? subnav.offsetHeight : 0;
             wrap.style.paddingTop = (hb + sh + 20) + 'px';
-            // Open the second header (gender sub-nav) only after we cross the hero.
-            if (subnav) subnav.classList.toggle('is-hero', !window.veroHeroPassed());
+            // Open the second header (gender sub-nav) and reveal the feed search
+            // only after we cross the hero.
+            var passed = window.veroHeroPassed();
+            if (subnav) subnav.classList.toggle('is-hero', !passed);
+            var feedSearch = document.querySelector('.feed-search');
+            if (feedSearch) feedSearch.classList.toggle('is-hero', !passed);
         }
         var raf; function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeContent); }
         window.addEventListener('scroll', schedulePlace, { passive: true });
