@@ -47,13 +47,16 @@
 		return v < lo ? lo : v > hi ? hi : v;
 	}
 
-	// The hero grows over ZOOM_VH viewports of scroll, reaching full size while
-	// the feed is still off-screen below (feed-scroll margin-top = ZOOM_VH + 1
-	// screens), so it fills the viewport before the feed rises over it.
-	var ZOOM_VH = 1.6;
+	// Progress is how far we've scrolled through the hero's sticky track
+	// (.zp-wrap). The hero stays pinned for (track height − one viewport) of
+	// scroll, over which it grows from --zp-min to --zp-max.
+	var wrap = document.getElementById('feedHeroWrap') || hero.parentNode;
 
 	function apply() {
-		var p = clamp(window.scrollY / Math.max(1, window.innerHeight * ZOOM_VH), 0, 1);
+		var winH = window.innerHeight;
+		var pinned = Math.max(1, wrap.offsetHeight - winH);
+		var start = wrap.offsetTop;
+		var p = clamp((window.scrollY - start) / pinned, 0, 1);
 
 		var min = parseFloat(getComputedStyle(centre).getPropertyValue('--zp-min')) || 0.62;
 		var max = parseFloat(getComputedStyle(centre).getPropertyValue('--zp-max')) || 1.18;
