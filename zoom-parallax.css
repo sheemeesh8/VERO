@@ -1,7 +1,9 @@
 /* ==========================================================================
    Zoom Parallax — hero → feed transition on feed.html
-   The hero image is centred and grows on scroll until it fills the viewport,
-   then the feed begins. Scroll-driven (see zoom-parallax.js).
+   A collage of 7 tiles that, on scroll, opens up: the off-centre tiles fly
+   outward while the centre tile (the hero) grows to fill the viewport — then
+   the feed follows. Scroll-driven through the hero's sticky track
+   (see zoom-parallax.js).
    ========================================================================== */
 
 .zp-stage {
@@ -12,34 +14,48 @@
 	background: #fff;
 }
 
-/* The hero tile is full-bleed, centred, and scaled on scroll.
-   --zp-min : start scale (framed, white around it) · --zp-max : end scale
-   --zp-s   : current scroll-driven scale */
-.zp-tile[data-zp="0"] {
+/* Each tile is centred, then nudged by its offset and scaled on scroll.
+   The offset scales with the zoom so off-centre tiles fly outward off-screen,
+   leaving the centre tile (offset 0) to fill the viewport. */
+.zp-tile {
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	width: 100%;
-	height: 100%;
-	--zp-min: 0.62;
-	--zp-max: 1.18;
-	--zp-s: var(--zp-min);
-	transform: translate(-50%, -50%) scale(var(--zp-s));
+	--zp-tx: 0vw;
+	--zp-ty: 0vh;
+	--zp-s: 1;
+	width: 25vw;
+	height: 25vh;
+	transform: translate(
+			calc(-50% + var(--zp-tx) * var(--zp-s)),
+			calc(-50% + var(--zp-ty) * var(--zp-s))
+		)
+		scale(var(--zp-s));
 	transform-origin: center center;
 	will-change: transform;
 	overflow: hidden;
 	background: #fff;
 }
 
-.zp-tile[data-zp="0"] > img,
-.zp-tile[data-zp="0"] > video {
+.zp-tile > img,
+.zp-tile > video {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 	display: block;
 }
 
-/* Reduced-motion: show the hero full-bleed, no scaling. */
+/* Per-tile geometry + target scale (mirrors the original component). */
+.zp-tile[data-zp="0"] { width: 25vw; height: 25vh; --zp-tx: 0vw;     --zp-ty: 0vh;    --zp-max: 4; }
+.zp-tile[data-zp="1"] { width: 35vw; height: 30vh; --zp-tx: 5vw;     --zp-ty: -30vh;  --zp-max: 5; }
+.zp-tile[data-zp="2"] { width: 20vw; height: 45vh; --zp-tx: -25vw;   --zp-ty: -10vh;  --zp-max: 6; }
+.zp-tile[data-zp="3"] { width: 25vw; height: 25vh; --zp-tx: 27.5vw;  --zp-ty: 0vh;    --zp-max: 5; }
+.zp-tile[data-zp="4"] { width: 20vw; height: 25vh; --zp-tx: 5vw;     --zp-ty: 27.5vh; --zp-max: 6; }
+.zp-tile[data-zp="5"] { width: 30vw; height: 25vh; --zp-tx: -22.5vw; --zp-ty: 27.5vh; --zp-max: 8; }
+.zp-tile[data-zp="6"] { width: 15vw; height: 15vh; --zp-tx: 25vw;    --zp-ty: 22.5vh; --zp-max: 9; }
+
+/* Reduced-motion: show the hero full-bleed, hide the collage. */
 @media (prefers-reduced-motion: reduce) {
-	.zp-tile[data-zp="0"] { transform: translate(-50%, -50%) scale(1); }
+	.zp-tile[data-zp="0"] { width: 100%; height: 100%; transform: translate(-50%, -50%); }
+	.zp-tile:not([data-zp="0"]) { display: none; }
 }
