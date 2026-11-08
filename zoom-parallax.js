@@ -19,12 +19,12 @@
 	// Centre tile reuses the hero video; the six outer circles are category
 	// shortcuts, each with a caption and a link to the relevant page.
 	var OUTER = [
-		{ src: 'magazine-hero.jpg',  label: 'Magazine',          href: 'index.html?open=magazine' },
-		{ src: 'clothing-hero.jpg',  label: 'Autumn Collection', href: 'index.html?collection=autumn' },
-		{ src: 'women-hero.jpg',     label: 'Gender',            href: '#genderCover' },
-		{ src: 'sale-hero.jpg',      label: 'Sale',              href: 'products.html?sale=1' },
-		{ src: 'gallery-hero.jpg',   label: 'New In',            href: 'products.html?new=1' },
-		{ src: 'art-hero.jpg',       label: 'Events',            href: 'events.html' }
+		{ src: 'magazine-hero.jpg',  label: 'Magazine',          href: 'category.html?cat=magazine' },
+		{ src: 'clothing-hero.jpg',  label: 'Autumn Collection', href: 'category.html?cat=autumn' },
+		{ src: 'women-hero.jpg',     label: 'Gender',            href: 'category.html?cat=gender' },
+		{ src: 'sale-hero.jpg',      label: 'Sale',              href: 'category.html?cat=sale' },
+		{ src: 'gallery-hero.jpg',   label: 'New In',            href: 'category.html?cat=new' },
+		{ src: 'art-hero.jpg',       label: 'Events',            href: 'category.html?cat=events' }
 	];
 
 	// ---- Build the stage ---------------------------------------------------
