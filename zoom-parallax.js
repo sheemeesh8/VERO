@@ -87,7 +87,8 @@
 		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
 
 		// Ring radius for the outer circles (px) — keep it circular on any screen.
-		var ring = Math.min(winW, winH) * 0.34;
+		// Sized to leave a clear gap between the ring and the centre circle.
+		var ring = Math.min(winW, winH) * 0.42;
 		var outerIndex = 0;
 
 		for (var i = 0; i < tiles.length; i++) {
