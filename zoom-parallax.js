@@ -1,9 +1,10 @@
 /* ==========================================================================
-   Zoom Parallax — hero → feed transition for feed.html
+   Zoom Parallax — hero → feed transition on feed.html
    --------------------------------------------------------------------------
-   The hero image sits centred, then grows as the visitor scrolls until it
-   fills the whole viewport — and from there the feed (the site) begins.
-   Scroll-driven scaling, no framer-motion. Enhances #feedHero.
+   A collage of 7 tiles (centre = the hero video, 6 editorial stills around it)
+   that opens up as you scroll the hero's sticky track: the off-centre tiles fly
+   outward while the centre grows to fill the viewport — and from there the feed
+   begins. Scroll-driven, no framer-motion.
    ========================================================================== */
 (function () {
 	'use strict';
@@ -15,12 +16,23 @@
 		window.matchMedia &&
 		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+	// Centre tile reuses the hero video; the six outer tiles use editorial
+	// stills that ship with the repo.
+	var OUTER = [
+		{ src: 'women-hero.jpg', alt: "Women's editorial" },
+		{ src: 'men-hero.jpg', alt: "Men's editorial" },
+		{ src: 'gallery-hero.jpg', alt: 'Gallery pieces' },
+		{ src: 'magazine-hero.jpg', alt: 'Magazine spread' },
+		{ src: 'art-hero.jpg', alt: 'Original art' },
+		{ src: 'clothing-hero.jpg', alt: 'Seasonal clothing' }
+	];
+
 	// ---- Build the stage ---------------------------------------------------
 	var existingVideo = hero.querySelector('.hero-video');
 	var stage = document.createElement('div');
 	stage.className = 'zp-stage';
 
-	// Single centre tile — the hero — wraps the existing video (keeps autoplay).
+	// Tile 0 — centre — wraps the existing hero video (keeps autoplay/loop).
 	var centre = document.createElement('div');
 	centre.className = 'zp-tile';
 	centre.setAttribute('data-zp', '0');
@@ -34,9 +46,25 @@
 	}
 	stage.appendChild(centre);
 
+	// Tiles 1..6 — outer editorial stills.
+	OUTER.forEach(function (item, i) {
+		var tile = document.createElement('div');
+		tile.className = 'zp-tile';
+		tile.setAttribute('data-zp', String(i + 1));
+		tile.setAttribute('aria-hidden', 'true');
+		var img = document.createElement('img');
+		img.src = item.src;
+		img.alt = item.alt;
+		img.loading = 'eager';
+		img.decoding = 'async';
+		tile.appendChild(img);
+		stage.appendChild(tile);
+	});
+
 	// Insert the stage as the hero backdrop (behind copy + scroll cue).
 	hero.insertBefore(stage, hero.firstChild);
 
+	var tiles = [].slice.call(stage.querySelectorAll('.zp-tile'));
 	var copy = hero.querySelector('.hero-copy');
 	var cue = hero.querySelector('.hero-scroll-cue');
 
@@ -49,20 +77,20 @@
 
 	// Progress is how far we've scrolled through the hero's sticky track
 	// (.zp-wrap). The hero stays pinned for (track height − one viewport) of
-	// scroll, over which it grows from --zp-min to --zp-max.
+	// scroll, over which the collage opens.
 	var wrap = document.getElementById('feedHeroWrap') || hero.parentNode;
 
 	function apply() {
-		var winH = window.innerHeight;
-		var pinned = Math.max(1, wrap.offsetHeight - winH);
-		var start = wrap.offsetTop;
-		var p = clamp((window.scrollY - start) / pinned, 0, 1);
+		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight);
+		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
 
-		var min = parseFloat(getComputedStyle(centre).getPropertyValue('--zp-min')) || 0.62;
-		var max = parseFloat(getComputedStyle(centre).getPropertyValue('--zp-max')) || 1.18;
-		centre.style.setProperty('--zp-s', String(min + (max - min) * p));
+		for (var i = 0; i < tiles.length; i++) {
+			var tile = tiles[i];
+			var max = parseFloat(getComputedStyle(tile).getPropertyValue('--zp-max')) || 4;
+			tile.style.setProperty('--zp-s', String(1 + (max - 1) * p));
+		}
 
-		// Fade the welcome copy + cue out as the hero takes over the screen.
+		// Fade the welcome copy + cue out as the collage opens into the hero.
 		var fade = clamp(1 - p * 1.8, 0, 1);
 		if (copy) copy.style.opacity = fade;
 		if (cue) cue.style.opacity = String(0.85 * fade);
