@@ -1,0 +1,69 @@
+/* ==========================================================================
+   Zoom Parallax — vanilla port of components/ui/zoom-parallax.tsx
+   Drives the hero -> feed transition on feed.html.
+
+   The hero is a fixed, full-screen stage. As the visitor scrolls the first
+   viewport, seven tiles scale up from the centre (the hero video) outward,
+   zooming past the edges to "open" into the feed below — the same motion as
+   the original framer-motion component, but scroll-driven in plain JS.
+   ========================================================================== */
+
+.zp-stage {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	z-index: 0;
+}
+
+/* Each tile is centred, then nudged by its own offset and scaled on scroll. */
+.zp-tile {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	/* --zp-tx / --zp-ty : offset from centre · --zp-s : scroll-driven scale */
+	--zp-tx: 0vw;
+	--zp-ty: 0vh;
+	--zp-s: 1;
+	width: 25vw;
+	height: 25vh;
+	transform: translate(calc(-50% + var(--zp-tx)), calc(-50% + var(--zp-ty)))
+		scale(var(--zp-s));
+	will-change: transform;
+	overflow: hidden;
+	background: #000;
+}
+
+.zp-tile > img,
+.zp-tile > video {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+/* --- Per-tile geometry, mirroring the Tailwind arbitrary values ---------- */
+/* index 0 — centre (hero video), target scale 4 */
+.zp-tile[data-zp="0"] { width: 25vw; height: 25vh; --zp-tx: 0vw;     --zp-ty: 0vh;    --zp-max: 4; }
+/* index 1 — target scale 5 */
+.zp-tile[data-zp="1"] { width: 35vw; height: 30vh; --zp-tx: 5vw;     --zp-ty: -30vh;  --zp-max: 5; }
+/* index 2 — target scale 6 */
+.zp-tile[data-zp="2"] { width: 20vw; height: 45vh; --zp-tx: -25vw;   --zp-ty: -10vh;  --zp-max: 6; }
+/* index 3 — target scale 5 */
+.zp-tile[data-zp="3"] { width: 25vw; height: 25vh; --zp-tx: 27.5vw;  --zp-ty: 0vh;    --zp-max: 5; }
+/* index 4 — target scale 6 */
+.zp-tile[data-zp="4"] { width: 20vw; height: 25vh; --zp-tx: 5vw;     --zp-ty: 27.5vh; --zp-max: 6; }
+/* index 5 — target scale 8 */
+.zp-tile[data-zp="5"] { width: 30vw; height: 25vh; --zp-tx: -22.5vw; --zp-ty: 27.5vh; --zp-max: 8; }
+/* index 6 — target scale 9 */
+.zp-tile[data-zp="6"] { width: 15vw; height: 15vh; --zp-tx: 25vw;    --zp-ty: 22.5vh; --zp-max: 9; }
+
+/* The hero copy + scroll cue ride above the centre tile and fade as we zoom. */
+.hero .hero-copy,
+.hero .hero-scroll-cue { z-index: 2; }
+
+/* Respect reduced-motion: freeze the tiles, show only the hero backdrop. */
+@media (prefers-reduced-motion: reduce) {
+	.zp-tile { transform: translate(-50%, -50%); }
+	.zp-tile[data-zp="0"] { width: 100vw; height: 100vh; }
+	.zp-tile:not([data-zp="0"]) { display: none; }
+}
