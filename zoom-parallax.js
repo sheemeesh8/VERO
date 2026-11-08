@@ -88,6 +88,10 @@
 		stage.classList.add('zp-opening');
 		tile.classList.add('zp-anim');
 		tile.style.zIndex = '6';
+		// Fade every other tile out; grow the tapped one to full-bleed (square).
+		for (var t = 0; t < tiles.length; t++) {
+			tiles[t].style.opacity = tiles[t] === tile ? '1' : '0';
+		}
 		tile.style.setProperty('--zp-tx', '0px');
 		tile.style.setProperty('--zp-ty', '0px');
 		tile.style.setProperty('--zp-s', String(cover));
