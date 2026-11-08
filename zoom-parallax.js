@@ -140,9 +140,8 @@
 			tiles[t].style.height = sz.toFixed(1) + 'px';
 		}
 
-		// Centre's final scale: a large centred hero, deliberately smaller than a
-		// full crop so the (landscape) video isn't blown up on a tall screen.
-		var centreMax = (Math.max(winW, winH) / centreD) * 0.82;
+		// Centre's final scale: grow until it fully covers the viewport (full-screen).
+		var centreMax = (Math.max(winW, winH) / centreD) * 1.04;
 
 		// Nudge the resting collage down so the top circle's outer caption clears
 		// the welcome copy. The centre un-nudges as it grows so it ends centred.
@@ -171,6 +170,8 @@
 				var ty = ringY + cy;
 				tile.style.setProperty('--zp-tx', tx.toFixed(1) + 'px');
 				tile.style.setProperty('--zp-ty', ty.toFixed(1) + 'px');
+				// Fade outer circles as they fly out so none linger over the hero.
+				tile.style.opacity = clamp(1 - p * 1.6, 0, 1);
 				// Caption sits on the OUTER side of its circle: above the circles
 				// in the upper half, below the ones in the lower half.
 				var cap = caps[outerIndex];
