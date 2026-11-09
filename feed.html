@@ -305,22 +305,37 @@
             <!-- 3 · Single featured product card, by the chosen gender -->
             <a class="feature-card" id="genderFeature" href="#"></a>
 
-            <!-- 4 · 4-card separator -->
-            <div class="feed-sep"><div class="sep-grid" id="sepA"></div></div>
+            <!-- Rails-first discovery: a wall of horizontal sliders, each under a
+                 banner or heading, finished by a short browse grid. -->
 
-            <!-- 5 · Sales section — banner + 10-card transparent rail -->
+            <!-- 4 · Sales section — banner + 10-card transparent rail -->
             <section>
                 <div class="feed-banner is-sale" id="bannerSale"><div class="fb-bg"></div><div class="fb-txt"><div class="fb-title">On sale</div><div class="fb-sub">Up to 50% off</div></div></div>
                 <div class="rail-trans" id="railSale"></div>
             </section>
 
-            <!-- 6 · 4-card separator -->
-            <div class="feed-sep"><div class="sep-grid" id="sepB"></div></div>
-
-            <!-- 7 · New arrivals section — banner + 10-card transparent rail -->
+            <!-- 5 · New arrivals section — banner + 10-card transparent rail -->
             <section>
                 <div class="feed-banner" id="bannerNew"><div class="fb-bg"></div><div class="fb-txt"><div class="fb-title">New arrivals</div><div class="fb-sub">Just listed</div></div></div>
                 <div class="rail-trans" id="railNew"></div>
+            </section>
+
+            <!-- 6 · For you — personalised discovery rail -->
+            <section>
+                <div class="sec-head"><h3>For you</h3><span class="sec-sub">Picked to your taste</span></div>
+                <div class="rail-trans" id="railForYou"></div>
+            </section>
+
+            <!-- 7 · Under budget — value discovery rail -->
+            <section>
+                <div class="sec-head"><h3>Under 100 ₪</h3><span class="sec-sub">Everyday steals</span></div>
+                <div class="rail-trans" id="railBudget"></div>
+            </section>
+
+            <!-- 8 · More to browse — short grid anchor -->
+            <section>
+                <div class="sec-head"><h3>More to browse</h3><span class="sec-sub">Fresh off the feed</span></div>
+                <div class="feed-grid" id="feedMore"></div>
             </section>
         </div>
 
@@ -468,20 +483,40 @@
             // Autumn Collection rail — up to 10 pieces from the current mode.
             fill('railAutumn', list.length ? list.slice(0, 10).map(transCard).join('') : '<div class="feed-empty">No pieces yet.</div>');
 
-            // Separator A — 4 cards.
-            fill('sepA', list.slice(1, 5).concat(list).slice(0, 4).map(cvCard).join(''));
-
             // Sales rail — up to 10 discounted pieces (mode-filtered), deepest cut first.
             var art = (state.mode === 'art');
             var sale = VC.onSale().filter(function (p) { return art ? isArt(p) : !isArt(p); }).slice(0, 10);
             fill('railSale', sale.length ? sale.map(transCard).join('') : '<div class="feed-empty">Nothing on sale right now.</div>');
 
-            // Separator B — 4 more cards.
-            fill('sepB', list.slice(4, 8).concat(list).slice(0, 4).map(cvCard).join(''));
-
             // New arrivals rail — up to 10 most recent (mode-filtered).
             var recent = list.slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); }).slice(0, 10);
             fill('railNew', recent.length ? recent.map(transCard).join('') : '<div class="feed-empty">No new pieces yet.</div>');
+
+            // For you rail — a varied slice, biased to the chosen gender, so it
+            // reads as a distinct edit rather than a repeat of Autumn.
+            var forYou = byGender(list, state.gender).slice();
+            forYou.sort(function (a, b) { return hashStr(a.name) - hashStr(b.name); });   // stable pseudo-shuffle
+            forYou = forYou.slice(0, 10);
+            fill('railForYou', forYou.length ? forYou.map(transCard).join('') : '<div class="feed-empty">Nothing to show yet.</div>');
+
+            // Under 100 ₪ rail — value discovery, cheapest first.
+            var budget = list.filter(function (p) { return VC.toNum(p.price) > 0 && VC.toNum(p.price) <= 100; })
+                             .sort(function (a, b) { return VC.toNum(a.price) - VC.toNum(b.price); })
+                             .slice(0, 10);
+            fill('railBudget', budget.length ? budget.map(transCard).join('') : '<div class="feed-empty">No pieces under 100 ₪ right now.</div>');
+
+            // More to browse — short grid anchor (6 pieces not already up top).
+            var more = list.slice(10, 16);
+            if (more.length < 6) more = list.slice(Math.max(0, list.length - 6));
+            fill('feedMore', more.length ? more.map(cvCard).join('') : '<div class="feed-empty" style="grid-column:1/-1">Nothing more yet.</div>');
+        }
+
+        // Tiny stable string hash → lets "For you" shuffle the same way each load
+        // instead of reshuffling on every rebuild.
+        function hashStr(s) {
+            var h = 0, str = String(s || '');
+            for (var i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
+            return h;
         }
 
         // ----- Search ------------------------------------------------------
