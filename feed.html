@@ -155,17 +155,17 @@
             #genderCover .gc-card { transition: none !important; }
         }
 
-        /* ===== Hero — a sticky zoom stage ===== */
-        /* The hero pins inside a tall scroll track and grows in place; once the
-           track ends it releases and the feed follows directly below.
-           Robust on mobile: sticky + svh avoid the fixed/vh mismatch that made
-           the address bar fight the scroll. */
+        /* ===== Hero — a full-screen video ===== */
+        /* The hero is the video at full zoom (full-bleed), with the white band
+           resting over its bottom quarter. One viewport tall, then the feed. */
         .zp-wrap { position: relative; width: 100%; z-index: 0; background: #fff;
-            height: 200vh; height: 200svh; }
+            height: 100vh; height: 100svh; }
         .hero { position: sticky; top: 0; width: 100%; overflow: hidden; background: #fff; z-index: 0;
             height: 100vh; height: 100svh; }
         .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-        .hero-copy { position: absolute; top: 0; left: 0; right: 0; z-index: 1;
+        /* Full-zoom hero: no welcome overlay, just the video. */
+        .hero-copy { display: none; }
+        .hero-copy-legacy { position: absolute; top: 0; left: 0; right: 0; z-index: 1;
             display: flex; flex-direction: column; align-items: center; text-align: center;
             padding-top: clamp(48px, 9vh, 96px); color: #141414; font-family: 'Poppins','Inter',system-ui,sans-serif;
             text-shadow: 0 1px 24px rgba(255,255,255,0.65); }
@@ -185,7 +185,7 @@
             gap: 16px; padding: 0 20px;
             /* The white band rises into view only after the hero has settled. */
             transform: translateY(100%); opacity: 0;
-            animation: heroBandRise .72s cubic-bezier(.2,.75,.25,1) 1.05s forwards; }
+            animation: heroBandRise .72s cubic-bezier(.2,.75,.25,1) .5s forwards; }
         @keyframes heroBandRise { to { transform: translateY(0); opacity: 1; } }
         @media (prefers-reduced-motion: reduce) {
             .hero-band { transform: none; opacity: 1; animation: none; }
@@ -214,11 +214,13 @@
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
     <script>
-        // Only one transparent header through the whole hero effect; the header
-        // goes solid (white) only once we've crossed past the hero's sticky track.
+        // Transparent header over the full-screen hero video; it goes solid
+        // (white) only once the feed has scrolled up under it.
         window.veroHeroPassed = function () {
             var w = document.getElementById('feedHeroWrap');
-            var release = w ? (w.offsetTop + w.offsetHeight - window.innerHeight) : window.innerHeight;
+            var header = document.getElementById('siteHeader');
+            var headH = header ? header.offsetHeight : 64;
+            var release = w ? (w.offsetTop + w.offsetHeight - headH) : window.innerHeight;
             return window.scrollY >= release - 4;
         };
         window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
@@ -688,7 +690,5 @@
     <script src="search-box.js" defer></script>
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
-    <!-- Zoom-parallax hero -> feed transition (vanilla port of components/ui/zoom-parallax). -->
-    <script src="zoom-parallax.js"></script>
 </body>
 </html>
