@@ -50,8 +50,23 @@
 
         /* ===== Grid ===== */
         .cat-wrap { max-width: 1180px; margin: 0 auto; padding: 28px 16px 72px; }
+        /* Count on the left, the filter control on the right. */
+        .cat-countbar { display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; margin: 0 0 18px; }
         .cat-count { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; letter-spacing: 1.5px;
-            text-transform: uppercase; color: #8a857c; margin: 0 0 18px; }
+            text-transform: uppercase; color: #8a857c; margin: 0; }
+        .cat-filter { display: inline-flex; align-items: center; gap: 10px; flex: none; }
+        .cat-filter-label { font-family: 'Arimo','Inter',sans-serif; font-size: 10px; letter-spacing: 2px;
+            text-transform: uppercase; color: #8a857c; }
+        .cat-filter select { appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            border: 1px solid #d9d7d2; border-radius: 999px; background-color: #fff;
+            padding: 9px 36px 9px 16px; font-family: 'Arimo','Inter',sans-serif; font-size: 12px;
+            color: #1b1916; cursor: pointer; outline: none; transition: border-color .2s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a857c' stroke-width='1.6'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 13px center; background-size: 15px; }
+        .cat-filter select:hover { border-color: #b7b4ad; }
+        .cat-filter select:focus { border-color: #1b1916; }
+        @media (max-width: 420px) { .cat-filter-label { display: none; } }
         .cat-grid { display: grid; gap: 22px 16px;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
         @media (min-width: 680px) { .cat-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
@@ -85,7 +100,19 @@
     </section>
 
     <main class="cat-wrap" id="catWrap">
-        <p class="cat-count" id="catCount"></p>
+        <div class="cat-countbar">
+            <p class="cat-count" id="catCount"></p>
+            <label class="cat-filter">
+                <span class="cat-filter-label">Filter</span>
+                <select id="catFilter" aria-label="Filter and sort pieces">
+                    <option value="featured">Featured</option>
+                    <option value="newest">Newest first</option>
+                    <option value="price-asc">Price: low to high</option>
+                    <option value="price-desc">Price: high to low</option>
+                    <option value="sale">On sale only</option>
+                </select>
+            </label>
+        </div>
         <div class="cat-grid" id="catGrid"></div>
     </main>
 
@@ -172,9 +199,32 @@
                     .toLowerCase().indexOf(q) !== -1;
             });
             var now = Date.now();
+
+            // ---- Filter / sort (the control next to the count) --------------
+            var filterEl = document.getElementById('catFilter');
+            var mode = filterEl ? filterEl.value : 'featured';
+            // Effective (sale) price + on-sale flag, worked out per piece.
+            function effOf(p) {
+                try { return vc.discountOf(p._raw || p, now); }
+                catch (e) { return { onSale: false, price: p.price || 0, original: p.price || 0 }; }
+            }
+            function effPrice(p) { var d = effOf(p); return d.onSale ? d.price : (d.original || p.price || 0); }
+            items = items.slice();
+            if (mode === 'sale') {
+                items = items.filter(function (p) { return effOf(p).onSale; });
+            } else if (mode === 'newest') {
+                items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+            } else if (mode === 'price-asc') {
+                items.sort(function (a, b) { return effPrice(a) - effPrice(b); });
+            } else if (mode === 'price-desc') {
+                items.sort(function (a, b) { return effPrice(b) - effPrice(a); });
+            }
+
             if (!items.length) {
                 grid.innerHTML = '<div class="cat-empty">' +
-                    (q ? 'No pieces match “' + q + '”.' : 'Nothing here yet — check back soon.') +
+                    (q ? 'No pieces match “' + q + '”.'
+                       : mode === 'sale' ? 'No pieces on sale here right now.'
+                       : 'Nothing here yet — check back soon.') +
                     '</div>';
                 count.textContent = '';
                 return true;
@@ -185,6 +235,8 @@
         }
 
         searchEl.addEventListener('input', function () { if (allItems) draw(); });
+        var filterEl = document.getElementById('catFilter');
+        if (filterEl) filterEl.addEventListener('change', function () { if (allItems) draw(); });
 
         // "Slide for more" scrolls down to the grid.
         document.getElementById('catCue').addEventListener('click', function () {
