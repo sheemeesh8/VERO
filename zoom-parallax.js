@@ -151,6 +151,12 @@
 		// Centre's final scale: grow until it fully covers the viewport (full-screen).
 		var centreMax = (Math.max(winW, winH) / centreD) * 1.04;
 
+		// Ease the growth in (p² ) so the first slice of scroll barely changes the
+		// resting ring. This keeps the clean collage stable while the welcome copy
+		// and captions fade out, so nothing balloons over the fixed header before
+		// the text is gone.
+		var pz = p * p;
+
 		// Nudge the resting collage down so the top circle's outer caption clears
 		// the welcome copy. The centre un-nudges as it grows so it ends centred.
 		var cy = winH * 0.13;
@@ -161,15 +167,15 @@
 			var max = isCentre
 				? centreMax
 				: (parseFloat(getComputedStyle(tile).getPropertyValue('--zp-max')) || 4);
-			var s = 1 + (max - 1) * p;
+			var s = 1 + (max - 1) * pz;
 			tile.style.setProperty('--zp-s', String(s));
 
 			if (isCentre) {
 				// Centre starts as a circle and squares off completely as it grows.
-				tile.style.setProperty('--zp-r', (50 - 50 * clamp(p * 1.2, 0, 1)) + '%');
+				tile.style.setProperty('--zp-r', (50 - 50 * clamp(pz * 1.2, 0, 1)) + '%');
 				tile.style.setProperty('--zp-tx', '0px');
 				// Offset is multiplied by scale in CSS, so divide to keep it in px.
-				tile.style.setProperty('--zp-ty', (cy * (1 - p) / s).toFixed(2) + 'px');
+				tile.style.setProperty('--zp-ty', (cy * (1 - pz) / s).toFixed(2) + 'px');
 			} else {
 				// Place outer circles evenly on the ring, starting at the top.
 				var angle = (outerIndex / 6) * Math.PI * 2 - Math.PI / 2;
@@ -178,8 +184,8 @@
 				var ty = ringY + cy;
 				tile.style.setProperty('--zp-tx', tx.toFixed(1) + 'px');
 				tile.style.setProperty('--zp-ty', ty.toFixed(1) + 'px');
-				// Fade outer circles as they fly out so none linger over the hero.
-				tile.style.opacity = clamp(1 - p * 1.6, 0, 1);
+				// Fade outer circles out quickly so none linger over the header.
+				tile.style.opacity = clamp(1 - p * 3, 0, 1);
 				// Caption sits on the OUTER side of its circle: above the circles
 				// in the upper half, below the ones in the lower half.
 				var cap = caps[outerIndex];
@@ -195,13 +201,14 @@
 			}
 		}
 
-		// Fade the welcome copy + cue out as the ring opens into the hero.
-		var fade = clamp(1 - p * 1.8, 0, 1);
+		// Fade the welcome copy + cue out fast, before the eased growth kicks in,
+		// so the title never sits under a ballooning circle.
+		var fade = clamp(1 - p * 4, 0, 1);
 		if (copy) copy.style.opacity = fade;
 		if (cue) cue.style.opacity = String(0.85 * fade);
 
 		// Captions belong to the resting collage — fade them quickly on scroll.
-		var capFade = clamp(1 - p * 3, 0, 1);
+		var capFade = clamp(1 - p * 4, 0, 1);
 		for (var c = 0; c < caps.length; c++) {
 			caps[c].style.opacity = capFade;
 			caps[c].style.pointerEvents = capFade > 0.6 ? 'auto' : 'none';
