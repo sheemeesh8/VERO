@@ -134,7 +134,7 @@
 
 		// Size the whole collage so it always fits the viewport — both width and
 		// height — whatever the aspect ratio (fixes overflow on wide/landscape).
-		var k = Math.min(winW * 0.40, winH * 0.28);
+		var k = Math.min(winW * 0.36, winH * 0.24);
 		var ring = k;                  // distance centre -> outer circle
 		var centreD = k;               // centre circle diameter
 		var outerD = k * 0.62;         // outer circle diameter
@@ -159,7 +159,7 @@
 
 		// Nudge the resting collage down so the top circle's outer caption clears
 		// the welcome copy. The centre un-nudges as it grows so it ends centred.
-		var cy = winH * 0.13;
+		var cy = winH * 0.20;
 
 		for (var i = 0; i < tiles.length; i++) {
 			var tile = tiles[i];

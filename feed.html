@@ -155,32 +155,44 @@
             #genderCover .gc-card { transition: none !important; }
         }
 
-        /* ===== Hero — full-screen video, category-page style ===== */
-        /* A full-bleed video with the welcome copy over its base and the white
-           band (search + "slide for more") resting over the bottom. One viewport
-           tall, then the feed. Mirrors the category hero. */
+        /* ===== Hero — zoom-parallax entrance (circles) + copy + band ===== */
+        /* A ring of category circles over the hero video that opens on scroll.
+           Captions sit on top (staggered in), the search + Autumn Collection
+           slider band rests over the bottom third. */
         .zp-wrap { position: relative; width: 100%; z-index: 0; background: #fff;
-            height: 100vh; height: 100svh; }
-        .hero { position: sticky; top: 0; width: 100%; overflow: hidden; background: #000; z-index: 0;
+            height: 200vh; height: 200svh; }
+        .hero { position: sticky; top: 0; width: 100%; overflow: hidden; background: #fff; z-index: 0;
             height: 100vh; height: 100svh;
-            /* Band holds the search + the Autumn Collection slider; copy sits above it.
-               Kept to ~1/3 of the screen so the video keeps the top two-thirds. */
+            /* Band holds the search + the Autumn Collection slider; the circle
+               stage fills the rest above it. */
             --band-h: max(33svh, 300px); }
         .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-        /* Scrim so the white welcome copy stays legible over the video. */
-        .hero::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-            background: linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.12) 42%, rgba(0,0,0,0.5) 100%); }
-        /* Welcome copy at the base of the image, just above the white band. */
-        .hero-copy { position: absolute; left: 0; right: 0; bottom: 44svh; bottom: var(--band-h); z-index: 2;
+        /* The zoom-circle stage fills the hero above the white band. */
+        .hero .zp-stage { position: absolute; top: 0; left: 0; right: 0; bottom: auto;
+            height: calc(100svh - var(--band-h)); }
+        /* Welcome copy near the top, over the collage — dark with a soft halo. */
+        .hero-copy { position: absolute; left: 0; right: 0; top: 0; z-index: 2;
             display: flex; flex-direction: column; align-items: center; text-align: center;
-            padding: 0 20px 24px; color: #fff; font-family: 'Poppins','Inter',system-ui,sans-serif; }
+            padding: clamp(72px, 10vh, 96px) 20px 0; color: #1b1916;
+            font-family: 'Poppins','Inter',system-ui,sans-serif;
+            text-shadow: 0 1px 22px rgba(255,255,255,0.7); }
+        /* Captions rise in, one after another. */
+        .hero-copy > * { opacity: 0; transform: translateY(14px);
+            animation: heroCapRise .6s cubic-bezier(.2,.75,.25,1) forwards; }
+        .hero-eyebrow { animation-delay: .25s; }
+        .hero-welcome { animation-delay: .45s; }
+        .hero-slogan  { animation-delay: .65s; }
+        @keyframes heroCapRise { to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-copy > * { opacity: 1; transform: none; animation: none; }
+        }
         /* Category-page hero style: eyebrow + large title + subtitle sentence. */
         .hero-eyebrow { font-family: 'Arimo','Inter',sans-serif; font-size: clamp(10px, 2.6vw, 12px);
             letter-spacing: 3px; text-transform: uppercase; opacity: 0.85; margin-bottom: 10px; }
-        .hero-welcome { font-size: clamp(30px, 8vw, 56px); font-weight: 300; letter-spacing: 0.01em; }
+        .hero-welcome { font-size: clamp(24px, 6.4vw, 40px); font-weight: 300; letter-spacing: 0.01em; }
         .hero-welcome b { font-weight: 600; }
-        .hero-slogan { margin-top: 12px; font-size: clamp(12px, 3.4vw, 15px); font-weight: 400;
-            letter-spacing: 0.5px; opacity: 0.92; max-width: 560px; padding: 0 20px;
+        .hero-slogan { margin-top: 8px; font-size: clamp(11px, 3vw, 13px); font-weight: 400;
+            letter-spacing: 0.5px; opacity: 0.92; max-width: 460px; padding: 0 20px;
             font-family: 'Arimo','Inter',sans-serif; }
         .hero-slogan b { font-weight: 600; }
         .hero-band { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; background: #fff;
@@ -223,13 +235,11 @@
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
     <script>
-        // Transparent header over the full-screen hero video; it goes solid
-        // (white) only once the feed has scrolled up under it.
+        // One transparent header through the whole zoom entrance; it goes solid
+        // (white) only once we've crossed past the hero's sticky track.
         window.veroHeroPassed = function () {
             var w = document.getElementById('feedHeroWrap');
-            var header = document.getElementById('siteHeader');
-            var headH = header ? header.offsetHeight : 64;
-            var release = w ? (w.offsetTop + w.offsetHeight - headH) : window.innerHeight;
+            var release = w ? (w.offsetTop + w.offsetHeight - window.innerHeight) : window.innerHeight;
             return window.scrollY >= release - 4;
         };
         window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
@@ -700,5 +710,7 @@
     <script src="search-box.js" defer></script>
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
+    <!-- Zoom-parallax hero -> feed transition (ring of category circles). -->
+    <script src="zoom-parallax.js"></script>
 </body>
 </html>
