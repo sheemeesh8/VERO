@@ -167,9 +167,8 @@
                stage fills the rest above it. */
             --band-h: max(33svh, 300px); }
         .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-        /* The zoom-circle stage fills the hero above the white band. */
-        .hero .zp-stage { position: absolute; top: 0; left: 0; right: 0; bottom: auto;
-            height: calc(100svh - var(--band-h)); }
+        /* The zoom-circle stage fills the whole hero (clean full-screen nav). */
+        .hero .zp-stage { position: absolute; inset: 0; }
         /* Welcome copy near the top, over the collage — dark with a soft halo. */
         .hero-copy { position: absolute; left: 0; right: 0; top: 0; z-index: 2;
             display: flex; flex-direction: column; align-items: center; text-align: center;
@@ -247,23 +246,12 @@
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=60"></script>
 
-    <!-- Hero — a sticky zoom stage inside a tall scroll track. It grows as you
-         scroll the track, then releases into the feed below. -->
+    <!-- Hero — a clean entrance: a ring of category circles (with labels) that
+         zooms open on scroll, then releases into the feed below. No copy, no
+         search, no slider here — just the navigation ring. -->
     <div class="zp-wrap" id="feedHeroWrap">
     <section class="hero" id="feedHero">
         <video class="hero-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline></video>
-        <div class="hero-copy">
-            <div class="hero-eyebrow">The season</div>
-            <div class="hero-welcome"><b>Autumn Collection</b></div>
-            <div class="hero-slogan"><b>moravchick</b> — a curated marketplace for pre-loved fashion &amp; art.</div>
-        </div>
-        <div class="hero-band">
-            <form class="hero-band-search" role="search" onsubmit="return false;">
-                <input type="search" id="heroSearch" placeholder="Search the feed&hellip;" autocomplete="off" aria-label="Search the feed">
-            </form>
-            <!-- Autumn Collection slider, directly under the search. -->
-            <div class="rail-trans" id="railAutumn"></div>
-        </div>
     </section>
     </div>
 
@@ -284,6 +272,12 @@
 
         <!-- The structured feed (hidden while a search is active). -->
         <div id="feedStructured">
+            <!-- 0 · Autumn Collection — transparent product slider -->
+            <section class="feed-collection">
+                <div class="sec-head"><h3>Autumn Collection</h3><span class="sec-sub">The season's edit</span></div>
+                <div class="rail-trans" id="railAutumn"></div>
+            </section>
+
             <!-- Banner · shop by category -->
             <div class="feed-banner" id="bannerFeature"><div class="fb-bg"></div><div class="fb-txt"><div class="fb-title">Shop by category</div><div class="fb-sub">Find your edit</div></div></div>
 
@@ -506,24 +500,6 @@
                 : '<div class="feed-empty" style="grid-column:1/-1">No matches for "' + esc(q) + '".</div>';
         }
         if (input) input.addEventListener('input', function () { runSearch(input.value); });
-
-        // Hero-band search mirrors into the feed search; the cue scrolls to the feed.
-        var heroSearch = document.getElementById('heroSearch');
-        if (heroSearch) {
-            heroSearch.addEventListener('input', function () {
-                if (input) { input.value = heroSearch.value; }
-                runSearch(heroSearch.value);
-                if (heroSearch.value.trim()) {
-                    var fs = document.querySelector('.feed-scroll');
-                    if (fs) fs.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        }
-        var heroCue = document.getElementById('heroCue');
-        if (heroCue) heroCue.addEventListener('click', function () {
-            var fs = document.querySelector('.feed-scroll');
-            if (fs) fs.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
 
         // Art / Fashion is driven by the header's own built-in toggle (header.js).
         // It stores vero_category and reloads, so the feed reflects the latest
