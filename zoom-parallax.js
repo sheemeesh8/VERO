@@ -148,10 +148,8 @@
 			tiles[t].style.height = sz.toFixed(1) + 'px';
 		}
 
-		// Centre's final scale: grow to a large rounded card that fills the short
-		// side of the stage, so its rounded corners stay visible — it does not
-		// square off to a full-bleed rectangle.
-		var centreMax = (Math.min(winW, winH) / centreD) * 1.0;
+		// Centre's final scale: grow until it fully covers the viewport (full-screen).
+		var centreMax = (Math.max(winW, winH) / centreD) * 1.04;
 
 		// Ease the growth in (p² ) so the first slice of scroll barely changes the
 		// resting ring. This keeps the clean collage stable while the welcome copy
@@ -173,9 +171,8 @@
 			tile.style.setProperty('--zp-s', String(s));
 
 			if (isCentre) {
-				// Centre starts as a circle and relaxes to a rounded card as it
-				// grows — it keeps rounded corners instead of squaring off.
-				tile.style.setProperty('--zp-r', (50 - 42 * clamp(pz * 1.2, 0, 1)) + '%');
+				// Centre starts as a circle and squares off completely as it grows.
+				tile.style.setProperty('--zp-r', (50 - 50 * clamp(pz * 1.2, 0, 1)) + '%');
 				tile.style.setProperty('--zp-tx', '0px');
 				// Offset is multiplied by scale in CSS, so divide to keep it in px.
 				tile.style.setProperty('--zp-ty', (cy * (1 - pz) / s).toFixed(2) + 'px');
