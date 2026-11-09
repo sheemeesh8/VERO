@@ -182,30 +182,6 @@
             .pf-spin { animation-duration: 3s; }
         }
 
-        /* ---- Entrance: a hang-tag. A black clothing tag carrying the moravchick
-               wordmark drops in on a cord, flips to show the home hero photo on its
-               back, then grows to fill the screen while the paper behind it fades —
-               so the app is entered "through" the tag. ~3.15s, once per open.
-               Percentages are of 3.15s; JS sets --pf-gs / --pf-gy (the scale and
-               offset that make the tag cover this screen). ---- */
-        /* ---- Load cover ----
-           Just bridges the brief iframe load with the hero clip's first frame, then
-           fades the moment the in-app hero video starts playing (the real intro — the
-           wordmark over the running clip — happens inside the app, over that same
-           never-restarted video). ---- */
-        .pf-intro {
-            position: absolute; inset: 0; z-index: 40;
-            overflow: hidden;
-            background: #0e0e0c url('assets/hero/intro-poster.jpg') center / cover no-repeat;
-        }
-        .pf-intro.done {
-            opacity: 0; visibility: hidden; pointer-events: none;
-            transition: opacity 0.6s ease, visibility 0s linear 0.6s;
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .pf-intro { background-image: none; }
-        }
-
         @media (prefers-reduced-motion: reduce) {
             .screen iframe.pf-enter { animation: none; }
         }
@@ -261,10 +237,6 @@ h3, h4, h5, h6, p,
             <!-- The whole site lives in here. index.html detects it is framed and renders
                  the real homepage instead of bouncing back to this frame. -->
             <iframe title="moravchick" id="siteFrame" name="vero-phone"></iframe>
-            <!-- Entrance intro: a clothing hang-tag with the moravchick wordmark drops
-                 in, flips to the home photo on its back and grows into the app. It
-                 covers the iframe while the home feed loads (see playIntro). -->
-            <div id="pfIntro" class="pf-intro" aria-hidden="true"></div>
             <!-- Camera island floats over the full-screen content. -->
             <div class="island"></div>
             <!-- Tiny build stamp (diagnostic): tells at a glance which deploy is live. -->
@@ -333,20 +305,6 @@ h3, h4, h5, h6, p,
                 if (t) document.title = t;
             } catch (e) { /* cross-origin — keep the default title */ }
         });
-
-        // ---- Entrance animation: remove the intro overlay once it has played, so it
-        // never intercepts taps. Runs once per app open (phone-frame load). ----
-        (function playIntro() {
-            var intro = document.getElementById('pfIntro');
-            if (!intro) return;
-            var done = false;
-            function finish() { if (done) return; done = true; intro.classList.add('done'); }
-            // The app posts this once its hero video is actually playing — then the
-            // cover fades, revealing the live clip (with the wordmark) underneath.
-            window.addEventListener('message', function (e) { if (e && e.data === 'vero-hero-playing') finish(); });
-            // Fallback so the cover can never get stuck if the message never arrives.
-            setTimeout(finish, 4000);
-        })();
 
         // ---- Straight-to-home entry ----
         // The feed is a "protected" view (auth.js bounces logged-out visitors to the
@@ -486,9 +444,6 @@ h3, h4, h5, h6, p,
             hideFrameScrollbar();
             playSlideIn();        // slide the new page down from the top
             hideCover();          // drop the paper cover so the slide is visible over paper
-            // Drop the load cover once the page is in — the index intro (over the hero
-            // video) then plays inside the frame; other pages reveal straight away.
-            var pf = document.getElementById('pfIntro'); if (pf) pf.classList.add('done');
             armPageHide();        // arm the cover for the next navigation
             rememberCurrentPage();// keep the URL hash on the page shown, so a refresh stays here
         });
