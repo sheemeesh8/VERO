@@ -18,14 +18,14 @@
         body { background: #fff; color: #111; -webkit-font-smoothing: antialiased; direction: ltr; }
 
         /* ===== Feed shell — top padding set from JS to clear header + subnav. */
-        .feed-wrap { max-width: 720px; margin: 0 auto; padding: 132px 20px 56px; }
+        .feed-wrap { max-width: 720px; margin: 0 auto; padding: 18px 20px 56px; }
 
         /* Keep the shared header pinned and visible at all times. */
         #siteHeader { position: fixed !important; transform: none !important; }
 
         /* ===== Gender category sub-header — a small bar under the main header ===== */
         .feed-subnav {
-            position: fixed; left: 0; right: 0; top: 64px; z-index: 98;
+            position: sticky; top: 64px; z-index: 98;
             display: flex; justify-content: center; gap: 30px; align-items: flex-end;
             padding: 12px 16px 0; overflow-x: auto; scrollbar-width: none;
             background: rgba(255,255,255,0.94);
@@ -256,7 +256,7 @@
     </section>
 
     <!-- Gender category sub-header — a small bar pinned under the main header. -->
-    <nav class="feed-subnav is-hero" id="feedSubnav" aria-label="Shop by gender">
+    <nav class="feed-subnav" id="feedSubnav" aria-label="Shop by gender">
         <button type="button" class="fsn-item" data-gender="women">Women</button>
         <button type="button" class="fsn-item" data-gender="men">Men</button>
         <button type="button" class="fsn-item" data-gender="unisex">Unisex</button>
@@ -269,18 +269,6 @@
 
         <!-- The structured feed (hidden while a search is active). -->
         <div id="feedStructured">
-            <!-- 0 · Autumn Collection — slider on black, white caption below -->
-            <section class="rail-sec feed-collection">
-                <div class="rail-trans" id="railAutumn"></div>
-                <div class="rail-cap">
-                    <h3>Autumn Collection</h3>
-                    <p class="rail-desc">The season's edit — rich knits, long coats and warm tones, hand-picked from this autumn's pre-loved listings.</p>
-                </div>
-            </section>
-
-            <!-- Banner · shop by category -->
-            <div class="feed-banner" id="bannerFeature"><div class="fb-bg"></div><div class="fb-txt"><div class="fb-title">Shop by category</div><div class="fb-sub">Find your edit</div></div></div>
-
             <!-- 2 · Gender slider -->
             <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
                 <p class="gc-head">Choose by category</p>
@@ -461,7 +449,6 @@
 
         // ----- Section banners (backgrounds swap with Art / Fashion) ------
         var BANNERS = {
-            bannerFeature: { fashion: 'clothing-hero.jpg',               art: 'art-hero.jpg' },
             bannerSale:    { fashion: 'assets/hero/sale-clothing.webp',  art: 'assets/hero/sale-art.webp' },
             bannerNew:     { fashion: 'gallery-hero.jpg',                art: 'magazine-hero.jpg' }
         };
@@ -499,9 +486,6 @@
                 return (((b._raw && b._raw.rating) || 0) - ((a._raw && a._raw.rating) || 0));
             }).slice(0, 10);
             fill('heroRail', liked.length ? liked.map(transCard).join('') : '<div class="feed-empty">Nothing yet.</div>');
-
-            // Autumn Collection rail — up to 10 pieces from the current mode.
-            fill('railAutumn', list.length ? list.slice(0, 10).map(transCard).join('') : '<div class="feed-empty">No pieces yet.</div>');
 
             // Sales rail — up to 10 discounted pieces (mode-filtered), deepest cut first.
             var art = (state.mode === 'art');
@@ -591,17 +575,13 @@
             else window.__onGenderChange(g);
         });
 
-        // ----- Keep the feed + sub-header clear of the fixed header --------
+        // ----- Keep the sticky gender sub-header tucked under the fixed header -
         var wrap = document.querySelector('.feed-wrap');
         function placeContent() {
             var hdr = document.getElementById('siteHeader');
-            if (!hdr || !wrap) return;
-            var hb = hdr.getBoundingClientRect().bottom; if (hb < 0) hb = 0;
-            if (subnav) subnav.style.top = hb + 'px';
-            var sh = subnav ? subnav.offsetHeight : 0;
-            wrap.style.paddingTop = (hb + sh + 20) + 'px';
-            // Open the second header (gender sub-nav) only after we cross the hero.
-            if (subnav) subnav.classList.toggle('is-hero', !window.veroHeroPassed());
+            if (!hdr || !subnav) return;
+            var hb = hdr.getBoundingClientRect().height; if (hb < 0) hb = 0;
+            subnav.style.top = hb + 'px';   // stick just below the fixed header
         }
         var raf; function schedulePlace() { cancelAnimationFrame(raf); raf = requestAnimationFrame(placeContent); }
         window.addEventListener('scroll', schedulePlace, { passive: true });
