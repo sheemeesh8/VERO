@@ -12,6 +12,14 @@
 	var hero = document.getElementById('feedHero');
 	if (!hero) return;
 
+	// Arrived through the "Shop" portal (feed.html?enter=1 / #feed) → skip the
+	// entrance gate and show the feed straight away.
+	if (/[?&]enter=1\b/.test(location.search) || location.hash === '#feed') {
+		var skipWrap = document.getElementById('feedHeroWrap');
+		if (skipWrap) skipWrap.style.display = 'none';
+		return;
+	}
+
 	var reduceMotion =
 		window.matchMedia &&
 		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -19,7 +27,7 @@
 	// The squares: the hero video first, then the category shortcuts. Each is a
 	// square tile in the slider, with a caption and a link.
 	var TILES = [
-		{ video: true,                label: 'Shop',              href: 'feed.html#feed' },
+		{ video: true,                label: 'Shop',              href: 'feed.html?enter=1' },
 		{ src: 'clothing-hero.jpg',   label: 'Autumn Collection', href: 'category.html?cat=autumn' },
 		{ src: 'women-hero.jpg',      label: 'Gender',            href: 'category.html?cat=gender' },
 		{ src: 'sale-hero.jpg',       label: 'Sale',              href: 'category.html?cat=sale' },
@@ -104,17 +112,67 @@
 	var wrap = document.getElementById('feedHeroWrap') || hero.parentNode;
 	var copy = hero.querySelector('.hero-copy');
 	var cue = hero.querySelector('.hero-scroll-cue');
+
+	// The square nearest the viewport centre — the one the gate will open.
+	function centredTile() {
+		var mid = window.innerWidth / 2, best = tiles[0], bd = Infinity;
+		for (var i = 0; i < tiles.length; i++) {
+			var r = tiles[i].getBoundingClientRect();
+			var d = Math.abs(r.left + r.width / 2 - mid);
+			if (d < bd) { bd = d; best = tiles[i]; }
+		}
+		return best;
+	}
+
+	var gateTile = null, gateRect = null, gateNavigated = false;
+	function liftGate() {
+		gateTile = centredTile();
+		gateRect = gateTile.getBoundingClientRect();
+		gateNavigated = false;
+		track.style.pointerEvents = 'none';
+		var s = gateTile.style;
+		s.position = 'fixed'; s.margin = '0'; s.zIndex = '55';
+		s.left = gateRect.left + 'px'; s.top = gateRect.top + 'px';
+		s.width = gateRect.width + 'px'; s.height = gateRect.height + 'px';
+		s.setProperty('--zp-s', '1'); s.transformOrigin = 'center center';
+	}
+	function releaseGate() {
+		if (!gateTile) return;
+		var s = gateTile.style;
+		s.position = ''; s.margin = ''; s.zIndex = '';
+		s.left = ''; s.top = ''; s.width = ''; s.height = '';
+		s.transform = ''; s.transformOrigin = '';
+		for (var i = 0; i < tiles.length; i++) tiles[i].style.opacity = '';
+		track.style.pointerEvents = '';
+		hint.style.opacity = '';
+		if (copy) copy.style.opacity = '';
+		gateTile = null; gateNavigated = false;
+		apply();
+	}
+
+	// Vertical scroll zooms the CENTRED square to full-bleed and opens its page
+	// — every slide is its own portal, just like the hero.
 	function gate() {
 		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight);
 		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
-		var pz = p * p;                         // ease the zoom in
-		// Zoom the slider into the viewport and fade it out as the gate opens.
-		track.style.transform = 'scale(' + (1 + 1.6 * pz).toFixed(3) + ')';
-		track.style.opacity = (1 - clamp(p * 1.25, 0, 1)).toFixed(3);
-		track.style.pointerEvents = p > 0.02 ? 'none' : '';   // lock swipe while zooming
-		hint.style.opacity = (1 - clamp(p * 3, 0, 1)).toFixed(3);
-		if (copy) copy.style.opacity = String(1 - clamp(p * 3, 0, 1));
-		if (cue) cue.style.opacity = String(0.85 * (1 - clamp(p * 3, 0, 1)));
+		if (p <= 0.002) { if (gateTile) releaseGate(); return; }
+		if (!gateTile) liftGate();
+		var pz = p * p;
+		var cover = (Math.max(window.innerWidth, window.innerHeight) / (gateRect.width || 1)) * 1.08;
+		var s = 1 + (cover - 1) * pz;
+		gateTile.style.transform = 'scale(' + s.toFixed(3) + ')';
+		var fade = clamp(1 - p * 3, 0, 1);
+		for (var i = 0; i < tiles.length; i++) {
+			if (tiles[i] !== gateTile) tiles[i].style.opacity = String(fade);
+		}
+		hint.style.opacity = String(fade);
+		if (copy) copy.style.opacity = String(fade);
+		if (cue) cue.style.opacity = String(0.85 * fade);
+		// Near the end of the track → open the square's page.
+		if (!gateNavigated && p >= 0.985) {
+			gateNavigated = true;
+			window.location.href = gateTile.getAttribute('href');
+		}
 	}
 
 	// Centre on the hero (first) square, then settle the zoom.
