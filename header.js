@@ -1544,21 +1544,22 @@
             .vsp-user-search.vsp-user-expanded { height: 70px; }
         }
 
-        /* ===== FINAL OVERRIDE: every header icon is white in ALL states =====
-           Placed last (and with !important) so it beats the default #111 icon
-           block and the black Art/Fashion switch block earlier in this file. */
+        /* ===== FINAL OVERRIDE: every header icon is black in ALL states =====
+           The header is now white with black content throughout (the slider and
+           filter bands are light, so it never flips to a dark look). Placed last
+           (and with !important) so it wins over the earlier state-based colours. */
         #siteHeader .icon-btn,
         #siteHeader.scrolled .icon-btn,
         #siteHeader.force-dark .icon-btn,
         #siteHeader.force-light .icon-btn,
         #siteHeader .header-left > a,
-        #siteHeader.scrolled .header-left > a { color: #fff !important; }
+        #siteHeader.scrolled .header-left > a { color: #111 !important; }
         #siteHeader .icon-btn svg,
         #siteHeader.scrolled .icon-btn svg,
         #siteHeader.force-dark .icon-btn svg,
-        #siteHeader.force-light .icon-btn svg { stroke: #fff !important; }
+        #siteHeader.force-light .icon-btn svg { stroke: #111 !important; }
         #siteHeader .icon-btn svg[data-fill],
-        #siteHeader.scrolled .icon-btn svg[data-fill] { fill: #fff !important; stroke: none; }
+        #siteHeader.scrolled .icon-btn svg[data-fill] { fill: #111 !important; stroke: none; }
         /* Art/Fashion switch: white track + knob over a dark header, dark on a
            light (scrolled / force-light) header so it stays visible. */
         #siteHeader .hdr-mode-pair .toggle-category,
@@ -1618,10 +1619,10 @@
         #siteHeader.sticky-look:not(.scrolled) .hdr-cats a.on,
         #siteHeader.scrolled.over-dark .hdr-cats a.on { color: #fff; border-bottom-color: #fff; }
 
-        /* ===== Header Clothing/Art switch — unified monochrome toggle look
-           (grey off, black #111 on, white knob) in every header state.
+        /* ===== Header Clothing/Art switch — unified Uiverse toggle look
+           (grey off, blue #4296f4 on, white knob) in every header state.
            Placed last + !important so it wins over the mode-driven colours
-           above. "On" (black, knob right) = Fashion/Clothing segment active. ===== */
+           above. "On" (blue, knob right) = Fashion/Clothing segment active. ===== */
         #siteHeader .toggle-category:not(#z) {
             width: 38px !important; height: 22px !important;
             background: #cccccc !important; border: none !important;
@@ -1634,7 +1635,7 @@
             box-shadow: 6px 0 24px rgba(0,0,0,0.12) !important;
             transition: transform .3s ease-in-out !important;
         }
-        #siteHeader .toggle-category:not(#z):has(#segFashion.active) { background: #111 !important; }
+        #siteHeader .toggle-category:not(#z):has(#segFashion.active) { background: #4296f4 !important; }
         #siteHeader .toggle-category:not(#z):has(#segFashion.active)::before {
             transform: translateX(16px) !important;
             box-shadow: -6px 0 24px rgba(0,0,0,0.12) !important;
