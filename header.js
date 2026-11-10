@@ -1618,10 +1618,10 @@
         #siteHeader.sticky-look:not(.scrolled) .hdr-cats a.on,
         #siteHeader.scrolled.over-dark .hdr-cats a.on { color: #fff; border-bottom-color: #fff; }
 
-        /* ===== Header Clothing/Art switch — unified Uiverse toggle look
-           (grey off, blue #4296f4 on, white knob) in every header state.
+        /* ===== Header Clothing/Art switch — unified monochrome toggle look
+           (grey off, black #111 on, white knob) in every header state.
            Placed last + !important so it wins over the mode-driven colours
-           above. "On" (blue, knob right) = Fashion/Clothing segment active. ===== */
+           above. "On" (black, knob right) = Fashion/Clothing segment active. ===== */
         #siteHeader .toggle-category:not(#z) {
             width: 38px !important; height: 22px !important;
             background: #cccccc !important; border: none !important;
@@ -1634,7 +1634,7 @@
             box-shadow: 6px 0 24px rgba(0,0,0,0.12) !important;
             transition: transform .3s ease-in-out !important;
         }
-        #siteHeader .toggle-category:not(#z):has(#segFashion.active) { background: #4296f4 !important; }
+        #siteHeader .toggle-category:not(#z):has(#segFashion.active) { background: #111 !important; }
         #siteHeader .toggle-category:not(#z):has(#segFashion.active)::before {
             transform: translateX(16px) !important;
             box-shadow: -6px 0 24px rgba(0,0,0,0.12) !important;
