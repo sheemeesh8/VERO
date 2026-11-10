@@ -169,6 +169,18 @@
         .promo-sec { margin: 24px 0; }
         .promo-sec .sec-head { margin: 0 0 10px; }
 
+        /* ===== Duo slider — two products per page, paginated, below the gender slider ===== */
+        .duo-sec { margin: 20px 0 26px; }
+        .duo-head { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 12px; }
+        .duo-head .duo-title { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 14px;
+            letter-spacing: -0.2px; text-transform: uppercase; color: #1b1916; }
+        .duo-head .duo-count { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; letter-spacing: 1px;
+            color: #8a857c; font-variant-numeric: tabular-nums; }
+        .duo-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 16px;
+            scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .duo-slider::-webkit-scrollbar { display: none; }
+        .duo-page { flex: 0 0 100%; scroll-snap-align: start; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
         /* ===== Search results grid ===== */
         .feed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 8px; margin: 0 -4px; }
         .feed-grid .cv-card-emoji { font-size: 48px; }
@@ -318,6 +330,12 @@
                 <button type="button" class="fsn-item" data-gender="unisex">Unisex</button>
                 <button type="button" class="fsn-item" data-gender="kids">Kids</button>
             </nav>
+
+            <!-- Duo slider — two products per page, paginated, for the chosen gender -->
+            <section class="duo-sec">
+                <div class="duo-head"><span class="duo-title">Discover</span><span class="duo-count" id="duoCount">1 / 1</span></div>
+                <div class="duo-slider" id="duoSlider"></div>
+            </section>
 
             <!-- 3 · Single featured product card, by the chosen gender -->
             <a class="feature-card" id="genderFeature" href="#"></a>
@@ -519,11 +537,40 @@
         }
 
         // ----- Build the structured feed ----------------------------------
+        // ----- Duo slider (two pieces per page, gender-filtered) -----------
+        var duoSlider = document.getElementById('duoSlider');
+        var duoCount = document.getElementById('duoCount');
+        function updateDuoCount() {
+            if (!duoSlider || !duoCount) return;
+            var pages = duoSlider.children.length || 1;
+            var w = duoSlider.clientWidth || 1;
+            var cur = Math.min(pages, Math.max(1, Math.round(duoSlider.scrollLeft / w) + 1));
+            duoCount.textContent = cur + ' / ' + pages;
+        }
+        if (duoSlider) duoSlider.addEventListener('scroll', function () {
+            cancelAnimationFrame(duoSlider.__raf);
+            duoSlider.__raf = requestAnimationFrame(updateDuoCount);
+        }, { passive: true });
+        function buildDuo() {
+            if (!duoSlider) return;
+            var picks = byGender(modeList(), state.gender).slice(0, 10);
+            var html = '';
+            for (var i = 0; i < picks.length; i += 2) {
+                html += '<div class="duo-page">' + cvCard(picks[i]) + (picks[i + 1] ? cvCard(picks[i + 1]) : '') + '</div>';
+            }
+            duoSlider.innerHTML = html || '<div class="duo-page"><div class="feed-empty" style="grid-column:1/-1">Nothing here yet.</div></div>';
+            duoSlider.scrollLeft = 0;
+            updateDuoCount();
+        }
+
         function buildStructured() {
             var list = modeList();
 
             // Featured single card, by the chosen gender.
             renderFeature(featureFor(state.gender));
+
+            // Duo slider — two pieces per page, for the chosen gender.
+            buildDuo();
 
             // Hero "Most liked" rail — top-rated pieces from the current mode.
             var liked = list.slice().sort(function (a, b) {
@@ -606,7 +653,7 @@
             var changed = (gender !== state.gender);
             state.gender = gender;
             syncSubnav();
-            if (changed) renderFeature(featureFor(gender));
+            if (changed) { renderFeature(featureFor(gender)); buildDuo(); }
         };
         // Tapping a category drives the slider (which then updates everything).
         if (subnav) subnav.addEventListener('click', function (e) {
