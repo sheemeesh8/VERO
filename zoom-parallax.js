@@ -73,7 +73,7 @@
 	// ---- Coverflow zoom: scale each tile by its distance from centre --------
 	function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
-	var MIN_SCALE = 0.8;   // a tile at the far side of the viewport
+	var MIN_SCALE = 0.9;   // a tile at the far side of the viewport (kept large so the neighbour peeks)
 	var MAX_SCALE = 1.0;   // the tile centred in the viewport (fully zoomed in)
 
 	function apply() {
