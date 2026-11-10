@@ -1,40 +1,64 @@
 /* ==========================================================================
-   Zoom Parallax — hero → feed transition on feed.html
-   A ring of circular images around a central hero circle. On scroll the ring
-   opens: the outer circles fly outward while the centre circle grows and
-   squares off to fill the viewport — then the feed begins. Scroll-driven
-   through the hero's sticky track (see zoom-parallax.js).
+   Zoom Parallax — hero → feed entrance on feed.html
+   --------------------------------------------------------------------------
+   A horizontal slider of SQUARE category tiles. Each square zooms up with the
+   hero's motion as it reaches the centre of the viewport (coverflow zoom), and
+   the whole stage zooms in on load. Tapping a square grows it to full-bleed
+   (the hero zoom) and then navigates. Built by zoom-parallax.js.
    ========================================================================== */
 
 .zp-stage {
 	position: absolute;
 	inset: 0;
-	overflow: hidden;
 	z-index: 0;
 	background: #fff;
-}
-
-/* Every tile is a circle, centred, then offset (set per-frame in JS, in px) and
-   scaled on scroll. The offset scales with the zoom so outer circles fly out. */
-.zp-tile {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	--zp-tx: 0px;
-	--zp-ty: 0px;
-	--zp-s: 1;
-	border-radius: var(--zp-r, 50%);
-	transform: translate(
-			calc(-50% + var(--zp-tx) * var(--zp-s)),
-			calc(-50% + var(--zp-ty) * var(--zp-s))
-		)
-		scale(var(--zp-s));
-	transform-origin: center center;
-	will-change: transform;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 	overflow: hidden;
-	background: #fff;
 }
 
+/* The whole stage eases in on load — the hero's zoom-in, applied once. */
+.zp-stage {
+	animation: zpStageIn .9s cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes zpStageIn {
+	from { opacity: 0; transform: scale(.92); }
+	to   { opacity: 1; transform: scale(1); }
+}
+
+/* Horizontal, scroll-snapping rail of squares. Side padding lets the first and
+   last tile settle in the centre. */
+.zp-track {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	width: 100%;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	padding: 0 calc(50vw - min(34vw, 180px));
+	scrollbar-width: none;
+	-webkit-overflow-scrolling: touch;
+}
+.zp-track::-webkit-scrollbar { display: none; }
+
+/* Each tile is a square that scales with its distance from the centre
+   (--zp-s set per-frame in JS: 1 at centre, smaller off to the side). */
+.zp-tile {
+	position: relative;
+	flex: 0 0 min(68vw, 360px);
+	aspect-ratio: 1 / 1;
+	scroll-snap-align: center;
+	border-radius: 20px;
+	overflow: hidden;
+	background: #efece6;
+	text-decoration: none;
+	transform: scale(var(--zp-s, .84));
+	transform-origin: center center;
+	transition: transform .32s cubic-bezier(.16, 1, .3, 1);
+	will-change: transform;
+}
 .zp-tile > img,
 .zp-tile > video {
 	width: 100%;
@@ -42,66 +66,42 @@
 	object-fit: cover;
 	display: block;
 }
-
-.zp-link { display: block; text-decoration: none; cursor: pointer; }
-
-/* Caption under each outer circle (positioned per-frame in JS). */
-.zp-cap {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	z-index: 2;
-	transform: translate(-50%, -50%);
-	font-family: 'Archivo', 'Poppins', sans-serif;
-	font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase;
-	color: #1b1916; text-align: center; text-decoration: none;
-	max-width: 23vw; line-height: 1.3;
-	text-shadow: 0 1px 10px rgba(255,255,255,0.75);
-	transition: opacity .2s ease;
-	cursor: pointer;
-}
-
-/* Click-to-open: the tapped circle zooms to full-bleed like the hero. */
-.zp-tile.zp-anim {
-	transition: transform .56s cubic-bezier(.66, 0, .2, 1), border-radius .5s ease;
-}
-.zp-stage.zp-opening .zp-tile:not(.zp-anim),
-.zp-stage.zp-opening .zp-cap {
-	opacity: 0;
-	transition: opacity .3s ease;
+.zp-tile::after {
+	content: "";
+	position: absolute; inset: 0;
+	background: linear-gradient(to top, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0) 46%);
 	pointer-events: none;
 }
 
-/* Centre = the hero. A circle that morphs to a full-bleed square as it grows
-   (--zp-r is driven 50% → 0 in JS). */
-.zp-tile[data-zp="0"] {
-	width: 42vmin;
-	height: 42vmin;
-	--zp-max: 6;
-	--zp-r: 50%;
-	border-radius: var(--zp-r);
+/* Caption over the base of each square. */
+.zp-cap {
+	position: absolute; left: 0; right: 0; bottom: 16px; z-index: 2;
+	text-align: center; color: #fff; text-decoration: none;
+	font-family: 'Archivo', 'Poppins', sans-serif;
+	font-size: 13px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase;
+	text-shadow: 0 2px 14px rgba(0,0,0,0.5);
+	transition: opacity .2s ease;
 }
 
-/* Outer circles — equal diameter; positioned on the ring by JS. */
-.zp-tile[data-zp="1"],
-.zp-tile[data-zp="2"],
-.zp-tile[data-zp="3"],
-.zp-tile[data-zp="4"],
-.zp-tile[data-zp="5"],
-.zp-tile[data-zp="6"] {
-	width: 26vmin;
-	height: 26vmin;
+/* Click-to-open: the tapped square zooms to full-bleed like the hero. */
+.zp-tile.zp-anim {
+	position: fixed; inset: 0; z-index: 60; flex: none;
+	width: 100vw; height: 100vh; border-radius: 0; scroll-snap-align: none;
+	transition: transform .56s cubic-bezier(.66, 0, .2, 1), border-radius .5s ease;
 }
-.zp-tile[data-zp="1"] { --zp-max: 5; }
-.zp-tile[data-zp="2"] { --zp-max: 6; }
-.zp-tile[data-zp="3"] { --zp-max: 5; }
-.zp-tile[data-zp="4"] { --zp-max: 6; }
-.zp-tile[data-zp="5"] { --zp-max: 7; }
-.zp-tile[data-zp="6"] { --zp-max: 8; }
+.zp-stage.zp-opening .zp-tile:not(.zp-anim),
+.zp-stage.zp-opening .zp-track { opacity: 0; transition: opacity .3s ease; pointer-events: none; }
 
-/* Reduced-motion: show the hero full-bleed (square), hide the ring. */
+/* A small scroll cue under the rail. */
+.zp-hint {
+	margin-top: 26px; font-family: 'Poppins','Inter',sans-serif;
+	font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #8a857c;
+	display: flex; align-items: center; gap: 8px;
+}
+.zp-hint::before, .zp-hint::after { content: ""; width: 22px; height: 1px; background: #cdcabf; }
+
+/* Reduced-motion: static row, no zoom animation. */
 @media (prefers-reduced-motion: reduce) {
-	.zp-tile[data-zp="0"] { width: 100%; height: 100%; border-radius: 0; transform: translate(-50%, -50%); }
-	.zp-tile:not([data-zp="0"]) { display: none; }
-	.zp-cap { display: none; }
+	.zp-stage { animation: none; }
+	.zp-tile { transform: none; transition: none; }
 }
