@@ -99,23 +99,32 @@
         var yp = function (x) { return BOT - ((x - min) / span) * (BOT - TOP); };
 
         // A smooth curve through every point (monotone: no overshoot past the
-        // data), drawn only by where a field of vertical hairlines is cut.
+        // data). Minimalist form: one hairline curve with a soft area wash
+        // beneath it — no field of vertical lines, no value on every break.
         var cy = curve(v.map(function (_, i) { return xp(i); }), v.map(yp));
-        var count = Math.max(60, Math.min(220, Math.round((window.innerWidth || 400) / 4.6)));
-        var lines = '';
-        for (var k = 0; k < count; k++) {
-            var lx = (k + 0.5) / count * 100;
-            lines += '<line x1="' + lx.toFixed(3) + '" x2="' + lx.toFixed(3) + '" y1="' + cy(lx).toFixed(3) + '" y2="' + BOT + '"/>';
+        var SAMP = 120, path = '';
+        for (var k = 0; k <= SAMP; k++) {
+            var lx = k / SAMP * 100;
+            path += (k ? 'L' : 'M') + lx.toFixed(2) + ',' + cy(lx).toFixed(2) + ' ';
         }
+        var gid = 'vlcg' + Math.random().toString(36).slice(2, 7);
         var svg = '<svg class="vlc-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
-            '<g class="vlc-lines" stroke="' + color + '">' + lines + '</g></svg>';
+            '<defs><linearGradient id="' + gid + '" x1="0" x2="0" y1="0" y2="1">' +
+            '<stop offset="0" stop-color="' + color + '" stop-opacity="0.14"/>' +
+            '<stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
+            '<path class="vlc-area" d="' + path + 'L100,' + BOT + ' L0,' + BOT + ' Z" fill="url(#' + gid + ')"/>' +
+            '<path class="vlc-line" d="' + path + '" fill="none" stroke="' + color + '" stroke-width="1.6" ' +
+            'vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 
-        var marks = breaks(v).map(function (p, k) {
-            var x = xp(p.i), y = yp(v[p.i]);
+        // Only the two ends carry a dot + value — the newest reading and where it
+        // started. Everything between is read by hovering.
+        var ends = n <= 1 ? [0] : [0, n - 1];
+        var marks = ends.map(function (i, k) {
+            var x = xp(i), y = yp(v[i]);
             var edge = x < 7 ? ' at-l' : x > 93 ? ' at-r' : '';
-            var delay = 'animation-delay:' + (0.5 + k * 0.06).toFixed(2) + 's';
+            var delay = 'animation-delay:' + (0.6 + k * 0.12).toFixed(2) + 's';
             return '<span class="vlc-pt" style="left:' + x + '%;top:' + y + '%;color:' + color + ';' + delay + '"></span>' +
-                   '<span class="vlc-val' + (p.up ? '' : ' dip') + edge + '" style="left:' + x + '%;top:' + y + '%;' + delay + '">' + esc(fmt(v[p.i])) + '</span>';
+                   '<span class="vlc-val' + edge + '" style="left:' + x + '%;top:' + y + '%;' + delay + '">' + esc(fmt(v[i])) + '</span>';
         }).join('');
 
         var data = { y: v.map(function (x) { return +yp(x).toFixed(3); }), t: v.map(function (x) { return fmt(x); }), l: lbl };
@@ -123,7 +132,7 @@
         var axis = opts.axis ? '<div class="vlc-x">' + opts.axis.map(function (a) { return '<span>' + esc(a) + '</span>'; }).join('') + '</div>' : '';
         summary += ', trend ' + (trend === 'up' ? 'rising' : trend === 'down' ? 'falling' : 'sideways');
         return '<div class="vlc trend-' + trend + '" role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
-            svg + '<i class="vlc-sheen" aria-hidden="true"></i>' + marks +
+            svg + marks +
             '<div class="vlc-hover"><i class="vlc-vline"></i><i class="vlc-hdot"></i><span class="vlc-tip"></span></div>' +
             '</div>' + axis;
     };
@@ -213,7 +222,7 @@
         var cols = v.map(function (x, i) {
             var h = Math.max(2, x / max * 100), last = i === v.length - 1;
             return '<div class="vbr-col' + (last ? ' is-last' : '') + '">' +
-                '<span class="vbr-val">' + esc(fmt(x)) + '</span>' +
+                (last ? '<span class="vbr-val">' + esc(fmt(x)) + '</span>' : '') +
                 '<span class="vbr-bar" style="height:' + h.toFixed(1) + '%;' + (last ? 'background:' + tone + ';' : '') +
                 'animation-delay:' + (i * 0.05).toFixed(2) + 's"></span>' +
                 (opts.labels ? '<span class="vbr-lbl">' + esc(opts.labels[i] || '') + '</span>' : '') + '</div>';
