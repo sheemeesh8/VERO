@@ -98,6 +98,25 @@
 	track.addEventListener('scroll', onScroll, { passive: true });
 	window.addEventListener('resize', onScroll);
 
+	// ---- Entrance GATE: vertical scroll zooms the whole slider in, then the feed.
+	// The hero sits on a sticky 200vh track; scrolling it zooms the squares up and
+	// fades them out — an "enter the site" gate before the feed begins. --------
+	var wrap = document.getElementById('feedHeroWrap') || hero.parentNode;
+	var copy = hero.querySelector('.hero-copy');
+	var cue = hero.querySelector('.hero-scroll-cue');
+	function gate() {
+		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight);
+		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
+		var pz = p * p;                         // ease the zoom in
+		// Zoom the slider into the viewport and fade it out as the gate opens.
+		track.style.transform = 'scale(' + (1 + 1.6 * pz).toFixed(3) + ')';
+		track.style.opacity = (1 - clamp(p * 1.25, 0, 1)).toFixed(3);
+		track.style.pointerEvents = p > 0.02 ? 'none' : '';   // lock swipe while zooming
+		hint.style.opacity = (1 - clamp(p * 3, 0, 1)).toFixed(3);
+		if (copy) copy.style.opacity = String(1 - clamp(p * 3, 0, 1));
+		if (cue) cue.style.opacity = String(0.85 * (1 - clamp(p * 3, 0, 1)));
+	}
+
 	// Centre on the hero (first) square, then settle the zoom.
 	function centreFirst() {
 		var t = tiles[0];
@@ -113,6 +132,17 @@
 	setTimeout(centreFirst, 60);
 
 	if (reduceMotion) return;
+
+	// Drive the entrance gate from vertical page scroll.
+	var gTick = false;
+	function onPageScroll() {
+		if (gTick) return;
+		gTick = true;
+		requestAnimationFrame(function () { gate(); gTick = false; });
+	}
+	window.addEventListener('scroll', onPageScroll, { passive: true });
+	window.addEventListener('resize', onPageScroll);
+	gate();
 
 	// ---- Click a square -> open it with the hero's zoom, then navigate ------
 	var transitioning = false;
