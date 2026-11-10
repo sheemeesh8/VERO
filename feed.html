@@ -169,6 +169,25 @@
         /* ===== Promoted block — a slider of promoted pieces set between sections ===== */
         .promo-sec { margin: 24px 0; }
         .promo-sec .sec-head { margin: 0 0 10px; }
+        /* Promoted carousel — one promoted piece per slide, full width. */
+        .promo1 { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; margin: 0 0 20px;
+            scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .promo1::-webkit-scrollbar { display: none; }
+        .promo-card { flex: 0 0 100%; scroll-snap-align: start; text-decoration: none; color: #1b1916; display: block; }
+        .promo-card-img { position: relative; width: 100%; aspect-ratio: 1.7; background: #f2f0ef; border-radius: 10px;
+            overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 56px; }
+        .promo-card-img img { width: 100%; height: 100%; object-fit: cover; }
+        .promo-tag { position: absolute; top: 10px; left: 10px; z-index: 2; background: #1b1916; color: #fff;
+            font-family: 'Arimo','Inter',sans-serif; font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+            padding: 4px 8px; border-radius: 4px; }
+        .promo-card-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 10px; }
+        .promo-card-name { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; letter-spacing: .3px; text-transform: uppercase; }
+        .promo-card-price { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; white-space: nowrap; }
+        .promo-card.is-sale .promo-card-price { color: #b3433b; }
+        .promo-card-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; color: #8a857c; margin-top: 2px; }
+        /* Grid of five products under each promoted carousel. */
+        .pb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 10px; }
+        @media (min-width: 560px) { .pb-grid { grid-template-columns: repeat(5, 1fr); } }
 
         /* ===== Duo slider — two products per page, paginated, below the gender slider ===== */
         .duo-sec { margin: 20px 0 26px; }
@@ -344,7 +363,8 @@
             <!-- Promoted products slider between sections -->
             <section class="promo-sec">
                 <div class="sec-head"><h3>Promoted</h3><span class="sec-sub">Sponsored picks</span></div>
-                <div class="rail-trans" id="block1"></div>
+                <div class="promo1" id="block1"></div>
+                <div class="pb-grid" id="grid1"></div>
             </section>
 
             <!-- Rails-first discovery: a wall of horizontal sliders, each under a
@@ -370,7 +390,8 @@
             <!-- Promoted products slider between sections -->
             <section class="promo-sec">
                 <div class="sec-head"><h3>Promoted</h3><span class="sec-sub">Sponsored picks</span></div>
-                <div class="rail-trans" id="block2"></div>
+                <div class="promo1" id="block2"></div>
+                <div class="pb-grid" id="grid2"></div>
             </section>
 
             <!-- 5 · New arrivals section — ⅓ banner, slider on black, white caption -->
@@ -393,7 +414,8 @@
             <!-- Promoted products slider between sections -->
             <section class="promo-sec">
                 <div class="sec-head"><h3>Promoted</h3><span class="sec-sub">Sponsored picks</span></div>
-                <div class="rail-trans" id="block3"></div>
+                <div class="promo1" id="block3"></div>
+                <div class="pb-grid" id="grid3"></div>
             </section>
 
             <!-- 7 · Under budget — slider on black, white caption -->
@@ -408,7 +430,8 @@
             <!-- Promoted products slider between sections -->
             <section class="promo-sec">
                 <div class="sec-head"><h3>Promoted</h3><span class="sec-sub">Sponsored picks</span></div>
-                <div class="rail-trans" id="block4"></div>
+                <div class="promo1" id="block4"></div>
+                <div class="pb-grid" id="grid4"></div>
             </section>
 
             <!-- 8 · More to browse — short grid anchor -->
@@ -497,6 +520,20 @@
                 '<div class="rt-cap"><div class="rt-brand">' + esc(p.seller) + '</div>' +
                 '<div class="rt-name">' + esc(p.name) + '</div>' +
                 '<div class="rt-price">' + price + '</div></div></a>';
+        }
+
+        // Full-width promoted card — one piece per slide in the promoted carousel.
+        function promoCard(p) {
+            var d = VC.discountOf(p._raw);
+            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
+                                : '<span>' + esc(p.icon || '🛍️') + '</span>';
+            var price = d && d.onSale
+                ? '<span class="cv-card-was">' + money(d.original) + '</span>' + money(d.price)
+                : money(p.price);
+            return '<a class="promo-card' + (d && d.onSale ? ' is-sale' : '') + '" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
+                '<div class="promo-card-img"><span class="promo-tag">Promoted</span>' + inner + '</div>' +
+                '<div class="promo-card-row"><span class="promo-card-name">' + esc(p.name) + '</span><span class="promo-card-price">' + price + '</span></div>' +
+                '<div class="promo-card-brand">' + esc(p.seller) + '</div></a>';
         }
 
         function renderFeature(p) {
@@ -599,17 +636,19 @@
             if (more.length < 6) more = list.slice(Math.max(0, list.length - 6));
             fill('feedMore', more.length ? more.map(cvCard).join('') : '<div class="feed-empty" style="grid-column:1/-1">Nothing more yet.</div>');
 
-            // Promoted sliders between sections — 10 pieces each, a distinct slice
-            // per block, wrapping around so a short catalogue still fills every one.
+            // Between sections — each block is a promoted carousel (one piece per
+            // slide) above a grid of five pieces. Distinct slices, wrapping around.
             function blockPick(offset, n) {
                 if (!list.length) return [];
                 var out = [];
                 for (var i = 0; i < n; i++) out.push(list[(offset + i) % list.length]);
                 return out;
             }
-            [['block1', 0], ['block2', 10], ['block3', 20], ['block4', 30]].forEach(function (b) {
-                var picks = blockPick(b[1], 10);
-                fill(b[0], picks.length ? picks.map(transCard).join('') : '<div class="feed-empty">Nothing promoted yet.</div>');
+            [['block1', 'grid1', 0], ['block2', 'grid2', 10], ['block3', 'grid3', 20], ['block4', 'grid4', 30]].forEach(function (b) {
+                var promo = blockPick(b[2], 5);
+                var grid = blockPick(b[2] + 5, 5);
+                fill(b[0], promo.length ? promo.map(promoCard).join('') : '<div class="feed-empty">Nothing promoted yet.</div>');
+                fill(b[1], grid.length ? grid.map(cvCard).join('') : '<div class="feed-empty" style="grid-column:1/-1">Nothing here yet.</div>');
             });
         }
 
