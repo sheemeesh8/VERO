@@ -26,10 +26,12 @@
 
         /* ===== Gender category sub-header — a small bar under the main header ===== */
         .feed-subnav {
-            position: static; z-index: 1;
+            position: sticky; top: 64px; z-index: 98;
             display: flex; justify-content: center; gap: 30px; align-items: flex-end;
-            margin: 16px 0 2px; padding: 0 16px; overflow-x: auto; scrollbar-width: none;
-            background: transparent; border: 0;
+            margin: 16px -20px 2px; padding: 12px 16px 10px; overflow-x: auto; scrollbar-width: none;
+            background: rgba(255,255,255,0.94);
+            -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px);
+            border-bottom: 1px solid #ececec;
         }
         .feed-subnav::-webkit-scrollbar { display: none; }
         /* Plain text labels — no pill — underlined on the guide line when active. */
@@ -305,15 +307,17 @@
                         </div>
                     </div>
                 </div>
-                <!-- Gender sub-header sits directly under the slider, synced to it. -->
-                <nav class="feed-subnav" id="feedSubnav" aria-label="Shop by gender">
-                    <button type="button" class="fsn-item" data-gender="women">Women</button>
-                    <button type="button" class="fsn-item" data-gender="men">Men</button>
-                    <button type="button" class="fsn-item" data-gender="unisex">Unisex</button>
-                    <button type="button" class="fsn-item" data-gender="kids">Kids</button>
-                </nav>
                 <div class="gc-dots"></div>
             </div>
+
+            <!-- Gender sub-header — sits under the slider, then docks under the
+                 main header on scroll (sticky). Synced to the slider. -->
+            <nav class="feed-subnav" id="feedSubnav" aria-label="Shop by gender">
+                <button type="button" class="fsn-item" data-gender="women">Women</button>
+                <button type="button" class="fsn-item" data-gender="men">Men</button>
+                <button type="button" class="fsn-item" data-gender="unisex">Unisex</button>
+                <button type="button" class="fsn-item" data-gender="kids">Kids</button>
+            </nav>
 
             <!-- 3 · Single featured product card, by the chosen gender -->
             <a class="feature-card" id="genderFeature" href="#"></a>
@@ -613,6 +617,18 @@
             else window.__onGenderChange(g);
         });
 
+
+        // Dock the gender sub-header just below the fixed main header.
+        function placeSubnav() {
+            if (!subnav) return;
+            var hdr = document.getElementById('siteHeader');
+            var h = hdr ? Math.round(hdr.getBoundingClientRect().height) : 56;
+            if (h > 0) subnav.style.top = h + 'px';
+        }
+        placeSubnav();
+        window.addEventListener('resize', placeSubnav);
+        if (window.ResizeObserver) { var he = document.getElementById('siteHeader'); if (he) { try { new ResizeObserver(placeSubnav).observe(he); } catch (e) {} } }
+        var pt = 0; (function settleSub() { placeSubnav(); if (++pt < 30) setTimeout(settleSub, 120); })();
 
         syncSubnav();
         buildStructured();
