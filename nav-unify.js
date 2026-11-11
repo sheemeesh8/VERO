@@ -23,9 +23,9 @@
     // NOTE: .sa-nav / .sa-tab / .sa-ind are intentionally excluded — the seller
     // (personal) area uses a top secondary header (like the home feed's gender
     // sub-nav), styled in seller-area.html, not the dark docked pill bar.
-    var BARS = '.feed-nav,.sec-nav,.area-tabs,.stats-subnav,.set-nav,.stf-tabs,.vinbox-tabs';
-    var TABS = '.feed-nav-tab,.sec-tab,.area-tab,.stats-subtab,.set-nav-btn,.stf-tab,.vinbox-tab';
-    var INDS = '.feed-nav-ind,.sec-ind,.area-ind,.stats-subind,.set-ind,.stf-ind,.vinbox-ind';
+    var BARS = '.feed-nav,.sec-nav,.stats-subnav,.set-nav,.stf-tabs,.vinbox-tabs';
+    var TABS = '.feed-nav-tab,.sec-tab,.stats-subtab,.set-nav-btn,.stf-tab,.vinbox-tab';
+    var INDS = '.feed-nav-ind,.sec-ind,.stats-subind,.set-ind,.stf-ind,.vinbox-ind';
 
     var css = [
         BARS + '{background:rgba(17,17,17,0.97)!important;border-color:transparent!important;border-radius:26px!important;}',
@@ -48,7 +48,7 @@
         '.set-ind,.stf-ind,.vinbox-ind{position:absolute;top:5px;bottom:5px;left:0;width:0;z-index:0;pointer-events:none;}',
 
         /* Keep the already-sliding bars' active label red for a consistent accent. */
-        '.feed-nav-tab.is-active,.sec-tab.is-active,.area-tab.is-active,.stats-subtab.is-active{'
+        '.feed-nav-tab.is-active,.sec-tab.is-active,.stats-subtab.is-active{'
             + 'color:' + RED + '!important;}'
     ].join('');
 
