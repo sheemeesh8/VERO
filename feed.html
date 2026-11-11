@@ -278,6 +278,9 @@
         /* Home hero — full-screen looping video banner at the top of the feed. */
         .home-hero { position: relative; width: 100%; height: 66.67vh; height: 66.67svh; overflow: hidden; background: #fff; }
         .home-hero .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        /* Soft top scrim so the transparent header's white icons stay legible. */
+        .home-hero::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 160px; z-index: 1;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.32), rgba(0,0,0,0)); pointer-events: none; }
         .feed-scroll { position: relative; z-index: 1; background: #fff; margin-top: 0; min-height: 100vh; }
         #siteFooter { position: relative; z-index: 1; }
 
@@ -289,13 +292,12 @@
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
     <script>
-        // One transparent header through the whole zoom entrance; it goes solid
-        // (white) only once we've crossed past the hero's sticky track.
+        // Transparent (white icons) while the home hero is in view; goes solid
+        // (white bar, dark icons) once the hero has scrolled nearly past the header.
         window.veroHeroPassed = function () {
-            var w = document.getElementById('feedHeroWrap');
-            if (!w) return true;
-            var release = w.offsetTop + w.offsetHeight - window.innerHeight;
-            return window.scrollY >= release - 4;
+            var w = document.querySelector('.home-hero');
+            if (!w) return window.scrollY > 80;
+            return w.getBoundingClientRect().bottom <= 64;
         };
         window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
     </script>
