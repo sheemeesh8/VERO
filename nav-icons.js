@@ -160,7 +160,7 @@
     // Item-level tab selectors for the app's SECTION navigation bars. Unmatched
     // labels here stay plain text (no icon).
     var SECTION_SEL = [
-        '.area-tab', '.sa-tab', '.sec-tab', '.pf-tab',
+        '.area-tab', '.sec-tab', '.pf-tab',
         '.cart-tab', '.vinbox-tab', '.stats-subtab', '.stf-tab',
         '.set-nav-btn', '.cp-navlink', '.chat-nav a',
         '.spend-nav button', '.vf-navbox-item'
