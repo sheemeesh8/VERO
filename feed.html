@@ -179,18 +179,24 @@
         .promo1 { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; margin: 0 0 20px;
             scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .promo1::-webkit-scrollbar { display: none; }
-        .promo-card { flex: 0 0 100%; scroll-snap-align: start; text-decoration: none; color: #1b1916; display: block; }
-        .promo-card-img { position: relative; width: 100%; aspect-ratio: 1.7; background: #f2f0ef; border-radius: 10px;
-            overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 56px; }
+        /* Large promoted card — image on one side, the piece's details (type, name,
+           brand, description, price) beside it. */
+        .promo-card { flex: 0 0 100%; scroll-snap-align: start; text-decoration: none; color: #1b1916;
+            display: flex; gap: 16px; align-items: stretch; }
+        .promo-card-img { position: relative; flex: 0 0 44%; aspect-ratio: 0.82; background: #f2f0ef; border-radius: 10px;
+            overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .promo-card-img img { width: 100%; height: 100%; object-fit: cover; }
-        .promo-tag { position: absolute; top: 10px; left: 10px; z-index: 2; background: #1b1916; color: #fff;
-            font-family: 'Arimo','Inter',sans-serif; font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-            padding: 4px 8px; border-radius: 4px; }
-        .promo-card-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 10px; }
-        .promo-card-name { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; letter-spacing: .3px; text-transform: uppercase; }
-        .promo-card-price { font-family: 'Archivo','Inter',sans-serif; font-size: 13px; white-space: nowrap; }
+        .promo-card-emoji { font-size: 64px; opacity: .5; }
+        .promo-card-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+        .promo-card-cat { font-family: 'Arimo','Inter',sans-serif; font-size: 10px; letter-spacing: 2px;
+            text-transform: uppercase; color: #a3a298; }
+        .promo-card-name { font-family: 'Archivo','Inter',sans-serif; font-size: clamp(16px, 4.6vw, 20px); font-weight: 500;
+            letter-spacing: .3px; text-transform: uppercase; line-height: 1.12; margin-top: 4px; }
+        .promo-card-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: .5px; color: #8a857c; margin-top: 4px; }
+        .promo-card-desc { font-family: 'Arimo','Inter',sans-serif; font-size: 12px; line-height: 1.5; color: #6b665e; margin-top: 10px; }
+        .promo-card-price { font-family: 'Archivo','Inter',sans-serif; font-size: 15px; margin-top: 12px; }
         .promo-card.is-sale .promo-card-price { color: #b3433b; }
-        .promo-card-brand { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; color: #8a857c; margin-top: 2px; }
+        .promo-card-was { font-family: 'Arimo',sans-serif; font-size: 12px; color: #a3a298; text-decoration: line-through; margin-right: 6px; }
         /* Grid of five products under each promoted carousel. */
         .pb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 10px; }
         @media (min-width: 560px) { .pb-grid { grid-template-columns: repeat(5, 1fr); } }
@@ -406,6 +412,7 @@
 
             <!-- Promoted products slider between sections -->
             <section class="promo-sec">
+                <div class="sec-head"><h3>For You</h3></div>
                 <div class="promo1" id="block1"></div>
                 <div class="pb-grid" id="grid1"></div>
             </section>
@@ -432,6 +439,7 @@
 
             <!-- Promoted products slider between sections -->
             <section class="promo-sec">
+                <div class="sec-head"><h3>For You</h3></div>
                 <div class="promo1" id="block2"></div>
                 <div class="pb-grid" id="grid2"></div>
             </section>
@@ -455,6 +463,7 @@
 
             <!-- Promoted products slider between sections -->
             <section class="promo-sec">
+                <div class="sec-head"><h3>For You</h3></div>
                 <div class="promo1" id="block3"></div>
                 <div class="pb-grid" id="grid3"></div>
             </section>
@@ -470,6 +479,7 @@
 
             <!-- Promoted products slider between sections -->
             <section class="promo-sec">
+                <div class="sec-head"><h3>For You</h3></div>
                 <div class="promo1" id="block4"></div>
                 <div class="pb-grid" id="grid4"></div>
             </section>
@@ -565,14 +575,21 @@
         function promoCard(p) {
             var d = VC.discountOf(p._raw);
             var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
-                                : '<span>' + esc(p.icon || '🛍️') + '</span>';
+                                : '<span class="promo-card-emoji">' + esc(p.icon || '🛍️') + '</span>';
             var price = d && d.onSale
-                ? '<span class="cv-card-was">' + money(d.original) + '</span>' + money(d.price)
+                ? '<span class="promo-card-was">' + money(d.original) + '</span>' + money(d.price)
                 : money(p.price);
+            var cat = p.category || (isArt(p) ? 'Art' : 'Fashion');
+            var desc = 'Hand-picked for you — a promoted piece from ' + esc(p.seller) + '.';
             return '<a class="promo-card' + (d && d.onSale ? ' is-sale' : '') + '" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
                 '<div class="promo-card-img">' + inner + '</div>' +
-                '<div class="promo-card-row"><span class="promo-card-name">' + esc(p.name) + '</span><span class="promo-card-price">' + price + '</span></div>' +
-                '<div class="promo-card-brand">' + esc(p.seller) + '</div></a>';
+                '<div class="promo-card-info">' +
+                    '<span class="promo-card-cat">' + esc(cat) + '</span>' +
+                    '<span class="promo-card-name">' + esc(p.name) + '</span>' +
+                    '<span class="promo-card-brand">' + esc(p.seller) + '</span>' +
+                    '<p class="promo-card-desc">' + desc + '</p>' +
+                    '<span class="promo-card-price">' + price + '</span>' +
+                '</div></a>';
         }
 
         function renderFeature(p) {
