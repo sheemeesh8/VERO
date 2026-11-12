@@ -219,6 +219,8 @@
 		}
 		// The white band (search + Most liked slider) slides up with the caption.
 		if (band) band.classList.toggle('revealed', p > 0.72);
+		// The site header slides in together with the caption/band.
+		document.body.classList.toggle('zp-head-in', p > 0.68);
 	}
 
 	var ticking = false;
