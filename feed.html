@@ -119,6 +119,35 @@
             transition: opacity .4s ease .12s, transform .4s ease .12s; }
         #genderCover .gc-card.is-active .gc-shop { opacity: 1; transform: translateY(0); }
 
+        /* White intro cover over the panels — brand, big title, Explore, labels.
+           Fades away once revealed (on Explore / tap), uncovering the panels. */
+        #genderCover .gc-stage { position: relative; }
+        #genderCover:not(.revealed) .gc-head, #genderCover:not(.revealed) .gc-sub { display: none; }
+        #genderCover .gc-intro { position: absolute; inset: 0; z-index: 5; cursor: pointer;
+            background: linear-gradient(145deg, #f6f4ef 0%, #eceae3 55%, #e4e1d9 100%);
+            display: flex; flex-direction: column; padding: 24px 22px;
+            transition: opacity .6s ease, visibility .6s ease; }
+        #genderCover.revealed .gc-intro { opacity: 0; visibility: hidden; pointer-events: none; }
+        #genderCover .gc-intro-top { display: flex; align-items: center; }
+        #genderCover .gc-intro-brand { font-family: 'Poppins','Inter',sans-serif; font-weight: 500;
+            letter-spacing: 3px; font-size: 12px; text-transform: uppercase; color: #1b1916; }
+        #genderCover .gc-intro-mid { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+        #genderCover .gc-intro-eyebrow { font-family: 'Arimo','Inter',sans-serif; font-size: 11px;
+            letter-spacing: 3px; text-transform: uppercase; color: #8a857c; margin-bottom: 14px; }
+        #genderCover .gc-intro-title { font-family: 'Poppins','Inter',sans-serif; font-weight: 300; margin: 0;
+            font-size: clamp(34px, 11vw, 60px); line-height: 1.0; letter-spacing: 0.01em; color: #1b1916; }
+        #genderCover .gc-intro-explore { margin-top: 26px; align-self: flex-start; display: inline-flex;
+            align-items: center; gap: 10px; font-family: 'Arimo','Inter',sans-serif; font-size: 11px;
+            letter-spacing: 2px; text-transform: uppercase; color: #1b1916; background: none;
+            border: 1px solid #1b1916; border-radius: 100px; padding: 11px 22px; cursor: pointer;
+            transition: background .25s ease, color .25s ease; }
+        #genderCover .gc-intro-explore:hover { background: #1b1916; color: #fff; }
+        #genderCover .gc-intro-labels { display: flex; justify-content: space-between; gap: 8px;
+            margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(27,25,22,0.12); }
+        #genderCover .gc-intro-labels span { font-family: 'Archivo','Inter',sans-serif; font-weight: 700;
+            font-size: clamp(10px, 3vw, 13px); letter-spacing: 0.4px; text-transform: uppercase; color: #1b1916; opacity: 0.5; }
+        @media (prefers-reduced-motion: reduce) { #genderCover .gc-intro { transition: none; } }
+
         /* ===== Single featured product card (follows the chosen gender) ===== */
         /* Single featured card — no background, the piece floating free with the
            brand / name / price centred beneath it. */
@@ -428,6 +457,17 @@
             <div id="genderCover" role="region" aria-label="Choose by category">
                 <p class="gc-head">Choose by category</p>
                 <p class="gc-sub" aria-live="polite">Tap a category to explore</p>
+                <div class="gc-stage">
+                <!-- White intro cover (like the reference): brand, big title, Explore. -->
+                <div class="gc-intro" id="gcIntro">
+                    <div class="gc-intro-top"><span class="gc-intro-brand">Moravchick</span></div>
+                    <div class="gc-intro-mid">
+                        <span class="gc-intro-eyebrow">The Edit</span>
+                        <h3 class="gc-intro-title">Dressed for<br>everyone.</h3>
+                        <button type="button" class="gc-intro-explore" id="gcExplore">Explore <span aria-hidden="true">&rarr;</span></button>
+                    </div>
+                    <div class="gc-intro-labels"><span>Women</span><span>Men</span><span>Unisex</span><span>Kids</span></div>
+                </div>
                 <div class="gc-accordion" role="tablist" aria-orientation="vertical">
                     <button type="button" class="gc-card" role="tab" aria-selected="false" data-gender="women" data-name="Women" data-sub="Women's collection">
                         <video class="gc-media" src="assets/hero/hero-clothing.mp4" poster="assets/hero/women-editorial.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
@@ -445,6 +485,7 @@
                         <video class="gc-media" src="assets/hero/kids.mp4" poster="clothing-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
                         <span class="gc-cap"><span class="gc-name">Kids</span><span class="gc-shop">Shop Kids</span></span>
                     </button>
+                </div>
                 </div>
             </div>
 
@@ -939,9 +980,23 @@
             });
         });
 
-        // Start at rest: four equal rectangles, nothing expanded. The first tap
-        // (or a gender tap in the sub-header) opens the accordion.
-        cards.forEach(function (c) { c.tabIndex = 0; });
+        // White intro cover → reveal the panels on Explore / tap.
+        var intro = document.getElementById('gcIntro');
+        function reveal() { root.classList.add('revealed'); }
+        if (intro) {
+            intro.addEventListener('click', reveal);
+            // While covered, keep panels out of the tab order.
+            cards.forEach(function (c) { c.tabIndex = -1; });
+            // Once revealed, make the panels focusable.
+            root.addEventListener('transitionend', function () {
+                if (root.classList.contains('revealed')) cards.forEach(function (c) { c.tabIndex = 0; });
+            });
+        } else {
+            cards.forEach(function (c) { c.tabIndex = 0; });
+        }
+        // A gender tap in the sub-header also reveals and opens.
+        var _goto = window.__gcGoToGender;
+        window.__gcGoToGender = function (gender) { reveal(); if (_goto) _goto(gender); };
     })();
     </script>
 
