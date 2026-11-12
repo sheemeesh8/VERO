@@ -70,6 +70,7 @@
 	var tiles = [].slice.call(stage.querySelectorAll('.zp-tile'));
 	var copy = hero.querySelector('.hero-copy');
 	var cue = hero.querySelector('.hero-scroll-cue');
+	var endcap = hero.querySelector('.zp-endcap');
 
 	// ---- Click a circle -> open it with the hero's zoom, then navigate ------
 	var transitioning = false;
@@ -206,6 +207,14 @@
 		for (var c = 0; c < caps.length; c++) {
 			caps[c].style.opacity = capFade;
 			caps[c].style.pointerEvents = capFade > 0.6 ? 'auto' : 'none';
+		}
+
+		// End-of-zoom caption + Discover button: fade in once the hero has nearly
+		// grown to full-screen (last third of the scroll track).
+		if (endcap) {
+			var endOp = clamp((p - 0.62) / 0.3, 0, 1);
+			endcap.style.opacity = endOp;
+			endcap.style.pointerEvents = endOp > 0.5 ? 'auto' : 'none';
 		}
 	}
 
