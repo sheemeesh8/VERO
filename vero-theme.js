@@ -40,6 +40,9 @@
         var st = document.createElement('style');
         st.id = 'veroThemeCSS';
         st.textContent = `
+            /* Site-wide: no rounded corners anywhere. */
+            *, *::before, *::after { border-radius: 0 !important; }
+
             :root[data-vero-tier="free"] {
                 --vero-accent: #1b1916;
                 --vero-accent-soft: #e7e3dc;
