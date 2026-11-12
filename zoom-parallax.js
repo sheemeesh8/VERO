@@ -121,9 +121,7 @@
 	function apply() {
 		if (transitioning) return; // don't fight the click-open animation
 		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight);
-		// The zoom completes in the first half of the pin track; the feed then
-		// slides up over the pinned hero through the second half.
-		var p = clamp((window.scrollY - wrap.offsetTop) / (pinned * 0.5), 0, 1);
+		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
 		// Size the collage from the stage box (the hero's image region), which may
 		// be only part of the viewport (e.g. the top 75%).
 		var srect = stage.getBoundingClientRect();
