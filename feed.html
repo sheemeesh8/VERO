@@ -255,7 +255,7 @@
         .zp-wrap { position: relative; width: 100%; z-index: 0; background: #fff;
             height: 200vh; height: 200svh; }
         .zp-wrap .hero { position: sticky; top: 0; width: 100%; overflow: hidden; background: #fff; z-index: 0;
-            height: 100vh; height: 100svh; --band-h: max(40svh, 330px); }
+            height: 100vh; height: 100svh; --band-h: max(25svh, 210px); }
         .zp-wrap .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
         .zp-wrap .hero .zp-stage { position: absolute; inset: 0; }
 
@@ -331,10 +331,15 @@
         .home-intro .cat-search { width: 100%; max-width: 520px; margin: 0 auto; }
         .home-intro .hi-rail-head { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 1.5px;
             text-transform: uppercase; color: #8a857c; text-align: center; margin: 0; }
-        /* Most liked slider at full size — the band is tall enough to show the whole
-           card (image + brand + name + price) without clipping. */
-        .home-intro .rail-trans { padding: 2px 0; }
-        .home-intro .rt-img { aspect-ratio: 1.1; }
+        /* Compact collection slider sized to fit the 1/4 band (3/4 hero) cleanly. */
+        .home-intro { gap: 10px; }
+        .home-intro .rail-trans { padding: 0; }
+        .home-intro .rt-img { aspect-ratio: auto; height: 56px; }
+        .home-intro .rt-emoji { font-size: 38px; }
+        .home-intro .rt-cap { margin-top: 3px; }
+        .home-intro .rt-brand { font-size: 10px; letter-spacing: .5px; }
+        .home-intro .rt-name { font-size: 11px; margin-top: 1px; }
+        .home-intro .rt-price { font-size: 11px; margin-top: 1px; }
         .feed-scroll { position: relative; z-index: 1; background: #fff; margin-top: 0; min-height: 100vh; }
         #siteFooter { position: relative; z-index: 1; }
 
@@ -375,7 +380,7 @@
                 <form class="cat-search" role="search" onsubmit="return false;">
                     <input type="search" id="feedSearchInput" placeholder="Search the feed…" autocomplete="off" aria-label="Search the feed">
                 </form>
-                <p class="hi-rail-head">Most liked</p>
+                <p class="hi-rail-head">Current Collection</p>
                 <div class="rail-trans" id="heroRail"></div>
             </div>
         </section>
@@ -672,11 +677,17 @@
             // Duo slider — two pieces per page, for the chosen gender.
             buildDuo();
 
-            // Hero "Most liked" rail — top-rated pieces from the current mode.
-            var liked = list.slice().sort(function (a, b) {
-                return (((b._raw && b._raw.rating) || 0) - ((a._raw && a._raw.rating) || 0));
-            }).slice(0, 10);
-            fill('heroRail', liked.length ? liked.map(transCard).join('') : '<div class="feed-empty">Nothing yet.</div>');
+            // Hero rail — pieces from the CURRENT collection (season / art), filtered
+            // to the chosen gender when that still leaves a few pieces.
+            var curKey = VC.currentKey();
+            var isArtMode = (state.mode === 'art');
+            var colItems = VC.byCollection(curKey).filter(function (p) { return isArtMode ? isArt(p) : !isArt(p); });
+            var current = byGender(colItems, state.gender);
+            if (current.length < 2) current = colItems;      // avoid an empty / too-thin rail
+            fill('heroRail', current.length ? current.slice(0, 10).map(transCard).join('')
+                                            : '<div class="feed-empty">Nothing in this collection yet.</div>');
+            var curHead = document.querySelector('.home-intro .hi-rail-head');
+            if (curHead) curHead.textContent = ((VC.get(curKey) && VC.get(curKey).en) || 'Current') + ' Collection';
 
             // Sales rail — up to 10 discounted pieces (mode-filtered), deepest cut first.
             var art = (state.mode === 'art');
