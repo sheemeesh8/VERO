@@ -18,14 +18,8 @@
 
 	// Centre tile reuses the hero video; the six outer circles are category
 	// shortcuts, each with a caption and a link to the relevant page.
-	var OUTER = [
-		{ src: 'magazine-hero.jpg',  label: 'Magazine',          href: 'category.html?cat=magazine' },
-		{ src: 'clothing-hero.jpg',  label: 'Autumn Collection', href: 'category.html?cat=autumn' },
-		{ src: 'women-hero.jpg',     label: 'Gender',            href: 'category.html?cat=gender' },
-		{ src: 'sale-hero.jpg',      label: 'Sale',              href: 'category.html?cat=sale' },
-		{ src: 'gallery-hero.jpg',   label: 'New In',            href: 'category.html?cat=new' },
-		{ src: 'art-hero.jpg',       label: 'Events',            href: 'category.html?cat=events' }
-	];
+	// Category circles removed — only the central hero tile (a growing rectangle).
+	var OUTER = [];
 
 	// ---- Build the stage ---------------------------------------------------
 	var existingVideo = hero.querySelector('.hero-video');
@@ -135,21 +129,21 @@
 		// Size the whole collage so it always fits the viewport — both width and
 		// height — whatever the aspect ratio (fixes overflow on wide/landscape).
 		var k = Math.min(winW * 0.40, winH * 0.28);
-		var ring = k;                  // distance centre -> outer circle
-		var centreD = k;               // centre circle diameter
-		var outerD = k * 0.62;         // outer circle diameter
-		var outerRadius = outerD / 2;
-		var outerIndex = 0;
+		var ring = k, outerD = k * 0.62, outerRadius = outerD / 2, outerIndex = 0; // (unused; no outer tiles)
 
-		// Apply the computed sizes to the tiles (overrides the CSS defaults).
+		// Centre hero is a rectangle (portrait-ish) that grows to fill the screen.
+		var centreW = Math.min(winW * 0.82, winH * 0.60);
+		var centreH = Math.min(centreW * 1.28, winH * 0.66);
+		var centreD = Math.min(centreW, centreH);  // used for the scale math below
+
+		// Apply the computed size to the centre tile (overrides the CSS default).
 		for (var t = 0; t < tiles.length; t++) {
-			var sz = tiles[t].getAttribute('data-zp') === '0' ? centreD : outerD;
-			tiles[t].style.width = sz.toFixed(1) + 'px';
-			tiles[t].style.height = sz.toFixed(1) + 'px';
+			tiles[t].style.width = centreW.toFixed(1) + 'px';
+			tiles[t].style.height = centreH.toFixed(1) + 'px';
 		}
 
-		// Centre's final scale: grow until it fully covers the viewport (full-screen).
-		var centreMax = (Math.max(winW, winH) / centreD) * 1.04;
+		// Grow until the rectangle fully covers the viewport on both axes.
+		var centreMax = Math.max(winW / centreW, winH / centreH) * 1.06;
 
 		// Ease the growth in (p² ) so the first slice of scroll barely changes the
 		// resting ring. This keeps the clean collage stable while the welcome copy
@@ -171,8 +165,8 @@
 			tile.style.setProperty('--zp-s', String(s));
 
 			if (isCentre) {
-				// Centre starts as a circle and squares off completely as it grows.
-				tile.style.setProperty('--zp-r', (50 - 50 * clamp(pz * 1.2, 0, 1)) + '%');
+				// Centre is a rounded rectangle whose corners flatten as it grows.
+				tile.style.setProperty('--zp-r', (16 * (1 - clamp(pz * 1.2, 0, 1))).toFixed(1) + 'px');
 				tile.style.setProperty('--zp-tx', '0px');
 				// Offset is multiplied by scale in CSS, so divide to keep it in px.
 				tile.style.setProperty('--zp-ty', (cy * (1 - pz) / s).toFixed(2) + 'px');

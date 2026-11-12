@@ -276,19 +276,16 @@
 
         /* The feed follows directly after the hero's sticky track. */
         /* Home hero — full-screen looping video banner at the top of the feed. */
-        .home-hero { position: relative; width: 100%; height: 66.67vh; height: 66.67svh; overflow: hidden; background: #fff; }
-        .home-hero .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-        /* Editorial caption over the hero — the current collection. */
-        .home-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 55%;
-            background: linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0)); pointer-events: none; z-index: 1; }
-        .home-hero-cap { position: absolute; left: 20px; right: 20px; bottom: 26px; z-index: 2; color: #fff;
-            text-shadow: 0 1px 14px rgba(0,0,0,0.35); pointer-events: none; }
+        /* Collection caption — sits below the hero rectangle in the intro, centred;
+           fades out (via .hero-copy) as the rectangle grows to full-screen. */
+        .home-hero-cap { position: absolute; left: 20px; right: 20px; bottom: 7vh; z-index: 4; color: #1b1916;
+            text-align: center; pointer-events: none; }
         .home-hero-cap .hhc-eyebrow { font-family: ui-monospace,'Roboto Mono','Courier New',monospace;
-            font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; opacity: .9; }
+            font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: #8a857c; }
         .home-hero-cap .hhc-title { margin: 8px 0 0; font-family: 'Archivo','Poppins',sans-serif; font-weight: 800;
-            font-size: clamp(28px, 9vw, 46px); line-height: 1.02; letter-spacing: -0.02em; text-transform: uppercase; }
-        .home-hero-cap .hhc-sub { margin: 10px 0 0; font-family: 'Arimo','Inter',sans-serif; font-size: 13px;
-            line-height: 1.5; letter-spacing: .2px; max-width: 34ch; opacity: .94; }
+            font-size: clamp(26px, 8vw, 42px); line-height: 1.02; letter-spacing: -0.02em; text-transform: uppercase; }
+        .home-hero-cap .hhc-sub { margin: 9px auto 0; font-family: 'Arimo','Inter',sans-serif; font-size: 13px;
+            line-height: 1.5; letter-spacing: .2px; max-width: 34ch; color: #6b665e; }
         .feed-scroll { position: relative; z-index: 1; background: #fff; margin-top: 0; min-height: 100vh; }
         #siteFooter { position: relative; z-index: 1; }
 
@@ -303,24 +300,28 @@
         // Transparent (white icons) while the home hero is in view; goes solid
         // (white bar, dark icons) once the hero has scrolled nearly past the header.
         window.veroHeroPassed = function () {
-            var w = document.querySelector('.home-hero');
+            var w = document.getElementById('feedHeroWrap');
             if (!w) return window.scrollY > 80;
-            return w.getBoundingClientRect().bottom <= 64;
+            var release = w.offsetTop + w.offsetHeight - window.innerHeight;
+            return window.scrollY >= release - 4;
         };
         window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
     </script>
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=60"></script>
 
-    <!-- Home hero — looping video banner (no circles entrance). -->
-    <section class="home-hero">
-        <video class="hero-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline></video>
-        <div class="home-hero-cap">
-            <span class="hhc-eyebrow">The Collection</span>
-            <h2 class="hhc-title">Autumn, pre-loved</h2>
-            <p class="hhc-sub">Curated second-hand fashion &amp; art — one-of-a-kind pieces, newly yours.</p>
-        </div>
-    </section>
+    <!-- Entrance — the hero grows from a rectangle to full-screen on scroll
+         (built by zoom-parallax.js; category circles removed). -->
+    <div class="zp-wrap" id="feedHeroWrap">
+        <section class="hero" id="feedHero">
+            <video class="hero-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline></video>
+            <div class="home-hero-cap hero-copy">
+                <span class="hhc-eyebrow">The Collection</span>
+                <h2 class="hhc-title">Autumn, pre-loved</h2>
+                <p class="hhc-sub">Curated second-hand fashion &amp; art — one-of-a-kind pieces, newly yours.</p>
+            </div>
+        </section>
+    </div>
 
     <div class="feed-scroll">
     <main class="feed-wrap">
@@ -854,5 +855,7 @@
     <script src="search-box.js" defer></script>
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
+    <!-- Entrance: hero rectangle that grows to full-screen on scroll. -->
+    <script src="zoom-parallax.js"></script>
 </body>
 </html>
