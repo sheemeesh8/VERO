@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Arimo:wght@400;500;600;700&family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="search-box.css">
-    <link rel="stylesheet" href="zoom-parallax.css?v=3">
+    <link rel="stylesheet" href="zoom-parallax.css?v=4">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: auto; }
@@ -247,7 +247,7 @@
         .zp-wrap { position: relative; width: 100%; z-index: 0; background: #fff;
             height: 200vh; height: 200svh; }
         .zp-wrap .hero { position: sticky; top: 0; width: 100%; overflow: hidden; background: #fff; z-index: 0;
-            height: 100vh; height: 100svh; }
+            height: 100vh; height: 100svh; --band-h: max(33svh, 280px); }
         .zp-wrap .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
         .zp-wrap .hero .zp-stage { position: absolute; inset: 0; }
 
@@ -280,9 +280,9 @@
            the category pages' hero (same full-screen ratio, white type, gradient). */
         /* End-of-zoom caption — fades in (driven by zoom-parallax.js) once the hero
            rectangle has grown to full-screen, with a Discover button below it. */
-        .home-hero-cap { position: absolute; left: 0; right: 0; bottom: 11svh; z-index: 5;
+        .home-hero-cap { position: absolute; left: 0; right: 0; bottom: calc(var(--band-h, 33svh) + 14px); z-index: 5;
             display: flex; flex-direction: column; align-items: center; text-align: center;
-            padding: 0 20px; color: #fff; opacity: 0; pointer-events: none; transition: opacity .25s ease;
+            padding: 0 20px 10px; color: #fff; opacity: 0; pointer-events: none; transition: opacity .25s ease;
             text-shadow: 0 1px 16px rgba(0,0,0,0.4); }
         @media (prefers-reduced-motion: reduce) { .home-hero-cap { opacity: 1; pointer-events: auto; } }
         .home-hero-cap .hhc-eyebrow { font-family: 'Arimo','Inter',sans-serif; font-size: 11px;
@@ -298,6 +298,21 @@
             letter-spacing: 2px; text-transform: uppercase; cursor: pointer; text-decoration: none;
             transition: background .2s, color .2s; }
         .hhc-discover:hover { background: #fff; color: #1b1916; }
+        /* White band pinned to the hero's base — search + Most liked slider. Slides
+           up into view (with the caption) at the end of the zoom. */
+        .home-intro { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4;
+            height: var(--band-h, 33svh); background: #fff;
+            display: flex; flex-direction: column; justify-content: center; gap: 14px;
+            padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+            transform: translateY(100%); opacity: 0;
+            transition: transform .6s cubic-bezier(.2,.75,.25,1), opacity .4s ease; }
+        .home-intro.revealed { transform: translateY(0); opacity: 1; }
+        @media (prefers-reduced-motion: reduce) { .home-intro { transform: none; opacity: 1; } }
+        .home-intro .cat-search { width: 100%; max-width: 520px; margin: 0 auto; }
+        .home-intro .hi-rail-head { font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 1.5px;
+            text-transform: uppercase; color: #8a857c; text-align: center; margin: 0; }
+        .home-intro .rail-trans { padding: 2px 0; }
+        .home-intro .rt-img { aspect-ratio: 1.1; }
         .feed-scroll { position: relative; z-index: 1; background: #fff; margin-top: 0; min-height: 100vh; }
         #siteFooter { position: relative; z-index: 1; }
 
@@ -333,24 +348,22 @@
                 <p class="hhc-sub">This season&rsquo;s edit — warm layers, soft wools and earthy tones.</p>
                 <a class="hhc-discover" href="#feedStructured">Discover</a>
             </div>
+            <!-- White band — slides up with the caption at the end of the zoom. -->
+            <div class="home-intro" id="homeIntro">
+                <form class="cat-search" role="search" onsubmit="return false;">
+                    <input type="search" id="feedSearchInput" placeholder="Search the feed…" autocomplete="off" aria-label="Search the feed">
+                </form>
+                <p class="hi-rail-head">Most liked</p>
+                <div class="rail-trans" id="heroRail"></div>
+            </div>
         </section>
     </div>
 
     <div class="feed-scroll">
     <main class="feed-wrap">
-        <!-- Search drives the structured feed; kept outside #feedStructured so it
-             stays visible while results are shown. -->
-        <form class="cat-search feed-top-search" role="search" onsubmit="return false;">
-            <input type="search" id="feedSearchInput" placeholder="Search the feed…" autocomplete="off" aria-label="Search the feed">
-        </form>
-
-        <!-- The structured feed (hidden while a search is active). -->
+        <!-- The structured feed (hidden while a search is active). The search box and
+             the "Most liked" rail live in the hero's white band (#homeIntro). -->
         <div id="feedStructured">
-            <!-- Most liked — top-rated pieces -->
-            <section class="promo-sec">
-                <div class="rail-trans" id="heroRail"></div>
-            </section>
-
             <!-- 2 · Gender slider -->
             <div id="genderCover" role="region" aria-roledescription="carousel" aria-label="Choose by category">
                 <p class="gc-head">Choose by category</p>
@@ -869,6 +882,6 @@
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
     <!-- Entrance: hero rectangle that grows to full-screen on scroll. -->
-    <script src="zoom-parallax.js?v=3"></script>
+    <script src="zoom-parallax.js?v=4"></script>
 </body>
 </html>

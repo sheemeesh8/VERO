@@ -71,6 +71,7 @@
 	var copy = hero.querySelector('.hero-copy');
 	var cue = hero.querySelector('.hero-scroll-cue');
 	var endcap = hero.querySelector('.zp-endcap');
+	var band = hero.querySelector('.home-intro');
 
 	// ---- Click a circle -> open it with the hero's zoom, then navigate ------
 	var transitioning = false;
@@ -216,6 +217,8 @@
 			endcap.style.opacity = endOp;
 			endcap.style.pointerEvents = endOp > 0.5 ? 'auto' : 'none';
 		}
+		// The white band (search + Most liked slider) slides up with the caption.
+		if (band) band.classList.toggle('revealed', p > 0.72);
 	}
 
 	var ticking = false;
