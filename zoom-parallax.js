@@ -132,9 +132,9 @@
 		var k = Math.min(winW * 0.40, winH * 0.28);
 		var ring = k, outerD = k * 0.62, outerRadius = outerD / 2, outerIndex = 0; // (unused; no outer tiles)
 
-		// Centre hero is a rectangle (portrait-ish) that grows to fill the screen.
-		var centreW = Math.min(winW * 0.82, winH * 0.60);
-		var centreH = Math.min(centreW * 1.28, winH * 0.66);
+		// Centre hero is a narrow, tall rectangle (sharp corners) that grows to fill.
+		var centreW = Math.min(winW * 0.60, winH * 0.40);
+		var centreH = Math.min(centreW * 1.75, winH * 0.82);
 		var centreD = Math.min(centreW, centreH);  // used for the scale math below
 
 		// Apply the computed size to the centre tile (overrides the CSS default).
@@ -166,8 +166,8 @@
 			tile.style.setProperty('--zp-s', String(s));
 
 			if (isCentre) {
-				// Centre is a rounded rectangle whose corners flatten as it grows.
-				tile.style.setProperty('--zp-r', (16 * (1 - clamp(pz * 1.2, 0, 1))).toFixed(1) + 'px');
+				// Sharp-cornered rectangle throughout.
+				tile.style.setProperty('--zp-r', '0px');
 				tile.style.setProperty('--zp-tx', '0px');
 				// Offset is multiplied by scale in CSS, so divide to keep it in px.
 				tile.style.setProperty('--zp-ty', (cy * (1 - pz) / s).toFixed(2) + 'px');
