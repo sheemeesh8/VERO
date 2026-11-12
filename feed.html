@@ -316,6 +316,13 @@
             transition: transform .6s cubic-bezier(.2,.75,.25,1), opacity .4s ease; }
         .home-intro.revealed { transform: translateY(0); opacity: 1; }
         @media (prefers-reduced-motion: reduce) { .home-intro { transform: none; opacity: 1; } }
+        /* Quick fade "page" shown when switching Art / Fashion. */
+        #modeFade { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
+            background: #fff; opacity: 0; pointer-events: none; transition: opacity .26s ease; }
+        #modeFade.show { opacity: 1; }
+        #modeFade.out { opacity: 0; }
+        #modeFade span { font-family: 'Poppins','Inter',sans-serif; font-weight: 300;
+            font-size: clamp(40px, 13vw, 72px); letter-spacing: .02em; text-transform: uppercase; color: #1b1916; }
         /* Site header hidden during the zoom; slides in with the caption at the end. */
         body #siteHeader { transform: translateY(-115%); opacity: 0;
             transition: transform .55s cubic-bezier(.2,.75,.25,1), opacity .4s ease,
@@ -677,10 +684,10 @@
             // Duo slider — two pieces per page, for the chosen gender.
             buildDuo();
 
-            // Hero rail — pieces from the CURRENT collection (season / art), filtered
-            // to the chosen gender when that still leaves a few pieces.
-            var curKey = VC.currentKey();
+            // Hero rail — pieces from the CURRENT collection (the season in fashion
+            // mode, the art collection in art mode), gender-filtered when possible.
             var isArtMode = (state.mode === 'art');
+            var curKey = isArtMode ? 'interiors' : VC.currentKey();
             var colItems = VC.byCollection(curKey).filter(function (p) { return isArtMode ? isArt(p) : !isArt(p); });
             var current = byGender(colItems, state.gender);
             if (current.length < 2) current = colItems;      // avoid an empty / too-thin rail
@@ -688,6 +695,7 @@
                                             : '<div class="feed-empty">Nothing in this collection yet.</div>');
             var curHead = document.querySelector('.home-intro .hi-rail-head');
             if (curHead) curHead.textContent = ((VC.get(curKey) && VC.get(curKey).en) || 'Current') + ' Collection';
+            applyHeroCaption(isArtMode, curKey);
 
             // Sales rail — up to 10 discounted pieces (mode-filtered), deepest cut first.
             var art = (state.mode === 'art');
@@ -751,6 +759,47 @@
             var m = currentMode();
             if (m !== state.mode) { state.mode = m; buildStructured(); if (input && input.value.trim()) runSearch(input.value); }
         });
+
+        // Swap the hero's editorial caption for the active mode.
+        function applyHeroCaption(isArtMode, curKey) {
+            var cap = document.querySelector('.home-hero-cap'); if (!cap) return;
+            var eb = cap.querySelector('.hhc-eyebrow'), ti = cap.querySelector('.hhc-title'), su = cap.querySelector('.hhc-sub');
+            var col = VC.get(curKey);
+            if (isArtMode) {
+                if (eb) eb.textContent = 'The Collection';
+                if (ti) ti.textContent = (col && col.en) || 'Interior Design';
+                if (su) su.textContent = (col && col.tagline) || 'Home decor, curated for you.';
+            } else {
+                if (eb) eb.textContent = 'The Season';
+                if (ti) ti.textContent = ((col && col.en) || 'Autumn') + ' Collection';
+                if (su) su.textContent = 'This season’s edit — warm layers, soft wools and earthy tones.';
+            }
+        }
+
+        // Quick fade "page" with the mode name, shown while the feed re-renders.
+        function showModeFade(mode) {
+            var ov = document.getElementById('modeFade');
+            if (!ov) { ov = document.createElement('div'); ov.id = 'modeFade'; ov.innerHTML = '<span></span>'; document.body.appendChild(ov); }
+            ov.querySelector('span').textContent = (mode === 'art') ? 'Art' : 'Fashion';
+            ov.classList.remove('out'); void ov.offsetWidth; ov.classList.add('show');
+            clearTimeout(ov.__t1); clearTimeout(ov.__t2);
+            ov.__t1 = setTimeout(function () { ov.classList.remove('show'); ov.classList.add('out'); }, 520);
+            ov.__t2 = setTimeout(function () { ov.classList.remove('out'); }, 1050);
+        }
+
+        // Toggle Art / Fashion IN PLACE — no reload, no zoom-intro replay. Overrides
+        // the header's default (which navigates to index.html).
+        window.toggleSwitch = function () {
+            var mode = (state.mode === 'art') ? 'fashion' : 'art';
+            try { localStorage.setItem('vero_category', mode === 'art' ? 'art' : 'clothing'); } catch (e) {}
+            var segA = document.getElementById('segArt'), segF = document.getElementById('segFashion');
+            if (segA && segF) { segA.classList.toggle('active', mode === 'art'); segF.classList.toggle('active', mode !== 'art'); }
+            try { document.body.setAttribute('data-mode', mode === 'art' ? 'art' : 'fashion'); } catch (e) {}
+            showModeFade(mode);
+            state.mode = mode;
+            buildStructured();
+            if (input && input.value.trim()) runSearch(input.value);
+        };
 
         // ----- Gender category sub-header + slider → feature card ----------
         var subnav = document.getElementById('feedSubnav');
