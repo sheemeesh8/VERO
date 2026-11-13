@@ -17,6 +17,9 @@
      dots      one dot per point with a dashed trend line through them
      baseline  green above the first point's level, red below it
      delta     a bar per point for its change from the one before (up / down)
+     line      a straight line from point to point with a marker on each
+     lollipop  a thin stem and a marker per point
+     heat      a strip of blocks, darker where the value is higher
    veroSpark(values) returns a tiny line for inside a figure tile.
 
    Values run oldest → newest, left → right, from one edge of the screen to
@@ -192,6 +195,26 @@
                 '<g clip-path="url(#' + id + 'b)"><path d="' + area + '" fill="' + TREND.down + '" fill-opacity="0.14"/><path d="' + bd + '" fill="none" stroke="' + TREND.down + '" stroke-width="2"' + NS + '/></g>' +
                 '<line x1="0" x2="100" y1="' + by + '" y2="' + by + '" stroke="#8d887e" stroke-width="1" stroke-dasharray="3 4"' + NS + '/>';
             dots = endDot(v[n - 1] >= v[0] ? TREND.up : TREND.down);
+        } else if (style === 'line') {
+            var ld = '';
+            for (i = 0; i < n; i++) ld += (i ? ' L' : 'M') + xs[i].toFixed(2) + ',' + ys[i].toFixed(2);
+            inner = '<path d="' + ld + '" fill="none" stroke="' + color + '" stroke-width="2"' + NS + ' stroke-linejoin="miter"/>';
+            for (i = 0; i < n - 1; i++) dots += '<span class="vlc-dot vlc-dot--mark" style="left:' + xs[i] + '%;top:' + ys[i] + '%;background:' + color + '"></span>';
+            dots += endDot(color);
+        } else if (style === 'lollipop') {
+            var lw = 100 / n;
+            xs = v.map(function (_, k) { return (k + 0.5) * lw; });
+            for (i = 0; i < n; i++) {
+                inner += '<line x1="' + xs[i].toFixed(2) + '" x2="' + xs[i].toFixed(2) + '" y1="' + B + '" y2="' + ys[i].toFixed(2) + '" stroke="' + (i === n - 1 ? color : '#b9b4aa') + '" stroke-width="2"' + NS + '/>';
+                if (i < n - 1) dots += '<span class="vlc-dot vlc-dot--mark" style="left:' + xs[i] + '%;top:' + ys[i] + '%"></span>';
+            }
+            inner += '<line x1="0" x2="100" y1="' + B + '" y2="' + B + '" stroke="#d6d2c8" stroke-width="1"' + NS + '/>';
+            dots += endDot(color);
+        } else if (style === 'heat') {
+            var hw = 100 / n, hmax = max || 1;
+            xs = v.map(function (_, k) { return (k + 0.5) * hw; });
+            for (i = 0; i < n; i++) inner += '<rect x="' + (i * hw + 0.4).toFixed(2) + '" y="6" width="' + (hw - 0.8).toFixed(2) + '" height="88" fill="#16150f" fill-opacity="' + (0.1 + 0.9 * (v[i] - min) / ((hmax - min) || 1)).toFixed(3) + '"/>';   // lightest = the lowest value, darkest = the highest
+            ys = v.map(function () { return 50; });
         } else {   // delta
             var dl = v.map(function (x, k) { return k ? x - v[k - 1] : 0; }), m = Math.max.apply(null, dl.map(Math.abs)) || 1, mid = (T + B) / 2, hh = (B - T) / 2, bw = 100 / n;
             xs = v.map(function (_, k) { return (k + 0.5) * bw; });
@@ -204,7 +227,7 @@
             texts = dl.map(function (x, k) { return k ? (x >= 0 ? '+' : '−') + fmt(Math.abs(x)) : fmt(v[0]); });
         }
         // One value label: the latest point (never a number on every point).
-        var lastX = xs[n - 1], val = style === 'delta' ? '' :
+        var lastX = xs[n - 1], val = (style === 'delta' || style === 'heat') ? '' :
             '<span class="vlc-val' + (lastX > 93 ? ' at-r' : '') + '" style="left:' + lastX + '%;top:' + ys[n - 1] + '%">' + esc(texts[n - 1]) + '</span>';
         var data = { y: ys.map(function (y) { return +y.toFixed(3); }), x: xs.map(function (x) { return +x.toFixed(3); }), t: texts, l: lbl };
         var summary = 'Chart, ' + n + ' points, from ' + fmt(v[0]) + ' to ' + fmt(v[n - 1]) + ', trend ' + (trend === 'up' ? 'rising' : trend === 'down' ? 'falling' : 'sideways');
@@ -272,8 +295,10 @@
          'pie'             full pie             'half'    half ring, total at the base
          'split'           one bar cut by share 'ranked'  a row and bar per part
          'waffle'          100 squares, 1% each 'rings'   one arc per part, nested
+         'stack'           one upright column   'blocks'  a square per part, sized by share
+         'tree'            a rectangle cut into areas by share
 
-     el.innerHTML = veroBars(values, { format, labels, mark });
+     el.innerHTML = veroBars(values, { format, labels, mark, horizontal });
        Thin rounded columns, oldest → newest; the value sits on each column
        and the newest column takes the trend colour.
 ------------------------------------------------------------------ */
@@ -355,15 +380,32 @@
             cells.forEach(function (c, k) { sq += '<rect class="vdn-p" x="' + (k % 10 * 10 + 0.8) + '" y="' + (Math.floor(k / 10) * 10 + 0.8) + '" width="8.4" height="8.4" fill="' + col(c) + '" style="animation-delay:' + (k * 0.006).toFixed(3) + 's"/>'; });
             fig = '<div class="vdn-fig">' + svg(sq) + '</div>';
         } else if (style === 'rings') {
-            var top = Number(items[0].value), step = Math.min(7, 40 / items.length), rg = '';
+            var top = Math.max.apply(null, items.map(function (it) { return Number(it.value); })) || 1, step = Math.min(7, 40 / items.length), rg = '';
             items.forEach(function (it, i) {
                 var r1 = 48 - i * step, r0 = r1 - step * 0.66;
                 rg += '<path d="' + slice(r1, r0, TOP, TOP + FULL * 0.75) + '" fill="#ecebe6"/>' +
                       '<path class="vdn-p" d="' + slice(r1, r0, TOP, TOP + Number(it.value) / top * FULL * 0.75) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
             });
             fig = '<div class="vdn-fig">' + svg(rg) + '</div>';
+        } else if (style === 'stack') {
+            fig = '<div class="vdn-stack">' + items.map(function (it, i) { return '<i style="flex:' + Number(it.value) + ' 1 0;background:' + col(i) + ';animation-delay:' + (i * 0.07).toFixed(2) + 's"></i>'; }).join('') + '</div>';
+        } else if (style === 'blocks') {
+            var bmax = Math.max.apply(null, items.map(function (it) { return Number(it.value); })) || 1;
+            fig = '<div class="vdn-blocks">' + items.map(function (it, i) { var side = (22 + 62 * Math.sqrt(Number(it.value) / bmax)).toFixed(1);
+                return '<i style="width:' + side + 'px;height:' + side + 'px;background:' + col(i) + ';animation-delay:' + (i * 0.07).toFixed(2) + 's"></i>'; }).join('') + '</div>';
+        } else if (style === 'tree') {
+            // Slice the rectangle: the largest part takes its share off one side, the rest recurse.
+            var tr = '', cut = function (list, sum, x, y, w, h, i) {
+                if (!list.length) return;
+                var f = Number(list[0].value) / sum, wide = w >= h, cw = wide ? w * f : w, ch = wide ? h : h * f;
+                if (list.length === 1) { cw = w; ch = h; }
+                tr += '<rect class="vdn-p" x="' + (x + 0.4).toFixed(2) + '" y="' + (y + 0.4).toFixed(2) + '" width="' + Math.max(0.2, cw - 0.8).toFixed(2) + '" height="' + Math.max(0.2, ch - 0.8).toFixed(2) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
+                if (wide) cut(list.slice(1), sum - Number(list[0].value), x + cw, y, w - cw, h, i + 1); else cut(list.slice(1), sum - Number(list[0].value), x, y + ch, w, h - ch, i + 1);
+            };
+            cut(items, total, 0, 0, 100, 62, 0);
+            fig = '<div class="vdn-fig vdn-fig--wide">' + svg(tr, '0 0 100 62') + '</div>';
         } else {   // ranked
-            var big = Number(items[0].value) || 1;
+            var big = Math.max.apply(null, items.map(function (it) { return Number(it.value); })) || 1;
             body = '<div class="vdn-rank">' + items.map(function (it, i) {
                 return '<div class="vdn-rr"><span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-rb"><i style="width:' + (Number(it.value) / big * 100).toFixed(1) + '%;animation-delay:' + (i * 0.07).toFixed(2) + 's"></i></span>' +
                        '<span class="vdn-val">' + esc(fmt(Number(it.value))) + '</span></div>';
@@ -378,6 +420,13 @@
         var v = (vals || []).map(function (x) { return Number(x) || 0; });
         if (!v.length) return '<div class="vbr"></div>';
         var max = Math.max.apply(null, v) || 1;
+        var tag = window.veroRememberShare ? window.veroRememberShare(v, opts.labels && opts.labels.length === v.length ? opts.labels : null, fmt, opts) : '';
+        if (opts.horizontal) {   // a row per value: label, bar, value — the longest bar is dark
+            return '<div class="vhb"' + tag + ' role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars') + '">' + v.map(function (x, i) {
+                return '<div class="vhb-r' + (i === v.indexOf(max) ? ' is-top' : '') + '"><span class="vhb-l">' + esc(opts.labels ? opts.labels[i] || '' : '') + '</span>' +
+                       '<span class="vhb-t"><i style="width:' + Math.max(1, x / max * 100).toFixed(1) + '%;animation-delay:' + (i * 0.05).toFixed(2) + 's"></i></span><span class="vhb-v">' + esc(fmt(x)) + '</span></div>';
+            }).join('') + '</div>';
+        }
         var tone = window.veroTrendColor ? window.veroTrendColor(v) : '#16150f';
         var cols = v.map(function (x, i) {
             // The dark column is the newest one, or the tallest with { mark: 'max' } (e.g. weekdays).
@@ -388,7 +437,7 @@
                 'animation-delay:' + (i * 0.05).toFixed(2) + 's"></span>' +
                 (opts.labels ? '<span class="vbr-lbl">' + esc(opts.labels[i] || '') + '</span>' : '') + '</div>';
         }).join('');
-        return '<div class="vbr"' + (window.veroRememberShare ? window.veroRememberShare(v, opts.labels && opts.labels.length === v.length ? opts.labels : null, fmt, opts) : '') + ' role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars, latest ' + fmt(v[v.length - 1])) + '">' + cols + '</div>';
+        return '<div class="vbr"' + tag + ' role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars, latest ' + fmt(v[v.length - 1])) + '">' + cols + '</div>';
     };
 })();
 
@@ -420,13 +469,30 @@
         return out;
     }
 
+    // Every pie on a page is drawn differently: a chart's pie takes the first
+    // style not used by the page's own share charts or by another chart's pie.
+    // It is remembered on the chart's holder, so a re-drawn chart keeps its style.
+    var ALL = ['pie', 'half', 'ring', 'rings', 'stack', 'blocks', 'tree', 'ranked', 'donut', 'split', 'waffle'], turn = 0;
+    function styleFor(chart) {
+        var host = chart.parentNode;
+        if (host._vswStyle) return host._vswStyle;
+        var used = {};
+        document.querySelectorAll('.vdn').forEach(function (d) {
+            if (d.closest('[hidden]') || d.closest('.vsw-pie')) return;
+            var m = /vdn--(\w+)/.exec(d.className); used[m ? m[1] : 'ring'] = 1;
+        });
+        document.querySelectorAll('[data-vsw]').forEach(function (c) { if (c.parentNode._vswStyle && !c.closest('[hidden]')) used[c.parentNode._vswStyle] = 1; });
+        var free = ALL.filter(function (s) { return !used[s]; });
+        return (host._vswStyle = free.length ? free[0] : ALL[turn++ % ALL.length]);
+    }
+
     function setMode(chart, pie) {
         var rec = SHARE.map[chart.getAttribute('data-vsw')]; if (!rec) return;
         var box = chart._vswPie, sw = chart._vswSwitch;
         if (pie && !box) {
             box = chart._vswPie = document.createElement('div');
             box.className = 'vsw-pie';
-            box.innerHTML = window.veroDonut(items(rec), { format: rec.fmt, style: 'donut', centerLabel: rec.level ? 'Added' : 'Total' });
+            box.innerHTML = window.veroDonut(items(rec), { format: rec.fmt, style: styleFor(chart), centerLabel: rec.level ? 'Added' : 'Total' });
             chart.parentNode.insertBefore(box, chart);
             swipe(box, function () { setMode(chart, false); });
         }
@@ -468,6 +534,7 @@
         sw.children[0].addEventListener('click', function () { setMode(chart, false); });
         sw.children[1].addEventListener('click', function () { setMode(chart, true); });
         swipe(chart, function () { setMode(chart, true); });
+        styleFor(chart);   // settle the pie style now, in page order
     }
     function scan() { document.querySelectorAll('[data-vsw]').forEach(enhance); }
     var pending = false;
