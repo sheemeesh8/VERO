@@ -7,7 +7,17 @@
          group:  'sum' | 'last',    // how a long series is grouped (default 'sum')
          labels: ['Jan', …],        // optional: point names for the tooltip
          axis:   ['Jan', …]         // optional: a date row under the chart
+         style:  'hairline' (default) | 'area' | 'step' | 'dots' | 'baseline' | 'delta'
      });
+
+   Styles — the same data, hover and trend colour, drawn differently:
+     hairline  the field of thin vertical lines described below
+     area      a smooth line over a fill that fades down
+     step      a right-angled line (levels that jump: totals, counts)
+     dots      one dot per point with a dashed trend line through them
+     baseline  green above the first point's level, red below it
+     delta     a bar per point for its change from the one before (up / down)
+   veroSpark(values) returns a tiny line for inside a figure tile.
 
    Values run oldest → newest, left → right, from one edge of the screen to
    the other. The shape is drawn by a field of thin vertical lines cut by a
@@ -93,6 +103,7 @@
         if (!n) return '<div class="vlc"></div>';
         var trend = trendOf(v);
         color = TREND[trend];   // green rising, blue sideways, red falling
+        if (opts.style && opts.style !== 'hairline') return styled(opts.style, v, lbl, fmt, trend, color, opts);
         var max = Math.max.apply(null, v), min = Math.min(0, Math.min.apply(null, v));
         var span = (max - min) || 1;
         var xp = function (i) { return n <= 1 ? 50 : (i / (n - 1)) * 100; };
@@ -128,6 +139,82 @@
             '</div>' + axis;
     };
 
+    // ---- The other styles (see the header). Same wrapper + data as the hairline
+    //      chart, so the hover layer, axis row and trend colour work unchanged. ----
+    function styled(style, v, lbl, fmt, trend, color, opts) {
+        var n = v.length, i, T = 14, B = 88;
+        var max = Math.max.apply(null, v), min = Math.min.apply(null, v), pad = (max - min) * 0.14 || Math.abs(max) * 0.1 || 1;
+        var lo = min - pad, span = (max - lo) || 1;
+        var xs = v.map(function (_, k) { return n <= 1 ? 50 : (k / (n - 1)) * 100; });
+        var yp = function (x) { return B - ((x - lo) / span) * (B - T); };
+        var ys = v.map(yp), texts = v.map(function (x) { return fmt(x); });
+        var NS = ' vector-effect="non-scaling-stroke"', inner = '', dots = '', id = 'vl' + Math.random().toString(36).slice(2, 8);
+        var smooth = function () {
+            var cy = curve(xs, ys), d = '', steps = Math.max(40, n * 8);
+            for (var k = 0; k <= steps; k++) { var x = k / steps * 100; d += (k ? ' L' : 'M') + x.toFixed(2) + ',' + cy(x).toFixed(2); }
+            return d;
+        };
+        var endDot = function (c) { return '<span class="vlc-pt vlc-end" style="left:' + xs[n - 1] + '%;top:' + ys[n - 1] + '%;color:' + c + '"></span>'; };
+
+        if (style === 'area') {
+            var d = smooth();
+            inner = '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + color + '" stop-opacity="0.28"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
+                '<path d="' + d + ' L100,100 L0,100 Z" fill="url(#' + id + ')"/><path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="2"' + NS + ' stroke-linejoin="round"/>';
+            dots = endDot(color);
+        } else if (style === 'step') {
+            var sd = 'M0,' + ys[0].toFixed(2);
+            for (i = 1; i < n; i++) sd += ' H' + xs[i].toFixed(2) + ' V' + ys[i].toFixed(2);
+            inner = '<path d="' + sd + ' V100 H0 Z" fill="' + color + '" fill-opacity="0.08"/><path d="' + sd + '" fill="none" stroke="' + color + '" stroke-width="2"' + NS + '/>';
+            dots = endDot(color);
+        } else if (style === 'dots') {
+            var mx = (n - 1) / 2, my = v.reduce(function (a, b) { return a + b; }, 0) / n, num = 0, den = 0;
+            for (i = 0; i < n; i++) { num += (i - mx) * (v[i] - my); den += (i - mx) * (i - mx); }
+            var k1 = den ? num / den : 0, a0 = my - k1 * mx;
+            inner = '<line x1="0" y1="' + yp(a0).toFixed(2) + '" x2="100" y2="' + yp(a0 + k1 * (n - 1)).toFixed(2) + '" stroke="' + color + '" stroke-width="2" stroke-dasharray="6 6"' + NS + '/>';
+            // Inset a little so the first and last dots are whole.
+            xs = xs.map(function (x) { return 4 + x * 0.92; });
+            for (i = 0; i < n - 1; i++) dots += '<span class="vlc-dot" style="left:' + xs[i] + '%;top:' + ys[i] + '%"></span>';
+            dots += endDot(color);
+        } else if (style === 'baseline') {
+            var bd = smooth(), by = ys[0], area = bd + ' L100,' + by + ' L0,' + by + ' Z';
+            inner = '<defs><clipPath id="' + id + 'a"><rect x="0" y="-10" width="100" height="' + (by + 10) + '"/></clipPath><clipPath id="' + id + 'b"><rect x="0" y="' + by + '" width="100" height="' + (110 - by) + '"/></clipPath></defs>' +
+                '<g clip-path="url(#' + id + 'a)"><path d="' + area + '" fill="' + TREND.up + '" fill-opacity="0.14"/><path d="' + bd + '" fill="none" stroke="' + TREND.up + '" stroke-width="2"' + NS + '/></g>' +
+                '<g clip-path="url(#' + id + 'b)"><path d="' + area + '" fill="' + TREND.down + '" fill-opacity="0.14"/><path d="' + bd + '" fill="none" stroke="' + TREND.down + '" stroke-width="2"' + NS + '/></g>' +
+                '<line x1="0" x2="100" y1="' + by + '" y2="' + by + '" stroke="#8d887e" stroke-width="1" stroke-dasharray="3 4"' + NS + '/>';
+            dots = endDot(v[n - 1] >= v[0] ? TREND.up : TREND.down);
+        } else {   // delta
+            var dl = v.map(function (x, k) { return k ? x - v[k - 1] : 0; }), m = Math.max.apply(null, dl.map(Math.abs)) || 1, mid = (T + B) / 2, hh = (B - T) / 2, bw = 100 / n;
+            xs = v.map(function (_, k) { return (k + 0.5) * bw; });
+            inner = '<line x1="0" x2="100" y1="' + mid + '" y2="' + mid + '" stroke="#b9b4aa" stroke-width="1"' + NS + '/>';
+            ys = dl.map(function (x, k) {
+                var h = Math.abs(x) / m * hh, up = x >= 0;
+                if (k) inner += '<rect x="' + (xs[k] - bw * 0.3).toFixed(2) + '" y="' + (up ? mid - h : mid).toFixed(2) + '" width="' + (bw * 0.6).toFixed(2) + '" height="' + Math.max(0.6, h).toFixed(2) + '" fill="' + (up ? TREND.up : TREND.down) + '"/>';
+                return up ? mid - h : mid + h;
+            });
+            texts = dl.map(function (x, k) { return k ? (x >= 0 ? '+' : '−') + fmt(Math.abs(x)) : fmt(v[0]); });
+        }
+        // One value label: the latest point (never a number on every point).
+        var lastX = xs[n - 1], val = style === 'delta' ? '' :
+            '<span class="vlc-val' + (lastX > 93 ? ' at-r' : '') + '" style="left:' + lastX + '%;top:' + ys[n - 1] + '%">' + esc(texts[n - 1]) + '</span>';
+        var data = { y: ys.map(function (y) { return +y.toFixed(3); }), x: xs.map(function (x) { return +x.toFixed(3); }), t: texts, l: lbl };
+        var summary = 'Chart, ' + n + ' points, from ' + fmt(v[0]) + ' to ' + fmt(v[n - 1]) + ', trend ' + (trend === 'up' ? 'rising' : trend === 'down' ? 'falling' : 'sideways');
+        var axis = opts.axis ? '<div class="vlc-x">' + opts.axis.map(function (a) { return '<span>' + esc(a) + '</span>'; }).join('') + '</div>' : '';
+        return '<div class="vlc vlc-s vlc-' + style + ' trend-' + trend + '" role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
+            '<svg class="vlc-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + inner + '</svg>' + dots + val +
+            '<div class="vlc-hover"><i class="vlc-vline"></i><i class="vlc-hdot"></i><span class="vlc-tip"></span></div></div>' + axis;
+    }
+
+    // A tiny line for inside a figure tile: takes the tile's text colour.
+    window.veroSpark = function (vals) {
+        var v = (vals || []).map(function (x) { return Number(x) || 0; }), n = v.length;
+        if (n < 2) return '';
+        var max = Math.max.apply(null, v), min = Math.min.apply(null, v), span = (max - min) || 1;
+        var xs = v.map(function (_, k) { return k / (n - 1) * 100; }), ys = v.map(function (x) { return 26 - (x - min) / span * 22; });
+        var cy = curve(xs, ys), d = '';
+        for (var k = 0; k <= 40; k++) { var x = k / 40 * 100; d += (k ? ' L' : 'M') + x.toFixed(1) + ',' + cy(x).toFixed(1); }
+        return '<svg class="vsp" viewBox="0 -2 100 32" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>';
+    };
+
     // ---- Hover / tap: one delegated handler for every chart on the page ----
     var hideTimer = null;
     function show(chart, clientX) {
@@ -137,6 +224,10 @@
         var f = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
         var i = n <= 1 ? 0 : Math.round(f * (n - 1));
         var x = n <= 1 ? 50 : i / (n - 1) * 100;
+        if (data.x) {   // styles that place points off the even grid (bars, inset dots)
+            var best = 1e9; for (var k = 0; k < n; k++) { var dd = Math.abs(data.x[k] - f * 100); if (dd < best) { best = dd; i = k; } }
+            x = data.x[i];
+        }
         var h = chart.querySelector('.vlc-hover');
         h.querySelector('.vlc-vline').style.left = x + '%';
         var dot = h.querySelector('.vlc-hdot'); dot.style.left = x + '%'; dot.style.top = data.y[i] + '%';

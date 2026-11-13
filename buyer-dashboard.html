@@ -217,8 +217,8 @@ h3, h4, h5, h6, p,
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261011e"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261003e">
-    <script src="assets/line-chart.js?v=20261003e"></script>
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261113f">
+    <script src="assets/line-chart.js?v=20261113f"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
         :root { --dash-gap: 44px; }
@@ -247,7 +247,7 @@ h3, h4, h5, h6, p,
         .hc-range { font-size: 13px !important; letter-spacing: 2px !important; }
     </style>
     <!-- Ledger look shared by both statistics dashboards (assets/dash.css). -->
-    <link rel="stylesheet" href="assets/dash.css?v=20261113b">
+    <link rel="stylesheet" href="assets/dash.css?v=20261113f">
     <link rel="stylesheet" href="assets/area-motion.css?v=20261113b">
     <style>:root { --a-goal-label: 'Budget'; }</style>
 </head>
@@ -541,6 +541,8 @@ h3, h4, h5, h6, p,
             el.classList.add(diff <= 0 ? 'up' : 'down');
         }
         document.getElementById('kTotalTrend').textContent = items.length + ' Deals';
+        const sparkHost = document.querySelector('.grid.g4 .card.dark');
+        const addSpark = vals => { if (sparkHost && window.veroSpark) sparkHost.insertAdjacentHTML('beforeend', '<span class="tile-spark">' + veroSpark(vals) + '</span>'); };
 
         // ---- Monthly spend bars (last 6 months). ----
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -554,8 +556,7 @@ h3, h4, h5, h6, p,
             buckets.push({ label: MONTHS[d.getMonth()], sum: sumBetween(start, end) });
         }
         const maxBucket = Math.max(1, ...buckets.map(b => b.sum));
-        document.getElementById('bars').innerHTML = veroLineChart(buckets.map(b => b.sum),
-            { format: nis, labels: buckets.map(b => b.label), axis: buckets.map(b => b.label) });
+        document.getElementById('bars').innerHTML = veroBars(buckets.map(b => b.sum), { format: nis, labels: buckets.map(b => b.label) });
 
         // ---- Time trends: cumulative spend + items-per-month lines. ----
         const monthCounts = [];
@@ -566,9 +567,10 @@ h3, h4, h5, h6, p,
             monthCounts.push(items.filter(it => tsOf(it) >= start && tsOf(it) < end).reduce((s, it) => s + qtyOf(it), 0));
         }
         const monthSums = buckets.map(b => b.sum);
+        addSpark(monthSums);
         const cumulative = monthSums.reduce((acc, v) => { acc.push((acc[acc.length - 1] || 0) + v); return acc; }, []);
         const labels = buckets.map(b => b.label);
-        document.getElementById('cumChart').innerHTML   = fineCols(cumulative, '#111', nis);
+        document.getElementById('cumChart').innerHTML   = veroLineChart(cumulative, { format: nis, labels: labels, style: 'step' });
         document.getElementById('cumX').innerHTML       = xLabels(labels);
         document.getElementById('itemsChart').innerHTML = veroBars(monthCounts, { labels: labels });
         trendPill(document.getElementById('cumTrend'),   monthSums[L],   (monthSums[L - 1] || 0), false);
@@ -577,7 +579,7 @@ h3, h4, h5, h6, p,
         // ---- Average price per item, month by month. ----
         (function avgPrice() {
             const avg = buckets.map((bk, i) => monthCounts[i] ? bk.sum / monthCounts[i] : 0);
-            document.getElementById('avgChart').innerHTML = veroLineChart(avg, { format: nis, labels: labels });
+            document.getElementById('avgChart').innerHTML = veroLineChart(avg, { format: nis, labels: labels, style: 'dots' });
             document.getElementById('avgX').innerHTML = xLabels(labels);
             trendPill(document.getElementById('avgTrend'), avg[L], (avg[L - 1] || 0), false);
             const paid = items.map(priceOf).filter(v => v > 0);
@@ -686,7 +688,7 @@ h3, h4, h5, h6, p,
             var seedf = function (i) { var x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
 
             // The range's daily totals as a line, oldest → newest.
-            function fineLine(vals) { return veroLineChart(vals, { format: nis }); }
+            function fineLine(vals) { return veroLineChart(vals, { format: nis, style: 'area' }); }
 
             // Build one daily bucket per day in the range (oldest → newest, today last).
             // Week = Sunday → today, Month = the 1st → today, Year = 1 January → today.
