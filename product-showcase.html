@@ -185,7 +185,7 @@
         .details{
             background:#ffffff;
             min-height:100svh;min-height:100vh;
-            padding:calc(var(--hdr-h) + env(safe-area-inset-top,0px) + 40px) 26px 120px;
+            padding:calc(var(--hdr-h) + env(safe-area-inset-top,0px) + 84px) 26px 120px;
             text-align:left;
             scroll-snap-align:start;
             /* three parts — header/description, specs, price+seller — spread down
@@ -210,53 +210,59 @@
         .det-priceline{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
         .det-priceline .det-price{margin-top:0;}
 
-        /* technical spec table — borderless, airy, value left / label right */
-        .spec-table{}
+        /* technical spec table — each row is its own highlighted pill in the
+           product page's own ground colour, with spacing between them */
+        .spec-table{ display:flex; flex-direction:column; gap:18px; }
         .spec-row{
-            display:flex;align-items:baseline;justify-content:space-between;gap:16px;
-            padding:11px 0;
+            display:flex;align-items:center;justify-content:space-between;gap:16px;
+            background:var(--sand); border-radius:0; padding:11px 20px;
         }
         .spec-row .sv{font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--ink);font-weight:400;}
         .spec-row .sk{font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
 
         /* seller row */
         .det-seller{
-            display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-            margin-top:34px;padding-top:22px;border-top:1px solid var(--line);
-            font-size:12.5px;color:#3d382f;
+            display:flex;align-items:center;gap:12px;
+            /* full-bleed black bar flush to the bottom edge: cancel the .details
+               side padding (26px) and bottom padding (120px). */
+            margin:40px -26px -120px;padding:20px 26px calc(20px + env(safe-area-inset-bottom,0px));
+            background:#111;color:#fff;
+            font-size:12.5px;
         }
-        .det-seller .s-label{color:var(--muted);letter-spacing:1px;}
-        .det-seller .s-name{font-weight:400;text-decoration:underline;text-underline-offset:3px;color:var(--ink);}
-        .det-seller .s-rating{margin-inline-start:auto;letter-spacing:2px;color:var(--ink);}
-        .det-seller .s-rating .num{color:var(--muted);letter-spacing:0;font-size:11px;margin-inline-start:3px;}
+        .det-seller .s-avatar{
+            width:44px;height:44px;flex:0 0 auto;border-radius:50%;object-fit:cover;
+            background:#2a2a2a;border:1px solid rgba(255,255,255,.18);
+        }
+        .det-seller .s-info{display:flex;flex-direction:column;gap:3px;min-width:0;}
+        .det-seller .s-label{color:rgba(255,255,255,.5);letter-spacing:1.5px;font-size:9.5px;text-transform:uppercase;}
+        .det-seller .s-name{font-weight:400;text-decoration:underline;text-underline-offset:3px;color:#fff;}
+        .det-seller .s-rating{margin-inline-start:auto;letter-spacing:2px;color:#fff;}
+        .det-seller .s-rating .num{color:rgba(255,255,255,.5);letter-spacing:0;font-size:11px;margin-inline-start:3px;}
 
-        /* ---------- floating dark action pill (only in section 2) ---------- */
+        /* ---------- secondary header — a bar under the topbar with the actions as
+             text labels (matches the personal-area sub-nav) ---------- */
         .action-bar{
-            position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));
-            max-width:452px;margin:0 auto;z-index:60;
-            display:flex;align-items:stretch;direction:ltr;
-            background:rgba(255,255,255,0.86);-webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);border-radius:999px;padding:4px;
-            box-shadow:0 8px 24px rgba(0,0,0,.14);
-            /* hidden until the details section is in view */
-            opacity:0;transform:translateY(140%);pointer-events:none;
-            transition:opacity .3s ease, transform .4s cubic-bezier(.2,.8,.2,1);
+            position:fixed;left:0;right:0;top:calc(var(--hdr-h) + env(safe-area-inset-top,0px));z-index:60;
+            display:flex;align-items:flex-end;justify-content:center;gap:28px;direction:ltr;
+            padding:12px 16px 10px;box-sizing:border-box;overflow-x:auto;scrollbar-width:none;
+            background:rgba(255,255,255,0.94);-webkit-backdrop-filter:saturate(180%) blur(12px);backdrop-filter:saturate(180%) blur(12px);
+            border-bottom:1px solid #ececec;
+            /* hidden until the details section is in view; slides down into place */
+            opacity:0;transform:translateY(-100%);pointer-events:none;
+            transition:opacity .3s ease, transform .45s cubic-bezier(.22,1,.36,1);
         }
+        .action-bar::-webkit-scrollbar{display:none;}
         .action-bar.show{opacity:1;transform:none;pointer-events:auto;}
         .action-item{
-            flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-            position:relative;background:none;border:none;color:#111;cursor:pointer;
-            font-family:inherit;font-size:9px;letter-spacing:.4px;
-            padding:6px;border-radius:999px;white-space:nowrap;transition:opacity .2s;
+            flex:none;position:relative;background:none;border:0;cursor:pointer;white-space:nowrap;
+            color:#8a857c;font-family:inherit;font-weight:600;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;
+            padding:0 2px 11px;border-bottom:2px solid transparent;margin-bottom:-1px;
+            transition:color .2s,border-color .2s;
         }
-        .action-item:active{opacity:.55;}
-        .action-item svg{width:18px;height:18px;stroke:#111;stroke-width:1.25;fill:none;}
-        .action-item + .action-item::before{
-            content:"";position:absolute;inset-inline-start:0;top:22%;height:56%;width:1px;background:rgba(0,0,0,.12);
-        }
-        .action-item.primary{background:#111;color:#fff;}
-        .action-item.primary svg{stroke:#fff;}
-        .action-item.primary + .action-item::before,.action-item.primary::before{display:none;}
-        .action-item.wish.active svg{fill:#111;}
+        .action-item svg{display:none;}
+        .action-item:hover{color:#1b1916;}
+        .action-item.primary{color:#1b1916;border-bottom-color:#1b1916;}
+        .action-item.wish.active{color:#1b1916;}
 
         /* ---------- overlays / popups (unchanged) ---------- */
         /* ---------- dark glass-morphism popups ---------- */
@@ -397,8 +403,11 @@ h3, h4, h5, h6, p,
                 <button class="hp-offer" onclick="openSheet('offerSheet')">Make an offer</button>
             </div>
             <div class="det-seller">
-                <span class="s-label">Seller:</span>
-                <a class="s-name" id="sellerName" href="#">moravchick</a>
+                <img class="s-avatar" id="sellerAvatar" alt="" />
+                <div class="s-info">
+                    <span class="s-label">Seller</span>
+                    <a class="s-name" id="sellerName" href="#">moravchick</a>
+                </div>
                 <span class="s-rating" id="sellerRating"></span>
             </div>
         </div>
@@ -532,6 +541,20 @@ h3, h4, h5, h6, p,
             String(label || 'MORAVCHICK').toUpperCase().replace(/[<>&]/g, '') + "</text></svg>";
         return 'data:image/svg+xml,' + encodeURIComponent(svg);
     }
+
+    // A circular seller avatar placeholder: the seller's initial on a dark
+    // disc, legible against the black seller card.
+    function avatarPlaceholder(name) {
+        var ch = (String(name || 'M').trim()[0] || 'M').toUpperCase().replace(/[<>&]/g, '');
+        var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'>" +
+            "<defs><linearGradient id='av' x1='0' y1='0' x2='0' y2='1'>" +
+            "<stop offset='0' stop-color='#4a4a4a'/><stop offset='1' stop-color='#262626'/>" +
+            "</linearGradient></defs>" +
+            "<rect width='96' height='96' fill='url(#av)'/>" +
+            "<text x='48' y='63' text-anchor='middle' font-family='Poppins,Arial,sans-serif' " +
+            "font-size='42' font-weight='400' fill='#eceae6'>" + ch + "</text></svg>";
+        return 'data:image/svg+xml,' + encodeURIComponent(svg);
+    }
     const photoObj = product.photos || {};
     const uploaded = ['cover', 'detail', 'label', 'angle'].map(k => photoObj[k]).filter(Boolean);
     const cover = product.processed_cover || product.image || product.cover
@@ -635,6 +658,14 @@ h3, h4, h5, h6, p,
     const sLink = document.getElementById('sellerName');
     sLink.textContent = sellerName;
     sLink.href = `index.html?seller=${encodeURIComponent(sellerName)}`;
+    // Seller profile circle — a real photo if the product carries one,
+    // otherwise an initial on a dark circle that sits on the black card.
+    const sAvatar = document.getElementById('sellerAvatar');
+    if (sAvatar) {
+        const sellerPhoto = product.sellerPhoto || product.sellerAvatar || product.sellerIcon || product.storeLogo || null;
+        sAvatar.src = sellerPhoto || avatarPlaceholder(sellerName);
+        sAvatar.alt = sellerName;
+    }
     const stars = '★'.repeat(Math.floor(rating)) + (rating%1>=0.5?'☆':'');
     document.getElementById('sellerRating').innerHTML = `${stars} <span class="num">${rating.toFixed(1)}</span>`;
 

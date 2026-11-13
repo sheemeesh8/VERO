@@ -18,14 +18,8 @@
 
 	// Centre tile reuses the hero video; the six outer circles are category
 	// shortcuts, each with a caption and a link to the relevant page.
-	var OUTER = [
-		{ src: 'magazine-hero.jpg',  label: 'Magazine',          href: 'category.html?cat=magazine' },
-		{ src: 'clothing-hero.jpg',  label: 'Autumn Collection', href: 'category.html?cat=autumn' },
-		{ src: 'women-hero.jpg',     label: 'Gender',            href: 'category.html?cat=gender' },
-		{ src: 'sale-hero.jpg',      label: 'Sale',              href: 'category.html?cat=sale' },
-		{ src: 'gallery-hero.jpg',   label: 'New In',            href: 'category.html?cat=new' },
-		{ src: 'art-hero.jpg',       label: 'Events',            href: 'category.html?cat=events' }
-	];
+	// Category circles removed — only the central hero tile (a growing rectangle).
+	var OUTER = [];
 
 	// ---- Build the stage ---------------------------------------------------
 	var existingVideo = hero.querySelector('.hero-video');
@@ -76,6 +70,8 @@
 	var tiles = [].slice.call(stage.querySelectorAll('.zp-tile'));
 	var copy = hero.querySelector('.hero-copy');
 	var cue = hero.querySelector('.hero-scroll-cue');
+	var endcap = hero.querySelector('.zp-endcap');
+	var band = hero.querySelector('.home-intro');
 
 	// ---- Click a circle -> open it with the hero's zoom, then navigate ------
 	var transitioning = false;
@@ -135,21 +131,21 @@
 		// Size the whole collage so it always fits the viewport — both width and
 		// height — whatever the aspect ratio (fixes overflow on wide/landscape).
 		var k = Math.min(winW * 0.40, winH * 0.28);
-		var ring = k;                  // distance centre -> outer circle
-		var centreD = k;               // centre circle diameter
-		var outerD = k * 0.62;         // outer circle diameter
-		var outerRadius = outerD / 2;
-		var outerIndex = 0;
+		var ring = k, outerD = k * 0.62, outerRadius = outerD / 2, outerIndex = 0; // (unused; no outer tiles)
 
-		// Apply the computed sizes to the tiles (overrides the CSS defaults).
+		// Centre hero is a narrow, tall rectangle (sharp corners) that grows to fill.
+		var centreW = Math.min(winW * 0.60, winH * 0.40);
+		var centreH = Math.min(centreW * 1.75, winH * 0.82);
+		var centreD = Math.min(centreW, centreH);  // used for the scale math below
+
+		// Apply the computed size to the centre tile (overrides the CSS default).
 		for (var t = 0; t < tiles.length; t++) {
-			var sz = tiles[t].getAttribute('data-zp') === '0' ? centreD : outerD;
-			tiles[t].style.width = sz.toFixed(1) + 'px';
-			tiles[t].style.height = sz.toFixed(1) + 'px';
+			tiles[t].style.width = centreW.toFixed(1) + 'px';
+			tiles[t].style.height = centreH.toFixed(1) + 'px';
 		}
 
-		// Centre's final scale: grow until it fully covers the viewport (full-screen).
-		var centreMax = (Math.max(winW, winH) / centreD) * 1.04;
+		// Grow until the rectangle fully covers the viewport on both axes.
+		var centreMax = Math.max(winW / centreW, winH / centreH) * 1.06;
 
 		// Ease the growth in (p² ) so the first slice of scroll barely changes the
 		// resting ring. This keeps the clean collage stable while the welcome copy
@@ -171,8 +167,8 @@
 			tile.style.setProperty('--zp-s', String(s));
 
 			if (isCentre) {
-				// Centre starts as a circle and squares off completely as it grows.
-				tile.style.setProperty('--zp-r', (50 - 50 * clamp(pz * 1.2, 0, 1)) + '%');
+				// Sharp-cornered rectangle throughout.
+				tile.style.setProperty('--zp-r', '0px');
 				tile.style.setProperty('--zp-tx', '0px');
 				// Offset is multiplied by scale in CSS, so divide to keep it in px.
 				tile.style.setProperty('--zp-ty', (cy * (1 - pz) / s).toFixed(2) + 'px');
@@ -213,6 +209,18 @@
 			caps[c].style.opacity = capFade;
 			caps[c].style.pointerEvents = capFade > 0.6 ? 'auto' : 'none';
 		}
+
+		// End-of-zoom caption + Discover button: fade in once the hero has nearly
+		// grown to full-screen (last third of the scroll track).
+		if (endcap) {
+			var endOp = clamp((p - 0.62) / 0.3, 0, 1);
+			endcap.style.opacity = endOp;
+			endcap.style.pointerEvents = endOp > 0.5 ? 'auto' : 'none';
+		}
+		// The white band (search + Most liked slider) slides up with the caption.
+		if (band) band.classList.toggle('revealed', p > 0.72);
+		// The site header slides in together with the caption/band.
+		document.body.classList.toggle('zp-head-in', p > 0.68);
 	}
 
 	var ticking = false;
