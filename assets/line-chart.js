@@ -258,7 +258,7 @@
      el.innerHTML = veroDonut([{ label, value }, …], { format, center, centerLabel });
        A ring split by share, the total in the middle, a legend beneath.
 
-     el.innerHTML = veroBars(values, { format, labels });
+     el.innerHTML = veroBars(values, { format, labels, mark });
        Thin rounded columns, oldest → newest; the value sits on each column
        and the newest column takes the trend colour.
 ------------------------------------------------------------------ */
@@ -302,10 +302,11 @@
         var max = Math.max.apply(null, v) || 1;
         var tone = window.veroTrendColor ? window.veroTrendColor(v) : '#16150f';
         var cols = v.map(function (x, i) {
-            var h = Math.max(2, x / max * 100), last = i === v.length - 1;
+            // The dark column is the newest one, or the tallest with { mark: 'max' } (e.g. weekdays).
+            var h = Math.max(2, x / max * 100), last = opts.mark === 'max' ? i === v.indexOf(max) : i === v.length - 1;
             return '<div class="vbr-col' + (last ? ' is-last' : '') + '">' +
                 '<span class="vbr-val">' + esc(fmt(x)) + '</span>' +
-                '<span class="vbr-bar" style="height:' + h.toFixed(1) + '%;' + (last ? 'background:' + tone + ';' : '') +
+                '<span class="vbr-bar" style="height:' + h.toFixed(1) + '%;' + (last && opts.mark !== 'max' ? 'background:' + tone + ';' : '') +
                 'animation-delay:' + (i * 0.05).toFixed(2) + 's"></span>' +
                 (opts.labels ? '<span class="vbr-lbl">' + esc(opts.labels[i] || '') + '</span>' : '') + '</div>';
         }).join('');

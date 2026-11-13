@@ -217,8 +217,8 @@ h3, h4, h5, h6, p,
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261011e"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261113f">
-    <script src="assets/line-chart.js?v=20261113f"></script>
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261113g">
+    <script src="assets/line-chart.js?v=20261113g"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
         :root { --dash-gap: 44px; }
@@ -247,7 +247,7 @@ h3, h4, h5, h6, p,
         .hc-range { font-size: 13px !important; letter-spacing: 2px !important; }
     </style>
     <!-- Ledger look shared by both statistics dashboards (assets/dash.css). -->
-    <link rel="stylesheet" href="assets/dash.css?v=20261113f">
+    <link rel="stylesheet" href="assets/dash.css?v=20261113g">
     <link rel="stylesheet" href="assets/area-motion.css?v=20261113b">
     <style>:root { --a-goal-label: 'Budget'; }</style>
 </head>
@@ -352,6 +352,17 @@ h3, h4, h5, h6, p,
             </div>
         </div>
 
+        <!-- ===== MONTH-OVER-MONTH CHANGE ===== -->
+        <div class="card">
+            <div class="card-h">
+                <div class="card-t">Change from month to month</div>
+                <span class="trend-pill" id="momTrend"></span>
+            </div>
+            <div class="card-d">How much more or less you spent than the month before</div>
+            <div id="momChart"></div>
+            <div class="lc-x" id="momX"></div>
+        </div>
+
         <!-- ===== BY SELLER ===== -->
         <div class="sec-title">Where you spent the most</div>
         <div class="card">
@@ -369,6 +380,17 @@ h3, h4, h5, h6, p,
             <div class="lc-x" id="cumX"></div>
         </div>
 
+        <!-- ===== AGAINST THE START OF THE YEAR ===== -->
+        <div class="card">
+            <div class="card-h">
+                <div class="card-t">Against the start of the year</div>
+                <span class="trend-pill" id="baseTrend"></span>
+            </div>
+            <div class="card-d">Each month compared with January: green above it, red below</div>
+            <div id="baseChart"></div>
+            <div class="lc-x" id="baseX"></div>
+        </div>
+
         <!-- ===== RECENT ===== -->
         <div class="sec-title">Recent purchases</div>
         <div class="card">
@@ -384,6 +406,16 @@ h3, h4, h5, h6, p,
             <div class="card-d">Number of purchases each month</div>
             <div id="itemsChart"></div>
                     </div>
+
+        <!-- ===== BY WEEKDAY ===== -->
+        <div class="card">
+            <div class="card-h">
+                <div class="card-t">Spending by weekday</div>
+            </div>
+            <div class="card-d">Which days you tend to buy on</div>
+            <div id="wdayChart"></div>
+            <div class="gstats" id="wdayStats"></div>
+        </div>
 
         <!-- ===== ACTIVITY ===== -->
         <div class="sec-title">Activity</div>
@@ -575,6 +607,22 @@ h3, h4, h5, h6, p,
         document.getElementById('itemsChart').innerHTML = veroBars(monthCounts, { labels: labels });
         trendPill(document.getElementById('cumTrend'),   monthSums[L],   (monthSums[L - 1] || 0), false);
         trendPill(document.getElementById('itemsTrend'), monthCounts[L], (monthCounts[L - 1] || 0), false);
+
+        // ---- Added charts: change per month, months against January, spend by weekday. ----
+        (function moreCharts() {
+            document.getElementById('momChart').innerHTML = veroLineChart(monthSums, { format: nis, labels: labels, style: 'delta' });
+            document.getElementById('momX').innerHTML = xLabels(labels);
+            trendPill(document.getElementById('momTrend'), monthSums[L], (monthSums[L - 1] || 0), false);
+            document.getElementById('baseChart').innerHTML = veroLineChart(monthSums, { format: nis, labels: labels, style: 'baseline' });
+            document.getElementById('baseX').innerHTML = xLabels(labels);
+            trendPill(document.getElementById('baseTrend'), monthSums[L], monthSums[0], false);
+            const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], byDay = [0, 0, 0, 0, 0, 0, 0];
+            items.forEach(it => { byDay[new Date(tsOf(it)).getDay()] += priceOf(it); });
+            document.getElementById('wdayChart').innerHTML = veroBars(byDay, { format: nis, labels: DAYS, mark: 'max' });
+            const hi = byDay.indexOf(Math.max(...byDay)), lo = byDay.indexOf(Math.min(...byDay));
+            document.getElementById('wdayStats').innerHTML = [[DAYS[hi], 'Busiest day'], [nis(byDay[hi]), 'Spent that day'], [DAYS[lo], 'Quietest day'], [nis(byDay[lo]), 'Spent that day']]
+                .map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join('');
+        })();
 
         // ---- Average price per item, month by month. ----
         (function avgPrice() {

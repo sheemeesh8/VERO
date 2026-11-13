@@ -478,8 +478,8 @@ h3, h4, h5, h6, p,
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261011e"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261113f">
-    <script src="assets/line-chart.js?v=20261113f"></script>
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261113g">
+    <script src="assets/line-chart.js?v=20261113g"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
         :root { --dash-gap: 44px; }
@@ -534,7 +534,7 @@ h3, h4, h5, h6, p,
         .hc-range { font-size: 13px !important; letter-spacing: 2px !important; }
     </style>
     <!-- Ledger look shared by both statistics dashboards (assets/dash.css). -->
-    <link rel="stylesheet" href="assets/dash.css?v=20261113f">
+    <link rel="stylesheet" href="assets/dash.css?v=20261113g">
     <link rel="stylesheet" href="assets/area-motion.css?v=20261113b">
 </head>
 <body>
@@ -677,6 +677,18 @@ h3, h4, h5, h6, p,
                         <div class="gstats" id="soldStats"></div>
         </div>
 
+        <!-- Total revenue building up through the year. -->
+        <div class="card">
+            <div class="card-h">
+                <div class="card-t">Cumulative revenue</div>
+                <span class="trend-pill" id="runRevTrend"></span>
+            </div>
+            <div class="card-d">Your running total since 1 January</div>
+            <div id="runRevChart"></div>
+            <div class="lc-x" id="runRevX"></div>
+            <div class="gstats" id="runRevStats"></div>
+        </div>
+
         <div class="sec-title">Sales history</div>
         <div class="po-tabs sh-tabs" id="shTabs">
             <button type="button" class="po-tab" data-range="week">Week</button>
@@ -716,6 +728,16 @@ h3, h4, h5, h6, p,
             <div id="avgSaleChart"></div>
             <div class="lc-x" id="avgSaleX"></div>
             <div class="gstats" id="avgSaleStats"></div>
+        </div>
+
+        <!-- Sales by weekday. -->
+        <div class="card">
+            <div class="card-h">
+                <div class="card-t">Sales by weekday</div>
+            </div>
+            <div class="card-d">Which days your items sell on</div>
+            <div id="wdayChart"></div>
+            <div class="gstats" id="wdayStats"></div>
         </div>
 
         <!-- Revenue by brand. -->
@@ -760,6 +782,18 @@ h3, h4, h5, h6, p,
                     <div class="gslider-dots"><span class="on"></span><span></span></div>
                 </div>
             </div>
+        </div>
+
+        <!-- New followers, month by month. -->
+        <div class="card">
+            <div class="card-h">
+                <div class="card-t">New followers</div>
+                <span class="trend-pill" id="newFolTrend"></span>
+            </div>
+            <div class="card-d">How many followers each month added or lost against the one before</div>
+            <div id="newFolChart"></div>
+            <div class="lc-x" id="newFolX"></div>
+            <div class="gstats" id="newFolStats"></div>
         </div>
 
         <!-- Product views ranking + reach. -->
@@ -1717,6 +1751,19 @@ h3, h4, h5, h6, p,
             gset('avgSaleStats', [[nis(sold.length ? revenue / sold.length : 0), 'Overall'], [nis(avg[L]), 'This month'],
                                   [nis(prices.length ? Math.max(...prices) : 0), 'Top sale'], [nis(prices.length ? Math.min(...prices) : 0), 'Lowest sale']]);
 
+            // Added: the running revenue total, and sales by weekday.
+            const cum = buckets.reduce((acc, b) => { acc.push((acc[acc.length - 1] || 0) + b.sum); return acc; }, []);
+            document.getElementById('runRevChart').innerHTML = veroLineChart(cum, { format: nis, labels: labels, style: 'step' });
+            document.getElementById('runRevX').innerHTML = xLabels(labels);
+            trendPill(document.getElementById('runRevTrend'), buckets[L].sum, (buckets[L - 1] || {}).sum || 0);
+            gset('runRevStats', [[nis(cum[L]), 'Year to date'], [nis(cum[L] / NM), 'Per month'],
+                                 [nis(buckets[L].sum), 'Added this month'], [nis(cum[L] / NM * 12), 'On pace for the year']]);
+            const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], byDay = [0, 0, 0, 0, 0, 0, 0];
+            sold.forEach(p => { byDay[new Date(Number(p.soldAt || p.createdAt) || Date.now()).getDay()]++; });
+            document.getElementById('wdayChart').innerHTML = veroBars(byDay, { format: fmtN, labels: DAYS, mark: 'max' });
+            const hi = byDay.indexOf(Math.max(...byDay)), lo = byDay.indexOf(Math.min(...byDay));
+            gset('wdayStats', [[DAYS[hi], 'Best day'], [fmtN(byDay[hi]), 'Sales that day'], [DAYS[lo], 'Quietest day'], [fmtN(byDay[lo]), 'Sales that day']]);
+
             const byBrand = {};
             sold.forEach(p => { const b = p.brand || p.seller || 'Other'; byBrand[b] = (byBrand[b] || 0) + priceOf(p.price); });
             const rows = Object.entries(byBrand).sort((a, b) => b[1] - a[1]).slice(0, 5);
@@ -1730,6 +1777,15 @@ h3, h4, h5, h6, p,
         (function growthExtras() {
             const gset = (id, items) => { const el = document.getElementById(id); if (el) el.innerHTML = items.map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join(''); };
             const fmtN = v => Math.round(v).toLocaleString('en-US');
+            // Added: followers gained each month (the change in the follower line).
+            document.getElementById('newFolChart').innerHTML = veroLineChart(followerSeries, { format: fmtN, labels: labels, style: 'delta' });
+            document.getElementById('newFolX').innerHTML = xLabels(labels);
+            const gains = followerSeries.map((v, i) => i ? v - followerSeries[i - 1] : 0).slice(1);
+            trendPill(document.getElementById('newFolTrend'), gains[gains.length - 1], gains[gains.length - 2] || 0);
+            const sg = n => (n >= 0 ? '+' : '−') + fmtN(Math.abs(n));
+            gset('newFolStats', [[sg(gains[gains.length - 1] || 0), 'This month'], [sg(Math.max(...gains)), 'Best month'],
+                                 [sg(gains.reduce((a, b) => a + b, 0) / (gains.length || 1)), 'Monthly average'], [fmtN(followerSeries[followerSeries.length - 1]), 'Followers now']]);
+
             // Product views: a level series that ends on today's total.
             const pv = growthSeries(productViews, NM, 13);
             document.getElementById('pvChart').innerHTML = veroLineChart(pv, { group: 'last', format: fmtN, labels: labels, style: 'step' });
