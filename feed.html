@@ -82,23 +82,23 @@
         /* ===== Gender vertical accordion — 4 equal full-width rectangles stacked,
                  with a thin divider between them; tapping one expands it to reveal
                  its full video, the rest shrink. ===== */
-        #genderCover { position: relative; margin: 0 -20px 8px; }
+        #genderCover { position: relative; margin: 0 -20px 0; }
         #genderCover .gc-head { font-family: 'Poppins','Inter',sans-serif; font-weight: 300; letter-spacing: 0.01em; font-size: 15px; color: #111; text-align: center; margin: 0 0 2px; }
         #genderCover .gc-sub { font-family: 'Poppins','Inter',sans-serif; font-weight: 400; font-size: 12px; color: #6b6a64; text-align: center; margin: 0 0 8px; min-height: 16px; }
-        /* Thin light gaps show the page behind, so each panel reads as its own rectangle. */
-        #genderCover .gc-accordion { display: flex; flex-direction: column; gap: 2px;
-            padding: 0; height: min(80svh, 680px); background: #e9e7e2; }
-        /* Resting state: every panel is an equal white rectangle (flex: 1).
-           Unselected panels stay plain white with a black label; only the chosen
-           one reveals its video. */
-        #genderCover .gc-card { position: relative; flex: 1 1 0%; min-height: 0; overflow: hidden;
+        /* Two rows of two upright rectangles — Men, Women over Unisex, Kids — edge
+           to edge with no gaps; a hairline drawn inside each panel tells them apart. */
+        #genderCover .gc-accordion { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0;
+            padding: 0; height: min(calc(100svh - 64px), 820px); background: #fff;
+            transition: grid-template-columns .6s cubic-bezier(.45,0,.1,1), grid-template-rows .6s cubic-bezier(.45,0,.1,1); }
+        /* Resting state: four equal white rectangles with a black label; only the
+           chosen one reveals its video. */
+        #genderCover .gc-card { position: relative; min-width: 0; min-height: 0; overflow: hidden;
             border-radius: 0; background: #fff; cursor: pointer; outline: none; padding: 0;
             border: 0; text-align: left; -webkit-tap-highlight-color: transparent;
-            transition: flex-grow .6s cubic-bezier(.45,0,.1,1);
-            will-change: flex-grow; }
-        /* Once a panel is chosen, it grows large and the others shrink. */
-        #genderCover .gc-accordion.has-active .gc-card { flex-grow: 0.42; }
-        #genderCover .gc-accordion.has-active .gc-card.is-active { flex-grow: 3.6; cursor: default; }
+            box-shadow: inset 0 0 0 0.5px #dcd9d2; }
+        #genderCover .gc-card.is-active { cursor: default; box-shadow: none; }
+        /* Once a panel is chosen, its column and row grow and the others shrink
+           (the script sets the grid tracks). */
         /* The video is hidden on unselected panels (plain white), shown on the active one. */
         /* Resting: the media waits off-screen to the left, ready to slide in. */
         #genderCover .gc-card img, #genderCover .gc-card video { position: absolute; inset: 0; width: 100%; height: 100%;
@@ -116,12 +116,14 @@
         #genderCover .gc-card.is-active::after {
             background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.08) 45%, rgba(0,0,0,0.58) 100%); }
         /* Caption pinned bottom-left — black on the white panels, white over the video. */
-        #genderCover .gc-cap { position: absolute; left: 18px; right: 18px; bottom: 16px; z-index: 2;
+        #genderCover .gc-cap { position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 2;
             display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; pointer-events: none; }
         #genderCover .gc-name { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800;
             text-transform: uppercase; letter-spacing: -0.3px; color: #111; line-height: 1;
             font-size: clamp(18px, 5vw, 24px); transition: color .4s ease, font-size .5s cubic-bezier(.45,0,.1,1); }
         #genderCover .gc-card.is-active .gc-name { color: #fff; font-size: clamp(30px, 9vw, 44px); }
+        /* Shrunk panels beside an open one: a smaller label so names never touch. */
+        #genderCover .gc-accordion.has-active .gc-card:not(.is-active) .gc-name { font-size: 14px; }
         #genderCover .gc-shop { pointer-events: auto; opacity: 0; transform: translateY(6px);
             font-family: 'Arimo','Inter',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
             color: #fff; border: 0; border-bottom: 1px solid #fff; padding: 0 0 2px; background: none;
@@ -260,10 +262,10 @@
 
         @media (min-width: 560px) {
             .feed-grid { grid-template-columns: repeat(3, 1fr); }
-            #genderCover .gc-accordion { height: min(70svh, 600px); }
+            #genderCover .gc-accordion { height: min(calc(100svh - 64px), 760px); }
         }
         @media (prefers-reduced-motion: reduce) {
-            #genderCover .gc-card, #genderCover .gc-card img, #genderCover .gc-card video,
+            #genderCover .gc-accordion, #genderCover .gc-card, #genderCover .gc-card img, #genderCover .gc-card video,
             #genderCover .gc-name, #genderCover .gc-shop { transition: none !important; }
         }
 
@@ -441,14 +443,14 @@
             <div id="genderCover" role="region" aria-label="Choose by category">
                 <p class="gc-head">Choose by category</p>
                 <p class="gc-sub" aria-live="polite">Tap a category to explore</p>
-                <div class="gc-accordion" role="tablist" aria-orientation="vertical">
-                    <button type="button" class="gc-card" role="tab" aria-selected="false" data-gender="women" data-name="Women" data-sub="Women's collection">
-                        <video class="gc-media" src="assets/hero/hero-clothing.mp4" poster="assets/hero/women-editorial.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-                        <span class="gc-cap"><span class="gc-name">Women</span><span class="gc-shop">Shop Women</span></span>
-                    </button>
+                <div class="gc-accordion" role="tablist">
                     <button type="button" class="gc-card" role="tab" aria-selected="false" data-gender="men" data-name="Men" data-sub="Men's collection">
                         <video class="gc-media" src="assets/hero/men.mp4" poster="men-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
                         <span class="gc-cap"><span class="gc-name">Men</span><span class="gc-shop">Shop Men</span></span>
+                    </button>
+                    <button type="button" class="gc-card" role="tab" aria-selected="false" data-gender="women" data-name="Women" data-sub="Women's collection">
+                        <video class="gc-media" src="assets/hero/hero-clothing.mp4" poster="assets/hero/women-editorial.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+                        <span class="gc-cap"><span class="gc-name">Women</span><span class="gc-shop">Shop Women</span></span>
                     </button>
                     <button type="button" class="gc-card" role="tab" aria-selected="false" data-gender="unisex" data-name="Unisex" data-sub="Unisex collection">
                         <video class="gc-media" src="assets/hero/unisex.mp4" poster="hero-beach.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
@@ -913,6 +915,13 @@
         if (!count) return;
         var sub = root.querySelector('.gc-sub');
         var selected = -1;
+        // 2 x 2 grid: the chosen panel's column and row take most of the space.
+        function layout() {
+            if (!accordion) return;
+            var big = '3fr', small = '1fr';
+            accordion.style.gridTemplateColumns = selected < 0 ? '' : (selected % 2 === 0 ? big + ' ' + small : small + ' ' + big);
+            accordion.style.gridTemplateRows    = selected < 0 ? '' : (selected < 2 ? big + ' ' + small : small + ' ' + big);
+        }
 
         function setActive(i, announce) {
             if (i < 0 || i >= count) return;
@@ -921,6 +930,7 @@
             selected = i;
             // First selection turns the equal rectangles into the accordion.
             if (accordion) accordion.classList.add('has-active');
+            layout();
             var card = cards[i];
             var nm = card.getAttribute('data-name') || '';
             if (sub) sub.textContent = card.getAttribute('data-sub') || nm;
@@ -965,6 +975,7 @@
             pc._leaveT = setTimeout(function () { pc.classList.remove('is-leaving'); }, 750);
             var v = pc.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} }
             if (accordion) accordion.classList.remove('has-active');
+            layout();
             if (sub) sub.textContent = restSub;
         }
 
