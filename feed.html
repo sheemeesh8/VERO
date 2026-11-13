@@ -78,7 +78,7 @@
         .feed-banner .fb-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         /* ===== Gender coverflow carousel (ported 1:1 from the old home) ===== */
-        #genderCover { position: relative; width: calc(100% + 40px); margin: 0 -20px 8px; --gc-card-w: 75vw; --gc-card-h: 50vh; --gc-stage-h: calc(100svh - 56px); }
+        #genderCover { position: relative; width: calc(100% + 40px); margin: 0 -20px 8px; --gc-box-w: 72vw; --gc-box-h: 46vh; --gc-stage-h: calc(100svh - 56px); }
         #genderCover .gc-head { position: absolute; top: 24px; left: 20px; width: 22vw; z-index: 5; font-family: 'Poppins','Inter',sans-serif; font-weight: 400; letter-spacing: 0.01em; font-size: 12px; line-height: 1.35; color: #111; text-align: left; margin: 0; }
         #genderCover .gc-sub { position: absolute; top: 52px; left: 20px; width: 22vw; z-index: 5; font-family: 'Poppins','Inter',sans-serif; font-weight: 400; font-size: 11px; line-height: 1.35; color: #6b6a64; text-align: left; margin: 0; min-height: 15px; }
         #genderCover .gc-rel { position: relative; }
@@ -87,7 +87,7 @@
         #genderCover .gc-stage { position: relative; height: var(--gc-stage-h); transform-style: preserve-3d; }
         /* Cards are stacked full-bleed; only the active one is revealed, via a
            two-phase clip-path open (full width first, then full height). */
-        #genderCover .gc-card { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #000; opacity: 0; clip-path: inset(50% 50% 50% 50%); will-change: clip-path, opacity; }
+        #genderCover .gc-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: var(--gc-box-w); height: var(--gc-box-h); overflow: hidden; background: #000; opacity: 0; clip-path: inset(50% 50% 50% 50%); will-change: clip-path, width, height; }
         #genderCover .gc-card img, #genderCover .gc-card video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; user-select: none; pointer-events: none; }
         #genderCover .gc-cap { display: flex; flex-direction: column; align-items: center; margin-top: 2px; }
         #genderCover .gc-cap .gc-name { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: -0.3px; color: #111; }
@@ -762,22 +762,42 @@
         function paint() {}
 
         var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var openTimer = null;
-        // Two-phase open: collapse to the centre, grow to full WIDTH, then — once
-        // the width has opened — grow to full HEIGHT, and stay open (full-screen).
+        var openTimers = [];
+        function clearOpen() { openTimers.forEach(clearTimeout); openTimers = []; }
+        // Two-STAGE open:
+        //  1) the card opens *within its own rectangle* (reveal to full width,
+        //     then full height, at its small resting box size);
+        //  2) once the rectangle's area is filled, the rectangle itself GROWS to
+        //     full screen — and stays open.
         function openCard(card) {
-            if (openTimer) { clearTimeout(openTimer); openTimer = null; }
+            clearOpen();
             card.style.opacity = '1';
-            if (reduceMotion) { card.style.transition = 'none'; card.style.clipPath = 'inset(0% 0% 0% 0%)'; return; }
+            if (reduceMotion) {
+                card.style.transition = 'none';
+                card.style.width = '100%'; card.style.height = '100%';
+                card.style.clipPath = 'inset(0% 0% 0% 0%)';
+                return;
+            }
+            // Reset to the small, collapsed rectangle.
             card.style.transition = 'none';
+            card.style.width = 'var(--gc-box-w)';
+            card.style.height = 'var(--gc-box-h)';
             card.style.clipPath = 'inset(50% 50% 50% 50%)';
             void card.offsetWidth; // reflow so the next change animates
-            card.style.transition = 'clip-path .42s cubic-bezier(.22,.61,.36,1)';
-            card.style.clipPath = 'inset(50% 0% 50% 0%)';        // full width, zero height
-            openTimer = setTimeout(function () {
-                card.style.transition = 'clip-path .5s cubic-bezier(.22,.61,.36,1)';
-                card.style.clipPath = 'inset(0% 0% 0% 0%)';       // then full height
-            }, 440);
+            // Stage 1a — reveal to full WIDTH inside the rectangle.
+            card.style.transition = 'clip-path .32s ease';
+            card.style.clipPath = 'inset(50% 0% 50% 0%)';
+            // Stage 1b — then full HEIGHT, filling the rectangle's whole area.
+            openTimers.push(setTimeout(function () {
+                card.style.transition = 'clip-path .32s ease';
+                card.style.clipPath = 'inset(0% 0% 0% 0%)';
+            }, 340));
+            // Stage 2 — the filled rectangle grows to full screen, and stays.
+            openTimers.push(setTimeout(function () {
+                card.style.transition = 'width .52s cubic-bezier(.22,.61,.36,1), height .52s cubic-bezier(.22,.61,.36,1)';
+                card.style.width = '100%';
+                card.style.height = '100%';
+            }, 700));
         }
         function render() {
             var a = indexAt(target); selected = a;
@@ -792,10 +812,12 @@
                 if (i === a) {
                     c.style.zIndex = '50';
                 } else {
-                    // Snap every other card shut and behind the active one.
+                    // Snap every other card shut (small box) and behind the active one.
                     c.style.zIndex = '1';
                     c.style.transition = 'none';
                     c.style.opacity = '0';
+                    c.style.width = 'var(--gc-box-w)';
+                    c.style.height = 'var(--gc-box-h)';
                     c.style.clipPath = 'inset(50% 50% 50% 50%)';
                 }
                 var v = c.querySelector('video'); if (!v) return;
