@@ -25,10 +25,12 @@
         #siteHeader { position: fixed !important; transform: none !important; }
 
         /* ===== Gender category sub-header — a small bar under the main header ===== */
+        /* Not in flow under the slider — a fixed second header, shown only once
+           the hero is crossed (toggled via .is-hero below). */
         .feed-subnav {
-            position: sticky; top: 64px; z-index: 98;
+            position: fixed; top: 64px; left: 0; right: 0; z-index: 98;
             display: flex; justify-content: center; gap: 30px; align-items: flex-end;
-            margin: 16px -20px 2px; padding: 12px 16px 10px; overflow-x: auto; scrollbar-width: none;
+            margin: 0; padding: 12px 16px 10px; overflow-x: auto; scrollbar-width: none;
             background: rgba(255,255,255,0.94);
             -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px);
             border-bottom: 1px solid #ececec;
@@ -459,7 +461,7 @@
 
             <!-- Gender sub-header — sits under the slider, then docks under the
                  main header on scroll (sticky). Synced to the slider. -->
-            <nav class="feed-subnav" id="feedSubnav" aria-label="Shop by gender">
+            <nav class="feed-subnav is-hero" id="feedSubnav" aria-label="Shop by gender">
                 <button type="button" class="fsn-item" data-gender="women">Women</button>
                 <button type="button" class="fsn-item" data-gender="men">Men</button>
                 <button type="button" class="fsn-item" data-gender="unisex">Unisex</button>
@@ -880,6 +882,17 @@
         window.addEventListener('resize', placeSubnav);
         if (window.ResizeObserver) { var he = document.getElementById('siteHeader'); if (he) { try { new ResizeObserver(placeSubnav).observe(he); } catch (e) {} } }
         var pt = 0; (function settleSub() { placeSubnav(); if (++pt < 30) setTimeout(settleSub, 120); })();
+
+        // Show the second header only once the hero has been crossed; keep it
+        // hidden (off, out of the way) while the hero is still in view.
+        function updateSubnavDock() {
+            if (!subnav) return;
+            var passed = (typeof window.veroHeroPassed === 'function') ? window.veroHeroPassed() : (window.scrollY > 80);
+            subnav.classList.toggle('is-hero', !passed);
+        }
+        window.addEventListener('scroll', updateSubnavDock, { passive: true });
+        window.addEventListener('resize', updateSubnavDock);
+        updateSubnavDock();
 
         syncSubnav();
         buildStructured();
