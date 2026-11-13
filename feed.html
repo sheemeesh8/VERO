@@ -935,6 +935,24 @@
             }
         }
 
+        var restSub = sub ? sub.textContent : '';
+
+        // Collapse back to the resting four equal rectangles: the open panel
+        // slides its media out the far side and the accordion returns to start.
+        function deselect() {
+            if (selected < 0) return;
+            var pc = cards[selected];
+            selected = -1;
+            if (pc._leaveT) clearTimeout(pc._leaveT);
+            pc.classList.remove('is-active');
+            pc.classList.add('is-leaving');
+            pc.setAttribute('aria-selected', 'false');
+            pc._leaveT = setTimeout(function () { pc.classList.remove('is-leaving'); }, 750);
+            var v = pc.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} }
+            if (accordion) accordion.classList.remove('has-active');
+            if (sub) sub.textContent = restSub;
+        }
+
         // Let the gender sub-header drive the accordion to a given gender.
         window.__gcGoToGender = function (gender) {
             for (var i = 0; i < count; i++) {
@@ -951,6 +969,9 @@
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
+                // Tapping the already-open category again closes it and returns
+                // to the four equal rectangles.
+                if (i === selected) { deselect(); return; }
                 setActive(i, true);
             });
             card.addEventListener('keydown', function (e) {
