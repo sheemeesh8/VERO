@@ -494,10 +494,15 @@ h3, h4, h5, h6, p,
             };
 
             var settings = document.getElementById('saSettings');
+            // Once the user taps a tab, keep the bar up (like the buyer area) so it
+            // never drops back down when scrolling back toward the hero.
+            var navPinned = false;
             // Header title for each tab (shown once you scroll down from the hero).
             var TAB_TITLES = { stats: 'Statistics', growth: 'Growth', editor: 'Store', products: 'Products',
                                chats: 'Chat', offers: 'Offers', shop: 'Settings' };
-            function activate(id) {
+            function activate(id, opts) {
+                opts = opts || {};
+                if (opts.pin) navPinned = true;
                 tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.id === id); });
                 // Slide the bar so the chosen tab is fully in view.
                 var at = nav.querySelector('.sa-tab.is-active');
@@ -527,14 +532,16 @@ h3, h4, h5, h6, p,
                     }
                 }
                 // Bring the content section (below the hero) into view; the hero stays
-                // one scroll up, never removed.
-                if (sc) {
+                // one scroll up, never removed. Skipped on the initial landing so the
+                // seller starts on the hero with the bar hidden until they cross it.
+                if (sc && opts.scroll !== false) {
                     var target = (id === 'shop') ? settings : overlay;
                     if (target) sc.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
                 }
+                if (typeof updateReveal === 'function') updateReveal();
             }
 
-            tabs.forEach(function (t) { t.addEventListener('click', function () { activate(t.dataset.id); }); });
+            tabs.forEach(function (t) { t.addEventListener('click', function () { activate(t.dataset.id, { pin: true }); }); });
             moveInd(false);
             window.addEventListener('resize', function () { moveInd(false); });
             window.addEventListener('load', function () { moveInd(false); });
@@ -543,7 +550,7 @@ h3, h4, h5, h6, p,
             /* Land on Statistics when entering the seller area — the stats +
                dashboard overview is the first thing a seller sees. A tap on any
                other tab (My Shop, Products…) still works as usual. */
-            setTimeout(function () { activate('stats'); }, 80);
+            setTimeout(function () { activate('stats', { scroll: false }); }, 80);
 
             /* ---- Reveal the bar only once the hero is scrolled past ----
                Over the full-screen hero the bar stays hidden; it slides up the
@@ -551,7 +558,7 @@ h3, h4, h5, h6, p,
             var hero = document.getElementById('saHero');
             function updateReveal() {
                 if (!sc || !hero) return;
-                var passed = sc.scrollTop > hero.offsetHeight * 0.55;
+                var passed = navPinned || sc.scrollTop > hero.offsetHeight * 0.55;
                 nav.classList.toggle('revealed', passed);
             }
             if (sc) sc.addEventListener('scroll', updateReveal, { passive: true });
