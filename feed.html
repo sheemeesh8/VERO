@@ -78,14 +78,16 @@
         .feed-banner .fb-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         /* ===== Gender coverflow carousel (ported 1:1 from the old home) ===== */
-        #genderCover { position: relative; margin: 0 -20px 8px; --gc-card-w: 75vw; --gc-card-h: 50vh; --gc-stage-h: 66.6667vh; }
+        #genderCover { position: relative; width: calc(100% + 40px); margin: 0 -20px 8px; --gc-card-w: 75vw; --gc-card-h: 50vh; --gc-stage-h: calc(100svh - 56px); }
         #genderCover .gc-head { position: absolute; top: 24px; left: 20px; width: 22vw; z-index: 5; font-family: 'Poppins','Inter',sans-serif; font-weight: 400; letter-spacing: 0.01em; font-size: 12px; line-height: 1.35; color: #111; text-align: left; margin: 0; }
         #genderCover .gc-sub { position: absolute; top: 52px; left: 20px; width: 22vw; z-index: 5; font-family: 'Poppins','Inter',sans-serif; font-weight: 400; font-size: 11px; line-height: 1.35; color: #6b6a64; text-align: left; margin: 0; min-height: 15px; }
         #genderCover .gc-rel { position: relative; }
         #genderCover .gc-frame { perspective: calc(var(--gc-card-h) * 3); overflow: hidden; padding: 0; outline: none; cursor: grab; touch-action: none; }
         #genderCover .gc-frame:active { cursor: grabbing; }
         #genderCover .gc-stage { position: relative; height: var(--gc-stage-h); transform-style: preserve-3d; }
-        #genderCover .gc-card { position: absolute; right: 0; top: 50%; width: var(--gc-card-w); height: var(--gc-card-h); overflow: hidden; background: #fff; will-change: transform; }
+        /* Cards are stacked full-bleed; only the active one is revealed, via a
+           two-phase clip-path open (full width first, then full height). */
+        #genderCover .gc-card { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #000; opacity: 0; clip-path: inset(50% 50% 50% 50%); will-change: clip-path, opacity; }
         #genderCover .gc-card img, #genderCover .gc-card video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; user-select: none; pointer-events: none; }
         #genderCover .gc-cap { display: flex; flex-direction: column; align-items: center; margin-top: 2px; }
         #genderCover .gc-cap .gc-name { font-family: 'Archivo','Poppins',sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: -0.3px; color: #111; }
@@ -755,19 +757,27 @@
         function indexAt(p) { return ((Math.round(p) % count) + count) % count; }
         function sign(n) { return n < 0 ? -1 : (n > 0 ? 1 : 0); }
 
-        function paint() {
-            if (!size) return;
-            var pitch = size * (1 + GAP);
-            for (var i = 0; i < count; i++) {
-                var card = cards[i], offset = i - pos;
-                if (LOOP) { offset = ((offset % count) + count) % count; if (offset > count / 2) offset -= count; }
-                var dist = Math.abs(offset), ramp = Math.pow(dist, FALLOFF);
-                var tilt = Math.min(ROTATE * ramp, 82) * sign(offset);
-                card.style.transform = 'translateY(calc(-50% + ' + (offset * pitch) + 'px)) translateZ(' + (-DEPTH * size * ramp) + 'px) rotateX(' + tilt + 'deg)';
-                var edge = LOOP ? Math.min(1, Math.max(0, count / 2 - dist)) : 1;
-                card.style.opacity = String(Math.max(0, 1 - FADE * dist) * edge);
-                card.style.zIndex = String(100 - Math.round(dist));
-            }
+        // The coverflow transform paint is retired — the slider is now a single
+        // full-bleed card whose reveal is driven by openCard() in render().
+        function paint() {}
+
+        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var openTimer = null;
+        // Two-phase open: collapse to the centre, grow to full WIDTH, then — once
+        // the width has opened — grow to full HEIGHT, and stay open (full-screen).
+        function openCard(card) {
+            if (openTimer) { clearTimeout(openTimer); openTimer = null; }
+            card.style.opacity = '1';
+            if (reduceMotion) { card.style.transition = 'none'; card.style.clipPath = 'inset(0% 0% 0% 0%)'; return; }
+            card.style.transition = 'none';
+            card.style.clipPath = 'inset(50% 50% 50% 50%)';
+            void card.offsetWidth; // reflow so the next change animates
+            card.style.transition = 'clip-path .42s cubic-bezier(.22,.61,.36,1)';
+            card.style.clipPath = 'inset(50% 0% 50% 0%)';        // full width, zero height
+            openTimer = setTimeout(function () {
+                card.style.transition = 'clip-path .5s cubic-bezier(.22,.61,.36,1)';
+                card.style.clipPath = 'inset(0% 0% 0% 0%)';       // then full height
+            }, 440);
         }
         function render() {
             var a = indexAt(target); selected = a;
@@ -779,10 +789,20 @@
             if (shopEl) shopEl.textContent = 'Shop ' + nm;
             if (typeof window.__onGenderChange === 'function') window.__onGenderChange(card.getAttribute('data-gender') || '');
             cards.forEach(function (c, i) {
+                if (i === a) {
+                    c.style.zIndex = '50';
+                } else {
+                    // Snap every other card shut and behind the active one.
+                    c.style.zIndex = '1';
+                    c.style.transition = 'none';
+                    c.style.opacity = '0';
+                    c.style.clipPath = 'inset(50% 50% 50% 50%)';
+                }
                 var v = c.querySelector('video'); if (!v) return;
                 v.muted = true; v.defaultMuted = true;
                 if (i === a) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else { try { v.pause(); } catch (x) {} }
             });
+            openCard(card);
         }
         function clampPos(p) { return LOOP ? p : Math.max(0, Math.min(count - 1, p)); }
         function settle(t) {
@@ -865,7 +885,9 @@
         });
         dots.forEach(function (d, i) { d.addEventListener('click', function () { goTo(i); }); });
 
-        function measure() { size = cards[0] ? cards[0].offsetHeight : 0; paint(); }
+        // Fixed swipe pitch — one short drag switches one gender (the card no
+        // longer scales with scroll, so card height shouldn't gate the gesture).
+        function measure() { size = 200; paint(); }
         if (window.ResizeObserver) { try { new ResizeObserver(measure).observe(frame); } catch (x) {} }
         window.addEventListener('resize', measure);
 
