@@ -14,7 +14,7 @@
 
     // Blocks that fade up as they come on screen.
     var REVEAL = [
-        '.card', '.gstat', '.row', '.vdn-row', '.vdn-ring', '.quick .btn', '.na-grid > *', '.po-tabs',
+        '.card', '.gstat', '.row', '.vdn-row', '.vsay', '.vkey', '.quick .btn', '.na-grid > *', '.po-tabs',
         '.sss-meter', '.sss-cap', '.sss-field', '.ar-cap', '.ps-field', '.ps-update'
     ].join(',');
     var RULES = '.sec-title, .sss-head, .ar-h, .ps-title--sub';   // headings reveal like any block
@@ -79,6 +79,12 @@
         });
     }, { threshold: 0.4 });
 
+    /* ---------- charts draw themselves when they come on screen, not while off it ---------- */
+    var CHARTS = '.vlc, .vbr, .vhb, .vdn';
+    var hio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting) { hio.unobserve(en.target); en.target.classList.remove('am-hold'); } });
+    }, { threshold: 0.2 });
+
     /* ---------- scanning (content is rendered and re-rendered by the pages) ---------- */
     function scan() {
         var els;
@@ -90,6 +96,11 @@
             if (el.closest('.po-modal, [hidden]')) return;
             el.classList.add('am-wait');
             io.observe(el);
+        });
+        document.querySelectorAll(CHARTS).forEach(function (el) {
+            if (seen.has(el)) return;
+            seen.add(el);
+            el.classList.add('am-hold'); hio.observe(el);
         });
         document.querySelectorAll(COUNT).forEach(function (el) {
             if (seen.has(el)) return;
@@ -117,6 +128,10 @@
         try { new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
         // Safety net: never leave anything hidden if an observer misses it.
         setInterval(function () {
+            document.querySelectorAll('.am-hold').forEach(function (el) {
+                var r = el.getBoundingClientRect();
+                if (r.height && r.top < (window.innerHeight || 800) && r.bottom > 0) { hio.unobserve(el); el.classList.remove('am-hold'); }
+            });
             document.querySelectorAll('.am-wait:not(.am-in)').forEach(function (el) {
                 var r = el.getBoundingClientRect();
                 if (r.width === 0 && r.height === 0) return;                    // not laid out (hidden tab)

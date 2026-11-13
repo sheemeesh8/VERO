@@ -45,6 +45,45 @@
         return ' data-vsw="' + id + '"';
     }
     window.veroRememberShare = remember;
+
+    /* Plain words around every chart, so nobody has to decode it:
+         • a sentence ABOVE it saying what the numbers show (opts.say: a string
+           replaces it, false removes it);
+         • a short key BELOW it saying how to read the drawing. */
+    function sayFor(v, lbl, fmt, opts) {
+        if (opts.say === false) return '';
+        if (typeof opts.say === 'string') return '<p class="vsay">' + opts.say + '</p>';
+        var n = v.length; if (n < 2 || !lbl) return '';
+        var last = v[n - 1], prev = v[n - 2], hi = v.indexOf(Math.max.apply(null, v)), lo = v.indexOf(Math.min.apply(null, v)), t;
+        if (opts.parts) {            // separate things side by side (weekdays): name the most and the least
+            t = 'Most on <b>' + esc(lbl[hi]) + '</b> (' + esc(fmt(v[hi])) + '), least on <b>' + esc(lbl[lo]) + '</b> (' + esc(fmt(v[lo])) + ').';
+        } else if (opts.level != null ? opts.level : opts.group === 'last') {   // a running total
+            var d = last - prev;
+            t = '<b>' + esc(fmt(last)) + '</b> so far. ' + esc(lbl[n - 1]) + (d >= 0 ? ' added ' : ' took off ') + esc(fmt(Math.abs(d))) + '.';
+        } else {
+            t = '<b>' + esc(lbl[n - 1]) + ': ' + esc(fmt(last)) + '</b>';
+            if (prev > 0) { var pc = Math.round((last - prev) / prev * 100); t += pc === 0 ? ', the same as ' + esc(lbl[n - 2]) : ', ' + Math.abs(pc) + '% ' + (pc > 0 ? 'more' : 'less') + ' than ' + esc(lbl[n - 2]); }
+            t += '.' + (hi !== n - 1 ? ' The highest was ' + esc(lbl[hi]) + ' (' + esc(fmt(v[hi])) + ').' : ' That is the highest so far.');
+        }
+        return '<p class="vsay">' + t + '</p>';
+    }
+    var UP = '<i class="vkey-sw" style="background:#1f8a4c"></i>', DOWN = '<i class="vkey-sw" style="background:#c0392b"></i>', INK = '<i class="vkey-sw" style="background:#16150f"></i>';
+    var KEYS = {
+        hairline: 'Left is the oldest, right is the newest. Higher means more.',
+        area:     'Left is the oldest, right is the newest. Higher means more.',
+        line:     'Each marker is one period, oldest on the left.',
+        step:     'A running total: every step up is what that period added.',
+        dots:     'Each dot is one period. The dashed line shows the overall direction.',
+        baseline: UP + 'above where it started &nbsp; ' + DOWN + 'below where it started',
+        delta:    UP + 'more than the period before &nbsp; ' + DOWN + 'less than the period before',
+        lollipop: 'Each stick is one period. Taller means more; the coloured one is the latest.',
+        heat:     'Each block is one day. ' + INK + 'darker means more.',
+        bars:     'Each column is one period. ' + INK + 'the dark one is the latest.',
+        barsmax:  'Each column is one day. ' + INK + 'the dark one is the highest.',
+        hbars:    'Longer bar means more. ' + INK + 'the dark one is the highest.'
+    };
+    function keyFor(name, opts) { return opts.key === false ? '' : '<p class="vkey">' + (typeof opts.key === 'string' ? opts.key : KEYS[name] || '') + '</p>'; }
+    window.veroChartWords = { say: sayFor, key: keyFor };
     var MAX_PTS = 12;         // a value label on every break needs room: long series are grouped
 
     // Group a long series into at most MAX_PTS points: 'sum' for flows (revenue,
@@ -146,10 +185,10 @@
         var summary = 'Line chart, ' + n + ' points, from ' + fmt(v[0]) + ' to ' + fmt(v[n - 1]);
         var axis = opts.axis ? '<div class="vlc-x">' + opts.axis.map(function (a) { return '<span>' + esc(a) + '</span>'; }).join('') + '</div>' : '';
         summary += ', trend ' + (trend === 'up' ? 'rising' : trend === 'down' ? 'falling' : 'sideways');
-        return '<div class="vlc trend-' + trend + '"' + remember(v, lbl, fmt, opts) + ' role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
+        return sayFor(v, lbl, fmt, opts) + '<div class="vlc trend-' + trend + '"' + remember(v, lbl, fmt, opts) + ' role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
             svg + '<i class="vlc-sheen" aria-hidden="true"></i>' + marks +
             '<div class="vlc-hover"><i class="vlc-vline"></i><i class="vlc-hdot"></i><span class="vlc-tip"></span></div>' +
-            '</div>' + axis;
+            '</div>' + axis + keyFor('hairline', opts);
     };
 
     // ---- The other styles (see the header). Same wrapper + data as the hairline
@@ -213,7 +252,7 @@
         } else if (style === 'heat') {
             var hw = 100 / n, hmax = max || 1;
             xs = v.map(function (_, k) { return (k + 0.5) * hw; });
-            for (i = 0; i < n; i++) inner += '<rect x="' + (i * hw + 0.4).toFixed(2) + '" y="6" width="' + (hw - 0.8).toFixed(2) + '" height="88" fill="#16150f" fill-opacity="' + (0.1 + 0.9 * (v[i] - min) / ((hmax - min) || 1)).toFixed(3) + '"/>';   // lightest = the lowest value, darkest = the highest
+            for (i = 0; i < n; i++) inner += '<rect x="' + (i * hw + 0.4).toFixed(2) + '" y="6" width="' + (hw - 0.8).toFixed(2) + '" height="88" fill="#16150f" fill-opacity="' + (0.1 + 0.9 * (v[i] - min) / ((hmax - min) || 1)).toFixed(3) + '" class="vlc-cell" style="animation-delay:' + (0.1 + i * 0.07).toFixed(2) + 's"/>';   // lightest = the lowest value, darkest = the highest
             ys = v.map(function () { return 50; });
         } else {   // delta
             var dl = v.map(function (x, k) { return k ? x - v[k - 1] : 0; }), m = Math.max.apply(null, dl.map(Math.abs)) || 1, mid = (T + B) / 2, hh = (B - T) / 2, bw = 100 / n;
@@ -221,7 +260,7 @@
             inner = '<line x1="0" x2="100" y1="' + mid + '" y2="' + mid + '" stroke="#b9b4aa" stroke-width="1"' + NS + '/>';
             ys = dl.map(function (x, k) {
                 var h = Math.abs(x) / m * hh, up = x >= 0;
-                if (k) inner += '<rect x="' + (xs[k] - bw * 0.3).toFixed(2) + '" y="' + (up ? mid - h : mid).toFixed(2) + '" width="' + (bw * 0.6).toFixed(2) + '" height="' + Math.max(0.6, h).toFixed(2) + '" fill="' + (up ? TREND.up : TREND.down) + '"/>';
+                if (k) inner += '<rect x="' + (xs[k] - bw * 0.3).toFixed(2) + '" y="' + (up ? mid - h : mid).toFixed(2) + '" width="' + (bw * 0.6).toFixed(2) + '" height="' + Math.max(0.6, h).toFixed(2) + '" fill="' + (up ? TREND.up : TREND.down) + '" class="vlc-bar ' + (up ? 'is-up' : 'is-down') + '" style="animation-delay:' + (0.15 + k * 0.05).toFixed(2) + 's"/>';
                 return up ? mid - h : mid + h;
             });
             texts = dl.map(function (x, k) { return k ? (x >= 0 ? '+' : '−') + fmt(Math.abs(x)) : fmt(v[0]); });
@@ -232,9 +271,10 @@
         var data = { y: ys.map(function (y) { return +y.toFixed(3); }), x: xs.map(function (x) { return +x.toFixed(3); }), t: texts, l: lbl };
         var summary = 'Chart, ' + n + ' points, from ' + fmt(v[0]) + ' to ' + fmt(v[n - 1]) + ', trend ' + (trend === 'up' ? 'rising' : trend === 'down' ? 'falling' : 'sideways');
         var axis = opts.axis ? '<div class="vlc-x">' + opts.axis.map(function (a) { return '<span>' + esc(a) + '</span>'; }).join('') + '</div>' : '';
-        return '<div class="vlc vlc-s vlc-' + style + ' trend-' + trend + '"' + remember(v, lbl, fmt, opts) + ' role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
+        if (style === 'heat' && opts.parts == null) opts.parts = true;
+        return sayFor(v, lbl, fmt, opts) + '<div class="vlc vlc-s vlc-' + style + ' trend-' + trend + '"' + remember(v, lbl, fmt, opts) + ' role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
             '<svg class="vlc-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + inner + '</svg>' + dots + val +
-            '<div class="vlc-hover"><i class="vlc-vline"></i><i class="vlc-hdot"></i><span class="vlc-tip"></span></div></div>' + axis;
+            '<div class="vlc-hover"><i class="vlc-vline"></i><i class="vlc-hdot"></i><span class="vlc-tip"></span></div></div>' + axis + keyFor(style, opts);
     }
 
     // A tiny line for inside a figure tile: takes the tile's text colour.
@@ -314,6 +354,12 @@
         items = (items || []).filter(function (it) { return (Number(it.value) || 0) > 0; });
         var total = items.reduce(function (s, it) { return s + Number(it.value); }, 0);
         if (!total) return '<div class="empty">No data yet</div>';
+        // In plain words: which part is the biggest (opts.say: a string replaces it, false removes it).
+        var top = items.reduce(function (a, b) { return Number(b.value) > Number(a.value) ? b : a; }, items[0]);
+        var named = top.label === 'Other' && items.length > 1 ? items.filter(function (it) { return it.label !== 'Other'; }).reduce(function (a, b) { return Number(b.value) > Number(a.value) ? b : a; }) : top;
+        opts._say = opts.say === false ? '' : '<p class="vsay">' + (typeof opts.say === 'string' ? opts.say :
+            'The biggest part is <b>' + esc(named.label) + '</b>: ' + Math.round(Number(named.value) / total * 100) + '% (' + esc(fmt(Number(named.value))) + ').') + '</p>';
+        opts._key = opts.key ? '<p class="vkey">' + opts.key + '</p>' : '';
         if (opts.style && opts.style !== 'ring') return share(opts.style, items, total, fmt, opts);
         var R = 15.915, C = 2 * Math.PI * R, off = 0, gap = items.length > 1 ? 0.6 : 0;
         var arcs = items.map(function (it, i) {
@@ -329,10 +375,10 @@
                    '<span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-pct">' + pct + '%</span>' +
                    '<span class="vdn-val">' + esc(fmt(Number(it.value))) + '</span></div>';
         }).join('');
-        return '<div class="vdn" role="img" aria-label="' + esc('Share chart, ' + items.length + ' parts, total ' + fmt(total)) + '">' +
+        return '<div class="vdn" role="img" aria-label="' + esc('Share chart, ' + items.length + ' parts, total ' + fmt(total)) + '">' + opts._say +
             '<div class="vdn-ring"><svg viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="' + R + '" class="vdn-track"/>' + arcs + '</svg>' +
             '<div class="vdn-mid"><b>' + esc(opts.center != null ? opts.center : fmt(total)) + '</b><span>' + esc(opts.centerLabel || 'Total') + '</span></div></div>' +
-            '<div class="vdn-legend">' + legend + '</div></div>';
+            '<div class="vdn-legend">' + legend + '</div>' + opts._key + '</div>';
     };
 
     // ---- The other share styles. One ink ramp, largest part darkest; same legend. ----
@@ -411,7 +457,7 @@
                        '<span class="vdn-val">' + esc(fmt(Number(it.value))) + '</span></div>';
             }).join('') + '</div>';
         }
-        return '<div class="vdn vdn--' + style + '" role="img" aria-label="' + esc('Share chart, ' + items.length + ' parts, total ' + fmt(total)) + '">' + (body || fig + legend) + '</div>';
+        return '<div class="vdn vdn--' + style + '" role="img" aria-label="' + esc('Share chart, ' + items.length + ' parts, total ' + fmt(total)) + '">' + opts._say + (body || fig + legend) + opts._key + '</div>';
     }
 
     window.veroBars = function (vals, opts) {
@@ -421,11 +467,14 @@
         if (!v.length) return '<div class="vbr"></div>';
         var max = Math.max.apply(null, v) || 1;
         var tag = window.veroRememberShare ? window.veroRememberShare(v, opts.labels && opts.labels.length === v.length ? opts.labels : null, fmt, opts) : '';
+        var W = window.veroChartWords, blbl = opts.labels && opts.labels.length === v.length ? opts.labels : null;
+        if ((opts.horizontal || opts.mark === 'max') && opts.parts == null) opts.parts = true;
+        var bsay = W ? W.say(v, blbl, fmt, opts) : '';
         if (opts.horizontal) {   // a row per value: label, bar, value — the longest bar is dark
-            return '<div class="vhb"' + tag + ' role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars') + '">' + v.map(function (x, i) {
+            return bsay + '<div class="vhb"' + tag + ' role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars') + '">' + v.map(function (x, i) {
                 return '<div class="vhb-r' + (i === v.indexOf(max) ? ' is-top' : '') + '"><span class="vhb-l">' + esc(opts.labels ? opts.labels[i] || '' : '') + '</span>' +
                        '<span class="vhb-t"><i style="width:' + Math.max(1, x / max * 100).toFixed(1) + '%;animation-delay:' + (i * 0.05).toFixed(2) + 's"></i></span><span class="vhb-v">' + esc(fmt(x)) + '</span></div>';
-            }).join('') + '</div>';
+            }).join('') + '</div>' + (W ? W.key('hbars', opts) : '');
         }
         var tone = window.veroTrendColor ? window.veroTrendColor(v) : '#16150f';
         var cols = v.map(function (x, i) {
@@ -437,7 +486,7 @@
                 'animation-delay:' + (i * 0.05).toFixed(2) + 's"></span>' +
                 (opts.labels ? '<span class="vbr-lbl">' + esc(opts.labels[i] || '') + '</span>' : '') + '</div>';
         }).join('');
-        return '<div class="vbr"' + tag + ' role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars, latest ' + fmt(v[v.length - 1])) + '">' + cols + '</div>';
+        return bsay + '<div class="vbr"' + tag + ' role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars, latest ' + fmt(v[v.length - 1])) + '">' + cols + '</div>' + (W ? W.key(opts.mark === 'max' ? 'barsmax' : 'bars', opts) : '');
     };
 })();
 
@@ -492,14 +541,20 @@
         if (pie && !box) {
             box = chart._vswPie = document.createElement('div');
             box.className = 'vsw-pie';
-            box.innerHTML = window.veroDonut(items(rec), { format: rec.fmt, style: styleFor(chart), centerLabel: rec.level ? 'Added' : 'Total' });
+            box.innerHTML = window.veroDonut(items(rec), { format: rec.fmt, style: styleFor(chart), centerLabel: rec.level ? 'Added' : 'Total',
+                key: rec.level ? 'The same numbers as a pie: each part is what one period added.' : 'The same numbers as a pie: each part is one period’s share of the total.' });
             chart.parentNode.insertBefore(box, chart);
             swipe(box, function () { setMode(chart, false); });
         }
         chart.classList.toggle('vsw-off', pie);
+        chart.classList.toggle('is-back', !pie && !!box);
         if (box) box.hidden = !pie;
         // The date row belongs to the graph: hide it with the graph.
-        var ax = chart.nextElementSibling; if (ax && ax.classList.contains('vlc-x')) ax.classList.toggle('vsw-off', pie);
+        var ax = chart.nextElementSibling;
+        while (ax && /\b(vlc-x|vkey)\b/.test(ax.className)) { ax.classList.toggle('vsw-off', pie); ax = ax.nextElementSibling; }
+        if (chart._vswKey) chart._vswKey.classList.toggle('vsw-off', pie);
+        var sy = chart.previousElementSibling; if (sy === box) sy = box.previousElementSibling;
+        if (sy && sy.classList.contains('vsay')) sy.classList.toggle('vsw-off', pie);
         var px = chart.parentNode.nextElementSibling; if (px && px.classList.contains('lc-x')) px.classList.toggle('vsw-off', pie);
         if (sw) { sw.children[0].classList.toggle('on', !pie); sw.children[1].classList.toggle('on', pie);
                   sw.children[0].setAttribute('aria-pressed', String(!pie)); sw.children[1].setAttribute('aria-pressed', String(pie)); }
@@ -528,9 +583,20 @@
         if (!rec || items(rec).length < 2) return;            // nothing to split
         var sw = chart._vswSwitch = document.createElement('div');
         sw.className = 'vsw'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'Show as');
-        sw.innerHTML = '<button type="button" class="on" aria-pressed="true" aria-label="Graph">' + ICON_G + '</button><button type="button" aria-pressed="false" aria-label="Pie">' + ICON_P + '</button>';
-        var after = chart.nextElementSibling && chart.nextElementSibling.classList.contains('vlc-x') ? chart.nextElementSibling : chart;
+        sw.innerHTML = '<button type="button" class="on" aria-pressed="true">' + ICON_G + 'Graph</button><button type="button" aria-pressed="false">' + ICON_P + 'Pie</button>';
+        var after = chart;   // the switch goes under the chart, its date row and its key
+        while (after.nextElementSibling && /\b(vlc-x|vkey)\b/.test(after.nextElementSibling.className)) after = after.nextElementSibling;
         after.parentNode.insertBefore(sw, after.nextSibling);
+        // Where the page keeps the date row outside the chart's holder, the key and
+        // the switch go under that row, so the order is always: chart, dates, key, switch.
+        var host = chart.parentNode, px = host.nextElementSibling, key = after !== chart && /\bvkey\b/.test(after.className) ? after : null;
+        (host._vswExtras || []).forEach(function (el) { if (el.parentNode && el.parentNode !== host) el.parentNode.removeChild(el); });   // left by an earlier drawing
+        if (px && px.classList.contains('lc-x')) {
+            px.parentNode.insertBefore(sw, px.nextSibling);
+            if (key) px.parentNode.insertBefore(key, sw);
+        }
+        host._vswExtras = [key, sw].filter(Boolean);
+        chart._vswKey = key;
         sw.children[0].addEventListener('click', function () { setMode(chart, false); });
         sw.children[1].addEventListener('click', function () { setMode(chart, true); });
         swipe(chart, function () { setMode(chart, true); });
