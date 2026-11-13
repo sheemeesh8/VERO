@@ -222,14 +222,20 @@
 
         /* seller row */
         .det-seller{
-            display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-            margin-top:34px;padding-top:22px;border-top:1px solid var(--line);
-            font-size:12.5px;color:#3d382f;
+            display:flex;align-items:center;gap:12px;
+            margin-top:34px;padding:14px 16px;
+            background:#111;color:#fff;
+            font-size:12.5px;
         }
-        .det-seller .s-label{color:var(--muted);letter-spacing:1px;}
-        .det-seller .s-name{font-weight:400;text-decoration:underline;text-underline-offset:3px;color:var(--ink);}
-        .det-seller .s-rating{margin-inline-start:auto;letter-spacing:2px;color:var(--ink);}
-        .det-seller .s-rating .num{color:var(--muted);letter-spacing:0;font-size:11px;margin-inline-start:3px;}
+        .det-seller .s-avatar{
+            width:44px;height:44px;flex:0 0 auto;border-radius:50%;object-fit:cover;
+            background:#2a2a2a;border:1px solid rgba(255,255,255,.18);
+        }
+        .det-seller .s-info{display:flex;flex-direction:column;gap:3px;min-width:0;}
+        .det-seller .s-label{color:rgba(255,255,255,.5);letter-spacing:1.5px;font-size:9.5px;text-transform:uppercase;}
+        .det-seller .s-name{font-weight:400;text-decoration:underline;text-underline-offset:3px;color:#fff;}
+        .det-seller .s-rating{margin-inline-start:auto;letter-spacing:2px;color:#fff;}
+        .det-seller .s-rating .num{color:rgba(255,255,255,.5);letter-spacing:0;font-size:11px;margin-inline-start:3px;}
 
         /* ---------- secondary header — a bar under the topbar with the actions as
              text labels (matches the personal-area sub-nav) ---------- */
@@ -395,8 +401,11 @@ h3, h4, h5, h6, p,
                 <button class="hp-offer" onclick="openSheet('offerSheet')">Make an offer</button>
             </div>
             <div class="det-seller">
-                <span class="s-label">Seller:</span>
-                <a class="s-name" id="sellerName" href="#">moravchick</a>
+                <img class="s-avatar" id="sellerAvatar" alt="" />
+                <div class="s-info">
+                    <span class="s-label">Seller</span>
+                    <a class="s-name" id="sellerName" href="#">moravchick</a>
+                </div>
                 <span class="s-rating" id="sellerRating"></span>
             </div>
         </div>
@@ -530,6 +539,20 @@ h3, h4, h5, h6, p,
             String(label || 'MORAVCHICK').toUpperCase().replace(/[<>&]/g, '') + "</text></svg>";
         return 'data:image/svg+xml,' + encodeURIComponent(svg);
     }
+
+    // A circular seller avatar placeholder: the seller's initial on a dark
+    // disc, legible against the black seller card.
+    function avatarPlaceholder(name) {
+        var ch = (String(name || 'M').trim()[0] || 'M').toUpperCase().replace(/[<>&]/g, '');
+        var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'>" +
+            "<defs><linearGradient id='av' x1='0' y1='0' x2='0' y2='1'>" +
+            "<stop offset='0' stop-color='#4a4a4a'/><stop offset='1' stop-color='#262626'/>" +
+            "</linearGradient></defs>" +
+            "<rect width='96' height='96' fill='url(#av)'/>" +
+            "<text x='48' y='63' text-anchor='middle' font-family='Poppins,Arial,sans-serif' " +
+            "font-size='42' font-weight='400' fill='#eceae6'>" + ch + "</text></svg>";
+        return 'data:image/svg+xml,' + encodeURIComponent(svg);
+    }
     const photoObj = product.photos || {};
     const uploaded = ['cover', 'detail', 'label', 'angle'].map(k => photoObj[k]).filter(Boolean);
     const cover = product.processed_cover || product.image || product.cover
@@ -633,6 +656,14 @@ h3, h4, h5, h6, p,
     const sLink = document.getElementById('sellerName');
     sLink.textContent = sellerName;
     sLink.href = `index.html?seller=${encodeURIComponent(sellerName)}`;
+    // Seller profile circle — a real photo if the product carries one,
+    // otherwise an initial on a dark circle that sits on the black card.
+    const sAvatar = document.getElementById('sellerAvatar');
+    if (sAvatar) {
+        const sellerPhoto = product.sellerPhoto || product.sellerAvatar || product.sellerIcon || product.storeLogo || null;
+        sAvatar.src = sellerPhoto || avatarPlaceholder(sellerName);
+        sAvatar.alt = sellerName;
+    }
     const stars = '★'.repeat(Math.floor(rating)) + (rating%1>=0.5?'☆':'');
     document.getElementById('sellerRating').innerHTML = `${stars} <span class="num">${rating.toFixed(1)}</span>`;
 
