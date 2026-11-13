@@ -118,6 +118,7 @@
         document.addEventListener('click', function (e) {
             if (!e.target.closest || !e.target.closest('.hc-dots span')) return;
             el.classList.remove('am-swap'); void el.offsetWidth; el.classList.add('am-swap');
+            setTimeout(function () { count(el); }, 30);   // …and counts up to its new value
         });
     }
 

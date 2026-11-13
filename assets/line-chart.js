@@ -225,7 +225,7 @@
             inner = '<line x1="0" y1="' + yp(a0).toFixed(2) + '" x2="100" y2="' + yp(a0 + k1 * (n - 1)).toFixed(2) + '" stroke="' + color + '" stroke-width="2" stroke-dasharray="6 6"' + NS + '/>';
             // Inset a little so the first and last dots are whole.
             xs = xs.map(function (x) { return 4 + x * 0.92; });
-            for (i = 0; i < n - 1; i++) dots += '<span class="vlc-dot" style="left:' + xs[i] + '%;top:' + ys[i] + '%"></span>';
+            for (i = 0; i < n - 1; i++) dots += '<span class="vlc-dot" style="left:' + xs[i] + '%;top:' + ys[i] + '%;animation-delay:' + (0.2 + i * 0.06).toFixed(2) + 's"></span>';
             dots += endDot(color);
         } else if (style === 'baseline') {
             var bd = smooth(), by = ys[0], area = bd + ' L100,' + by + ' L0,' + by + ' Z';
@@ -238,14 +238,14 @@
             var ld = '';
             for (i = 0; i < n; i++) ld += (i ? ' L' : 'M') + xs[i].toFixed(2) + ',' + ys[i].toFixed(2);
             inner = '<path d="' + ld + '" fill="none" stroke="' + color + '" stroke-width="2"' + NS + ' stroke-linejoin="miter"/>';
-            for (i = 0; i < n - 1; i++) dots += '<span class="vlc-dot vlc-dot--mark" style="left:' + xs[i] + '%;top:' + ys[i] + '%;background:' + color + '"></span>';
+            for (i = 0; i < n - 1; i++) dots += '<span class="vlc-dot vlc-dot--mark" style="left:' + xs[i] + '%;top:' + ys[i] + '%;background:' + color + ';animation-delay:' + (0.2 + i * 0.07).toFixed(2) + 's"></span>';
             dots += endDot(color);
         } else if (style === 'lollipop') {
             var lw = 100 / n;
             xs = v.map(function (_, k) { return (k + 0.5) * lw; });
             for (i = 0; i < n; i++) {
-                inner += '<line x1="' + xs[i].toFixed(2) + '" x2="' + xs[i].toFixed(2) + '" y1="' + B + '" y2="' + ys[i].toFixed(2) + '" stroke="' + (i === n - 1 ? color : '#b9b4aa') + '" stroke-width="2"' + NS + '/>';
-                if (i < n - 1) dots += '<span class="vlc-dot vlc-dot--mark" style="left:' + xs[i] + '%;top:' + ys[i] + '%"></span>';
+                inner += '<line x1="' + xs[i].toFixed(2) + '" x2="' + xs[i].toFixed(2) + '" y1="' + B + '" y2="' + ys[i].toFixed(2) + '" stroke="' + (i === n - 1 ? color : '#b9b4aa') + '" stroke-width="2"' + NS + ' class="vlc-stem" style="animation-delay:' + (0.1 + i * 0.06).toFixed(2) + 's"/>';
+                if (i < n - 1) dots += '<span class="vlc-dot vlc-dot--mark" style="left:' + xs[i] + '%;top:' + ys[i] + '%;animation-delay:' + (0.4 + i * 0.06).toFixed(2) + 's"></span>';
             }
             inner += '<line x1="0" x2="100" y1="' + B + '" y2="' + B + '" stroke="#d6d2c8" stroke-width="1"' + NS + '/>';
             dots += endDot(color);
@@ -285,7 +285,7 @@
         var xs = v.map(function (_, k) { return k / (n - 1) * 100; }), ys = v.map(function (x) { return 26 - (x - min) / span * 22; });
         var cy = curve(xs, ys), d = '';
         for (var k = 0; k <= 40; k++) { var x = k / 40 * 100; d += (k ? ' L' : 'M') + x.toFixed(1) + ',' + cy(x).toFixed(1); }
-        return '<svg class="vsp" viewBox="0 -2 100 32" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>';
+        return '<svg class="vsp" viewBox="0 -2 100 32" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" pathLength="1" class="vsp-line"/></svg>';
     };
 
     // ---- Hover / tap: one delegated handler for every chart on the page ----
@@ -364,14 +364,14 @@
         var R = 15.915, C = 2 * Math.PI * R, off = 0, gap = items.length > 1 ? 0.6 : 0;
         var arcs = items.map(function (it, i) {
             var len = Number(it.value) / total * C, seg = Math.max(0.01, len - gap);
-            var a = '<circle class="vdn-seg" cx="21" cy="21" r="' + R + '" stroke="' + PALETTE[i % PALETTE.length] +
+            var a = '<circle class="vdn-seg" data-i="' + i + '" cx="21" cy="21" r="' + R + '" stroke="' + PALETTE[i % PALETTE.length] +
                     '" stroke-dasharray="' + seg.toFixed(3) + ' ' + (C - seg).toFixed(3) + '" stroke-dashoffset="' + (-off).toFixed(3) +
                     '" style="animation-delay:' + (i * 0.08).toFixed(2) + 's"/>';
             off += len; return a;
         }).join('');
         var legend = items.map(function (it, i) {
             var pct = Math.round(Number(it.value) / total * 100);
-            return '<div class="vdn-row"><i style="background:' + PALETTE[i % PALETTE.length] + '"></i>' +
+            return '<div class="vdn-row" data-i="' + i + '"><i style="background:' + PALETTE[i % PALETTE.length] + '"></i>' +
                    '<span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-pct">' + pct + '%</span>' +
                    '<span class="vdn-val">' + esc(fmt(Number(it.value))) + '</span></div>';
         }).join('');
@@ -398,14 +398,14 @@
             var a = start, out = '', g = items.length > 1 ? gap / r1 / 2 : 0;
             items.forEach(function (it, i) {
                 var w = Number(it.value) / total * sweep;
-                out += '<path class="vdn-p" d="' + slice(r1, r0, a + g, Math.max(a + g + 0.002, a + w - g)) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
+                out += '<path class="vdn-p vdn-arc" data-i="' + i + '" d="' + slice(r1, r0, a + g, Math.max(a + g + 0.002, a + w - g)) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
                 a += w;
             });
             return out;
         };
         var mid = function (cls) { return '<div class="vdn-mid' + (cls || '') + '"><b>' + esc(opts.center != null ? opts.center : fmt(total)) + '</b><span>' + esc(opts.centerLabel || 'Total') + '</span></div>'; };
         var legend = '<div class="vdn-legend">' + items.map(function (it, i) {
-            return '<div class="vdn-row"><i style="background:' + col(i) + '"></i><span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-pct">' + pctOf(it) + '%</span>' +
+            return '<div class="vdn-row" data-i="' + i + '"><i style="background:' + col(i) + '"></i><span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-pct">' + pctOf(it) + '%</span>' +
                    '<span class="vdn-val">' + esc(fmt(Number(it.value))) + '</span></div>';
         }).join('') + '</div>';
         var TOP = -Math.PI / 2, FULL = Math.PI * 2, fig, body;
@@ -416,36 +416,36 @@
         else if (style === 'half')  fig = '<div class="vdn-fig vdn-fig--half">' + svg(arcs(48, 30, Math.PI, Math.PI, 2.2), '0 0 100 52') + mid(' vdn-mid--low') + '</div>';
         else if (style === 'split') {
             var x = 0, bars = '';
-            items.forEach(function (it, i) { var w = Number(it.value) / total * 100; bars += '<i style="width:' + w.toFixed(2) + '%;background:' + col(i) + ';animation-delay:' + (i * 0.07).toFixed(2) + 's"></i>'; x += w; });
+            items.forEach(function (it, i) { var w = Number(it.value) / total * 100; bars += '<i data-i="' + i + '" style="width:' + w.toFixed(2) + '%;background:' + col(i) + ';animation-delay:' + (i * 0.07).toFixed(2) + 's"></i>'; x += w; });
             fig = '<div class="vdn-split">' + bars + '</div>';
         } else if (style === 'waffle') {
             var cells = [], sq = '';
             items.forEach(function (it, i) { for (var k = 0; k < pctOf(it); k++) cells.push(i); });
             while (cells.length < 100) cells.push(items.length - 1);
             cells.length = 100;
-            cells.forEach(function (c, k) { sq += '<rect class="vdn-p" x="' + (k % 10 * 10 + 0.8) + '" y="' + (Math.floor(k / 10) * 10 + 0.8) + '" width="8.4" height="8.4" fill="' + col(c) + '" style="animation-delay:' + (k * 0.006).toFixed(3) + 's"/>'; });
+            cells.forEach(function (c, k) { sq += '<rect class="vdn-p vdn-sq" data-i="' + c + '" x="' + (k % 10 * 10 + 0.8) + '" y="' + (Math.floor(k / 10) * 10 + 0.8) + '" width="8.4" height="8.4" fill="' + col(c) + '" style="animation-delay:' + (k * 0.006).toFixed(3) + 's"/>'; });
             fig = '<div class="vdn-fig">' + svg(sq) + '</div>';
         } else if (style === 'rings') {
             var top = Math.max.apply(null, items.map(function (it) { return Number(it.value); })) || 1, step = Math.min(7, 40 / items.length), rg = '';
             items.forEach(function (it, i) {
                 var r1 = 48 - i * step, r0 = r1 - step * 0.66;
                 rg += '<path d="' + slice(r1, r0, TOP, TOP + FULL * 0.75) + '" fill="#ecebe6"/>' +
-                      '<path class="vdn-p" d="' + slice(r1, r0, TOP, TOP + Number(it.value) / top * FULL * 0.75) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
+                      '<path class="vdn-p vdn-arc" data-i="' + i + '" d="' + slice(r1, r0, TOP, TOP + Number(it.value) / top * FULL * 0.75) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
             });
             fig = '<div class="vdn-fig">' + svg(rg) + '</div>';
         } else if (style === 'stack') {
-            fig = '<div class="vdn-stack">' + items.map(function (it, i) { return '<i style="flex:' + Number(it.value) + ' 1 0;background:' + col(i) + ';animation-delay:' + (i * 0.07).toFixed(2) + 's"></i>'; }).join('') + '</div>';
+            fig = '<div class="vdn-stack">' + items.map(function (it, i) { return '<i data-i="' + i + '" style="flex:' + Number(it.value) + ' 1 0;background:' + col(i) + ';animation-delay:' + (i * 0.07).toFixed(2) + 's"></i>'; }).join('') + '</div>';
         } else if (style === 'blocks') {
             var bmax = Math.max.apply(null, items.map(function (it) { return Number(it.value); })) || 1;
             fig = '<div class="vdn-blocks">' + items.map(function (it, i) { var side = (22 + 62 * Math.sqrt(Number(it.value) / bmax)).toFixed(1);
-                return '<i style="width:' + side + 'px;height:' + side + 'px;background:' + col(i) + ';animation-delay:' + (i * 0.07).toFixed(2) + 's"></i>'; }).join('') + '</div>';
+                return '<i data-i="' + i + '" style="width:' + side + 'px;height:' + side + 'px;background:' + col(i) + ';animation-delay:' + (i * 0.07).toFixed(2) + 's"></i>'; }).join('') + '</div>';
         } else if (style === 'tree') {
             // Slice the rectangle: the largest part takes its share off one side, the rest recurse.
             var tr = '', cut = function (list, sum, x, y, w, h, i) {
                 if (!list.length) return;
                 var f = Number(list[0].value) / sum, wide = w >= h, cw = wide ? w * f : w, ch = wide ? h : h * f;
                 if (list.length === 1) { cw = w; ch = h; }
-                tr += '<rect class="vdn-p" x="' + (x + 0.4).toFixed(2) + '" y="' + (y + 0.4).toFixed(2) + '" width="' + Math.max(0.2, cw - 0.8).toFixed(2) + '" height="' + Math.max(0.2, ch - 0.8).toFixed(2) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
+                tr += '<rect class="vdn-p vdn-tr" data-i="' + i + '" x="' + (x + 0.4).toFixed(2) + '" y="' + (y + 0.4).toFixed(2) + '" width="' + Math.max(0.2, cw - 0.8).toFixed(2) + '" height="' + Math.max(0.2, ch - 0.8).toFixed(2) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
                 if (wide) cut(list.slice(1), sum - Number(list[0].value), x + cw, y, w - cw, h, i + 1); else cut(list.slice(1), sum - Number(list[0].value), x, y + ch, w, h - ch, i + 1);
             };
             cut(items, total, 0, 0, 100, 62, 0);
@@ -453,7 +453,7 @@
         } else {   // ranked
             var big = Math.max.apply(null, items.map(function (it) { return Number(it.value); })) || 1;
             body = '<div class="vdn-rank">' + items.map(function (it, i) {
-                return '<div class="vdn-rr"><span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-rb"><i style="width:' + (Number(it.value) / big * 100).toFixed(1) + '%;animation-delay:' + (i * 0.07).toFixed(2) + 's"></i></span>' +
+                return '<div class="vdn-rr vdn-row-r" data-i="' + i + '"><span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-rb"><i style="width:' + (Number(it.value) / big * 100).toFixed(1) + '%;animation-delay:' + (i * 0.07).toFixed(2) + 's"></i></span>' +
                        '<span class="vdn-val">' + esc(fmt(Number(it.value))) + '</span></div>';
             }).join('') + '</div>';
         }
@@ -607,4 +607,36 @@
     function schedule() { if (pending) return; pending = true; setTimeout(function () { pending = false; scan(); }, 50); }
     function boot() { scan(); try { new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true }); } catch (e) {} }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+
+
+/* ------------------------------------------------------------------
+   Touch a part: tapping (or hovering) a row of a pie's legend lights up
+   that part in the drawing and dims the rest; tapping it again, or leaving,
+   brings everything back.
+------------------------------------------------------------------ */
+(function () {
+    'use strict';
+    function focus(vdn, i) {
+        var on = i != null;
+        vdn.classList.toggle('has-focus', on);
+        vdn.querySelectorAll('[data-i]').forEach(function (el) { el.classList.toggle('is-focus', on && el.getAttribute('data-i') === String(i)); });
+        vdn._focus = on ? String(i) : null;
+    }
+    document.addEventListener('click', function (e) {
+        var row = e.target.closest && e.target.closest('.vdn-row'); if (!row) return;
+        var vdn = row.closest('.vdn'), i = row.getAttribute('data-i'); if (!vdn || i == null) return;
+        focus(vdn, vdn._focus === i ? null : i);
+    });
+    document.addEventListener('pointerover', function (e) {
+        if (e.pointerType !== 'mouse') return;
+        var row = e.target.closest && e.target.closest('.vdn-row'); if (!row) return;
+        var vdn = row.closest('.vdn'); if (vdn) focus(vdn, row.getAttribute('data-i'));
+    });
+    document.addEventListener('pointerout', function (e) {
+        if (e.pointerType !== 'mouse') return;
+        var row = e.target.closest && e.target.closest('.vdn-row'); if (!row) return;
+        if (e.relatedTarget && row.contains(e.relatedTarget)) return;
+        var vdn = row.closest('.vdn'); if (vdn) focus(vdn, null);
+    });
 })();
