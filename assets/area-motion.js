@@ -17,8 +17,7 @@
         '.card', '.gstat', '.row', '.vdn-row', '.vdn-ring', '.quick .btn', '.na-grid > *', '.po-tabs',
         '.sss-meter', '.sss-cap', '.sss-field', '.ar-cap', '.ps-field', '.ps-update'
     ].join(',');
-    // Section rules: the line draws instead of the block moving.
-    var RULES = '.sec-title, .sss-head, .ar-h, .ps-title--sub';
+    var RULES = '.sec-title, .sss-head, .ar-h, .ps-title--sub';   // headings reveal like any block
     // Figures that count up from zero the first time they are seen.
     var COUNT = '.kpi-num, .gstat-num, .vdn-mid b, .sa-reach b, .psa-stats b, .sss-meter-pct';
 
@@ -89,7 +88,6 @@
             seen.add(el);
             // Sheets, sliders' off-screen pages and fixed chrome keep their own motion.
             if (el.closest('.po-modal, [hidden]')) return;
-            if (el.matches(RULES)) el.classList.add('am-rule');
             el.classList.add('am-wait');
             io.observe(el);
         });
