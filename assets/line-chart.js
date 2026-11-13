@@ -255,8 +255,13 @@
 /* ------------------------------------------------------------------
    Two more chart types, same look (styles in line-chart.css).
 
-     el.innerHTML = veroDonut([{ label, value }, …], { format, center, centerLabel });
+     el.innerHTML = veroDonut([{ label, value }, …], { format, center, centerLabel, style });
        A ring split by share, the total in the middle, a legend beneath.
+       style picks another way to draw the same shares:
+         'ring' (default)  thin ring            'donut'   thick ring with gaps
+         'pie'             full pie             'half'    half ring, total at the base
+         'split'           one bar cut by share 'ranked'  a row and bar per part
+         'waffle'          100 squares, 1% each 'rings'   one arc per part, nested
 
      el.innerHTML = veroBars(values, { format, labels, mark });
        Thin rounded columns, oldest → newest; the value sits on each column
@@ -274,6 +279,7 @@
         items = (items || []).filter(function (it) { return (Number(it.value) || 0) > 0; });
         var total = items.reduce(function (s, it) { return s + Number(it.value); }, 0);
         if (!total) return '<div class="empty">No data yet</div>';
+        if (opts.style && opts.style !== 'ring') return share(opts.style, items, total, fmt, opts);
         var R = 15.915, C = 2 * Math.PI * R, off = 0, gap = items.length > 1 ? 0.6 : 0;
         var arcs = items.map(function (it, i) {
             var len = Number(it.value) / total * C, seg = Math.max(0.01, len - gap);
@@ -293,6 +299,68 @@
             '<div class="vdn-mid"><b>' + esc(opts.center != null ? opts.center : fmt(total)) + '</b><span>' + esc(opts.centerLabel || 'Total') + '</span></div></div>' +
             '<div class="vdn-legend">' + legend + '</div></div>';
     };
+
+    // ---- The other share styles. One ink ramp, largest part darkest; same legend. ----
+    var RAMP = ['#16150f', '#56524a', '#8d887e', '#b9b4aa', '#d6d2c8', '#c9922b'];
+    function share(style, items, total, fmt, opts) {
+        var col = function (i) { return RAMP[i % RAMP.length]; };
+        var pctOf = function (it) { return Math.round(Number(it.value) / total * 100); };
+        var P = function (cx, cy, r, a) { return (cx + r * Math.cos(a)).toFixed(2) + ',' + (cy + r * Math.sin(a)).toFixed(2); };
+        // A slice between two angles; r0 = inner radius (0 draws a pie wedge).
+        var slice = function (r1, r0, a0, a1) {
+            if (a1 - a0 >= Math.PI * 2 - 0.001) a1 = a0 + Math.PI * 2 - 0.001;
+            var big = a1 - a0 > Math.PI ? 1 : 0;
+            return r0 ? 'M' + P(50, 50, r1, a0) + ' A' + r1 + ',' + r1 + ' 0 ' + big + ' 1 ' + P(50, 50, r1, a1) + ' L' + P(50, 50, r0, a1) + ' A' + r0 + ',' + r0 + ' 0 ' + big + ' 0 ' + P(50, 50, r0, a0) + ' Z'
+                      : 'M50,50 L' + P(50, 50, r1, a0) + ' A' + r1 + ',' + r1 + ' 0 ' + big + ' 1 ' + P(50, 50, r1, a1) + ' Z';
+        };
+        var arcs = function (r1, r0, start, sweep, gap) {
+            var a = start, out = '', g = items.length > 1 ? gap / r1 / 2 : 0;
+            items.forEach(function (it, i) {
+                var w = Number(it.value) / total * sweep;
+                out += '<path class="vdn-p" d="' + slice(r1, r0, a + g, Math.max(a + g + 0.002, a + w - g)) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
+                a += w;
+            });
+            return out;
+        };
+        var mid = function (cls) { return '<div class="vdn-mid' + (cls || '') + '"><b>' + esc(opts.center != null ? opts.center : fmt(total)) + '</b><span>' + esc(opts.centerLabel || 'Total') + '</span></div>'; };
+        var legend = '<div class="vdn-legend">' + items.map(function (it, i) {
+            return '<div class="vdn-row"><i style="background:' + col(i) + '"></i><span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-pct">' + pctOf(it) + '%</span>' +
+                   '<span class="vdn-val">' + esc(fmt(Number(it.value))) + '</span></div>';
+        }).join('') + '</div>';
+        var TOP = -Math.PI / 2, FULL = Math.PI * 2, fig, body;
+        var svg = function (inner, vb) { return '<svg viewBox="' + (vb || '0 0 100 100') + '" aria-hidden="true">' + inner + '</svg>'; };
+
+        if (style === 'donut')      fig = '<div class="vdn-fig">' + svg(arcs(48, 28, TOP, FULL, 2.4)) + mid() + '</div>';
+        else if (style === 'pie')   fig = '<div class="vdn-fig">' + svg(arcs(48, 0, TOP, FULL, 1.6)) + '</div>';
+        else if (style === 'half')  fig = '<div class="vdn-fig vdn-fig--half">' + svg(arcs(48, 30, Math.PI, Math.PI, 2.2), '0 0 100 52') + mid(' vdn-mid--low') + '</div>';
+        else if (style === 'split') {
+            var x = 0, bars = '';
+            items.forEach(function (it, i) { var w = Number(it.value) / total * 100; bars += '<i style="width:' + w.toFixed(2) + '%;background:' + col(i) + ';animation-delay:' + (i * 0.07).toFixed(2) + 's"></i>'; x += w; });
+            fig = '<div class="vdn-split">' + bars + '</div>';
+        } else if (style === 'waffle') {
+            var cells = [], sq = '';
+            items.forEach(function (it, i) { for (var k = 0; k < pctOf(it); k++) cells.push(i); });
+            while (cells.length < 100) cells.push(items.length - 1);
+            cells.length = 100;
+            cells.forEach(function (c, k) { sq += '<rect class="vdn-p" x="' + (k % 10 * 10 + 0.8) + '" y="' + (Math.floor(k / 10) * 10 + 0.8) + '" width="8.4" height="8.4" fill="' + col(c) + '" style="animation-delay:' + (k * 0.006).toFixed(3) + 's"/>'; });
+            fig = '<div class="vdn-fig">' + svg(sq) + '</div>';
+        } else if (style === 'rings') {
+            var top = Number(items[0].value), step = Math.min(7, 40 / items.length), rg = '';
+            items.forEach(function (it, i) {
+                var r1 = 48 - i * step, r0 = r1 - step * 0.66;
+                rg += '<path d="' + slice(r1, r0, TOP, TOP + FULL * 0.75) + '" fill="#ecebe6"/>' +
+                      '<path class="vdn-p" d="' + slice(r1, r0, TOP, TOP + Number(it.value) / top * FULL * 0.75) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
+            });
+            fig = '<div class="vdn-fig">' + svg(rg) + '</div>';
+        } else {   // ranked
+            var big = Number(items[0].value) || 1;
+            body = '<div class="vdn-rank">' + items.map(function (it, i) {
+                return '<div class="vdn-rr"><span class="vdn-name">' + esc(it.label) + '</span><span class="vdn-rb"><i style="width:' + (Number(it.value) / big * 100).toFixed(1) + '%;animation-delay:' + (i * 0.07).toFixed(2) + 's"></i></span>' +
+                       '<span class="vdn-val">' + esc(fmt(Number(it.value))) + '</span></div>';
+            }).join('') + '</div>';
+        }
+        return '<div class="vdn vdn--' + style + '" role="img" aria-label="' + esc('Share chart, ' + items.length + ' parts, total ' + fmt(total)) + '">' + (body || fig + legend) + '</div>';
+    }
 
     window.veroBars = function (vals, opts) {
         opts = opts || {};

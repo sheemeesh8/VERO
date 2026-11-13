@@ -217,8 +217,8 @@ h3, h4, h5, h6, p,
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261011e"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261113g">
-    <script src="assets/line-chart.js?v=20261113g"></script>
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261113h">
+    <script src="assets/line-chart.js?v=20261113h"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
         :root { --dash-gap: 44px; }
@@ -247,7 +247,7 @@ h3, h4, h5, h6, p,
         .hc-range { font-size: 13px !important; letter-spacing: 2px !important; }
     </style>
     <!-- Ledger look shared by both statistics dashboards (assets/dash.css). -->
-    <link rel="stylesheet" href="assets/dash.css?v=20261113g">
+    <link rel="stylesheet" href="assets/dash.css?v=20261113h">
     <link rel="stylesheet" href="assets/area-motion.css?v=20261113b">
     <style>:root { --a-goal-label: 'Budget'; }</style>
 </head>
@@ -369,6 +369,11 @@ h3, h4, h5, h6, p,
             <div class="list" id="sellerList"></div>
         </div>
 
+        <!-- ===== SHARE: price ranges ===== -->
+        <div class="sec-title">What you pay</div>
+        <div class="na-sub">Your spending split by the price of each item</div>
+        <div class="list" id="priceSplit"></div>
+
         <!-- ===== CUMULATIVE ===== -->
         <div class="card">
             <div class="card-h">
@@ -406,6 +411,11 @@ h3, h4, h5, h6, p,
             <div class="card-d">Number of purchases each month</div>
             <div id="itemsChart"></div>
                     </div>
+
+        <!-- ===== SHARE: purchases per seller ===== -->
+        <div class="sec-title">Who you buy from</div>
+        <div class="na-sub">Each square is 1% of your purchases</div>
+        <div class="list" id="sellerWaffle"></div>
 
         <!-- ===== BY WEEKDAY ===== -->
         <div class="card">
@@ -705,7 +715,21 @@ h3, h4, h5, h6, p,
         const sellerEl = document.getElementById('sellerList');
         const restSpend = total - sellers.reduce((t, x) => t + x[1], 0);
         if (restSpend > 0) sellers.push(['Other', restSpend]);
-        sellerEl.innerHTML = veroDonut(sellers.map(([name, sum]) => ({ label: name, value: sum })), { format: nis, centerLabel: 'Spent' });
+        sellerEl.innerHTML = veroDonut(sellers.map(([name, sum]) => ({ label: name, value: sum })), { format: nis, centerLabel: 'Spent', style: 'donut' });
+
+        // ---- More share charts: spend by price range (split bar), purchases per seller (squares). ----
+        (function shareCharts() {
+            const bands = [['Under ₪150', 0, 150], ['₪150–250', 150, 250], ['₪250–350', 250, 350], ['₪350 and up', 350, Infinity]];
+            document.getElementById('priceSplit').innerHTML = veroDonut(bands.map(([label, lo, hi]) => ({ label: label,
+                value: items.filter(it => { const p = parseFloat(it.price) || 0; return p >= lo && p < hi; }).reduce((s, it) => s + priceOf(it), 0) })),
+                { format: nis, style: 'split' });
+            const cnt = {};
+            items.forEach(it => { const s = it.seller || 'Other'; cnt[s] = (cnt[s] || 0) + qtyOf(it); });
+            const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]), head = top.slice(0, 5), restN = top.slice(5).reduce((t, x) => t + x[1], 0);
+            if (restN > 0) head.push(['Other', restN]);
+            document.getElementById('sellerWaffle').innerHTML = veroDonut(head.map(([label, n]) => ({ label: label, value: n })),
+                { format: n => Math.round(n) + (Math.round(n) === 1 ? ' item' : ' items'), style: 'waffle' });
+        })();
 
         // ---- Recent purchases. ----
         const recent = [...items].sort((a, b) => tsOf(b) - tsOf(a)).slice(0, 5);

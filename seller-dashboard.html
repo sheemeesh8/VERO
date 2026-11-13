@@ -478,8 +478,8 @@ h3, h4, h5, h6, p,
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261011e"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261113g">
-    <script src="assets/line-chart.js?v=20261113g"></script>
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261113h">
+    <script src="assets/line-chart.js?v=20261113h"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
         :root { --dash-gap: 44px; }
@@ -534,7 +534,7 @@ h3, h4, h5, h6, p,
         .hc-range { font-size: 13px !important; letter-spacing: 2px !important; }
     </style>
     <!-- Ledger look shared by both statistics dashboards (assets/dash.css). -->
-    <link rel="stylesheet" href="assets/dash.css?v=20261113g">
+    <link rel="stylesheet" href="assets/dash.css?v=20261113h">
     <link rel="stylesheet" href="assets/area-motion.css?v=20261113b">
 </head>
 <body>
@@ -740,6 +740,14 @@ h3, h4, h5, h6, p,
             <div class="gstats" id="wdayStats"></div>
         </div>
 
+        <!-- Share: items sold by brand (ranked rows) and stock sold vs available (half ring). -->
+        <div class="sec-title">Items sold by brand</div>
+        <div class="na-sub">Your brands ranked by how many pieces sold</div>
+        <div class="list" id="brandSold"></div>
+        <div class="sec-title">Your stock</div>
+        <div class="na-sub">How much of what you listed has sold</div>
+        <div class="list" id="stockHalf"></div>
+
         <!-- Revenue by brand. -->
         <div class="sec-title">Revenue by brand</div>
         <div class="list" id="brandRev"></div>
@@ -855,6 +863,11 @@ h3, h4, h5, h6, p,
             <div class="lc-x" id="pvX"></div>
             <div class="gstats" id="pvStats"></div>
         </div>
+
+        <!-- Share: where views land. -->
+        <div class="sec-title">Where views land</div>
+        <div class="na-sub">Views of your store page against views of your items</div>
+        <div class="list" id="reachPie"></div>
 
         <!-- Views by brand. -->
         <div class="sec-title">Views by brand</div>
@@ -1771,6 +1784,14 @@ h3, h4, h5, h6, p,
             const rest = revenue - rows.reduce((t, r) => t + r[1], 0);
             if (rest > 0) rows.push(['Other', rest]);
             document.getElementById('brandRev').innerHTML = veroDonut(rows.map(([b, v]) => ({ label: b, value: v })), { format: nis, centerLabel: 'Revenue' });
+
+            // More share charts: pieces sold per brand (ranked), stock sold vs still available (half ring).
+            const soldBy = {};
+            sold.forEach(p => { const b = p.brand || p.seller || 'Other'; soldBy[b] = (soldBy[b] || 0) + 1; });
+            document.getElementById('brandSold').innerHTML = veroDonut(Object.entries(soldBy).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([b, n]) => ({ label: b, value: n })),
+                { format: fmtN, style: 'ranked' });
+            document.getElementById('stockHalf').innerHTML = veroDonut([{ label: 'Sold', value: sold.length }, { label: 'Still available', value: Math.max(0, listings.length - sold.length) }],
+                { format: n => fmtN(n) + ' items', center: fmtN(listings.length), centerLabel: 'Listed', style: 'half' });
         })();
 
         // ---- Growth view: product views and conversion over time, views by brand. ----
@@ -1817,7 +1838,9 @@ h3, h4, h5, h6, p,
             const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
             const rest = productViews - rows.reduce((t, r) => t + r[1], 0);
             if (rest > 0) rows.push(['Other', rest]);
-            document.getElementById('gBrandViews').innerHTML = veroDonut(rows.map(([b, v]) => ({ label: b, value: v })), { format: fmtN, centerLabel: 'Views' });
+            document.getElementById('gBrandViews').innerHTML = veroDonut(rows.map(([b, v]) => ({ label: b, value: v })), { format: fmtN, centerLabel: 'Views', style: 'rings' });
+            // Store-page views against item views (pie).
+            document.getElementById('reachPie').innerHTML = veroDonut([{ label: 'Item views', value: productViews }, { label: 'Store page views', value: storeViews }], { format: fmtN, style: 'pie' });
         })();
 
         // ---- View selection. The Business ↔ Growth toggle was removed; the two
