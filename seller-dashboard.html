@@ -478,8 +478,8 @@ h3, h4, h5, h6, p,
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261011e"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261113h">
-    <script src="assets/line-chart.js?v=20261113h"></script>
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261113i">
+    <script src="assets/line-chart.js?v=20261113i"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
         :root { --dash-gap: 44px; }
@@ -534,7 +534,7 @@ h3, h4, h5, h6, p,
         .hc-range { font-size: 13px !important; letter-spacing: 2px !important; }
     </style>
     <!-- Ledger look shared by both statistics dashboards (assets/dash.css). -->
-    <link rel="stylesheet" href="assets/dash.css?v=20261113h">
+    <link rel="stylesheet" href="assets/dash.css?v=20261113i">
     <link rel="stylesheet" href="assets/area-motion.css?v=20261113b">
 </head>
 <body>
@@ -951,8 +951,8 @@ h3, h4, h5, h6, p,
         const xLabels = labels => labels.map(l => '<span>' + l + '</span>').join('');
         // Growth line (oldest → newest, left → right): a line that rises and falls
         // with the monthly trend, with a soft area fill underneath.
-        function growthLine(vals) {
-            return veroLineChart(vals, { format: nis, style: 'delta' });
+        function growthLine(vals, names) {
+            return veroLineChart(vals, { format: nis, style: 'delta', labels: names });
         }
         // Monthly series as a line, oldest → newest (left → right).
         const fineCols = (vals, color, fmt) => veroLineChart(vals, { color: color, format: fmt });
@@ -1048,7 +1048,7 @@ h3, h4, h5, h6, p,
         // ---- Monthly growth: a rising/falling line + month-over-month %. ----
         (function monthlyGrowth() {
             const vals = buckets.map(b => b.sum);
-            document.getElementById('revSlider').innerHTML = growthLine(vals);
+            document.getElementById('revSlider').innerHTML = growthLine(vals, buckets.map(b => b.label));
             document.getElementById('revX').innerHTML = buckets.map(b => `<span>${b.label}</span>`).join('');
             const cur = vals[vals.length - 1], prev = vals[vals.length - 2] || 0;
             trendPill(document.getElementById('revGrowthTrend'), cur, prev);
@@ -1238,7 +1238,7 @@ h3, h4, h5, h6, p,
             };
             // A rising line (oldest → newest, left → right) with a soft area fill.
             // Followers / views are levels: a grouped point shows the value at its end.
-            const lineSVG = (vals, color, style) => veroLineChart(vals, { color: color, group: 'last', style: style });
+            const lineSVG = (vals, color, style, names) => veroLineChart(vals, { color: color, group: 'last', style: style, labels: names });
             // Each range starts on its first day: Sunday, the 1st, 1 January — up to today.
             const nFor = r => { const t = new Date(); return r === 'week' ? t.getDay() + 1 : r === 'year' ? t.getMonth() + 1 : t.getDate(); };
             const labelsFor = r => {
@@ -1254,7 +1254,7 @@ h3, h4, h5, h6, p,
                 const series = growthSeries(c.end, nFor(range), seed);
                 // Every chart runs oldest → newest (left → right).
                 const labels = labelsFor(range).slice().reverse();
-                document.getElementById(c.chart).innerHTML = lineSVG(series, c.color, c.style);
+                document.getElementById(c.chart).innerHTML = lineSVG(series, c.color, c.style, labels.length === series.length ? labels : null);
                 document.getElementById(c.x).innerHTML = labels.map(l => '<span>' + l + '</span>').join('');
                 const tp = document.getElementById(c.trend); if (tp) { tp.className = 'trend-pill'; trendPill(tp, series[series.length - 1], series[series.length - 2]); }
             }
@@ -1766,7 +1766,7 @@ h3, h4, h5, h6, p,
 
             // Added: the running revenue total, and sales by weekday.
             const cum = buckets.reduce((acc, b) => { acc.push((acc[acc.length - 1] || 0) + b.sum); return acc; }, []);
-            document.getElementById('runRevChart').innerHTML = veroLineChart(cum, { format: nis, labels: labels, style: 'step' });
+            document.getElementById('runRevChart').innerHTML = veroLineChart(cum, { format: nis, labels: labels, style: 'step', level: true });
             document.getElementById('runRevX').innerHTML = xLabels(labels);
             trendPill(document.getElementById('runRevTrend'), buckets[L].sum, (buckets[L - 1] || {}).sum || 0);
             gset('runRevStats', [[nis(cum[L]), 'Year to date'], [nis(cum[L] / NM), 'Per month'],
@@ -1799,7 +1799,7 @@ h3, h4, h5, h6, p,
             const gset = (id, items) => { const el = document.getElementById(id); if (el) el.innerHTML = items.map(it => '<div class="gstat"><div class="gstat-num">' + it[0] + '</div><div class="gstat-lbl">' + it[1] + '</div></div>').join(''); };
             const fmtN = v => Math.round(v).toLocaleString('en-US');
             // Added: followers gained each month (the change in the follower line).
-            document.getElementById('newFolChart').innerHTML = veroLineChart(followerSeries, { format: fmtN, labels: labels, style: 'delta' });
+            document.getElementById('newFolChart').innerHTML = veroLineChart(followerSeries, { format: fmtN, labels: labels, style: 'delta', level: true });
             document.getElementById('newFolX').innerHTML = xLabels(labels);
             const gains = followerSeries.map((v, i) => i ? v - followerSeries[i - 1] : 0).slice(1);
             trendPill(document.getElementById('newFolTrend'), gains[gains.length - 1], gains[gains.length - 2] || 0);
@@ -1825,7 +1825,7 @@ h3, h4, h5, h6, p,
             const mean = monthSold.reduce((a, b) => a + b, 0) / NM || 1;
             const cv = monthSold.map((n, i) => +(conv * (n ? n / mean : 0.4 + rnd(i + 61) * 0.8)).toFixed(2));
             const pct = v => v.toFixed(1) + '%';
-            document.getElementById('convChart').innerHTML = veroLineChart(cv, { group: 'last', format: pct, labels: labels, style: 'area' });
+            document.getElementById('convChart').innerHTML = veroLineChart(cv, { group: 'last', format: pct, labels: labels, style: 'area', level: false });
             document.getElementById('convX').innerHTML = xLabels(labels);
             trendPill(document.getElementById('convTrend'), cv[L], (cv[L - 1] || 0));
             gset('convStats', [[pct(conv), 'Overall'], [pct(cv[L]), 'This month'],
@@ -1872,7 +1872,7 @@ h3, h4, h5, h6, p,
             var seed = function (i) { var x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
 
             // The range's daily totals as a line, oldest → newest.
-            function fineLine(vals) { return veroLineChart(vals, { format: nis, style: 'area' }); }
+            function fineLine(vals, names) { return veroLineChart(vals, { format: nis, style: 'area', labels: names }); }
 
             // Build one daily bucket per day in the range (oldest → newest, today last).
             // Week = Sunday → today, Month = the 1st → today, Year = 1 January → today.
@@ -1911,7 +1911,7 @@ h3, h4, h5, h6, p,
                         return Math.round(180 + 220 * Math.abs(Math.sin(t * Math.PI * 3)) + 160 * seed(i + 1) + t * 120);
                     });
                 }
-                plot.innerHTML = fineLine(data.vals);
+                plot.innerHTML = fineLine(data.vals, kind === 'Week' ? data.vals.map(function (_, i) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i % 7]; }) : null);   // day names for the pie view
                 xEl.innerHTML = data.labels.map(function (l) { return '<span>' + l + '</span>'; }).join('');
                 rangeEl.textContent = kind;
                 totalEl.textContent = nis(data.vals.reduce(function (s, v) { return s + v; }, 0));

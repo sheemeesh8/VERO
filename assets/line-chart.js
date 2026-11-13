@@ -32,6 +32,16 @@
     'use strict';
 
     var TOP = 16, BOT = 86;   // plot band, % of the height (room for labels above / below)
+
+    // Every chart remembers its numbers so it can also be shown as a pie
+    // (swipe sideways on the chart, or use the small switch under it).
+    var SHARE = window.__veroShare = window.__veroShare || { n: 0, map: {} };
+    function remember(v, lbl, fmt, opts) {
+        var id = 's' + (++SHARE.n);
+        SHARE.map[id] = { v: v, l: lbl, fmt: fmt, level: opts.level != null ? !!opts.level : opts.group === 'last' };
+        return ' data-vsw="' + id + '"';
+    }
+    window.veroRememberShare = remember;
     var MAX_PTS = 12;         // a value label on every break needs room: long series are grouped
 
     // Group a long series into at most MAX_PTS points: 'sum' for flows (revenue,
@@ -133,7 +143,7 @@
         var summary = 'Line chart, ' + n + ' points, from ' + fmt(v[0]) + ' to ' + fmt(v[n - 1]);
         var axis = opts.axis ? '<div class="vlc-x">' + opts.axis.map(function (a) { return '<span>' + esc(a) + '</span>'; }).join('') + '</div>' : '';
         summary += ', trend ' + (trend === 'up' ? 'rising' : trend === 'down' ? 'falling' : 'sideways');
-        return '<div class="vlc trend-' + trend + '" role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
+        return '<div class="vlc trend-' + trend + '"' + remember(v, lbl, fmt, opts) + ' role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
             svg + '<i class="vlc-sheen" aria-hidden="true"></i>' + marks +
             '<div class="vlc-hover"><i class="vlc-vline"></i><i class="vlc-hdot"></i><span class="vlc-tip"></span></div>' +
             '</div>' + axis;
@@ -199,7 +209,7 @@
         var data = { y: ys.map(function (y) { return +y.toFixed(3); }), x: xs.map(function (x) { return +x.toFixed(3); }), t: texts, l: lbl };
         var summary = 'Chart, ' + n + ' points, from ' + fmt(v[0]) + ' to ' + fmt(v[n - 1]) + ', trend ' + (trend === 'up' ? 'rising' : trend === 'down' ? 'falling' : 'sideways');
         var axis = opts.axis ? '<div class="vlc-x">' + opts.axis.map(function (a) { return '<span>' + esc(a) + '</span>'; }).join('') + '</div>' : '';
-        return '<div class="vlc vlc-s vlc-' + style + ' trend-' + trend + '" role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
+        return '<div class="vlc vlc-s vlc-' + style + ' trend-' + trend + '"' + remember(v, lbl, fmt, opts) + ' role="img" aria-label="' + esc(summary) + '" style="color:' + color + '" data-vlc="' + esc(JSON.stringify(data)) + '">' +
             '<svg class="vlc-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + inner + '</svg>' + dots + val +
             '<div class="vlc-hover"><i class="vlc-vline"></i><i class="vlc-hdot"></i><span class="vlc-tip"></span></div></div>' + axis;
     }
@@ -378,6 +388,90 @@
                 'animation-delay:' + (i * 0.05).toFixed(2) + 's"></span>' +
                 (opts.labels ? '<span class="vbr-lbl">' + esc(opts.labels[i] || '') + '</span>' : '') + '</div>';
         }).join('');
-        return '<div class="vbr" role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars, latest ' + fmt(v[v.length - 1])) + '">' + cols + '</div>';
+        return '<div class="vbr"' + (window.veroRememberShare ? window.veroRememberShare(v, opts.labels && opts.labels.length === v.length ? opts.labels : null, fmt, opts) : '') + ' role="img" aria-label="' + esc('Bar chart, ' + v.length + ' bars, latest ' + fmt(v[v.length - 1])) + '">' + cols + '</div>';
     };
+})();
+
+
+/* ------------------------------------------------------------------
+   Graph ⇄ pie. Every line / bar chart can also be read as a pie of the same
+   numbers: swipe sideways on the chart (or on the pie to come back), or tap
+   the small switch under it. Each part is one period's share of the total;
+   for running totals (levels) it is what each period added. More than six
+   periods keep the five largest and fold the rest into "Other".
+------------------------------------------------------------------ */
+(function () {
+    'use strict';
+    var SHARE = window.__veroShare; if (!SHARE || !window.veroDonut) return;
+    var ICON_G = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 3 8-9"/></svg>';
+    var ICON_P = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7 5"/></svg>';
+
+    function items(rec) {
+        var v = rec.v.slice(), l = rec.l ? rec.l.slice() : v.map(function (_, i) { return 'Period ' + (i + 1); });
+        if (rec.level) {   // a running total: show what each period added
+            v = v.map(function (x, i) { return i ? x - rec.v[i - 1] : 0; }).slice(1); l = l.slice(1);
+        }
+        var out = v.map(function (x, i) { return { label: String(l[i]), value: Math.max(0, x) }; }).filter(function (it) { return it.value > 0; });
+        out.sort(function (a, b) { return b.value - a.value; });
+        if (out.length > 6) {
+            var rest = out.slice(5).reduce(function (s, it) { return s + it.value; }, 0);
+            out = out.slice(0, 5).concat([{ label: 'Other', value: rest }]);
+        }
+        return out;
+    }
+
+    function setMode(chart, pie) {
+        var rec = SHARE.map[chart.getAttribute('data-vsw')]; if (!rec) return;
+        var box = chart._vswPie, sw = chart._vswSwitch;
+        if (pie && !box) {
+            box = chart._vswPie = document.createElement('div');
+            box.className = 'vsw-pie';
+            box.innerHTML = window.veroDonut(items(rec), { format: rec.fmt, style: 'donut', centerLabel: rec.level ? 'Added' : 'Total' });
+            chart.parentNode.insertBefore(box, chart);
+            swipe(box, function () { setMode(chart, false); });
+        }
+        chart.classList.toggle('vsw-off', pie);
+        if (box) box.hidden = !pie;
+        // The date row belongs to the graph: hide it with the graph.
+        var ax = chart.nextElementSibling; if (ax && ax.classList.contains('vlc-x')) ax.classList.toggle('vsw-off', pie);
+        var px = chart.parentNode.nextElementSibling; if (px && px.classList.contains('lc-x')) px.classList.toggle('vsw-off', pie);
+        if (sw) { sw.children[0].classList.toggle('on', !pie); sw.children[1].classList.toggle('on', pie);
+                  sw.children[0].setAttribute('aria-pressed', String(!pie)); sw.children[1].setAttribute('aria-pressed', String(pie)); }
+    }
+
+    // A sideways swipe (touch or mouse drag). Handled on the element itself and
+    // not passed on, so a card that swipes for something else doesn't also react.
+    function swipe(el, fn) {
+        var x0 = null, y0 = 0;
+        el.addEventListener('touchstart', function (e) { if (e.touches.length !== 1) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; e.stopPropagation(); }, { passive: true });
+        el.addEventListener('touchend', function (e) {
+            e.stopPropagation();
+            if (x0 === null) return;
+            var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+            if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.4) fn();
+        }, { passive: true });
+        var mx = null;
+        el.addEventListener('mousedown', function (e) { mx = e.clientX; e.stopPropagation(); });
+        el.addEventListener('mouseup', function (e) { e.stopPropagation(); if (mx === null) return; var dx = e.clientX - mx; mx = null; if (Math.abs(dx) > 44) fn(); });
+        el.addEventListener('mouseleave', function () { mx = null; });
+    }
+
+    function enhance(chart) {
+        if (chart._vsw) return; chart._vsw = true;
+        var rec = SHARE.map[chart.getAttribute('data-vsw')];
+        if (!rec || items(rec).length < 2) return;            // nothing to split
+        var sw = chart._vswSwitch = document.createElement('div');
+        sw.className = 'vsw'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'Show as');
+        sw.innerHTML = '<button type="button" class="on" aria-pressed="true" aria-label="Graph">' + ICON_G + '</button><button type="button" aria-pressed="false" aria-label="Pie">' + ICON_P + '</button>';
+        var after = chart.nextElementSibling && chart.nextElementSibling.classList.contains('vlc-x') ? chart.nextElementSibling : chart;
+        after.parentNode.insertBefore(sw, after.nextSibling);
+        sw.children[0].addEventListener('click', function () { setMode(chart, false); });
+        sw.children[1].addEventListener('click', function () { setMode(chart, true); });
+        swipe(chart, function () { setMode(chart, true); });
+    }
+    function scan() { document.querySelectorAll('[data-vsw]').forEach(enhance); }
+    var pending = false;
+    function schedule() { if (pending) return; pending = true; setTimeout(function () { pending = false; scan(); }, 50); }
+    function boot() { scan(); try { new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true }); } catch (e) {} }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

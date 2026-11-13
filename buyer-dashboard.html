@@ -217,8 +217,8 @@ h3, h4, h5, h6, p,
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261011e"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261113h">
-    <script src="assets/line-chart.js?v=20261113h"></script>
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261113i">
+    <script src="assets/line-chart.js?v=20261113i"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
         :root { --dash-gap: 44px; }
@@ -247,7 +247,7 @@ h3, h4, h5, h6, p,
         .hc-range { font-size: 13px !important; letter-spacing: 2px !important; }
     </style>
     <!-- Ledger look shared by both statistics dashboards (assets/dash.css). -->
-    <link rel="stylesheet" href="assets/dash.css?v=20261113h">
+    <link rel="stylesheet" href="assets/dash.css?v=20261113i">
     <link rel="stylesheet" href="assets/area-motion.css?v=20261113b">
     <style>:root { --a-goal-label: 'Budget'; }</style>
 </head>
@@ -612,7 +612,7 @@ h3, h4, h5, h6, p,
         addSpark(monthSums);
         const cumulative = monthSums.reduce((acc, v) => { acc.push((acc[acc.length - 1] || 0) + v); return acc; }, []);
         const labels = buckets.map(b => b.label);
-        document.getElementById('cumChart').innerHTML   = veroLineChart(cumulative, { format: nis, labels: labels, style: 'step' });
+        document.getElementById('cumChart').innerHTML   = veroLineChart(cumulative, { format: nis, labels: labels, style: 'step', level: true });
         document.getElementById('cumX').innerHTML       = xLabels(labels);
         document.getElementById('itemsChart').innerHTML = veroBars(monthCounts, { labels: labels });
         trendPill(document.getElementById('cumTrend'),   monthSums[L],   (monthSums[L - 1] || 0), false);
@@ -760,7 +760,7 @@ h3, h4, h5, h6, p,
             var seedf = function (i) { var x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
 
             // The range's daily totals as a line, oldest → newest.
-            function fineLine(vals) { return veroLineChart(vals, { format: nis, style: 'area' }); }
+            function fineLine(vals, names) { return veroLineChart(vals, { format: nis, style: 'area', labels: names }); }
 
             // Build one daily bucket per day in the range (oldest → newest, today last).
             // Week = Sunday → today, Month = the 1st → today, Year = 1 January → today.
@@ -797,7 +797,7 @@ h3, h4, h5, h6, p,
                         return Math.round(60 + 120 * Math.abs(Math.sin(t * Math.PI * 3)) + 90 * seedf(i + 1) + t * 70);
                     });
                 }
-                plot.innerHTML = fineLine(data.vals);
+                plot.innerHTML = fineLine(data.vals, kind === 'Week' ? data.vals.map(function (_, i) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i % 7]; }) : null);   // day names for the pie view
                 xEl.innerHTML = data.labels.map(function (l) { return '<span>' + l + '</span>'; }).join('');
                 rangeEl.textContent = kind;
                 totalEl.textContent = nis(data.vals.reduce(function (s, v) { return s + v; }, 0));
