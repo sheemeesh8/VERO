@@ -68,7 +68,7 @@
             border-radius: 18px; overflow: hidden; box-shadow: 0 10px 34px rgba(0,0,0,0.09);
         }
         .cv-hero {
-            position: relative; height: 150px; display: flex; align-items: flex-end; padding: 16px; cursor: pointer;
+            position: relative; height: 150px; display: flex; align-items: flex-end; padding: 16px;
             background: var(--sf-hero, linear-gradient(150deg,#2c2823,#100e0c)) center / cover;
         }
         .cv-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, var(--sf-scrim, rgba(0,0,0,.55)), transparent 70%); }
@@ -267,10 +267,6 @@ h3, h4, h5, h6, p,
     </header>
 
     <div class="topbar">
-        <div class="seg" id="viewSeg">
-            <button type="button" class="on" data-view="build">Build</button>
-            <button type="button" data-view="theme">Theme</button>
-        </div>
         <span class="grow"></span>
         <button class="pillbtn" id="presetBtn" type="button">Presets</button>
         <button class="ib" id="undoBtn" type="button" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -280,22 +276,6 @@ h3, h4, h5, h6, p,
     <!-- BUILD — the storefront itself. Tap a section to select it, + to add one. -->
     <div class="view on" id="viewBuild">
         <div class="stage"><div class="cv" id="cv"></div></div>
-    </div>
-
-    <!-- THEME — template, accent colour, store-name position. -->
-    <div class="view" id="viewTheme">
-        <div class="theme">
-            <div class="sec-lbl">Accent color</div>
-            <div class="swatches" id="accentRow"></div>
-            <div class="sec-lbl">Store name position</div>
-            <div class="seg" id="namePosSeg">
-                <button type="button" data-pos="left">Left</button>
-                <button type="button" data-pos="center">Center</button>
-                <button type="button" data-pos="right">Right</button>
-            </div>
-            <div class="sec-lbl">Template</div>
-            <div class="tpl-grid" id="tplGrid"></div>
-        </div>
     </div>
 
     <!-- Bottom sheet: section settings, the section library, or the presets. -->
@@ -422,7 +402,7 @@ h3, h4, h5, h6, p,
         }
 
         function paint() {
-            var h = '<div class="cv-hero" data-hero><span class="hint">Header · Theme</span>' +
+            var h = '<div class="cv-hero">' +
                     '<div class="nm" style="text-align:' + (cfg.namePos || 'left') + '">' + esc(storeName) + '</div></div>';
             sections.forEach(function (s, i) {
                 var on = s.id === selId;
@@ -453,7 +433,6 @@ h3, h4, h5, h6, p,
         cv.addEventListener('click', function (e) {
             var ins = e.target.closest('[data-ins]');
             if (ins) { addAt = +ins.getAttribute('data-ins'); openSheet('add'); return; }
-            if (e.target.closest('[data-hero]')) { setView('theme'); return; }
             var w = e.target.closest('.sw'); if (!w) return;
             var id = w.getAttribute('data-sec'), i = indexOf(id), act = (e.target.closest('[data-act]') || {}).getAttribute && e.target.closest('[data-act]').getAttribute('data-act');
             if (!act) { select(id, true); return; }
@@ -801,46 +780,8 @@ h3, h4, h5, h6, p,
             }).catch(function () { toast('That image could not be read'); });
         });
 
-        /* ------------------------------- Theme ------------------------------- */
-        var TEMPLATES = [
-            ['t1', 'Minimal', 'Clean white, signature red'], ['t2', 'Editorial', 'Warm cream, gold, Bodoni'], ['t3', 'Noir', 'Dark and bold, silver'],
-            ['t4', 'Blush', 'Soft pink, elegant serif'], ['t5', 'Street', 'Bold orange, uppercase'], ['t6', 'Luxe', 'Deep green, gold'],
-            ['t7', 'Lavender', 'Soft purple, rounded'], ['t8', 'Gallery', 'Airy gray, monochrome'], ['t9', 'Classic', 'Navy, traditional serif'], ['t10', 'Coast', 'Fresh turquoise']
-        ];
-        var ACCENTS = ['#EB2323', '#9a7d52', '#d46a7e', '#ff5a1f', '#c8a24a', '#7b5cd6', '#1f3a5f', '#1f9c8f', '#111111'];
-        function saveTheme(patch) {
-            cfg = read();
-            Object.keys(patch).forEach(function (k) { if (patch[k] === '' || patch[k] == null) delete cfg[k]; else cfg[k] = patch[k]; });
-            write(cfg); paintTheme(); applyTheme(); paint(); toast('Theme saved');
-        }
-        function paintTheme() {
-            var accent = cfg.accent || '', tpl = cfg.template || 't1';
-            $('accentRow').innerHTML =
-                '<button type="button" class="swatch' + (!accent ? ' on' : '') + '" data-accent="" title="The template default" style="background:conic-gradient(#EB2323,#c8a24a,#1f9c8f,#7b5cd6,#EB2323)"></button>' +
-                ACCENTS.map(function (c) { return '<button type="button" class="swatch' + (accent === c ? ' on' : '') + '" data-accent="' + c + '" style="background:' + c + '"></button>'; }).join('');
-            $('tplGrid').innerHTML = TEMPLATES.map(function (t) {
-                return '<button type="button" class="tpl' + (t[0] === tpl ? ' on' : '') + '" data-tpl="' + t[0] + '">' +
-                    '<span class="sfp" data-store-template="' + t[0] + '" style="display:block' + (accent ? ';--sf-accent:' + accent : '') + '">' +
-                    '<span class="sfp-hero" style="display:flex"><span class="sfp-name">' + esc(storeName) + '</span></span>' +
-                    '<span class="sfp-body" style="display:block"><span class="sfp-tiles" style="display:grid"><i class="sfp-tile"></i><i class="sfp-tile"></i><i class="sfp-tile"></i></span></span></span>' +
-                    '<span class="tpl-foot"><b>' + t[1] + '</b><small>' + t[2] + '</small></span></button>';
-            }).join('');
-            $('namePosSeg').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-pos') === (cfg.namePos || 'left')); });
-        }
-        $('accentRow').addEventListener('click', function (e) { var b = e.target.closest('[data-accent]'); if (b) saveTheme({ accent: b.getAttribute('data-accent') }); });
-        $('tplGrid').addEventListener('click', function (e) { var b = e.target.closest('[data-tpl]'); if (b) saveTheme({ template: b.getAttribute('data-tpl') }); });
-        $('namePosSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-pos]'); if (b) saveTheme({ namePos: b.getAttribute('data-pos') }); });
-
         /* ------------------------------ Chrome ------------------------------ */
-        function setView(v) {
-            $('viewBuild').classList.toggle('on', v === 'build');
-            $('viewTheme').classList.toggle('on', v === 'theme');
-            $('viewSeg').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-view') === v); });
-            if (v === 'theme') closeSheet();
-            window.scrollTo(0, 0);
-        }
-        $('viewSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-view]'); if (b) setView(b.getAttribute('data-view')); });
-        $('presetBtn').addEventListener('click', function () { setView('build'); openSheet('presets'); });
+        $('presetBtn').addEventListener('click', function () { openSheet('presets'); });
         $('undoBtn').addEventListener('click', function () { travel(-1); });
         $('redoBtn').addEventListener('click', function () { travel(1); });
         $('publishBtn').addEventListener('click', function () {
@@ -849,7 +790,7 @@ h3, h4, h5, h6, p,
         });
         $('previewBtn').addEventListener('click', function () { saveDraft(); location.href = 'buyer-profile.html?draft=1'; });
 
-        applyTheme(); paintTheme(); paint();
+        applyTheme(); paint();
     })();
     </script>
 <script src="assets/line-icons.js"></script>
