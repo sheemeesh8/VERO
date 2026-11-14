@@ -2,7 +2,7 @@
    moravchick — the site's line chart (styles in line-chart.css).
 
      el.innerHTML = veroLineChart(values, {
-         color:  (ignored)          // colour follows the trend: green up, blue sideways, red down
+         color:  (ignored)          // charts are drawn in dark blue
          format: v => '₪' + v,      // how a value reads (dots + tooltip)
          group:  'sum' | 'last',    // how a long series is grouped (default 'sum')
          labels: ['Jan', …],        // optional: point names for the tooltip
@@ -15,7 +15,7 @@
      area      a smooth line over a fill that fades down
      step      a right-angled line (levels that jump: totals, counts)
      dots      one dot per point with a dashed trend line through them
-     baseline  green above the first point's level, red below it
+     baseline  dark blue above the first point's level, light blue below it
      delta     a bar per point for its change from the one before (up / down)
      line      a straight line from point to point with a marker on each
      lollipop  a thin stem and a marker per point
@@ -67,7 +67,10 @@
         }
         return '<p class="vsay">' + t + '</p>';
     }
-    var UP = '<i class="vkey-sw" style="background:#1f8a4c"></i>', DOWN = '<i class="vkey-sw" style="background:#c0392b"></i>', INK = '<i class="vkey-sw" style="background:#16150f"></i>';
+    // Charts are drawn in dark blue. Where a chart shows two directions, "more / above" is the
+    // dark blue and "less / below" the light blue (the key under the chart says which is which).
+    var POS = '#163876', NEG = '#99baee';
+    var UP = '<i class="vkey-sw" style="background:' + POS + '"></i>', DOWN = '<i class="vkey-sw" style="background:' + NEG + '"></i>', INK = '<i class="vkey-sw" style="background:' + POS + '"></i>';
     var KEYS = {
         hairline: 'Left is the oldest, right is the newest. Higher means more.',
         area:     'Left is the oldest, right is the newest. Higher means more.',
@@ -134,7 +137,7 @@
     // The chart's colour follows its overall trend: a least-squares line through
     // every point, as a share of the series' typical size. Rising ≥ 10% over the
     // period → green; falling ≥ 10% → red; anything between (sideways) → blue.
-    var TREND = { up: '#1f8a4c', flat: '#2f6fb5', down: '#c0392b' };
+    var TREND = { up: POS, flat: POS, down: POS };   // one dark blue whatever the trend; the trend chip says the direction
     function trendOf(v) {
         var n = v.length; if (n < 2) return 'flat';
         var mx = (n - 1) / 2, my = v.reduce(function (s, x) { return s + x; }, 0) / n, num = 0, den = 0;
@@ -154,7 +157,7 @@
         var n = v.length;
         if (!n) return '<div class="vlc"></div>';
         var trend = trendOf(v);
-        color = TREND[trend];   // green rising, blue sideways, red falling
+        color = TREND[trend];   // always the chart blue
         if (opts.style && opts.style !== 'hairline') return styled(opts.style, v, lbl, fmt, trend, color, opts);
         var max = Math.max.apply(null, v), min = Math.min(0, Math.min.apply(null, v));
         var span = (max - min) || 1;
@@ -230,10 +233,10 @@
         } else if (style === 'baseline') {
             var bd = smooth(), by = ys[0], area = bd + ' L100,' + by + ' L0,' + by + ' Z';
             inner = '<defs><clipPath id="' + id + 'a"><rect x="0" y="-10" width="100" height="' + (by + 10) + '"/></clipPath><clipPath id="' + id + 'b"><rect x="0" y="' + by + '" width="100" height="' + (110 - by) + '"/></clipPath></defs>' +
-                '<g clip-path="url(#' + id + 'a)"><path d="' + area + '" fill="' + TREND.up + '" fill-opacity="0.14"/><path d="' + bd + '" fill="none" stroke="' + TREND.up + '" stroke-width="2"' + NS + '/></g>' +
-                '<g clip-path="url(#' + id + 'b)"><path d="' + area + '" fill="' + TREND.down + '" fill-opacity="0.14"/><path d="' + bd + '" fill="none" stroke="' + TREND.down + '" stroke-width="2"' + NS + '/></g>' +
+                '<g clip-path="url(#' + id + 'a)"><path d="' + area + '" fill="' + POS + '" fill-opacity="0.14"/><path d="' + bd + '" fill="none" stroke="' + POS + '" stroke-width="2"' + NS + '/></g>' +
+                '<g clip-path="url(#' + id + 'b)"><path d="' + area + '" fill="' + NEG + '" fill-opacity="0.14"/><path d="' + bd + '" fill="none" stroke="' + NEG + '" stroke-width="2"' + NS + '/></g>' +
                 '<line x1="0" x2="100" y1="' + by + '" y2="' + by + '" stroke="#8d887e" stroke-width="1" stroke-dasharray="3 4"' + NS + '/>';
-            dots = endDot(v[n - 1] >= v[0] ? TREND.up : TREND.down);
+            dots = endDot(v[n - 1] >= v[0] ? POS : NEG);
         } else if (style === 'line') {
             var ld = '';
             for (i = 0; i < n; i++) ld += (i ? ' L' : 'M') + xs[i].toFixed(2) + ',' + ys[i].toFixed(2);
@@ -244,7 +247,7 @@
             var lw = 100 / n;
             xs = v.map(function (_, k) { return (k + 0.5) * lw; });
             for (i = 0; i < n; i++) {
-                inner += '<line x1="' + xs[i].toFixed(2) + '" x2="' + xs[i].toFixed(2) + '" y1="' + B + '" y2="' + ys[i].toFixed(2) + '" stroke="' + (i === n - 1 ? color : '#b9b4aa') + '" stroke-width="2"' + NS + ' class="vlc-stem" style="animation-delay:' + (0.1 + i * 0.06).toFixed(2) + 's"/>';
+                inner += '<line x1="' + xs[i].toFixed(2) + '" x2="' + xs[i].toFixed(2) + '" y1="' + B + '" y2="' + ys[i].toFixed(2) + '" stroke="' + (i === n - 1 ? color : NEG) + '" stroke-width="2"' + NS + ' class="vlc-stem" style="animation-delay:' + (0.1 + i * 0.06).toFixed(2) + 's"/>';
                 if (i < n - 1) dots += '<span class="vlc-dot vlc-dot--mark" style="left:' + xs[i] + '%;top:' + ys[i] + '%;animation-delay:' + (0.4 + i * 0.06).toFixed(2) + 's"></span>';
             }
             inner += '<line x1="0" x2="100" y1="' + B + '" y2="' + B + '" stroke="#d6d2c8" stroke-width="1"' + NS + '/>';
@@ -252,7 +255,7 @@
         } else if (style === 'heat') {
             var hw = 100 / n, hmax = max || 1;
             xs = v.map(function (_, k) { return (k + 0.5) * hw; });
-            for (i = 0; i < n; i++) inner += '<rect x="' + (i * hw + 0.4).toFixed(2) + '" y="6" width="' + (hw - 0.8).toFixed(2) + '" height="88" fill="#16150f" fill-opacity="' + (0.1 + 0.9 * (v[i] - min) / ((hmax - min) || 1)).toFixed(3) + '" class="vlc-cell" style="animation-delay:' + (0.1 + i * 0.07).toFixed(2) + 's"/>';   // lightest = the lowest value, darkest = the highest
+            for (i = 0; i < n; i++) inner += '<rect x="' + (i * hw + 0.4).toFixed(2) + '" y="6" width="' + (hw - 0.8).toFixed(2) + '" height="88" fill="' + POS + '" fill-opacity="' + (0.1 + 0.9 * (v[i] - min) / ((hmax - min) || 1)).toFixed(3) + '" class="vlc-cell" style="animation-delay:' + (0.1 + i * 0.07).toFixed(2) + 's"/>';   // lightest = the lowest value, darkest = the highest
             ys = v.map(function () { return 50; });
         } else {   // delta
             var dl = v.map(function (x, k) { return k ? x - v[k - 1] : 0; }), m = Math.max.apply(null, dl.map(Math.abs)) || 1, mid = (T + B) / 2, hh = (B - T) / 2, bw = 100 / n;
@@ -260,7 +263,7 @@
             inner = '<line x1="0" x2="100" y1="' + mid + '" y2="' + mid + '" stroke="#b9b4aa" stroke-width="1"' + NS + '/>';
             ys = dl.map(function (x, k) {
                 var h = Math.abs(x) / m * hh, up = x >= 0;
-                if (k) inner += '<rect x="' + (xs[k] - bw * 0.3).toFixed(2) + '" y="' + (up ? mid - h : mid).toFixed(2) + '" width="' + (bw * 0.6).toFixed(2) + '" height="' + Math.max(0.6, h).toFixed(2) + '" fill="' + (up ? TREND.up : TREND.down) + '" class="vlc-bar ' + (up ? 'is-up' : 'is-down') + '" style="animation-delay:' + (0.15 + k * 0.05).toFixed(2) + 's"/>';
+                if (k) inner += '<rect x="' + (xs[k] - bw * 0.3).toFixed(2) + '" y="' + (up ? mid - h : mid).toFixed(2) + '" width="' + (bw * 0.6).toFixed(2) + '" height="' + Math.max(0.6, h).toFixed(2) + '" fill="' + (up ? POS : NEG) + '" class="vlc-bar ' + (up ? 'is-up' : 'is-down') + '" style="animation-delay:' + (0.15 + k * 0.05).toFixed(2) + 's"/>';
                 return up ? mid - h : mid + h;
             });
             texts = dl.map(function (x, k) { return k ? (x >= 0 ? '+' : '−') + fmt(Math.abs(x)) : fmt(v[0]); });
@@ -344,7 +347,7 @@
 ------------------------------------------------------------------ */
 (function () {
     'use strict';
-    var PALETTE = ['#16150f', '#c9922b', '#2f6fb5', '#1f8a4c', '#b9b4aa', '#c0392b'];
+    var PALETTE = ['#071530', '#163876', '#2b60b6', '#5d8edc', '#99baee', '#d6e3fa'];   // dark → light blue
     function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
     function num(x) { return Math.round(x).toLocaleString('en-US'); }
 
@@ -382,7 +385,7 @@
     };
 
     // ---- The other share styles. One ink ramp, largest part darkest; same legend. ----
-    var RAMP = ['#16150f', '#56524a', '#8d887e', '#b9b4aa', '#d6d2c8', '#c9922b'];
+    var RAMP = ['#071530', '#163876', '#2b60b6', '#5d8edc', '#99baee', '#d6e3fa'];      // dark → light blue, largest part darkest
     function share(style, items, total, fmt, opts) {
         var col = function (i) { return RAMP[i % RAMP.length]; };
         var pctOf = function (it) { return Math.round(Number(it.value) / total * 100); };
@@ -476,7 +479,7 @@
                        '<span class="vhb-t"><i style="width:' + Math.max(1, x / max * 100).toFixed(1) + '%;animation-delay:' + (i * 0.05).toFixed(2) + 's"></i></span><span class="vhb-v">' + esc(fmt(x)) + '</span></div>';
             }).join('') + '</div>' + (W ? W.key('hbars', opts) : '');
         }
-        var tone = window.veroTrendColor ? window.veroTrendColor(v) : '#16150f';
+        var tone = window.veroTrendColor ? window.veroTrendColor(v) : '#163876';
         var cols = v.map(function (x, i) {
             // The dark column is the newest one, or the tallest with { mark: 'max' } (e.g. weekdays).
             var h = Math.max(2, x / max * 100), last = opts.mark === 'max' ? i === v.indexOf(max) : i === v.length - 1;
