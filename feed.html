@@ -393,7 +393,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category slider, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261114d">
+    <link rel="stylesheet" href="assets/home.css?v=20261114e">
 </head>
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
@@ -563,10 +563,15 @@
             catsEl.innerHTML = CATS.map(function (c) {
                 var n = list.filter(function (p) { return genderOf(p) === c.g; }).length || list.length;   // no gender data → the whole list
                 return '<button type="button" class="hm-cat' + (c.g === state.gender ? ' is-on' : '') + '" data-gender="' + c.g + '" aria-label="' + c.name + '">' +
-                    '<span class="hm-cat-media"><video src="' + c.media + '" poster="' + c.poster + '" muted loop playsinline preload="none" aria-hidden="true"></video></span>' +
-                    '<span class="hm-cat-count"><b>' + num(n) + '</b><span>Items on air</span></span>' +
-                    '<span class="hm-cat-name">' + c.name + '</span>' +
-                    '<p class="hm-cat-desc">' + esc(c.desc) + '</p></button>';
+                    '<span class="hm-cat-pic">' +
+                        '<span class="hm-cat-media"><video src="' + c.media + '" poster="' + c.poster + '" muted loop playsinline preload="none" aria-hidden="true"></video></span>' +
+                        '<span class="hm-cat-count"><b>' + num(n) + '</b><span>Items on air</span></span>' +
+                        '<span class="hm-cat-glass" aria-hidden="true">' + c.name + '</span>' +          // frosted glass while not chosen
+                    '</span>' +
+                    '<span class="hm-cat-panel"><span><span class="hm-cat-panel-in">' +                    // navy panel, opens under the picture
+                        '<span class="hm-cat-name">' + c.name + '</span>' +
+                        '<span class="hm-cat-desc">' + esc(c.desc) + '</span>' +
+                    '</span></span></span></button>';
             }).join('');
         }
         function catCards() { return [].slice.call(catsEl.querySelectorAll('.hm-cat')); }
@@ -591,12 +596,14 @@
                 if (k < 1) requestAnimationFrame(step);
             })(performance.now());
         }
+        // Scroll position that puts a card in the middle of the slider.
+        function centreOf(el) { return el.offsetLeft - catsEl.offsetLeft - (catsEl.clientWidth - el.offsetWidth) / 2; }
         function setGender(g, scroll) {
             if (!g) return;
             var changed = g !== state.gender;
             state.gender = g;
             catCards().forEach(function (c) { c.classList.toggle('is-on', c.dataset.gender === g); });
-            if (scroll) { var el = catsEl.querySelector('.hm-cat[data-gender="' + g + '"]'); if (el) catsEl.scrollTo({ left: el.offsetLeft - 44, behavior: 'smooth' }); }
+            if (scroll) { var el = catsEl.querySelector('.hm-cat[data-gender="' + g + '"]'); if (el) catsEl.scrollTo({ left: centreOf(el), behavior: 'smooth' }); }
             syncSubnav(); playCurrent();
             if (changed) {
                 var on = catsEl.querySelector('.hm-cat.is-on .hm-cat-count b'); if (on) countUp(on);
@@ -605,13 +612,13 @@
                 buildPieces();
             }
         }
-        // Swiping the slider picks the card that settles at the left.
+        // Swiping the slider picks the card that settles in the middle.
         var settle = null;
         catsEl.addEventListener('scroll', function () {
             clearTimeout(settle);
             settle = setTimeout(function () {
                 var best = null, dist = 1e9;
-                catCards().forEach(function (c) { var dd = Math.abs(c.offsetLeft - 44 - catsEl.scrollLeft); if (dd < dist) { dist = dd; best = c; } });
+                catCards().forEach(function (c) { var dd = Math.abs(centreOf(c) - catsEl.scrollLeft); if (dd < dist) { dist = dd; best = c; } });
                 if (best) setGender(best.dataset.gender, false);
             }, 120);
         }, { passive: true });
