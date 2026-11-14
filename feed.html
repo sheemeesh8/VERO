@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="search-box.css">
     <link rel="stylesheet" href="zoom-parallax.css?v=8">
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: auto; }
@@ -395,6 +396,8 @@
         .feed-subnav { transition: opacity .12s linear; }
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
+    <!-- The home core: hero, search line, pieces, category slider, sale (assets/home.css). -->
+    <link rel="stylesheet" href="assets/home.css?v=20261114a">
 </head>
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
@@ -404,168 +407,74 @@
         window.veroHeroPassed = function () {
             var w = document.getElementById('feedHeroWrap');
             if (!w) return window.scrollY > 80;
-            var release = w.offsetTop + w.offsetHeight - window.innerHeight;
-            return window.scrollY >= release - 4;
+            // Passed once the hero's bottom edge reaches the header.
+            return window.scrollY >= w.offsetTop + w.offsetHeight - 70;
         };
         window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
     </script>
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=60"></script>
 
-    <!-- Entrance — the hero grows from a rectangle to full-screen on scroll; the
-         caption + Discover button fade in at the end (built by zoom-parallax.js). -->
-    <div class="zp-wrap" id="feedHeroWrap">
-        <section class="hero" id="feedHero">
-            <video class="hero-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline></video>
-            <div class="home-hero-cap zp-endcap">
-                <span class="hhc-eyebrow">The Season</span>
-                <h2 class="hhc-title">Autumn Collection</h2>
-                <p class="hhc-sub">This season&rsquo;s edit — warm layers, soft wools and earthy tones.</p>
-                <a class="hhc-discover" href="#feedStructured">Discover</a>
-            </div>
-            <!-- White band — slides up with the caption at the end of the zoom. -->
-            <div class="home-intro" id="homeIntro">
-                <form class="cat-search" role="search" onsubmit="return false;">
-                    <input type="search" id="feedSearchInput" placeholder="Search the feed…" autocomplete="off" aria-label="Search the feed">
-                </form>
-                <p class="hi-rail-head">Current Collection</p>
-                <div class="rail-trans" id="heroRail"></div>
+    <!-- ===================== THE HOME CORE (styles: assets/home.css) =====================
+         hero → search line → two pieces → category slider → two pieces → four more → sale. -->
+    <div id="feedHeroWrap">
+        <section class="hm-hero" id="feedHero">
+            <video src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline></video>
+            <div class="hm-hero-cap">
+                <h1 class="hm-hero-title" id="hmTitle">Autumn<br>Collection</h1>
+                <p class="hm-hero-sub" id="hmSub">Refined silhouettes for the season ahead</p>
+                <div class="hm-hero-num" id="hmCount">0</div>
+                <div class="hm-hero-lbl">Items available</div>
             </div>
         </section>
     </div>
 
-    <div class="feed-scroll">
-    <main class="feed-wrap">
-        <!-- The structured feed (hidden while a search is active). The search box and
-             the "Most liked" rail live in the hero's white band (#homeIntro). -->
+    <!-- Gender sub-header — a fixed second header, shown once the hero is crossed. -->
+    <nav class="feed-subnav is-hero" id="feedSubnav" aria-label="Shop by gender">
+        <button type="button" class="fsn-item" data-gender="women">Women</button>
+        <button type="button" class="fsn-item" data-gender="men">Men</button>
+        <button type="button" class="fsn-item" data-gender="unisex">Unisex</button>
+        <button type="button" class="fsn-item" data-gender="kids">Kids</button>
+    </nav>
+
+    <main class="hm">
+        <form class="hm-search" role="search" onsubmit="return false;">
+            <input type="search" id="feedSearchInput" data-usearch="off" placeholder="Search here" autocomplete="off" aria-label="Search the feed">
+        </form>
+
+        <!-- The structured page (hidden while search / sale results are showing). -->
         <div id="feedStructured">
-            <!-- 2 · Gender slider -->
-            <div id="genderCover" role="region" aria-label="Choose by category">
-                <p class="gc-head">Choose by category</p>
-                <p class="gc-sub" aria-live="polite">Tap a category to explore</p>
-                <div class="gc-accordion" role="tablist">
-                    <button type="button" class="gc-card" role="tab" aria-selected="false" data-gender="men" data-name="Men" data-sub="Men's collection">
-                        <video class="gc-media" src="assets/hero/men.mp4" poster="men-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-                        <span class="gc-cap"><span class="gc-name">Men</span><span class="gc-shop">Shop Men</span></span>
-                    </button>
-                    <button type="button" class="gc-card" role="tab" aria-selected="false" data-gender="women" data-name="Women" data-sub="Women's collection">
-                        <video class="gc-media" src="assets/hero/hero-clothing.mp4" poster="assets/hero/women-editorial.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-                        <span class="gc-cap"><span class="gc-name">Women</span><span class="gc-shop">Shop Women</span></span>
-                    </button>
-                    <button type="button" class="gc-card" role="tab" aria-selected="false" data-gender="unisex" data-name="Unisex" data-sub="Unisex collection">
-                        <video class="gc-media" src="assets/hero/unisex.mp4" poster="hero-beach.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-                        <span class="gc-cap"><span class="gc-name">Unisex</span><span class="gc-shop">Shop Unisex</span></span>
-                    </button>
-                    <button type="button" class="gc-card" role="tab" aria-selected="false" data-gender="kids" data-name="Kids" data-sub="Kids collection">
-                        <video class="gc-media" src="assets/hero/kids.mp4" poster="clothing-hero.jpg" muted loop playsinline preload="metadata" aria-hidden="true"></video>
-                        <span class="gc-cap"><span class="gc-name">Kids</span><span class="gc-shop">Shop Kids</span></span>
-                    </button>
+            <section class="hm-pair" id="hmPairA" aria-label="Picked for you"></section>
+
+            <!-- Category slider: Women, Men, Unisex, Kids. -->
+            <section class="hm-cats" id="hmCats" aria-label="Shop by category"></section>
+
+            <section class="hm-pair" id="hmPairB" aria-label="More picks"></section>
+            <section class="hm-four" id="hmFour" aria-label="More to browse"></section>
+
+            <figure class="hm-sale-pic" id="hmSalePic"><img src="sale-hero.jpg" alt="" loading="lazy"></figure>
+            <section class="hm-sale" aria-labelledby="hmSaleTitle">
+                <div class="hm-sale-head"><h2 id="hmSaleTitle">Sales</h2><span id="hmSaleCount">0 items available</span></div>
+                <dl class="hm-facts" id="hmFacts"></dl>
+                <p class="hm-sale-text">The pieces you’ve been bookmarking, now within reach. Our archive collection brings together standout apparel and artwork from previous drops, available at special prices for a limited time.</p>
+                <div class="hm-btns">
+                    <button type="button" class="hm-btn hm-btn--navy" id="hmShopSale">Shop the sale</button>
+                    <button type="button" class="hm-btn hm-btn--light" id="hmShopAll">See everything</button>
                 </div>
-            </div>
-
-            <!-- Gender sub-header — sits under the slider, then docks under the
-                 main header on scroll (sticky). Synced to the slider. -->
-            <nav class="feed-subnav is-hero" id="feedSubnav" aria-label="Shop by gender">
-                <button type="button" class="fsn-item" data-gender="women">Women</button>
-                <button type="button" class="fsn-item" data-gender="men">Men</button>
-                <button type="button" class="fsn-item" data-gender="unisex">Unisex</button>
-                <button type="button" class="fsn-item" data-gender="kids">Kids</button>
-            </nav>
-
-            <!-- Single featured product card, directly below the gender slider -->
-            <a class="feature-card" id="genderFeature" href="#"></a>
-
-            <!-- Duo slider — two products per page, paginated, for the chosen gender -->
-            <section class="duo-sec">
-                <div class="duo-slider" id="duoSlider"></div>
-            </section>
-
-            <!-- Promoted products slider between sections -->
-            <section class="promo-sec">
-                <div class="promo1" id="block1"></div>
-                <div class="pb-grid" id="grid1"></div>
-            </section>
-
-            <!-- Rails-first discovery: a wall of horizontal sliders, each under a
-                 banner or heading, finished by a short browse grid. -->
-
-            <!-- 4 · Sales section — ⅓ banner, slider on black, white caption -->
-            <section class="rail-sec">
-                <div class="rail-cap">
-                    <h3>On sale</h3>
-                    <p class="rail-desc">Up to 50% off — pre-loved pieces at their lowest, deepest cuts first, while they last.</p>
-                </div>
-                <div class="feed-banner is-sale" id="bannerSale">
-                    <div class="fb-text">
-                        <div class="fb-row"><span>Moravchick</span><span class="fb-accent">Sale</span></div>
-                        <h3 class="fb-head">Up to 50% off, while they last.</h3>
-                        <div class="fb-row"><span>Limited time</span><span>Women, Men, Art</span></div>
-                    </div>
-                    <div class="fb-photo"><img src="clothing-hero.jpg" alt="On sale" loading="lazy"></div>
-                </div>
-                <div class="rail-trans" id="railSale"></div>
-            </section>
-
-            <!-- Promoted products slider between sections -->
-            <section class="promo-sec">
-                <div class="promo1" id="block2"></div>
-                <div class="pb-grid" id="grid2"></div>
-            </section>
-
-            <!-- 5 · New arrivals section — ⅓ banner, slider on black, white caption -->
-            <section class="rail-sec">
-                <div class="rail-cap">
-                    <h3>New arrivals</h3>
-                    <p class="rail-desc">Just listed — the freshest pieces added to the marketplace, newest first.</p>
-                </div>
-                <div class="feed-banner" id="bannerNew">
-                    <div class="fb-text">
-                        <div class="fb-row"><span>Moravchick</span><span>New in</span></div>
-                        <h3 class="fb-head">New arrivals, just listed.</h3>
-                        <div class="fb-row"><span>Fresh daily</span><span>Shop the latest</span></div>
-                    </div>
-                    <div class="fb-photo"><img src="gallery-hero.jpg" alt="New arrivals" loading="lazy"></div>
-                </div>
-                <div class="rail-trans" id="railNew"></div>
-            </section>
-
-            <!-- Promoted products slider between sections -->
-            <section class="promo-sec">
-                <div class="promo1" id="block3"></div>
-                <div class="pb-grid" id="grid3"></div>
-            </section>
-
-            <!-- 7 · Under budget — slider on black, white caption -->
-            <section class="rail-sec">
-                <div class="rail-cap">
-                    <h3>Under 100 ₪</h3>
-                    <p class="rail-desc">Everyday steals — standout finds, all priced under 100 ₪.</p>
-                </div>
-                <div class="rail-trans" id="railBudget"></div>
-            </section>
-
-            <!-- Promoted products slider between sections -->
-            <section class="promo-sec">
-                <div class="promo1" id="block4"></div>
-                <div class="pb-grid" id="grid4"></div>
-            </section>
-
-            <!-- 8 · More to browse — short grid anchor -->
-            <section>
-                <div class="sec-head"><h3>More to browse</h3><span class="sec-sub">Fresh off the feed</span></div>
-                <div class="feed-grid" id="feedMore"></div>
             </section>
         </div>
 
-        <!-- Search results (shown only while typing). -->
-        <div class="feed-grid" id="searchResults" hidden></div>
+        <!-- Search / sale / everything results. -->
+        <div id="hmResultsWrap" hidden>
+            <div class="hm-results-head"><h2 id="hmResultsTitle">Results</h2><button type="button" id="hmResultsBack">Back</button></div>
+            <div class="hm-four hm-results" id="searchResults"></div>
+        </div>
     </main>
-    </div><!-- /.feed-scroll -->
 
     <!-- Product data layer (shared across the site). -->
     <script src="collections.js"></script>
 
-    <!-- Feed assembly. -->
+    <!-- Home assembly. -->
     <script>
     (function () {
         'use strict';
@@ -584,11 +493,10 @@
         };
 
         // ----- Helpers -----------------------------------------------------
-        function money(n) { return (Math.round(Number(n) || 0)).toLocaleString('en-US') + ' ₪'; }
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+        function num(n) { return Math.round(Number(n) || 0).toLocaleString('en-US'); }
         function isArt(p) { return !!(p._raw && (p._raw.type === 'art' || p.collection === 'interiors')); }
         function genderOf(p) { return String((p._raw && (p._raw.gender || p._raw.audience)) || '').toLowerCase(); }
-
         function hrefOf(p, d) {
             var priceNum = VC.toNum(d && d.onSale ? d.price : (d ? d.original : p.price));
             var payload = JSON.stringify({
@@ -598,7 +506,6 @@
             });
             return 'product-showcase.html?product=' + encodeURIComponent(payload);
         }
-
         function modeList() {
             var art = (state.mode === 'art');
             return VC.allProducts().filter(function (p) { return art ? isArt(p) : !isArt(p); });
@@ -608,222 +515,156 @@
             var g = list.filter(function (p) { return genderOf(p) === gender; });
             return g.length ? g : list;         // demo data carries no gender → fall back
         }
-
-        // ----- Card renderers ---------------------------------------------
-        function cvCard(p) {
-            var d = VC.discountOf(p._raw);
-            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
-                                : '<span class="cv-card-emoji">' + esc(p.icon || '🛍️') + '</span>';
-            var price = d && d.onSale
-                ? '<span class="cv-card-was">' + money(d.original) + '</span>' + money(d.price)
-                : money(p.price);
-            return '<a class="cv-card' + (d && d.onSale ? ' is-sale' : '') + '" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
-                '<div class="cv-card-img">' + inner + '</div>' +
-                '<div class="cv-card-row"><span class="cv-card-name">' + esc(p.name) + '</span><span class="cv-card-price">' + price + '</span></div>' +
-                '<div class="cv-card-brand">' + esc(p.seller) + '</div></a>';
-        }
-
-        function transCard(p) {
-            var d = VC.discountOf(p._raw);
-            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
-                                : '<span class="rt-emoji">' + esc(p.icon || '🛍️') + '</span>';
-            var price = d && d.onSale
-                ? '<span class="rt-was">' + money(d.original) + '</span>' + money(d.price)
-                : money(p.price);
-            return '<a class="rt-card' + (d && d.onSale ? ' is-sale' : '') + '" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
-                '<div class="rt-img">' + inner + '</div>' +
-                '<div class="rt-cap"><div class="rt-brand">' + esc(p.seller) + '</div>' +
-                '<div class="rt-name">' + esc(p.name) + '</div>' +
-                '<div class="rt-price">' + price + '</div></div></a>';
-        }
-
-        // Full-width promoted card — one piece per slide in the promoted carousel.
-        function promoCard(p) {
-            var d = VC.discountOf(p._raw);
-            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
-                                : '<span class="promo-card-emoji">' + esc(p.icon || '🛍️') + '</span>';
-            var price = d && d.onSale
-                ? '<span class="promo-card-was">' + money(d.original) + '</span>' + money(d.price)
-                : money(p.price);
-            var cat = p.category || (isArt(p) ? 'Art' : 'Fashion');
-            var desc = 'Hand-picked for you — a promoted piece from ' + esc(p.seller) + '.';
-            return '<a class="promo-card' + (d && d.onSale ? ' is-sale' : '') + '" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
-                '<div class="promo-card-img">' + inner + '</div>' +
-                '<div class="promo-card-info">' +
-                    '<span class="promo-card-foryou">For You</span>' +
-                    '<span class="promo-card-cat">' + esc(cat) + '</span>' +
-                    '<span class="promo-card-name">' + esc(p.name) + '</span>' +
-                    '<span class="promo-card-brand">' + esc(p.seller) + '</span>' +
-                    '<p class="promo-card-desc">' + desc + '</p>' +
-                    '<span class="promo-card-price">' + price + '</span>' +
-                '</div></a>';
-        }
-
-        function renderFeature(p) {
-            var el = document.getElementById('genderFeature');
-            if (!el) return;
-            if (!p) { el.style.display = 'none'; return; }
-            el.style.display = 'block';
-            var d = VC.discountOf(p._raw);
-            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '">'
-                                : '<span class="fc-emoji">' + esc(p.icon || '🛍️') + '</span>';
-            var price = d && d.onSale
-                ? '<span class="fc-was">' + money(d.original) + '</span>' + money(d.price)
-                : money(p.price);
-            el.className = 'feature-card' + (d && d.onSale ? ' is-sale' : '');
-            el.setAttribute('href', hrefOf(p, d));
-            el.innerHTML =
-                '<div class="fc-img">' + inner + '</div>' +
-                '<div class="fc-cap">' +
-                    '<div class="fc-brand">' + esc(p.seller) + '</div>' +
-                    '<div class="fc-name">' + esc(p.name) + '</div>' +
-                    '<div class="fc-price">' + price + '</div>' +
-                '</div>';
-        }
-
         function fill(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
 
-        // Pick the featured piece for a gender. Uses real gender data when the
-        // catalogue carries it; otherwise shows a distinct piece per gender so
-        // the featured item still changes as the category switches.
-        function featureFor(gender) {
+        // A piece: picture, name, brand.
+        function card(p) {
+            var d = VC.discountOf(p._raw);
+            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
+                                : '<span class="hm-card-emoji" aria-hidden="true">' + esc(p.icon || '🛍️') + '</span>';
+            return '<a class="hm-card' + (p.cover ? '' : ' is-tile') + '" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
+                '<div class="hm-card-img">' + inner + '</div>' +
+                '<div class="hm-card-name">' + esc(p.name) + '</div>' +
+                '<div class="hm-card-brand">' + esc(p.seller) + '</div></a>';
+        }
+        var EMPTY = '<div class="hm-empty">Nothing here yet.</div>';
+
+        // ----- Category slider ---------------------------------------------
+        var CATS = [
+            { g: 'women',  name: 'Women',  media: 'assets/hero/hero-clothing.mp4', poster: 'assets/hero/women-editorial.jpg', desc: 'Discover our women’s collection, where timeless elegance meets modern style' },
+            { g: 'men',    name: 'Men',    media: 'assets/hero/men.mp4',           poster: 'men-hero.jpg',                    desc: 'Tailoring, denim and outerwear, picked for everyday wear' },
+            { g: 'unisex', name: 'Unisex', media: 'assets/hero/unisex.mp4',        poster: 'hero-beach.jpg',                  desc: 'Pieces made to be shared, in easy shapes and quiet colours' },
+            { g: 'kids',   name: 'Kids',   media: 'assets/hero/kids.mp4',          poster: 'clothing-hero.jpg',               desc: 'Small sizes, the same care: soft, sturdy and ready to play' }
+        ];
+        var catsEl = document.getElementById('hmCats');
+        function buildCats() {
             var list = modeList();
-            if (!list.length) return null;
-            var matched = list.filter(function (p) { return genderOf(p) === gender; });
-            if (matched.length) return matched[0];
-            var order = ['women', 'men', 'unisex', 'kids'];
-            var idx = order.indexOf(gender); if (idx < 0) idx = 0;
-            return list[idx % list.length];
+            catsEl.innerHTML = CATS.map(function (c) {
+                var n = list.filter(function (p) { return genderOf(p) === c.g; }).length || list.length;   // no gender data → the whole list
+                return '<button type="button" class="hm-cat' + (c.g === state.gender ? ' is-on' : '') + '" data-gender="' + c.g + '" aria-label="' + c.name + '">' +
+                    '<span class="hm-cat-media"><video src="' + c.media + '" poster="' + c.poster + '" muted loop playsinline preload="none" aria-hidden="true"></video></span>' +
+                    '<span class="hm-cat-count"><b>' + num(n) + '</b><span>Items on air</span></span>' +
+                    '<span class="hm-cat-name">' + c.name + '</span>' +
+                    '<p class="hm-cat-desc">' + esc(c.desc) + '</p></button>';
+            }).join('');
         }
-
-        // ----- Build the structured feed ----------------------------------
-        // ----- Duo slider (two pieces per page, gender-filtered) -----------
-        var duoSlider = document.getElementById('duoSlider');
-        var duoCount = document.getElementById('duoCount');
-        function updateDuoCount() {
-            if (!duoSlider || !duoCount) return;
-            var pages = duoSlider.children.length || 1;
-            var w = duoSlider.clientWidth || 1;
-            var cur = Math.min(pages, Math.max(1, Math.round(duoSlider.scrollLeft / w) + 1));
-            duoCount.textContent = cur + ' / ' + pages;
-        }
-        if (duoSlider) duoSlider.addEventListener('scroll', function () {
-            cancelAnimationFrame(duoSlider.__raf);
-            duoSlider.__raf = requestAnimationFrame(updateDuoCount);
-        }, { passive: true });
-        function buildDuo() {
-            if (!duoSlider) return;
-            var picks = byGender(modeList(), state.gender).slice(0, 10);
-            var html = '';
-            for (var i = 0; i < picks.length; i += 2) {
-                html += '<div class="duo-page">' + cvCard(picks[i]) + (picks[i + 1] ? cvCard(picks[i + 1]) : '') + '</div>';
-            }
-            duoSlider.innerHTML = html || '<div class="duo-page"><div class="feed-empty" style="grid-column:1/-1">Nothing here yet.</div></div>';
-            duoSlider.scrollLeft = 0;
-            updateDuoCount();
-        }
-
-        function buildStructured() {
-            var list = modeList();
-
-            // Featured single card, by the chosen gender.
-            renderFeature(featureFor(state.gender));
-
-            // Duo slider — two pieces per page, for the chosen gender.
-            buildDuo();
-
-            // Hero rail — pieces from the CURRENT collection (the season in fashion
-            // mode, the art collection in art mode), gender-filtered when possible.
-            var isArtMode = (state.mode === 'art');
-            var curKey = isArtMode ? 'interiors' : VC.currentKey();
-            var colItems = VC.byCollection(curKey).filter(function (p) { return isArtMode ? isArt(p) : !isArt(p); });
-            var current = byGender(colItems, state.gender);
-            if (current.length < 2) current = colItems;      // avoid an empty / too-thin rail
-            fill('heroRail', current.length ? current.slice(0, 10).map(transCard).join('')
-                                            : '<div class="feed-empty">Nothing in this collection yet.</div>');
-            var curHead = document.querySelector('.home-intro .hi-rail-head');
-            if (curHead) curHead.textContent = ((VC.get(curKey) && VC.get(curKey).en) || 'Current') + ' Collection';
-            applyHeroCaption(isArtMode, curKey);
-
-            // Sales rail — up to 10 discounted pieces (mode-filtered), deepest cut first.
-            var art = (state.mode === 'art');
-            var sale = VC.onSale().filter(function (p) { return art ? isArt(p) : !isArt(p); }).slice(0, 10);
-            fill('railSale', sale.length ? sale.map(transCard).join('') : '<div class="feed-empty">Nothing on sale right now.</div>');
-
-            // New arrivals rail — up to 10 most recent (mode-filtered).
-            var recent = list.slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); }).slice(0, 10);
-            fill('railNew', recent.length ? recent.map(transCard).join('') : '<div class="feed-empty">No new pieces yet.</div>');
-
-            // Under 100 ₪ rail — value discovery, cheapest first.
-            var budget = list.filter(function (p) { return VC.toNum(p.price) > 0 && VC.toNum(p.price) <= 100; })
-                             .sort(function (a, b) { return VC.toNum(a.price) - VC.toNum(b.price); })
-                             .slice(0, 10);
-            fill('railBudget', budget.length ? budget.map(transCard).join('') : '<div class="feed-empty">No pieces under 100 ₪ right now.</div>');
-
-            // More to browse — short grid anchor (6 pieces not already up top).
-            var more = list.slice(10, 16);
-            if (more.length < 6) more = list.slice(Math.max(0, list.length - 6));
-            fill('feedMore', more.length ? more.map(cvCard).join('') : '<div class="feed-empty" style="grid-column:1/-1">Nothing more yet.</div>');
-
-            // Between sections — each block is a promoted carousel (one piece per
-            // slide) above a grid of five pieces. Distinct slices, wrapping around.
-            function blockPick(offset, n) {
-                if (!list.length) return [];
-                var out = [];
-                for (var i = 0; i < n; i++) out.push(list[(offset + i) % list.length]);
-                return out;
-            }
-            [['block1', 'grid1', 0], ['block2', 'grid2', 10], ['block3', 'grid3', 20], ['block4', 'grid4', 30]].forEach(function (b) {
-                var promo = blockPick(b[2], 5);
-                var grid = blockPick(b[2] + 5, 5);
-                fill(b[0], promo.length ? promo.map(promoCard).join('') : '<div class="feed-empty">Nothing promoted yet.</div>');
-                fill(b[1], grid.length ? grid.map(cvCard).join('') : '<div class="feed-empty" style="grid-column:1/-1">Nothing here yet.</div>');
+        function catCards() { return [].slice.call(catsEl.querySelectorAll('.hm-cat')); }
+        // Only the card in view plays its video.
+        function playCurrent() {
+            catCards().forEach(function (c) {
+                var v = c.querySelector('video'); if (!v) return;
+                if (c.dataset.gender === state.gender) { v.muted = true; var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
+                else { try { v.pause(); } catch (e) {} }
             });
         }
+        function setGender(g, scroll) {
+            if (!g) return;
+            var changed = g !== state.gender;
+            state.gender = g;
+            catCards().forEach(function (c) { c.classList.toggle('is-on', c.dataset.gender === g); });
+            if (scroll) { var el = catsEl.querySelector('.hm-cat[data-gender="' + g + '"]'); if (el) catsEl.scrollTo({ left: el.offsetLeft - 44, behavior: 'smooth' }); }
+            syncSubnav(); playCurrent();
+            if (changed) buildPieces();
+        }
+        // Swiping the slider picks the card that settles at the left.
+        var settle = null;
+        catsEl.addEventListener('scroll', function () {
+            clearTimeout(settle);
+            settle = setTimeout(function () {
+                var best = null, dist = 1e9;
+                catCards().forEach(function (c) { var dd = Math.abs(c.offsetLeft - 44 - catsEl.scrollLeft); if (dd < dist) { dist = dd; best = c; } });
+                if (best) setGender(best.dataset.gender, false);
+            }, 120);
+        }, { passive: true });
+        catsEl.addEventListener('click', function (e) {
+            var c = e.target.closest ? e.target.closest('.hm-cat') : null;
+            if (c) setGender(c.dataset.gender, true);
+        });
+        // Hooks kept for the sub-header and for links that name a gender.
+        window.__gcGoToGender = function (g) { setGender(g, true); };
+        window.__onGenderChange = function (g) { setGender(g, false); };
 
-        // ----- Search ------------------------------------------------------
+        // ----- The pieces (they follow the chosen category) -----------------
+        function buildPieces() {
+            var picks = byGender(modeList(), state.gender);
+            // With no gender data every category would show the same pieces: start each one further along the list.
+            var shift = Math.max(0, ['women', 'men', 'unisex', 'kids'].indexOf(state.gender)) * 2;
+            var at = function (i) { return picks.length ? picks[(i + shift) % picks.length] : null; };
+            var take = function (from, n) { var out = []; for (var i = 0; i < n && i < picks.length; i++) out.push(at(from + i)); return out; };
+            fill('hmPairA', take(0, 2).map(card).join('') || EMPTY);
+            fill('hmPairB', take(2, 2).map(card).join('') || EMPTY);
+            fill('hmFour',  take(4, 4).map(card).join('') || EMPTY);
+        }
+
+        // ----- Hero + sale facts --------------------------------------------
+        function buildHero() {
+            var art = (state.mode === 'art'), key = art ? 'interiors' : VC.currentKey(), col = VC.get(key);
+            var name = art ? ((col && col.en) || 'Interior Design') : (((col && col.en) || 'Autumn') + ' Collection');
+            var parts = name.split(' ');
+            document.getElementById('hmTitle').innerHTML = esc(parts[0]) + (parts.length > 1 ? '<br>' + esc(parts.slice(1).join(' ')) : '');
+            document.getElementById('hmSub').textContent = art ? ((col && col.tagline) || 'Home decor, curated for you') : 'Refined silhouettes for the season ahead';
+            document.getElementById('hmCount').textContent = num(modeList().length);
+        }
+        function saleList() {
+            var art = (state.mode === 'art');
+            return VC.onSale().filter(function (p) { return art ? isArt(p) : !isArt(p); });
+        }
+        function buildSale() {
+            var sale = saleList();
+            document.getElementById('hmSaleCount').textContent = num(sale.length) + (sale.length === 1 ? ' item available' : ' items available');
+            var pct = sale.map(function (p) { return (p._d || VC.discountOf(p._raw)).percent || 0; });
+            var most = function (key) {
+                var c = {}, best = '—', top = 0;
+                sale.forEach(function (p) { var k = p[key] || ''; if (!k) return; c[k] = (c[k] || 0) + 1; if (c[k] > top) { top = c[k]; best = k; } });
+                return best;
+            };
+            var lo = pct.length ? Math.min.apply(null, pct) : 0, hi = pct.length ? Math.max.apply(null, pct) : 0;
+            var facts = [
+                ['Over 20%', num(pct.filter(function (x) { return x >= 20; }).length)],
+                ['The best category', most('category')],
+                ['Discounts', pct.length ? (lo === hi ? lo + '%' : lo + '–' + hi + '%') : '—'],
+                ['Best seller', most('seller')]
+            ];
+            fill('hmFacts', facts.map(function (r) { return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>'; }).join(''));
+            var pic = document.querySelector('#hmSalePic img');
+            if (pic) pic.src = (state.mode === 'art') ? 'art-hero.jpg' : 'sale-hero.jpg';
+        }
+
+        function buildAll() { buildHero(); buildCats(); buildPieces(); buildSale(); syncSubnav(); playCurrent(); }
+
+        // ----- Results: search, the sale, everything ------------------------
         var input = document.getElementById('feedSearchInput');
         var structured = document.getElementById('feedStructured');
-        var results = document.getElementById('searchResults');
+        var wrap = document.getElementById('hmResultsWrap'), results = document.getElementById('searchResults'), rTitle = document.getElementById('hmResultsTitle');
+        function showResults(title, list, emptyText) {
+            structured.hidden = true; wrap.hidden = false;
+            rTitle.textContent = title;
+            results.innerHTML = list.length ? list.map(card).join('') : '<div class="hm-empty">' + esc(emptyText) + '</div>';
+        }
+        function closeResults() { wrap.hidden = true; structured.hidden = false; if (input) input.value = ''; }
         function runSearch(q) {
             q = (q || '').trim().toLowerCase();
-            if (!q) { results.hidden = true; structured.style.display = ''; return; }
-            var matches = modeList().filter(function (p) {
+            if (!q) { closeResults(); return; }
+            showResults('Results', modeList().filter(function (p) {
                 return (p.name + ' ' + p.seller + ' ' + (p.category || '')).toLowerCase().indexOf(q) !== -1;
-            });
-            structured.style.display = 'none';
-            results.hidden = false;
-            results.innerHTML = matches.length ? matches.map(cvCard).join('')
-                : '<div class="feed-empty" style="grid-column:1/-1">No matches for "' + esc(q) + '".</div>';
+            }), 'No matches for "' + q + '".');
         }
         if (input) input.addEventListener('input', function () { runSearch(input.value); });
+        document.getElementById('hmResultsBack').addEventListener('click', closeResults);
+        function openList(title, list, empty) {
+            if (input) input.value = '';
+            showResults(title, list, empty);
+            var top = document.querySelector('.hm-search'); if (top) window.scrollTo({ top: top.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+        }
+        document.getElementById('hmShopSale').addEventListener('click', function () { openList('On sale', saleList(), 'Nothing on sale right now.'); });
+        document.getElementById('hmShopAll').addEventListener('click', function () { openList('Everything', modeList(), 'Nothing here yet.'); });
 
-        // Art / Fashion is driven by the header's own built-in toggle (header.js).
-        // It stores vero_category and reloads, so the feed reflects the latest
-        // choice on load. As a belt-and-braces measure, re-sync if the stored
-        // mode changed while the page stayed open (e.g. bfcache restore).
+        // ----- Art / Fashion (the header's own toggle) -----------------------
         function currentMode() { return (localStorage.getItem('vero_category') === 'art') ? 'art' : 'fashion'; }
         window.addEventListener('pageshow', function () {
             var m = currentMode();
-            if (m !== state.mode) { state.mode = m; buildStructured(); if (input && input.value.trim()) runSearch(input.value); }
+            if (m !== state.mode) { state.mode = m; buildAll(); if (input && input.value.trim()) runSearch(input.value); }
         });
-
-        // Swap the hero's editorial caption for the active mode.
-        function applyHeroCaption(isArtMode, curKey) {
-            var cap = document.querySelector('.home-hero-cap'); if (!cap) return;
-            var eb = cap.querySelector('.hhc-eyebrow'), ti = cap.querySelector('.hhc-title'), su = cap.querySelector('.hhc-sub');
-            var col = VC.get(curKey);
-            if (isArtMode) {
-                if (eb) eb.textContent = 'The Collection';
-                if (ti) ti.textContent = (col && col.en) || 'Interior Design';
-                if (su) su.textContent = (col && col.tagline) || 'Home decor, curated for you.';
-            } else {
-                if (eb) eb.textContent = 'The Season';
-                if (ti) ti.textContent = ((col && col.en) || 'Autumn') + ' Collection';
-                if (su) su.textContent = 'This season’s edit — warm layers, soft wools and earthy tones.';
-            }
-        }
-
         // Quick fade "page" with the mode name, shown while the feed re-renders.
         function showModeFade(mode) {
             var ov = document.getElementById('modeFade');
@@ -834,9 +675,7 @@
             ov.__t1 = setTimeout(function () { ov.classList.remove('show'); ov.classList.add('out'); }, 520);
             ov.__t2 = setTimeout(function () { ov.classList.remove('out'); }, 1050);
         }
-
-        // Toggle Art / Fashion IN PLACE — no reload, no zoom-intro replay. Overrides
-        // the header's default (which navigates to index.html).
+        // Toggle Art / Fashion in place — no reload.
         window.toggleSwitch = function () {
             var mode = (state.mode === 'art') ? 'fashion' : 'art';
             try { localStorage.setItem('vero_category', mode === 'art' ? 'art' : 'clothing'); } catch (e) {}
@@ -845,37 +684,24 @@
             try { document.body.setAttribute('data-mode', mode === 'art' ? 'art' : 'fashion'); } catch (e) {}
             showModeFade(mode);
             state.mode = mode;
-            buildStructured();
+            buildAll();
             if (input && input.value.trim()) runSearch(input.value);
         };
 
-        // ----- Gender category sub-header + slider → feature card ----------
+        // ----- Gender sub-header (fixed second header after the hero) --------
         var subnav = document.getElementById('feedSubnav');
         function syncSubnav() {
             if (!subnav) return;
-            [].slice.call(subnav.querySelectorAll('.fsn-item')).forEach(function (b) {
-                b.classList.toggle('on', b.dataset.gender === state.gender);
-            });
+            [].slice.call(subnav.querySelectorAll('.fsn-item')).forEach(function (b) { b.classList.toggle('on', b.dataset.gender === state.gender); });
         }
-        // The gender slider announces its centred gender through this hook.
-        window.__onGenderChange = function (gender) {
-            if (!gender) return;
-            var changed = (gender !== state.gender);
-            state.gender = gender;
-            syncSubnav();
-            if (changed) { renderFeature(featureFor(gender)); buildDuo(); }
-        };
-        // Tapping a category drives the slider (which then updates everything).
         if (subnav) subnav.addEventListener('click', function (e) {
             var b = e.target.closest ? e.target.closest('.fsn-item') : null;
             if (!b) return;
-            var g = b.dataset.gender;
-            if (typeof window.__gcGoToGender === 'function') window.__gcGoToGender(g);
-            else window.__onGenderChange(g);
+            closeResults();
+            setGender(b.dataset.gender, true);
+            var top = catsEl.getBoundingClientRect().top + window.scrollY - 130;
+            window.scrollTo({ top: top, behavior: 'smooth' });
         });
-
-
-        // Dock the gender sub-header just below the fixed main header.
         function placeSubnav() {
             if (!subnav) return;
             var hdr = document.getElementById('siteHeader');
@@ -886,9 +712,6 @@
         window.addEventListener('resize', placeSubnav);
         if (window.ResizeObserver) { var he = document.getElementById('siteHeader'); if (he) { try { new ResizeObserver(placeSubnav).observe(he); } catch (e) {} } }
         var pt = 0; (function settleSub() { placeSubnav(); if (++pt < 30) setTimeout(settleSub, 120); })();
-
-        // Show the second header only once the hero has been crossed; keep it
-        // hidden (off, out of the way) while the hero is still in view.
         function updateSubnavDock() {
             if (!subnav) return;
             var passed = (typeof window.veroHeroPassed === 'function') ? window.veroHeroPassed() : (window.scrollY > 80);
@@ -898,124 +721,12 @@
         window.addEventListener('resize', updateSubnavDock);
         updateSubnavDock();
 
-        syncSubnav();
-        buildStructured();
-    })();
-    </script>
-
-    <!-- Gender vertical accordion — click a panel to expand it; it drives the
-         feature card / duo slider through the same hooks the old slider used. -->
-    <script>
-    (function () {
-        var root = document.getElementById('genderCover');
-        if (!root) return;
-        var accordion = root.querySelector('.gc-accordion');
-        var cards = [].slice.call(root.querySelectorAll('.gc-card'));
-        var count = cards.length;
-        if (!count) return;
-        var sub = root.querySelector('.gc-sub');
-        var selected = -1;
-        // 2 x 2 grid: the chosen panel's column and row take most of the space.
-        function layout() {
-            if (!accordion) return;
-            var big = '3fr', small = '1fr';
-            accordion.style.gridTemplateColumns = selected < 0 ? '' : (selected % 2 === 0 ? big + ' ' + small : small + ' ' + big);
-            accordion.style.gridTemplateRows    = selected < 0 ? '' : (selected < 2 ? big + ' ' + small : small + ' ' + big);
-        }
-
-        function setActive(i, announce) {
-            if (i < 0 || i >= count) return;
-            if (i === selected) return;
-            var prev = selected;
-            selected = i;
-            // First selection turns the equal rectangles into the accordion.
-            if (accordion) accordion.classList.add('has-active');
-            layout();
-            var card = cards[i];
-            var nm = card.getAttribute('data-name') || '';
-            if (sub) sub.textContent = card.getAttribute('data-sub') || nm;
-            // The panel we're leaving slides its media out the far (right) side,
-            // then resets back to the resting (off-left) state once it's gone.
-            if (prev >= 0 && prev !== i) {
-                var pc = cards[prev];
-                if (pc._leaveT) clearTimeout(pc._leaveT);
-                pc.classList.add('is-leaving');
-                pc._leaveT = setTimeout(function () { pc.classList.remove('is-leaving'); }, 750);
-            }
-            cards.forEach(function (c, j) {
-                var on = (j === i);
-                // The incoming panel must not carry a stale leaving state.
-                if (on) { if (c._leaveT) clearTimeout(c._leaveT); c.classList.remove('is-leaving'); }
-                c.classList.toggle('is-active', on);
-                c.setAttribute('aria-selected', on ? 'true' : 'false');
-                c.tabIndex = on ? 0 : -1;
-                var v = c.querySelector('video'); if (v) {
-                    v.muted = true; v.defaultMuted = true;
-                    if (on) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
-                    else { try { v.pause(); } catch (x) {} }
-                }
-            });
-            if (announce !== false && typeof window.__onGenderChange === 'function') {
-                window.__onGenderChange(card.getAttribute('data-gender') || '');
-            }
-        }
-
-        var restSub = sub ? sub.textContent : '';
-
-        // Collapse back to the resting four equal rectangles: the open panel
-        // slides its media out the far side and the accordion returns to start.
-        function deselect() {
-            if (selected < 0) return;
-            var pc = cards[selected];
-            selected = -1;
-            if (pc._leaveT) clearTimeout(pc._leaveT);
-            pc.classList.remove('is-active');
-            pc.classList.add('is-leaving');
-            pc.setAttribute('aria-selected', 'false');
-            pc._leaveT = setTimeout(function () { pc.classList.remove('is-leaving'); }, 750);
-            var v = pc.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} }
-            if (accordion) accordion.classList.remove('has-active');
-            layout();
-            if (sub) sub.textContent = restSub;
-        }
-
-        // Let the gender sub-header drive the accordion to a given gender.
-        window.__gcGoToGender = function (gender) {
-            for (var i = 0; i < count; i++) {
-                if (cards[i].getAttribute('data-gender') === gender) { setActive(i, true); return; }
-            }
-        };
-
-        cards.forEach(function (card, i) {
-            card.addEventListener('click', function (e) {
-                // The "Shop X" link jumps to the feature card instead of re-selecting.
-                if (e.target && e.target.classList.contains('gc-shop')) {
-                    e.preventDefault();
-                    var el = document.getElementById('genderFeature');
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                // Tapping the already-open category again closes it and returns
-                // to the four equal rectangles.
-                if (i === selected) { deselect(); return; }
-                setActive(i, true);
-            });
-            card.addEventListener('keydown', function (e) {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); setActive((i + 1) % count, true); cards[(i + 1) % count].focus(); }
-                else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); var p = (i - 1 + count) % count; setActive(p, true); cards[p].focus(); }
-            });
-        });
-
-        // Start at rest: four equal rectangles, nothing expanded. The first tap
-        // (or a gender tap in the sub-header) opens the accordion.
-        cards.forEach(function (c) { c.tabIndex = 0; });
+        buildAll();
     })();
     </script>
 
     <script src="search-box.js" defer></script>
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
-    <!-- Entrance: hero rectangle that grows to full-screen on scroll. -->
-    <script src="zoom-parallax.js?v=8"></script>
 </body>
 </html>
