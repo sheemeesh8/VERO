@@ -20,375 +20,422 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Poppins:wght@200;300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --ink: #16150f;
-    --muted: #8f8d86;
-    --line: #e6e4de;
-    --line-strong: #cfccc4;
-    --accent: #b23b3b;
-    --ok: #1f8f4e;
-    --bg: #ffffff;
-  }
+  :root { --ink:#16150f; --muted:#8f8d86; --line:#e6e4de; --soft:#f6f5f2; --accent:#b23b3b; --ok:#1f8f4e; --wait:#b7791f; --bg:#fff; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { min-height: 100%; }
   body {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg); color: var(--ink);
-    font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
   }
+  button { font-family: inherit; color: inherit; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 84px 18px 90px; }
+  html.is-embed .wrap { padding: 16px 16px 120px; }
 
-  /* ---- Standalone chrome (hidden when embedded) ---- */
-  .back {
-    position: fixed; top: 20px; left: 20px; z-index: 40;
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px; border: 1px solid var(--ink); border-radius: 999px;
-    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-    text-decoration: none; color: var(--ink); background: var(--bg);
-    transition: background 0.2s, color 0.2s;
-  }
-  .back:hover { background: var(--ink); color: #fff; }
-  html.is-embed .back { display: none !important; }
+  /* ---- Top row: side switch + rules ---- */
+  .toprow { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .seg button { border: 0; background: #fff; color: var(--muted); padding: 8px 15px; min-height: 38px; font-size: 12px; font-weight: 500; cursor: pointer; }
+  .seg button.on { background: var(--ink); color: #fff; }
+  .toprow .grow { flex: 1; }
+  .rules { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 0 14px; min-height: 38px; font-size: 12px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+  .rules svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 
-  .wrap { max-width: 640px; margin: 0 auto; padding: 84px 24px 80px; }
-  html.is-embed .wrap { padding: 20px 18px 120px; }
+  /* ---- Numbers ---- */
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 16px; }
+  .nums div { padding: 14px 8px; text-align: center; }
+  .nums div + div { border-left: 1px solid var(--line); }
+  .nums b { display: block; font-family: 'Bodoni Moda', Georgia, serif; font-size: 24px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .nums span { font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); }
 
-  /* ---- Header ---- */
-  .eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); }
-  h1 {
-    font-family: 'Bodoni Moda', 'Didot', Georgia, serif;
-    font-weight: 500; font-size: clamp(30px, 8vw, 42px); line-height: 1.05;
-    margin: 12px 0 14px; letter-spacing: 0.5px;
-  }
-  .lede { color: var(--muted); font-size: 13px; font-weight: 300; max-width: 42ch; }
+  .tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 0 14px; min-height: 36px; font-size: 12px; cursor: pointer; white-space: nowrap; color: var(--muted); }
+  .tab.on { border-color: var(--ink); color: var(--ink); font-weight: 500; }
+  .tab i { font-style: normal; opacity: 0.6; margin-left: 4px; }
 
-  /* ---- Summary strip: three fine columns divided by hairlines ---- */
-  .summary {
-    display: grid; grid-template-columns: 1fr 1fr 1fr;
-    margin: 30px 0 6px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
-  }
-  .sm { padding: 16px 6px; text-align: center; position: relative; }
-  .sm + .sm::before { content: ''; position: absolute; left: 0; top: 18px; bottom: 18px; width: 1px; background: var(--line); }
-  .sm-num { font-family: 'Bodoni Moda', serif; font-weight: 500; font-size: 26px; line-height: 1; }
-  .sm-lbl { font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+  /* ---- Negotiation card ---- */
+  .list { display: flex; flex-direction: column; gap: 12px; }
+  .card { border: 1px solid var(--line); border-radius: 18px; padding: 14px; background: #fff; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+  .card:hover { border-color: #cfccc4; box-shadow: 0 8px 26px rgba(0,0,0,0.06); }
+  .card.mine { border-color: var(--ink); }
+  .c-top { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; }
+  .thumb { width: 52px; height: 64px; border-radius: 10px; background: var(--soft) center / cover; display: grid; place-items: center; font-size: 26px; overflow: hidden; }
+  .c-name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .c-who { font-size: 11.5px; color: var(--muted); }
+  .chip { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--soft); color: var(--muted); }
+  .chip.me { background: var(--ink); color: #fff; }
+  .chip.them { background: #fbf3e2; color: var(--wait); }
+  .chip.accepted { background: #e6f4ec; color: var(--ok); }
+  .chip.declined, .chip.expired, .chip.withdrawn { background: #f7e9e8; color: var(--accent); }
+  .c-price { text-align: right; }
+  .c-price b { display: block; font-family: 'Bodoni Moda', Georgia, serif; font-size: 22px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .c-price s { font-size: 11px; color: var(--muted); }
 
-  /* ---- Featured: the highest open offer as a big photo tile ---- */
-  .feat {
-    position: relative; overflow: hidden; border-radius: 20px; min-height: 250px; margin: 6px 0 10px;
-    color: #fff; display: flex; align-items: flex-end;
-    background: radial-gradient(120% 90% at 85% 15%, #6b5a46 0%, #2b2620 55%, #16150f 100%) center / cover no-repeat;
-    animation: fade 0.45s ease both;
-  }
-  .feat[hidden] { display: none; }
-  .feat::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.7)); }
-  .feat-ico { position: absolute; top: 22px; right: 26px; font-size: 64px; line-height: 1; opacity: 0.9; z-index: 1; }
-  .feat.has-photo .feat-ico { display: none; }
-  .feat-tx { position: relative; z-index: 1; width: 100%; padding: 18px; }
-  .feat-k { font-size: 9.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.8); }
-  .feat-pr { font-family: 'Bodoni Moda', Georgia, serif; font-weight: 500; font-size: 36px; line-height: 1.1; margin-top: 4px; }
-  .feat-w { font-size: 12px; opacity: 0.9; margin-top: 2px; }
-  .feat-row { display: flex; gap: 8px; margin-top: 14px; }
-  .feat-row button {
-    flex: 1; font-family: inherit; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
-    padding: 12px 0; border-radius: 999px; border: 1px solid rgba(255,255,255,0.7); background: none; color: #fff;
-    transition: background 0.2s, color 0.2s;
-  }
-  .feat-row button:active { background: rgba(255,255,255,0.15); }
-  .feat-row .ok { background: #fff; color: var(--ink); border-color: #fff; }
-  .feat-row .ok:active { background: rgba(255,255,255,0.85); }
-  .feat-cap { font-size: 9.5px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-top: 22px; }
-  .feat-cap[hidden] { display: none; }
+  /* ---- Price track: where each side stands between the floor and the ask ---- */
+  .track { position: relative; height: 34px; margin: 14px 4px 2px; }
+  .track::before { content: ''; position: absolute; left: 0; right: 0; top: 9px; height: 4px; border-radius: 999px; background: var(--soft); }
+  .track .fill { position: absolute; top: 9px; height: 4px; border-radius: 999px; background: #d8d5cd; }
+  .track .pin { position: absolute; top: 4px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--ink); background: #fff; }
+  .track .pin.me { background: var(--ink); }
+  .track .pin.deal { background: var(--ok); box-shadow: 0 0 0 1px var(--ok); }
+  .track .pin span { position: absolute; top: 17px; left: 50%; transform: translateX(-50%); font-size: 9.5px; white-space: nowrap; color: var(--muted); }
+  .track .pin.edge-l span { left: 0; transform: none; }
+  .track .pin.edge-r span { left: auto; right: 0; transform: none; }
+  .c-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+  .c-foot .urgent { color: var(--accent); font-weight: 500; }
+  .quick { display: flex; gap: 8px; margin-top: 12px; }
+  .btn { border: 1px solid var(--ink); background: #fff; border-radius: 999px; padding: 0 16px; min-height: 42px; font-size: 12px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: var(--ink); }
+  .btn.dark { background: var(--ink); color: #fff; }
+  .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .btn.quiet { border-color: var(--line); color: var(--muted); }
+  .btn.grow { flex: 1; }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .empty { border: 1px dashed #cfccc4; border-radius: 18px; padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; }
 
-  /* ---- Filter tabs — text with a thin active underline ---- */
-  .summary[hidden] { display: none; }
-  .tabs { display: flex; gap: 22px; margin: 26px 0 6px; border-bottom: 1px solid var(--line); }
-  .tab {
-    background: none; border: none; cursor: pointer; font-family: inherit;
-    font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted);
-    padding: 0 0 12px; position: relative; transition: color 0.2s;
-  }
-  .tab.on { color: var(--ink); }
-  .tab.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--ink); }
+  /* ---- Deal room (bottom sheet) ---- */
+  .veil { position: fixed; inset: 0; z-index: 70; background: rgba(20,18,16,0.45); display: none; align-items: flex-end; justify-content: center; }
+  .veil.open { display: flex; animation: fade 0.2s ease both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .room { background: #fff; width: 100%; max-width: 560px; max-height: 92vh; max-height: 92dvh; border-radius: 22px 22px 0 0; display: flex; flex-direction: column; animation: up 0.28s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes up { from { transform: translateY(26px); } to { transform: none; } }
+  .r-top { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); flex: none; }
+  .r-top .thumb { width: 44px; height: 54px; font-size: 22px; }
+  .x { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: 18px; line-height: 1; }
+  .r-body { overflow-y: auto; padding: 14px 16px; flex: 1; -webkit-overflow-scrolling: touch; }
+  .r-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .thread { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .ev { max-width: 80%; padding: 10px 13px; border-radius: 16px; font-size: 13px; background: var(--soft); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .ev.me { align-self: flex-end; background: var(--ink); color: #fff; border-radius: 16px; border-bottom-right-radius: 4px; }
+  .ev .who { display: block; font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; opacity: 0.6; margin-bottom: 2px; }
+  .ev .amt { font-family: 'Bodoni Moda', Georgia, serif; font-size: 20px; font-weight: 500; line-height: 1.2; }
+  .ev .tag { font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid currentColor; border-radius: 999px; padding: 1px 7px; margin-left: 6px; opacity: 0.75; vertical-align: middle; }
+  .ev .note { display: block; margin-top: 3px; opacity: 0.85; }
+  .ev time { display: block; font-size: 10px; opacity: 0.5; margin-top: 3px; }
+  .ev.sys { align-self: center; max-width: 100%; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 11.5px; color: var(--muted); text-align: center; }
+  .ev.sys.good { border-color: #bfe0cc; color: var(--ok); background: #f1f9f4; }
+  .typing { align-self: flex-start; font-size: 11.5px; color: var(--muted); padding: 4px 2px; }
+  .typing::after { content: '…'; animation: blink 1.2s infinite; }
+  @keyframes blink { 50% { opacity: 0.2; } }
 
-  /* ---- Offer list — hairline rows ---- */
-  .list { margin-top: 4px; }
-  .offer { border-bottom: 1px solid var(--line); }
-  .offer-head {
-    display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 14px;
-    padding: 20px 2px; cursor: pointer;
-  }
-  .thumb {
-    width: 40px; height: 40px; border: 1px solid var(--line-strong); border-radius: 50%;
-    display: grid; place-items: center; font-size: 19px;
-  }
-  .o-name { font-size: 14px; font-weight: 400; }
-  .o-buyer { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 0.2px; }
-  .o-right { text-align: right; }
-  .o-offer { font-family: 'Bodoni Moda', serif; font-weight: 500; font-size: 19px; line-height: 1; }
-  .o-was { font-size: 11px; color: var(--muted); margin-top: 5px; }
-  .o-was s { text-decoration-thickness: 1px; }
-  .o-delta { color: var(--accent); }
+  .r-foot { flex: none; border-top: 1px solid var(--line); padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .r-actions { display: flex; gap: 8px; }
+  .hint { font-size: 11.5px; color: var(--muted); margin-bottom: 10px; }
+  .err { font-size: 12px; color: var(--accent); margin-top: 8px; min-height: 0; }
 
-  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-top: 7px; }
-  .status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); display: inline-block; }
-  .status.pending .dot { background: #c9922b; }
-  .status.accepted { color: var(--ok); } .status.accepted .dot { background: var(--ok); }
-  .status.declined { color: var(--accent); } .status.declined .dot { background: var(--accent); }
-  .status.countered .dot { background: var(--ink); }
+  /* ---- Counter composer ---- */
+  .comp-amt { display: flex; align-items: baseline; justify-content: center; gap: 4px; font-family: 'Bodoni Moda', Georgia, serif; }
+  .comp-amt span { font-size: 22px; }
+  .comp-amt input { width: 150px; border: 0; outline: none; text-align: center; font: inherit; font-size: 40px; font-weight: 500; color: var(--ink); background: none; -moz-appearance: textfield; }
+  .comp-amt input::-webkit-outer-spin-button, .comp-amt input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .comp-sub { text-align: center; font-size: 11.5px; color: var(--muted); margin-bottom: 8px; }
+  .comp input[type="range"] { width: 100%; accent-color: var(--ink); }
+  .comp-ends { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); margin-bottom: 10px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .chips button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 0 12px; min-height: 34px; font-size: 11.5px; cursor: pointer; }
+  .chips button:hover { border-color: var(--ink); }
+  .comp-note { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 13px; outline: none; margin-bottom: 10px; }
+  .comp-note:focus { border-color: var(--ink); }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 12px; cursor: pointer; }
+  .check input { width: 18px; height: 18px; accent-color: var(--ink); }
 
-  /* ---- Expanded negotiation panel ---- */
-  .panel { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
-  .offer.open .panel { max-height: 620px; }
-  .panel-inner { padding: 4px 2px 24px; }
-  .thread { display: flex; flex-direction: column; gap: 10px; padding: 6px 0 16px; }
-  .msg { max-width: 78%; font-size: 12.5px; line-height: 1.5; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; }
-  .msg .who { display: block; font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-  .msg.them { align-self: flex-start; border-bottom-left-radius: 4px; }
-  .msg.me { align-self: flex-end; border-color: var(--ink); border-bottom-right-radius: 4px; }
-  .msg .amt { font-family: 'Bodoni Moda', serif; font-weight: 500; }
-
-  .actions { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
-  .btn {
-    font-family: inherit; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-    padding: 11px 16px; border-radius: 999px; cursor: pointer; background: none;
-    border: 1px solid var(--line-strong); color: var(--ink); transition: all 0.2s; white-space: nowrap;
-  }
-  .btn:hover { border-color: var(--ink); }
-  .btn.accept { background: var(--ink); border-color: var(--ink); color: #fff; }
-  .btn.accept:hover { opacity: 0.85; }
-  .btn.decline { border: none; color: var(--muted); padding-left: 4px; }
-  .btn.decline:hover { color: var(--accent); }
-  .counter { display: none; align-items: center; gap: 8px; margin-left: auto; }
-  .counter.show { display: flex; }
-  .counter input {
-    width: 96px; font-family: inherit; font-size: 14px; color: var(--ink);
-    border: none; border-bottom: 1px solid var(--line-strong); padding: 6px 4px; outline: none; background: none;
-  }
-  .counter input:focus { border-bottom-color: var(--ink); }
-  .spacer { flex: 1; }
-
-  .resolved { padding: 14px 2px 0; font-size: 12px; color: var(--muted); }
-  .resolved b { color: var(--ink); font-weight: 500; }
-
-  .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 60px 0; font-weight: 300; }
-
-  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .offer { animation: fade 0.4s ease both; }
+  /* ---- Rules sheet ---- */
+  .rule { padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .rule:last-child { border-bottom: 0; }
+  .rule-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .rule-top b { font-size: 13.5px; font-weight: 500; }
+  .rule p { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+  .rule input[type="range"] { width: 100%; accent-color: var(--ink); margin-top: 10px; }
+  .sw { appearance: none; width: 44px; height: 26px; border-radius: 999px; background: #d9d7d1; position: relative; cursor: pointer; transition: background 0.2s; flex: none; }
+  .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+  .sw:checked { background: var(--ink); }
+  .sw:checked::after { transform: translateX(18px); }
 </style>
-<link rel="stylesheet" href="assets/fonts/aharoni.css">
-<style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Aharoni CLM','Segoe UI',sans-serif !important;}</style>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261011e"></script>
 </head>
 <body>
-  <a class="back old-back" href="seller-area.html">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    Back
-  </a>
-  <style id="sticky-page-head">
-    .old-back { display: none !important; }
-    .sticky-head { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 16px; padding: calc(env(safe-area-inset-top, 0px) + 54px) 20px 20px; background: rgba(255,255,255,0.94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid #ececea; }
-    .sh-back { width: 44px; height: 44px; border: 1px solid #e2e0da; border-radius: 50%; background: none; display: grid; place-items: center; cursor: pointer; color: #111; flex: none; transition: background 0.2s, color 0.2s, border-color 0.2s; }
-    .sh-back svg { width: 22px; height: 22px; }
-    .sh-back:hover { background: #111; color: #fff; border-color: #111; }
-    .sh-title { font-size: 22px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; color: #1b1916; }
-  </style>
     <!-- Shared page header (assets/page-header.css): title left, back arrow right. -->
     <header class="page-header">
-        <div class="ph-name" role="heading" aria-level="1">Offers</div>
-        <a class="ph-back" href="seller-area.html" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+        <div class="ph-name" role="heading" aria-level="1">Negotiation</div>
+        <a class="ph-back" id="phBack" href="seller-area.html" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     </header>
 
   <main class="wrap">
-    <h1 style="display:none">Offers &amp; Negotiation</h1>
-
-    <!-- The highest open offer, front and centre -->
-    <div class="feat" id="feat" hidden></div>
-    <div class="feat-cap" id="featCap" hidden>All offers</div>
-
-    <div class="summary" hidden>
-      <div class="sm"><div class="sm-num" id="sPending">0</div><div class="sm-lbl">Pending</div></div>
-      <div class="sm"><div class="sm-num" id="sAccepted">0</div><div class="sm-lbl">Accepted</div></div>
-      <div class="sm"><div class="sm-num" id="sValue">₪0</div><div class="sm-lbl">Open value</div></div>
+    <div class="toprow">
+      <div class="seg" id="sideSeg">
+        <button type="button" data-side="selling">Selling</button>
+        <button type="button" data-side="buying">Buying</button>
+      </div>
+      <span class="grow"></span>
+      <button class="rules" id="rulesBtn" type="button"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Rules</button>
     </div>
 
-    <div class="tabs" id="tabs">
-      <button class="tab on" data-f="all">All</button>
-      <button class="tab" data-f="pending">Pending</button>
-      <button class="tab" data-f="accepted">Accepted</button>
-      <button class="tab" data-f="declined">Declined</button>
+    <div class="nums">
+      <div><b id="nMine">0</b><span>Your move</span></div>
+      <div><b id="nWait">0</b><span>Waiting</span></div>
+      <div><b id="nDeal">₪0</b><span>Agreed</span></div>
     </div>
 
+    <div class="tabs" id="tabs"></div>
     <div class="list" id="list"></div>
   </main>
 
+  <!-- Deal room: the whole thread for one negotiation, and the moves you can make. -->
+  <div class="veil" id="veil">
+    <div class="room" role="dialog" aria-modal="true" aria-label="Negotiation">
+      <div class="r-top" id="rTop"></div>
+      <div class="r-body" id="rBody"></div>
+      <div class="r-foot" id="rFoot"></div>
+    </div>
+  </div>
+
+  <script src="negotiation.js?v=1"></script>
   <script>
-  (function offersPage() {
-    if (/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('is-embed');
-    var KEY = 'vero_received_offers';
-    var readJSON = function (k, fb) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
-    var save = function () { try { localStorage.setItem(KEY, JSON.stringify(offers)); } catch (e) {} };
-    var nis = function (n) { return '₪' + Math.round(n).toLocaleString('en-US'); };
-    var H = 36e5, D = 864e5;
+  (function negotiationPage() {
+    'use strict';
+    var N = window.VeroNego, qs = new URLSearchParams(location.search);
+    var embed = qs.get('embed') === '1';
+    if (embed) document.documentElement.classList.add('is-embed');
 
-    var offers = readJSON(KEY, null);
-    if (!Array.isArray(offers) || !offers.length) {
-      offers = [
-        { name: 'Wool coat',    icon: '🧥', buyer: 'Maya L.',   askPrice: 269, offer: 230, at: Date.now() - 4 * H, status: 'pending' },
-        { name: 'Raw denim',    icon: '👖', buyer: 'Omer T.',   askPrice: 129, offer: 100, at: Date.now() - 9 * H, status: 'pending' },
-        { name: 'Silk scarf',   icon: '🧣', buyer: 'Noa B.',    askPrice: 210, offer: 175, at: Date.now() - 1 * D, status: 'countered', counter: 195 },
-        { name: 'Leather tote',  icon: '👜', buyer: 'Daniel K.', askPrice: 540, offer: 480, at: Date.now() - 2 * D, status: 'accepted' },
-        { name: 'Linen shirt',  icon: '👔', buyer: 'Tal R.',    askPrice: 95,  offer: 60,  at: Date.now() - 3 * D, status: 'declined' }
-      ];
-      save();
+    var side = qs.get('side');
+    if (side !== 'selling' && side !== 'buying') {
+      var acct = ''; try { acct = localStorage.getItem('vero_active_account') || ''; } catch (e) {}
+      side = (qs.get('from') === 'seller' || acct === 'seller') ? 'selling' : 'buying';
     }
+    // Embedded in the seller area or the buyer profile, the page shows one side only.
+    var locked = embed && (qs.get('from') === 'seller' || qs.has('side'));
 
-    var filter = 'all';
-    var list = document.getElementById('list');
-
-    function pct(o) { return Math.round((1 - o.offer / o.askPrice) * 100); }
-    function when(ts) {
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    var nis = function (n) { return '₪' + Math.round(Number(n) || 0).toLocaleString('en-US'); };
+    var ago = function (ts) {
       var s = (Date.now() - ts) / 1000;
-      if (s < 3600) return Math.max(1, Math.round(s / 60)) + 'm ago';
-      if (s < 86400) return Math.round(s / 3600) + 'h ago';
-      return Math.round(s / 86400) + 'd ago';
-    }
-    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+      if (s < 60) return 'now'; if (s < 3600) return Math.round(s / 60) + 'm ago';
+      if (s < 86400) return Math.round(s / 3600) + 'h ago'; return Math.round(s / 86400) + 'd ago';
+    };
+    var left = function (ms) {
+      if (ms <= 0) return 'expired';
+      var h = ms / 36e5; return h >= 24 ? Math.round(h / 24) + 'd left' : h >= 1 ? Math.round(h) + 'h left' : Math.max(1, Math.round(ms / 6e4)) + 'm left';
+    };
+    var thumb = function (it) {
+      return it.cover ? '<div class="thumb" style="background-image:url(&quot;' + esc(encodeURI(it.cover)) + '&quot;)"></div>' : '<div class="thumb">' + esc(it.icon || '🛍️') + '</div>';
+    };
 
-    function thread(o) {
-      // Build the negotiation thread from the offer's numbers + any counter.
-      var t = '<div class="thread">';
-      t += '<div class="msg them"><span class="who">' + esc(o.buyer) + '</span>Would you take <span class="amt">' + nis(o.offer) + '</span> for the ' + esc(o.name.toLowerCase()) + '?</div>';
-      if (o.status === 'countered' && o.counter) {
-        t += '<div class="msg me"><span class="who">You</span>Thanks! I can meet you at <span class="amt">' + nis(o.counter) + '</span>.</div>';
-      } else if (o.status === 'accepted') {
-        t += '<div class="msg me"><span class="who">You</span>Deal — <span class="amt">' + nis(o.offer) + '</span> it is. I\'ll get it shipped.</div>';
-      } else if (o.status === 'declined') {
-        t += '<div class="msg me"><span class="who">You</span>Sorry, I can\'t go that low on this one.</div>';
+    var filter = 'mine', openId = null, composing = false, sheet = null;
+    var them = function () { return side === 'selling' ? 'buyer' : 'seller'; };
+
+    function group(n) { var st = N.state(n); return !st.open ? 'closed' : st.turn === 'me' ? 'mine' : 'wait'; }
+    function chip(n) {
+      var st = N.state(n);
+      if (st.open) return st.turn === 'me' ? '<span class="chip me">Your move</span>' : '<span class="chip them">Waiting for ' + them() + '</span>';
+      var label = { accepted: 'Deal agreed', declined: 'Declined', withdrawn: 'Withdrawn', expired: 'Expired' }[n.status];
+      return '<span class="chip ' + n.status + '">' + label + '</span>';
+    }
+
+    // The price line: both sides' latest numbers placed between the lowest figure and the ask.
+    function track(n) {
+      var st = N.state(n), ask = n.item.ask;
+      var vals = n.events.filter(function (e) { return e.amount; }).map(function (e) { return e.amount; }).concat(ask);
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      lo = Math.max(0, lo - (hi - lo) * 0.35 - 1);
+      var at = function (v) { return Math.min(100, Math.max(0, (v - lo) / (hi - lo || 1) * 100)); };
+      var edge = function (p) { return p < 14 ? ' edge-l' : p > 86 ? ' edge-r' : ''; };
+      var pins = '';
+      if (n.status === 'accepted') {
+        var p = at(n.agreed); pins = '<i class="pin deal' + edge(p) + '" style="left:' + p + '%"><span>Agreed ' + nis(n.agreed) + '</span></i>';
+      } else {
+        var mineLabel = side === 'selling' ? 'You' : 'Your offer', theirLabel = side === 'selling' ? 'Buyer' : 'Seller';
+        if (st.theirs) { var a = at(st.theirs.amount); pins += '<i class="pin' + edge(a) + '" style="left:' + a + '%"><span>' + theirLabel + ' ' + nis(st.theirs.amount) + '</span></i>'; }
+        if (st.mine) { var b = at(st.mine.amount); pins += '<i class="pin me' + edge(b) + '" style="left:' + b + '%"><span>' + mineLabel + ' ' + nis(st.mine.amount) + '</span></i>'; }
       }
-      t += '</div>';
-      return t;
+      var from = st.theirs && st.mine ? Math.min(at(st.theirs.amount), at(st.mine.amount)) : at(st.price);
+      var to = st.theirs && st.mine && n.status !== 'accepted' ? Math.max(at(st.theirs.amount), at(st.mine.amount)) : 100;
+      return '<div class="track"><span class="fill" style="left:' + from + '%;width:' + Math.max(0, to - from) + '%"></span>' + pins + '</div>';
     }
 
-    function actionsFor(o, i) {
-      if (o.status === 'accepted') return '<div class="resolved">Accepted at <b>' + nis(o.offer) + '</b> — moved to your chats.</div>';
-      if (o.status === 'declined') return '<div class="resolved">Declined. The buyer has been notified.</div>';
-      var counterLine = o.status === 'countered' ? '<div class="resolved">Countered at <b>' + nis(o.counter) + '</b> — waiting on the buyer.</div>' : '';
-      return counterLine +
-        '<div class="actions">' +
-          '<button class="btn decline" data-act="decline" data-i="' + i + '">Decline</button>' +
-          '<div class="spacer"></div>' +
-          '<button class="btn" data-act="counter-open" data-i="' + i + '">Counter</button>' +
-          '<button class="btn accept" data-act="accept" data-i="' + i + '">Accept ' + nis(o.offer) + '</button>' +
-          '<div class="counter" data-counter="' + i + '">' +
-            '<input type="number" inputmode="numeric" placeholder="' + Math.round((o.offer + o.askPrice) / 2) + '" data-cin="' + i + '">' +
-            '<button class="btn" data-act="counter-send" data-i="' + i + '">Send</button>' +
-          '</div>' +
-        '</div>';
+    /* ------------------------------- List ------------------------------- */
+    function paint() {
+      N.refresh();
+      var all = N.bySide(side), by = { mine: [], wait: [], closed: [] };
+      all.forEach(function (n) { by[group(n)].push(n); });
+      $('nMine').textContent = by.mine.length;
+      $('nWait').textContent = by.wait.length;
+      $('nDeal').textContent = nis(all.reduce(function (s, n) { return s + (n.status === 'accepted' ? n.agreed : 0); }, 0));
+      $('sideSeg').style.display = locked ? 'none' : '';
+      $('sideSeg').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-side') === side); });
+      $('rulesBtn').style.display = side === 'selling' ? '' : 'none';
+      $('phBack').setAttribute('href', side === 'selling' ? 'seller-area.html' : 'profile.html');
+
+      var TABS = [['mine', 'Your move', by.mine.length], ['wait', 'Waiting', by.wait.length], ['closed', 'Closed', by.closed.length], ['all', 'All', all.length]];
+      $('tabs').innerHTML = TABS.map(function (t) { return '<button type="button" class="tab' + (filter === t[0] ? ' on' : '') + '" data-f="' + t[0] + '">' + t[1] + '<i>' + t[2] + '</i></button>'; }).join('');
+
+      var rows = filter === 'all' ? all : by[filter];
+      if (!rows.length) {
+        var msg = { mine: 'Nothing is waiting on you.', wait: 'No offers are waiting on the other side.', closed: 'No closed negotiations yet.',
+                    all: side === 'selling' ? 'No offers on your pieces yet.' : 'You have not made any offers yet. Tap "Make an offer" on any item.' }[filter];
+        $('list').innerHTML = '<div class="empty">' + msg + '</div>';
+      } else {
+        $('list').innerHTML = rows.map(function (n) {
+          var st = N.state(n), mine = st.turn === 'me';
+          var foot = st.open
+            ? '<span>Round ' + st.rounds + ' of ' + N.MAX_OFFERS + '</span><span class="' + (st.msLeft < 6 * 36e5 ? 'urgent' : '') + '">' + left(st.msLeft) + '</span>'
+            : '<span>' + st.rounds + ' offer' + (st.rounds === 1 ? '' : 's') + ' exchanged</span><span>' + ago(n.updatedAt) + '</span>';
+          var quick = mine
+            ? '<div class="quick"><button type="button" class="btn grow" data-go="counter"' + (st.canCounter ? '' : ' disabled') + '>Counter</button>' +
+              '<button type="button" class="btn ok grow" data-go="accept">Accept ' + nis(st.last.amount) + '</button></div>' : '';
+          return '<article class="card' + (mine ? ' mine' : '') + '" data-id="' + n.id + '">' +
+            '<div class="c-top">' + thumb(n.item) +
+              '<div style="min-width:0"><div class="c-name">' + esc(n.item.name) + '</div><div class="c-who">' + esc(n.party) + ' · ' + ago(n.updatedAt) + '</div>' + chip(n) + '</div>' +
+              '<div class="c-price"><b>' + nis(st.price) + '</b><s>' + nis(n.item.ask) + '</s></div></div>' +
+            track(n) + '<div class="c-foot">' + foot + '</div>' + quick + '</article>';
+        }).join('');
+      }
+      if (openId && !composing) paintRoom(false);   // never repaint over a counter being typed
+      N.simulate(false);
     }
 
-    function render() {
-      var rows = offers.map(function (o, i) { return { o: o, i: i }; })
-        .filter(function (r) { return filter === 'all' || r.o.status === filter || (filter === 'pending' && r.o.status === 'countered'); });
-
-      var pend = offers.filter(function (o) { return o.status === 'pending' || o.status === 'countered'; });
-      document.getElementById('sPending').textContent = pend.length;
-      document.getElementById('sAccepted').textContent = offers.filter(function (o) { return o.status === 'accepted'; }).length;
-      document.getElementById('sValue').textContent = nis(pend.reduce(function (s, o) { return s + (o.counter || o.offer); }, 0));
-
-      renderFeat();
-      if (!rows.length) { list.innerHTML = '<div class="empty">Nothing here yet.</div>'; return; }
-      list.innerHTML = rows.map(function (r) {
-        var o = r.o, i = r.i, label = o.status === 'countered' ? 'Countered' : o.status;
-        return '<div class="offer" data-row="' + i + '">' +
-          '<div class="offer-head" data-toggle="' + i + '">' +
-            '<div class="thumb">' + esc(o.icon || '🛍️') + '</div>' +
-            '<div><div class="o-name">' + esc(o.name) + '</div>' +
-              '<div class="o-buyer">' + esc(o.buyer) + ' · ' + when(o.at) + '</div>' +
-              '<div class="status ' + o.status + '"><span class="dot"></span>' + esc(label) + '</div></div>' +
-            '<div class="o-right">' +
-              '<div class="o-offer">' + nis(o.offer) + '</div>' +
-              '<div class="o-was"><s>' + nis(o.askPrice) + '</s> · <span class="o-delta">−' + pct(o) + '%</span></div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="panel"><div class="panel-inner">' + thread(o) + actionsFor(o, i) + '</div></div>' +
-        '</div>';
-      }).join('');
-    }
-
-    // Featured tile: the highest offer still waiting on me.
-    var feat = document.getElementById('feat'), featCap = document.getElementById('featCap');
-    function photoOf(o) { return o.processed_cover || o.image || o.cover || o.img || o.photo || null; }
-    function renderFeat() {
-      var top = -1;
-      offers.forEach(function (o, i) { if (o.status === 'pending' && (top < 0 || o.offer > offers[top].offer)) top = i; });
-      feat.hidden = featCap.hidden = top < 0;
-      if (top < 0) return;
-      var o = offers[top], ph = photoOf(o);
-      feat.classList.toggle('has-photo', !!ph);
-      feat.style.backgroundImage = ph ? 'url("' + String(ph).replace(/"/g, '%22') + '")' : '';
-      feat.innerHTML =
-        '<div class="feat-ico" aria-hidden="true">' + esc(o.icon || '🛍️') + '</div>' +
-        '<div class="feat-tx">' +
-          '<div class="feat-k">Top open offer · ' + esc(o.buyer) + '</div>' +
-          '<div class="feat-pr">' + nis(o.offer) + '</div>' +
-          '<div class="feat-w">' + esc(o.name) + ' · asking ' + nis(o.askPrice) + ' · −' + pct(o) + '%</div>' +
-          '<div class="feat-row">' +
-            '<button type="button" data-feat="counter" data-i="' + top + '">Counter</button>' +
-            '<button type="button" class="ok" data-feat="accept" data-i="' + top + '">Accept</button>' +
-          '</div>' +
-        '</div>';
-    }
-    feat.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-feat]'); if (!b) return;
-      var i = +b.getAttribute('data-i'), o = offers[i]; if (!o) return;
-      if (b.getAttribute('data-feat') === 'accept') { o.status = 'accepted'; save(); render(); reopen(i); return; }
-      // Counter: open that offer's row in the list with the counter field ready.
-      if (filter !== 'all' && filter !== 'pending') document.querySelector('#tabs .tab[data-f="all"]').click();
-      reopen(i);
-      var c = list.querySelector('[data-counter="' + i + '"]'), row = list.querySelector('[data-row="' + i + '"]');
-      if (c) c.classList.add('show');
-      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      var inp = c && c.querySelector('input'); if (inp) setTimeout(function () { inp.focus({ preventScroll: true }); }, 350);
+    $('tabs').addEventListener('click', function (e) { var t = e.target.closest('[data-f]'); if (t) { filter = t.getAttribute('data-f'); paint(); } });
+    $('sideSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-side]'); if (b) { side = b.getAttribute('data-side'); filter = 'mine'; paint(); } });
+    $('list').addEventListener('click', function (e) {
+      var card = e.target.closest('.card'); if (!card) return;
+      var id = card.getAttribute('data-id'), go = e.target.closest('[data-go]');
+      if (go && go.getAttribute('data-go') === 'accept') { move(id, 'accept'); return; }
+      openRoom(id, !!go);
     });
 
-    // Expand / collapse.
-    list.addEventListener('click', function (e) {
-      var head = e.target.closest('[data-toggle]');
-      if (head && !e.target.closest('.actions') && !e.target.closest('.counter')) {
-        head.parentElement.classList.toggle('open');
-        return;
-      }
-      var btn = e.target.closest('[data-act]');
-      if (!btn) return;
-      var i = +btn.getAttribute('data-i'), act = btn.getAttribute('data-act'), o = offers[i];
-      if (!o) return;
-      if (act === 'accept') { o.status = 'accepted'; save(); render(); reopen(i); }
-      else if (act === 'decline') { o.status = 'declined'; save(); render(); reopen(i); }
-      else if (act === 'counter-open') {
-        var c = list.querySelector('[data-counter="' + i + '"]');
-        if (c) { c.classList.toggle('show'); var inp = c.querySelector('input'); if (inp) inp.focus(); }
-      }
-      else if (act === 'counter-send') {
-        var val = parseFloat((list.querySelector('[data-cin="' + i + '"]') || {}).value);
-        if (!val || val <= 0) { val = Math.round((o.offer + o.askPrice) / 2); }
-        o.status = 'countered'; o.counter = Math.round(val); save(); render(); reopen(i);
-      }
-    });
+    /* ----------------------------- Deal room ----------------------------- */
+    function openRoom(id, compose) { sheet = 'room'; openId = id; composing = !!compose; $('veil').classList.add('open'); document.body.style.overflow = 'hidden'; paintRoom(true); }
+    function closeRoom() { openId = null; sheet = null; composing = false; $('veil').classList.remove('open'); document.body.style.overflow = ''; }
+    $('veil').addEventListener('click', function (e) { if (e.target === this || e.target.closest('[data-close]')) closeRoom(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheet) closeRoom(); });
 
-    function reopen(i) {
-      var row = list.querySelector('[data-row="' + i + '"]');
-      if (row) row.classList.add('open');
+    function line(n, ev) {
+      var who = ev.by === 'me' ? 'You' : esc(n.party), cls = ev.by === 'me' ? ' me' : '';
+      var t = '<time>' + ago(ev.at) + '</time>';
+      if (ev.type === 'offer') {
+        var first = n.events.indexOf(ev) === 0;
+        return '<div class="ev' + cls + '"><span class="who">' + who + ' · ' + (first ? 'offer' : 'counter') + '</span><span class="amt">' + nis(ev.amount) + '</span>' +
+          (ev.final ? '<span class="tag">Final</span>' : '') + (ev.note ? '<span class="note">' + esc(ev.note) + '</span>' : '') + t + '</div>';
+      }
+      if (ev.type === 'accept') return '<div class="ev sys good">' + who + ' accepted ' + nis(ev.amount) + (ev.auto ? ' · by your auto-accept rule' : '') + '</div>';
+      if (ev.type === 'decline') return '<div class="ev sys">' + who + ' declined' + (ev.auto ? ' · by your auto-decline rule' : '') + '</div>';
+      if (ev.type === 'withdraw') return '<div class="ev sys">' + who + ' withdrew the offer</div>';
+      return '<div class="ev sys">The offer expired with no answer</div>';
     }
 
-    document.getElementById('tabs').addEventListener('click', function (e) {
-      var t = e.target.closest('.tab'); if (!t) return;
-      filter = t.getAttribute('data-f');
-      this.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('on', x === t); });
-      render();
+    function paintRoom(scroll) {
+      if (sheet !== 'room') return;
+      var n = N.get(openId); if (!n) { closeRoom(); return; }
+      var st = N.state(n);
+      $('rTop').innerHTML = thumb(n.item) + '<div style="min-width:0"><div class="c-name">' + esc(n.item.name) + '</div><div class="c-who">' +
+        (side === 'selling' ? 'Buyer' : 'Seller') + ' · ' + esc(n.party) + ' · asking ' + nis(n.item.ask) + '</div></div><button type="button" class="x" data-close aria-label="Close">×</button>';
+      $('rBody').innerHTML = chip(n) + track(n) +
+        '<div class="r-meta"><span>' + (st.open ? 'Round ' + st.rounds + ' of ' + N.MAX_OFFERS : st.rounds + ' offers exchanged') + '</span><span>' + (st.open ? left(st.msLeft) : ago(n.updatedAt)) + '</span></div>' +
+        '<div class="thread">' + n.events.map(function (ev) { return line(n, ev); }).join('') +
+        (st.turn === 'them' ? '<div class="typing">' + esc(n.party) + ' is deciding</div>' : '') + '</div>';
+      if (scroll !== false) $('rBody').scrollTop = $('rBody').scrollHeight;
+
+      var foot = '';
+      if (!st.open) {
+        composing = false;
+        foot = n.status === 'accepted'
+          ? '<div class="hint">Agreed at <b>' + nis(n.agreed) + '</b>. Arrange the pickup in the chat.</div><div class="r-actions"><a class="btn dark grow" target="_top" href="chats.html' + (side === 'selling' ? '?from=seller' : '') + '">Open chat</a></div>'
+          : '<div class="hint">This negotiation is closed.</div><div class="r-actions"><button type="button" class="btn grow" data-close>Close</button></div>';
+      } else if (st.turn === 'them') {
+        composing = false;
+        foot = '<div class="hint">Your ' + (side === 'selling' ? 'counter' : 'offer') + ' of <b>' + nis(st.mine.amount) + '</b> is with the ' + them() + '. They have ' + left(st.msLeft).replace(' left', '') + ' to answer.</div>' +
+          '<div class="r-actions"><button type="button" class="btn quiet grow" data-move="' + (side === 'selling' ? 'decline' : 'withdraw') + '">' + (side === 'selling' ? 'End negotiation' : 'Withdraw offer') + '</button></div>';
+      } else if (composing && st.canCounter) {
+        var mid = Math.round((st.min + st.max) / 2 / 5) * 5; mid = Math.min(st.max, Math.max(st.min, mid));
+        var chips = side === 'selling'
+          ? [['Meet halfway', mid], ['Asking −5%', Math.round(n.item.ask * 0.95)], ['Asking −10%', Math.round(n.item.ask * 0.9)]]
+          : [['Meet halfway', mid], ['+5%', Math.round(st.mine.amount * 1.05)], ['+10%', Math.round(st.mine.amount * 1.1)]];
+        chips = chips.filter(function (c) { return c[1] >= st.min && c[1] <= st.max; });
+        foot = '<div class="comp" data-min="' + st.min + '" data-max="' + st.max + '">' +
+          '<div class="comp-amt"><span>₪</span><input type="number" inputmode="numeric" id="cAmt" value="' + mid + '" aria-label="Your counter"></div>' +
+          '<div class="comp-sub" id="cSub"></div>' +
+          '<input type="range" id="cRange" min="' + st.min + '" max="' + st.max + '" value="' + mid + '" aria-label="Counter amount">' +
+          '<div class="comp-ends"><span>' + nis(st.min) + '</span><span>' + nis(st.max) + '</span></div>' +
+          '<div class="chips">' + chips.map(function (c) { return '<button type="button" data-amt="' + c[1] + '">' + c[0] + ' · ' + nis(c[1]) + '</button>'; }).join('') + '</div>' +
+          '<input class="comp-note" id="cNote" type="text" maxlength="200" placeholder="Add a note (optional)">' +
+          '<label class="check"><input type="checkbox" id="cFinal"' + (st.roundsLeft <= 1 ? ' checked disabled' : '') + '>This is my final offer</label>' +
+          '<div class="r-actions"><button type="button" class="btn quiet" data-comp="cancel">Back</button><button type="button" class="btn dark grow" data-comp="send">Send counter</button></div>' +
+          '<div class="err" id="cErr"></div></div>';
+      } else {
+        composing = false;
+        foot = (st.last.final ? '<div class="hint">This is the ' + them() + '’s final offer — accept or decline.</div>'
+              : st.canCounter ? '' : '<div class="hint">No counters left — accept or decline.</div>') +
+          '<div class="r-actions"><button type="button" class="btn quiet" data-move="decline">Decline</button>' +
+          '<button type="button" class="btn grow" data-comp="open"' + (st.canCounter ? '' : ' disabled') + '>Counter</button>' +
+          '<button type="button" class="btn ok grow" data-move="accept">Accept ' + nis(st.last.amount) + '</button></div>';
+      }
+      $('rFoot').innerHTML = foot;
+      syncComposer();
+    }
+
+    function syncComposer() {
+      var a = $('cAmt'); if (!a) return;
+      var n = N.get(openId), v = Number(a.value) || 0, pct = n.item.ask ? Math.round(v / n.item.ask * 100) : 0;
+      $('cSub').textContent = pct + '% of the asking price · ' + nis(Math.abs(n.item.ask - v)) + (v <= n.item.ask ? ' below' : ' above');
+    }
+    $('rFoot').addEventListener('input', function (e) {
+      if (e.target.id === 'cRange') $('cAmt').value = e.target.value;
+      if (e.target.id === 'cAmt') $('cRange').value = e.target.value;
+      if (e.target.id === 'cRange' || e.target.id === 'cAmt') { $('cErr').textContent = ''; syncComposer(); }
+    });
+    $('rFoot').addEventListener('click', function (e) {
+      var b;
+      if ((b = e.target.closest('[data-amt]'))) { $('cAmt').value = $('cRange').value = b.getAttribute('data-amt'); syncComposer(); return; }
+      if ((b = e.target.closest('[data-move]'))) { move(openId, b.getAttribute('data-move')); return; }
+      b = e.target.closest('[data-comp]'); if (!b) return;
+      var c = b.getAttribute('data-comp');
+      if (c === 'open') { composing = true; paintRoom(false); }
+      else if (c === 'cancel') { composing = false; paintRoom(false); }
+      else if (c === 'send') {
+        var draft = { amount: $('cAmt').value, note: $('cNote').value, final: $('cFinal').checked };
+        composing = false;                       // so the room repaints when the move lands
+        var r = N.act(openId, 'offer', draft);
+        if (!r.ok) { composing = true; $('cErr').textContent = r.error; return; }
+        N.simulate(true);
+      }
+    });
+    function move(id, action) {
+      var r = N.act(id, action);
+      if (!r.ok) { alert(r.error); return; }
+      N.simulate(true);
+    }
+
+    /* ---------------------------- Seller rules ---------------------------- */
+    function paintRules() {
+      var s = N.settings();
+      $('rTop').innerHTML = '<div class="thumb" style="height:44px;font-size:20px">⚖️</div><div><div class="c-name">Negotiation rules</div><div class="c-who">Applied to every new offer you receive</div></div><button type="button" class="x" data-close aria-label="Close">×</button>';
+      $('rBody').innerHTML =
+        '<div class="rule"><div class="rule-top"><b>Auto-accept strong offers</b><input type="checkbox" class="sw" data-rule="autoAccept" data-on="95"' + (s.autoAccept ? ' checked' : '') + '></div>' +
+          '<p>' + (s.autoAccept ? 'Offers at <b>' + s.autoAccept + '%</b> of your asking price or more are accepted for you.' : 'Off — you answer every offer yourself.') + '</p>' +
+          (s.autoAccept ? '<input type="range" min="70" max="100" value="' + s.autoAccept + '" data-rule="autoAccept">' : '') + '</div>' +
+        '<div class="rule"><div class="rule-top"><b>Auto-decline low offers</b><input type="checkbox" class="sw" data-rule="autoDecline" data-on="50"' + (s.autoDecline ? ' checked' : '') + '></div>' +
+          '<p>' + (s.autoDecline ? 'Offers under <b>' + s.autoDecline + '%</b> of your asking price are declined for you.' : 'Off — low offers still reach you.') + '</p>' +
+          (s.autoDecline ? '<input type="range" min="20" max="' + Math.min(85, (s.autoAccept || 100) - 5) + '" value="' + s.autoDecline + '" data-rule="autoDecline">' : '') + '</div>' +
+        '<div class="rule"><div class="rule-top"><b>Time to answer</b><div class="seg">' + [24, 48, 72].map(function (h) {
+            return '<button type="button" data-hours="' + h + '"' + (s.expiryHours === h ? ' class="on"' : '') + '>' + h + 'h</button>'; }).join('') + '</div></div>' +
+          '<p>An offer or counter that gets no answer in this time expires.</p></div>';
+      $('rFoot').innerHTML = '<div class="r-actions"><button type="button" class="btn dark grow" data-close>Done</button></div>';
+    }
+    $('rulesBtn').addEventListener('click', function () { sheet = 'rules'; openId = null; $('veil').classList.add('open'); document.body.style.overflow = 'hidden'; paintRules(); });
+    $('rBody').addEventListener('change', function (e) {
+      var k = e.target.getAttribute('data-rule'); if (!k || sheet !== 'rules') return;
+      var patch = {}; patch[k] = e.target.type === 'checkbox' ? (e.target.checked ? Number(e.target.getAttribute('data-on')) : 0) : Number(e.target.value);
+      N.saveSettings(patch); paintRules();
+    });
+    $('rBody').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-hours]'); if (!b || sheet !== 'rules') return;
+      N.saveSettings({ expiryHours: Number(b.getAttribute('data-hours')) }); paintRules();
     });
 
-    render();
+    N.onChange(paint);
+    paint();
+    setInterval(function () { if (!document.hidden && !composing && sheet !== 'rules') paint(); }, 60000);
   })();
   </script>
 <script src="assets/line-icons.js"></script>

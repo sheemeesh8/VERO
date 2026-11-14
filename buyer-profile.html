@@ -475,6 +475,13 @@
         .sf-ev-meta .d { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
         .sf-ev-prods { font-size: 11px; opacity: 0.55; margin-top: 5px; }
         .sf-ev-time { font-family: 'Bodoni Moda', serif; font-size: 14px; white-space: nowrap; }
+        #sfSections { padding-bottom: 96px; }
+        .sf-draftbar {
+            position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 90;
+            background: #111; color: #fff; font-size: 12px; font-weight: 600; text-decoration: none;
+            padding: 12px 20px; border-radius: 999px; box-shadow: 0 8px 26px rgba(0,0,0,0.3); white-space: nowrap;
+        }
+        .sf-draftbar[hidden] { display: none; }
         .feed {
             display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;
             padding: 26px 40px 70px;
@@ -797,6 +804,8 @@
     <link rel="stylesheet" href="product-card.css?v=7">
     <script src="pc-social.js?v=6"></script>
     <link rel="stylesheet" href="store-templates.css">
+    <link rel="stylesheet" href="store-sections.css?v=1">
+    <script src="store-sections.js?v=1"></script>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <!-- Apply the seller's chosen storefront template as early as possible to
          avoid a flash of the default look. -->
@@ -995,9 +1004,15 @@ h3, h4, h5, h6, p,
             <div class="sf-ev-list" id="sfEvList"></div>
         </section>
 
+        <!-- Seller-built storefront sections (store-editor.html → vero_store_config.sections),
+             rendered by store-sections.js. When the design has a Products section it
+             replaces the plain feed below. ?draft=1 previews the unpublished draft. -->
+        <a class="sf-draftbar" id="sfDraftBar" href="store-editor.html" hidden>Draft preview · Back to the builder</a>
+        <div id="sfSections" hidden></div>
+
         <!-- FEED — just the products the buyer has uploaded. No categories or
              audiences; a promo banner drops in every five items if one is set. -->
-        <div class="feed-head">
+        <div class="feed-head" id="feedHead">
             <div class="feed-title">Items for sale</div>
             <div class="feed-note" id="feedNote">—</div>
         </div>
@@ -1289,11 +1304,36 @@ h3, h4, h5, h6, p,
         // Feed = 5 across. If the buyer set a banner, it drops in after every five
         // items (one row of five).
         const AD_EVERY = 5;
+        // Returns true when the seller's sections include a visible Products block
+        // (so the default feed should step aside).
+        function renderBuiltSections(filtered) {
+            const host = document.getElementById('sfSections');
+            if (!host || !window.VeroStore) return false;
+            let cfg = {}; try { cfg = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
+            const draft = /[?&]draft=1/.test(location.search);
+            const list = draft && Array.isArray(cfg.sectionsDraft) ? cfg.sectionsDraft : cfg.sections;
+            if (draft) {
+                const bar = document.getElementById('sfDraftBar');
+                bar.hidden = false;
+                if (bar.parentNode !== document.body) document.body.appendChild(bar);   // outside .wrap so it stays pinned
+                bar.onclick = (e) => { if (history.length > 1) { e.preventDefault(); history.back(); } };
+            }
+            if (!Array.isArray(list) || !list.length) { host.hidden = true; return false; }
+            host.hidden = false;
+            VeroStore.render(host, list, { products: filtered, card });
+            return list.some(s => s && !s.hidden && s.type === 'products');
+        }
         function renderFeed() {
             const filtered = PRODUCTS.filter(p =>
                 searchTerm === '' || p.name.toLowerCase().includes(searchTerm));
             const feed = document.getElementById('feed');
             const empty = document.getElementById('feedEmpty');
+            // A storefront built in the store builder takes over from the plain feed.
+            if (renderBuiltSections(filtered)) {
+                feed.style.display = 'none'; empty.style.display = 'none';
+                document.getElementById('feedHead').style.display = 'none';
+                return;
+            }
             const wantsBanner = BUYER.banner && BUYER.banner.enabled;
             let html = '';
             filtered.forEach((p, i) => {

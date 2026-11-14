@@ -14,184 +14,233 @@
     </script>
     <meta name="description" content="moravchick is a curated marketplace for pre-loved fashion and art. Discover unique pieces, chat with sellers and complete every sale safely in person.">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
-    <title>moravchick — Edit store</title>
+    <title>moravchick — Store builder</title>
     <script src="vero-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="store-templates.css">
+    <link rel="stylesheet" href="store-sections.css?v=1">
     <style>
-        :root { --ink:#1c1c1c; --muted:#7a7a75; --line:#e9e9e6; }
+        :root { --ink:#1c1c1c; --muted:#7a7a75; --line:#e9e9e6; --soft:#f5f4f1; --blue:#2f6bff; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { min-height: 100%; }
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #fff; direction: ltr; color: var(--ink);
-            overflow-x: hidden; font-size: 14px; line-height: 1.5;
+            background: var(--soft); direction: ltr; color: var(--ink);
+            overflow-x: hidden; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased;
         }
-        .back {
-            position: fixed; top: 22px; left: 22px; z-index: 40;
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 9px 18px; border: 1.4px solid #000; border-radius: 999px;
-            font-size: 10px; letter-spacing: 1.5px; text-decoration: none; color: var(--ink);
-            background: #fff; transition: background 0.25s, color 0.25s;
+        button { font-family: inherit; color: inherit; }
+
+        /* ---- Top bar: Build / Theme, undo, redo, presets ---- */
+        .topbar {
+            position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px; background: rgba(255,255,255,0.94); border-bottom: 1px solid var(--line);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
         }
-        .back:hover { background: #000; color: #fff; }
-        html.is-embed .back { display: none !important; }
+        html:not(.is-embed) .topbar { top: 0; }
+        .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: #fff; flex-wrap: wrap; }
+        .seg button {
+            appearance: none; border: 0; background: none; color: var(--muted); cursor: pointer;
+            padding: 8px 14px; min-height: 36px; font-size: 12px; font-weight: 600; transition: background 0.15s, color 0.15s;
+        }
+        .seg button.on { background: #111; color: #fff; }
+        .topbar .grow { flex: 1; }
+        .ib {
+            width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: #fff;
+            display: grid; place-items: center; cursor: pointer; flex: none;
+        }
+        .ib svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+        .ib:disabled { opacity: 0.3; cursor: default; }
+        .ib:not(:disabled):hover { background: #111; color: #fff; border-color: #111; }
+        .pillbtn {
+            border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 0 13px; height: 36px;
+            font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap;
+        }
 
-        .wrap { max-width: 1080px; margin: 0 auto; padding: 74px 20px 110px; animation: fade 0.5s ease both; }
-        html.is-embed .wrap { padding: 22px 16px 90px; }
-        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        .view { display: none; }
+        .view.on { display: block; }
 
-        .head { text-align: center; margin-bottom: 8px; }
-        .head h1 { font-size: clamp(28px, 6vw, 40px); font-weight: 200; letter-spacing: 0.5px; }
-        html.is-embed .head, html.is-embed .head p { text-align: left; }
-        .head .sub { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
-        .head p { max-width: 34em; margin: 10px auto 0; font-size: 13px; color: var(--muted); line-height: 1.7; }
+        /* ---- Canvas: the storefront itself, editable ---- */
+        .stage { padding: 14px 12px 150px; }
+        .cv {
+            max-width: 460px; margin: 0 auto; background: var(--sf-bg, #fff); color: var(--sf-ink, #111);
+            border-radius: 18px; overflow: hidden; box-shadow: 0 10px 34px rgba(0,0,0,0.09);
+        }
+        .cv-hero {
+            position: relative; height: 150px; display: flex; align-items: flex-end; padding: 16px; cursor: pointer;
+            background: var(--sf-hero, linear-gradient(150deg,#2c2823,#100e0c)) center / cover;
+        }
+        .cv-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, var(--sf-scrim, rgba(0,0,0,.55)), transparent 70%); }
+        .cv-hero .nm {
+            position: relative; z-index: 1; width: 100%; color: #fff; font-size: 26px; line-height: 1;
+            font-family: var(--sf-name-font); font-weight: var(--sf-name-weight);
+            letter-spacing: var(--sf-name-spacing); text-transform: var(--sf-name-transform);
+        }
+        .cv-hero .hint {
+            position: absolute; z-index: 2; top: 10px; right: 10px; font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase;
+            background: rgba(255,255,255,0.9); color: #111; padding: 4px 9px; border-radius: 999px; font-weight: 600;
+        }
 
-        .sec-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 34px 0 14px; }
+        .sw { position: relative; cursor: pointer; outline: 2px solid transparent; outline-offset: -2px; transition: outline-color 0.15s; }
+        .sw > .ss { pointer-events: none; }
+        .sw:hover { outline-color: rgba(47,107,255,0.35); }
+        .sw.sel { outline-color: var(--blue); z-index: 3; }
+        .sw.off > .ss { opacity: 0.28; filter: grayscale(1); }
+        .sw-tag {
+            position: absolute; z-index: 5; top: 6px; left: 6px; display: none; pointer-events: none;
+            background: var(--blue); color: #fff; font-size: 9.5px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+            padding: 3px 8px; border-radius: 999px;
+        }
+        .sw.sel .sw-tag, .sw.off .sw-tag { display: block; }
+        .sw.off:not(.sel) .sw-tag { background: #8b8b86; }
+        .sw-bar {
+            position: absolute; z-index: 6; top: 6px; right: 6px; display: none; gap: 2px; padding: 3px;
+            background: #111; border-radius: 999px; box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        }
+        .sw.sel .sw-bar { display: flex; }
+        .sw-bar button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; display: grid; place-items: center; }
+        .sw-bar button:hover { background: rgba(255,255,255,0.18); }
+        .sw-bar button:disabled { opacity: 0.3; }
+        .sw-bar svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
-        /* Accent override row */
-        .accent-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .accent-row .lbl { font-size: 12px; color: var(--muted); }
-        .swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; transition: transform 0.15s; }
-        .swatch:hover { transform: scale(1.12); }
+        .ins { position: relative; height: 0; z-index: 4; }
+        .ins button {
+            position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%);
+            width: 26px; height: 26px; border-radius: 50%; border: 0; background: var(--blue); color: #fff; cursor: pointer;
+            font-size: 17px; line-height: 1; display: grid; place-items: center; opacity: 0.0; transition: opacity 0.15s;
+            box-shadow: 0 3px 10px rgba(47,107,255,0.4);
+        }
+        .cv:hover .ins button, .ins button:focus-visible { opacity: 1; }
+        @media (hover: none) { .ins button { opacity: 0.9; } }
+        .addbig {
+            display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 28px); margin: 16px 14px;
+            padding: 15px; border: 1.5px dashed #b9b6ae; border-radius: 14px; background: none; cursor: pointer;
+            font-size: 12.5px; font-weight: 600; color: inherit;
+        }
+        .addbig:hover { border-color: var(--blue); color: var(--blue); }
+
+        /* ---- Bottom sheet (settings / add / presets) ---- */
+        .sheet {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; margin: 0 auto; max-width: 540px;
+            background: #fff; border-radius: 20px 20px 0 0; box-shadow: 0 -12px 40px rgba(0,0,0,0.18);
+            max-height: 62vh; display: none; flex-direction: column;
+        }
+        .sheet.open { display: flex; animation: shUp 0.26s cubic-bezier(.2,.8,.2,1) both; }
+        .sheet.tall { max-height: 84vh; }
+        @keyframes shUp { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+        .sh-top { display: flex; align-items: center; gap: 10px; padding: 12px 16px 10px; border-bottom: 1px solid var(--line); flex: none; }
+        .sh-name { font-size: 14px; font-weight: 600; flex: 1; }
+        .sh-body { padding: 14px 16px calc(22px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+        .f { display: block; margin-bottom: 15px; }
+        .f > span, .lbl { display: block; font-size: 10px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 7px; }
+        .f input[type="text"], .f textarea, .f select {
+            width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; font: inherit; font-size: 14px;
+            background: #fff; color: var(--ink); outline: none;
+        }
+        .f textarea { min-height: 70px; resize: vertical; }
+        .f input:focus, .f textarea:focus, .f select:focus { border-color: #111; }
+        .f input[type="range"] { width: 100%; accent-color: #111; }
+        .f .rowv { display: flex; align-items: center; gap: 10px; }
+        .f .rowv output { font-size: 12px; font-weight: 600; min-width: 44px; text-align: right; }
+        .tg { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; font-size: 13px; }
+        .tg input { appearance: none; width: 44px; height: 26px; border-radius: 999px; background: #d9d7d1; position: relative; cursor: pointer; transition: background 0.2s; flex: none; }
+        .tg input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+        .tg input:checked { background: #111; }
+        .tg input:checked::after { transform: translateX(18px); }
+
+        .pos9 { display: grid; grid-template-columns: repeat(3, 34px); gap: 4px; }
+        .pos9 button { height: 28px; border: 1px solid var(--line); border-radius: 7px; background: #fff; cursor: pointer; position: relative; }
+        .pos9 button::after { content: ''; position: absolute; inset: 0; margin: auto; width: 7px; height: 7px; border-radius: 50%; background: #c9c6be; }
+        .pos9 button.on { background: #111; border-color: #111; }
+        .pos9 button.on::after { background: #fff; }
+
+        .swatches { display: flex; gap: 9px; flex-wrap: wrap; align-items: center; }
+        .swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
         .swatch.on { box-shadow: 0 0 0 2px #111; }
+        .swatch.none { background: linear-gradient(135deg, #fff 45%, #e0554f 46%, #e0554f 54%, #fff 55%); }
 
-        /* ---- Layout gallery — colorless wireframes of the site structures. ----
-           These are intentionally monochrome (neutral greys only): they show the
-           arrangement, not the colours. Colour + position are chosen after you open
-           a layout in the preview modal. */
-        .layout-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        @media (min-width: 620px) { .layout-row { grid-template-columns: 1fr 1fr 1fr; } }
-        .lay {
-            border: 1.5px solid var(--line); border-radius: 18px; background: #fff; cursor: pointer;
-            padding: 12px; text-align: left; transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s; position: relative;
-        }
-        .lay:hover { border-color: #bdbdb8; transform: translateY(-3px); box-shadow: 0 14px 32px rgba(0,0,0,0.09); }
-        .lay.on { border-color: #111; box-shadow: 0 0 0 1.5px #111; }
-        .lay .lay-check {
-            position: absolute; top: 8px; inset-inline-end: 8px; width: 22px; height: 22px; border-radius: 50%;
-            background: #111; color: #fff; display: none; place-items: center; font-size: 12px; z-index: 2;
-        }
-        .lay.on .lay-check { display: grid; }
+        .imgf { display: flex; align-items: center; gap: 12px; }
+        .imgf-th { position: relative; width: 68px; height: 68px; border-radius: 12px; overflow: hidden; background: var(--soft); flex: none; border: 1px solid var(--line); }
+        .imgf-th .ss-media { background: var(--soft); }
+        .imgf-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .sbtn { border: 1px solid #111; background: #fff; border-radius: 999px; padding: 0 14px; min-height: 38px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .sbtn.dark { background: #111; color: #fff; }
+        .sbtn.quiet { border-color: var(--line); color: var(--muted); }
+        .sbtn.danger { border-color: #e7c9c6; color: #b23b3b; }
+        .sbtn.wide { width: 100%; }
 
-        /* Neutral wireframe canvas. Everything inside is greyscale on purpose. */
-        .wf { --wf-line:#cfcbc4; --wf-fill:#ddd9d3; --wf-strong:#bdb8b0; --wf-bg:#f4f2f0;
-              height: 132px; border-radius: 10px; background: var(--wf-bg); padding: 8px; overflow: hidden;
-              display: flex; flex-direction: column; gap: 5px; }
-        .wf .wf-nav { height: 9px; border-radius: 3px; background: var(--wf-strong); display: flex; align-items: center; gap: 4px; padding: 0 5px; }
-        .wf .wf-nav b { display: block; width: 8px; height: 3px; border-radius: 2px; background: var(--wf-bg); }
-        .wf .wf-nav b.sp { margin-inline-start: auto; }
-        .wf .wf-hero { border-radius: 5px; background: var(--wf-fill); position: relative; display: flex; align-items: flex-end; padding: 6px; }
-        .wf .wf-hero i { display: block; height: 6px; border-radius: 2px; background: var(--wf-strong); }
-        .wf .wf-split { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .wf .wf-split > span { border-radius: 5px; background: var(--wf-fill); }
-        .wf .wf-bar { height: 7px; border-radius: 2px; background: var(--wf-line); }
-        .wf .wf-bar.c { margin: 0 auto; }
-        .wf .wf-pill { height: 8px; width: 34%; border-radius: 999px; background: var(--wf-strong); }
-        .wf .wf-pill.c { margin: 0 auto; }
-        .wf .wf-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
-        .wf .wf-stats i { height: 12px; border-radius: 3px; background: var(--wf-fill); }
-        .wf .wf-grid { display: grid; gap: 4px; margin-top: auto; }
-        .wf .wf-grid i { border-radius: 3px; background: var(--wf-line); aspect-ratio: 3/4; }
-        .wf .wf-side { display: grid; grid-template-columns: 1.1fr 1fr; gap: 6px; flex: 1; }
-        .wf .wf-side .wf-txt { display: flex; flex-direction: column; gap: 4px; justify-content: center; }
-        .wf .wf-side .wf-txt i { height: 6px; border-radius: 2px; background: var(--wf-line); }
-        .wf .wf-side .wf-txt i:nth-child(1) { width: 80%; height: 9px; background: var(--wf-strong); }
-        .wf .wf-side .wf-txt i:nth-child(2) { width: 60%; }
-        .wf .wf-side .wf-img { border-radius: 5px; background: var(--wf-fill); }
-        .lay-name { font-size: 13px; font-weight: 600; margin-top: 11px; }
-        .lay-desc { font-size: 11px; color: var(--muted, #7a7a75); margin-top: 3px; line-height: 1.5; }
-        .lay-open { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 6px; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+        .sub { border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 12px; }
+        .sub-top { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+        .sub-top b { flex: 1; font-size: 12.5px; }
+        .mini { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: #fff; cursor: pointer; display: grid; place-items: center; font-size: 14px; line-height: 1; }
+        .mini:disabled { opacity: 0.3; }
 
-        /* ---- Preview modal (opens when you "enter" a layout). ---- */
-        .lm-overlay {
-            position: fixed; inset: 0; z-index: 60; background: rgba(20,18,16,0.45);
-            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
-            display: none; align-items: flex-end; justify-content: center;
+        /* ---- Grid builder board ---- */
+        .gb { border: 1px dashed #c9c6be; border-radius: 14px; padding: 8px; margin-bottom: 12px; background: var(--soft); }
+        .gb .ss-pad { padding: 0; }
+        .gb .ss-cell { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; outline: 2px solid transparent; outline-offset: -2px; }
+        .gb .ss-cell.on { outline-color: var(--blue); }
+        .gb .ss-cell.drag { opacity: 0.45; }
+        .gb .ss-cell.drop { outline: 2px dashed var(--blue); }
+        .gb-size { position: absolute; z-index: 4; top: 5px; left: 5px; background: rgba(17,17,17,0.78); color: #fff; font-size: 9.5px; font-weight: 600; padding: 2px 6px; border-radius: 999px; pointer-events: none; }
+        .gb-handle {
+            position: absolute; z-index: 5; right: 0; bottom: 0; width: 26px; height: 26px; cursor: nwse-resize; touch-action: none;
+            background: linear-gradient(135deg, transparent 50%, var(--blue) 50%); border-bottom-right-radius: inherit;
         }
-        @media (min-width: 620px) { .lm-overlay { align-items: center; } }
-        .lm-overlay.open { display: flex; animation: fade 0.2s ease both; }
-        .lm {
-            background: #fff; width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto;
-            border-radius: 22px 22px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom,0px));
-            animation: lmUp 0.28s cubic-bezier(.2,.8,.2,1) both;
-        }
-        @media (min-width: 620px) { .lm { border-radius: 22px; } }
-        @keyframes lmUp { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-        .lm-grip { width: 40px; height: 4px; border-radius: 999px; background: #e0ddd7; margin: 0 auto 14px; }
-        @media (min-width: 620px) { .lm-grip { display: none; } }
-        .lm-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-        .lm-title { font-size: 20px; font-weight: 200; letter-spacing: 0.5px; }
-        .lm-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
-        .lm-x { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #fff; cursor: pointer; display: grid; place-items: center; color: #111; }
-        .lm-x:hover { background: #111; color: #fff; }
-        .lm-preview { background: #f4f2f0; border-radius: 16px; padding: 14px; margin-bottom: 18px; max-height: 62vh; overflow-y: auto; }
-        .lm-preview .sfp { max-width: 320px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
-        /* Full-layout preview parts (rendered only inside the modal). */
-        .lm-preview .sfp .sfp-nav { display: flex; align-items: center; gap: 6px; padding: 10px 12px; background: var(--sf-surface); }
-        .lm-preview .sfp .sfp-nav i { height: 4px; width: 22px; border-radius: 2px; background: var(--sf-ink); opacity: 0.35; }
-        .lm-preview .sfp .sfp-nav i.sp { margin-inline-start: auto; }
-        .lm-preview .sfp .sfp-split { display: grid !important; grid-template-columns: 1fr 1fr; gap: 2px; padding: 0; }
-        .lm-preview .sfp .sfp-split > span { background: var(--sf-hero); background-size: cover; }
-        .lm-preview .sfp .sfp-name-abs { position: absolute; z-index: 2; inset-inline: 0; bottom: 14px; padding: 0 14px; color: #fff; font-size: 22px; line-height: 1; font-family: var(--sf-name-font); font-weight: var(--sf-name-weight); letter-spacing: var(--sf-name-spacing); text-transform: var(--sf-name-transform); }
-        .lm-preview .sfp .sfp-tall { height: 168px; }
-        .lm-preview .sfp .sfp-center { flex-direction: column; align-items: center; justify-content: center; gap: 9px; }
-        .lm-preview .sfp .sfp-cta { position: relative; z-index: 2; background: var(--sf-accent); color: #fff; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; padding: 6px 15px; border-radius: 999px; }
-        .lm-preview .sfp .sfp-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 13px; text-align: center; }
-        .lm-preview .sfp .sfp-stats span { display: flex; flex-direction: column; gap: 2px; font-size: 7.5px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--sf-ink); opacity: 0.7; }
-        .lm-preview .sfp .sfp-stats b { font-size: 15px; font-weight: 600; opacity: 1; }
-        .lm-field { margin-bottom: 16px; }
-        .lm-field > .lm-lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 9px; }
-        .lm-swatches { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .lm-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
-        .lm-seg button {
-            appearance: none; border: 0; background: #fff; color: var(--muted); cursor: pointer;
-            padding: 8px 14px; font-family: inherit; font-size: 12px; font-weight: 600; transition: background 0.15s, color 0.15s;
-        }
-        .lm-seg button.on { background: #111; color: #fff; }
-        .lm-actions { display: flex; gap: 10px; margin-top: 22px; }
-        .lm-actions .btn { flex: 1; }
+        .gb-help { font-size: 11px; color: var(--muted); margin: -4px 0 12px; }
+        .step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+        .step button { width: 36px; height: 36px; border: 0; background: #fff; cursor: pointer; font-size: 16px; }
+        .step b { min-width: 30px; text-align: center; font-size: 13px; }
+        .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-        /* Template grid */
-        .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
-        @media (max-width: 560px) { .tpl-grid { grid-template-columns: 1fr 1fr; gap: 12px; } }
-        .tpl {
-            border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; cursor: pointer;
-            background: #fff; transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s; position: relative;
+        /* ---- Add-section library + presets ---- */
+        .lib { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .lib button {
+            text-align: left; border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 12px; cursor: pointer;
+            display: flex; flex-direction: column; gap: 4px; transition: border-color 0.15s, transform 0.15s;
         }
-        .tpl:hover { border-color: #bdbdb8; transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+        .lib button:hover { border-color: #111; transform: translateY(-2px); }
+        .lib svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 4px; }
+        .lib b { font-size: 13px; }
+        .lib small { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+        /* ---- Theme view ---- */
+        .theme { max-width: 720px; margin: 0 auto; padding: 6px 16px 150px; }
+        .sec-lbl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 24px 0 12px; font-weight: 600; }
+        .tpl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (min-width: 620px) { .tpl-grid { grid-template-columns: repeat(3, 1fr); } }
+        .tpl { border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden; cursor: pointer; background: #fff; position: relative; text-align: left; padding: 0; }
         .tpl.on { border-color: #111; box-shadow: 0 0 0 2px #111; }
         .tpl .sfp { border-radius: 0; }
-        .tpl-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; }
-        .tpl-name { font-size: 13px; font-weight: 600; }
-        .tpl-desc { font-size: 10.5px; color: var(--muted); }
-        .tpl .check {
-            position: absolute; top: 10px; inset-inline-start: 10px; width: 26px; height: 26px; border-radius: 50%;
-            background: #111; color: #fff; display: none; place-items: center; font-size: 14px; z-index: 3;
-        }
-        .tpl.on .check { display: grid; }
+        .tpl .sfp .sfp-hero { height: 84px; }
+        .tpl-foot { padding: 9px 12px 11px; display: block; }
+        .tpl-foot b { font-size: 12.5px; display: block; }
+        .tpl-foot small { font-size: 10.5px; color: var(--muted); }
 
-        /* Sticky save/preview bar */
+        /* ---- Sticky publish bar ---- */
         .actionbar {
-            position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-            display: flex; gap: 12px; justify-content: center; align-items: center;
-            padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
-            background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-top: 1px solid var(--line);
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+            display: flex; gap: 10px; align-items: center;
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-top: 1px solid var(--line);
         }
-        html.is-embed .actionbar { position: sticky; }
+        .state { flex: 1; font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 7px; min-width: 0; }
+        .state i { width: 8px; height: 8px; border-radius: 50%; background: #1f8f4e; flex: none; }
+        .state.dirty i { background: #e09a1f; }
         .btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-            padding: 12px 22px; border-radius: 999px; border: 1.4px solid #111; background: #fff; color: #111;
-            font-family: inherit; font-size: 12px; letter-spacing: 0.5px; font-weight: 600; cursor: pointer;
-            min-height: 46px; text-decoration: none; transition: background 0.2s, color 0.2s;
+            display: inline-flex; align-items: center; justify-content: center; padding: 0 20px; border-radius: 999px;
+            border: 1.4px solid #111; background: #fff; color: #111; font-family: inherit; font-size: 12px; font-weight: 600;
+            cursor: pointer; min-height: 44px;
         }
-        .btn:hover { background: #111; color: #fff; }
         .btn.primary { background: #111; color: #fff; }
-        .btn.primary:hover { background: #000; }
-        .saved-note { font-size: 11px; color: #1f8f4e; opacity: 0; transition: opacity 0.3s; }
-        .saved-note.show { opacity: 1; }
+        .btn:disabled { opacity: 0.35; cursor: default; }
+        .toast {
+            position: fixed; left: 50%; bottom: 86px; z-index: 80; transform: translate(-50%, 12px); opacity: 0; pointer-events: none;
+            background: #111; color: #fff; font-size: 12px; padding: 10px 16px; border-radius: 999px; transition: opacity 0.25s, transform 0.25s; white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
     </style>
 <style id="vero-global-type">
 /* VERO global typography: main titles in Bodoni, sub-headings + descriptions in serif.
@@ -211,316 +260,596 @@ h3, h4, h5, h6, p,
     <script src="assets/page-header.js?v=20261011e"></script>
 </head>
 <body>
-    <a class="back old-back" href="seller-area.html">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-        to the store
-    </a>
-    <style id="sticky-page-head">
-        .old-back { display: none !important; }
-        .sticky-head { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 16px; padding: calc(env(safe-area-inset-top, 0px) + 54px) 20px 20px; background: rgba(255,255,255,0.94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid #ececea; }
-        .sh-back { width: 44px; height: 44px; border: 1px solid #e2e0da; border-radius: 50%; background: none; display: grid; place-items: center; cursor: pointer; color: #111; flex: none; transition: background 0.2s, color 0.2s, border-color 0.2s; }
-        .sh-back svg { width: 22px; height: 22px; }
-        .sh-back:hover { background: #111; color: #fff; border-color: #111; }
-        .sh-title { font-size: 22px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; color: #1b1916; }
-    </style>
     <!-- Shared page header (assets/page-header.css): title left, back arrow right. -->
     <header class="page-header">
-        <div class="ph-name" role="heading" aria-level="1">Edit store</div>
+        <div class="ph-name" role="heading" aria-level="1">Store builder</div>
         <a class="ph-back" href="seller-area.html" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     </header>
 
-    <main class="wrap">
-
-        <div class="sec-title">Accent color</div>
-        <div class="accent-row" id="accentRow">
-            <span class="lbl">Choose a color:</span>
+    <div class="topbar">
+        <div class="seg" id="viewSeg">
+            <button type="button" class="on" data-view="build">Build</button>
+            <button type="button" data-view="theme">Theme</button>
         </div>
+        <span class="grow"></span>
+        <button class="pillbtn" id="presetBtn" type="button">Presets</button>
+        <button class="ib" id="undoBtn" type="button" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+        <button class="ib" id="redoBtn" type="button" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+    </div>
 
-        <div class="sec-title">Choose a template</div>
-        <div class="tpl-grid" id="tplGrid"></div>
+    <!-- BUILD — the storefront itself. Tap a section to select it, + to add one. -->
+    <div class="view on" id="viewBuild">
+        <div class="stage"><div class="cv" id="cv"></div></div>
+    </div>
 
-        <div class="sec-title">Layout — tap one to preview &amp; customize</div>
-        <div class="layout-row" id="layoutRow"></div>
-    </main>
-
-    <!-- Layout preview modal: opens when a layout is "entered". Shows a live example
-         and lets the seller pick colour + positions before applying to the storefront. -->
-    <div class="lm-overlay" id="layModal" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
-        <div class="lm" role="document">
-            <div class="lm-grip"></div>
-            <div class="lm-head">
-                <div>
-                    <div class="lm-title" id="lmTitle">Layout</div>
-                    <div class="lm-sub" id="lmSub"></div>
-                </div>
-                <button class="lm-x" id="lmClose" type="button" aria-label="Close">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-                </button>
+    <!-- THEME — template, accent colour, store-name position. -->
+    <div class="view" id="viewTheme">
+        <div class="theme">
+            <div class="sec-lbl">Accent color</div>
+            <div class="swatches" id="accentRow"></div>
+            <div class="sec-lbl">Store name position</div>
+            <div class="seg" id="namePosSeg">
+                <button type="button" data-pos="left">Left</button>
+                <button type="button" data-pos="center">Center</button>
+                <button type="button" data-pos="right">Right</button>
             </div>
-
-            <div class="lm-preview" id="lmPreview"></div>
-
-            <div class="lm-field">
-                <div class="lm-lbl">Store name position</div>
-                <div class="lm-seg" id="lmNamePos">
-                    <button type="button" data-pos="left">Left</button>
-                    <button type="button" data-pos="center">Center</button>
-                    <button type="button" data-pos="right">Right</button>
-                </div>
-            </div>
-
-            <div class="lm-field">
-                <div class="lm-lbl">Grid density</div>
-                <div class="lm-seg" id="lmGrid">
-                    <button type="button" data-grid="2">2-up</button>
-                    <button type="button" data-grid="3">3-up</button>
-                    <button type="button" data-grid="4">4-up</button>
-                </div>
-            </div>
-
-            <div class="lm-actions">
-                <button class="btn" id="lmCancel" type="button">Cancel</button>
-                <button class="btn primary" id="lmApply" type="button">Apply to storefront</button>
-            </div>
+            <div class="sec-lbl">Template</div>
+            <div class="tpl-grid" id="tplGrid"></div>
         </div>
     </div>
+
+    <!-- Bottom sheet: section settings, the section library, or the presets. -->
+    <div class="sheet" id="sheet" role="dialog" aria-label="Section settings">
+        <div class="sh-top">
+            <div class="sh-name" id="shName"></div>
+            <button class="ib" id="shClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <div class="sh-body" id="shBody"></div>
+    </div>
+    <input type="file" id="filePick" accept="image/*" hidden>
 
     <div class="actionbar">
-        <span class="saved-note" id="savedNote">Saved ✓</span>
-        <button class="btn" id="viewStore">Preview storefront</button>
-        <button class="btn primary" id="applyBtn">Save design</button>
+        <div class="state" id="state"><i></i><span id="stateTx">Published</span></div>
+        <button class="btn" id="previewBtn" type="button">Preview</button>
+        <button class="btn primary" id="publishBtn" type="button">Publish</button>
     </div>
+    <div class="toast" id="toast"></div>
 
-    <script src="assets/footer.js"></script>
+    <script src="media-store.js"></script>
+    <script src="store-sections.js?v=1"></script>
     <script>
-    (function storeEditor() {
+    (function storeBuilder() {
+        'use strict';
         try { localStorage.setItem('vero_active_account', 'seller'); } catch (e) {}
-        if (new URLSearchParams(location.search).get('embed') === '1') {
-            document.documentElement.classList.add('is-embed');
+        if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.classList.add('is-embed');
+
+        var V = window.VeroStore, esc = V.esc, uid = V.uid;
+        var KEY = 'vero_store_config';
+        var readJSON = function (k, fb) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
+        var read = function () { return readJSON(KEY, {}) || {}; };
+        var write = function (o) { try { localStorage.setItem(KEY, JSON.stringify(o)); return true; } catch (e) { toast('Storage is full — remove an image and try again'); return false; } };
+        var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
+        var $ = function (id) { return document.getElementById(id); };
+
+        var cfg = read();
+
+        /* ------------------------------ Data ------------------------------ */
+        // First visit: carry the old "grid density" choice into a products section.
+        function starter() {
+            var p = V.defaults('products');
+            p.cols = Math.min(3, Math.max(2, Number(cfg.grid) || 2));
+            return [p];
+        }
+        var sections = clone(Array.isArray(cfg.sectionsDraft) ? cfg.sectionsDraft : Array.isArray(cfg.sections) ? cfg.sections : starter());
+        var selId = null, cellId = null, mode = null, addAt = 0;
+        var history = [JSON.stringify(sections)], hi = 0;
+
+        // What the canvas shows as "your items": real listings, or samples.
+        var products = (function () {
+            var l = readJSON('vero_listings', []);
+            var mine = (Array.isArray(l) ? l : []).filter(function (p) { return p && (p.status === 'active' || p.status == null); })
+                .map(function (p) {
+                    return { name: p.name || p.title || 'Item', price: p.price != null ? p.price : 0, icon: p.icon || p.emoji || '🛍️',
+                             cover: p.processed_cover || p.cover || (p.photos && (p.photos.cover || p.photos.detail)) || '' };
+                });
+            if (mine.length) return mine;
+            return [['Wool coat', 269, '🧥'], ['Raw denim', 129, '👖'], ['Silk scarf', 210, '🧣'], ['Leather tote', 540, '👜'], ['Knit sweater', 180, '🧶'], ['Linen shirt', 95, '👔']]
+                .map(function (a) { return { name: a[0], price: a[1], icon: a[2], cover: '' }; });
+        })();
+        var ctx = { products: products, editing: true };
+
+        var storeName = (function () {
+            var prof = readJSON('vero_profile', {}) || {};
+            var full = [prof.firstName, prof.lastName].filter(Boolean).join(' ').trim();
+            return cfg.name || full || prof.name || 'My Store';
+        })();
+
+        var byId = function (id) { for (var i = 0; i < sections.length; i++) if (sections[i].id === id) return sections[i]; return null; };
+        var indexOf = function (id) { for (var i = 0; i < sections.length; i++) if (sections[i].id === id) return i; return -1; };
+        var sel = function () { return byId(selId); };
+
+        function getPath(o, path) { return path.split('.').reduce(function (a, k) { return a == null ? a : a[k]; }, o); }
+        function setPath(o, path, val) {
+            var ks = path.split('.'), last = ks.pop();
+            var t = ks.reduce(function (a, k) { return a[k]; }, o);
+            if (t) t[last] = val;
         }
 
-        const KEY = 'vero_store_config';
-        const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
-        const write = (o) => { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
-        let cfg = read();
-
-        // The ten templates (id + Hebrew name + one-line description). Their visual
-        // tokens live in store-templates.css, keyed by the same id.
-        const TEMPLATES = [
-            { id: 't1',  name: 'Minimal',   desc: 'Clean white, Signature red' },
-            { id: 't2',  name: 'Editorial', desc: 'Warm cream, Gold, Bodoni' },
-            { id: 't3',  name: 'Noir',     desc: 'Dark and bold, Silver' },
-            { id: 't4',  name: 'Blush',     desc: 'Soft pink, Elegant serif' },
-            { id: 't5',  name: 'Street',    desc: 'Bold orange, Uppercase letters' },
-            { id: 't6',  name: 'Luxe',     desc: 'Deep green, Gold' },
-            { id: 't7',  name: 'Lavender',    desc: 'Soft purple, Rounded corners' },
-            { id: 't8',  name: 'Gallery',    desc: 'Airy gray, Monochrome' },
-            { id: 't9',  name: 'Classic',    desc: 'Navy, Traditional serif' },
-            { id: 't10', name: 'Coast',     desc: 'Fresh turquoise' }
-        ];
-
-        // Accent colours the seller can override on top of a template.
-        const ACCENTS = ['#EB2323', '#9a7d52', '#d46a7e', '#ff5a1f', '#c8a24a', '#7b5cd6', '#1f3a5f', '#1f9c8f', '#111111'];
-
-        // Storefront layout presets. Each carries a distinct site structure (rendered
-        // as a colorless wireframe) plus its default positions. The seller can nudge
-        // namePos + grid inside the preview modal before applying. Stored as
-        // cfg.layout / cfg.namePos / cfg.grid.
-        const LAYOUTS = [
-            { id: 'l1', name: 'Editorial', desc: 'Split hero · centered name · 3-up grid', wf: 'split',   namePos: 'center', grid: 3 },
-            { id: 'l2', name: 'Boutique',  desc: 'Roomy 2-up grid · left-aligned name',     wf: 'left',    namePos: 'left',   grid: 2 },
-            { id: 'l3', name: 'Gallery',   desc: 'Dense 4-up grid · centered name',          wf: 'dense',   namePos: 'center', grid: 4 },
-            { id: 'l4', name: 'Story',     desc: 'Tall portrait hero · stats · 3-up',        wf: 'story',   namePos: 'left',   grid: 3 },
-            { id: 'l5', name: 'Landing',   desc: 'Nav bar · hero + intro · feature grid',    wf: 'landing', namePos: 'center', grid: 3 },
-            { id: 'l6', name: 'Classic',   desc: 'Centered hero with call-to-action · 3-up', wf: 'classic', namePos: 'center', grid: 3 }
-        ];
-
-        // Colorless wireframe markup for each layout structure (neutral greys only).
-        function wireframe(type) {
-            const cols = (n) => `<span class="wf-grid" style="grid-template-columns:repeat(${n},1fr)">${'<i></i>'.repeat(n)}</span>`;
-            const nav = `<span class="wf-nav"><b></b><b></b><b class="sp"></b><b></b></span>`;
-            switch (type) {
-                case 'split':
-                    return `<div class="wf"><span class="wf-split" style="flex:1"><span></span><span></span></span><span class="wf-bar c" style="width:50%"></span>${cols(3)}</div>`;
-                case 'left':
-                    return `<div class="wf"><span class="wf-hero" style="flex:1"><i style="width:45%"></i></span><span class="wf-bar" style="width:42%"></span>${cols(2)}</div>`;
-                case 'dense':
-                    return `<div class="wf"><span class="wf-hero" style="flex:1;align-items:center;justify-content:center"><span class="wf-bar c" style="width:60%"></span></span>${cols(4)}</div>`;
-                case 'story':
-                    return `<div class="wf"><span class="wf-hero" style="flex:1.4"><i style="width:55%"></i></span><span class="wf-stats"><i></i><i></i><i></i></span>${cols(3)}</div>`;
-                case 'landing':
-                    return `<div class="wf">${nav}<span class="wf-side"><span class="wf-txt"><i></i><i></i><span class="wf-pill" style="width:50%;margin-top:2px"></span></span><span class="wf-img"></span></span>${cols(3)}</div>`;
-                case 'classic':
-                    return `<div class="wf">${nav}<span class="wf-hero" style="flex:1;flex-direction:column;align-items:center;justify-content:center;gap:5px"><span class="wf-bar c" style="width:55%"></span><span class="wf-pill c"></span></span>${cols(3)}</div>`;
-                default:
-                    return `<div class="wf"><span class="wf-hero" style="flex:1"></span>${cols(3)}</div>`;
-            }
+        /* --------------------------- Save + history -------------------------- */
+        function saveDraft() { cfg = read(); cfg.sectionsDraft = sections; write(cfg); paintState(); }
+        function commit() {
+            var j = JSON.stringify(sections);
+            if (j === history[hi]) return;
+            history = history.slice(0, hi + 1); history.push(j);
+            if (history.length > 80) history.shift();
+            hi = history.length - 1;
+            saveDraft();
+        }
+        function travel(d) {
+            if (!history[hi + d]) return;
+            hi += d; sections = JSON.parse(history[hi]);
+            if (selId && !byId(selId)) { selId = null; closeSheet(); }
+            saveDraft(); paint(); if (mode === 'edit') paintSheet();
+        }
+        function isDirty() { return JSON.stringify(sections) !== JSON.stringify(read().sections || null); }
+        function paintState() {
+            var d = isDirty();
+            $('state').classList.toggle('dirty', d);
+            $('stateTx').textContent = d ? 'Draft saved · not published' : 'Published';
+            $('publishBtn').disabled = !d;
+            $('undoBtn').disabled = hi <= 0;
+            $('redoBtn').disabled = hi >= history.length - 1;
+        }
+        var toastT;
+        function toast(msg) {
+            var t = $('toast'); t.textContent = msg; t.classList.add('show');
+            clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2200);
         }
 
-        let selected = cfg.template || 't1';
-        let accent = cfg.accent || '';
-        let layout = cfg.layout || 'l1';
-        let namePos = cfg.namePos || (LAYOUTS.find(l => l.id === layout) || {}).namePos || 'center';
-        let gridN = cfg.grid || (LAYOUTS.find(l => l.id === layout) || {}).grid || 3;
+        /* ------------------------------ Canvas ------------------------------ */
+        var cv = $('cv');
+        var ICON = {
+            up: '<path d="M12 19V5M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+            edit: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/>', dup: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+            eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+            del: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'
+        };
+        var svg = function (k) { return '<svg viewBox="0 0 24 24">' + ICON[k] + '</svg>'; };
 
-        // ---- Build the template preview grid. ----
-        const grid = document.getElementById('tplGrid');
-        grid.innerHTML = TEMPLATES.map(t => `
-            <div class="tpl${t.id === selected ? ' on' : ''}" data-id="${t.id}">
-                <span class="check">✓</span>
-                <div class="sfp" data-store-template="${t.id}"${accent ? ` style="--sf-accent:${accent}"` : ''}>
-                    <div class="sfp-hero"><div class="sfp-name">My Store</div></div>
-                    <div class="sfp-body">
-                        <div class="sfp-row"><span class="sfp-cat">Items for sale</span><span class="sfp-btn">Follow</span></div>
-                        <div class="sfp-tiles"><i class="sfp-tile"></i><i class="sfp-tile"></i><i class="sfp-tile"></i></div>
-                    </div>
-                </div>
-                <div class="tpl-foot"><span class="tpl-name">${t.name}</span><span class="tpl-desc">${t.desc}</span></div>
-            </div>`).join('');
+        function applyTheme() {
+            cv.setAttribute('data-store-template', cfg.template || 't1');
+            if (cfg.accent) cv.style.setProperty('--sf-accent', cfg.accent); else cv.style.removeProperty('--sf-accent');
+        }
 
-        grid.addEventListener('click', (e) => {
-            const card = e.target.closest('.tpl');
-            if (!card) return;
-            selected = card.dataset.id;
-            grid.querySelectorAll('.tpl').forEach(c => c.classList.toggle('on', c === card));
-            // Persist immediately so the storefront always reflects the chosen template.
-            save();
-        });
-
-        // ---- Accent swatches. ----
-        const accentRow = document.getElementById('accentRow');
-        accentRow.insertAdjacentHTML('beforeend',
-            `<button class="swatch${!accent ? ' on' : ''}" data-accent="" title="The template default" style="background:conic-gradient(#EB2323,#c8a24a,#1f9c8f,#7b5cd6,#EB2323)"></button>` +
-            ACCENTS.map(c => `<button class="swatch${accent === c ? ' on' : ''}" data-accent="${c}" style="background:${c}"></button>`).join(''));
-        accentRow.addEventListener('click', (e) => {
-            const sw = e.target.closest('.swatch'); if (!sw) return;
-            accent = sw.dataset.accent || '';
-            accentRow.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s === sw));
-            // Live-update the previews' accent.
-            grid.querySelectorAll('.sfp').forEach(el => {
-                if (accent) el.style.setProperty('--sf-accent', accent);
-                else el.style.removeProperty('--sf-accent');
+        function paint() {
+            var h = '<div class="cv-hero" data-hero><span class="hint">Header · Theme</span>' +
+                    '<div class="nm" style="text-align:' + (cfg.namePos || 'left') + '">' + esc(storeName) + '</div></div>';
+            sections.forEach(function (s, i) {
+                var on = s.id === selId;
+                h += '<div class="ins"><button type="button" data-ins="' + i + '" aria-label="Add section here">+</button></div>' +
+                     '<div class="sw' + (on ? ' sel' : '') + (s.hidden ? ' off' : '') + '" data-sec="' + s.id + '">' +
+                        '<span class="sw-tag">' + esc(V.TYPES[s.type].name) + (s.hidden ? ' · hidden' : '') + '</span>' +
+                        '<div class="sw-bar">' +
+                            '<button type="button" data-act="up" aria-label="Move up"' + (i ? '' : ' disabled') + '>' + svg('up') + '</button>' +
+                            '<button type="button" data-act="down" aria-label="Move down"' + (i < sections.length - 1 ? '' : ' disabled') + '>' + svg('down') + '</button>' +
+                            '<button type="button" data-act="edit" aria-label="Edit">' + svg('edit') + '</button>' +
+                            '<button type="button" data-act="dup" aria-label="Duplicate">' + svg('dup') + '</button>' +
+                            '<button type="button" data-act="hide" aria-label="Show or hide">' + svg('eye') + '</button>' +
+                            '<button type="button" data-act="del" aria-label="Delete">' + svg('del') + '</button>' +
+                        '</div>' + V.sectionHTML(s, ctx) +
+                     '</div>';
             });
-            // Persist immediately so the storefront always reflects the chosen accent.
-            save();
-        });
-
-        // ---- Layout gallery (colorless wireframes). Tap a card to open its preview. ----
-        const layoutRow = document.getElementById('layoutRow');
-        function renderLayouts() {
-            layoutRow.innerHTML = LAYOUTS.map(l => `
-                <button type="button" class="lay${l.id === layout ? ' on' : ''}" data-lay="${l.id}">
-                    <span class="lay-check">✓</span>
-                    ${wireframe(l.wf)}
-                    <span class="lay-name">${l.name}</span>
-                    <span class="lay-desc">${l.desc}</span>
-                    <span class="lay-open">Preview
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-                    </span>
-                </button>`).join('');
-        }
-        renderLayouts();
-        layoutRow.addEventListener('click', (e) => {
-            const b = e.target.closest('.lay'); if (!b) return;
-            openModal(b.dataset.lay);
-        });
-
-        // ---- Layout preview modal: color + positions + apply. ----
-        const modal   = document.getElementById('layModal');
-        const mPreview = document.getElementById('lmPreview');
-        const mNamePos = document.getElementById('lmNamePos');
-        const mGrid   = document.getElementById('lmGrid');
-        // Draft state while the modal is open — only committed on Apply.
-        // dAccent mirrors the accent chosen above (the modal no longer sets colour).
-        let dLayout = layout, dAccent = accent, dNamePos = namePos, dGrid = gridN;
-
-        // Build the FULL storefront preview for the open layout — hero variant,
-        // optional nav / stats / call-to-action, and a full multi-row product grid.
-        function previewHTML() {
-            const tiles = `<div class="sfp-tiles" style="grid-template-columns:repeat(${dGrid},1fr)">${'<i class="sfp-tile"></i>'.repeat(dGrid * 2)}</div>`;
-            const name  = `<div class="sfp-name" style="width:100%;text-align:${dNamePos}">My Store</div>`;
-            const cat   = `<div class="sfp-row"><span class="sfp-cat">Items for sale</span><span class="sfp-btn">Follow</span></div>`;
-            const nav   = `<div class="sfp-nav"><i></i><i></i><i class="sp"></i><i></i></div>`;
-            let inner;
-            switch (dLayout) {
-                case 'l1': // Editorial — split hero, name overlay
-                    inner = `<div class="sfp-hero sfp-split"><span></span><span></span><div class="sfp-name-abs" style="text-align:${dNamePos}">My Store</div></div>
-                             <div class="sfp-body">${cat}${tiles}</div>`;
-                    break;
-                case 'l4': // Story — tall hero + stats
-                    inner = `<div class="sfp-hero sfp-tall">${name}</div>
-                             <div class="sfp-body"><div class="sfp-stats"><span><b>52</b>sold</span><span><b>120</b>items</span><span><b>4.9</b>rating</span></div>${cat}${tiles}</div>`;
-                    break;
-                case 'l5': // Landing — nav bar + hero + grid
-                    inner = `${nav}<div class="sfp-hero">${name}</div>
-                             <div class="sfp-body">${cat}${tiles}</div>`;
-                    break;
-                case 'l6': // Classic — nav bar + centered hero with CTA
-                    inner = `${nav}<div class="sfp-hero sfp-center"><div class="sfp-name" style="width:100%;text-align:center">My Store</div><span class="sfp-cta">Shop now</span></div>
-                             <div class="sfp-body">${cat}${tiles}</div>`;
-                    break;
-                default: // Boutique / Gallery — single hero
-                    inner = `<div class="sfp-hero">${name}</div>
-                             <div class="sfp-body">${cat}${tiles}</div>`;
+            h += '<button type="button" class="addbig" data-ins="' + sections.length + '">+ Add section</button>';
+            cv.innerHTML = h;
+            V.hydrate(cv);
+            if (cfg.hero && window.veroResolveMedia) {
+                window.veroResolveMedia(cfg.hero, 'hero').then(function (u) {
+                    var el = cv.querySelector('.cv-hero'); if (u && el) el.style.backgroundImage = 'url("' + String(u).replace(/"/g, '%22') + '")';
+                });
             }
-            return `<div class="sfp" data-store-template="${selected}"${dAccent ? ` style="--sf-accent:${dAccent}"` : ''}>${inner}</div>`;
+            paintState();
         }
 
-        function paintPreview() {
-            mPreview.innerHTML = previewHTML();
-            mNamePos.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.pos === dNamePos));
-            mGrid.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(b.dataset.grid) === String(dGrid)));
-        }
-
-        function openModal(id) {
-            const l = LAYOUTS.find(x => x.id === id) || LAYOUTS[0];
-            dLayout = l.id;
-            // If re-opening the already-applied layout, keep the seller's saved tweaks;
-            // otherwise start from that layout's own defaults.
-            if (l.id === layout) { dAccent = accent; dNamePos = namePos; dGrid = gridN; }
-            else { dAccent = accent; dNamePos = l.namePos; dGrid = l.grid; }
-            document.getElementById('lmTitle').textContent = l.name;
-            document.getElementById('lmSub').textContent = l.desc;
-            paintPreview();
-            modal.classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
-
-        mNamePos.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; dNamePos = b.dataset.pos; paintPreview(); });
-        mGrid.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; dGrid = +b.dataset.grid; paintPreview(); });
-
-        document.getElementById('lmClose').addEventListener('click', closeModal);
-        document.getElementById('lmCancel').addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
-
-        document.getElementById('lmApply').addEventListener('click', () => {
-            // Colour is chosen above, not here — only layout + positions are applied.
-            layout = dLayout; namePos = dNamePos; gridN = dGrid;
-            renderLayouts();
-            save();
-            closeModal();
+        cv.addEventListener('click', function (e) {
+            var ins = e.target.closest('[data-ins]');
+            if (ins) { addAt = +ins.getAttribute('data-ins'); openSheet('add'); return; }
+            if (e.target.closest('[data-hero]')) { setView('theme'); return; }
+            var w = e.target.closest('.sw'); if (!w) return;
+            var id = w.getAttribute('data-sec'), i = indexOf(id), act = (e.target.closest('[data-act]') || {}).getAttribute && e.target.closest('[data-act]').getAttribute('data-act');
+            if (!act) { select(id, true); return; }
+            if (act === 'edit') { select(id, true); return; }
+            if (act === 'up' || act === 'down') {
+                var j = i + (act === 'up' ? -1 : 1); if (j < 0 || j >= sections.length) return;
+                sections.splice(j, 0, sections.splice(i, 1)[0]);
+            } else if (act === 'dup') {
+                var c = clone(sections[i]); c.id = uid();
+                (c.slides || []).concat(c.cells || []).forEach(function (x) { x.id = uid(); });
+                sections.splice(i + 1, 0, c); selId = c.id;
+            } else if (act === 'hide') {
+                sections[i].hidden = !sections[i].hidden;
+            } else if (act === 'del') {
+                sections.splice(i, 1); selId = null; closeSheet(); toast('Section removed · Undo to bring it back');
+            }
+            commit(); paint();
+            var el = cv.querySelector('.sw.sel'); if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         });
 
-        // ---- Save + preview. ----
-        function save() {
+        function select(id, open) {
+            selId = id; cellId = null; paint();
+            if (open) openSheet('edit');
+        }
+
+        /* ------------------------------ Sheet ------------------------------ */
+        var sheet = $('sheet'), shBody = $('shBody');
+        function openSheet(m) {
+            mode = m; sheet.classList.add('open');
+            sheet.classList.toggle('tall', m !== 'edit');
+            paintSheet(); shBody.scrollTop = 0;
+            if (m === 'edit') setTimeout(function () {
+                var el = cv.querySelector('.sw.sel'); if (!el) return;
+                var top = el.getBoundingClientRect().top + window.scrollY - 70;
+                window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+            }, 60);
+        }
+        function closeSheet() { mode = null; sheet.classList.remove('open'); }
+        $('shClose').addEventListener('click', function () { closeSheet(); if (selId) { selId = null; paint(); } });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && mode) $('shClose').click();
+            var typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); travel(e.shiftKey ? 1 : -1); }
+        });
+
+        /* Field builders — every control carries data-p (a path inside the section). */
+        var fText = function (p, label, v, ph) { return '<label class="f"><span>' + label + '</span><input type="text" data-p="' + p + '" value="' + esc(v || '') + '" placeholder="' + esc(ph || '') + '"></label>'; };
+        var fArea = function (p, label, v) { return '<label class="f"><span>' + label + '</span><textarea data-p="' + p + '">' + esc(v || '') + '</textarea></label>'; };
+        var fSeg = function (p, label, v, opts, num) {
+            return '<div class="f"><span>' + label + '</span><div class="seg">' + opts.map(function (o) {
+                return '<button type="button" data-set="' + p + '" data-v="' + o[0] + '"' + (num ? ' data-num' : '') + (String(v) === String(o[0]) ? ' class="on"' : '') + '>' + o[1] + '</button>';
+            }).join('') + '</div></div>';
+        };
+        var fRange = function (p, label, v, min, max, unit) {
+            return '<label class="f"><span>' + label + '</span><div class="rowv"><input type="range" data-p="' + p + '" data-num min="' + min + '" max="' + max + '" value="' + v + '"><output>' + v + (unit || '') + '</output></div></label>';
+        };
+        var fToggle = function (p, label, v) { return '<label class="tg">' + label + '<input type="checkbox" data-p="' + p + '"' + (v ? ' checked' : '') + '></label>'; };
+        var fPos = function (p, label, v) {
+            return '<div class="f"><span>' + label + '</span><div class="pos9">' + ['tl', 'tc', 'tr', 'cl', 'cc', 'cr', 'bl', 'bc', 'br'].map(function (k) {
+                return '<button type="button" data-set="' + p + '" data-v="' + k + '" aria-label="' + k + '"' + (v === k ? ' class="on"' : '') + '></button>';
+            }).join('') + '</div></div>';
+        };
+        var COLORS = ['#111111', '#EB2323', '#9a7d52', '#d46a7e', '#ff5a1f', '#c8a24a', '#7b5cd6', '#1f3a5f', '#1f9c8f', '#f2efe9'];
+        var fColor = function (p, label, v) {
+            return '<div class="f"><span>' + label + '</span><div class="swatches">' +
+                '<button type="button" class="swatch none' + (!v ? ' on' : '') + '" data-set="' + p + '" data-v="" aria-label="Theme default"></button>' +
+                COLORS.map(function (c) { return '<button type="button" class="swatch' + (v === c ? ' on' : '') + '" data-set="' + p + '" data-v="' + c + '" style="background:' + c + '" aria-label="' + c + '"></button>'; }).join('') +
+                '</div></div>';
+        };
+        var fImage = function (p, label, v) {
+            return '<div class="f"><span>' + label + '</span><div class="imgf"><div class="imgf-th"><div class="ss-media"' + (v ? ' data-ss-media="' + esc(v) + '"' : '') + '></div></div>' +
+                '<div class="imgf-btns"><button type="button" class="sbtn dark" data-do="img" data-path="' + p + '">' + (v ? 'Replace' : 'Upload image') + '</button>' +
+                (v ? '<button type="button" class="sbtn quiet" data-do="img-clear" data-path="' + p + '">Remove</button>' : '') + '</div></div></div>';
+        };
+        var HEIGHT = [['s', 'Short'], ['m', 'Medium'], ['l', 'Tall'], ['xl', 'Full']];
+
+        function formFor(s) {
+            switch (s.type) {
+                case 'banner': return fImage('image', 'Image', s.image) + fText('kicker', 'Small line', s.kicker) + fText('title', 'Headline', s.title) +
+                    fArea('text', 'Text', s.text) + fText('cta', 'Button label', s.cta, 'Leave empty for no button') +
+                    '<div class="two">' + fPos('pos', 'Text position', s.pos) + fSeg('tone', 'Text color', s.tone, [['light', 'Light'], ['dark', 'Dark']]) + '</div>' +
+                    fSeg('height', 'Height', s.height, HEIGHT) + fSeg('width', 'Width', s.width, [['full', 'Edge to edge'], ['boxed', 'Boxed']]) +
+                    fRange('overlay', 'Image dimming', s.overlay, 0, 80, '%') + fColor('bg', 'Background (when there is no image)', s.bg);
+                case 'slider': return slidesForm(s) +
+                    fSeg('style', 'Style', s.style, [['full', 'Full width'], ['cards', 'Cards']]) + fSeg('height', 'Height', s.height, HEIGHT) +
+                    '<div class="two">' + fPos('pos', 'Text position', s.pos) + '<div>' + fToggle('autoplay', 'Autoplay', s.autoplay) + '</div></div>' +
+                    fRange('interval', 'Seconds per slide', s.interval, 2, 12, 's') + fRange('overlay', 'Image dimming', s.overlay, 0, 80, '%');
+                case 'products': return fText('title', 'Heading', s.title) +
+                    fSeg('layout', 'Layout', s.layout, [['grid', 'Grid'], ['feature', 'Featured'], ['carousel', 'Carousel'], ['list', 'List']]) +
+                    (s.layout === 'grid' || s.layout === 'carousel' ? fSeg('cols', s.layout === 'grid' ? 'Columns' : 'Cards in view', s.cols, [[1, '1'], [2, '2'], [3, '3'], [4, '4']], true) : '') +
+                    fSeg('sort', 'Order', s.sort, [['default', 'Newest'], ['low', 'Price ↑'], ['high', 'Price ↓']]) +
+                    fSeg('limit', 'How many', s.limit, [[0, 'All'], [4, '4'], [6, '6'], [8, '8'], [12, '12']], true);
+                case 'grid': return gridForm(s);
+                case 'split': return fImage('image', 'Image', s.image) + fSeg('side', 'Image side', s.side, [['left', 'Left'], ['right', 'Right'], ['top', 'Top']]) +
+                    fText('title', 'Headline', s.title) + fArea('text', 'Text', s.text) + fText('cta', 'Button label', s.cta, 'Leave empty for no button');
+                case 'text': return fText('title', 'Headline', s.title) + fArea('text', 'Text', s.text) +
+                    fSeg('align', 'Alignment', s.align, [['left', 'Left'], ['center', 'Center'], ['right', 'Right']]) + fSeg('size', 'Size', s.size, [['s', 'Small'], ['m', 'Medium'], ['l', 'Large']]);
+                case 'marquee': return fText('text', 'Text', s.text) + fRange('speed', 'Loop time (lower is faster)', s.speed, 6, 60, 's') + fToggle('invert', 'Accent background', s.invert);
+                case 'spacer': return fRange('size', 'Height', s.size, 4, 160, 'px') + fToggle('line', 'Show a divider line', s.line);
+            }
+            return '';
+        }
+
+        function slidesForm(s) {
+            return '<div class="lbl">Slides</div>' + s.slides.map(function (sl, i) {
+                var p = 'slides.' + i + '.';
+                return '<div class="sub"><div class="sub-top"><b>Slide ' + (i + 1) + '</b>' +
+                    '<button type="button" class="mini" data-do="slide-up" data-i="' + i + '"' + (i ? '' : ' disabled') + ' aria-label="Move earlier">↑</button>' +
+                    '<button type="button" class="mini" data-do="slide-del" data-i="' + i + '"' + (s.slides.length > 1 ? '' : ' disabled') + ' aria-label="Remove slide">×</button></div>' +
+                    fImage(p + 'image', 'Image', sl.image) + fText(p + 'title', 'Headline', sl.title) + fText(p + 'text', 'Text', sl.text) + fText(p + 'cta', 'Button label', sl.cta) + '</div>';
+            }).join('') + '<button type="button" class="sbtn wide" data-do="slide-add" style="margin-bottom:16px">+ Add slide</button>';
+        }
+
+        /* ---- The grid builder: a live board. Tap to select, drag a tile onto
+               another to move it, drag the blue corner to resize. ---- */
+        function gridForm(s) {
+            var c = null, ci = -1;
+            s.cells.forEach(function (x, i) { if (x.id === cellId) { c = x; ci = i; } });
+            var h = '<div class="gb" id="gb">' + V.sectionHTML(s, ctx) + '</div>' +
+                '<p class="gb-help">Tap a tile to edit it · drag a tile onto another to move it · drag the blue corner to resize.</p>' +
+                '<div class="imgf-btns" style="margin-bottom:16px"><button type="button" class="sbtn dark" data-do="cell-add">+ Add tile</button>' +
+                '<button type="button" class="sbtn" data-do="pattern" data-v="mosaic">Mosaic</button>' +
+                '<button type="button" class="sbtn" data-do="pattern" data-v="hero">Hero + row</button>' +
+                '<button type="button" class="sbtn" data-do="pattern" data-v="even">Even</button></div>';
+            if (c) {
+                var p = 'cells.' + ci + '.';
+                h += '<div class="sub"><div class="sub-top"><b>Tile ' + (ci + 1) + '</b>' +
+                    '<button type="button" class="mini" data-do="cell-move" data-d="-1"' + (ci ? '' : ' disabled') + ' aria-label="Move earlier">←</button>' +
+                    '<button type="button" class="mini" data-do="cell-move" data-d="1"' + (ci < s.cells.length - 1 ? '' : ' disabled') + ' aria-label="Move later">→</button>' +
+                    '<button type="button" class="mini" data-do="cell-del" aria-label="Delete tile">×</button></div>' +
+                    '<div class="two"><div class="f"><span>Width</span><div class="step"><button type="button" data-do="cell-size" data-k="w" data-d="-1">−</button><b>' + c.w + '</b><button type="button" data-do="cell-size" data-k="w" data-d="1">+</button></div></div>' +
+                    '<div class="f"><span>Height</span><div class="step"><button type="button" data-do="cell-size" data-k="h" data-d="-1">−</button><b>' + c.h + '</b><button type="button" data-do="cell-size" data-k="h" data-d="1">+</button></div></div></div>' +
+                    fSeg(p + 'kind', 'Content', c.kind, [['image', 'Image'], ['product', 'Product'], ['text', 'Text'], ['color', 'Color']]);
+                if (c.kind === 'image') h += fImage(p + 'image', 'Image', c.image);
+                if (c.kind === 'color') h += fColor(p + 'color', 'Color', c.color);
+                if (c.kind === 'product') {
+                    h += '<label class="f"><span>Product</span><select data-p="' + p + 'product" data-num>' + products.map(function (pr, i) {
+                        return '<option value="' + i + '"' + (Number(c.product || 0) === i ? ' selected' : '') + '>' + esc(pr.name) + '</option>';
+                    }).join('') + '</select></label>';
+                } else {
+                    h += fText(p + 'title', 'Headline', c.title) + fText(p + 'text', 'Text', c.text);
+                }
+                h += '</div>';
+            }
+            return h + fSeg('cols', 'Columns', s.cols, [[2, '2'], [3, '3'], [4, '4']], true) + fRange('gap', 'Gap between tiles', s.gap, 0, 24, 'px');
+        }
+
+        var LIB_ICON = {
+            banner: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15h6M7 12h9"/>',
+            slider: '<rect x="6" y="5" width="12" height="14" rx="2"/><path d="M3 8v8M21 8v8"/>',
+            products: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
+            grid: '<rect x="3" y="3" width="11" height="11" rx="1.5"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="16" y="10" width="5" height="4" rx="1"/><rect x="3" y="16" width="18" height="5" rx="1.5"/>',
+            split: '<rect x="3" y="5" width="8" height="14" rx="1.5"/><path d="M14 9h7M14 12h7M14 15h4"/>',
+            text: '<path d="M5 6h14M12 6v13M9 19h6"/>',
+            marquee: '<path d="M3 12h18M17 8l4 4-4 4"/>',
+            spacer: '<path d="M4 6h16M4 18h16M12 9v6M10 11l2-2 2 2M10 13l2 2 2-2"/>'
+        };
+        var PRESETS = {
+            boutique: { name: 'Boutique', desc: 'Banner and a roomy two-column grid', build: function () {
+                var b = V.defaults('banner'), p = V.defaults('products'); return [b, p]; } },
+            editorial: { name: 'Editorial', desc: 'Slider, a story, a mosaic, featured items', build: function () {
+                var s = V.defaults('slider'), t = V.defaults('text'), g = V.defaults('grid'), p = V.defaults('products');
+                p.layout = 'feature'; p.title = 'The edit'; return [s, t, g, p]; } },
+            gallery: { name: 'Gallery', desc: 'Announcement, mosaic, dense three-column grid', build: function () {
+                var m = V.defaults('marquee'), g = V.defaults('grid'), p = V.defaults('products'); p.cols = 3; return [m, g, p]; } },
+            launch: { name: 'Launch', desc: 'Tall hero, your story, a carousel, then everything', build: function () {
+                var b = V.defaults('banner'); b.height = 'l'; b.pos = 'cc';
+                var sp = V.defaults('split'), c = V.defaults('products'), p = V.defaults('products');
+                c.layout = 'carousel'; c.title = 'Just in'; c.limit = 6; p.title = 'All items'; return [b, sp, c, p]; } }
+        };
+
+        function paintSheet() {
+            var keep = shBody.scrollTop;
+            if (mode === 'add') {
+                $('shName').textContent = 'Add a section';
+                shBody.innerHTML = '<div class="lib">' + Object.keys(V.TYPES).map(function (k) {
+                    return '<button type="button" data-add="' + k + '"><svg viewBox="0 0 24 24">' + LIB_ICON[k] + '</svg><b>' + V.TYPES[k].name + '</b><small>' + V.TYPES[k].desc + '</small></button>';
+                }).join('') + '</div>';
+            } else if (mode === 'presets') {
+                $('shName').textContent = 'Start from a preset';
+                shBody.innerHTML = '<p class="gb-help" style="margin:0 0 12px">A preset replaces your current sections. Undo brings them back.</p><div class="lib">' +
+                    Object.keys(PRESETS).map(function (k) {
+                        return '<button type="button" data-preset="' + k + '"><b>' + PRESETS[k].name + '</b><small>' + PRESETS[k].desc + '</small></button>';
+                    }).join('') + '</div>';
+            } else if (mode === 'edit') {
+                var s = sel(); if (!s) { closeSheet(); return; }
+                $('shName').textContent = V.TYPES[s.type].name;
+                shBody.innerHTML = formFor(s);
+                V.hydrate(shBody);
+                if (s.type === 'grid') wireBoard(s);
+                shBody.scrollTop = keep;
+            }
+        }
+
+        /* Typing / sliding → live canvas update; committed to history on change. */
+        shBody.addEventListener('input', function (e) {
+            var el = e.target, p = el.getAttribute('data-p'), s = sel(); if (!p || !s) return;
+            var v = el.type === 'checkbox' ? el.checked : el.hasAttribute('data-num') ? Number(el.value) : el.value;
+            setPath(s, p, v);
+            if (el.type === 'range') { var o = el.parentElement.querySelector('output'); if (o) o.textContent = el.value + o.textContent.replace(/^[\d.]+/, ''); }
+            paint();
+            if (s.type === 'grid') { var gb = $('gb'); if (gb && el.type !== 'range') { gb.innerHTML = V.sectionHTML(s, ctx); V.hydrate(gb); wireBoard(s); } }
+        });
+        shBody.addEventListener('change', function (e) { if (e.target.getAttribute('data-p')) { commit(); if (e.target.tagName === 'SELECT' || e.target.type === 'range') paintSheet(); } });
+
+        shBody.addEventListener('click', function (e) {
+            var b;
+            if ((b = e.target.closest('[data-add]'))) {
+                var n = V.defaults(b.getAttribute('data-add'));
+                sections.splice(addAt, 0, n); commit(); select(n.id, true); return;
+            }
+            if ((b = e.target.closest('[data-preset]'))) {
+                sections = PRESETS[b.getAttribute('data-preset')].build(); selId = null;
+                commit(); closeSheet(); paint(); toast('Preset applied'); return;
+            }
+            var s = sel(); if (!s) return;
+            if ((b = e.target.closest('[data-set]'))) {
+                var v = b.getAttribute('data-v');
+                setPath(s, b.getAttribute('data-set'), b.hasAttribute('data-num') ? Number(v) : v);
+                commit(); paint(); paintSheet(); return;
+            }
+            b = e.target.closest('[data-do]'); if (!b) return;
+            var act = b.getAttribute('data-do'), i = +b.getAttribute('data-i');
+            if (act === 'img') { pickPath = b.getAttribute('data-path'); $('filePick').value = ''; $('filePick').click(); return; }
+            if (act === 'img-clear') setPath(s, b.getAttribute('data-path'), '');
+            else if (act === 'slide-add') s.slides.push({ id: uid(), image: '', title: 'New slide', text: '' });
+            else if (act === 'slide-del') s.slides.splice(i, 1);
+            else if (act === 'slide-up') s.slides.splice(i - 1, 0, s.slides.splice(i, 1)[0]);
+            else if (act === 'cell-add') { var c = { id: uid(), w: 1, h: 1, kind: 'image', image: '', title: '', text: '' }; s.cells.push(c); cellId = c.id; }
+            else if (act === 'pattern') applyPattern(s, b.getAttribute('data-v'));
+            else {
+                var ci = -1; s.cells.forEach(function (x, k) { if (x.id === cellId) ci = k; }); if (ci < 0) return;
+                if (act === 'cell-del') { s.cells.splice(ci, 1); cellId = null; }
+                else if (act === 'cell-move') { var j = ci + Number(b.getAttribute('data-d')); if (j < 0 || j >= s.cells.length) return; s.cells.splice(j, 0, s.cells.splice(ci, 1)[0]); }
+                else if (act === 'cell-size') {
+                    var k = b.getAttribute('data-k'), max = k === 'w' ? s.cols : 4;
+                    s.cells[ci][k] = Math.min(max, Math.max(1, (s.cells[ci][k] || 1) + Number(b.getAttribute('data-d'))));
+                }
+            }
+            commit(); paint(); paintSheet();
+        });
+
+        function applyPattern(s, name) {
+            var cols = s.cols, P = {
+                mosaic: [[2, 2], [1, 1], [1, 1], [1, 2], [2, 1], [1, 1]],
+                hero: [[cols, 2], [1, 1], [1, 1], [1, 1], [1, 1]],
+                even: [[1, 1]]
+            }[name];
+            var need = name === 'even' ? Math.max(s.cells.length, cols * 2) : Math.max(s.cells.length, name === 'hero' ? cols + 1 : 5);
+            while (s.cells.length < need) s.cells.push({ id: uid(), w: 1, h: 1, kind: 'image', image: '', title: '', text: '' });
+            s.cells.forEach(function (c, i) { var z = P[i % P.length]; c.w = Math.min(cols, z[0]); c.h = z[1]; });
+        }
+
+        /* Pointer interactions on the board: select, drag-to-move, corner-resize. */
+        function wireBoard(s) {
+            var gb = $('gb'); if (!gb) return;
+            var box = gb.querySelector('.ss-gridbox'); if (!box) return;
+            gb.querySelectorAll('[data-cell]').forEach(function (el) {
+                var c = s.cells.filter(function (x) { return x.id === el.getAttribute('data-cell'); })[0]; if (!c) return;
+                el.classList.toggle('on', c.id === cellId);
+                el.insertAdjacentHTML('beforeend', '<span class="gb-size">' + c.w + '×' + c.h + '</span><span class="gb-handle"></span>');
+            });
+            if (gb._wired) return; gb._wired = true;
+            var drag = null;
+            gb.addEventListener('pointerdown', function (e) {
+                var el = e.target.closest('[data-cell]'); if (!el) return;
+                var sec = sel(); if (!sec) return;
+                var c = sec.cells.filter(function (x) { return x.id === el.getAttribute('data-cell'); })[0]; if (!c) return;
+                var bx = gb.querySelector('.ss-gridbox'), gap = Number(sec.gap) || 0;
+                drag = { el: el, c: c, x: e.clientX, y: e.clientY, resize: !!e.target.closest('.gb-handle'), moved: false,
+                         unit: (bx.clientWidth - gap * (sec.cols - 1)) / sec.cols, gap: gap, w: c.w, h: c.h, sec: sec, drop: null };
+                try { gb.setPointerCapture(e.pointerId); } catch (err) {}
+                e.preventDefault();
+            });
+            gb.addEventListener('pointermove', function (e) {
+                if (!drag) return;
+                var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+                if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 7) return;
+                drag.moved = true;
+                if (drag.resize) {
+                    var step = drag.unit + drag.gap;
+                    var w = Math.min(drag.sec.cols, Math.max(1, Math.round((drag.w * step + dx) / step)));
+                    var h = Math.min(4, Math.max(1, Math.round((drag.h * step + dy) / step)));
+                    if (w !== drag.c.w || h !== drag.c.h) {
+                        drag.c.w = w; drag.c.h = h;
+                        drag.el.style.setProperty('--w', w); drag.el.style.setProperty('--h', h);
+                        var tag = drag.el.querySelector('.gb-size'); if (tag) tag.textContent = w + '×' + h;
+                        paint();
+                    }
+                } else {
+                    drag.el.classList.add('drag');
+                    var over = document.elementFromPoint(e.clientX, e.clientY);
+                    over = over && over.closest('#gb [data-cell]');
+                    if (drag.drop && drag.drop !== over) drag.drop.classList.remove('drop');
+                    drag.drop = over && over !== drag.el ? over : null;
+                    if (drag.drop) drag.drop.classList.add('drop');
+                }
+            });
+            var end = function () {
+                if (!drag) return;
+                var d = drag; drag = null;
+                if (!d.moved) { cellId = d.c.id; paintSheet(); return; }
+                if (!d.resize && d.drop) {
+                    var from = d.sec.cells.indexOf(d.c), to = -1, tid = d.drop.getAttribute('data-cell');
+                    d.sec.cells.forEach(function (x, k) { if (x.id === tid) to = k; });
+                    if (to >= 0) d.sec.cells.splice(to, 0, d.sec.cells.splice(from, 1)[0]);
+                }
+                cellId = d.c.id; commit(); paint(); paintSheet();
+            };
+            gb.addEventListener('pointerup', end);
+            gb.addEventListener('pointercancel', end);
+        }
+
+        /* ------------------------------ Images ------------------------------ */
+        var pickPath = null;
+        function shrink(file, max, q) {
+            return new Promise(function (resolve, reject) {
+                var url = URL.createObjectURL(file), img = new Image();
+                img.onload = function () {
+                    var k = Math.min(1, max / Math.max(img.width, img.height));
+                    var c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    URL.revokeObjectURL(url);
+                    resolve(c);
+                };
+                img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('unreadable image')); };
+                img.src = url;
+            });
+        }
+        $('filePick').addEventListener('change', function () {
+            var file = this.files && this.files[0], s = sel(), path = pickPath;
+            if (!file || !s || !path) return;
+            shrink(file, 1400).then(function (canvas) {
+                return new Promise(function (res) { canvas.toBlob(res, 'image/jpeg', 0.84); }).then(function (blob) {
+                    var key = 'sb_' + uid(), pointer = 'idb:' + key;
+                    return window.veroMediaSet(key, blob).then(function () {
+                        V.setMedia(pointer, URL.createObjectURL(blob)); return pointer;
+                    });
+                }).catch(function () {
+                    // IndexedDB unavailable — keep a small inline copy instead.
+                    return shrink(file, 800).then(function (c) { return c.toDataURL('image/jpeg', 0.7); });
+                });
+            }).then(function (pointer) {
+                setPath(s, path, pointer); commit(); paint(); if (mode === 'edit') paintSheet();
+            }).catch(function () { toast('That image could not be read'); });
+        });
+
+        /* ------------------------------- Theme ------------------------------- */
+        var TEMPLATES = [
+            ['t1', 'Minimal', 'Clean white, signature red'], ['t2', 'Editorial', 'Warm cream, gold, Bodoni'], ['t3', 'Noir', 'Dark and bold, silver'],
+            ['t4', 'Blush', 'Soft pink, elegant serif'], ['t5', 'Street', 'Bold orange, uppercase'], ['t6', 'Luxe', 'Deep green, gold'],
+            ['t7', 'Lavender', 'Soft purple, rounded'], ['t8', 'Gallery', 'Airy gray, monochrome'], ['t9', 'Classic', 'Navy, traditional serif'], ['t10', 'Coast', 'Fresh turquoise']
+        ];
+        var ACCENTS = ['#EB2323', '#9a7d52', '#d46a7e', '#ff5a1f', '#c8a24a', '#7b5cd6', '#1f3a5f', '#1f9c8f', '#111111'];
+        function saveTheme(patch) {
             cfg = read();
-            cfg.template = selected;
-            cfg.layout = layout;
-            cfg.namePos = namePos;
-            cfg.grid = gridN;
-            if (accent) cfg.accent = accent; else delete cfg.accent;
-            write(cfg);
-            const note = document.getElementById('savedNote');
-            note.classList.add('show');
-            setTimeout(() => note.classList.remove('show'), 1600);
+            Object.keys(patch).forEach(function (k) { if (patch[k] === '' || patch[k] == null) delete cfg[k]; else cfg[k] = patch[k]; });
+            write(cfg); paintTheme(); applyTheme(); paint(); toast('Theme saved');
         }
-        document.getElementById('applyBtn').addEventListener('click', save);
-        document.getElementById('viewStore').addEventListener('click', () => {
-            save();
-            location.href = 'buyer-profile.html';
+        function paintTheme() {
+            var accent = cfg.accent || '', tpl = cfg.template || 't1';
+            $('accentRow').innerHTML =
+                '<button type="button" class="swatch' + (!accent ? ' on' : '') + '" data-accent="" title="The template default" style="background:conic-gradient(#EB2323,#c8a24a,#1f9c8f,#7b5cd6,#EB2323)"></button>' +
+                ACCENTS.map(function (c) { return '<button type="button" class="swatch' + (accent === c ? ' on' : '') + '" data-accent="' + c + '" style="background:' + c + '"></button>'; }).join('');
+            $('tplGrid').innerHTML = TEMPLATES.map(function (t) {
+                return '<button type="button" class="tpl' + (t[0] === tpl ? ' on' : '') + '" data-tpl="' + t[0] + '">' +
+                    '<span class="sfp" data-store-template="' + t[0] + '" style="display:block' + (accent ? ';--sf-accent:' + accent : '') + '">' +
+                    '<span class="sfp-hero" style="display:flex"><span class="sfp-name">' + esc(storeName) + '</span></span>' +
+                    '<span class="sfp-body" style="display:block"><span class="sfp-tiles" style="display:grid"><i class="sfp-tile"></i><i class="sfp-tile"></i><i class="sfp-tile"></i></span></span></span>' +
+                    '<span class="tpl-foot"><b>' + t[1] + '</b><small>' + t[2] + '</small></span></button>';
+            }).join('');
+            $('namePosSeg').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-pos') === (cfg.namePos || 'left')); });
+        }
+        $('accentRow').addEventListener('click', function (e) { var b = e.target.closest('[data-accent]'); if (b) saveTheme({ accent: b.getAttribute('data-accent') }); });
+        $('tplGrid').addEventListener('click', function (e) { var b = e.target.closest('[data-tpl]'); if (b) saveTheme({ template: b.getAttribute('data-tpl') }); });
+        $('namePosSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-pos]'); if (b) saveTheme({ namePos: b.getAttribute('data-pos') }); });
+
+        /* ------------------------------ Chrome ------------------------------ */
+        function setView(v) {
+            $('viewBuild').classList.toggle('on', v === 'build');
+            $('viewTheme').classList.toggle('on', v === 'theme');
+            $('viewSeg').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-view') === v); });
+            if (v === 'theme') closeSheet();
+            window.scrollTo(0, 0);
+        }
+        $('viewSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-view]'); if (b) setView(b.getAttribute('data-view')); });
+        $('presetBtn').addEventListener('click', function () { setView('build'); openSheet('presets'); });
+        $('undoBtn').addEventListener('click', function () { travel(-1); });
+        $('redoBtn').addEventListener('click', function () { travel(1); });
+        $('publishBtn').addEventListener('click', function () {
+            cfg = read(); cfg.sections = clone(sections); cfg.sectionsDraft = sections;
+            if (write(cfg)) { paintState(); toast('Published — your storefront is live'); }
         });
+        $('previewBtn').addEventListener('click', function () { saveDraft(); location.href = 'buyer-profile.html?draft=1'; });
+
+        applyTheme(); paintTheme(); paint();
     })();
     </script>
 <script src="assets/line-icons.js"></script>
