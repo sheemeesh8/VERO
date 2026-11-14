@@ -553,6 +553,45 @@ h3, h4, h5, h6, p,
     <script src="assets/page-header.js?v=20261011e"></script>
     <link rel="stylesheet" href="search-box.css?v=20261103b">
     <script defer src="search-box.js?v=20261103b"></script>
+    <style id="chat-minimal">
+        /* ===== Minimal chat list: two quiet lines per row, hairline dividers,
+                 small avatar, compact time, one dot for unread. ===== */
+        .chat-tabs { gap: 22px; padding: 0 20px; border-bottom-color: #efeee9; }
+        .chat-tab { padding: 14px 0 11px; font-size: 10px; letter-spacing: 1.8px; }
+        .chat-tab.active::after { height: 1px; }
+        .chat-controls { padding: 6px 20px 2px; gap: 4px; }
+        .chat-search { font-size: 13px; padding: 12px 0; border-bottom: 1px solid #efeee9; }
+        .chat-search:focus { border-bottom-color: var(--ink); }
+        .ct-funnel { width: 36px; height: 36px; color: var(--faint); }
+        .ct-funnel svg { width: 18px; height: 18px; }
+
+        .chat-list, .chat-track, .chat-others { gap: 0; }
+        .chat-row { gap: 14px; padding: 0 20px; }
+        .chat-row:hover { background: none; }
+        .chat-row:active { background: #f7f6f3; }
+        .chat-avatar { width: 42px; height: 42px; font-size: 19px; background: #f6f5f2; }
+        .chat-avatar:hover { transform: none; }
+        .chat-online { width: 9px; height: 9px; border-width: 1.5px; box-shadow: none; }
+        .chat-body { padding: 15px 0; border-bottom: 1px solid #efeee9; }
+        .chat-row:last-child .chat-body { border-bottom: 0; }
+        .chat-name { font-size: 14px; font-weight: 400; letter-spacing: 0.1px; }
+        .chat-time { font-size: 10.5px; letter-spacing: 0.3px; }
+        .chat-preview { font-size: 12px; margin-top: 2px; color: var(--faint); }
+        .chat-who { color: var(--muted); }
+        .chat-who::after { content: '·'; margin: 0 6px; color: var(--faint); }
+        .chat-item { display: none; }
+        .chat-row.is-unread .chat-name { font-weight: 500; }
+        .chat-row.is-unread .chat-preview { color: var(--ink); font-weight: 400; }
+        .chat-row.is-unread .chat-time { color: var(--ink); }
+        .chat-unread { width: 6px; height: 6px; background: var(--ink); border-radius: 50%; }
+        .chat-tab sup { color: var(--faint); }
+        .chat-deal { background: none; color: var(--muted); border: 1px solid #dcdad3; padding: 1px 7px; }
+        .chat-track.has-offers .chat-row.is-offer,
+        .chat-track.has-offers .chat-row.is-offer:hover { background: none; box-shadow: inset 2px 0 0 var(--ink); }
+        .chat-acc { border-top: 0; border-bottom: 1px solid #efeee9; padding: 14px 20px; }
+        .chat-acc b { font-size: 10px; letter-spacing: 2px; color: var(--muted); }
+        .chat-empty { font-size: 12px; color: var(--faint); padding: 72px 24px; }
+    </style>
 </head>
 <body>
     <script>if (new URLSearchParams(location.search).get('embed')) document.documentElement.classList.add('embed');</script>
@@ -830,6 +869,23 @@ h3, h4, h5, h6, p,
             ? new Date(ms).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
             : '';
 
+        // Compact time for the list: "14:32" today, "Yesterday", weekday this week, else "12 Nov".
+        const shortWhen = ms => {
+            if (!ms) return '';
+            const d = new Date(ms), now = new Date();
+            const day = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+            const diff = Math.round((day(now) - day(d)) / 864e5);
+            if (diff <= 0) return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            if (diff === 1) return 'Yesterday';
+            if (diff < 7) return d.toLocaleDateString('en-GB', { weekday: 'short' });
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        };
+        // The list shows one quiet line: offer previews drop the asking price and the
+        // repeated product name ("Offered ₪230 · asking ₪269 — Wool coat" → "Offered ₪230").
+        const shortPreview = p => /^Offered /.test(p || '')
+            ? String(p).replace(/\s·\sasking[^—]*/, '').replace(/\s*—\s.*$/, '').trim()
+            : (p || '');
+
         // The product this conversation is about (self-contained; safe at first render).
         function productName(seller) {
             const o = offs.find(x => (x.seller || 'moravchick') === seller && x.name);
@@ -930,13 +986,12 @@ h3, h4, h5, h6, p,
                         <div class="chat-body">
                             <div class="chat-topline">
                                 <span class="chat-name">${title}</span>
-                                <span class="chat-time">${fullWhen(t.at)}</span>
+                                <span class="chat-time" title="${fullWhen(t.at)}">${shortWhen(t.at)}</span>
                             </div>
                             <div class="chat-topline">
-                                <div class="chat-preview">${t.preview}</div>
+                                <div class="chat-preview">${prod ? `<span class="chat-who">${t.seller}</span>` : ''}${shortPreview(t.preview)}</div>
                                 ${unread ? '<span class="chat-unread" aria-label="Unread"></span>' : ''}
                             </div>
-                            <div class="chat-item">${t.seller}</div>
                         </div>
                     </div>`;
             };
