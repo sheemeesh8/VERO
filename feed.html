@@ -397,7 +397,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category slider, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261114a">
+    <link rel="stylesheet" href="assets/home.css?v=20261114b">
 </head>
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
@@ -449,18 +449,28 @@
             <!-- Category slider: Women, Men, Unisex, Kids. -->
             <section class="hm-cats" id="hmCats" aria-label="Shop by category"></section>
 
-            <section class="hm-pair" id="hmPairB" aria-label="More picks"></section>
+            <!-- Pieces for the chosen category, as a slider under it. -->
+            <section class="hm-rail" id="hmGenderRail" aria-label="Pieces in this category"></section>
+
             <section class="hm-four" id="hmFour" aria-label="More to browse"></section>
 
             <figure class="hm-sale-pic" id="hmSalePic"><img src="sale-hero.jpg" alt="" loading="lazy"></figure>
             <section class="hm-sale" aria-labelledby="hmSaleTitle">
                 <div class="hm-sale-head"><h2 id="hmSaleTitle">Sales</h2><span id="hmSaleCount">0 items available</span></div>
                 <dl class="hm-facts" id="hmFacts"></dl>
+                <!-- The sale's pieces, as a slider under its facts. -->
+                <div class="hm-rail" id="hmSaleRail" aria-label="Pieces on sale"></div>
                 <p class="hm-sale-text">The pieces you’ve been bookmarking, now within reach. Our archive collection brings together standout apparel and artwork from previous drops, available at special prices for a limited time.</p>
                 <div class="hm-btns">
                     <button type="button" class="hm-btn hm-btn--navy" id="hmShopSale">Shop the sale</button>
                     <button type="button" class="hm-btn hm-btn--light" id="hmShopAll">See everything</button>
                 </div>
+            </section>
+
+            <!-- New in: the latest pieces, as a slider under its heading. -->
+            <section class="hm-part" aria-labelledby="hmNewTitle">
+                <div class="hm-sale-head"><h2 id="hmNewTitle">New in</h2><span id="hmNewCount">0 items</span></div>
+                <div class="hm-rail" id="hmNewRail" aria-label="Newest pieces"></div>
             </section>
         </div>
 
@@ -528,6 +538,24 @@
                 '<div class="hm-card-brand">' + esc(p.seller) + '</div></a>';
         }
         var EMPTY = '<div class="hm-empty">Nothing here yet.</div>';
+        // A slider piece: the picture on the page itself (no tile), then name, brand and price, centred.
+        function money(n) { return num(n) + ' ₪'; }
+        function railCard(p) {
+            var d = p._d || VC.discountOf(p._raw);
+            var inner = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
+                                : '<span class="hm-card-emoji" aria-hidden="true">' + esc(p.icon || '🛍️') + '</span>';
+            var price = d && d.onSale ? '<s>' + money(d.original) + '</s>' + money(d.price) : money(VC.toNum(p.price));
+            return '<a class="hm-rcard" href="' + esc(hrefOf(p, d)) + '" title="' + esc(p.name) + '">' +
+                '<div class="hm-rcard-img">' + inner + '</div>' +
+                '<div class="hm-card-name">' + esc(p.name) + '</div>' +
+                '<div class="hm-card-brand">' + esc(p.seller) + '</div>' +
+                '<div class="hm-rcard-price">' + price + '</div></a>';
+        }
+        function fillRail(id, list) {
+            var el = document.getElementById(id); if (!el) return;
+            el.innerHTML = list.length ? list.map(railCard).join('') : EMPTY;
+            el.scrollLeft = 0;
+        }
 
         // ----- Category slider ---------------------------------------------
         var CATS = [
@@ -557,6 +585,19 @@
                 else { try { v.pause(); } catch (e) {} }
             });
         }
+        // The item count on a card counts up when its card becomes the chosen one.
+        function countUp(el) {
+            var to = parseInt(String(el.getAttribute('data-n') || el.textContent).replace(/\D/g, ''), 10) || 0;
+            el.setAttribute('data-n', String(to));
+            if (!to || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) { el.textContent = num(to); return; }
+            var t0 = null;
+            (function step(t) {
+                if (t0 === null) t0 = t;
+                var k = Math.min(1, (t - t0) / 700), e = 1 - Math.pow(1 - k, 3);
+                el.textContent = num(to * e);
+                if (k < 1) requestAnimationFrame(step);
+            })(performance.now());
+        }
         function setGender(g, scroll) {
             if (!g) return;
             var changed = g !== state.gender;
@@ -564,7 +605,12 @@
             catCards().forEach(function (c) { c.classList.toggle('is-on', c.dataset.gender === g); });
             if (scroll) { var el = catsEl.querySelector('.hm-cat[data-gender="' + g + '"]'); if (el) catsEl.scrollTo({ left: el.offsetLeft - 44, behavior: 'smooth' }); }
             syncSubnav(); playCurrent();
-            if (changed) buildPieces();
+            if (changed) {
+                var on = catsEl.querySelector('.hm-cat.is-on .hm-cat-count b'); if (on) countUp(on);
+                var rail = document.getElementById('hmGenderRail');
+                if (rail) { rail.classList.remove('is-swap'); void rail.offsetWidth; rail.classList.add('is-swap'); }   // the pieces slide in again
+                buildPieces();
+            }
         }
         // Swiping the slider picks the card that settles at the left.
         var settle = null;
@@ -592,8 +638,8 @@
             var at = function (i) { return picks.length ? picks[(i + shift) % picks.length] : null; };
             var take = function (from, n) { var out = []; for (var i = 0; i < n && i < picks.length; i++) out.push(at(from + i)); return out; };
             fill('hmPairA', take(0, 2).map(card).join('') || EMPTY);
-            fill('hmPairB', take(2, 2).map(card).join('') || EMPTY);
-            fill('hmFour',  take(4, 4).map(card).join('') || EMPTY);
+            fillRail('hmGenderRail', take(2, 8));
+            fill('hmFour',  take(10, 4).map(card).join('') || EMPTY);
         }
 
         // ----- Hero + sale facts --------------------------------------------
@@ -626,6 +672,11 @@
                 ['Best seller', most('seller')]
             ];
             fill('hmFacts', facts.map(function (r) { return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>'; }).join(''));
+            fillRail('hmSaleRail', sale.slice(0, 10));
+            // New in: the most recently listed pieces.
+            var recent = modeList().slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); }).slice(0, 10);
+            fillRail('hmNewRail', recent);
+            document.getElementById('hmNewCount').textContent = num(recent.length) + (recent.length === 1 ? ' item' : ' items');
             var pic = document.querySelector('#hmSalePic img');
             if (pic) pic.src = (state.mode === 'art') ? 'art-hero.jpg' : 'sale-hero.jpg';
         }
@@ -722,6 +773,18 @@
         updateSubnavDock();
 
         buildAll();
+
+        // Sliders and the category cards come in when they are scrolled to.
+        if (typeof IntersectionObserver !== 'undefined') {
+            var io = new IntersectionObserver(function (es) {
+                es.forEach(function (en) {
+                    if (!en.isIntersecting) return;
+                    io.unobserve(en.target); en.target.classList.add('hm-in');
+                    if (en.target === catsEl) { var b = catsEl.querySelector('.hm-cat.is-on .hm-cat-count b'); if (b) countUp(b); }
+                });
+            }, { threshold: 0.15 });
+            [].forEach.call(document.querySelectorAll('.hm-cats, .hm-rail'), function (el) { el.classList.add('hm-wait'); io.observe(el); });
+        }
     })();
     </script>
 
