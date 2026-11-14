@@ -61,8 +61,8 @@
             var d = last - prev;
             t = '<b>' + esc(fmt(last)) + '</b> so far. ' + esc(lbl[n - 1]) + (d >= 0 ? ' added ' : ' took off ') + esc(fmt(Math.abs(d))) + '.';
         } else {
-            t = '<b>' + esc(lbl[n - 1]) + ': ' + esc(fmt(last)) + '</b>';
-            if (prev > 0) { var pc = Math.round((last - prev) / prev * 100); t += pc === 0 ? ', the same as ' + esc(lbl[n - 2]) : ', ' + Math.abs(pc) + '% ' + (pc > 0 ? 'more' : 'less') + ' than ' + esc(lbl[n - 2]); }
+            t = '<b>' + esc(lbl[n - 1]) + ': ' + (last === 0 ? 'nothing yet' : esc(fmt(last))) + '</b>';
+            if (prev > 0 && last !== 0) { var pc = Math.round((last - prev) / prev * 100); t += pc === 0 ? ', the same as ' + esc(lbl[n - 2]) : ', ' + Math.abs(pc) + '% ' + (pc > 0 ? 'more' : 'less') + ' than ' + esc(lbl[n - 2]); }
             t += '.' + (hi !== n - 1 ? ' The highest was ' + esc(lbl[hi]) + ' (' + esc(fmt(v[hi])) + ').' : ' That is the highest so far.');
         }
         return '<p class="vsay">' + t + '</p>';
