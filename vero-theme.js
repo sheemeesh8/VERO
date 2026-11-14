@@ -40,8 +40,19 @@
         var st = document.createElement('style');
         st.id = 'veroThemeCSS';
         st.textContent = `
-            /* Site-wide: no rounded corners anywhere. */
-            *, *::before, *::after { border-radius: 0 !important; }
+            /* Site-wide: soft, rounded corners. Each page's own radii apply as
+               written; these zero-specificity defaults round whatever a page left
+               square — controls, product pictures, thumbnails — and never override
+               a radius a page sets itself. */
+            :root { --vero-radius: 14px; --vero-radius-sm: 10px; }
+            :where(button, select, textarea, input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"])) {
+                border-radius: var(--vero-radius-sm);
+            }
+            :where(.product-card .product-image, .product-card.cart-item, .product-card.pc-e,
+                   .chat-avatar, .thumb, .card, [class*="-thumb"], [class*="-card"]:not(.product-card)) {
+                border-radius: var(--vero-radius);
+            }
+            :where(.product-card .product-image, .chat-avatar, .thumb, [class*="-thumb"]) { overflow: hidden; }
 
             :root[data-vero-tier="free"] {
                 --vero-accent: #1b1916;
@@ -118,6 +129,62 @@
         else document.addEventListener('DOMContentLoaded', function () { renderBar(tier); }, { once: true });
         try { document.dispatchEvent(new CustomEvent('vero:tier', { detail: { tier: tier } })); } catch (e) {}
     }
+
+    /* ---- Rounded corners everywhere ----
+       The CSS above rounds the common cases. This pass catches the rest: any
+       box a page drew square — a picture, a tile, a bordered button, a filled
+       label — gets a soft radius, sized to the box. Left alone: full-width
+       bands (heroes, bars, sheets), hairlines, and anything a page already
+       rounded. It re-runs as content is added. */
+    var seen = typeof WeakSet === 'function' ? new WeakSet() : null;
+    function roundBox(el, vw) {
+        var tag = el.tagName;
+        if (tag === 'HTML' || tag === 'BODY' || tag === 'IFRAME' || el.namespaceURI !== 'http://www.w3.org/1999/xhtml') return true;
+        if (tag === 'INPUT' && /^(range|checkbox|radio|file)$/.test(el.type)) return true;
+        var w = el.offsetWidth, h = el.offsetHeight;
+        if (!w || !h) return false;                              // not laid out yet — look again later
+        if (w < 5 || h < 5 || w >= vw * 0.96) return true;       // hairline, or a full-width band
+        var cs = getComputedStyle(el);
+        // Already rounded — a 1–3px radius on a real box still reads as square.
+        var has = Math.max(parseFloat(cs.borderTopLeftRadius) || 0, parseFloat(cs.borderBottomRightRadius) || 0);
+        if (has >= 4 || (has && Math.min(w, h) < 40)) return true;
+        var media = tag === 'IMG' || tag === 'VIDEO' || tag === 'CANVAS';
+        var filled = cs.backgroundImage !== 'none' || !/rgba\(\d+, \d+, \d+, 0\)|transparent/.test(cs.backgroundColor);
+        var boxed = parseFloat(cs.borderTopWidth) && parseFloat(cs.borderBottomWidth) && parseFloat(cs.borderLeftWidth) && parseFloat(cs.borderRightWidth);
+        if (!media && !filled && !boxed && cs.boxShadow === 'none') return true;
+        // A picture that fills a parent which is already rounded and clipped needs nothing.
+        if (media && el.parentElement) {
+            var ps = getComputedStyle(el.parentElement);
+            if (ps.overflow !== 'visible' && parseFloat(ps.borderTopLeftRadius)) return true;
+        }
+        // 'important' so the few page rules that force square corners give way too.
+        el.style.setProperty('border-radius', Math.min(14, Math.round(Math.min(w, h) / 2)) + 'px', 'important');
+        if (!media && cs.overflow === 'visible' && el.children.length &&
+            Array.prototype.every.call(el.children, function (c) { return /^(IMG|VIDEO|CANVAS)$/.test(c.tagName); })) {
+            el.style.overflow = 'hidden';
+        }
+        return true;
+    }
+    function roundAll() {
+        if (!document.body || !seen) return;
+        var vw = document.documentElement.clientWidth || window.innerWidth;
+        var all = document.body.getElementsByTagName('*');
+        for (var i = 0; i < all.length; i++) {
+            var el = all[i];
+            if (seen.has(el)) continue;
+            try { if (roundBox(el, vw)) seen.add(el); } catch (e) { seen.add(el); }
+        }
+    }
+    var roundT = 0;
+    function roundSoon() { clearTimeout(roundT); roundT = setTimeout(roundAll, 120); }
+    function startRounding() {
+        roundAll();
+        try { new MutationObserver(roundSoon).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+        window.addEventListener('load', roundSoon);
+        setTimeout(roundAll, 900);
+    }
+    if (document.body) startRounding();
+    else document.addEventListener('DOMContentLoaded', startRounding, { once: true });
 
     window.veroTier = function () { return document.documentElement.getAttribute('data-vero-tier') || 'free'; };
     window.veroSetTier = function (t) { apply(t); return window.veroTier(); };
