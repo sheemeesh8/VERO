@@ -1263,10 +1263,22 @@
             display: grid; place-items: center; font-size: 25px;
         }
         .vs-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .vs-ava {
-            flex: none; width: 44px; height: 44px; display: grid; place-items: center;
-            font-size: 16px; font-weight: 500; text-transform: uppercase; color: #fff;
+        /* Users: two to a row — a large round profile picture, the details under it. */
+        .vs-users { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 14px; padding-top: 18px; }
+        .vs-user {
+            display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; padding: 6px 4px;
+            text-align: center; text-decoration: none; color: #111;
         }
+        .vs-ava {
+            width: 112px; height: 112px; border-radius: 50%; overflow: hidden; margin-bottom: 8px;
+            display: grid; place-items: center; font-size: 38px; font-weight: 300; text-transform: uppercase; color: #fff;
+            transition: transform 0.25s ease;
+        }
+        .vs-ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .vs-user:hover .vs-ava, .vs-user.hi .vs-ava { transform: scale(1.04); }
+        .vs-user b { max-width: 100%; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vs-user b mark { background: none; color: inherit; font-weight: 700; }
+        .vs-user small { font-size: 12px; color: #8a877f; line-height: 1.5; }
 
         .vs-chips { display: flex; flex-wrap: wrap; gap: 6px 22px; padding-top: 8px; }
         .vs-chip {
@@ -1301,19 +1313,21 @@
         .vs-step-n { font-size: 10px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: #8a877f; }
         .vs-step-t { margin: 12px 0 0; font-size: 28px; line-height: 1.2; font-weight: 300; letter-spacing: 0.2px; color: #111; outline: none; }
         .vs-step-s { margin: 8px 0 0; font-size: 13px; color: #8a877f; }
-        .vs-opts { margin-top: 30px; display: flex; flex-direction: column; align-items: flex-start; }
+        /* The answers are capsules, centred and wrapping onto as many lines as needed. */
+        .vs-step { text-align: center; }
+        .vs-opts { margin-top: 30px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
         .vs-opt {
-            display: block; min-height: 50px; padding: 10px 0; background: none; border: 0; cursor: pointer;
-            text-align: left; font-size: 19px; font-weight: 300; color: #8a877f;
-            transition: color 0.18s ease;
+            min-height: 46px; padding: 11px 22px; box-sizing: border-box; cursor: pointer;
+            background: #fff; border: 1px solid #d9d5cd; border-radius: 999px;
+            font-size: 15px; font-weight: 400; color: #111;
+            transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
         }
-        .vs-opt:hover { color: #111; }
-        .vs-opt.on { color: #111; font-weight: 500; text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px; }
-        .vs-opt[disabled] { color: #d3cfc7; cursor: default; }
+        .vs-opt:hover { border-color: #111; }
+        .vs-opt.on { background: #111; border-color: #111; color: #fff; }
         .vs-foot {
             position: sticky; bottom: 0; background: #fff; margin-top: 30px;
             padding: 14px 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
-            display: flex; align-items: baseline; justify-content: flex-start; gap: 20px;
+            display: flex; align-items: baseline; justify-content: center; gap: 20px;
         }
         .vs-next {
             background: none; border: 0; padding: 8px 0; margin: 0; color: #111; cursor: pointer;
@@ -1851,13 +1865,14 @@
                 </a>`;
     }
     function vsUserRow(u, tokens) {
-        const meta = '★ ' + vspSellerRating(u.name) + (u.items ? ' · ' + u.items + (u.items === 1 ? ' piece' : ' pieces') : '');
-        return `<a class="vs-row vs-hit" href="index.html?seller=${encodeURIComponent(u.name)}">
+        return `<a class="vs-user vs-hit" href="index.html?seller=${encodeURIComponent(u.name)}">
                     <span class="vs-ava" style="${vspAvatarStyle(u.name)}">${vspEscape(u.name[0] || '?')}</span>
-                    <span class="vs-row-main"><b>${vsMark(u.name, tokens)}</b><small>${meta}</small></span>
-                    <span class="vs-chev">›</span>
+                    <b>${vsMark(u.name, tokens)}</b>
+                    <small>★ ${vspSellerRating(u.name)}</small>
+                    <small>${u.items ? vsPieces(u.items) : 'No pieces yet'}</small>
                 </a>`;
     }
+    function vsUsersHTML(list, tokens) { return `<div class="vs-users">` + list.map(u => vsUserRow(u, tokens)).join('') + `</div>`; }
     function vsEmpty(q, what, picks) {
         const chips = picks.length
             ? `<div class="vs-chips">${picks.map(t => `<button class="vs-chip" type="button" data-vs="term" data-term="${vspEscape(t)}">${vspEscape(t)}</button>`).join('')}</div>` : '';
@@ -1909,9 +1924,9 @@
         if (vs.tab === 'user') {
             if (!tokens.length) {
                 const top = users.slice().sort((a, b) => b.items - a.items).slice(0, 8);
-                html = `<div class="vs-head">Suggested</div>` + top.map(u => vsUserRow(u, [])).join('');
+                html = `<div class="vs-head">Suggested</div>` + vsUsersHTML(top, []);
             } else if (userHits.length) {
-                html = `<div class="vs-head">Users <span>${userHits.length}</span></div>` + userHits.map(u => vsUserRow(u, tokens)).join('');
+                html = `<div class="vs-head">Users <span>${userHits.length}</span></div>` + vsUsersHTML(userHits, tokens);
             } else {
                 html = vsEmpty(vs.q, 'users', users.slice(0, 5).map(u => u.name));
             }
@@ -1987,8 +2002,8 @@
         return `<div class="vs-cards">` + list.map(h => vc.cardHTML(h.p)).join('') + `</div>`;
     }
 
-    // One filter question as a page of plain words: the "any" answer first, then
-    // the choices that still lead somewhere. The chosen one is underlined.
+    // One filter question as a page of capsules: the "any" answer first, then
+    // the choices that still lead somewhere. The chosen one is filled in.
     function vsStepHTML(hits, total) {
         const asked = vsAsked();
         const step = asked.find(st => st.key === vs.step) || asked[0], key = step.key, cur = vs.f[key];
