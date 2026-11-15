@@ -346,7 +346,7 @@ h3, h4, h5, h6, p,
     <script src="assets/nav-bar.js?v=20261003e" defer></script>
     <link rel="stylesheet" href="switch.css?v=20261103a">
     <!-- Shared shell of the personal + seller areas: hero band, section rules, forms. -->
-    <link rel="stylesheet" href="assets/area.css?v=20261115a">
+    <link rel="stylesheet" href="assets/area.css?v=20261115b">
     <link rel="stylesheet" href="assets/area-motion.css?v=20261113m">
     <script src="assets/area-motion.js?v=20261113m" defer></script>
 </head>
@@ -370,12 +370,12 @@ h3, h4, h5, h6, p,
                         <p class="sa-tag ah-bio" id="saTag">The best for your closet</p>
                     </div>
                 </div>
-                <!-- Followers and reach. -->
-                <div class="sa-reach ah-stats" id="saReach" aria-label="Followers and reach">
+                <!-- A peek at the storefront: where the shop is and its social links
+                     (assets/area-peek.js), then followers and items for sale. -->
+                <div class="ah-meta" id="saMeta" hidden></div>
+                <div class="sa-reach ah-stats" id="saReach" aria-label="Followers and items">
                     <a class="sa-r" href="follows.html?from=seller"><b data-k="followers">—</b><span>Followers</span></a>
-                    <div class="sa-r"><b data-k="profileViews">—</b><span>Profile views</span></div>
-                    <div class="sa-r"><b data-k="productViews">—</b><span>Product views</span></div>
-                    <div class="sa-r"><b data-k="conv">—</b><span>Conversion</span></div>
+                    <div class="sa-r"><b id="saItems">0</b><span>Items</span></div>
                 </div>
                 <div class="ah-actions">
                     <button type="button" class="ah-btn" id="saChangeHero"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>Cover</button>
@@ -415,6 +415,7 @@ h3, h4, h5, h6, p,
 
     <!-- Big images (the store's cover) live in IndexedDB; localStorage keeps a pointer. -->
     <script src="media-store.js"></script>
+    <script src="assets/area-peek.js?v=20261115a"></script>
     <script>
     /* ---- Followers and reach on the cover photo: figures come from the
            dashboard (embedded below), with the last known copy shown first. ---- */
@@ -458,6 +459,23 @@ h3, h4, h5, h6, p,
         setMono(profile.name || store.name);
         var tagEl = document.getElementById('saTag');
         if (tagEl) tagEl.textContent = profile.bio || store.tagline || 'The best for your closet';
+
+        /* ---- The rest of the storefront peek: items for sale, location, social
+               links. Read fresh each time, so it follows the Settings tab as you
+               type; a detail switched off for the storefront is not shown here. ---- */
+        var paintPeek = window.veroSaPeek = function () {
+            var p = read('vero_seller_profile'), show = p.show || {}, soc = p.socials || {}, shown = {};
+            ['instagram', 'tiktok', 'facebook', 'website'].forEach(function (k) { if (show[k] !== false) shown[k] = soc[k]; });
+            if (window.veroHeroMeta) window.veroHeroMeta(document.getElementById('saMeta'),
+                { location: show.location === false ? '' : p.location, socials: shown });
+            var list; try { list = JSON.parse(localStorage.getItem('vero_listings')) || []; } catch (e) { list = []; }
+            var n = Array.isArray(list) ? list.filter(function (x) { return x && (x.status || 'active') === 'active'; }).length : 0;
+            var it = document.getElementById('saItems'); if (it) it.textContent = n.toLocaleString('en-US');
+        };
+        paintPeek();
+        var peekT; var peekSoon = function () { clearTimeout(peekT); peekT = setTimeout(paintPeek, 60); };
+        var setHost = document.getElementById('sssInner');
+        if (setHost) { setHost.addEventListener('input', peekSoon); setHost.addEventListener('change', peekSoon); }
 
         /* ---- Change hero picture: pick a file, show it, and save to
                vero_store_config.hero (the same key the storefront reads). ---- */
