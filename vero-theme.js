@@ -41,11 +41,11 @@
         st.id = 'veroThemeCSS';
         st.textContent = `
             /* Site-wide: square corners everywhere — except the on/off switches
-               (switch.css), which keep their pill track and round knob. The
+               (switch.css) and the header's Clothing / Art switch, which keep their pill track and round knob. The
                :not(#vq…) part only adds weight, so this beats every page's own radius. */
-            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq),
-            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::before,
-            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::after {
+            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq),
+            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::before,
+            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::after {
                 border-radius: 0 !important;
             }
 
