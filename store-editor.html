@@ -92,18 +92,8 @@
             background: var(--blue); color: #fff; font-size: 9.5px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
             padding: 3px 8px; border-radius: 999px;
         }
-        .sw.sel .sw-tag, .sw.off .sw-tag { display: block; }
+        .sw.off .sw-tag { display: block; }   /* a hidden section says so; a selected one is named by its sheet */
         .sw.off:not(.sel) .sw-tag { background: #8b8b86; }
-        .sw-bar {
-            position: absolute; z-index: 6; top: 6px; right: 6px; display: none; gap: 2px; padding: 3px;
-            background: #111; border-radius: 999px; box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-        }
-        .sw.sel .sw-bar { display: flex; }
-        .sw-bar button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; display: grid; place-items: center; }
-        .sw-bar button:hover { background: rgba(255,255,255,0.18); }
-        .sw-bar button:disabled { opacity: 0.3; }
-        .sw-bar svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-
         .ins { position: relative; height: 0; z-index: 4; }
         .ins button {
             position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%);
@@ -241,6 +231,38 @@
             background: #111; color: #fff; font-size: 12px; padding: 10px 16px; border-radius: 999px; transition: opacity 0.25s, transform 0.25s; white-space: nowrap;
         }
         .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+        /* ---- Calm pass: the storefront sits flat on the page (no grey stage, no
+                floating card), labels read as plain words, and the section actions
+                are a row of named buttons in the sheet instead of an icon bubble. ---- */
+        html, body { background: #fff; }
+        .topbar { padding: 8px 14px; }
+        .pillbtn--add { background: #111; color: #fff; border-color: #111; }
+        .stage { padding: 0 0 150px; }
+        .cv { max-width: 540px; border-radius: 0; box-shadow: none; }
+        .sw-tag { top: 8px; left: 8px; font-size: 11px; letter-spacing: 0; text-transform: none; padding: 3px 9px; }
+        .ins button { width: 30px; height: 30px; background: #111; box-shadow: none; }
+        .addbig { border: 1px solid var(--line); background: var(--soft); border-radius: 999px; padding: 13px; font-weight: 400; font-size: 13px; }
+        .sheet { box-shadow: 0 -6px 24px rgba(0,0,0,0.10); }
+        .sh-name { font-size: 15px; }
+        .f > span, .lbl { font-size: 12.5px; letter-spacing: 0; text-transform: none; font-weight: 400; margin-bottom: 6px; }
+        .f, .tg { margin-bottom: 18px; }
+        .seg { border: 0; background: var(--soft); padding: 3px; gap: 2px; }
+        .seg button { border-radius: 999px; font-weight: 400; font-size: 13px; min-height: 34px; }
+        .seg button.on { background: #fff; color: #111; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .acts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: -2px 0 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+        .acts button {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 56px; padding: 6px 2px;
+            border: 0; border-radius: 12px; background: none; cursor: pointer; font-size: 11px; line-height: 1.2; color: var(--ink);
+        }
+        .acts button:hover, .acts button:active { background: var(--soft); }
+        .acts button:disabled { opacity: 0.3; cursor: default; background: none; }
+        .acts button.danger { color: #b23b3b; }
+        .acts svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+        .lib button { border-radius: 14px; }
+        .lib button:hover { transform: none; }
+        .btn { font-weight: 400; font-size: 13px; }
+        .pillbtn, .sbtn { font-weight: 400; font-size: 12.5px; }
     </style>
 <style id="vero-global-type">
 /* VERO global typography: main titles in Bodoni, sub-headings + descriptions in serif.
@@ -267,6 +289,7 @@ h3, h4, h5, h6, p,
     </header>
 
     <div class="topbar">
+        <button class="pillbtn pillbtn--add" id="addBtn" type="button">+ Add section</button>
         <span class="grow"></span>
         <button class="pillbtn" id="presetBtn" type="button">Presets</button>
         <button class="ib" id="undoBtn" type="button" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -409,14 +432,7 @@ h3, h4, h5, h6, p,
                 h += '<div class="ins"><button type="button" data-ins="' + i + '" aria-label="Add section here">+</button></div>' +
                      '<div class="sw' + (on ? ' sel' : '') + (s.hidden ? ' off' : '') + '" data-sec="' + s.id + '">' +
                         '<span class="sw-tag">' + esc(V.TYPES[s.type].name) + (s.hidden ? ' · hidden' : '') + '</span>' +
-                        '<div class="sw-bar">' +
-                            '<button type="button" data-act="up" aria-label="Move up"' + (i ? '' : ' disabled') + '>' + svg('up') + '</button>' +
-                            '<button type="button" data-act="down" aria-label="Move down"' + (i < sections.length - 1 ? '' : ' disabled') + '>' + svg('down') + '</button>' +
-                            '<button type="button" data-act="edit" aria-label="Edit">' + svg('edit') + '</button>' +
-                            '<button type="button" data-act="dup" aria-label="Duplicate">' + svg('dup') + '</button>' +
-                            '<button type="button" data-act="hide" aria-label="Show or hide">' + svg('eye') + '</button>' +
-                            '<button type="button" data-act="del" aria-label="Delete">' + svg('del') + '</button>' +
-                        '</div>' + V.sectionHTML(s, ctx) +
+                        V.sectionHTML(s, ctx) +
                      '</div>';
             });
             h += '<button type="button" class="addbig" data-ins="' + sections.length + '">+ Add section</button>';
@@ -434,9 +450,13 @@ h3, h4, h5, h6, p,
             var ins = e.target.closest('[data-ins]');
             if (ins) { addAt = +ins.getAttribute('data-ins'); openSheet('add'); return; }
             var w = e.target.closest('.sw'); if (!w) return;
-            var id = w.getAttribute('data-sec'), i = indexOf(id), act = (e.target.closest('[data-act]') || {}).getAttribute && e.target.closest('[data-act]').getAttribute('data-act');
-            if (!act) { select(id, true); return; }
-            if (act === 'edit') { select(id, true); return; }
+            select(w.getAttribute('data-sec'), true);
+        });
+
+        // Move / duplicate / hide / delete the selected section (the row of named
+        // buttons at the top of its settings sheet).
+        function sectionAct(act) {
+            var i = indexOf(selId); if (i < 0) return;
             if (act === 'up' || act === 'down') {
                 var j = i + (act === 'up' ? -1 : 1); if (j < 0 || j >= sections.length) return;
                 sections.splice(j, 0, sections.splice(i, 1)[0]);
@@ -450,8 +470,9 @@ h3, h4, h5, h6, p,
                 sections.splice(i, 1); selId = null; closeSheet(); toast('Section removed · Undo to bring it back');
             }
             commit(); paint();
+            if (mode === 'edit') paintSheet();
             var el = cv.querySelector('.sw.sel'); if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        });
+        }
 
         function select(id, open) {
             selId = id; cellId = null; paint();
@@ -620,7 +641,15 @@ h3, h4, h5, h6, p,
             } else if (mode === 'edit') {
                 var s = sel(); if (!s) { closeSheet(); return; }
                 $('shName').textContent = V.TYPES[s.type].name;
-                shBody.innerHTML = formFor(s);
+                var si = indexOf(s.id);
+                var actBtn = function (k, ic, label, extra) { return '<button type="button" data-act="' + k + '"' + (extra || '') + '>' + svg(ic) + '<span>' + label + '</span></button>'; };
+                shBody.innerHTML = '<div class="acts" role="group" aria-label="Section actions">' +
+                        actBtn('up', 'up', 'Move up', si ? '' : ' disabled') +
+                        actBtn('down', 'down', 'Move down', si < sections.length - 1 ? '' : ' disabled') +
+                        actBtn('dup', 'dup', 'Duplicate') +
+                        actBtn('hide', 'eye', s.hidden ? 'Show' : 'Hide') +
+                        actBtn('del', 'del', 'Delete', ' class="danger"') +
+                    '</div>' + formFor(s);
                 V.hydrate(shBody);
                 if (s.type === 'grid') wireBoard(s);
                 shBody.scrollTop = keep;
@@ -640,6 +669,7 @@ h3, h4, h5, h6, p,
 
         shBody.addEventListener('click', function (e) {
             var b;
+            if ((b = e.target.closest('.acts [data-act]'))) { sectionAct(b.getAttribute('data-act')); return; }
             if ((b = e.target.closest('[data-add]'))) {
                 var n = V.defaults(b.getAttribute('data-add'));
                 sections.splice(addAt, 0, n); commit(); select(n.id, true); return;
@@ -782,6 +812,7 @@ h3, h4, h5, h6, p,
 
         /* ------------------------------ Chrome ------------------------------ */
         $('presetBtn').addEventListener('click', function () { openSheet('presets'); });
+        $('addBtn').addEventListener('click', function () { addAt = sections.length; openSheet('add'); });
         $('undoBtn').addEventListener('click', function () { travel(-1); });
         $('redoBtn').addEventListener('click', function () { travel(1); });
         $('publishBtn').addEventListener('click', function () {
