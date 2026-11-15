@@ -1327,13 +1327,19 @@
         .vs-foot {
             position: sticky; bottom: 0; background: #fff; margin-top: 30px;
             padding: 14px 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
-            display: flex; align-items: baseline; justify-content: center; gap: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
         }
-        .vs-next {
-            background: none; border: 0; padding: 8px 0; margin: 0; color: #111; cursor: pointer;
-            font-size: 16px; font-weight: 500; text-decoration: underline; text-underline-offset: 6px;
+        /* Back and Next, side by side: Back outlined, Next filled. */
+        .vs-navrow { display: flex; gap: 10px; width: 100%; max-width: 380px; }
+        .vs-nav {
+            flex: 1; min-height: 50px; padding: 12px 18px; box-sizing: border-box; cursor: pointer;
+            background: #fff; color: #111; border: 1px solid #111; border-radius: 999px;
+            font-size: 14px; font-weight: 500; letter-spacing: 0.3px;
+            transition: background 0.18s ease, color 0.18s ease, opacity 0.18s ease;
         }
-        .vs-foot .vs-link { padding: 8px 0; }
+        .vs-nav:hover { opacity: 0.7; }
+        .vs-nav-next { background: #111; color: #fff; }
+        .vs-foot .vs-link { padding: 12px 8px; }
         .vsp-overlay button:focus-visible, .vsp-overlay a:focus-visible, .vsp-overlay [tabindex="0"]:focus-visible {
             outline: 2px solid #111; outline-offset: 2px;
         }
@@ -2008,6 +2014,7 @@
         const asked = vsAsked();
         const step = asked.find(st => st.key === vs.step) || asked[0], key = step.key, cur = vs.f[key];
         const opts = [{ val: '', label: step.any }].concat(vsOptions(key, hits));
+        const last = !vsNeighbour(key, 1, hits);
         return `<div class="vs-step" role="group" aria-labelledby="vsStepTitle">
                     <div class="vs-step-n">${asked.indexOf(step) + 1} / ${asked.length}</div>
                     <h2 class="vs-step-t" id="vsStepTitle" tabindex="-1">${step.title}</h2>
@@ -2015,8 +2022,12 @@
             + opts.map(o => `<button class="vs-opt${o.val === cur ? ' on' : ''}" type="button" data-vs="f-opt" data-val="${vspEscape(o.val)}"
                             aria-pressed="${o.val === cur ? 'true' : 'false'}">${vspEscape(o.label)}</button>`).join('')
             + `</div></div>
-                <div class="vs-foot" aria-live="polite">
-                    <button class="vs-next" type="button" data-vs="f-done">Show ${vsPieces(total)}</button>
+                <div class="vs-foot">
+                    <div class="vs-navrow">
+                        <button class="vs-nav" type="button" data-vs="back">‹ Back</button>
+                        <button class="vs-nav vs-nav-next" type="button" data-vs="f-next">${last ? 'Show ' + vsPieces(total) : 'Next ›'}</button>
+                    </div>
+                    ${last ? '' : `<button class="vs-link" type="button" data-vs="f-done" aria-live="polite">Show ${vsPieces(total)}</button>`}
                 </div>`;
     }
     // Move between pages: the current one fades out, the next fades in, and focus
@@ -2107,6 +2118,7 @@
             else if (act === 'term') { vs.tab = 'product'; vsRemember(el.dataset.term); vsSetQuery(el.dataset.term, false); }
             else if (act === 'f-open') vsGo(vsNeighbour('', 1, vsHits()));
             else if (act === 'f-done') { vsUseProfileGender(); vsGo(''); }
+            else if (act === 'f-next') { vsUseProfileGender(); vsGo(vsNeighbour(vs.step, 1, vsHits())); }
             else if (act === 'f-opt') vsPickOption(el.dataset.val);
             else if (act === 'f-clear') { vs.f = vsNoFilter(); vs.limit = VS_PAGE; vsRender(); }
             else if (act === 'f-drop') {
