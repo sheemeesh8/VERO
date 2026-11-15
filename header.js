@@ -1262,11 +1262,73 @@
             transition: background 0.18s ease, color 0.18s ease;
         }
         .vs-chip:hover, .vs-chip.on { background: #111; color: #fff; }
-        /* The narrowing chips above the results scroll sideways on one line. */
+        /* The filter line above the results: the Filter button, then what is
+           applied, each with its own remove mark. Scrolls sideways on one line. */
         .vs-narrow { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 14px 20px 4px; scrollbar-width: none; }
         .vs-narrow::-webkit-scrollbar { display: none; }
-        .vs-narrow .vs-chip { flex: none; border-color: #d9d5cd; padding: 7px 12px; font-size: 11.5px; }
-        .vs-narrow .vs-chip.on { border-color: #111; }
+        .vs-narrow .vs-chip { flex: none; padding: 8px 12px; font-size: 11.5px; }
+        .vs-narrow .vs-chip.vs-applied { border-color: #d9d5cd; }
+        .vs-narrow .vs-chip.vs-applied::after { content: '×'; margin-left: 8px; color: #8a877f; }
+        .vs-narrow .vs-chip.vs-applied:hover::after { color: #fff; }
+        .vs-filterbtn {
+            display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;
+            margin-top: 28px; padding: 17px 16px; background: #fff; color: #111; border: 1.5px solid #111; cursor: pointer;
+            font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+        .vs-filterbtn:hover { background: #111; color: #fff; }
+        .vs-filterbtn span { font-size: 16px; line-height: 1; font-weight: 400; }
+
+        /* ===== Filter, one question per page =====
+           While filtering, the field and tabs step aside for a slim bar (Back,
+           progress, Close). Each step is its own page: the old one fades out,
+           the next fades in. */
+        .vs-flowbar { display: none; align-items: center; gap: 16px; height: 54px; }
+        .vsp-overlay.filtering .vs-flowbar { display: flex; }
+        .vsp-overlay.filtering .vs-barrow, .vsp-overlay.filtering .vs-tabs { display: none; }
+        .vs-back {
+            flex: none; background: none; border: 0; padding: 10px 8px 10px 0; margin: 0; color: #111; cursor: pointer;
+            font-size: 11px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase;
+        }
+        .vs-prog { flex: 1; display: flex; gap: 4px; }
+        .vs-prog i { flex: 1; height: 2px; background: #e6e3dd; transition: background 0.35s ease; }
+        .vs-prog i.on { background: #111; }
+        .vs-body { transition: opacity 0.22s ease; }
+        .vs-body.vs-out { opacity: 0; }
+        .vs-step { padding-top: 34px; }
+        .vs-body > .vs-step, .vs-body > .vs-foot { animation-duration: 0.42s; }
+        .vs-step-n { font-size: 10px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: #8a877f; }
+        .vs-step-t { margin: 12px 0 0; font-size: 28px; line-height: 1.2; font-weight: 300; letter-spacing: 0.2px; color: #111; outline: none; }
+        .vs-step-s { margin: 8px 0 0; font-size: 13px; color: #8a877f; }
+        .vs-opts { margin-top: 26px; border-top: 1px solid #eeebe6; }
+        .vs-opt {
+            display: flex; align-items: center; gap: 14px; width: 100%; box-sizing: border-box; min-height: 60px;
+            padding: 14px 4px; background: none; border: 0; border-bottom: 1px solid #eeebe6; color: #111; cursor: pointer;
+            text-align: left; font-size: 16px; font-weight: 400;
+            transition: background 0.15s ease, padding 0.2s ease;
+        }
+        .vs-opt:hover { background: #f6f5f1; }
+        .vs-opt[disabled] { color: #b9b5ad; cursor: default; background: none; }
+        .vs-opt-box {
+            flex: none; width: 20px; height: 20px; box-sizing: border-box; border: 1.5px solid #111;
+            display: grid; place-items: center; transition: background 0.18s ease;
+        }
+        .vs-opt[disabled] .vs-opt-box { border-color: #d9d5cd; }
+        .vs-opt-box::after { content: ''; width: 8px; height: 8px; background: #fff; opacity: 0; transition: opacity 0.18s ease; }
+        .vs-opt.on { font-weight: 600; }
+        .vs-opt.on .vs-opt-box { background: #111; }
+        .vs-opt.on .vs-opt-box::after { opacity: 1; }
+        .vs-opt-l { flex: 1; min-width: 0; }
+        .vs-foot {
+            position: sticky; bottom: 0; background: #fff; margin-top: 26px;
+            padding: 12px 0 calc(env(safe-area-inset-bottom, 0px) + 14px);
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .vs-foot .vs-more { margin-top: 0; }
+        .vs-foot .vs-link { padding: 12px 8px; }
+        .vsp-overlay button:focus-visible, .vsp-overlay a:focus-visible, .vsp-overlay [tabindex="0"]:focus-visible {
+            outline: 2px solid #111; outline-offset: 2px;
+        }
 
         .vs-empty { padding: 54px 0 10px; text-align: center; }
         .vs-empty-t { font-size: 20px; font-weight: 300; letter-spacing: 0.3px; }
@@ -1285,7 +1347,7 @@
             .vs-narrow { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .vsp-overlay, .vs-body > *, .vs-tab::after { transition: none; animation: none; }
+            .vsp-overlay, .vs-body, .vs-body > *, .vs-tab::after, .vs-prog i { transition: none; animation: none; }
         }
 
         /* ===== Shared five-star rating (outline stars, proportional fill) ===== */
@@ -1565,7 +1627,34 @@
         search: '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
         clock: '<svg class="vs-row-ico" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 14"></polyline></svg>'
     };
-    let vs = { q: '', tab: 'product', cat: '', sort: 'rel', hi: -1, limit: VS_PAGE };
+    // The filter is asked one question per page, in this order.
+    const VS_STEPS = [
+        { key: 'type',  title: 'What are you looking for?', sub: 'Choose one.' },
+        { key: 'cats',  title: 'Which categories?',         sub: 'Pick as many as you like, or none for all of them.' },
+        { key: 'price', title: 'What is your budget?',      sub: 'Choose one.' },
+        { key: 'sale',  title: 'Only pieces on sale?',      sub: 'Choose one.' }
+    ];
+    const VS_TYPES = [['', 'Everything'], ['clothing', 'Fashion'], ['art', 'Art & interiors']];
+    const VS_BANDS = [['', 'Any price', 0, Infinity], ['u200', 'Under ₪200', 0, 200], ['200', '₪200 – ₪500', 200, 500],
+                      ['500', '₪500 – ₪1,500', 500, 1500], ['1500', 'Over ₪1,500', 1500, Infinity]];
+    const VS_SALE = [['', 'All pieces'], ['1', 'On sale only']];
+    function vsNoFilter() { return { type: '', cats: [], price: '', sale: '' }; }
+    function vsFresh() { return { q: '', tab: 'product', f: vsNoFilter(), step: 0, sort: 'rel', hi: -1, limit: VS_PAGE }; }
+    let vs = vsFresh();
+    function vsFilterOn(f) { return !!(f.type || f.cats.length || f.price || f.sale); }
+    function vsIsArt(p) { return (p._raw && p._raw.type === 'art') || p.collection === 'interiors'; }
+    // Does a piece pass the filter? `skip` leaves one question out, to count its options.
+    function vsPass(p, f, skip) {
+        if (skip !== 'type' && f.type && (f.type === 'art') !== vsIsArt(p)) return false;
+        if (skip !== 'cats' && f.cats.length && !f.cats.includes(p.category)) return false;
+        if (skip !== 'price' && f.price) {
+            const band = VS_BANDS.find(b => b[0] === f.price), n = vsPrice(p).price;
+            if (band && !(n >= band[2] && n < band[3])) return false;
+        }
+        if (skip !== 'sale' && f.sale && !vsPrice(p).onSale) return false;
+        return true;
+    }
+    function vsPieces(n) { return n + (n === 1 ? ' piece' : ' pieces'); }
 
     // Deterministic 4.0–5.0 rating per seller, stable across searches.
     function vspSellerRating(s) {
@@ -1730,24 +1819,37 @@
         const tokens = vsTokens(vs.q);
         const all = vsProducts();
         const users = vsUsers(all);
-        const active = tokens.length > 0 || !!vs.cat;       // showing results, not the starting point
+        const active = tokens.length > 0 || vsFilterOn(vs.f);   // showing results, not the starting point
         const popular = (VSP_POPULAR[document.body.dataset.mode === 'art' ? 'art' : 'clothing'] || [])
             .filter(t => !all.length || vsMatchProducts(all, [t.toLowerCase()]).length);
 
-        let hits = vsMatchProducts(all, tokens);
-        const cats = {};
-        hits.forEach(h => { const c = h.p.category; if (c) cats[c] = (cats[c] || 0) + 1; });
-        if (vs.cat && !cats[vs.cat]) vs.cat = '';
-        const narrowed = vs.cat ? hits.filter(h => h.p.category === vs.cat) : hits;
+        const hits = vsMatchProducts(all, tokens);
+        const narrowed = hits.filter(h => vsPass(h.p, vs.f));
         const userHits = vsMatchUsers(users, tokens);
 
         page.classList.toggle('has-q', !!vs.q);
+        page.classList.toggle('filtering', vs.step > 0);
+        page.querySelectorAll('.vs-prog i').forEach((seg, i) => seg.classList.toggle('on', i < vs.step));
         page.querySelectorAll('.vs-tab').forEach(t => {
             const mine = t.dataset.tab;
             t.classList.toggle('on', mine === vs.tab);
             t.setAttribute('aria-selected', mine === vs.tab ? 'true' : 'false');
-            t.querySelector('i').textContent = tokens.length ? (mine === 'product' ? hits.length : userHits.length) : '';
+            t.querySelector('i').textContent = tokens.length ? (mine === 'product' ? narrowed.length : userHits.length) : '';
         });
+
+        if (vs.step > 0) { body.innerHTML = vsStepHTML(hits, narrowed.length); vs.hi = -1; return; }
+
+        // The filter line: the Filter button, then each applied choice (tap to remove).
+        const f = vs.f;
+        const applied = []
+            .concat(f.type ? [['type', '', (VS_TYPES.find(t => t[0] === f.type) || [])[1]]] : [])
+            .concat(f.cats.map(c => ['cats', c, c]))
+            .concat(f.price ? [['price', '', (VS_BANDS.find(x => x[0] === f.price) || [])[1]]] : [])
+            .concat(f.sale ? [['sale', '', 'On sale']] : []);
+        const filterLine = `<div class="vs-chips vs-narrow">`
+            + `<button class="vs-chip on" type="button" data-vs="f-open">Filter</button>`
+            + applied.map(x => `<button class="vs-chip vs-applied" type="button" data-vs="f-drop" data-key="${x[0]}" data-val="${vspEscape(x[1])}" aria-label="Remove ${vspEscape(x[2])}">${vspEscape(x[2])}</button>`).join('')
+            + `</div>`;
 
         let html = '';
         if (vs.tab === 'user') {
@@ -1772,27 +1874,19 @@
                 html += `<div class="vs-head">Trending</div><div class="vs-chips">`
                     + popular.map(t => `<button class="vs-chip" type="button" data-vs="term" data-term="${vspEscape(t)}">${vspEscape(t)}</button>`).join('') + `</div>`;
             }
-            const catNames = Object.keys(cats).sort((a, b) => cats[b] - cats[a] || a.localeCompare(b));
-            if (catNames.length) {
-                html += `<div class="vs-head">Browse</div>`
-                    + catNames.map(c => `<button class="vs-row vs-hit" type="button" data-vs="cat" data-cat="${vspEscape(c)}">
-                            <span class="vs-row-main"><b>${vspEscape(c)}</b></span>
-                            <span class="vs-count">${cats[c]}</span><span class="vs-chev">›</span>
-                        </button>`).join('');
-            }
+            if (all.length) html += `<button class="vs-filterbtn" type="button" data-vs="f-open">Filter pieces <span>›</span></button>`;
         } else if (!hits.length) {
             html = vsEmpty(vs.q, 'pieces', popular.slice(0, 5));
+        } else if (!narrowed.length) {
+            html = filterLine + `<div class="vs-empty">
+                    <div class="vs-empty-t">Nothing found</div>
+                    <div class="vs-empty-m">No pieces match these choices.</div>
+                    <div class="vs-chips"><button class="vs-chip" type="button" data-vs="f-clear">Clear filter</button></div>
+                </div>`;
         } else {
-            const catNames = Object.keys(cats).sort((a, b) => cats[b] - cats[a] || a.localeCompare(b));
-            if (catNames.length > 1 || vs.cat) {
-                html += `<div class="vs-chips vs-narrow">`
-                    + `<button class="vs-chip${vs.cat ? '' : ' on'}" type="button" data-vs="cat" data-cat="">All</button>`
-                    + catNames.map(c => `<button class="vs-chip${vs.cat === c ? ' on' : ''}" type="button" data-vs="cat" data-cat="${vspEscape(c)}">${vspEscape(c)}</button>`).join('')
-                    + `</div>`;
-            }
-            const sortLabel = (VS_SORTS.find(s => s[0] === vs.sort) || VS_SORTS[0])[1];
+            const sortLabel = (VS_SORTS.find(x => x[0] === vs.sort) || VS_SORTS[0])[1];
             const sorted = vsSort(narrowed);
-            html += `<div class="vs-head">${narrowed.length} ${narrowed.length === 1 ? 'piece' : 'pieces'}
+            html += filterLine + `<div class="vs-head">${vsPieces(narrowed.length)}
                         <button class="vs-link" type="button" data-vs="sort">${sortLabel} ↕</button></div>`
                 + sorted.slice(0, vs.limit).map(h => vsProductRow(h.p, tokens)).join('');
             if (sorted.length > vs.limit) html += `<button class="vs-more" type="button" data-vs="more">Show more</button>`;
@@ -1814,6 +1908,11 @@
                         </label>
                         <button class="vs-close" type="button" data-vs="close" aria-label="Close search">Close</button>
                     </div>
+                    <div class="vs-flowbar">
+                        <button class="vs-back" type="button" data-vs="f-back">‹ Back</button>
+                        <div class="vs-prog" aria-hidden="true">${VS_STEPS.map(() => '<i></i>').join('')}</div>
+                        <button class="vs-close" type="button" data-vs="close" aria-label="Close search">Close</button>
+                    </div>
                     <div class="vs-tabs" role="tablist">
                         <button class="vs-tab on" type="button" role="tab" data-vs="tab" data-tab="product">Products<i></i></button>
                         <button class="vs-tab" type="button" role="tab" data-vs="tab" data-tab="user">Users<i></i></button>
@@ -1823,9 +1922,76 @@
             </div>
         </div>`;
 
+    // One filter question as a page of large options. Each option shows how many
+    // pieces it would leave, and options that would leave none are switched off.
+    function vsStepHTML(hits, total) {
+        const step = VS_STEPS[vs.step - 1], f = vs.f, key = step.key;
+        const pool = hits.filter(h => vsPass(h.p, f, key)).map(h => h.p);
+        let opts;
+        if (key === 'cats') {
+            const count = {};
+            pool.forEach(p => { if (p.category) count[p.category] = (count[p.category] || 0) + 1; });
+            opts = Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b))
+                .map(c => ({ val: c, label: c, n: count[c], on: f.cats.includes(c) }));
+        } else {
+            const list = key === 'type' ? VS_TYPES : key === 'price' ? VS_BANDS : VS_SALE;
+            opts = list.map(o => {
+                const trial = Object.assign({}, f, { [key]: o[0] });
+                return { val: o[0], label: o[1], n: pool.filter(p => vsPass(p, trial)).length, on: f[key] === o[0] };
+            });
+        }
+        const last = vs.step === VS_STEPS.length;
+        return `<div class="vs-step" role="group" aria-labelledby="vsStepTitle">
+                    <div class="vs-step-n">Step ${vs.step} of ${VS_STEPS.length}</div>
+                    <h2 class="vs-step-t" id="vsStepTitle" tabindex="-1">${step.title}</h2>
+                    <p class="vs-step-s">${step.sub}</p>
+                    <div class="vs-opts">`
+            + opts.map(o => `<button class="vs-opt${o.on ? ' on' : ''}" type="button" data-vs="f-opt" data-val="${vspEscape(o.val)}"
+                            aria-pressed="${o.on ? 'true' : 'false'}"${!o.n && !o.on ? ' disabled' : ''}>
+                        <span class="vs-opt-box"></span><span class="vs-opt-l">${vspEscape(o.label)}</span><span class="vs-count">${o.n}</span>
+                    </button>`).join('')
+            + `</div></div>
+                <div class="vs-foot" aria-live="polite">
+                    <button class="vs-more" type="button" data-vs="${last ? 'f-done' : 'f-next'}">${last ? 'Show ' + vsPieces(total) : 'Next'}</button>
+                    ${last ? '' : `<button class="vs-link" type="button" data-vs="f-done">Show ${vsPieces(total)} now</button>`}
+                </div>`;
+    }
+    // Move between pages: the current one fades out, the next fades in, and focus
+    // lands on the new question so it is read out.
+    function vsGo(step) {
+        const page = document.getElementById('veroSearchPage');
+        const body = document.getElementById('vsBody');
+        if (!page || !body) return;
+        const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        clearTimeout(vsGo.t);
+        body.classList.add('vs-out');
+        vsGo.t = setTimeout(() => {
+            vs.step = step; vs.limit = VS_PAGE;
+            vsRender();
+            page.scrollTop = 0;
+            body.classList.remove('vs-out');
+            const title = document.getElementById('vsStepTitle');
+            if (title) title.focus({ preventScroll: true });
+        }, still ? 0 : 220);
+    }
+    function vsPickOption(val) {
+        const key = VS_STEPS[vs.step - 1].key, f = vs.f;
+        if (key === 'cats') {
+            f.cats = f.cats.includes(val) ? f.cats.filter(c => c !== val) : f.cats.concat(val);
+            vsRender();
+            return;
+        }
+        if (key === 'type' && f.type !== val) f.cats = [];     // categories belong to the department
+        f[key] = val;
+        vsRender();
+        // A single choice answers the question — carry on to the next page.
+        clearTimeout(vsGo.t);
+        vsGo.t = setTimeout(() => vsGo(vs.step < VS_STEPS.length ? vs.step + 1 : 0), 260);
+    }
+
     function vsSetQuery(q, focus) {
         const input = document.getElementById('vspInput');
-        vs.q = q; vs.cat = ''; vs.limit = VS_PAGE;
+        vs.q = q; vs.limit = VS_PAGE;
         if (input && input.value !== q) input.value = q;
         vsRender();
         const page = document.getElementById('veroSearchPage');
@@ -1850,7 +2016,7 @@
         const page = document.getElementById('veroSearchPage');
         const input = document.getElementById('vspInput');
 
-        input.addEventListener('input', () => { vs.q = input.value; vs.cat = ''; vs.limit = VS_PAGE; vsRender(); });
+        input.addEventListener('input', () => { vs.q = input.value; vs.limit = VS_PAGE; vsRender(); });
         input.addEventListener('keydown', e => {
             if (e.key === 'ArrowDown') { e.preventDefault(); vsMove(1); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); vsMove(-1); }
@@ -1872,11 +2038,22 @@
             const act = el.dataset.vs;
             if (act === 'close') window.veroCloseSearchPage();
             else if (act === 'clear') { e.preventDefault(); vsSetQuery('', true); }
-            else if (act === 'tab') { vs.tab = el.dataset.tab; vs.cat = ''; vs.limit = VS_PAGE; vsRender(); page.scrollTop = 0; }
+            else if (act === 'tab') { vs.tab = el.dataset.tab; vs.limit = VS_PAGE; vsRender(); page.scrollTop = 0; }
             else if (act === 'forget') { e.stopPropagation(); vsSaveRecent(vsRecent().filter(r => r !== el.dataset.term)); vsRender(); }
             else if (act === 'clear-recent') { vsSaveRecent([]); vsRender(); }
             else if (act === 'term') { vs.tab = 'product'; vsRemember(el.dataset.term); vsSetQuery(el.dataset.term, false); }
-            else if (act === 'cat') { vs.cat = el.dataset.cat; vs.limit = VS_PAGE; vsRender(); if (!vs.q) page.scrollTop = 0; }
+            else if (act === 'f-open') vsGo(1);
+            else if (act === 'f-back') vsGo(vs.step - 1);
+            else if (act === 'f-next') vsGo(vs.step + 1);
+            else if (act === 'f-done') vsGo(0);
+            else if (act === 'f-opt') vsPickOption(el.dataset.val);
+            else if (act === 'f-clear') { vs.f = vsNoFilter(); vs.limit = VS_PAGE; vsRender(); }
+            else if (act === 'f-drop') {
+                const k = el.dataset.key;
+                if (k === 'cats') vs.f.cats = vs.f.cats.filter(c => c !== el.dataset.val);
+                else { vs.f[k] = ''; if (k === 'type') vs.f.cats = []; }
+                vs.limit = VS_PAGE; vsRender();
+            }
             else if (act === 'sort') {
                 const i = VS_SORTS.findIndex(s => s[0] === vs.sort);
                 vs.sort = VS_SORTS[(i + 1) % VS_SORTS.length][0];
@@ -1895,7 +2072,7 @@
         const page = document.getElementById('veroSearchPage');
         const input = document.getElementById('vspInput');
         // Fresh each open: empty field, Products tab, the starting point below.
-        vs = { q: '', tab: 'product', cat: '', sort: 'rel', hi: -1, limit: VS_PAGE };
+        vs = vsFresh();
         input.value = '';
         vsRender();
         vsEnsureData(vsRender);
@@ -1915,12 +2092,13 @@
         const input = document.getElementById('vspInput');
         if (input) input.blur();
     };
-    // Escape empties the field first; a second press closes the search.
+    // Escape leaves the filter pages, then empties the search, then closes it.
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape') return;
         const page = document.getElementById('veroSearchPage');
         if (!page || !page.classList.contains('open')) return;
-        if (vs.q || vs.cat) vsSetQuery('', true);
+        if (vs.step) vsGo(0);
+        else if (vs.q || vsFilterOn(vs.f)) { vs.f = vsNoFilter(); vsSetQuery('', true); }
         else window.veroCloseSearchPage();
     });
 
