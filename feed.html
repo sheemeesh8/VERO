@@ -393,7 +393,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category slider, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261115b">
+    <link rel="stylesheet" href="assets/home.css?v=20261115c">
 </head>
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
@@ -463,6 +463,10 @@
             <section class="hm-rail" id="hmGenderRail" aria-label="Pieces in this category"></section>
 
             <section class="hm-four" id="hmFour" aria-label="More to browse"></section>
+
+            <!-- Promoted pieces: one to a slide — the cut-out on the card ground beside
+                 a slider of the piece's own photos, the details underneath. -->
+            <section class="hm-promo" id="hmPromo" aria-label="Promoted pieces" hidden></section>
 
             <figure class="hm-sale-pic" id="hmSalePic"><img src="sale-hero.jpg" alt="" loading="lazy"></figure>
             <section class="hm-sale" aria-labelledby="hmSaleTitle">
@@ -722,7 +726,70 @@
             if (pic) pic.src = (state.mode === 'art') ? 'art-hero.jpg' : 'sale-hero.jpg';
         }
 
-        function buildAll() { buildHero(); buildCats(); buildPieces(); buildSale(); syncSubnav(); playCurrent(); }
+        // ----- Promoted pieces ----------------------------------------------
+        // One piece per slide. Left half: the piece itself on the product-card
+        // ground. Right half: its accompanying photos on a slider with the card's
+        // own progress mark. Under them: name | brand, price, Discover more — and
+        // the description on the other side.
+        function promoSlide(p) {
+            var d = VC.discountOf(p._raw), href = esc(hrefOf(p, d));
+            var piece = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
+                                : '<span class="hm-promo-emoji" aria-hidden="true">' + esc(p.icon || '🛍️') + '</span>';
+            var shots = (p.gallery || []).slice(0, 6);
+            var photos = shots.length
+                ? '<div class="hm-promo-shots">' + shots.map(function (src) { return '<a class="hm-promo-shot" href="' + href + '" tabindex="-1"><img src="' + esc(src) + '" alt="" loading="lazy"></a>'; }).join('') + '</div>' +
+                  '<div class="hm-promo-bar" aria-hidden="true"><span style="width:' + (100 / shots.length) + '%"></span></div>'
+                : '<a class="hm-promo-shot hm-promo-shot--none" href="' + href + '" tabindex="-1">' + piece + '</a>';
+            var price = d.onSale ? '<s>' + num(d.original) + '₪</s> ' + num(d.price) + '₪' : num(VC.toNum(p.price)) + '₪';
+            return '<article class="hm-promo-slide">' +
+                '<div class="hm-promo-media">' +
+                    '<a class="hm-promo-piece" href="' + href + '" title="' + esc(p.name) + '">' + piece + '</a>' +
+                    '<div class="hm-promo-photos">' + photos + '</div>' +
+                '</div>' +
+                '<div class="hm-promo-info">' +
+                    '<div class="hm-promo-left">' +
+                        '<div class="hm-promo-name"><b>' + esc(p.name) + '</b><span>' + esc(p.seller) + '</span></div>' +
+                        '<div class="hm-promo-price">' + price + '</div>' +
+                        '<a class="hm-promo-more" href="' + href + '">Discover more</a>' +
+                    '</div>' +
+                    (p.description ? '<p class="hm-promo-desc">' + esc(p.description) + '</p>' : '') +
+                '</div></article>';
+        }
+        function buildPromo() {
+            var el = document.getElementById('hmPromo'); if (!el) return;
+            var list = modeList().filter(function (p) { return p.promoted; }).slice(0, 8);
+            el.hidden = !list.length;
+            if (el._dots) el._dots.hidden = !list.length;
+            if (!list.length) { el.innerHTML = ''; return; }
+            el.innerHTML = list.map(promoSlide).join('');
+            el.scrollLeft = 0;
+            // Each photo slider moves its own mark, like the product card.
+            [].forEach.call(el.querySelectorAll('.hm-promo-shots'), function (sl) {
+                var mark = sl.parentNode.querySelector('.hm-promo-bar span'), raf = 0;
+                sl.addEventListener('scroll', function () {
+                    cancelAnimationFrame(raf);
+                    raf = requestAnimationFrame(function () {
+                        var max = sl.scrollWidth - sl.clientWidth, n = sl.children.length;
+                        if (mark && max > 0) mark.style.transform = 'translateX(' + (Math.abs(sl.scrollLeft) / max) * (n - 1) * 100 + '%)';
+                    });
+                }, { passive: true });
+            });
+            // Marks under the block: one per promoted piece.
+            var dots = el._dots;
+            if (!dots) {
+                dots = el._dots = document.createElement('div'); dots.className = 'hm-dots'; dots.setAttribute('aria-hidden', 'true');
+                el.parentNode.insertBefore(dots, el.nextSibling);
+                var raf2 = 0;
+                el.addEventListener('scroll', function () { cancelAnimationFrame(raf2); raf2 = requestAnimationFrame(function () { markDot(el); }); }, { passive: true });
+                dots.addEventListener('click', function (e) {
+                    var k = [].indexOf.call(dots.children, e.target); if (k >= 0) el.scrollTo({ left: k * el.clientWidth, behavior: 'smooth' });
+                });
+            }
+            dots.innerHTML = list.length > 1 ? list.map(function () { return '<i></i>'; }).join('') : '';
+            markDot(el);
+        }
+
+        function buildAll() { buildHero(); buildCats(); buildPieces(); buildPromo(); buildSale(); syncSubnav(); playCurrent(); }
 
         // ----- Results: search, the sale, everything ------------------------
         var input = document.getElementById('feedSearchInput');
