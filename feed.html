@@ -393,7 +393,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category slider, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261115d">
+    <link rel="stylesheet" href="assets/home.css?v=20261115e">
 </head>
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
@@ -731,6 +731,34 @@
         // ground. Right half: its accompanying photos on a slider with the card's
         // own progress mark. Under them: name | brand, price, Discover more — and
         // the description on the other side.
+        // What the caption beside the name cycles through: the brand, then the
+        // size, the style and the fabric — whichever the listing has.
+        function promoFacts(p) {
+            var r = p._raw || {};
+            var size = Array.isArray(r.size) ? r.size.join(' / ') : (r.size || '');
+            var style = Array.isArray(r.style) ? r.style[0] : (r.style || '');
+            return [p.seller, size && ('Size ' + size), style, r.fabric || r.material || ''].filter(Boolean);
+        }
+        var promoTimer = 0;
+        function runPromoFacts(el) {
+            clearInterval(promoTimer);
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            var rots = [].map.call(el.querySelectorAll('.hm-promo-rot'), function (s) {
+                var vals = []; try { vals = JSON.parse(s.getAttribute('data-vals')) || []; } catch (e) {}
+                return { el: s, vals: vals, i: 0 };
+            }).filter(function (r) { return r.vals.length > 1; });
+            if (!rots.length) return;
+            promoTimer = setInterval(function () {
+                rots.forEach(function (r) {
+                    r.el.classList.add('is-out');                       // fade out, swap the word, fade in
+                    setTimeout(function () {
+                        r.i = (r.i + 1) % r.vals.length;
+                        r.el.textContent = r.vals[r.i];
+                        r.el.classList.remove('is-out');
+                    }, 380);
+                });
+            }, 2600);
+        }
         function promoSlide(p) {
             var d = VC.discountOf(p._raw), href = esc(hrefOf(p, d));
             var piece = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
@@ -748,7 +776,7 @@
                 '</div>' +
                 '<div class="hm-promo-info">' +
                     '<div class="hm-promo-left">' +
-                        '<div class="hm-promo-name"><b>' + esc(p.name) + '</b><span>' + esc(p.seller) + '</span></div>' +
+                        '<div class="hm-promo-name"><b>' + esc(p.name) + '</b><span class="hm-promo-rot" data-vals="' + esc(JSON.stringify(promoFacts(p))) + '">' + esc(p.seller) + '</span></div>' +
                         '<div class="hm-promo-price">' + price + '</div>' +
                         '<a class="hm-promo-more" href="' + href + '">Discover more</a>' +
                     '</div>' +
@@ -760,8 +788,9 @@
             var list = modeList().filter(function (p) { return p.promoted; }).slice(0, 8);
             el.hidden = !list.length;
             if (el._dots) el._dots.hidden = !list.length;
-            if (!list.length) { el.innerHTML = ''; return; }
+            if (!list.length) { el.innerHTML = ''; clearInterval(promoTimer); return; }
             el.innerHTML = list.map(promoSlide).join('');
+            runPromoFacts(el);
             el.scrollLeft = 0;
             // Each photo slider moves its own mark, like the product card.
             [].forEach.call(el.querySelectorAll('.hm-promo-shots'), function (sl) {
