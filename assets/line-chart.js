@@ -85,7 +85,12 @@
         barsmax:  'Each column is one day. ' + INK + 'the dark one is the highest.',
         hbars:    'Longer bar means more. ' + INK + 'the dark one is the highest.'
     };
-    function keyFor(name, opts) { return opts.key === false ? '' : '<p class="vkey">' + (typeof opts.key === 'string' ? opts.key : KEYS[name] || '') + '</p>'; }
+    // Only the up / down bars need their two colours named; the rest read on their own.
+    function keyFor(name, opts) {
+        if (opts.key === false) return '';
+        var t = typeof opts.key === 'string' ? opts.key : (name === 'delta' ? KEYS.delta : '');
+        return t ? '<p class="vkey">' + t + '</p>' : '';
+    }
     window.veroChartWords = { say: sayFor, key: keyFor };
     var MAX_PTS = 12;         // a value label on every break needs room: long series are grouped
 
@@ -158,7 +163,17 @@
         if (!n) return '<div class="vlc"></div>';
         var trend = trendOf(v);
         color = TREND[trend];   // always the chart blue
-        if (opts.style && opts.style !== 'hairline') return styled(opts.style, v, lbl, fmt, trend, color, opts);
+        // Calm set: a trend over time is always the same filled line; only "change
+        // against the period before" keeps its up / down bars. The older variants
+        // (hairlines, dots, lollipop, heat, step, baseline, marker line) all read as that line.
+        if (n === 1) {
+            // One point so far (the first day of a week): a flat line at that value,
+            // with the sentence written for the single point.
+            var one = sayFor(v, lbl, fmt, opts).replace(/^<p class="vsay">|<\/p>$/g, '');
+            opts = Object.assign({}, opts, { say: one || false, style: 'area' });
+            v = [v[0], v[0]]; lbl = lbl ? [lbl[0], lbl[0]] : null;
+        }
+        return styled(opts.style === 'delta' ? 'delta' : 'area', v, lbl, fmt, trend, color, opts);
         var max = Math.max.apply(null, v), min = Math.min(0, Math.min.apply(null, v));
         var span = (max - min) || 1;
         var xp = function (i) { return n <= 1 ? 50 : (i / (n - 1)) * 100; };
@@ -363,7 +378,10 @@
         opts._say = opts.say === false ? '' : '<p class="vsay">' + (typeof opts.say === 'string' ? opts.say :
             'The biggest part is <b>' + esc(named.label) + '</b>: ' + Math.round(Number(named.value) / total * 100) + '% (' + esc(fmt(Number(named.value))) + ').') + '</p>';
         opts._key = opts.key ? '<p class="vkey">' + opts.key + '</p>' : '';
-        if (opts.style && opts.style !== 'ring') return share(opts.style, items, total, fmt, opts);
+        // Calm set: shares are a ring with its legend, or ranked bars with names.
+        // (pie, half, rings, stack, blocks, tree, split and waffle are drawn as ranked bars.)
+        if (opts.style === 'donut') opts.style = 'ring';
+        if (opts.style && opts.style !== 'ring') return share('ranked', items, total, fmt, opts);
         var R = 15.915, C = 2 * Math.PI * R, off = 0, gap = items.length > 1 ? 0.6 : 0;
         var arcs = items.map(function (it, i) {
             var len = Number(it.value) / total * C, seg = Math.max(0.01, len - gap);
@@ -524,7 +542,7 @@
     // Every pie on a page is drawn differently: a chart's pie takes the first
     // style not used by the page's own share charts or by another chart's pie.
     // It is remembered on the chart's holder, so a re-drawn chart keeps its style.
-    var ALL = ['pie', 'half', 'ring', 'rings', 'stack', 'blocks', 'tree', 'ranked', 'donut', 'split', 'waffle'], turn = 0;
+    var ALL = ['ring'], turn = 0;
     function styleFor(chart) {
         var host = chart.parentNode;
         if (host._vswStyle) return host._vswStyle;
@@ -605,7 +623,10 @@
         swipe(chart, function () { setMode(chart, true); });
         styleFor(chart);   // settle the pie style now, in page order
     }
-    function scan() { document.querySelectorAll('[data-vsw]').forEach(enhance); }
+    // Calm set: a chart is drawn one way. The graph ⇄ pie switch (and its swipe) is
+    // off — a trend over time read as a pie added a control without adding meaning.
+    var SWITCH = false;
+    function scan() { if (SWITCH) document.querySelectorAll('[data-vsw]').forEach(enhance); }
     var pending = false;
     function schedule() { if (pending) return; pending = true; setTimeout(function () { pending = false; scan(); }, 50); }
     function boot() { scan(); try { new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true }); } catch (e) {} }
