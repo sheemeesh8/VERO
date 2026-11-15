@@ -1168,11 +1168,9 @@
         .vs-barrow { display: flex; align-items: stretch; gap: 10px; }
         .vs-bar {
             flex: 1; min-width: 0; height: 54px; box-sizing: border-box;
-            display: flex; align-items: center; gap: 12px; padding: 0 14px;
-            border: 1.5px solid #111; background: #fff;
-            transition: box-shadow 0.2s ease;
+            display: flex; align-items: center; gap: 12px; padding: 0;
+            border: 0; border-bottom: 1px solid #111; background: none;
         }
-        .vs-bar:focus-within { box-shadow: 4px 4px 0 #111; }
         .vs-bar svg { width: 19px; height: 19px; flex: none; stroke: #111; stroke-width: 1.6; fill: none; }
         .vs-bar input {
             flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; padding: 0; margin: 0;
@@ -1256,32 +1254,30 @@
             font-size: 16px; font-weight: 500; text-transform: uppercase; color: #fff;
         }
 
-        .vs-chips { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px; }
+        .vs-chips { display: flex; flex-wrap: wrap; gap: 6px 22px; padding-top: 8px; }
         .vs-chip {
-            border: 1px solid #111; padding: 9px 14px; font-size: 12px; letter-spacing: 0.3px;
-            transition: background 0.18s ease, color 0.18s ease;
+            padding: 6px 0; font-size: 14px; letter-spacing: 0.2px; color: #111;
+            transition: color 0.18s ease;
         }
-        .vs-chip:hover, .vs-chip.on { background: #111; color: #fff; }
+        .vs-chip:hover { color: #8a877f; }
         /* The filter line above the results: the Filter button, then what is
            applied, each with its own remove mark. Scrolls sideways on one line. */
-        .vs-narrow { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 14px 20px 4px; scrollbar-width: none; }
+        .vs-narrow { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 16px 20px 0; scrollbar-width: none; }
         .vs-narrow::-webkit-scrollbar { display: none; }
-        .vs-narrow .vs-chip { flex: none; padding: 8px 12px; font-size: 11.5px; }
-        .vs-narrow .vs-chip.vs-applied { border-color: #d9d5cd; }
-        .vs-narrow .vs-chip.vs-applied::after { content: '×'; margin-left: 8px; color: #8a877f; }
-        .vs-narrow .vs-chip.vs-applied:hover::after { color: #fff; }
+        .vs-narrow .vs-chip { flex: none; font-size: 13px; }
+        .vs-narrow .vs-chip.on { text-decoration: underline; text-underline-offset: 5px; }
+        .vs-narrow .vs-chip.vs-applied { color: #8a877f; }
+        .vs-narrow .vs-chip.vs-applied::after { content: '×'; margin-left: 6px; }
+        .vs-narrow .vs-chip.vs-applied:hover { color: #111; }
         .vs-filterbtn {
-            display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;
-            margin-top: 28px; padding: 17px 16px; background: #fff; color: #111; border: 1.5px solid #111; cursor: pointer;
-            font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
-            transition: background 0.2s ease, color 0.2s ease;
+            display: block; margin-top: 30px; padding: 6px 0; background: none; border: 0; color: #111; cursor: pointer;
+            font-size: 14px; text-decoration: underline; text-underline-offset: 5px;
         }
-        .vs-filterbtn:hover { background: #111; color: #fff; }
-        .vs-filterbtn span { font-size: 16px; line-height: 1; font-weight: 400; }
+        .vs-filterbtn:hover { color: #8a877f; }
 
         /* ===== Filter, one question per page =====
-           While filtering, the field and tabs step aside for a slim bar (Back,
-           progress, Close). Each step is its own page: the old one fades out,
+           Words only. While filtering, the field and tabs step aside for Back and
+           Close. Each step is its own page: the old one fades out,
            the next fades in. */
         .vs-flowbar { display: none; align-items: center; gap: 16px; height: 54px; }
         .vsp-overlay.filtering .vs-flowbar { display: flex; }
@@ -1290,9 +1286,7 @@
             flex: none; background: none; border: 0; padding: 10px 8px 10px 0; margin: 0; color: #111; cursor: pointer;
             font-size: 11px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase;
         }
-        .vs-prog { flex: 1; display: flex; gap: 4px; }
-        .vs-prog i { flex: 1; height: 2px; background: #e6e3dd; transition: background 0.35s ease; }
-        .vs-prog i.on { background: #111; }
+        .vs-flowbar { justify-content: space-between; }
         .vs-body { transition: opacity 0.22s ease; }
         .vs-body.vs-out { opacity: 0; }
         .vs-step { padding-top: 34px; }
@@ -1300,32 +1294,25 @@
         .vs-step-n { font-size: 10px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: #8a877f; }
         .vs-step-t { margin: 12px 0 0; font-size: 28px; line-height: 1.2; font-weight: 300; letter-spacing: 0.2px; color: #111; outline: none; }
         .vs-step-s { margin: 8px 0 0; font-size: 13px; color: #8a877f; }
-        .vs-opts { margin-top: 26px; border-top: 1px solid #eeebe6; }
+        .vs-opts { margin-top: 30px; display: flex; flex-direction: column; align-items: flex-start; }
         .vs-opt {
-            display: flex; align-items: center; gap: 14px; width: 100%; box-sizing: border-box; min-height: 60px;
-            padding: 14px 4px; background: none; border: 0; border-bottom: 1px solid #eeebe6; color: #111; cursor: pointer;
-            text-align: left; font-size: 16px; font-weight: 400;
-            transition: background 0.15s ease, padding 0.2s ease;
+            display: block; min-height: 50px; padding: 10px 0; background: none; border: 0; cursor: pointer;
+            text-align: left; font-size: 19px; font-weight: 300; color: #8a877f;
+            transition: color 0.18s ease;
         }
-        .vs-opt:hover { background: #f6f5f1; }
-        .vs-opt[disabled] { color: #b9b5ad; cursor: default; background: none; }
-        .vs-opt-box {
-            flex: none; width: 20px; height: 20px; box-sizing: border-box; border: 1.5px solid #111;
-            display: grid; place-items: center; transition: background 0.18s ease;
-        }
-        .vs-opt[disabled] .vs-opt-box { border-color: #d9d5cd; }
-        .vs-opt-box::after { content: ''; width: 8px; height: 8px; background: #fff; opacity: 0; transition: opacity 0.18s ease; }
-        .vs-opt.on { font-weight: 600; }
-        .vs-opt.on .vs-opt-box { background: #111; }
-        .vs-opt.on .vs-opt-box::after { opacity: 1; }
-        .vs-opt-l { flex: 1; min-width: 0; }
+        .vs-opt:hover { color: #111; }
+        .vs-opt.on { color: #111; font-weight: 500; text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px; }
+        .vs-opt[disabled] { color: #d3cfc7; cursor: default; }
         .vs-foot {
-            position: sticky; bottom: 0; background: #fff; margin-top: 26px;
-            padding: 12px 0 calc(env(safe-area-inset-bottom, 0px) + 14px);
-            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            position: sticky; bottom: 0; background: #fff; margin-top: 30px;
+            padding: 14px 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
+            display: flex; align-items: baseline; justify-content: space-between; gap: 20px;
         }
-        .vs-foot .vs-more { margin-top: 0; }
-        .vs-foot .vs-link { padding: 12px 8px; }
+        .vs-next {
+            background: none; border: 0; padding: 8px 0; margin: 0; color: #111; cursor: pointer;
+            font-size: 16px; font-weight: 500; text-decoration: underline; text-underline-offset: 6px;
+        }
+        .vs-foot .vs-link { padding: 8px 0; }
         .vsp-overlay button:focus-visible, .vsp-overlay a:focus-visible, .vsp-overlay [tabindex="0"]:focus-visible {
             outline: 2px solid #111; outline-offset: 2px;
         }
@@ -1334,6 +1321,7 @@
         .vs-empty-t { font-size: 20px; font-weight: 300; letter-spacing: 0.3px; }
         .vs-empty-m { font-size: 13px; color: #8a877f; line-height: 1.6; margin-top: 8px; }
         .vs-empty .vs-chips { justify-content: center; margin-top: 14px; }
+        .vs-empty .vs-chip { text-decoration: underline; text-underline-offset: 5px; }
         .vs-more {
             display: block; width: 100%; margin-top: 18px; padding: 15px; box-sizing: border-box;
             background: #111; color: #fff; border: 1.5px solid #111; cursor: pointer;
@@ -1347,7 +1335,7 @@
             .vs-narrow { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .vsp-overlay, .vs-body, .vs-body > *, .vs-tab::after, .vs-prog i { transition: none; animation: none; }
+            .vsp-overlay, .vs-body, .vs-body > *, .vs-tab::after { transition: none; animation: none; }
         }
 
         /* ===== Shared five-star rating (outline stars, proportional fill) ===== */
@@ -1630,7 +1618,7 @@
     // The filter is asked one question per page, in this order.
     const VS_STEPS = [
         { key: 'type',  title: 'What are you looking for?', sub: 'Choose one.' },
-        { key: 'cats',  title: 'Which categories?',         sub: 'Pick as many as you like, or none for all of them.' },
+        { key: 'cats',  title: 'Which categories?',         sub: 'As many as you like.' },
         { key: 'price', title: 'What is your budget?',      sub: 'Choose one.' },
         { key: 'sale',  title: 'Only pieces on sale?',      sub: 'Choose one.' }
     ];
@@ -1829,7 +1817,6 @@
 
         page.classList.toggle('has-q', !!vs.q);
         page.classList.toggle('filtering', vs.step > 0);
-        page.querySelectorAll('.vs-prog i').forEach((seg, i) => seg.classList.toggle('on', i < vs.step));
         page.querySelectorAll('.vs-tab').forEach(t => {
             const mine = t.dataset.tab;
             t.classList.toggle('on', mine === vs.tab);
@@ -1874,7 +1861,7 @@
                 html += `<div class="vs-head">Trending</div><div class="vs-chips">`
                     + popular.map(t => `<button class="vs-chip" type="button" data-vs="term" data-term="${vspEscape(t)}">${vspEscape(t)}</button>`).join('') + `</div>`;
             }
-            if (all.length) html += `<button class="vs-filterbtn" type="button" data-vs="f-open">Filter pieces <span>›</span></button>`;
+            if (all.length) html += `<button class="vs-filterbtn" type="button" data-vs="f-open">Filter</button>`;
         } else if (!hits.length) {
             html = vsEmpty(vs.q, 'pieces', popular.slice(0, 5));
         } else if (!narrowed.length) {
@@ -1910,7 +1897,6 @@
                     </div>
                     <div class="vs-flowbar">
                         <button class="vs-back" type="button" data-vs="f-back">‹ Back</button>
-                        <div class="vs-prog" aria-hidden="true">${VS_STEPS.map(() => '<i></i>').join('')}</div>
                         <button class="vs-close" type="button" data-vs="close" aria-label="Close search">Close</button>
                     </div>
                     <div class="vs-tabs" role="tablist">
@@ -1922,8 +1908,8 @@
             </div>
         </div>`;
 
-    // One filter question as a page of large options. Each option shows how many
-    // pieces it would leave, and options that would leave none are switched off.
+    // One filter question as a page of plain words. A chosen word is underlined;
+    // words that would leave no pieces are greyed out.
     function vsStepHTML(hits, total) {
         const step = VS_STEPS[vs.step - 1], f = vs.f, key = step.key;
         const pool = hits.filter(h => vsPass(h.p, f, key)).map(h => h.p);
@@ -1942,18 +1928,17 @@
         }
         const last = vs.step === VS_STEPS.length;
         return `<div class="vs-step" role="group" aria-labelledby="vsStepTitle">
-                    <div class="vs-step-n">Step ${vs.step} of ${VS_STEPS.length}</div>
+                    <div class="vs-step-n">${vs.step} / ${VS_STEPS.length}</div>
                     <h2 class="vs-step-t" id="vsStepTitle" tabindex="-1">${step.title}</h2>
-                    <p class="vs-step-s">${step.sub}</p>
+                    ${key === 'cats' ? `<p class="vs-step-s">${step.sub}</p>` : ''}
                     <div class="vs-opts">`
             + opts.map(o => `<button class="vs-opt${o.on ? ' on' : ''}" type="button" data-vs="f-opt" data-val="${vspEscape(o.val)}"
                             aria-pressed="${o.on ? 'true' : 'false'}"${!o.n && !o.on ? ' disabled' : ''}>
-                        <span class="vs-opt-box"></span><span class="vs-opt-l">${vspEscape(o.label)}</span><span class="vs-count">${o.n}</span>
-                    </button>`).join('')
+${vspEscape(o.label)}</button>`).join('')
             + `</div></div>
                 <div class="vs-foot" aria-live="polite">
-                    <button class="vs-more" type="button" data-vs="${last ? 'f-done' : 'f-next'}">${last ? 'Show ' + vsPieces(total) : 'Next'}</button>
-                    ${last ? '' : `<button class="vs-link" type="button" data-vs="f-done">Show ${vsPieces(total)} now</button>`}
+                    <button class="vs-next" type="button" data-vs="${last ? 'f-done' : 'f-next'}">${last ? 'Show ' + vsPieces(total) : 'Next'}</button>
+                    ${last ? '' : `<button class="vs-link" type="button" data-vs="f-done">Show ${vsPieces(total)}</button>`}
                 </div>`;
     }
     // Move between pages: the current one fades out, the next fades in, and focus
