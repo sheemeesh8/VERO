@@ -594,6 +594,29 @@ h3, h4, h5, h6, p,
                         onclick="event.stopPropagation();"
                         onchange="veroSetCardCollection(event, ${idx})">${opts}</select></label>`;
         }
+        // A discount, set right on the card: the same quiet control as the
+        // collection picker. The card repaints with the new price and badge.
+        const DISCOUNT_OPTS = [0, 10, 15, 20, 25, 30, 40, 50, 60, 70];
+        function tracked(text) { return Array.from(text).map(ch => `<span>${ch === ' ' ? '&nbsp;' : ch}</span>`).join(''); }
+        function discountSelect(p, idx) {
+            const cur = Number(p.discount) || 0;
+            const list = DISCOUNT_OPTS.includes(cur) ? DISCOUNT_OPTS : DISCOUNT_OPTS.concat(cur).sort((a, b) => a - b);
+            const opts = list.map(v => `<option value="${v}" ${v === cur ? 'selected' : ''}>${v ? v + '% off' : 'No discount'}</option>`).join('');
+            return `<label class="pe-coll"><span class="pe-coll-text" aria-hidden="true">${tracked(cur ? 'Discount ' + cur + '%' : 'Discount +')}</span>` +
+                   `<select class="pe-collection" title="Discount on this piece" aria-label="Set a discount"
+                        onmousedown="event.stopPropagation()"
+                        onclick="event.stopPropagation();"
+                        onchange="veroSetCardDiscount(event, ${idx})">${opts}</select></label>`;
+        }
+        window.veroSetCardDiscount = function (e, i) {
+            e.stopPropagation();
+            if (!listings[i]) return;
+            const v = Number(e.target.value) || 0;
+            listings[i].discount = v;
+            if ('salePercent' in listings[i]) listings[i].salePercent = v;   // keep the upload form's field in step
+            save('vero_listings', listings);
+            render();
+        };
         window.veroSetCardCollection = function (e, i) {
             e.stopPropagation();
             if (!listings[i]) return;
@@ -603,6 +626,10 @@ h3, h4, h5, h6, p,
             if (t) t.innerHTML = collLabel(e.target.value);
         };
 
+        // Shown inside the personal / seller area: the editor opens as its own page.
+        const EMBEDDED = window.self !== window.top && window.name !== 'vero-phone';
+        // Upload and Drafts leave the embedded list too, so they open with their own header.
+        if (EMBEDDED) document.querySelectorAll('a[href$=".html"], a[href*=".html?"]').forEach(a => { if (!a.closest('.product-card')) a.target = '_parent'; });
         function card(p, idx, past) {
             const src = imgOf(p);
             const status = p.status || 'active';
@@ -614,7 +641,7 @@ h3, h4, h5, h6, p,
 
             // Discounted price: p.discount is a percentage off the asking price.
             const price = Number(p.price) || 0;
-            const disc = Number(p.discount) || 0;
+            const disc = Number(p.discount) || Number(p.salePercent) || 0;
             const hasDisc = disc > 0 && disc < 100 && price > 0;
             const finalPrice = hasDisc ? Math.round(price * (1 - disc / 100)) : price;
             const priceHtml = hasDisc
@@ -646,9 +673,9 @@ h3, h4, h5, h6, p,
                     </div>`;
             const cardEl = past
                 ? `<div class="product-card" title="${p.name || 'Untitled listing'}">${inner}</div>`
-                : `<a class="product-card" href="${editHref}" title="${p.name || 'Untitled listing'}">${inner}</a>`;
-            // The collection picker sits under the card, not on its image.
-            return `<div class="prod-cell ${past ? 'past' : ''}">${cardEl}${past ? '' : collectionSelect(p, idx)}</div>`;
+                : `<a class="product-card" href="${editHref}"${EMBEDDED ? ' target="_parent"' : ''} title="${p.name || 'Untitled listing'}">${inner}</a>`;
+            // The discount and collection pickers sit under the card, not on its image.
+            return `<div class="prod-cell ${past ? 'past' : ''}">${cardEl}${past ? '' : discountSelect(p, idx) + collectionSelect(p, idx)}</div>`;
         }
 
         // ---- Draft card (inline preview, links into the drafts editor) ----
