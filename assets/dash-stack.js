@@ -2,10 +2,10 @@
    dash-stack.js — the dashboards as a calm list of sections.
 
    Every part of a dashboard (the headline chart, each titled group, each
-   chart card) becomes its own <section class="dsec">. The headline chart and
-   the first part stay open; every other part folds down to one row — its
-   name, its trend chip and a chevron — and opens when tapped. So a dashboard
-   opens as a short, readable page instead of a long wall of charts.
+   chart card) becomes its own <section class="dsec">, shown as one row — its
+   name, its trend chip and a chevron — that opens when tapped. The first row
+   starts open. So a dashboard opens as a short list of categories instead of
+   a long wall of charts.
 
    A folded part keeps its width (it is clipped, not removed), so its chart is
    already drawn at the right size when it opens.
@@ -89,14 +89,19 @@
         var secs = build(wrap);
         if (!secs.length) return;
         document.documentElement.classList.add('has-dsec');
-        // Each view (Business / Growth) opens with its own first part unfolded.
-        var seen = new Map();
+        // Every part is a row, the headline chart included (named by its own label,
+        // e.g. "Revenue"). Only the first row of the page starts open. On the Growth
+        // view the headline is not shown, so its first part is the open one.
+        var growth = /[?&]view=growth\b/.test(location.search);
+        var opened = 0;
         secs.forEach(function (s, i) {
             s.setAttribute('data-n', String(i + 1));
-            if (s.querySelector(':scope > .hero-chart')) { s.classList.add('dsec--hero'); return; }
-            var k = s.parentNode, c = seen.get(k) || 0;
-            seen.set(k, c + 1);
-            fold(s, c < OPEN_FIRST, i + 1);
+            var hero = !!s.querySelector(':scope > .hero-chart');
+            if (hero) s.classList.add('dsec--hero');
+            var hiddenView = s.parentNode.classList.contains('view') && s.parentNode.hidden;
+            var open = !hiddenView && !(hero && growth) && opened < OPEN_FIRST;
+            if (open) opened++;
+            fold(s, open, i + 1);
         });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
