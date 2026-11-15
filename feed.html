@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Arimo:wght@400;500;600;700&family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="search-box.css">
-    <link rel="stylesheet" href="zoom-parallax.css?v=8">
+    <link rel="stylesheet" href="zoom-parallax.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -393,30 +393,43 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category slider, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261114h">
+    <link rel="stylesheet" href="assets/home.css?v=20261115b">
 </head>
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
     <script>
         // Transparent (white icons) while the home hero is in view; goes solid
         // (white bar, dark icons) once the hero has scrolled nearly past the header.
+        // The hero is pinned while it zooms open (zoom-parallax.js); it is passed
+        // once its sticky track has been scrolled through.
         window.veroHeroPassed = function () {
             var w = document.getElementById('feedHeroWrap');
             if (!w) return window.scrollY > 80;
-            // Passed once the hero's bottom edge reaches the header.
-            return window.scrollY >= w.offsetTop + w.offsetHeight - 70;
+            var release = w.offsetTop + w.offsetHeight - window.innerHeight;
+            return window.scrollY >= release - 4;
         };
-        window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
+        // Solid header (dark icons) while the hero is still a small picture on the
+        // white stage and again after the hero; transparent only over the full-screen hero.
+        window.veroHeaderScrolled = function () {
+            if (window.veroHeroPassed()) return true;
+            var reduce = false; try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+            if (reduce) return false;                      // no zoom: the hero is full-screen from the start
+            var w = document.getElementById('feedHeroWrap'); if (!w) return false;
+            var pinned = Math.max(1, w.offsetHeight - window.innerHeight);
+            return (window.scrollY - w.offsetTop) / pinned < 0.9;    // until the picture has reached the top edge
+        };
     </script>
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=60"></script>
 
     <!-- ===================== THE HOME CORE (styles: assets/home.css) =====================
          hero → search line → two pieces → category slider → two pieces → four more → sale. -->
-    <div id="feedHeroWrap">
-        <section class="hm-hero" id="feedHero">
-            <video src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline></video>
-            <div class="hm-hero-cap">
+    <!-- Entrance: the hero opens as a tall picture on a white stage and grows to
+         full-screen as you scroll (zoom-parallax.js); its caption fades in at the end. -->
+    <div class="zp-wrap" id="feedHeroWrap">
+        <section class="hero hm-hero" id="feedHero">
+            <video class="hero-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline></video>
+            <div class="hm-hero-cap zp-endcap">
                 <h1 class="hm-hero-title" id="hmTitle">Autumn<br>Collection</h1>
                 <p class="hm-hero-sub" id="hmSub">Refined silhouettes for the season ahead</p>
                 <div class="hm-hero-num" id="hmCount">0</div>
@@ -820,5 +833,14 @@
     <script src="search-box.js" defer></script>
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
+    <!-- Hero zoom on scroll (zoom-parallax.css). -->
+    <script src="zoom-parallax.js?v=9"></script>
+    <script>
+        // The header reads its state on scroll; tell it once now, so it is right before the first scroll.
+        (function () {
+            var ping = function () { try { window.dispatchEvent(new Event('scroll')); } catch (e) {} };
+            ping(); window.addEventListener('load', ping); setTimeout(ping, 600);
+        })();
+    </script>
 </body>
 </html>
