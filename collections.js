@@ -151,34 +151,34 @@
     }
 
     // A spread of demo pieces so every collection and the sale hub always have
-    // something to show on a fresh device. Seeded once into vero_listings so
-    // seller edits and discounts attach to them like any real listing.
+    // something to show on a fresh device. Each carries the same details a real
+    // listing does (gender, style, fabric, colour) so the search filter can use them.
     function demoSeed() {
         var D = 864e5, now = Date.now();
         return [
-            { id: 'c_sp1', collection: 'spring', name: 'Linen shirt',      seller: 'Studio Noir',       category: 'Shirts',    price: 220, icon: '👔', salePercent: 20 },
-            { id: 'c_sp2', collection: 'spring', name: 'Floral midi',      seller: 'Designer Collection', category: 'Dresses', price: 340, icon: '👗' },
-            { id: 'c_sp3', collection: 'spring', name: 'Trench coat',      seller: 'Luxe Atelier',      category: 'Outerwear', price: 480, icon: '🧥', salePercent: 15 },
-            { id: 'c_su1', collection: 'summer', name: 'Straw hat',        seller: 'Sole Society',      category: 'Accessories', price: 90, icon: '👒', salePercent: 35 },
-            { id: 'c_su2', collection: 'summer', name: 'Beach linen set',  seller: 'Studio Vero',       category: 'Sets',      price: 260, icon: '🩳', salePercent: 45 },
-            { id: 'c_su3', collection: 'summer', name: 'Leather sandals',  seller: 'Sole Society',      category: 'Shoes',     price: 180, icon: '👡' },
-            { id: 'c_au1', collection: 'autumn', name: 'Wool cardigan',    seller: 'Vintage Vault',     category: 'Knitwear',  price: 300, icon: '🧶', salePercent: 25 },
-            { id: 'c_au2', collection: 'autumn', name: 'Suede boots',      seller: 'Sole Society',      category: 'Shoes',     price: 420, icon: '👢' },
-            { id: 'c_au3', collection: 'autumn', name: 'Plaid scarf',      seller: 'Art House',         category: 'Accessories', price: 120, icon: '🧣', salePercent: 30 },
-            { id: 'c_wi1', collection: 'winter', name: 'Down parka',       seller: 'Studio Noir',       category: 'Outerwear', price: 640, icon: '🧥', salePercent: 10 },
-            { id: 'c_wi2', collection: 'winter', name: 'Cashmere sweater', seller: 'Luxe Atelier',      category: 'Knitwear',  price: 390, icon: '🧶', salePercent: 50 },
-            { id: 'c_wi3', collection: 'winter', name: 'Leather gloves',   seller: 'Vintage Vault',     category: 'Accessories', price: 150, icon: '🧤' },
+            { id: 'c_sp1', collection: 'spring', name: 'Linen shirt',      seller: 'Studio Noir',       category: 'Shirts',    price: 220, icon: '👔', salePercent: 20, gender: 'Men', style: ['Classic', 'Minimalist'], fabric: 'Linen', color: 'White' },
+            { id: 'c_sp2', collection: 'spring', name: 'Floral midi',      seller: 'Designer Collection', category: 'Dresses', price: 340, icon: '👗', gender: 'Women', style: ['Bohemian', 'Vintage'], fabric: 'Cotton', color: 'Pink' },
+            { id: 'c_sp3', collection: 'spring', name: 'Trench coat',      seller: 'Luxe Atelier',      category: 'Outerwear', price: 480, icon: '🧥', salePercent: 15, gender: 'Women', style: ['Classic', 'Quiet Luxury'], fabric: 'Cotton', color: 'Beige' },
+            { id: 'c_su1', collection: 'summer', name: 'Straw hat',        seller: 'Sole Society',      category: 'Accessories', price: 90, icon: '👒', salePercent: 35, gender: 'Unisex', style: ['Bohemian'], fabric: 'Linen', color: 'Cream' },
+            { id: 'c_su2', collection: 'summer', name: 'Beach linen set',  seller: 'Studio Vero',       category: 'Sets',      price: 260, icon: '🩳', salePercent: 45, gender: 'Women', style: ['Minimalist', 'Bohemian'], fabric: 'Linen', color: 'White' },
+            { id: 'c_su3', collection: 'summer', name: 'Leather sandals',  seller: 'Sole Society',      category: 'Shoes',     price: 180, icon: '👡', gender: 'Women', style: ['Classic', 'Minimalist'], fabric: 'Leather', color: 'Brown' },
+            { id: 'c_au1', collection: 'autumn', name: 'Wool cardigan',    seller: 'Vintage Vault',     category: 'Knitwear',  price: 300, icon: '🧶', salePercent: 25, gender: 'Women', style: ['Vintage', 'Classic'], fabric: 'Wool', color: 'Grey' },
+            { id: 'c_au2', collection: 'autumn', name: 'Suede boots',      seller: 'Sole Society',      category: 'Shoes',     price: 420, icon: '👢', gender: 'Men', style: ['Classic', 'Streetwear'], fabric: 'Leather', color: 'Camel' },
+            { id: 'c_au3', collection: 'autumn', name: 'Plaid scarf',      seller: 'Art House',         category: 'Accessories', price: 120, icon: '🧣', salePercent: 30, gender: 'Unisex', style: ['Vintage', 'Classic'], fabric: 'Wool', color: 'Red' },
+            { id: 'c_wi1', collection: 'winter', name: 'Down parka',       seller: 'Studio Noir',       category: 'Outerwear', price: 640, icon: '🧥', salePercent: 10, gender: 'Men', style: ['Streetwear', 'Minimalist'], fabric: 'Synthetic', color: 'Black' },
+            { id: 'c_wi2', collection: 'winter', name: 'Cashmere sweater', seller: 'Luxe Atelier',      category: 'Knitwear',  price: 390, icon: '🧶', salePercent: 50, gender: 'Women', style: ['Quiet Luxury', 'Minimalist'], fabric: 'Cashmere', color: 'Cream' },
+            { id: 'c_wi3', collection: 'winter', name: 'Leather gloves',   seller: 'Vintage Vault',     category: 'Accessories', price: 150, icon: '🧤', gender: 'Men', style: ['Classic', 'Quiet Luxury'], fabric: 'Leather', color: 'Black' },
             // Interior Design — home decor for interior designers (art mode).
-            { id: 'c_in1', collection: 'interiors', type: 'art', name: 'Travertine side table', seller: 'Atelier Pierre',  category: 'Furniture', price: 2400, icon: '🪨' },
-            { id: 'c_in2', collection: 'interiors', type: 'art', name: 'Linen pleated floor lamp', seller: 'Lumen Studio', category: 'Lighting',  price: 1350, icon: '💡' },
-            { id: 'c_in3', collection: 'interiors', type: 'art', name: 'Hand-thrown stoneware vase', seller: 'Clay & Co',  category: 'Ceramics',  price: 480,  icon: '🏺' },
-            { id: 'c_in4', collection: 'interiors', type: 'art', name: 'Large abstract canvas',   seller: 'Studio Noir',      category: 'Wall Art',  price: 3200, icon: '🖼️' },
-            { id: 'c_in5', collection: 'interiors', type: 'art', name: 'Arched oak mirror',        seller: 'Nord Atelier',     category: 'Mirrors',   price: 1100, icon: '🪞' },
-            { id: 'c_in6', collection: 'interiors', type: 'art', name: 'Hand-knotted wool rug',    seller: 'Loom House',       category: 'Rugs',      price: 4600, icon: '🧶' },
-            { id: 'c_in7', collection: 'interiors', type: 'art', name: 'Bronze figure sculpture',  seller: 'Art House',        category: 'Sculpture', price: 2900, icon: '🗿' },
-            { id: 'c_in8', collection: 'interiors', type: 'art', name: 'Bouclé accent chair',      seller: 'Maison Vero',      category: 'Furniture', price: 3800, icon: '🪑' },
-            { id: 'c_in9', collection: 'interiors', type: 'art', name: 'Alabaster table lamp',     seller: 'Lumen Studio',     category: 'Lighting',  price: 890,  icon: '🕯️' },
-            { id: 'c_in10', collection: 'interiors', type: 'art', name: 'Wool & cashmere throw',   seller: 'Loom House',       category: 'Textiles',  price: 620,  icon: '🧣' }
+            { id: 'c_in1', collection: 'interiors', type: 'art', name: 'Travertine side table', seller: 'Atelier Pierre',  category: 'Furniture', price: 2400, icon: '🪨', style: ['Minimalist'], fabric: 'Stone', color: 'Beige' },
+            { id: 'c_in2', collection: 'interiors', type: 'art', name: 'Linen pleated floor lamp', seller: 'Lumen Studio', category: 'Lighting',  price: 1350, icon: '💡', style: ['Classic'], fabric: 'Linen', color: 'Cream' },
+            { id: 'c_in3', collection: 'interiors', type: 'art', name: 'Hand-thrown stoneware vase', seller: 'Clay & Co',  category: 'Ceramics',  price: 480,  icon: '🏺', style: ['Minimalist'], fabric: 'Ceramic', color: 'Grey' },
+            { id: 'c_in4', collection: 'interiors', type: 'art', name: 'Large abstract canvas',   seller: 'Studio Noir',      category: 'Wall Art',  price: 3200, icon: '🖼️', style: ['Minimalist'], fabric: 'Canvas', color: 'Multi' },
+            { id: 'c_in5', collection: 'interiors', type: 'art', name: 'Arched oak mirror',        seller: 'Nord Atelier',     category: 'Mirrors',   price: 1100, icon: '🪞', style: ['Classic'], fabric: 'Wood', color: 'Brown' },
+            { id: 'c_in6', collection: 'interiors', type: 'art', name: 'Hand-knotted wool rug',    seller: 'Loom House',       category: 'Rugs',      price: 4600, icon: '🧶', style: ['Bohemian'], fabric: 'Wool', color: 'Beige' },
+            { id: 'c_in7', collection: 'interiors', type: 'art', name: 'Bronze figure sculpture',  seller: 'Art House',        category: 'Sculpture', price: 2900, icon: '🗿', style: ['Classic'], fabric: 'Bronze', color: 'Gold' },
+            { id: 'c_in8', collection: 'interiors', type: 'art', name: 'Bouclé accent chair',      seller: 'Maison Vero',      category: 'Furniture', price: 3800, icon: '🪑', style: ['Quiet Luxury'], fabric: 'Wool', color: 'Cream' },
+            { id: 'c_in9', collection: 'interiors', type: 'art', name: 'Alabaster table lamp',     seller: 'Lumen Studio',     category: 'Lighting',  price: 890,  icon: '🕯️', style: ['Quiet Luxury'], fabric: 'Stone', color: 'White' },
+            { id: 'c_in10', collection: 'interiors', type: 'art', name: 'Wool & cashmere throw',   seller: 'Loom House',       category: 'Textiles',  price: 620,  icon: '🧣', style: ['Minimalist'], fabric: 'Cashmere', color: 'Grey' }
         ].map(function (p, i) { p.status = 'active'; p.createdAt = now - (i + 1) * D; p.demo = true; return p; });
     }
 

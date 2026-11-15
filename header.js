@@ -1306,7 +1306,7 @@
         .vs-foot {
             position: sticky; bottom: 0; background: #fff; margin-top: 30px;
             padding: 14px 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
-            display: flex; align-items: baseline; justify-content: space-between; gap: 20px;
+            display: flex; align-items: baseline; justify-content: flex-start; gap: 20px;
         }
         .vs-next {
             background: none; border: 0; padding: 8px 0; margin: 0; color: #111; cursor: pointer;
@@ -1317,6 +1317,10 @@
             outline: 2px solid #111; outline-offset: 2px;
         }
 
+        /* Matching pieces as the site's product cards, two to a row. */
+        .vs-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 14px; padding-top: 14px; }
+        .vs-cards .product-card { width: 100%; margin: 0; }
+        @media (min-width: 700px) { .vs-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         .vs-empty { padding: 54px 0 10px; text-align: center; }
         .vs-empty-t { font-size: 20px; font-weight: 300; letter-spacing: 0.3px; }
         .vs-empty-m { font-size: 13px; color: #8a877f; line-height: 1.6; margin-top: 8px; }
@@ -1615,32 +1619,91 @@
         search: '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
         clock: '<svg class="vs-row-ico" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 14"></polyline></svg>'
     };
-    // The filter is asked one question per page, in this order.
+    // The filter is a process: one question per page, in this order. A question
+    // with nothing to choose from is passed over, and "who is it for" is never
+    // asked when the profile already says.
     const VS_STEPS = [
-        { key: 'type',  title: 'What are you looking for?', sub: 'Choose one.' },
-        { key: 'cats',  title: 'Which categories?',         sub: 'As many as you like.' },
-        { key: 'price', title: 'What is your budget?',      sub: 'Choose one.' },
-        { key: 'sale',  title: 'Only pieces on sale?',      sub: 'Choose one.' }
+        { key: 'product',  title: 'What are you looking for?', any: 'Anything' },
+        { key: 'gender',   title: 'Who is it for?',            any: 'Everyone' },
+        { key: 'style',    title: 'Which style?',              any: 'Any style' },
+        { key: 'material', title: 'Which material?',           any: 'Any material' },
+        { key: 'color',    title: 'Which colour?',             any: 'Any colour' },
+        { key: 'price',    title: 'What is your budget?',      any: 'Any price' }
     ];
-    const VS_TYPES = [['', 'Everything'], ['clothing', 'Fashion'], ['art', 'Art & interiors']];
-    const VS_BANDS = [['', 'Any price', 0, Infinity], ['u200', 'Under ₪200', 0, 200], ['200', '₪200 – ₪500', 200, 500],
+    const VS_GENDERS = ['Women', 'Men', 'Unisex', 'Kids'];
+    const VS_BANDS = [['u200', 'Under ₪200', 0, 200], ['200', '₪200 – ₪500', 200, 500],
                       ['500', '₪500 – ₪1,500', 500, 1500], ['1500', 'Over ₪1,500', 1500, Infinity]];
-    const VS_SALE = [['', 'All pieces'], ['1', 'On sale only']];
-    function vsNoFilter() { return { type: '', cats: [], price: '', sale: '' }; }
-    function vsFresh() { return { q: '', tab: 'product', f: vsNoFilter(), step: 0, sort: 'rel', hi: -1, limit: VS_PAGE }; }
+    function vsNoFilter() { return { product: '', gender: '', style: '', material: '', color: '', price: '' }; }
+    function vsFresh() { return { q: '', tab: 'product', f: vsNoFilter(), step: '', gOff: false, sort: 'rel', hi: -1, limit: VS_PAGE }; }
     let vs = vsFresh();
-    function vsFilterOn(f) { return !!(f.type || f.cats.length || f.price || f.sale); }
-    function vsIsArt(p) { return (p._raw && p._raw.type === 'art') || p.collection === 'interiors'; }
-    // Does a piece pass the filter? `skip` leaves one question out, to count its options.
+    function vsFilterOn(f) { return VS_STEPS.some(st => !!f[st.key]); }
+    // The gender set in the personal area: '' when none was chosen there.
+    function vsProfileGender() {
+        try { return (JSON.parse(localStorage.getItem('vero_profile')) || {}).gender || ''; } catch (e) { return ''; }
+    }
+    // A profile gender stands in for the skipped question (Other narrows nothing),
+    // until the shopper removes it from the results.
+    function vsUseProfileGender() {
+        if (vs.gOff || vs.f.gender) return;
+        const g = { male: 'Men', female: 'Women' }[vsProfileGender()];
+        if (g) vs.f.gender = g;
+    }
+    // What a piece says about itself for one question.
+    function vsAttr(p, key) {
+        const r = p._raw || {};
+        if (key === 'product') { const c = r.itemType || p.category || ''; return /^(clothing|art)$/i.test(c) ? '' : c; }
+        if (key === 'gender') return r.gender || '';
+        if (key === 'style') return Array.isArray(r.style) ? r.style : (r.style ? [r.style] : []);
+        if (key === 'material') return r.fabric || r.material || '';
+        if (key === 'color') return r.color || '';
+        return '';
+    }
+    // Does a piece pass the filter? `skip` leaves one question out, to list its options.
     function vsPass(p, f, skip) {
-        if (skip !== 'type' && f.type && (f.type === 'art') !== vsIsArt(p)) return false;
-        if (skip !== 'cats' && f.cats.length && !f.cats.includes(p.category)) return false;
+        for (const k of ['product', 'material', 'color']) {
+            if (skip !== k && f[k] && vsAttr(p, k) !== f[k]) return false;
+        }
+        if (skip !== 'gender' && f.gender) {
+            const g = vsAttr(p, 'gender');             // unisex and ungendered pieces suit everyone
+            if (g && g !== f.gender && g !== 'Unisex') return false;
+        }
+        if (skip !== 'style' && f.style && !vsAttr(p, 'style').includes(f.style)) return false;
         if (skip !== 'price' && f.price) {
             const band = VS_BANDS.find(b => b[0] === f.price), n = vsPrice(p).price;
             if (band && !(n >= band[2] && n < band[3])) return false;
         }
-        if (skip !== 'sale' && f.sale && !vsPrice(p).onSale) return false;
         return true;
+    }
+    function vsLabel(key, val) { return key === 'price' ? (VS_BANDS.find(b => b[0] === val) || [])[1] || val : val; }
+    // The choices one question offers right now, given the answers so far —
+    // only ones that still lead to at least one piece.
+    function vsOptions(key, hits) {
+        const f = vs.f;
+        const pool = hits.map(h => h.p).filter(p => vsPass(p, f, key));
+        let vals;
+        if (key === 'price') vals = VS_BANDS.map(b => b[0]);
+        else if (key === 'gender') vals = VS_GENDERS;
+        else {
+            const seen = new Set();
+            pool.forEach(p => [].concat(vsAttr(p, key)).forEach(v => { if (v) seen.add(v); }));
+            vals = [...seen];
+        }
+        let opts = vals.map(v => ({ val: v, label: vsLabel(key, v), n: pool.filter(p => vsPass(p, Object.assign({}, f, { [key]: v }))).length }))
+            .filter(o => o.n > 0);
+        if (key === 'gender') opts = opts.filter(o => pool.some(p => vsAttr(p, 'gender') === o.val));
+        if (key !== 'price' && key !== 'gender') opts.sort((a, b) => b.n - a.n || a.label.localeCompare(b.label));
+        return opts;
+    }
+    // The questions that will actually be asked, in order.
+    function vsAsked() { return VS_STEPS.filter(st => !(st.key === 'gender' && vsProfileGender())); }
+    // The next (dir 1) or previous (dir -1) question that has something to choose; '' when none.
+    function vsNeighbour(key, dir, hits) {
+        const asked = vsAsked();
+        let i = key ? asked.findIndex(st => st.key === key) + dir : (dir > 0 ? 0 : -1);
+        for (; i >= 0 && i < asked.length; i += dir) {
+            if (vsOptions(asked[i].key, hits).length) return asked[i].key;
+        }
+        return '';
     }
     function vsPieces(n) { return n + (n === 1 ? ' piece' : ' pieces'); }
 
@@ -1816,7 +1879,7 @@
         const userHits = vsMatchUsers(users, tokens);
 
         page.classList.toggle('has-q', !!vs.q);
-        page.classList.toggle('filtering', vs.step > 0);
+        page.classList.toggle('filtering', !!vs.step);
         page.querySelectorAll('.vs-tab').forEach(t => {
             const mine = t.dataset.tab;
             t.classList.toggle('on', mine === vs.tab);
@@ -1824,15 +1887,11 @@
             t.querySelector('i').textContent = tokens.length ? (mine === 'product' ? narrowed.length : userHits.length) : '';
         });
 
-        if (vs.step > 0) { body.innerHTML = vsStepHTML(hits, narrowed.length); vs.hi = -1; return; }
+        if (vs.step) { body.innerHTML = vsStepHTML(hits, narrowed.length); vs.hi = -1; return; }
 
-        // The filter line: the Filter button, then each applied choice (tap to remove).
+        // The filter line: the Filter link, then each answer given (tap to remove).
         const f = vs.f;
-        const applied = []
-            .concat(f.type ? [['type', '', (VS_TYPES.find(t => t[0] === f.type) || [])[1]]] : [])
-            .concat(f.cats.map(c => ['cats', c, c]))
-            .concat(f.price ? [['price', '', (VS_BANDS.find(x => x[0] === f.price) || [])[1]]] : [])
-            .concat(f.sale ? [['sale', '', 'On sale']] : []);
+        const applied = VS_STEPS.filter(st => f[st.key]).map(st => [st.key, '', vsLabel(st.key, f[st.key])]);
         const filterLine = `<div class="vs-chips vs-narrow">`
             + `<button class="vs-chip on" type="button" data-vs="f-open">Filter</button>`
             + applied.map(x => `<button class="vs-chip vs-applied" type="button" data-vs="f-drop" data-key="${x[0]}" data-val="${vspEscape(x[1])}" aria-label="Remove ${vspEscape(x[2])}">${vspEscape(x[2])}</button>`).join('')
@@ -1875,7 +1934,7 @@
             const sorted = vsSort(narrowed);
             html += filterLine + `<div class="vs-head">${vsPieces(narrowed.length)}
                         <button class="vs-link" type="button" data-vs="sort">${sortLabel} ↕</button></div>`
-                + sorted.slice(0, vs.limit).map(h => vsProductRow(h.p, tokens)).join('');
+                + vsCardsHTML(sorted.slice(0, vs.limit), tokens);
             if (sorted.length > vs.limit) html += `<button class="vs-more" type="button" data-vs="more">Show more</button>`;
         }
         body.innerHTML = html;
@@ -1908,41 +1967,38 @@
             </div>
         </div>`;
 
-    // One filter question as a page of plain words. A chosen word is underlined;
-    // words that would leave no pieces are greyed out.
-    function vsStepHTML(hits, total) {
-        const step = VS_STEPS[vs.step - 1], f = vs.f, key = step.key;
-        const pool = hits.filter(h => vsPass(h.p, f, key)).map(h => h.p);
-        let opts;
-        if (key === 'cats') {
-            const count = {};
-            pool.forEach(p => { if (p.category) count[p.category] = (count[p.category] || 0) + 1; });
-            opts = Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b))
-                .map(c => ({ val: c, label: c, n: count[c], on: f.cats.includes(c) }));
-        } else {
-            const list = key === 'type' ? VS_TYPES : key === 'price' ? VS_BANDS : VS_SALE;
-            opts = list.map(o => {
-                const trial = Object.assign({}, f, { [key]: o[0] });
-                return { val: o[0], label: o[1], n: pool.filter(p => vsPass(p, trial)).length, on: f[key] === o[0] };
-            });
+    // Results as the site's own product cards, two to a row. Falls back to the
+    // plain rows if the card renderer is not there.
+    function vsCardsHTML(list, tokens) {
+        const vc = window.veroCollections;
+        if (!vc || typeof vc.cardHTML !== 'function') return list.map(h => vsProductRow(h.p, tokens)).join('');
+        if (!document.querySelector('link[href*="product-card.css"]')) {
+            const l = document.createElement('link');
+            l.rel = 'stylesheet'; l.href = 'product-card.css';
+            document.head.appendChild(l);
         }
-        const last = vs.step === VS_STEPS.length;
+        return `<div class="vs-cards">` + list.map(h => vc.cardHTML(h.p)).join('') + `</div>`;
+    }
+
+    // One filter question as a page of plain words: the "any" answer first, then
+    // the choices that still lead somewhere. The chosen one is underlined.
+    function vsStepHTML(hits, total) {
+        const asked = vsAsked();
+        const step = asked.find(st => st.key === vs.step) || asked[0], key = step.key, cur = vs.f[key];
+        const opts = [{ val: '', label: step.any }].concat(vsOptions(key, hits));
         return `<div class="vs-step" role="group" aria-labelledby="vsStepTitle">
-                    <div class="vs-step-n">${vs.step} / ${VS_STEPS.length}</div>
+                    <div class="vs-step-n">${asked.indexOf(step) + 1} / ${asked.length}</div>
                     <h2 class="vs-step-t" id="vsStepTitle" tabindex="-1">${step.title}</h2>
-                    ${key === 'cats' ? `<p class="vs-step-s">${step.sub}</p>` : ''}
                     <div class="vs-opts">`
-            + opts.map(o => `<button class="vs-opt${o.on ? ' on' : ''}" type="button" data-vs="f-opt" data-val="${vspEscape(o.val)}"
-                            aria-pressed="${o.on ? 'true' : 'false'}"${!o.n && !o.on ? ' disabled' : ''}>
-${vspEscape(o.label)}</button>`).join('')
+            + opts.map(o => `<button class="vs-opt${o.val === cur ? ' on' : ''}" type="button" data-vs="f-opt" data-val="${vspEscape(o.val)}"
+                            aria-pressed="${o.val === cur ? 'true' : 'false'}">${vspEscape(o.label)}</button>`).join('')
             + `</div></div>
                 <div class="vs-foot" aria-live="polite">
-                    <button class="vs-next" type="button" data-vs="${last ? 'f-done' : 'f-next'}">${last ? 'Show ' + vsPieces(total) : 'Next'}</button>
-                    ${last ? '' : `<button class="vs-link" type="button" data-vs="f-done">Show ${vsPieces(total)}</button>`}
+                    <button class="vs-next" type="button" data-vs="f-done">Show ${vsPieces(total)}</button>
                 </div>`;
     }
     // Move between pages: the current one fades out, the next fades in, and focus
-    // lands on the new question so it is read out.
+    // lands on the new question so it is read out. '' leaves the filter for the results.
     function vsGo(step) {
         const page = document.getElementById('veroSearchPage');
         const body = document.getElementById('vsBody');
@@ -1959,19 +2015,19 @@ ${vspEscape(o.label)}</button>`).join('')
             if (title) title.focus({ preventScroll: true });
         }, still ? 0 : 220);
     }
+    function vsHits() { return vsMatchProducts(vsProducts(), vsTokens(vs.q)); }
+    // An answer moves the process on by itself. Changing an earlier answer
+    // clears the later ones, since their choices depended on it.
     function vsPickOption(val) {
-        const key = VS_STEPS[vs.step - 1].key, f = vs.f;
-        if (key === 'cats') {
-            f.cats = f.cats.includes(val) ? f.cats.filter(c => c !== val) : f.cats.concat(val);
-            vsRender();
-            return;
-        }
-        if (key === 'type' && f.type !== val) f.cats = [];     // categories belong to the department
-        f[key] = val;
+        const keys = VS_STEPS.map(st => st.key), at = keys.indexOf(vs.step);
+        if (at < 0) return;
+        if (vs.f[vs.step] !== val) keys.slice(at + 1).forEach(k => { vs.f[k] = ''; });
+        vs.f[vs.step] = val;
+        if (vs.step === 'gender') vs.gOff = !val;
+        vsUseProfileGender();
         vsRender();
-        // A single choice answers the question — carry on to the next page.
         clearTimeout(vsGo.t);
-        vsGo.t = setTimeout(() => vsGo(vs.step < VS_STEPS.length ? vs.step + 1 : 0), 260);
+        vsGo.t = setTimeout(() => vsGo(vsNeighbour(vs.step, 1, vsHits())), 240);
     }
 
     function vsSetQuery(q, focus) {
@@ -2027,16 +2083,14 @@ ${vspEscape(o.label)}</button>`).join('')
             else if (act === 'forget') { e.stopPropagation(); vsSaveRecent(vsRecent().filter(r => r !== el.dataset.term)); vsRender(); }
             else if (act === 'clear-recent') { vsSaveRecent([]); vsRender(); }
             else if (act === 'term') { vs.tab = 'product'; vsRemember(el.dataset.term); vsSetQuery(el.dataset.term, false); }
-            else if (act === 'f-open') vsGo(1);
-            else if (act === 'f-back') vsGo(vs.step - 1);
-            else if (act === 'f-next') vsGo(vs.step + 1);
-            else if (act === 'f-done') vsGo(0);
+            else if (act === 'f-open') vsGo(vsNeighbour('', 1, vsHits()));
+            else if (act === 'f-back') vsGo(vsNeighbour(vs.step, -1, vsHits()));
+            else if (act === 'f-done') { vsUseProfileGender(); vsGo(''); }
             else if (act === 'f-opt') vsPickOption(el.dataset.val);
             else if (act === 'f-clear') { vs.f = vsNoFilter(); vs.limit = VS_PAGE; vsRender(); }
             else if (act === 'f-drop') {
-                const k = el.dataset.key;
-                if (k === 'cats') vs.f.cats = vs.f.cats.filter(c => c !== el.dataset.val);
-                else { vs.f[k] = ''; if (k === 'type') vs.f.cats = []; }
+                vs.f[el.dataset.key] = '';
+                if (el.dataset.key === 'gender') vs.gOff = true;
                 vs.limit = VS_PAGE; vsRender();
             }
             else if (act === 'sort') {
@@ -2082,7 +2136,7 @@ ${vspEscape(o.label)}</button>`).join('')
         if (e.key !== 'Escape') return;
         const page = document.getElementById('veroSearchPage');
         if (!page || !page.classList.contains('open')) return;
-        if (vs.step) vsGo(0);
+        if (vs.step) vsGo('');
         else if (vs.q || vsFilterOn(vs.f)) { vs.f = vsNoFilter(); vsSetQuery('', true); }
         else window.veroCloseSearchPage();
     });
