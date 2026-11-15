@@ -263,6 +263,40 @@
         .lib button:hover { transform: none; }
         .btn { font-weight: 400; font-size: 13px; }
         .pillbtn, .sbtn { font-weight: 400; font-size: 12.5px; }
+
+        /* ---- Parts menu + steps ---- */
+        .menu { max-width: 540px; margin: 0 auto; padding: 22px 16px 150px; }
+        .menu-h { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 0 0 6px; }
+        .menu-p { font-size: 13px; color: var(--muted); margin: 0 0 18px; }
+        .parts { border-top: 1px solid var(--line); }
+        .part { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--line); }
+        .part.off .part-open { opacity: 0.5; }
+        .part-open {
+            flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 10px 0;
+            border: 0; background: none; text-align: left; cursor: pointer;
+        }
+        .part-n { flex: none; width: 26px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .part-ic { flex: none; width: 40px; height: 40px; border-radius: 12px; background: var(--soft); display: grid; place-items: center; }
+        .part-ic svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+        .part-tx { flex: 1; min-width: 0; }
+        .part-tx b { display: block; font-size: 15px; font-weight: 400; }
+        .part-tx small { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .part-mv { flex: none; width: 40px; height: 44px; border: 0; border-radius: 12px; background: none; cursor: pointer; display: grid; place-items: center; }
+        .part-mv:hover, .part-mv:active { background: var(--soft); }
+        .part-mv:disabled { opacity: 0.25; cursor: default; background: none; }
+        .part-mv svg, .part-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+        .part-go { flex: none; width: 24px; display: grid; place-items: center; color: #b9b4aa; }
+        .menu .addbig { width: 100%; margin: 18px 0 0; }
+        .menu-link { display: block; margin: 14px auto 0; padding: 8px 12px; border: 0; background: none; font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+        .sh-id { flex: 1; min-width: 0; }
+        .sh-step { font-size: 12px; color: var(--muted); }
+        .sh-step:empty { display: none; }
+        .sh-foot { display: none; gap: 10px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); flex: none; }
+        .sheet.steps .sh-foot { display: flex; }
+        .sheet.steps .sh-body { padding-bottom: 16px; }
+        .sh-foot .btn { flex: 1; min-height: 46px; }
+        .sh-foot .btn:first-child { flex: 0 0 auto; }
+        .hero-note { font-size: 12px; color: var(--muted); margin: -4px 0 0; }
     </style>
 <style id="vero-global-type">
 /* VERO global typography: main titles in Bodoni, sub-headings + descriptions in serif.
@@ -289,27 +323,48 @@ h3, h4, h5, h6, p,
     </header>
 
     <div class="topbar">
-        <button class="pillbtn pillbtn--add" id="addBtn" type="button">+ Add section</button>
+        <!-- Parts = the menu of everything in the store; Store = the storefront itself. -->
+        <div class="seg" id="viewSeg" role="tablist" aria-label="View">
+            <button type="button" class="on" data-view="menu" role="tab">Parts</button>
+            <button type="button" data-view="build" role="tab">Store</button>
+        </div>
         <span class="grow"></span>
-        <button class="pillbtn" id="presetBtn" type="button">Presets</button>
         <button class="ib" id="undoBtn" type="button" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
         <button class="ib" id="redoBtn" type="button" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
     </div>
 
+    <!-- MENU — every part of the store, in order. Open one to build it; the
+         arrows change its place (which part sits above which). -->
+    <div class="view on" id="viewMenu">
+        <div class="menu">
+            <h2 class="menu-h">Build your store</h2>
+            <p class="menu-p">Open a part to build it, step by step. Use the arrows to change the order.</p>
+            <div class="parts" id="parts"></div>
+            <button class="addbig" id="addBtn" type="button">+ Add a part</button>
+            <button class="menu-link" id="presetBtn" type="button">Start from a ready-made layout</button>
+        </div>
+    </div>
+
     <!-- BUILD — the storefront itself. Tap a section to select it, + to add one. -->
-    <div class="view on" id="viewBuild">
+    <div class="view" id="viewBuild">
         <div class="stage"><div class="cv" id="cv"></div></div>
     </div>
 
     <!-- Bottom sheet: section settings, the section library, or the presets. -->
     <div class="sheet" id="sheet" role="dialog" aria-label="Section settings">
         <div class="sh-top">
-            <div class="sh-name" id="shName"></div>
+            <div class="sh-id"><div class="sh-step" id="shStep"></div><div class="sh-name" id="shName"></div></div>
             <button class="ib" id="shClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         </div>
         <div class="sh-body" id="shBody"></div>
+        <!-- Steps: the parts in order — Hero first, then each section. -->
+        <div class="sh-foot" id="shFoot">
+            <button class="btn" id="stepPrev" type="button">Back</button>
+            <button class="btn primary" id="stepNext" type="button">Next</button>
+        </div>
     </div>
     <input type="file" id="filePick" accept="image/*" hidden>
+    <input type="file" id="heroPick" accept="image/*" hidden>
 
     <div class="actionbar">
         <div class="state" id="state"><i></i><span id="stateTx">Published</span></div>
@@ -392,7 +447,7 @@ h3, h4, h5, h6, p,
             if (!history[hi + d]) return;
             hi += d; sections = JSON.parse(history[hi]);
             if (selId && !byId(selId)) { selId = null; closeSheet(); }
-            saveDraft(); paint(); if (mode === 'edit') paintSheet();
+            saveDraft(); paint(); if (mode === 'edit' || mode === 'hero') paintSheet();
         }
         function isDirty() { return JSON.stringify(sections) !== JSON.stringify(read().sections || null); }
         function paintState() {
@@ -437,6 +492,7 @@ h3, h4, h5, h6, p,
             });
             h += '<button type="button" class="addbig" data-ins="' + sections.length + '">+ Add section</button>';
             cv.innerHTML = h;
+            paintMenu();
             V.hydrate(cv);
             if (cfg.hero && window.veroResolveMedia) {
                 window.veroResolveMedia(cfg.hero, 'hero').then(function (u) {
@@ -474,16 +530,80 @@ h3, h4, h5, h6, p,
             var el = cv.querySelector('.sw.sel'); if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
 
+        /* ------------------------- Parts menu + steps ------------------------- */
+        // The store's parts in order: the hero (always first), then every section.
+        // The menu lists them; opening one walks through them as steps.
+        var view = 'menu';
+        var HERO_ICON = '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/>';
+        var ARROW = { up: '<path d="M12 19V5M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>', go: '<path d="M9 6l6 6-6 6"/>' };
+        var ico = function (d) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>'; };
+        function summary(s) {
+            if (s.type === 'slider') return s.slides.length + (s.slides.length === 1 ? ' slide' : ' slides');
+            if (s.type === 'grid') return s.cells.length + (s.cells.length === 1 ? ' tile' : ' tiles');
+            return s.title || s.text || V.TYPES[s.type].desc;
+        }
+        function paintMenu() {
+            var row = function (n, id, icon, name, sub, mv, off) {
+                return '<div class="part' + (off ? ' off' : '') + '">' +
+                    '<button type="button" class="part-open" data-open="' + id + '"><span class="part-n">' + n + '</span><span class="part-ic">' + ico(icon) + '</span>' +
+                    '<span class="part-tx"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></span></button>' + mv +
+                    '<span class="part-go">' + ico(ARROW.go) + '</span></div>';
+            };
+            var h = row(1, 'hero', HERO_ICON, 'Hero', 'Cover picture and store name', '');
+            sections.forEach(function (s, i) {
+                var mv = '<button type="button" class="part-mv" data-mv="up" data-id="' + s.id + '" aria-label="Move ' + esc(V.TYPES[s.type].name) + ' up"' + (i ? '' : ' disabled') + '>' + ico(ARROW.up) + '</button>' +
+                         '<button type="button" class="part-mv" data-mv="down" data-id="' + s.id + '" aria-label="Move ' + esc(V.TYPES[s.type].name) + ' down"' + (i < sections.length - 1 ? '' : ' disabled') + '>' + ico(ARROW.down) + '</button>';
+                h += row(i + 2, s.id, LIB_ICON[s.type] || HERO_ICON, V.TYPES[s.type].name, (s.hidden ? 'Hidden · ' : '') + summary(s), mv, s.hidden);
+            });
+            $('parts').innerHTML = h;
+        }
+        function setView(v) {
+            view = v;
+            $('viewMenu').classList.toggle('on', v === 'menu');
+            $('viewBuild').classList.toggle('on', v === 'build');
+            $('viewSeg').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-view') === v); });
+            if (v === 'menu' && (mode === 'edit' || mode === 'hero')) { closeSheet(); if (selId) { selId = null; paint(); } }
+            window.scrollTo(0, 0);
+        }
+        // Step 0 is the hero; step i is sections[i - 1].
+        function stepNow() { return mode === 'hero' ? 0 : indexOf(selId) + 1; }
+        function openStep(i) {
+            if (i < 0) return;
+            if (i > sections.length) { setView('menu'); return; }     // past the last part: back to the menu
+            if (view !== 'build') setView('build');
+            if (i === 0) { selId = null; cellId = null; paint(); openSheet('hero'); }
+            else select(sections[i - 1].id, true);
+        }
+        $('viewSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-view]'); if (b) setView(b.getAttribute('data-view')); });
+        $('parts').addEventListener('click', function (e) {
+            var b = e.target.closest('[data-mv]');
+            if (b) {
+                var i = indexOf(b.getAttribute('data-id')), j = i + (b.getAttribute('data-mv') === 'up' ? -1 : 1);
+                if (i < 0 || j < 0 || j >= sections.length) return;
+                sections.splice(j, 0, sections.splice(i, 1)[0]); commit(); paint();
+                var again = $('parts').querySelector('[data-mv="' + b.getAttribute('data-mv') + '"][data-id="' + b.getAttribute('data-id') + '"]');
+                if (again && !again.disabled) again.focus();
+                return;
+            }
+            b = e.target.closest('[data-open]'); if (!b) return;
+            var id = b.getAttribute('data-open');
+            openStep(id === 'hero' ? 0 : indexOf(id) + 1);
+        });
+        $('stepPrev').addEventListener('click', function () { openStep(stepNow() - 1); });
+        $('stepNext').addEventListener('click', function () { openStep(stepNow() + 1); });
+
         function select(id, open) {
             selId = id; cellId = null; paint();
-            if (open) openSheet('edit');
+            if (open) { if (view !== 'build') setView('build'); openSheet('edit'); }
         }
 
         /* ------------------------------ Sheet ------------------------------ */
         var sheet = $('sheet'), shBody = $('shBody');
         function openSheet(m) {
             mode = m; sheet.classList.add('open');
-            sheet.classList.toggle('tall', m !== 'edit');
+            sheet.classList.toggle('tall', m !== 'edit' && m !== 'hero');
+            sheet.classList.toggle('steps', m === 'edit' || m === 'hero');
+            if (m === 'hero') window.scrollTo({ top: 0, behavior: 'smooth' });
             paintSheet(); shBody.scrollTop = 0;
             if (m === 'edit') setTimeout(function () {
                 var el = cv.querySelector('.sw.sel'); if (!el) return;
@@ -627,7 +747,24 @@ h3, h4, h5, h6, p,
 
         function paintSheet() {
             var keep = shBody.scrollTop;
-            if (mode === 'add') {
+            var total = sections.length + 1, at = stepNow();
+            $('shStep').textContent = (mode === 'edit' || mode === 'hero') ? 'Step ' + (at + 1) + ' of ' + total : '';
+            $('stepPrev').disabled = at <= 0;
+            $('stepNext').textContent = (at >= total - 1 || !sections[at]) ? 'Done' : 'Next: ' + V.TYPES[sections[at].type].name;
+            if (mode === 'hero') {
+                cfg = read();
+                $('shName').textContent = 'Hero';
+                shBody.innerHTML = '<div class="f"><span>Cover picture</span><div class="imgf"><div class="imgf-th" id="heroTh"></div>' +
+                    '<div class="imgf-btns"><button type="button" class="sbtn dark" data-hero="pick">' + (cfg.hero ? 'Replace' : 'Upload image') + '</button>' +
+                    (cfg.hero ? '<button type="button" class="sbtn quiet" data-hero="clear">Remove</button>' : '') + '</div></div></div>' +
+                    '<div class="f"><span>Store name position</span><div class="seg">' + [['left', 'Left'], ['center', 'Center'], ['right', 'Right']].map(function (o) {
+                        return '<button type="button" data-hero="pos" data-v="' + o[0] + '"' + ((cfg.namePos || 'left') === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>';
+                    }).join('') + '</div></div>' +
+                    '<p class="hero-note">The store name and tagline are set in Settings. Hero changes are saved right away.</p>';
+                if (cfg.hero && window.veroResolveMedia) window.veroResolveMedia(cfg.hero, 'hero').then(function (u) {
+                    var th = $('heroTh'); if (u && th) { th.style.backgroundImage = 'url("' + String(u).replace(/"/g, '%22') + '")'; th.style.backgroundSize = 'cover'; th.style.backgroundPosition = 'center'; }
+                }).catch(function () {});
+            } else if (mode === 'add') {
                 $('shName').textContent = 'Add a section';
                 shBody.innerHTML = '<div class="lib">' + Object.keys(V.TYPES).map(function (k) {
                     return '<button type="button" data-add="' + k + '"><svg viewBox="0 0 24 24">' + LIB_ICON[k] + '</svg><b>' + V.TYPES[k].name + '</b><small>' + V.TYPES[k].desc + '</small></button>';
@@ -670,6 +807,15 @@ h3, h4, h5, h6, p,
         shBody.addEventListener('click', function (e) {
             var b;
             if ((b = e.target.closest('.acts [data-act]'))) { sectionAct(b.getAttribute('data-act')); return; }
+            if ((b = e.target.closest('[data-hero]'))) {
+                var what = b.getAttribute('data-hero');
+                if (what === 'pick') { $('heroPick').value = ''; $('heroPick').click(); return; }
+                cfg = read();
+                if (what === 'clear') { delete cfg.hero; delete cfg.heroVideo; }
+                else if (what === 'pos') cfg.namePos = b.getAttribute('data-v');
+                if (write(cfg)) { paint(); paintSheet(); }
+                return;
+            }
             if ((b = e.target.closest('[data-add]'))) {
                 var n = V.defaults(b.getAttribute('data-add'));
                 sections.splice(addAt, 0, n); commit(); select(n.id, true); return;
@@ -808,6 +954,18 @@ h3, h4, h5, h6, p,
             }).then(function (pointer) {
                 setPath(s, path, pointer); commit(); paint(); if (mode === 'edit') paintSheet();
             }).catch(function () { toast('That image could not be read'); });
+        });
+
+        // Hero cover: the picture goes to IndexedDB, a pointer to the store config —
+        // the same way the seller area's Cover button saves it.
+        $('heroPick').addEventListener('change', function () {
+            var f = this.files && this.files[0]; if (!f) return;
+            Promise.resolve(window.veroMediaSet ? window.veroMediaSet('hero', f) : Promise.reject())
+                .then(function () {
+                    cfg = read(); cfg.hero = window.VERO_IDB_FLAG || 'idb'; delete cfg.heroVideo;
+                    if (write(cfg)) { paint(); if (mode === 'hero') paintSheet(); }
+                })
+                .catch(function () { toast('That image could not be read'); });
         });
 
         /* ------------------------------ Chrome ------------------------------ */
