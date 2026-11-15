@@ -15,6 +15,8 @@
     'use strict';
     var BELONGS = /\b(na-sub|po-count|po-tabs|po-viewport|po-more|na-toggle|na-grid|list|quick|grid|lc-x|vkey|vsw)\b/;
     var OPEN_FIRST = 1;                       // titled parts open on arrival (after the headline chart)
+    var EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
+    var REDUCE = false; try { REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
     var CHEV = '<svg class="dsec-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 
     // Group a container's children into sections. A section starts at a section
@@ -69,18 +71,38 @@
 
         sec.appendChild(head); sec.appendChild(body);
         sec.classList.add('dsec--fold');
-        function set(on) {
+        function state(on) {
             sec.classList.toggle('is-open', on);
             head.setAttribute('aria-expanded', on ? 'true' : 'false');
             if ('inert' in body) body.inert = !on;
         }
-        set(open);
-        head.addEventListener('click', function () {
-            var on = !sec.classList.contains('is-open');
-            set(on);
-            // Charts measure themselves; let them (and an embedding page) catch up.
-            setTimeout(function () { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }, 380);
-        });
+        state(open);
+
+        // Open / close: the body grows from (or shrinks to) nothing while its
+        // content fades and settles into place; the chevron turns with it.
+        var anim = null, fade = null;
+        function toggle(on) {
+            var from = body.getBoundingClientRect().height;      // wherever it is now (also mid-animation)
+            if (anim) anim.cancel(); if (fade) fade.cancel();
+            state(on);
+            if (REDUCE || !body.animate) return;
+            var to = on ? inner.scrollHeight : 0;
+            var ms = Math.round(Math.min(620, Math.max(300, 240 + Math.abs(to - from) * 0.45)));   // taller parts take a little longer
+            sec.classList.add('is-anim');
+            anim = body.animate([{ height: from + 'px' }, { height: to + 'px' }], { duration: ms, easing: EASE });
+            fade = inner.animate(on
+                ? [{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'none' }]
+                : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-10px)' }],
+                { duration: on ? ms : Math.round(ms * 0.7), easing: on ? EASE : 'ease-in', fill: 'both', delay: on ? 60 : 0 });
+            var mine = anim;
+            anim.onfinish = function () {
+                if (anim !== mine) return;
+                sec.classList.remove('is-anim'); if (fade) fade.cancel(); anim = fade = null;
+                // Charts measure themselves; let them (and an embedding page) catch up.
+                try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+            };
+        }
+        head.addEventListener('click', function () { toggle(!sec.classList.contains('is-open')); });
     }
 
     function init() {
@@ -98,7 +120,8 @@
             s.setAttribute('data-n', String(i + 1));
             var hero = !!s.querySelector(':scope > .hero-chart');
             if (hero) s.classList.add('dsec--hero');
-            var hiddenView = s.parentNode.classList.contains('view') && s.parentNode.hidden;
+            var vw = s.parentNode.classList.contains('view') ? s.parentNode.getAttribute('data-view') : null;
+            var hiddenView = !!vw && vw !== (growth ? 'growth' : 'business');
             var open = !hiddenView && !(hero && growth) && opened < OPEN_FIRST;
             if (open) opened++;
             fold(s, open, i + 1);
