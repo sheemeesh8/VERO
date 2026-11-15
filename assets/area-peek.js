@@ -7,7 +7,8 @@
 
    Fills `el` with a location line (only when there is one) and a row of
    social icons (only the networks that are filled in). Nothing to show → the
-   element is hidden. Styles: assets/area.css (.ah-meta …).
+   element is hidden. Also runs the hero's Follow button (.ah-follow), a preview.
+   Styles: assets/area.css (.ah-meta, .ah-follow …).
    ========================================================================== */
 (function (global) {
     'use strict';
@@ -45,4 +46,14 @@
                        (icons ? '<span class="ah-soc">' + icons + '</span>' : '');
         el.hidden = !(loc || icons);
     };
+
+    // The Follow button on the hero is a preview of what a visitor gets: it flips
+    // between Follow and Following so the owner sees both, and changes no data
+    // (nobody follows their own page).
+    document.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('.ah-follow'); if (!b) return;
+        var on = b.getAttribute('aria-pressed') !== 'true';
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.textContent = on ? 'Following' : 'Follow';
+    });
 })(window);
