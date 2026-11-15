@@ -1161,10 +1161,29 @@
             transition: opacity 0.26s ease, transform 0.26s ease;
         }
         .vs-wrap { max-width: 760px; margin: 0 auto; padding: 0 20px 96px; }
-        .vs-top {
-            position: sticky; top: 0; z-index: 2; background: #fff;
-            padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
+        .vs-top { position: sticky; top: 0; z-index: 2; background: #fff; }
+        /* The same header as the rest of the site: title on the left, an arrow
+           pointing right on the right. The arrow goes back — one filter question
+           at a time, then out of the search. */
+        .vs-hdr {
+            display: flex; align-items: center; box-sizing: border-box; margin: 0 -6px 6px;
+            height: calc(env(safe-area-inset-top, 0px) + 64px);
+            padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
         }
+        #veroSearchPageRoot .vs-hdr-name:not(#zz) {
+            flex: 1 1 auto; min-width: 0; padding-left: 6px;
+            font-family: 'Aharoni CLM', 'Segoe UI', sans-serif !important;
+            font-size: 22px; font-weight: 500; letter-spacing: 2px; line-height: 1.2;
+            text-transform: uppercase; color: #1b1916;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .vs-hdr-back {
+            flex: none; width: 42px; height: 42px; box-sizing: border-box; padding: 0; margin: 0;
+            border: none; background: none; display: flex; align-items: center; justify-content: center;
+            color: #16150f; cursor: pointer; transition: opacity 0.2s;
+        }
+        .vs-hdr-back:hover { opacity: 0.6; }
+        .vs-hdr-back svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
         .vs-barrow { display: flex; align-items: stretch; gap: 10px; }
         .vs-bar {
             flex: 1; min-width: 0; height: 54px; box-sizing: border-box;
@@ -1178,7 +1197,7 @@
             -webkit-appearance: none; appearance: none;
         }
         .vs-bar input::placeholder { color: #a09c94; }
-        .vs-clear, .vs-close, .vs-tab, .vs-link, .vs-chip, .vs-x {
+        .vs-clear, .vs-tab, .vs-link, .vs-chip, .vs-x {
             background: none; border: 0; padding: 0; margin: 0; color: #111; cursor: pointer;
         }
         .vs-clear {
@@ -1187,11 +1206,6 @@
         }
         .vsp-overlay.has-q .vs-clear { display: block; }
         .vs-clear:hover { color: #111; }
-        .vs-close {
-            flex: none; padding: 0 4px 0 8px;
-            font-size: 11px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase;
-        }
-        .vs-close:hover { opacity: 0.55; }
         .vs-tabs { display: flex; gap: 26px; margin-top: 16px; border-bottom: 1px solid #e6e3dd; }
         .vs-tab {
             position: relative; padding: 12px 0 13px;
@@ -1276,20 +1290,13 @@
         .vs-filterbtn:hover { color: #8a877f; }
 
         /* ===== Filter, one question per page =====
-           Words only. While filtering, the field and tabs step aside for Back and
-           Close. Each step is its own page: the old one fades out,
+           Words only. While filtering, the field and tabs step aside; the header
+           reads Filter and its arrow goes back a question. Each step is its own page: the old one fades out,
            the next fades in. */
-        .vs-flowbar { display: none; align-items: center; gap: 16px; height: 54px; }
-        .vsp-overlay.filtering .vs-flowbar { display: flex; }
         .vsp-overlay.filtering .vs-barrow, .vsp-overlay.filtering .vs-tabs { display: none; }
-        .vs-back {
-            flex: none; background: none; border: 0; padding: 10px 8px 10px 0; margin: 0; color: #111; cursor: pointer;
-            font-size: 11px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase;
-        }
-        .vs-flowbar { justify-content: space-between; }
         .vs-body { transition: opacity 0.22s ease; }
         .vs-body.vs-out { opacity: 0; }
-        .vs-step { padding-top: 34px; }
+        .vs-step { padding-top: 14px; }
         .vs-body > .vs-step, .vs-body > .vs-foot { animation-duration: 0.42s; }
         .vs-step-n { font-size: 10px; font-weight: 600; letter-spacing: 2.4px; text-transform: uppercase; color: #8a877f; }
         .vs-step-t { margin: 12px 0 0; font-size: 28px; line-height: 1.2; font-weight: 300; letter-spacing: 0.2px; color: #111; outline: none; }
@@ -1335,7 +1342,6 @@
         .vs-more:hover { background: #fff; color: #111; }
         @media (max-width: 600px) {
             .vs-wrap { padding: 0 16px 80px; }
-            .vs-top { padding-top: calc(env(safe-area-inset-top, 0px) + 14px); }
             .vs-narrow { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -1880,6 +1886,8 @@
 
         page.classList.toggle('has-q', !!vs.q);
         page.classList.toggle('filtering', !!vs.step);
+        const hdrName = document.getElementById('vsHdrName');
+        if (hdrName) hdrName.textContent = vs.step ? 'Filter' : 'Search';
         page.querySelectorAll('.vs-tab').forEach(t => {
             const mine = t.dataset.tab;
             t.classList.toggle('on', mine === vs.tab);
@@ -1945,6 +1953,10 @@
         <div class="vsp-overlay" id="veroSearchPage" aria-hidden="true" role="dialog" aria-label="Search">
             <div class="vs-wrap">
                 <div class="vs-top">
+                    <div class="vs-hdr">
+                        <div class="vs-hdr-name" id="vsHdrName" role="heading" aria-level="1">Search</div>
+                        <button class="vs-hdr-back" type="button" data-vs="back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+                    </div>
                     <div class="vs-barrow">
                         <label class="vs-bar">
                             ${VS_ICON.search}
@@ -1952,11 +1964,6 @@
                                    placeholder="Search pieces, brands, people" autocomplete="off" autocapitalize="off" spellcheck="false">
                             <button class="vs-clear" type="button" data-vs="clear">Clear</button>
                         </label>
-                        <button class="vs-close" type="button" data-vs="close" aria-label="Close search">Close</button>
-                    </div>
-                    <div class="vs-flowbar">
-                        <button class="vs-back" type="button" data-vs="f-back">‹ Back</button>
-                        <button class="vs-close" type="button" data-vs="close" aria-label="Close search">Close</button>
                     </div>
                     <div class="vs-tabs" role="tablist">
                         <button class="vs-tab on" type="button" role="tab" data-vs="tab" data-tab="product">Products<i></i></button>
@@ -2077,14 +2084,13 @@
                 return;
             }
             const act = el.dataset.vs;
-            if (act === 'close') window.veroCloseSearchPage();
+            if (act === 'back') { if (vs.step) vsGo(vsNeighbour(vs.step, -1, vsHits())); else window.veroCloseSearchPage(); }
             else if (act === 'clear') { e.preventDefault(); vsSetQuery('', true); }
             else if (act === 'tab') { vs.tab = el.dataset.tab; vs.limit = VS_PAGE; vsRender(); page.scrollTop = 0; }
             else if (act === 'forget') { e.stopPropagation(); vsSaveRecent(vsRecent().filter(r => r !== el.dataset.term)); vsRender(); }
             else if (act === 'clear-recent') { vsSaveRecent([]); vsRender(); }
             else if (act === 'term') { vs.tab = 'product'; vsRemember(el.dataset.term); vsSetQuery(el.dataset.term, false); }
             else if (act === 'f-open') vsGo(vsNeighbour('', 1, vsHits()));
-            else if (act === 'f-back') vsGo(vsNeighbour(vs.step, -1, vsHits()));
             else if (act === 'f-done') { vsUseProfileGender(); vsGo(''); }
             else if (act === 'f-opt') vsPickOption(el.dataset.val);
             else if (act === 'f-clear') { vs.f = vsNoFilter(); vs.limit = VS_PAGE; vsRender(); }
