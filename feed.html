@@ -291,15 +291,14 @@
 
         /* ===== Entrance — zoom-parallax ring of category circles (before the hero).
            A full-screen sticky stage (built by zoom-parallax.js) that opens on
-           scroll, then releases into the collection hero below.
-           The track is three screens: one to zoom the picture open, then the
-           full-screen hero stays pinned while the feed slides up over it
+           gesture (zoom-parallax.js holds the page's scroll until it has), then
+           the full-screen hero stays pinned while the feed slides up over it.
+           The track is two screens: the hero, and the screen the feed covers
            (the feed's pull-up lives in assets/home.css). ===== */
         .zp-wrap { position: relative; width: 100%; z-index: 0; background: #fff;
-            height: 300vh; height: 300svh; }
-        /* Once the zoom has opened it is gone for good: the track drops the zoom's
-           screen, so scrolling back up ends on the full-screen hero. */
-        .zp-wrap.zp-open { height: 200vh; height: 200svh; }
+            height: 200vh; height: 200svh; }
+        /* No site header over the white stage; it arrives with the full-screen picture. */
+        body.zp-head-out #siteHeader { opacity: 0; pointer-events: none; }
         .zp-wrap .hero { position: sticky; top: 0; width: 100%; overflow: hidden; background: #fff; z-index: 0;
             height: 100vh; height: 100svh; --band-h: max(25svh, 210px); }
         .zp-wrap .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
@@ -370,7 +369,7 @@
         #modeFade span { font-family: 'Poppins','Inter',sans-serif; font-weight: 300;
             font-size: clamp(40px, 13vw, 72px); letter-spacing: .02em; text-transform: uppercase; color: #1b1916; }
         /* The site header is always on screen (the zoom-in entrance that used to reveal it is gone). */
-        body #siteHeader { transition: background .35s ease, box-shadow .35s ease, border-color .35s ease; }
+        body #siteHeader { transition: opacity .3s ease, background .35s ease, box-shadow .35s ease, border-color .35s ease; }
         /* Over the hero (sticky / not scrolled) the header reads white. */
         body #siteHeader:not(.scrolled) .logo,
         body #siteHeader:not(.scrolled) .logo-script,
@@ -407,8 +406,7 @@
     <script>
         // Transparent (white icons) while the home hero is in view; goes solid
         // (white bar, dark icons) once the hero has scrolled nearly past the header.
-        // The hero is pinned while it zooms open (zoom-parallax.js) and stays pinned
-        // while the feed slides up over it; it is passed once the feed's top edge
+        // The hero stays pinned while the feed slides up over it; it is passed once the feed's top edge
         // has climbed to the header.
         window.veroHeroPassed = function () {
             var w = document.getElementById('feedHeroWrap');
@@ -417,18 +415,10 @@
             var covered = w.offsetTop + w.offsetHeight - (hero ? hero.offsetHeight : window.innerHeight);
             return window.scrollY >= covered - (head ? head.offsetHeight : 0) - 4;
         };
-        // Solid header (dark icons) while the hero is still a small picture on the
-        // white stage and again after the hero; transparent only over the full-screen hero.
-        window.veroHeaderScrolled = function () {
-            if (window.veroHeroPassed()) return true;
-            var reduce = false; try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
-            if (reduce) return false;                      // no zoom: the hero is full-screen from the start
-            var w = document.getElementById('feedHeroWrap'); if (!w) return false;
-            if (w.classList.contains('zp-open')) return false;  // the zoom has opened: the hero is full-screen for good
-            var hero = document.getElementById('feedHero');     // the zoom is the track minus the screen the feed covers
-            var pinned = Math.max(1, w.offsetHeight - window.innerHeight - (hero ? hero.offsetHeight : 0));
-            return (window.scrollY - w.offsetTop) / pinned < 0.9;    // until the picture has reached the top edge
-        };
+        window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
+        // While the hero is still a small picture on the white stage there is no
+        // header at all (zoom-parallax.js lifts this once the picture is full-screen).
+        try { if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.body.classList.add('zp-head-out'); } catch (e) {}
     </script>
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=60"></script>
@@ -957,7 +947,7 @@
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
     <!-- Hero zoom on scroll (zoom-parallax.css). -->
-    <script src="zoom-parallax.js?v=11"></script>
+    <script src="zoom-parallax.js?v=12"></script>
     <script>
         // The header reads its state on scroll; tell it once now, so it is right before the first scroll.
         (function () {

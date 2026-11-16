@@ -113,32 +113,19 @@
 		return v < lo ? lo : v > hi ? hi : v;
 	}
 
-	// Progress is how far we've scrolled through the hero's sticky track
-	// (.zp-wrap). The zoom plays over the track minus its last screen: there the
-	// zoom is finished and the full-screen hero simply stays pinned while the
-	// feed slides up over it.
-	var wrap = document.getElementById('feedHeroWrap') || hero.parentNode;
-
-	// Once the picture has opened to full-screen the zoom never plays back: the
-	// track drops the zoom's screen (.zp-open) and the scroll position is moved
-	// up by the same amount, so nothing jumps and the page now starts at the
-	// full-screen hero.
+	// The zoom is NOT part of the page's scroll. The page opens at the top with
+	// scrolling held: the first swipe / wheel / key drives the picture open
+	// (progress p, 0 → 1) and it then finishes on its own. Only once it is
+	// full-screen is the page released — the gesture that opened it never
+	// carries on into the feed, so the scroll always comes to rest on the hero,
+	// and since no part of the page's scroll belongs to the zoom there is no
+	// way back to it. From there the hero stays pinned and the feed slides
+	// over it (.zp-wrap is two screens; see assets/home.css).
+	var p = 0;
 	var opened = false;
 
 	function apply() {
 		if (transitioning) return; // don't fight the click-open animation
-		var p = 1;
-		if (!opened) {
-			var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight - hero.offsetHeight);
-			p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
-			if (p >= 1) {
-				opened = true;
-				var before = wrap.offsetHeight;
-				wrap.classList.add('zp-open');
-				var cut = before - wrap.offsetHeight;
-				if (cut > 0) window.scrollTo(0, Math.max(0, window.scrollY - cut));
-			}
-		}
 		// Size the collage from the stage box (the hero's image region), which may
 		// be only part of the viewport (e.g. the top 75%).
 		var srect = stage.getBoundingClientRect();
@@ -236,21 +223,88 @@
 		}
 		// The white band (search + Most liked slider) slides up with the caption.
 		if (band) band.classList.toggle('revealed', p > 0.72);
-		// The site header slides in together with the caption/band.
-		document.body.classList.toggle('zp-head-in', p > 0.68);
+		// No site header over the white stage: it arrives with the full-screen picture.
+		document.body.classList.toggle('zp-head-out', !opened && p < 0.9);
 	}
 
-	var ticking = false;
-	function onScroll() {
-		if (ticking) return;
-		ticking = true;
-		requestAnimationFrame(function () {
-			apply();
-			ticking = false;
-		});
+	function finish() {
+		if (opened) return;
+		opened = true; p = 1; raf = 0;
+		apply();
+	}
+	function setP(v) {
+		p = clamp(v, 0, 1);
+		if (p >= 1) finish(); else apply();
 	}
 
-	window.addEventListener('scroll', onScroll, { passive: true });
-	window.addEventListener('resize', onScroll);
-	apply();
+	// Let go mid-way and the picture finishes opening by itself.
+	var raf = 0;
+	function run() {
+		if (opened || raf) return;
+		var from = p, t0 = 0, dur = Math.max(260, 760 * (1 - from));
+		function step(now) {
+			if (opened) return;
+			if (!t0) t0 = now;
+			var t = clamp((now - t0) / dur, 0, 1);
+			var e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+			if (t >= 1) { finish(); return; }
+			p = from + (1 - from) * e; apply();
+			raf = requestAnimationFrame(step);
+		}
+		raf = requestAnimationFrame(step);
+	}
+
+	function travel() { return Math.max(240, window.innerHeight * 0.55); } // input needed for the whole zoom
+
+	// Wheel / trackpad. The page stays held until the gesture (and its inertia)
+	// that opened the picture has died down.
+	var wheelIdle = 0, wheelHold = false;
+	window.addEventListener('wheel', function (e) {
+		if (opened && !wheelHold) return;
+		e.preventDefault();
+		wheelHold = true;
+		clearTimeout(wheelIdle);
+		wheelIdle = setTimeout(function () { wheelHold = false; if (!opened && p > 0) run(); }, 170);
+		if (opened || raf) return;
+		var d = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+		setP(p + d / travel());
+	}, { passive: false });
+
+	// Touch. The swipe that opens the picture is used up by it.
+	var lastY = null, touchHold = false;
+	window.addEventListener('touchstart', function (e) {
+		lastY = e.touches.length ? e.touches[0].clientY : null;
+		touchHold = !opened;
+	}, { passive: true });
+	window.addEventListener('touchmove', function (e) {
+		if (!touchHold) return;
+		if (e.cancelable) e.preventDefault();
+		if (opened || raf || lastY === null || !e.touches.length) return;
+		var y = e.touches[0].clientY;
+		setP(p + (lastY - y) / travel());
+		lastY = y;
+	}, { passive: false });
+	function touchEnd(e) {
+		if (e.touches && e.touches.length) return;
+		touchHold = false; lastY = null;
+		if (!opened && p > 0) run();
+	}
+	window.addEventListener('touchend', touchEnd, { passive: true });
+	window.addEventListener('touchcancel', touchEnd, { passive: true });
+
+	// Keyboard scrolling opens the picture too.
+	window.addEventListener('keydown', function (e) {
+		if (opened) return;
+		var t = e.target, tag = t && t.tagName;
+		if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+		if (e.key === ' ' || e.key === 'PageDown' || e.key === 'ArrowDown' || e.key === 'End') { e.preventDefault(); run(); }
+	});
+
+	// Anything that moves the page some other way (a restored position, a jump
+	// to a section, the scrollbar) simply finds the picture already open.
+	window.addEventListener('scroll', function () {
+		if (!opened && window.scrollY > 2) finish();
+	}, { passive: true });
+	window.addEventListener('resize', apply);
+	if (window.scrollY > 2) finish(); else apply();
 })();
