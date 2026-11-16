@@ -114,13 +114,14 @@
 	}
 
 	// Progress is how far we've scrolled through the hero's sticky track
-	// (.zp-wrap). The hero stays pinned for (track height − one viewport) of
-	// scroll, over which the collage opens.
+	// (.zp-wrap). The zoom plays over the track minus its last screen: there the
+	// zoom is finished and the full-screen hero simply stays pinned while the
+	// feed slides up over it.
 	var wrap = document.getElementById('feedHeroWrap') || hero.parentNode;
 
 	function apply() {
 		if (transitioning) return; // don't fight the click-open animation
-		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight);
+		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight - hero.offsetHeight);
 		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
 		// Size the collage from the stage box (the hero's image region), which may
 		// be only part of the viewport (e.g. the top 75%).
