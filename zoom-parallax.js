@@ -231,6 +231,8 @@
 		if (opened) return;
 		opened = true; p = 1; raf = 0;
 		apply();
+		// The header and the gender sub-header decide their look on scroll: let them look again now.
+		try { window.dispatchEvent(new Event('scroll')); } catch (e) {}
 	}
 	function setP(v) {
 		p = clamp(v, 0, 1);

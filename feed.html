@@ -398,8 +398,8 @@
         .feed-subnav { transition: opacity .12s linear; }
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
-    <!-- The home core: hero, search line, pieces, category slider, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261116b">
+    <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
+    <link rel="stylesheet" href="assets/home.css?v=20261116c">
 </head>
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
@@ -425,7 +425,7 @@
     <script src="header.js?v=60"></script>
 
     <!-- ===================== THE HOME CORE (styles: assets/home.css) =====================
-         hero → search line → two pieces → category slider → two pieces → four more → sale. -->
+         hero → search line → two pieces → category index → two pieces → four more → sale. -->
     <!-- Entrance: the hero opens as a tall picture on a white stage and grows to
          full-screen as you scroll (zoom-parallax.js); its caption fades in at the end. -->
     <div class="zp-wrap" id="feedHeroWrap">
@@ -458,7 +458,7 @@
             <!-- Under the hero: the current collection, two pieces to a slide. -->
             <section class="hm-rail" id="hmHeroRail" aria-label="The current collection"></section>
 
-            <!-- Category slider: Women, Men, Unisex, Kids. -->
+            <!-- Category index: a picture with the four names (Women, Men, Unisex, Kids) listed beside it. -->
             <section class="hm-cats" id="hmCats" aria-label="Shop by category"></section>
 
             <!-- Pieces for the chosen category, as a slider under it. -->
@@ -583,7 +583,7 @@
             [].forEach.call(dots.children, function (d, i) { d.classList.toggle('on', i === k); });
         }
 
-        // ----- Category slider ---------------------------------------------
+        // ----- Category index ----------------------------------------------
         var CATS = [
             { g: 'women',  name: 'Women',  media: 'assets/hero/hero-clothing.mp4', poster: 'assets/hero/women-editorial.jpg', desc: 'Discover our women’s collection, where timeless elegance meets modern style' },
             { g: 'men',    name: 'Men',    media: 'assets/hero/men.mp4',           poster: 'men-hero.jpg',                    desc: 'Tailoring, denim and outerwear, picked for everyday wear' },
@@ -593,19 +593,20 @@
         var catsEl = document.getElementById('hmCats');
         function buildCats() {
             var list = modeList();
-            catsEl.innerHTML = CATS.map(function (c) {
-                var n = list.filter(function (p) { return genderOf(p) === c.g; }).length || list.length;   // no gender data → the whole list
-                return '<button type="button" class="hm-cat' + (c.g === state.gender ? ' is-on' : '') + '" data-gender="' + c.g + '" aria-label="' + c.name + '">' +
-                    '<span class="hm-cat-pic">' +
-                        '<span class="hm-cat-media"><video src="' + c.media + '" poster="' + c.poster + '" muted loop playsinline preload="none" aria-hidden="true"></video></span>' +
-                        '<span class="hm-cat-count"><b>' + num(n) + '</b><span>Items on air</span></span>' +
-                        '<span class="hm-cat-desc">' + esc(c.desc) + '</span>' +
-                        '<span class="hm-cat-glass" aria-hidden="true">' + c.name + '</span>' +          // frosted glass while not chosen
-                    '</span>' +
-                    '<span class="hm-cat-name"><span>' + c.name + '</span></span></button>';
-            }).join('');
+            var count = function (c) { return list.filter(function (p) { return genderOf(p) === c.g; }).length || list.length; };   // no gender data → the whole list
+            // An index: the four pictures stacked on one side, the four names as a list beside them.
+            catsEl.innerHTML = '<div class="hm-ix-stage">' + CATS.map(function (c) {
+                return '<div class="hm-ix-pane' + (c.g === state.gender ? ' is-on' : '') + '" data-gender="' + c.g + '">' +
+                    '<span class="hm-ix-media"><video src="' + c.media + '" poster="' + c.poster + '" muted loop playsinline preload="none" aria-hidden="true"></video></span>' +
+                    '<span class="hm-ix-count"><b>' + num(count(c)) + '</b> items on air</span>' +
+                    '<p class="hm-ix-desc">' + esc(c.desc) + '</p></div>';
+            }).join('') + '</div><ul class="hm-ix-list">' + CATS.map(function (c) {
+                var n = count(c);
+                return '<li><button type="button" class="hm-ix-item' + (c.g === state.gender ? ' is-on' : '') + '" data-gender="' + c.g + '"' +
+                    (c.g === state.gender ? ' aria-current="true"' : '') + '>' + c.name + '<small>' + (n < 10 ? '0' : '') + num(n) + '</small></button></li>';
+            }).join('') + '</ul>';
         }
-        function catCards() { return [].slice.call(catsEl.querySelectorAll('.hm-cat')); }
+        function catCards() { return [].slice.call(catsEl.querySelectorAll('.hm-ix-pane')); }
         // Only the card in view plays its video.
         function playCurrent() {
             catCards().forEach(function (c) {
@@ -627,49 +628,45 @@
                 if (k < 1) requestAnimationFrame(step);
             })(performance.now());
         }
-        // Scroll position that puts a card in the middle of the slider.
-        function centreOf(el) { return el.offsetLeft - catsEl.offsetLeft - (catsEl.clientWidth - el.offsetWidth) / 2; }
-        function setGender(g, scroll) {
+        function setGender(g) {
             if (!g) return;
             var changed = g !== state.gender;
             state.gender = g;
             catCards().forEach(function (c) { c.classList.toggle('is-on', c.dataset.gender === g); });
-            if (scroll) { var el = catsEl.querySelector('.hm-cat[data-gender="' + g + '"]'); if (el) catsEl.scrollTo({ left: centreOf(el), behavior: 'smooth' }); }
+            [].forEach.call(catsEl.querySelectorAll('.hm-ix-item'), function (b) {
+                var on = b.dataset.gender === g; b.classList.toggle('is-on', on);
+                if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+            });
             syncSubnav(); playCurrent();
             if (changed) {
-                var on = catsEl.querySelector('.hm-cat.is-on .hm-cat-count b'); if (on) countUp(on);
+                var on = catsEl.querySelector('.hm-ix-pane.is-on .hm-ix-count b'); if (on) countUp(on);
                 var rail = document.getElementById('hmGenderRail');
                 if (rail) { rail.classList.remove('is-swap'); void rail.offsetWidth; rail.classList.add('is-swap'); }   // the pieces slide in again
                 buildPieces();
             }
         }
-        // Swiping the slider: the card nearest the middle takes the chosen look straight away,
-        // while the finger is still moving; the pieces below follow once the swipe stops.
-        var settle = null, frame = 0;
-        function nearest() {
-            var best = null, dist = 1e9;
-            catCards().forEach(function (c) { var dd = Math.abs(centreOf(c) - catsEl.scrollLeft); if (dd < dist) { dist = dd; best = c; } });
-            return best;
-        }
-        catsEl.addEventListener('scroll', function () {
-            cancelAnimationFrame(frame);
-            frame = requestAnimationFrame(function () {
-                var best = nearest();
-                if (best && !best.classList.contains('is-on')) {
-                    catCards().forEach(function (c) { c.classList.toggle('is-on', c === best); });
-                    var b = best.querySelector('.hm-cat-count b'); if (b) countUp(b);
-                }
-            });
-            clearTimeout(settle);
-            settle = setTimeout(function () { var best = nearest(); if (best) setGender(best.dataset.gender, false); }, 140);
-        }, { passive: true });
+        // A name in the list chooses its picture; a sideways swipe on the picture moves to the next / previous one.
         catsEl.addEventListener('click', function (e) {
-            var c = e.target.closest ? e.target.closest('.hm-cat') : null;
-            if (c) setGender(c.dataset.gender, true);
+            var b = e.target.closest ? e.target.closest('.hm-ix-item') : null;
+            if (b) setGender(b.dataset.gender);
         });
+        var sx = null, sy = 0;
+        catsEl.addEventListener('touchstart', function (e) {
+            var onPic = e.target.closest && e.target.closest('.hm-ix-stage');
+            if (!onPic || e.touches.length !== 1) { sx = null; return; }
+            sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+        }, { passive: true });
+        catsEl.addEventListener('touchend', function (e) {
+            if (sx === null || !e.changedTouches.length) return;
+            var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+            if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+            var i = 0; CATS.forEach(function (c, k) { if (c.g === state.gender) i = k; });
+            var next = CATS[i + (dx < 0 ? 1 : -1)];
+            if (next) setGender(next.g);
+        }, { passive: true });
         // Hooks kept for the sub-header and for links that name a gender.
-        window.__gcGoToGender = function (g) { setGender(g, true); };
-        window.__onGenderChange = function (g) { setGender(g, false); };
+        window.__gcGoToGender = function (g) { setGender(g); };
+        window.__onGenderChange = function (g) { setGender(g); };
 
         // ----- The pieces (they follow the chosen category) -----------------
         function buildPieces() {
@@ -904,7 +901,7 @@
             var b = e.target.closest ? e.target.closest('.fsn-item') : null;
             if (!b) return;
             closeResults();
-            setGender(b.dataset.gender, true);
+            setGender(b.dataset.gender);
             var top = catsEl.getBoundingClientRect().top + window.scrollY - 130;
             window.scrollTo({ top: top, behavior: 'smooth' });
         });
@@ -935,8 +932,7 @@
                 es.forEach(function (en) {
                     if (!en.isIntersecting) return;
                     io.unobserve(en.target); en.target.classList.add('hm-in');
-                    if (en.target === catsEl) { var b = catsEl.querySelector('.hm-cat.is-on .hm-cat-count b'); if (b) countUp(b); }
-                    if (en.target === catsEl) setTimeout(function () { catsEl.classList.add('hm-done'); }, 1300);   // entrance over: answer at once from here on
+                    if (en.target === catsEl) { var b = catsEl.querySelector('.hm-ix-pane.is-on .hm-ix-count b'); if (b) countUp(b); }
                 });
             }, { threshold: 0.15 });
             [].forEach.call(document.querySelectorAll('.hm-cats, .hm-rail'), function (el) { el.classList.add('hm-wait'); io.observe(el); });
@@ -948,7 +944,7 @@
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
     <!-- Hero zoom on scroll (zoom-parallax.css). -->
-    <script src="zoom-parallax.js?v=12"></script>
+    <script src="zoom-parallax.js?v=13"></script>
     <script>
         // The header reads its state on scroll; tell it once now, so it is right before the first scroll.
         (function () {
