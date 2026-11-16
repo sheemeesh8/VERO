@@ -119,10 +119,26 @@
 	// feed slides up over it.
 	var wrap = document.getElementById('feedHeroWrap') || hero.parentNode;
 
+	// Once the picture has opened to full-screen the zoom never plays back: the
+	// track drops the zoom's screen (.zp-open) and the scroll position is moved
+	// up by the same amount, so nothing jumps and the page now starts at the
+	// full-screen hero.
+	var opened = false;
+
 	function apply() {
 		if (transitioning) return; // don't fight the click-open animation
-		var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight - hero.offsetHeight);
-		var p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
+		var p = 1;
+		if (!opened) {
+			var pinned = Math.max(1, wrap.offsetHeight - window.innerHeight - hero.offsetHeight);
+			p = clamp((window.scrollY - wrap.offsetTop) / pinned, 0, 1);
+			if (p >= 1) {
+				opened = true;
+				var before = wrap.offsetHeight;
+				wrap.classList.add('zp-open');
+				var cut = before - wrap.offsetHeight;
+				if (cut > 0) window.scrollTo(0, Math.max(0, window.scrollY - cut));
+			}
+		}
 		// Size the collage from the stage box (the hero's image region), which may
 		// be only part of the viewport (e.g. the top 75%).
 		var srect = stage.getBoundingClientRect();
