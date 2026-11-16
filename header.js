@@ -1178,7 +1178,7 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .vs-hdr-back {
-            flex: none; width: 42px; height: 42px; box-sizing: border-box; padding: 0; margin: 0;
+            flex: none; width: 42px; height: 42px; box-sizing: border-box; padding: 0; margin: 0 0 0 auto;
             border: none; background: none; display: flex; align-items: center; justify-content: center;
             color: #16150f; cursor: pointer; transition: opacity 0.2s;
         }
@@ -1975,7 +1975,6 @@
             <div class="vs-wrap">
                 <div class="vs-top">
                     <div class="vs-hdr">
-                        <div class="vs-hdr-name" id="vsHdrName" role="heading" aria-level="1">Search</div>
                         <button class="vs-hdr-back" type="button" data-vs="back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
                     </div>
                     <div class="vs-barrow">
