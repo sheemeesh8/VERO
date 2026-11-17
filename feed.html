@@ -422,7 +422,7 @@
         try { if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.body.classList.add('zp-head-out'); } catch (e) {}
     </script>
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
-    <script src="header.js?v=20261117a"></script>
+    <script src="header.js?v=20261117b"></script>
 
     <!-- ===================== THE HOME CORE (styles: assets/home.css) =====================
          hero → search line → two pieces → category index → two pieces → four more → sale. -->
@@ -441,11 +441,9 @@
     </div>
 
     <!-- Gender sub-header — a fixed second header, shown once the hero is crossed. -->
-    <nav class="feed-subnav is-hero" id="feedSubnav" aria-label="Shop by gender">
-        <button type="button" class="fsn-item" data-gender="women">Women</button>
-        <button type="button" class="fsn-item" data-gender="men">Men</button>
-        <button type="button" class="fsn-item" data-gender="unisex">Unisex</button>
-        <button type="button" class="fsn-item" data-gender="kids">Kids</button>
+    <nav class="feed-subnav is-hero" id="feedSubnav" aria-label="Art or clothing">
+        <button type="button" class="fsn-item" data-mode="art">Art</button>
+        <button type="button" class="fsn-item" data-mode="fashion">Clothing</button>
     </nav>
 
     <main class="hm">
@@ -884,38 +882,37 @@
         function showModeFade(mode) {
             var ov = document.getElementById('modeFade');
             if (!ov) { ov = document.createElement('div'); ov.id = 'modeFade'; ov.innerHTML = '<span></span>'; document.body.appendChild(ov); }
-            ov.querySelector('span').textContent = (mode === 'art') ? 'Art' : 'Fashion';
+            ov.querySelector('span').textContent = (mode === 'art') ? 'Art' : 'Clothing';
             ov.classList.remove('out'); void ov.offsetWidth; ov.classList.add('show');
             clearTimeout(ov.__t1); clearTimeout(ov.__t2);
             ov.__t1 = setTimeout(function () { ov.classList.remove('show'); ov.classList.add('out'); }, 520);
             ov.__t2 = setTimeout(function () { ov.classList.remove('out'); }, 1050);
         }
-        // Toggle Art / Fashion in place — no reload.
-        window.toggleSwitch = function () {
-            var mode = (state.mode === 'art') ? 'fashion' : 'art';
+        // Switch to a given mode (Art / Clothing) in place — no reload. Driven by the
+        // sub-header's Art / Clothing tabs (and kept for any toggleSwitch callers).
+        function setFeedMode(mode) {
+            mode = (mode === 'art') ? 'art' : 'fashion';
+            if (mode === state.mode) return;
             try { localStorage.setItem('vero_category', mode === 'art' ? 'art' : 'clothing'); } catch (e) {}
-            var segA = document.getElementById('segArt'), segF = document.getElementById('segFashion');
-            if (segA && segF) { segA.classList.toggle('active', mode === 'art'); segF.classList.toggle('active', mode !== 'art'); }
-            try { document.body.setAttribute('data-mode', mode === 'art' ? 'art' : 'fashion'); } catch (e) {}
+            try { document.body.setAttribute('data-mode', mode); } catch (e) {}
             showModeFade(mode);
             state.mode = mode;
-            buildAll();
+            buildAll();                // rebuilds the feed and re-marks the active sub-header tab (via syncSubnav)
             if (input && input.value.trim()) runSearch(input.value);
-        };
+        }
+        window.toggleSwitch = function () { setFeedMode(state.mode === 'art' ? 'fashion' : 'art'); };
 
-        // ----- Gender sub-header (fixed second header after the hero) --------
+        // ----- Art / Clothing sub-header (fixed second header after the hero) --------
         var subnav = document.getElementById('feedSubnav');
         function syncSubnav() {
             if (!subnav) return;
-            [].slice.call(subnav.querySelectorAll('.fsn-item')).forEach(function (b) { b.classList.toggle('on', b.dataset.gender === state.gender); });
+            [].slice.call(subnav.querySelectorAll('.fsn-item')).forEach(function (b) { b.classList.toggle('on', b.dataset.mode === state.mode); });
         }
         if (subnav) subnav.addEventListener('click', function (e) {
             var b = e.target.closest ? e.target.closest('.fsn-item') : null;
-            if (!b) return;
+            if (!b || b.dataset.mode === state.mode) return;
             closeResults();
-            setGender(b.dataset.gender);
-            var top = catsEl.getBoundingClientRect().top + window.scrollY - 130;
-            window.scrollTo({ top: top, behavior: 'smooth' });
+            setFeedMode(b.dataset.mode);
         });
         function placeSubnav() {
             if (!subnav) return;
