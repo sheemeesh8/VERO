@@ -400,7 +400,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261117t">
+    <link rel="stylesheet" href="assets/home.css?v=20261117u">
 </head>
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
@@ -605,12 +605,15 @@
                 var media = c.img
                     ? '<img src="' + c.img + '" alt="" loading="lazy" decoding="async">'
                     : '<video src="' + c.media + '" poster="' + c.poster + '" muted loop playsinline preload="none" aria-hidden="true"></video>';
-                return '<button type="button" class="hm-dk-card" data-gender="' + c.g + '" aria-label="' + c.name + '">' +
+                return '<div class="hm-dk-card" data-gender="' + c.g + '" role="button" tabindex="0" aria-label="' + c.name + '">' +
                     '<span class="hm-dk-media">' + media + '</span>' +
                     '<span class="hm-dk-count"><b>' + num(n) + '</b> items on air</span>' +
-                    '<span class="hm-dk-desc">' + esc(c.desc) + '</span>' +
                     '<span class="hm-dk-glass" aria-hidden="true"></span>' +
-                    '<span class="hm-dk-name"><span>' + c.name + '</span></span></button>';        // the navy tab, on the chosen card only
+                    '<span class="hm-dk-body">' +                                   // name → small copy → Discover (front card only)
+                        '<span class="hm-dk-name">' + c.name + '</span>' +
+                        '<span class="hm-dk-desc">' + esc(c.desc) + '</span>' +
+                        '<span class="hm-dk-btn" data-dk="discover">Discover</span>' +
+                    '</span></div>';
             }).join('') + '</div><div class="hm-dk-bar" aria-hidden="true"><span class="hm-dk-at">01</span><i><b></b></i><span>0' + CATS.length + '</span></div>';
             placeDeck();
         }
@@ -665,8 +668,15 @@
         // A card peeking from behind comes to the front when tapped; a sideways swipe on the deck
         // sends the front card away (left) or brings the last one back (right).
         catsEl.addEventListener('click', function (e) {
-            var b = e.target.closest ? e.target.closest('.hm-dk-card') : null;
-            if (b && b.getAttribute('data-pos') !== '0') setGender(b.dataset.gender);
+            var card = e.target.closest ? e.target.closest('.hm-dk-card') : null;
+            if (!card) return;
+            if (e.target.closest('.hm-dk-btn')) {              // Discover → show that gender's pieces
+                closeResults(); setGender(card.dataset.gender);
+                var rail = document.getElementById('hmGenderRail');
+                if (rail) window.scrollTo({ top: rail.getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' });
+                return;
+            }
+            if (card.getAttribute('data-pos') !== '0') setGender(card.dataset.gender);
         });
         var sx = null, sy = 0;
         catsEl.addEventListener('touchstart', function (e) {
