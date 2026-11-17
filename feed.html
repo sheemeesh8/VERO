@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="search-box.css">
     <link rel="stylesheet" href="zoom-parallax.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: auto; }
@@ -399,7 +400,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261116s">
+    <link rel="stylesheet" href="assets/home.css?v=20261117a">
 </head>
 <body>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
@@ -431,11 +432,19 @@
     <div class="zp-wrap" id="feedHeroWrap">
         <section class="hero hm-hero" id="feedHero">
             <video class="hero-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline></video>
-            <div class="hm-hero-cap zp-endcap">
-                <h1 class="hm-hero-title" id="hmTitle">Autumn<br>Collection</h1>
-                <p class="hm-hero-sub" id="hmSub">Refined silhouettes for the season ahead</p>
-                <div class="hm-hero-num" id="hmCount">0</div>
-                <div class="hm-hero-lbl">Items available</div>
+            <div class="hm-hero-cap zp-endcap" id="hmHeroCap">
+                <h1 class="hh-title">moravchick</h1>
+                <div class="hh-tag">Straight Elegance</div>
+                <nav class="hh-nav" aria-label="Sections">
+                    <a class="hh-nav-item" data-mode="fashion">Fashion</a>
+                    <a class="hh-nav-item" data-mode="art">Art</a>
+                    <a class="hh-nav-item" data-act="magazine">Magazine</a>
+                </nav>
+                <nav class="hh-links" aria-label="Quick links">
+                    <a data-act="add">Add product</a>
+                    <a data-act="collection">Autumn Collection</a>
+                    <a data-act="sale">Our nest sales</a>
+                </nav>
             </div>
         </section>
     </div>
@@ -691,17 +700,31 @@
 
         // ----- Hero + sale facts --------------------------------------------
         function buildHero() {
-            var art = (state.mode === 'art'), key = art ? 'interiors' : VC.currentKey(), col = VC.get(key);
-            var name = art ? ((col && col.en) || 'Interior Design') : (((col && col.en) || 'Autumn') + ' Collection');
-            var parts = name.split(' ');
-            document.getElementById('hmTitle').innerHTML = esc(parts[0]) + (parts.length > 1 ? '<br>' + esc(parts.slice(1).join(' ')) : '');
-            document.getElementById('hmSub').textContent = art ? ((col && col.tagline) || 'Home decor, curated for you') : 'Refined silhouettes for the season ahead';
-            document.getElementById('hmCount').textContent = num(modeList().length);
+            var art = (state.mode === 'art'), key = art ? 'interiors' : VC.currentKey();
+            // Mark the current section (Fashion / Art) in the hero nav.
+            var cap = document.getElementById('hmHeroCap');
+            if (cap) [].forEach.call(cap.querySelectorAll('.hh-nav-item[data-mode]'), function (a) { a.classList.toggle('is-on', a.dataset.mode === state.mode); });
             // The slider under the hero: pieces from the collection the hero is showing.
             var inCol = VC.byCollection(key).filter(function (p) { return art ? isArt(p) : !isArt(p); });
             if (inCol.length < 2) inCol = modeList();
             fillRail('hmHeroRail', inCol.slice(0, 10));
         }
+        // Hero nav: Fashion / Art switch the feed mode; Magazine / Add product / collection / sale act or scroll.
+        (function () {
+            var cap = document.getElementById('hmHeroCap'); if (!cap) return;
+            function toSection(sel, off) { var t = document.querySelector(sel); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - (off || 100), behavior: 'smooth' }); }
+            cap.addEventListener('click', function (e) {
+                var el = e.target.closest ? e.target.closest('[data-mode],[data-act]') : null; if (!el) return;
+                e.preventDefault();
+                if (el.dataset.mode) { closeResults(); setFeedMode(el.dataset.mode); return; }
+                switch (el.dataset.act) {
+                    case 'magazine': (window.openMagazine ? window.openMagazine() : (location.href = 'magazine.html')); break;
+                    case 'add': (window.openUploadProduct ? window.openUploadProduct() : (location.href = 'upload-start.html')); break;
+                    case 'collection': toSection('#hmCats', 120); break;
+                    case 'sale': toSection('.hm-sale', 80); break;
+                }
+            });
+        })();
         function saleList() {
             var art = (state.mode === 'art');
             return VC.onSale().filter(function (p) { return art ? isArt(p) : !isArt(p); });
