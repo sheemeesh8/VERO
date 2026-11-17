@@ -220,6 +220,7 @@
 			var endOp = clamp((p - 0.62) / 0.3, 0, 1);
 			endcap.style.opacity = endOp;
 			endcap.style.pointerEvents = endOp > 0.5 ? 'auto' : 'none';
+			if (endOp > 0.05) endcap.classList.add('zp-in');   // the caption's lines rise in, staggered
 		}
 		// The white band (search + Most liked slider) slides up with the caption.
 		if (band) band.classList.toggle('revealed', p > 0.72);
@@ -230,6 +231,7 @@
 	function finish() {
 		if (opened) return;
 		opened = true; p = 1; raf = 0;
+		if (endcap) endcap.classList.add('zp-in');
 		apply();
 		// The header and the gender sub-header decide their look on scroll: let them look again now.
 		try { window.dispatchEvent(new Event('scroll')); } catch (e) {}
