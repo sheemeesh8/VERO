@@ -2139,7 +2139,7 @@
         });
     }
 
-    window.veroOpenSearchPage = function () {
+    window.veroOpenSearchPage = function (opts) {
         mountSearchPage();
         const page = document.getElementById('veroSearchPage');
         const input = document.getElementById('vspInput');
@@ -2153,8 +2153,16 @@
         page.setAttribute('aria-hidden', 'false');
         page.scrollTop = 0;
         document.body.style.overflow = 'hidden';
-        input.focus();                         // straight to typing, keyboard up on phones
+        if (opts && opts.filter) {             // straight into the filter wizard
+            const toFilter = function () { vsGo(vsNeighbour('', 1, vsHits())); };
+            if (window.veroCollections) toFilter();                         // data already here (e.g. the feed)
+            else vsEnsureData(function () { vsRender(); toFilter(); });      // otherwise wait for it
+        } else {
+            input.focus();                     // straight to typing, keyboard up on phones
+        }
     };
+    // Open the search page directly on the product-filter wizard.
+    window.veroOpenFilter = function () { window.veroOpenSearchPage({ filter: true }); };
     window.veroCloseSearchPage = function () {
         const page = document.getElementById('veroSearchPage');
         if (!page || !page.classList.contains('open')) return;
