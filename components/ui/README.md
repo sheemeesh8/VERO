@@ -1,18 +1,37 @@
-# `components/ui` — Zoom Parallax
+# `components/ui` — component references
 
 ## Important: this repo is **not** a shadcn / React / TypeScript project
 
 VERO is a **static, vanilla HTML + CSS + JavaScript** site. There is no
 `package.json`, no bundler, no Tailwind and no TypeScript toolchain. The React
-files in this folder (`zoom-parallax.tsx`, `demo.tsx`) are kept **only as the
-canonical reference** for the component that was requested, so the design intent
-stays documented in one place.
+files in this folder (`zoom-parallax.tsx`, `snow-ball-loading-spinner.tsx`,
+`*.demo.tsx`, `demo.tsx`) are kept **only as the canonical reference** for the
+components that were requested, so the design intent stays documented in one
+place.
 
-The effect is actually shipped to the live site as a **vanilla port**:
+Each effect is actually shipped to the live site as a **vanilla port**:
 
+### Zoom Parallax
 - `zoom-parallax.css` (repo root) — styling + tile positions
 - `zoom-parallax.js`  (repo root) — scroll-driven scaling (replaces framer-motion)
 - wired into `feed.html` to drive the **hero → feed** transition.
+
+### Snowball loading spinner
+- `snow-ball-loading-spinner.tsx` / `.demo.tsx` — reference only.
+- `loading-spinner.css` (repo root) — the full spinner. The source snippet only
+  shipped the `@keyframes`; the `.pl*` **element styles were reconstructed** here
+  so it actually renders (a white snowball rolling in a recessed ring). The
+  `@import "tailwindcss"` / `tw-animate-css` lines from the snippet are **omitted**
+  — there is no Tailwind in this repo.
+- `loading-spinner.js` (repo root) — injects a full-screen overlay and exposes
+  `window.veroLoader.show('label')` / `.hide()`. By default it auto-shows on page
+  load and fades out on `window.load` (min on-screen time + a safety timeout).
+- wired into `feed.html` as the page-load loader (`data-label="Curating"`).
+- Because the site forces square corners globally (`vero-theme.js`), the `.pl`
+  classes are added to that rule's round-element whitelist so the spinner stays
+  circular. Reuse it on any page with:
+  `<link rel="stylesheet" href="loading-spinner.css" data-vero-loader-css>` +
+  `<script src="loading-spinner.js" data-label="…"></script>`.
 
 If you ever want to pull in more 21st.dev / shadcn components and use the
 original `.tsx` files directly, set up a proper project first:
