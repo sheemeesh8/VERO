@@ -540,7 +540,7 @@
         }
         function byGender(list, gender) {
             if (!gender) return list;
-            var g = list.filter(function (p) { return genderOf(p) === gender; });
+            var g = list.filter(function (p) { return facetOf(p) === gender; });
             return g.length ? g : list;         // demo data carries no gender → fall back
         }
         function fill(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
@@ -596,12 +596,22 @@
             { g: 'unisex', name: 'Unisex', img: 'assets/hero/unisex-slide.jpg?v=1', desc: 'Pieces made to be shared, in easy shapes and quiet colours' },
             { g: 'kids',   name: 'Kids',   img: 'assets/hero/kids-slide.jpg?v=1', desc: 'Small sizes, the same care: soft, sturdy and ready to play' }
         ];
+        // In Art mode the deck shows the art categories instead of the genders.
+        var CATS_ART = [
+            { g: 'Wall Art',  name: 'Wall Art',  img: 'art-hero.jpg',                        desc: 'Original canvases and prints, chosen to anchor a room' },
+            { g: 'Furniture', name: 'Furniture', img: 'gallery-hero.jpg',                     desc: 'Quiet, sculptural pieces in wood, stone and bouclé' },
+            { g: 'Lighting',  name: 'Lighting',  img: 'assets/hero/art-section-poster.jpg',   desc: 'Lamps and fixtures that set the evening mood' },
+            { g: 'Sculpture', name: 'Sculpture', img: 'magazine-hero.jpg',                    desc: 'One-of-a-kind objects, hand-made and signed' }
+        ];
+        function modeCats() { return (state.mode === 'art') ? CATS_ART : CATS; }
+        // What a piece says for the deck's facet: its gender in Fashion, its category in Art.
+        function facetOf(p) { return (state.mode === 'art') ? String((p.category || (p._raw && p._raw.category)) || '') : genderOf(p); }
         var catsEl = document.getElementById('hmCats');
         function buildCats() {
             var list = modeList();
             // A deck: the chosen card in front, the next ones behind it under frosted glass.
-            catsEl.innerHTML = '<div class="hm-dk">' + CATS.map(function (c) {
-                var n = list.filter(function (p) { return genderOf(p) === c.g; }).length || list.length;   // no gender data → the whole list
+            catsEl.innerHTML = '<div class="hm-dk">' + modeCats().map(function (c) {
+                var n = list.filter(function (p) { return facetOf(p) === c.g; }).length || list.length;   // no gender data → the whole list
                 var media = c.img
                     ? '<img src="' + c.img + '" alt="" loading="lazy" decoding="async">'
                     : '<video src="' + c.media + '" poster="' + c.poster + '" muted loop playsinline preload="none" aria-hidden="true"></video>';
@@ -614,10 +624,10 @@
                         '<span class="hm-dk-desc">' + esc(c.desc) + '</span>' +
                         '<span class="hm-dk-btn" data-dk="discover">Discover</span>' +
                     '</span></div>';
-            }).join('') + '</div><div class="hm-dk-bar" aria-hidden="true"><span class="hm-dk-at">01</span><i><b></b></i><span>0' + CATS.length + '</span></div>';
+            }).join('') + '</div><div class="hm-dk-bar" aria-hidden="true"><span class="hm-dk-at">01</span><i><b></b></i><span>0' + modeCats().length + '</span></div>';
             placeDeck();
         }
-        function catIndex() { var i = 0; CATS.forEach(function (c, k) { if (c.g === state.gender) i = k; }); return i; }
+        function catIndex() { var i = 0; modeCats().forEach(function (c, k) { if (c.g === state.gender) i = k; }); return i; }
         // Each card's place in the deck, counted from the chosen one.
         function placeDeck() {
             var cur = catIndex();
@@ -628,7 +638,7 @@
             });
             var at = catsEl.querySelector('.hm-dk-at'), fill = catsEl.querySelector('.hm-dk-bar i b');
             if (at) at.textContent = '0' + (cur + 1);
-            if (fill) fill.style.width = ((cur + 1) / CATS.length * 100) + '%';
+            if (fill) fill.style.width = ((cur + 1) / modeCats().length * 100) + '%';
         }
         function catCards() { return [].slice.call(catsEl.querySelectorAll('.hm-dk-card')); }
         // Only the card in view plays its video.
@@ -688,8 +698,8 @@
             if (sx === null || !e.changedTouches.length) return;
             var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
             if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
-            var i = 0; CATS.forEach(function (c, k) { if (c.g === state.gender) i = k; });
-            var next = CATS[i + (dx < 0 ? 1 : -1)];
+            var cats = modeCats(), i = 0; cats.forEach(function (c, k) { if (c.g === state.gender) i = k; });
+            var next = cats[i + (dx < 0 ? 1 : -1)];
             if (next) setGender(next.g);
         }, { passive: true });
         // Hooks kept for the sub-header and for links that name a gender.
@@ -930,6 +940,7 @@
             try { document.body.setAttribute('data-mode', mode); } catch (e) {}
             showModeFade(mode);
             state.mode = mode;
+            state.gender = modeCats()[0].g;    // the new mode's facets differ (genders vs art categories) — start on the first
             buildAll();                // rebuilds the feed and re-marks the active sub-header tab (via syncSubnav)
             if (input && input.value.trim()) runSearch(input.value);
         }
