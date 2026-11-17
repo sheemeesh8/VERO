@@ -1653,12 +1653,13 @@
         { key: 'style',    title: 'Which style?',              any: 'Any style' },
         { key: 'material', title: 'Which material?',           any: 'Any material' },
         { key: 'color',    title: 'Which colour?',             any: 'Any colour' },
+        { key: 'size',     title: 'Which size?',               any: 'Any size' },
         { key: 'price',    title: 'What is your budget?',      any: 'Any price' }
     ];
     const VS_GENDERS = ['Women', 'Men', 'Unisex', 'Kids'];
     const VS_BANDS = [['u200', 'Under ₪200', 0, 200], ['200', '₪200 – ₪500', 200, 500],
                       ['500', '₪500 – ₪1,500', 500, 1500], ['1500', 'Over ₪1,500', 1500, Infinity]];
-    function vsNoFilter() { return { product: '', gender: '', style: '', material: '', color: '', price: '' }; }
+    function vsNoFilter() { return { product: '', gender: '', style: '', material: '', color: '', size: '', price: '' }; }
     function vsFresh() { return { q: '', tab: 'product', f: vsNoFilter(), step: '', gOff: false, sort: 'rel', hi: -1, limit: VS_PAGE }; }
     let vs = vsFresh();
     function vsFilterOn(f) { return VS_STEPS.some(st => !!f[st.key]); }
@@ -1681,11 +1682,12 @@
         if (key === 'style') return Array.isArray(r.style) ? r.style : (r.style ? [r.style] : []);
         if (key === 'material') return r.fabric || r.material || '';
         if (key === 'color') return r.color || '';
+        if (key === 'size') return r.size || '';
         return '';
     }
     // Does a piece pass the filter? `skip` leaves one question out, to list its options.
     function vsPass(p, f, skip) {
-        for (const k of ['product', 'material', 'color']) {
+        for (const k of ['product', 'material', 'color', 'size']) {
             if (skip !== k && f[k] && vsAttr(p, k) !== f[k]) return false;
         }
         if (skip !== 'gender' && f.gender) {
