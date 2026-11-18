@@ -419,33 +419,67 @@
             return feed.getBoundingClientRect().top <= (head ? head.offsetHeight : 0) + 4;
         };
         window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
-        // While the hero is still a small picture on the white stage there is no
-        // header at all (zoom-parallax.js lifts this once the picture is full-screen).
-        try { if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.body.classList.add('zp-head-out'); } catch (e) {}
+        // The hero is a slider (no zoom-parallax entrance), so the header follows
+        // the normal rule: transparent over the hero, solid once the feed rises in.
     </script>
     <!-- Shared site header (single source: header.js). It injects #siteHeader. -->
     <script src="header.js?v=20261117e"></script>
 
     <!-- ===================== THE HOME CORE (styles: assets/home.css) =====================
          hero → search line → two pieces → category index → two pieces → four more → sale. -->
-    <!-- Entrance: the hero opens as a tall picture on a white stage and grows to
-         full-screen as you scroll (zoom-parallax.js); its caption fades in at the end. -->
-    <div class="zp-wrap" id="feedHeroWrap">
-        <section class="hero hm-hero" id="feedHero">
-            <video class="hero-video" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" autoplay muted loop playsinline></video>
-            <div class="hm-hero-cap zp-endcap" id="hmHeroCap">
-                <div class="rl-eyebrow">The Autumn Collection</div>
-                <h1 class="rl-title">moravchick</h1>
-                <span class="rl-rule"></span>
-                <p class="rl-sub">Curated fashion &amp; art, chosen with care<br>and met in person.</p>
-                <nav class="rl-nav" aria-label="Sections">
-                    <a class="hh-nav-item rl-nav-item" data-mode="fashion">Fashion</a>
-                    <a class="hh-nav-item rl-nav-item" data-mode="art">Art</a>
-                    <a class="hh-nav-item rl-nav-item" data-act="magazine">Magazine</a>
-                </nav>
-                <a class="rl-btn" data-act="collection">Discover the collection</a>
-                <a class="rl-btn-sub" data-act="filter">Filter products</a>
+    <!-- Hero slider: three slides — welcome → the collection → new arrivals.
+         Drives on autoplay / dots / arrows / swipe (hero-slider.js); the slide
+         captions reuse the .hm-hero-cap / .rl-* type in assets/home.css. The
+         slider root keeps id="hmHeroCap" so the feed's existing data-act /
+         data-mode click delegation still catches every slide button. -->
+    <div id="feedHeroWrap">
+        <section class="hero-slider" id="hmHeroCap" aria-roledescription="carousel" aria-label="Featured">
+            <!-- 1 — Welcome -->
+            <div class="hs-slide is-active" data-slide="0">
+                <video class="hs-media" src="assets/hero/intro.mp4" poster="assets/hero/intro-poster.jpg" muted loop playsinline preload="auto"></video>
+                <div class="hm-hero-cap">
+                    <div class="rl-eyebrow">Welcome to</div>
+                    <h1 class="rl-title">moravchick</h1>
+                    <span class="rl-rule"></span>
+                    <p class="rl-sub">Curated fashion &amp; art, chosen with care<br>and met in person.</p>
+                    <nav class="rl-nav" aria-label="Sections">
+                        <a class="hh-nav-item rl-nav-item" data-mode="fashion">Fashion</a>
+                        <a class="hh-nav-item rl-nav-item" data-mode="art">Art</a>
+                        <a class="hh-nav-item rl-nav-item" data-act="magazine">Magazine</a>
+                    </nav>
+                    <a class="rl-btn" data-act="collection">Enter the collection</a>
+                </div>
             </div>
+            <!-- 2 — The collection -->
+            <div class="hs-slide" data-slide="1">
+                <video class="hs-media" src="assets/hero/unisex.mp4" poster="assets/hero/autumn-hero.jpg" muted loop playsinline preload="metadata"></video>
+                <div class="hm-hero-cap">
+                    <div class="rl-eyebrow">The Autumn Collection</div>
+                    <h1 class="rl-title">The Collection</h1>
+                    <span class="rl-rule"></span>
+                    <p class="rl-sub">This season&rsquo;s edit &mdash; warm layers,<br>soft wools and earthy tones.</p>
+                    <a class="rl-btn" data-act="collection">Discover the collection</a>
+                </div>
+            </div>
+            <!-- 3 — New arrivals -->
+            <div class="hs-slide" data-slide="2">
+                <img class="hs-media" src="assets/hero/women-slide.jpg" alt="" loading="eager">
+                <div class="hm-hero-cap">
+                    <div class="rl-eyebrow">Just In</div>
+                    <h1 class="rl-title">New Arrivals</h1>
+                    <span class="rl-rule"></span>
+                    <p class="rl-sub">The latest pieces to land,<br>fresh from our sellers.</p>
+                    <a class="rl-btn" data-act="new">See what&rsquo;s new</a>
+                </div>
+            </div>
+            <!-- controls -->
+            <div class="hs-dots" role="tablist" aria-label="Choose a slide">
+                <button type="button" class="hs-dot is-active" data-go="0" role="tab" aria-selected="true" aria-label="Welcome"></button>
+                <button type="button" class="hs-dot" data-go="1" role="tab" aria-selected="false" aria-label="The collection"></button>
+                <button type="button" class="hs-dot" data-go="2" role="tab" aria-selected="false" aria-label="New arrivals"></button>
+            </div>
+            <button type="button" class="hs-arrow hs-prev" aria-label="Previous slide">&#8249;</button>
+            <button type="button" class="hs-arrow hs-next" aria-label="Next slide">&#8250;</button>
         </section>
     </div>
 
@@ -741,6 +775,7 @@
                     case 'magazine': (window.openMagazine ? window.openMagazine() : (location.href = 'magazine.html')); break;
                     case 'add': (window.openUploadProduct ? window.openUploadProduct() : (location.href = 'upload-start.html')); break;
                     case 'collection': toSection('#hmCats', 120); break;
+                    case 'new': toSection('#hmNewRail', 80); break;
                     case 'sale': toSection('.hm-sale', 80); break;
                     case 'filter': (window.veroOpenFilter ? window.veroOpenFilter() : (window.veroOpenSearchPage && window.veroOpenSearchPage())); break;
                 }
@@ -999,8 +1034,8 @@
     <script src="search-box.js" defer></script>
     <script src="footer.js"></script>
     <script src="reveal.js" defer></script>
-    <!-- Hero zoom on scroll (zoom-parallax.css). -->
-    <script src="zoom-parallax.js?v=14"></script>
+    <!-- Hero slider: welcome / collection / new arrivals. -->
+    <script src="hero-slider.js?v=1"></script>
     <script>
         // The header reads its state on scroll; tell it once now, so it is right before the first scroll.
         (function () {
