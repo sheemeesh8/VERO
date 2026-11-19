@@ -109,9 +109,16 @@
          overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
          scrollbar-width: none; scroll-behavior: smooth; }
 .hm-dk::-webkit-scrollbar { display: none; }
-.hm-dk-card { position: relative; flex: 0 0 calc(100% - 52px); scroll-snap-align: start; height: 100%;
+.hm-dk-card { position: relative; flex: 0 0 calc(100% - 92px); scroll-snap-align: start; height: 100%;
               background: #2b2924; color: #fff; border: 0; padding: 0; text-align: left; overflow: hidden;
-              cursor: pointer; -webkit-tap-highlight-color: transparent; }
+              cursor: pointer; -webkit-tap-highlight-color: transparent;
+              transform: scale(0.6667); transform-origin: left center; }   /* cards not in focus shrink by ~1.5× */
+.hm-dk-card[aria-current="true"] { transform: none; }
+/* Frosted glass veils a card until it is the chosen one. */
+.hm-dk-card::before { content: ''; position: absolute; z-index: 4; inset: 0; pointer-events: none;
+                      background: rgba(255,255,255,0.16); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+                      border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 1px 0 rgba(255,255,255,0.35); opacity: 1; }
+.hm-dk-card[aria-current="true"]::before { opacity: 0; }
 .hm-dk-media { position: absolute; inset: 0; overflow: hidden; }
 .hm-dk-media img, .hm-dk-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .hm-dk-media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,0.6) 100%); }
@@ -185,7 +192,9 @@
 
 /* ============================ Motion ============================ */
 @media (prefers-reduced-motion: no-preference) {
-    /* Category slider: the picture of the card in view drifts slowly. */
+    /* Category slider: cards grow into focus and shed their glass; the picture in view drifts slowly. */
+    .hm-dk-card { transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+    .hm-dk-card::before { transition: opacity 0.4s ease; }
     .hm-dk-media video, .hm-dk-media img { transform: scale(1.04); }
     .hm-dk-card[aria-current="true"] .hm-dk-media video, .hm-dk-card[aria-current="true"] .hm-dk-media img { animation: hmDrift 14s ease-in-out infinite alternate; }
     @keyframes hmDrift { from { transform: scale(1.02) translate(0, 0); } to { transform: scale(1.14) translate(-2%, -2%); } }
