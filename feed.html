@@ -699,7 +699,7 @@
         function setGender(g, fromScroll) {
             if (!g) return;
             var changed = g !== state.gender;
-            state.gender = g;
+            state.gender = g; liveG = g;
             placeDeck(!fromScroll);                             // a tap / link slides the card in; a user scroll does not
             syncSubnav(); playCurrent();
             if (changed) {
@@ -715,17 +715,37 @@
             if (!card) return;
             setGender(card.dataset.gender);
         });
-        // A plain horizontal slider: the card the row has settled on becomes the chosen one.
-        var scrollTmr = null;
+        // The card nearest the middle of the row.
+        function nearestCard(dk) {
+            var cards = catCards(); if (!cards.length) return null;
+            var mid = dk.scrollLeft + dk.clientWidth / 2, best = cards[0], bd = Infinity;
+            cards.forEach(function (c) { var d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = c; } });
+            return best;
+        }
+        // Mark a card current straight away (no state change) so the scale/glass/tuck animate with the finger.
+        function markActive(g) {
+            catCards().forEach(function (c) {
+                if (c.dataset.gender === g) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current');
+            });
+        }
+        // A plain horizontal slider. While it scrolls, the card nearest the middle lights up at once;
+        // the heavier work (counting up, swapping the pieces) waits until the scroll has settled.
+        var scrollTmr = null, rafPend = false, liveG = null;
         catsEl.addEventListener('scroll', function (e) {
             var dk = e.target.closest && e.target.closest('.hm-dk'); if (!dk) return;
+            if (!rafPend) {
+                rafPend = true;
+                requestAnimationFrame(function () {
+                    rafPend = false;
+                    var best = nearestCard(dk);
+                    if (best && best.dataset.gender !== liveG) { liveG = best.dataset.gender; markActive(liveG); }
+                });
+            }
             if (scrollTmr) clearTimeout(scrollTmr);
             scrollTmr = setTimeout(function () {
-                var cards = catCards(); if (!cards.length) return;
-                var mid = dk.scrollLeft + dk.clientWidth / 2, best = cards[0], bd = Infinity;
-                cards.forEach(function (c) { var d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = c; } });
-                if (best.dataset.gender !== state.gender) setGender(best.dataset.gender, true);
-            }, 90);
+                var best = nearestCard(dk);
+                if (best && best.dataset.gender !== state.gender) setGender(best.dataset.gender, true);
+            }, 80);
         }, true);
         // Hooks kept for the sub-header and for links that name a gender.
         window.__gcGoToGender = function (g) { setGender(g); };
