@@ -660,6 +660,7 @@
                     '</div>';
             }).join('') + '</div>';
             placeDeck(true);
+            requestAnimationFrame(updateScales);                    // set the opening sizes before any scroll
         }
         function catIndex() { var i = 0; modeCats().forEach(function (c, k) { if (c.g === state.gender) i = k; }); return i; }
         var dkEl = function () { return catsEl.querySelector('.hm-dk'); };
@@ -722,10 +723,28 @@
             cards.forEach(function (c) { var d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = c; } });
             return best;
         }
-        // Mark a card current straight away (no state change) so the scale/glass/tuck animate with the finger.
+        // Mark a card current straight away (no state change) so the glass/frame track the finger.
         function markActive(g) {
             catCards().forEach(function (c) {
                 if (c.dataset.gender === g) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current');
+            });
+        }
+        // Scroll-linked size: a card keeps its small size until it is halfway to the middle, then grows
+        // to full as it reaches the centre. Tied to scroll position, so it tracks the movement exactly.
+        var DK_MIN = 0.6667;
+        function updateScales() {
+            var dk = dkEl(); if (!dk) return;
+            var cards = catCards(); if (!cards.length) return;
+            var mid = dk.scrollLeft + dk.clientWidth / 2;
+            var ctr = function (c) { return c.offsetLeft + c.offsetWidth / 2; };
+            var stride = cards.length > 1 ? Math.abs(ctr(cards[1]) - ctr(cards[0])) : dk.clientWidth;
+            var half = stride / 2;
+            cards.forEach(function (c) {
+                var d = Math.abs(ctr(c) - mid);
+                var t = Math.max(0, Math.min(1, (half - d) / half));   // 0 until the halfway point, 1 at the centre
+                var s = DK_MIN + t * (1 - DK_MIN);
+                c.style.transform = 'scale(' + s.toFixed(4) + ')';
+                c.style.transformOrigin = d < 2 ? 'center bottom' : (ctr(c) < mid ? 'right bottom' : 'left bottom');
             });
         }
         // A plain horizontal slider. While it scrolls, the card nearest the middle lights up at once;
@@ -737,6 +756,7 @@
                 rafPend = true;
                 requestAnimationFrame(function () {
                     rafPend = false;
+                    updateScales();                                 // grow / shrink in step with the scroll
                     var best = nearestCard(dk);
                     if (best && best.dataset.gender !== liveG) { liveG = best.dataset.gender; markActive(liveG); }
                 });
@@ -1014,6 +1034,7 @@
         }
         placeSubnav();
         window.addEventListener('resize', placeSubnav);
+        window.addEventListener('resize', updateScales);
         if (window.ResizeObserver) { var he = document.getElementById('siteHeader'); if (he) { try { new ResizeObserver(placeSubnav).observe(he); } catch (e) {} } }
         var pt = 0; (function settleSub() { placeSubnav(); if (++pt < 30) setTimeout(settleSub, 120); })();
         function updateSubnavDock() {
