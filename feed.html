@@ -400,7 +400,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261122b">
+    <link rel="stylesheet" href="assets/home.css?v=20261122c">
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
 <body>
@@ -512,9 +512,29 @@
                 <div class="hm-sale-head"><h2 id="hmSaleTitle">Sales</h2><span id="hmSaleCount">0 items available</span></div>
                 <dl class="hm-facts" id="hmFacts"></dl>
                 <p class="hm-sale-text">The pieces you’ve been bookmarking, now within reach. Our archive collection brings together standout apparel and artwork from previous drops, available at special prices for a limited time.</p>
-                <div class="hm-btns">
-                    <button type="button" class="hm-btn hm-btn--navy" id="hmShopSale">Shop the sale</button>
-                    <button type="button" class="hm-btn hm-btn--light" id="hmShopAll">See everything</button>
+                <!-- "Find me a good deal" turns the two buttons into a deal finder in place:
+                     a discount slider, filters by item type / style / fabric, and a search
+                     button that counts the matches as they change. -->
+                <div class="hm-deal-wrap" id="hmDealWrap">
+                    <div class="hm-btns">
+                        <button type="button" class="hm-btn hm-btn--navy" id="hmFindDeal" aria-expanded="false" aria-controls="hmDeal">Find me a good deal</button>
+                        <button type="button" class="hm-btn hm-btn--light" id="hmShopAll">See everything</button>
+                    </div>
+                    <div class="hm-deal" id="hmDeal" aria-label="Find a good deal" hidden>
+                        <div class="hm-deal-in">
+                            <div class="hm-deal-row">
+                                <label class="hm-deal-k" for="hmDealPct">Discount</label>
+                                <output class="hm-deal-v" id="hmDealPctOut" for="hmDealPct">Any</output>
+                            </div>
+                            <input type="range" class="hm-deal-range" id="hmDealPct" min="0" max="100" step="5" value="0" aria-describedby="hmDealPctOut">
+                            <div class="hm-deal-scale" aria-hidden="true"><span>0%</span><span>50%</span><span>100%</span></div>
+                            <div class="hm-deal-group"><div class="hm-deal-k">Item type</div><div class="hm-deal-chips" data-facet="type"></div></div>
+                            <div class="hm-deal-group"><div class="hm-deal-k">Style</div><div class="hm-deal-chips" data-facet="style"></div></div>
+                            <div class="hm-deal-group"><div class="hm-deal-k">Fabric</div><div class="hm-deal-chips" data-facet="fabric"></div></div>
+                            <button type="button" class="hm-btn hm-btn--navy hm-deal-go" id="hmDealGo">Search</button>
+                            <button type="button" class="hm-deal-close" id="hmDealClose">Close</button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -1045,7 +1065,90 @@
             showResults(title, list, empty);
             var top = document.querySelector('.hm-search'); if (top) window.scrollTo({ top: top.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
         }
-        document.getElementById('hmShopSale').addEventListener('click', function () { openList('On sale', saleList(), 'Nothing on sale right now.'); });
+        // ----- Find me a good deal ------------------------------------------
+        // The two sale buttons give way to a small finder: at least N% off, plus any
+        // item types / styles / fabrics picked (none picked = any). The search button
+        // counts the matches live; Search shows them, deepest discount first.
+        (function dealFinder() {
+            var wrap = document.getElementById('hmDealWrap'), panel = document.getElementById('hmDeal');
+            var openBtn = document.getElementById('hmFindDeal'), pct = document.getElementById('hmDealPct');
+            var pctOut = document.getElementById('hmDealPctOut'), go = document.getElementById('hmDealGo');
+            var picked = { type: [], style: [], fabric: [] };
+            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var facets = {
+                type:   function (p) { var t = p.category || (p._raw && p._raw.itemType) || ''; return t ? [t] : []; },
+                style:  function (p) { var s = p._raw && p._raw.style; return Array.isArray(s) ? s : (s ? [s] : []); },
+                fabric: function (p) { var f = p._raw && (p._raw.fabric || p._raw.material); return f ? [f] : []; }
+            };
+            function pctOf(p) { return ((p._d || VC.discountOf(p._raw)) || {}).percent || 0; }
+            function pool() { return modeList().map(function (p) { p._d = p._d || VC.discountOf(p._raw); return p; }); }
+            function matches() {
+                var min = +pct.value;
+                return pool().filter(function (p) {
+                    if (pctOf(p) < min) return false;
+                    for (var k in picked) {
+                        if (!picked[k].length) continue;
+                        var vals = facets[k](p);
+                        if (!vals.some(function (v) { return picked[k].indexOf(v) !== -1; })) return false;
+                    }
+                    return true;
+                }).sort(function (a, b) { return pctOf(b) - pctOf(a); });
+            }
+            // The chips come from the pieces themselves, most common first.
+            function buildChips() {
+                var list = pool();
+                Object.keys(facets).forEach(function (k) {
+                    var count = {};
+                    list.forEach(function (p) { facets[k](p).forEach(function (v) { count[v] = (count[v] || 0) + 1; }); });
+                    var vals = Object.keys(count).sort(function (a, b) { return count[b] - count[a] || a.localeCompare(b); });
+                    picked[k] = picked[k].filter(function (v) { return count[v]; });
+                    var host = panel.querySelector('[data-facet="' + k + '"]');
+                    host.innerHTML = vals.length ? vals.map(function (v) {
+                        var on = picked[k].indexOf(v) !== -1;
+                        return '<button type="button" class="hm-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-v="' + esc(v) + '">' + esc(v) + '</button>';
+                    }).join('') : '<span class="hm-deal-none">\u2014</span>';
+                    host.closest('.hm-deal-group').hidden = !vals.length;
+                });
+            }
+            function refresh() {
+                var v = +pct.value;
+                pctOut.textContent = v ? 'At least ' + v + '% off' : 'Any';
+                pct.style.setProperty('--fill', v + '%');
+                var n = matches().length;
+                go.textContent = n ? 'Show ' + num(n) + (n === 1 ? ' piece' : ' pieces') : 'No matches \u2014 loosen the filters';
+                go.disabled = !n;
+            }
+            function setOpen(open) {
+                openBtn.setAttribute('aria-expanded', open);
+                if (open) {
+                    buildChips(); refresh();
+                    panel.hidden = false;
+                    requestAnimationFrame(function () { wrap.classList.add('is-deal'); });
+                    setTimeout(function () { pct.focus({ preventScroll: true }); }, reduce ? 0 : 380);
+                } else {
+                    wrap.classList.remove('is-deal');
+                    setTimeout(function () { if (!wrap.classList.contains('is-deal')) panel.hidden = true; }, reduce ? 0 : 420);
+                    openBtn.focus({ preventScroll: true });
+                }
+            }
+            openBtn.addEventListener('click', function () { setOpen(true); });
+            document.getElementById('hmDealClose').addEventListener('click', function () { setOpen(false); });
+            pct.addEventListener('input', refresh);
+            panel.addEventListener('click', function (e) {
+                var chip = e.target.closest && e.target.closest('.hm-chip'); if (!chip) return;
+                var k = chip.parentNode.getAttribute('data-facet'), v = chip.getAttribute('data-v');
+                var i = picked[k].indexOf(v);
+                if (i === -1) picked[k].push(v); else picked[k].splice(i, 1);
+                chip.classList.toggle('on', i === -1); chip.setAttribute('aria-pressed', i === -1);
+                refresh();
+            });
+            go.addEventListener('click', function () {
+                var v = +pct.value, list = matches();
+                openList(v ? v + '%+ off' : 'Good deals', list, 'Nothing matches \u2014 try a smaller discount or fewer filters.');
+            });
+            // The section is rebuilt when the feed switches Fashion / Art: keep the chips in step.
+            window.addEventListener('pageshow', function () { if (wrap.classList.contains('is-deal')) { buildChips(); refresh(); } });
+        })();
         document.getElementById('hmShopAll').addEventListener('click', function () { openList('Everything', modeList(), 'Nothing here yet.'); });
 
         // ----- Art / Fashion (the header's own toggle) -----------------------
