@@ -144,7 +144,7 @@
 
         /* ---- Result card preview (last slide): a regular product card on white ---- */
         .pu-result { display: flex; flex-direction: column; align-items: center; }
-        .pu-preview { width: 230px; max-width: 72%; margin: 6px auto 0; background: #fff; }
+        .pu-preview { width: 188px; max-width: 54%; margin: 0 auto; background: #fff; }
         .pu-preview .product-card { width: 100%; }
         .pu-result-actions { display: flex; gap: 12px; width: 100%; margin-top: 34px; }
 
@@ -187,7 +187,7 @@ h3, h4, h5, h6, p,
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Arimo', 'Inter', sans-serif !important;}</style>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <link rel="stylesheet" href="product-card.css?v=9">
-    <link rel="stylesheet" href="assets/upload-flow.css?v=20261121e">
+    <link rel="stylesheet" href="assets/upload-flow.css?v=20261121f">
     <script src="assets/page-header.js?v=20261117e"></script>
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
@@ -351,12 +351,10 @@ h3, h4, h5, h6, p,
                     <p class="pu-sub">This is the card buyers will see.</p>
                     <div class="pu-result">
                         <div class="pu-preview">
-                            <div class="product-card">
-                                <div class="product-image">
-                                    <span id="cardImg">🛍️</span>
-                                    <div class="product-price"><span class="vprice" id="cardPrice">₪0</span></div>
-                                </div>
+                            <div class="product-card" id="puCard">
+                                <div class="product-image" id="cardImg">🛍️</div>
                                 <div class="product-info">
+                                    <div class="pc-left"><div class="product-price" id="cardPrice"><span class="vprice">₪0</span></div></div>
                                     <div class="pc-right">
                                         <div class="product-name" id="cardTitle">Item name</div>
                                         <div class="product-seller" id="cardBrand">Your store</div>
@@ -622,7 +620,12 @@ h3, h4, h5, h6, p,
             img.innerHTML = cover ? '<img class="pc-photo" src="' + cover + '" alt="">' : '🛍️';
             document.getElementById('cardBrand').textContent = data.brand || 'Your store';
             document.getElementById('cardTitle').textContent = data.title || 'Item name';
-            document.getElementById('cardPrice').textContent = '₪' + (data.price || '0');
+            var pr = parseFloat(data.price) || 0, off = parseFloat(data.salePercent) || 0;
+            var nis = function (n) { return '\u20AA' + Math.round(n); };
+            document.getElementById('puCard').classList.toggle('is-sale', !!(off > 0 && pr));
+            document.getElementById('cardPrice').innerHTML = (off > 0 && pr)
+                ? '<span class="vprice-wrap"><span class="vprice-off">-' + Math.round(off) + '%</span><span class="vprice-was">' + nis(pr) + '</span><span class="vprice vprice-sale">' + nis(pr * (1 - off / 100)) + '</span></span>'
+                : '<span class="vprice">' + nis(pr) + '</span>';
         }
 
         // ---- Build the listing object from the form ----
