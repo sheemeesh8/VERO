@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   moravchick — after a product is deleted, anywhere, show the same page.
+   moravchick — after a product is deleted (or sold), anywhere, show the same page.
 
    veroGoDeleted(what, name, back)
      what  'draft'   — a draft was deleted
@@ -25,5 +25,20 @@
         var enc = function (v) { return encodeURIComponent(v).replace(/[!'()*~]/g, function (c) { return '%' + c.charCodeAt(0).toString(16).toUpperCase(); }); };
         w.location.href = 'listing-done.html?state=deleted&what=' + enc(what || 'listing') +
             '&name=' + enc(name || '') + '&back=' + enc(back || here);
+    };
+
+    /* veroGoSold(name, { amount, id, back }) — the same, for a piece marked as sold:
+       the "Sold!" page with confetti, the price it went for, and Back. */
+    window.veroGoSold = function (name, opts) {
+        opts = opts || {};
+        var embedded = window.self !== window.top && window.name !== 'vero-phone';
+        var w = window;
+        if (embedded) { try { void window.parent.location.href; w = window.parent; } catch (e) { w = window; } }
+        var here = w.location.pathname.split('/').pop() + w.location.search.replace(/([?&])_ts=\d+&?/, '$1').replace(/[?&]$/, '');
+        var enc = function (v) { return encodeURIComponent(v).replace(/[!'()*~]/g, function (c) { return '%' + c.charCodeAt(0).toString(16).toUpperCase(); }); };
+        w.location.href = 'listing-done.html?state=sold&name=' + enc(name || '') +
+            (opts.amount ? '&amount=' + enc(Math.round(opts.amount)) : '') +
+            (opts.id ? '&id=' + enc(opts.id) : '') +
+            '&back=' + enc(opts.back || here);
     };
 })();

@@ -60,6 +60,29 @@
         .d1 { animation-delay: 0.15s; } .d2 { animation-delay: 0.3s; } .d3 { animation-delay: 0.45s; } .d4 { animation-delay: 0.65s; }
         .ld-mark .draw { stroke-dasharray: 60; animation: ldDraw 0.7s 0.35s var(--ease) both; }
         @media (prefers-reduced-motion: reduce) { .anim { animation: none; opacity: 1; } .ld-mark .draw { animation: none; } }
+
+        /* ---- Sold: confetti, then the page ---- */
+        .ld-confetti { position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; }
+        .ld-confetti i { position: absolute; display: block; opacity: 0; will-change: transform, opacity; }
+        .ld-confetti .burst { top: 30%; left: 50%; animation: ldBurst var(--d, 1.5s) cubic-bezier(0.12, 0.75, 0.3, 1) var(--w, 0s) forwards; }
+        .ld-confetti .rain  { top: -24px; animation: ldFall var(--d, 3s) cubic-bezier(0.35, 0.1, 0.65, 1) var(--w, 0s) forwards; }
+        @keyframes ldBurst {
+            0%   { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(0.6); }
+            70%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) scale(1); }
+        }
+        @keyframes ldFall {
+            0%   { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
+            85%  { opacity: 1; }
+            100% { opacity: 0; transform: translate3d(var(--x), 105vh, 0) rotate(var(--r)); }
+        }
+        body.is-sold .ld-title { font-size: clamp(36px, 11vw, 48px); font-weight: 200; letter-spacing: -0.01em; }
+        body.is-sold .ld-card { width: 112px; margin-top: 18px; }   /* room for the price line, with both buttons still on screen */
+        .ld-price { margin-top: 8px; font-size: 13px; font-weight: 400; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+        .ld-price[hidden] { display: none; }
+        .ld-card .pc-sold { position: absolute; z-index: 5; top: 10px; left: 10px; padding: 5px 8px; background: var(--ink); color: #fff;
+                            font-size: 7.5px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; }
+        @media (prefers-reduced-motion: reduce) { .ld-confetti { display: none; } }
     </style>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261117e"></script>
@@ -75,6 +98,7 @@
         <div class="ld-mark anim" id="ldMark" aria-hidden="true"></div>
         <p class="ld-eyebrow anim d1" id="ldEyebrow"></p>
         <h1 class="ld-title anim d1" id="ldTitle"></h1>
+        <p class="ld-price anim d1" id="ldPrice" hidden></p>
         <p class="ld-text anim d2" id="ldText"></p>
         <div class="ld-card anim d3" id="ldCard"></div>
         <div class="ld-actions anim d4">
@@ -85,19 +109,27 @@
 
     <script>
     (function () {
-        var state = (location.search.match(/[?&]state=(live|draft|deleted)\b/) || [])[1] || 'live';
-        var draft = state === 'draft', deleted = state === 'deleted';
+        var state = (location.search.match(/[?&]state=(live|draft|deleted|sold)\b/) || [])[1] || 'live';
+        var draft = state === 'draft', deleted = state === 'deleted', sold = state === 'sold';
 
         // The item that was just saved: the newest entry in its list. (A deleted one
         // was never stored, so there is no card to show.)
         var item = null;
-        if (!deleted) try { item = (JSON.parse(localStorage.getItem(draft ? 'vero_drafts' : 'vero_listings')) || [])[0] || null; } catch (e) {}
+        if (sold) {
+            // The piece that sold, by its id (or name) — still in the listings, now marked sold.
+            var sq = new URLSearchParams(location.search), sid = sq.get('id'), sname = sq.get('name');
+            try { item = (JSON.parse(localStorage.getItem('vero_listings')) || []).filter(function (p) {
+                return (sid && p.id === sid) || (!sid && sname && (p.name === sname || p.title === sname));
+            })[0] || null; } catch (e) {}
+        } else if (!deleted) try { item = (JSON.parse(localStorage.getItem(draft ? 'vero_drafts' : 'vero_listings')) || [])[0] || null; } catch (e) {}
 
         var MARKS = {
             // A tick inside a circle — live.
             live: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M17 27.5l7 7 13-14"/></svg>',
             // A folded page — kept as a draft.
             draft: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M21 16h9l5 5v17H21z M30 16v5h5 M24.5 28h7 M24.5 32h5"/></svg>',
+            // A price tag — sold.
+            sold: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M17.5 27.5l10-10h9v9l-10 10z M31.5 22.5h.01 M22 29l4 4"/></svg>',
             // A bin — deleted.
             deleted: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M18 20h18 M23.5 20v-2.5h7V20 M20.5 20l1.3 16h10.4l1.3-16 M25 24.5v7.5 M29 24.5v7.5"/></svg>'
         };
@@ -122,7 +154,17 @@
                        text: (pname ? quoted + ' is' : 'It is') + ' off the feed now. You\u2019ll find it in your history, and you can relist it any time.',
                        primary: ['Back to my listings', back || 'products.html?from=seller'], secondary: ['List another item', 'upload-start.html'] }
         };
-        var COPY = deleted ? (DELETED[what] || DELETED.upload) : draft ? {
+        // Sold: from the chat, the product editor or the listings page (sold-celebration.js /
+        // veroGoSold). The amount is what it sold for; "Back" returns where the seller was.
+        var soldAmt = Math.round(parseFloat(qp.get('amount')) || 0);
+        var SOLD = {
+            eyebrow: 'Congratulations',
+            title: 'Sold!',
+            text: (pname ? quoted + ' has' : 'Your piece has') + ' found a new home. It\u2019s moved to your sales history \u2014 nice work.',
+            primary: ['View my sales', 'products.html?from=seller'],
+            secondary: back ? ['Back', back] : ['List another item', 'upload-start.html']
+        };
+        var COPY = sold ? SOLD : deleted ? (DELETED[what] || DELETED.upload) : draft ? {
             eyebrow: 'Saved to drafts',
             title: 'Saved as a draft',
             text: 'Your listing is waiting in your drafts. Pick it up whenever you’re ready and publish it in one tap.',
@@ -135,6 +177,15 @@
         };
 
         document.getElementById('ldMark').innerHTML = MARKS[state];
+        // The header names where the seller is: the upload flow, a sale, or their products.
+        var phName = document.querySelector('.page-header .ph-name');
+        if (phName) phName.textContent = sold ? 'Sold' : (deleted && what !== 'upload') ? 'My products' : 'List an item';
+        if (sold) {
+            document.body.classList.add('is-sold');
+            var priceEl = document.getElementById('ldPrice');
+            if (soldAmt) { priceEl.textContent = 'Sold for \u20AA' + soldAmt.toLocaleString('en-US'); priceEl.hidden = false; }
+            confetti();
+        }
         document.getElementById('ldEyebrow').textContent = COPY.eyebrow;
         document.getElementById('ldTitle').textContent = COPY.title;
         document.getElementById('ldText').textContent = COPY.text +
@@ -149,6 +200,29 @@
         }
         document.title = 'moravchick — ' + COPY.title;
 
+        // A burst from behind the mark, then a light rain from the top — about three
+        // seconds, then it is gone and the page stays. Squares and slivers in the
+        // site's palette; nothing at all for reduced motion.
+        function confetti() {
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            var COL = ['#16150f', '#2a4373', '#c9a24a', '#b23b3b', '#1f8f4e', '#e8e3d8', '#7aa6c2'];
+            var box = document.createElement('div'); box.className = 'ld-confetti'; box.setAttribute('aria-hidden', 'true');
+            var r = function (a, b) { return a + Math.random() * (b - a); }, html = '', i;
+            for (i = 0; i < 46; i++) {
+                var a = r(0, Math.PI * 2), d = r(110, 260), w = r(5, 9), h = i % 3 ? r(8, 14) : w;
+                html += '<i class="burst" style="width:' + w.toFixed(0) + 'px;height:' + h.toFixed(0) + 'px;background:' + COL[i % COL.length] +
+                    ';--x:' + (Math.cos(a) * d).toFixed(0) + 'px;--y:' + (Math.sin(a) * d - 40).toFixed(0) + 'px;--r:' + r(-540, 540).toFixed(0) +
+                    'deg;--d:' + r(1.1, 1.7).toFixed(2) + 's;--w:' + r(0.05, 0.25).toFixed(2) + 's"></i>';
+            }
+            for (i = 0; i < 70; i++) {
+                var w2 = r(5, 9), h2 = i % 3 ? r(9, 15) : w2;
+                html += '<i class="rain" style="left:' + r(0, 100).toFixed(1) + '%;width:' + w2.toFixed(0) + 'px;height:' + h2.toFixed(0) + 'px;background:' + COL[(i + 3) % COL.length] +
+                    ';--x:' + r(-60, 60).toFixed(0) + 'px;--r:' + r(-720, 720).toFixed(0) + 'deg;--d:' + r(2.2, 3.4).toFixed(2) + 's;--w:' + r(0.3, 1.2).toFixed(2) + 's"></i>';
+            }
+            box.innerHTML = html; document.body.appendChild(box);
+            setTimeout(function () { box.remove(); }, 4800);
+        }
+
         // The card buyers will see — the same feed card as everywhere else.
         if (!item) { document.getElementById('ldCard').remove(); return; }
         var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -160,7 +234,7 @@
             : '<span class="vprice">' + nis(pr) + '</span>';
         document.getElementById('ldCard').innerHTML =
             '<div class="product-card' + (sale ? ' is-sale' : '') + '">' +
-                '<div class="product-image">' + fig + '</div>' +
+                '<div class="product-image">' + fig + (sold ? '<span class="pc-sold">Sold</span>' : '') + '</div>' +
                 '<div class="product-info">' +
                     '<div class="pc-left"><div class="product-price">' + price + '</div></div>' +
                     '<div class="pc-right">' +
