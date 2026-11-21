@@ -100,7 +100,7 @@
             transition: background 0.25s, transform 0.15s; }
         .pu-slot:active { transform: scale(0.98); }
         .pu-slot.cover { grid-column: 1 / -1; aspect-ratio: 16/10; }
-        .pu-slot.cover.filled { background-color: #F0F0F0; background-size: contain; }
+        .pu-slot.cover.filled { background-color: #F2F2F2; background-size: contain; }   /* the card's ground */
         .pu-slot.filled { background-color: #f2f0ef; }
         .pu-slot .pu-slot-plus { width: 40px; height: 40px; border-radius: 50%; background: #fff;
             box-shadow: 0 3px 12px rgba(30,25,20,0.08); display: flex; align-items: center; justify-content: center;
@@ -172,7 +172,7 @@ h3, h4, h5, h6, p,
 </style>
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Arimo', 'Inter', sans-serif !important;}</style>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
-    <link rel="stylesheet" href="product-card.css?v=9">
+    <link rel="stylesheet" href="product-card.css?v=10">
     <link rel="stylesheet" href="assets/upload-flow.css?v=20261121f">
     <script src="assets/page-header.js?v=20261117e"></script>
     <link rel="stylesheet" href="assets/site-font.css">
@@ -384,7 +384,7 @@ h3, h4, h5, h6, p,
     </script>
 
     <!-- Background-removal engine for the cover shot. -->
-    <script src="cutout.js?v=20261121b"></script>
+    <script src="cutout.js?v=20261121c"></script>
     <script>
       // Fetch the cut-out engine while the seller fills in the first step.
       (window.requestIdleCallback || function (f) { setTimeout(f, 1200); })(function () { if (typeof veroCutoutWarm === 'function') veroCutoutWarm(); });
@@ -529,22 +529,6 @@ h3, h4, h5, h6, p,
         });
 
         // ---- Compose a transparent cut-out onto the #F0F0F0 ground ----
-        function composeOnGround(cutUrl) {
-            return new Promise(function (resolve) {
-                var img = new Image();
-                img.onload = function () {
-                    var S = 900, c = document.createElement('canvas'); c.width = c.height = S;
-                    var ctx = c.getContext('2d');
-                    ctx.fillStyle = '#F0F0F0'; ctx.fillRect(0, 0, S, S);
-                    var k = Math.min(S / img.naturalWidth, S / img.naturalHeight), dw = img.naturalWidth * k, dh = img.naturalHeight * k;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, (S - dw) / 2, (S - dh) / 2, dw, dh);   // contain: a fallback photo is never stretched
-                    resolve(c.toDataURL('image/png'));
-                };
-                img.onerror = function () { resolve(cutUrl); };
-                img.src = cutUrl;
-            });
-        }
 
         // ---- Photo slots ----
         document.querySelectorAll('.pu-slot').forEach(function (slot) {
@@ -569,11 +553,13 @@ h3, h4, h5, h6, p,
                         if (typeof veroCutout === 'function') {
                             veroCutout(raw, { onStatus: function (m) { var s = document.getElementById('coverStatus'); if (s) s.textContent = m; } })
                                 .then(function (res) {
+                                    // The cut-out is already a transparent frame in the card's shape:
+                                    // stored as it is, so the card paints its own ground behind it.
                                     if (!res.ok) note('Couldn\u2019t remove the background \u2014 using your photo as it is.');
-                                    return composeOnGround(res.image);
-                                }).then(done)
-                                .catch(function () { composeOnGround(raw).then(done); });
-                        } else { composeOnGround(raw).then(done); }
+                                    done(res.image);
+                                })
+                                .catch(function () { done(raw); });
+                        } else { done(raw); }
                     } else {
                         data.photos[key] = raw; save();
                         slot.style.backgroundImage = 'url("' + raw + '")'; slot.classList.add('filled');
@@ -607,6 +593,19 @@ h3, h4, h5, h6, p,
         updateDeal();
 
         // ---- Result card preview ----
+        // The preview grows into whatever height the screen has spare, so it is as
+        // large as possible while Save as draft / Publish stay in view.
+        function fitPreview() {
+            var prev = document.querySelector('.pu-preview'), acts = document.querySelector('.pu-result-actions'), nav = document.querySelector('.pu-nav');
+            if (!prev || !acts || !nav || !prev.offsetWidth) return;
+            prev.style.width = ''; prev.style.maxWidth = '';
+            var card = prev.getBoundingClientRect();
+            var spare = nav.getBoundingClientRect().top - acts.getBoundingClientRect().bottom - 24;
+            if (spare <= 0 || !card.height) return;
+            var w = Math.min(card.width + spare * card.width / card.height, prev.parentNode.clientWidth * 0.8, 320);
+            if (w > card.width) { prev.style.maxWidth = 'none'; prev.style.width = Math.floor(w) + 'px'; }
+        }
+        window.addEventListener('resize', function () { if (step === total - 1) fitPreview(); });
         function renderCard() {
             var img = document.getElementById('cardImg');
             var cover = data.photos && (data.photos.cover || data.photos.detail || data.photos.label || data.photos.angle) || '';
@@ -619,6 +618,7 @@ h3, h4, h5, h6, p,
             document.getElementById('cardPrice').innerHTML = (off > 0 && pr)
                 ? '<span class="vprice-wrap"><span class="vprice-off">-' + Math.round(off) + '%</span><span class="vprice-was">' + nis(pr) + '</span><span class="vprice vprice-sale">' + nis(pr * (1 - off / 100)) + '</span></span>'
                 : '<span class="vprice">' + nis(pr) + '</span>';
+            setTimeout(fitPreview, 260);   // after the slide has faded in and laid out
         }
 
         // ---- Build the listing object from the form ----

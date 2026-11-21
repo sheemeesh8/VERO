@@ -19,7 +19,7 @@
        downloads them once — later listings start the cut straight away.
      • The photo is scaled to 1280px before the model sees it. The model works
        at 1024px anyway; a 12–48MP phone photo only cost seconds (and memory)
-       resizing in and out, and the result is a 1000px square regardless.
+       resizing in and out, and the result is a 680×1000 frame regardless.
      • "small" rather than "medium": the same cut on product shots, half the
        download, a little quicker to run.
 
@@ -35,14 +35,18 @@
      <script src="cutout.js"></script>
      veroCutoutWarm();                       // optional, as early as possible
      const out = await veroCutout(fileOrDataUrl, { onStatus: msg => ... });
-     // out.image  — the cut-out, a transparent 1000px square PNG (data URL)
+     // out.image  — the cut-out: a transparent 680×1000 PNG in the card's shape (data URL)
      // out.ok     — false if it fell back to the original
 ------------------------------------------------------------------ */
 
-/* The square every product ends up in, so the grid never has to crop. */
-const VERO_CUTOUT_SIZE = 1000;
-/* Air around the piece, as a share of the square. */
-const VERO_CUTOUT_PAD = 0.06;
+/* The frame every product ends up in: the shape of the card's image field
+   (product-card.css: aspect-ratio 0.68, filled with object-fit: cover). A cut-out
+   in exactly that shape is never cropped by the card, and being transparent it
+   sits on the card's own ground instead of a square of a slightly different grey. */
+const VERO_CUTOUT_W = 680;
+const VERO_CUTOUT_H = 1000;
+/* The piece fills this share of the frame, centred, with even air around it. */
+const VERO_CUTOUT_FILL = 0.84;
 /* Longest side of the photo handed to the model. */
 const VERO_CUTOUT_INPUT = 1280;
 
@@ -211,20 +215,50 @@ function veroCutoutCompose(img) {
 
     // Haze (alpha ≤ LO) goes clear, the body (alpha ≥ HI) goes solid, and the
     // soft edge in between is stretched across the full range so it stays smooth.
-    const LO = 40, HI = 215, span = HI - LO;
-    let top = h, left = w, right = -1, bottom = -1;
-    for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-            const i = (y * w + x) * 4 + 3, a = data[i];
-            const v = a <= LO ? 0 : a >= HI ? 255 : Math.round((a - LO) * 255 / span);
-            data[i] = v;
-            if (v) {
-                if (x < left) left = x;
-                if (x > right) right = x;
-                if (y < top) top = y;
-                if (y > bottom) bottom = y;
-            }
+    const LO = 40, HI = 215, span = HI - LO, n = w * h;
+    const mask = new Uint8Array(n);
+    for (let p = 0; p < n; p++) {
+        const i = p * 4 + 3, a = data[i];
+        const v = a <= LO ? 0 : a >= HI ? 255 : Math.round((a - LO) * 255 / span);
+        data[i] = v;
+        if (v) mask[p] = 1;
+    }
+
+    // Keep the piece, drop the specks. The model leaves small islands of
+    // "foreground" in the background (a crease, a shadow, a fleck of pattern);
+    // left in, they stretch the trim and the piece ends up small and off-centre.
+    // Regions are labelled and only those of real size are kept — any region at
+    // least 3% of the largest, so a pair of shoes or an earring set survives.
+    const label = new Int32Array(n), sizes = [0], stack = new Int32Array(n);
+    let count = 0;
+    for (let p = 0; p < n; p++) {
+        if (!mask[p] || label[p]) continue;
+        const id = ++count; let sp = 0, size = 0;
+        stack[sp++] = p; label[p] = id;
+        while (sp) {
+            const q = stack[--sp]; size++;
+            const x = q % w, y = (q - x) / w;
+            if (x > 0     && mask[q - 1] && !label[q - 1]) { label[q - 1] = id; stack[sp++] = q - 1; }
+            if (x < w - 1 && mask[q + 1] && !label[q + 1]) { label[q + 1] = id; stack[sp++] = q + 1; }
+            if (y > 0     && mask[q - w] && !label[q - w]) { label[q - w] = id; stack[sp++] = q - w; }
+            if (y < h - 1 && mask[q + w] && !label[q + w]) { label[q + w] = id; stack[sp++] = q + w; }
         }
+        sizes.push(size);
+    }
+    let biggest = 0;
+    for (let k = 1; k <= count; k++) if (sizes[k] > biggest) biggest = sizes[k];
+    const keep = new Uint8Array(count + 1);
+    for (let k = 1; k <= count; k++) keep[k] = sizes[k] >= biggest * 0.03 ? 1 : 0;
+
+    let top = h, left = w, right = -1, bottom = -1;
+    for (let p = 0; p < n; p++) {
+        if (!mask[p]) continue;
+        if (!keep[label[p]]) { data[p * 4 + 3] = 0; continue; }
+        const x = p % w, y = (p - x) / w;
+        if (x < left) left = x;
+        if (x > right) right = x;
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
     }
     // Nothing (or next to nothing) survived the cut — keep the original instead.
     if (right < 0 || (right - left) * (bottom - top) < w * h * 0.01) return null;
@@ -232,15 +266,15 @@ function veroCutoutCompose(img) {
 
     const cw = right - left + 1, ch = bottom - top + 1;
     const out = document.createElement('canvas');
-    out.width = out.height = VERO_CUTOUT_SIZE;
+    out.width = VERO_CUTOUT_W; out.height = VERO_CUTOUT_H;
     const ctx = out.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    // No fill: the square stays transparent and the card paints the ground.
-    const box = VERO_CUTOUT_SIZE * (1 - VERO_CUTOUT_PAD * 2);
-    const scale = Math.min(box / cw, box / ch);
+    // No fill: the frame stays transparent and the card paints the ground.
+    const scale = Math.min(VERO_CUTOUT_W * VERO_CUTOUT_FILL / cw, VERO_CUTOUT_H * VERO_CUTOUT_FILL / ch);
     const dw = cw * scale, dh = ch * scale;
     ctx.drawImage(scan, left, top, cw, ch,
-        (VERO_CUTOUT_SIZE - dw) / 2, (VERO_CUTOUT_SIZE - dh) / 2, dw, dh);
+        (VERO_CUTOUT_W - dw) / 2, (VERO_CUTOUT_H - dh) / 2, dw, dh);
 
     // PNG, not JPEG — JPEG has no alpha and would fill the transparency black.
     return out.toDataURL('image/png');
