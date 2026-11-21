@@ -18,6 +18,8 @@
        items: [...],                       // anything; render() draws each
        render: function (item, i) { return '...'; },
        onActiveChange: function (item, i) {},
+       onSelectedClick: function (item, i) {},  // a tap on the item already chosen
+       apexPx: 100,                         // apex in px from the left (instead of apexInset %)
        initialIndex: 0, loop: false,
        radius: 320, spacing: 14, visibleItems: 7, apexInset: 34,
        scrollSpeed: 0.008, dragSpeed: 0.02, snap: true, momentum: true,
@@ -49,6 +51,7 @@
             spacing: opts.spacing != null ? opts.spacing : 14,
             visibleItems: opts.visibleItems != null ? opts.visibleItems : 7,
             apexInset: opts.apexInset != null ? opts.apexInset : 34,
+            apexPx: opts.apexPx != null ? opts.apexPx : null,      // the apex in px from the left edge (overrides apexInset)
             scrollSpeed: opts.scrollSpeed != null ? opts.scrollSpeed : 0.008,
             dragSpeed: opts.dragSpeed != null ? opts.dragSpeed : 0.02,
             snap: opts.snap !== false,
@@ -84,7 +87,7 @@
             var el = document.createElement('div');
             el.className = 'vwc-item'; el.id = id + '-item-' + i;
             el.setAttribute('role', 'option'); el.setAttribute('aria-selected', 'false');
-            el.style.left = o.apexInset + '%';
+            el.style.left = o.apexPx != null ? o.apexPx + 'px' : o.apexInset + '%';
             el.innerHTML = o.render(it, i);
             list.appendChild(el);
             return el;
@@ -191,6 +194,7 @@
                 if (d < best && d < 26) { best = d; hit = i; }
             });
             if (hit !== null && hit !== selected) { velocity = 0; commit(rotation + offsetOf(hit, rotation)); run(); }
+            else if (hit !== null && hit === selected && opts.onSelectedClick) opts.onSelectedClick(items[hit], hit);
         });
         stage.addEventListener('wheel', onWheel, { passive: false });
         stage.addEventListener('pointerdown', onDown);

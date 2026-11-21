@@ -400,7 +400,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261122f">
+    <link rel="stylesheet" href="assets/home.css?v=20261122j">
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
 <body>
@@ -545,9 +545,10 @@
                 <div class="hm-wo-head"><h2 id="hmWoTitle">What&rsquo;s on</h2><a class="hm-wo-all" href="events.html">Full calendar</a></div>
                 <div class="hm-wo-month" id="hmWoMonth"></div>
                 <!-- The dates on a wheel (assets/wheel-carousel.js, the port of components/ui/
-                     wheel-carousel.tsx): drag or scroll to turn it; a yellow dot marks a day with events. -->
+                     wheel-carousel.tsx): drag or scroll to turn it. A day with events carries a
+                     yellow dot and the event beside it; tap the chosen day to open it. The wheel
+                     runs off the page's left edge, unbounded top and bottom. -->
                 <div class="hm-wo-wheel" id="hmWoWheel"></div>
-                <div class="hm-wo-list" id="hmWoList" aria-live="polite"></div>
             </section>
 
             <!-- The latest pieces, as a slider (no heading). -->
@@ -569,7 +570,7 @@
     <!-- Product data layer (shared across the site). -->
     <script src="collections.js"></script>
     <script src="assets/events-data.js?v=1"></script>
-    <script src="assets/wheel-carousel.js?v=2"></script>
+    <script src="assets/wheel-carousel.js?v=3"></script>
 
     <!-- Home assembly. -->
     <script>
@@ -1081,44 +1082,37 @@
         }
         // ----- What's on: the coming weeks on a date wheel --------------------
         (function whatsOn() {
-            var E = window.veroEvents, host = document.getElementById('hmWoWheel'), list = document.getElementById('hmWoList');
+            var E = window.veroEvents, host = document.getElementById('hmWoWheel');
             if (!E || !host || !window.VeroWheelCarousel) return;
             var DAYS = 61, start = E.today(), todayIso = E.iso(start), byDay = {}, strip = [];
             E.all().forEach(function (e) { (byDay[e.date] = byDay[e.date] || []).push(e); });
             for (var i = 0; i < DAYS; i++) { var d = new Date(start); d.setDate(d.getDate() + i); strip.push(E.iso(d)); }
-            function color(t) { return (E.TYPES[t] || {}).color || '#3d3a35'; }
-            function row(e) {
-                var t = E.TYPES[e.type] || {};
-                return '<a class="hm-wo-ev" href="events.html?date=' + e.date + '">' +
-                    '<span class="hm-wo-type" style="color:' + color(e.type) + '"><i style="background:' + color(e.type) + '"></i>' + esc(t.name || e.type) + '</span>' +
-                    '<span class="hm-wo-name">' + esc(e.title) + '</span>' +
-                    '<span class="hm-wo-meta">' + esc(e.time || 'All day') + (e.place ? ' \u00b7 ' + esc(e.place) : '') + '</span>' +
-                    '<span class="hm-wo-go" aria-hidden="true">\u2192</span></a>';
-            }
-            function show(ds) {
-                var d0 = E.parse(ds);
-                document.getElementById('hmWoMonth').textContent = E.MONF[d0.getMonth()] + ' ' + d0.getFullYear();
-                var evs = byDay[ds] || [];
-                if (evs.length) { list.innerHTML = evs.map(row).join(''); return; }
-                var next = E.upcoming().filter(function (e) { return e.date > ds; })[0];
-                list.innerHTML = '<p class="hm-wo-empty">Nothing on this day.' + (next ? ' Next up:' : '') + '</p>' + (next ? row(next) : '');
-            }
+            var month = function (ds) { var d = E.parse(ds); document.getElementById('hmWoMonth').textContent = E.MONF[d.getMonth()] + ' ' + d.getFullYear(); };
             // Open on the first day with something on.
             var first = 0; for (var k = 0; k < strip.length; k++) if (byDay[strip[k]]) { first = k; break; }
+            // The wheel's centre sits off the page to the left: the dates swing round and
+            // leave through the page's left edge (apex 96px in, radius 150px), before they
+            // could reach the top or bottom of the block — so nothing is cut there.
             VeroWheelCarousel(host, {
                 items: strip, loop: false, initialIndex: first, label: 'Choose a day',
-                radius: 300, spacing: 8.5, visibleItems: 5, apexInset: 20, edgeFadeSize: 24,
+                apexPx: 96, radius: 150, spacing: 16, visibleItems: 5, edgeFade: false,
                 render: function (ds) {
                     var d = E.parse(ds), evs = byDay[ds] || [];
                     var name = ds === todayIso ? 'Today' : E.DOW[d.getDay()];
                     return '<span class="hm-wd-dow">' + name + '</span>' +
                         '<span class="hm-wd-num">' + d.getDate() + '</span>' +
                         '<span class="hm-wd-mon">' + E.MON[d.getMonth()] + '</span>' +
-                        (evs.length ? '<i class="hm-wd-dot" aria-hidden="true"></i><span class="vwc-sr">' + evs.length + (evs.length === 1 ? ' event' : ' events') + '</span>' : '');
+                        (evs.length
+                            ? '<i class="hm-wd-dot" aria-hidden="true"></i>' +
+                              '<span class="hm-wd-ev"><b>' + esc(evs[0].title) + (evs.length > 1 ? ' <em>+' + (evs.length - 1) + '</em>' : '') + '</b>' +
+                              '<small>' + esc(evs[0].time || 'All day') + (evs[0].place ? ' \u00b7 ' + esc(evs[0].place.split(',')[0]) : '') + '</small></span>'
+                            : '');
                 },
-                onActiveChange: function (ds) { show(ds); }
+                onActiveChange: function (ds) { month(ds); },
+                // A tap on the chosen day opens it on the events page.
+                onSelectedClick: function (ds) { location.href = 'events.html?date=' + ds; }
             });
-            show(strip[first]);
+            month(strip[first]);
         })();
 
         // ----- Find me a good deal ------------------------------------------
