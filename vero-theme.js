@@ -45,9 +45,9 @@
                capsules (answers, Back / Next) and round profile pictures (search, product page), and the round
                choice marks on the "What are you listing?" page. The :not(#vq…) part
                only adds weight, so this beats every page's own radius. */
-            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq),
-            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::before,
-            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::after {
+            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .pu-swatch .sw, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq),
+            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .pu-swatch .sw, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::before,
+            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .pu-swatch .sw, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::after {
                 border-radius: 0 !important;
             }
 
