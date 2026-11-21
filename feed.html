@@ -400,7 +400,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261121c">
+    <link rel="stylesheet" href="assets/home.css?v=20261122b">
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
 <body>
@@ -781,7 +781,10 @@
             dkStride = dkCenters.length > 1 ? Math.abs(dkCenters[1] - dkCenters[0]) : dk.clientWidth;
             dkCW = dk.clientWidth;
         }
+        // Browsers with scroll-driven animations do this in CSS (assets/home.css, hmDkGrow).
+        var DK_CSS = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: view()'));
         function updateScales() {
+            if (DK_CSS) return;
             var dk = dkEl(); if (!dk) return;
             var cards = catCards(); if (!cards.length) return;
             if (dkCenters.length !== cards.length || dkCW !== dk.clientWidth || !dkStride) measureDeck();
@@ -798,27 +801,36 @@
         // A plain horizontal slider. While it scrolls, the card nearest the middle lights up at once;
         // the heavier work (counting up, swapping the pieces) waits until the scroll has settled.
         var scrollTmr = null, rafPend = false, liveG = null, liveEl = null;
+        // The swipe has finished: choose the card in the middle, keep the loop endless,
+        // and only then do the heavier work (the pieces below, the video). Browsers that
+        // report the end of a scroll (scrollend, after the snap has come to rest) are
+        // trusted with it; older ones fall back to "no scroll for a moment" — longer than
+        // before, because acting while the snap was still easing in made the row jolt.
+        var HAS_SCROLLEND = 'onscrollend' in window;
+        function settle(dk) {
+            if (scrollTmr) { clearTimeout(scrollTmr); scrollTmr = null; }
+            updateScales();
+            var best = nearestCard(dk);
+            if (best && best.dataset.gender !== state.gender) setGender(best.dataset.gender, true, best);
+            else if (best) { curCard = best; markActive(best); playCurrent(); }
+            recentre(dk);                                           // after the card is chosen: it keeps that card centred
+        }
         catsEl.addEventListener('scroll', function (e) {
             var dk = e.target.closest && e.target.closest('.hm-dk'); if (!dk) return;
-            if (!dk.classList.contains('is-scrolling')) dk.classList.add('is-scrolling');   // flat veil while moving
             if (!rafPend) {
                 rafPend = true;
                 requestAnimationFrame(function () {
                     rafPend = false;
-                    updateScales();                                 // grow / shrink in step with the scroll
+                    updateScales();                                 // grow / shrink in step with the scroll (no-op where CSS does it)
                     var best = nearestCard(dk);
                     if (best && best !== liveEl) { liveEl = best; liveG = best.dataset.gender; markActive(best); }
                 });
             }
             if (scrollTmr) clearTimeout(scrollTmr);
-            scrollTmr = setTimeout(function () {
-                dk.classList.remove('is-scrolling');                // settled: bring the real glass back
-                updateScales();
-                var best = nearestCard(dk);
-                if (best && best.dataset.gender !== state.gender) setGender(best.dataset.gender, true, best);
-                else if (best) { curCard = best; markActive(best); playCurrent(); }
-                recentre(dk);
-            }, 110);
+            scrollTmr = setTimeout(function () { settle(dk); }, HAS_SCROLLEND ? 800 : 180);   // a safety net where scrollend exists
+        }, true);
+        if (HAS_SCROLLEND) catsEl.addEventListener('scrollend', function (e) {
+            var dk = e.target.closest && e.target.closest('.hm-dk'); if (dk) settle(dk);
         }, true);
         // Hooks kept for the sub-header and for links that name a gender.
         window.__gcGoToGender = function (g) { setGender(g); };

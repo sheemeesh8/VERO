@@ -120,14 +120,35 @@
 .hm-dk-card:has(+ .hm-dk-card[aria-current="true"]) { transform-origin: right bottom; }
 .hm-dk-card[aria-current="true"] + .hm-dk-card { transform-origin: left bottom; }
 .hm-dk-card[aria-current="true"] { transform: none; }
-.hm-dk.is-scrolling .hm-dk-card { will-change: transform; }   /* promote to its own layer only while the row moves */
+.hm-dk-card { will-change: transform; }   /* each card is its own layer for good: promoting them as a swipe starts cost a hitch */
+/* Where the browser can, the growing and shrinking is tied straight to the scroll
+   (a view timeline): it runs with the scroll on the compositor instead of a frame
+   behind it from JavaScript, which is what made the swipe stutter. Each card's
+   timeline runs from entering on the right (0%) to leaving on the left (100%); it
+   is centred at 50%, and half a card-step either side is ~21.5% of that range, so
+   a card keeps its small size until it is half way to the middle, grows to full
+   size at the centre, and shrinks again on the way out. The pivot is the side
+   facing the middle, so the side cards stay tucked against the chosen one. */
+@supports (animation-timeline: view()) {
+    .hm-dk.is-loop .hm-dk-card { animation: hmDkGrow linear both; animation-timeline: view(inline); will-change: transform; }
+}
+@keyframes hmDkGrow {
+    0%     { transform: scale(0.6667); transform-origin: left bottom; }
+    28.4%  { transform: scale(0.6667); transform-origin: left bottom; }
+    49.9%  { transform-origin: left bottom; }
+    50%    { transform: scale(1);      transform-origin: center bottom; }
+    50.1%  { transform-origin: right bottom; }
+    71.6%  { transform: scale(0.6667); transform-origin: right bottom; }
+    100%   { transform: scale(0.6667); transform-origin: right bottom; }
+}
 /* Frosted glass veils a card until it is the chosen one. */
+/* A flat, milky veil — not a live blur. A backdrop blur on cards that move and scale
+   with every frame of the swipe is the heaviest thing on the page, and switching it
+   off for the swipe and back on after made the row jolt at both ends of every swipe. */
 .hm-dk-card::before { content: ''; position: absolute; z-index: 4; inset: 0; pointer-events: none;
-                      background: rgba(255,255,255,0.16); -webkit-backdrop-filter: blur(12px) saturate(140%); backdrop-filter: blur(12px) saturate(140%);
+                      background: rgba(236,234,230,0.42);
                       border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 1px 0 rgba(255,255,255,0.35); opacity: 1; }
 .hm-dk-card[aria-current="true"]::before { opacity: 0; }
-/* Re-blurring the glass every frame while scaling is costly; use a flat veil during the scroll, the real blur at rest. */
-.hm-dk.is-scrolling .hm-dk-card::before { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(150,148,143,0.3); }
 .hm-dk-media { position: absolute; inset: 0; overflow: hidden; }
 .hm-dk-media img, .hm-dk-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .hm-dk-media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,0.6) 100%); }
