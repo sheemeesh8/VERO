@@ -135,18 +135,12 @@
         .pu-price-big input:focus { outline: none; }
         .pu-price-big input::placeholder { color: #57544e; }
 
-        /* ---- Deal Score gauge ---- */
-        .pu-deal { margin-top: 30px; padding: 22px; border: 1px solid #f0ece4; border-radius: 16px; background: #fff; }
-        .pu-deal-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
-        .pu-deal-verdict { font-family: 'Arimo', 'Inter', sans-serif; font-size: 18px; font-weight: 400; letter-spacing: 0.5px; }
-        .pu-deal-note { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #44403b; font-weight: 600; }
-        .pu-gauge { position: relative; height: 8px; border-radius: 999px;
-            background: linear-gradient(to right, #37946b 0%, #7fae4f 32%, #d8b24a 62%, #c15b4a 100%); }
-        .pu-gauge-marker { position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%; background: #fff;
-            border: 2px solid #1b1916; transform: translate(-50%, -50%); left: 50%;
-            transition: left 0.4s cubic-bezier(0.22,1,0.36,1); box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-        .pu-gauge-scale { display: flex; justify-content: space-between; margin-top: 10px;
-            font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #4a4741; }
+        /* ---- Price recommendation note ---- */
+        .pu-rec { margin-top: 30px; padding: 18px 20px; border: 1px solid #ece7de; background: #faf8f4; text-align: left; }
+        .pu-rec-label { display: block; font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: #8a857c; font-weight: 600; }
+        .pu-rec-text { margin: 9px 0 0; font-family: 'Arimo', 'Inter', sans-serif; font-size: 13px; line-height: 1.6; color: #2c2a26; font-weight: 300; }
+        .pu-rec-text b { font-weight: 600; }
+        .pu-rec-react { display: block; margin-top: 7px; font-size: 11.5px; color: #6b665e; }
 
         /* ---- Result card preview (last slide) ---- */
         .pu-result { display: flex; flex-direction: column; align-items: center; }
@@ -349,13 +343,9 @@ h3, h4, h5, h6, p,
                     <h2 class="pu-h">Price</h2>
                     <p class="pu-sub">Set your price — we'll show how it compares to similar pieces.</p>
                     <div class="pu-price-big"><span class="cur" style="font-family:Arial,'Segoe UI',sans-serif!important">₪</span><input data-k="price" id="puPrice" type="number" inputmode="numeric" placeholder="0"></div>
-                    <div class="pu-deal" id="puDeal">
-                        <div class="pu-deal-top">
-                            <span class="pu-deal-verdict" id="puDealVerdict">Deal score</span>
-                            <span class="pu-deal-note" id="puDealNote">Enter a price</span>
-                        </div>
-                        <div class="pu-gauge"><div class="pu-gauge-marker" id="puGaugeMarker"></div></div>
-                        <div class="pu-gauge-scale"><span>Excellent</span><span>Great</span><span>Fair</span><span>High</span></div>
+                    <div class="pu-rec" id="puRec">
+                        <span class="pu-rec-label">Price recommendation</span>
+                        <p class="pu-rec-text" id="puRecText">Choose an item type to see a suggested price.</p>
                     </div>
                     <div class="pu-field" style="margin-top:22px"><label>Sale — % off (optional)</label>
                         <input data-k="salePercent" type="number" inputmode="numeric" min="0" max="95" placeholder="e.g. 25 — leave empty for full price">
@@ -610,23 +600,26 @@ h3, h4, h5, h6, p,
             });
         });
 
-        // ---- Deal Score ----
+        // ---- Price recommendation ----
         var MARKET = { Dresses: 220, Tops: 90, Jackets: 280, Pants: 150, Skirts: 120, Knitwear: 180, Shoes: 260, Accessories: 80 };
-        var marker = document.getElementById('puGaugeMarker');
-        var verdict = document.getElementById('puDealVerdict');
-        var note = document.getElementById('puDealNote');
+        var recText = document.getElementById('puRecText');
+        var round5 = function (n) { return Math.round(n / 5) * 5; };
         function updateDeal() {
-            var price = parseFloat(data.price);
-            if (!price || price <= 0) { verdict.textContent = 'Deal score'; note.textContent = 'Enter a price'; marker.style.left = '50%'; return; }
+            if (!data.itemType) {
+                recText.innerHTML = 'Choose an item type to see a suggested price.';
+                return;
+            }
             var avg = MARKET[data.itemType] || 150;
-            var ratio = price / avg;
-            marker.style.left = Math.max(4, Math.min(96, (ratio / 1.8) * 100)) + '%';
-            var v, n;
-            if (ratio <= 0.6) { v = 'Excellent price'; n = 'Well below market'; }
-            else if (ratio <= 0.9) { v = 'Great deal'; n = 'Below market'; }
-            else if (ratio <= 1.15) { v = 'Fair market price'; n = 'Around market'; }
-            else { v = 'Above market'; n = 'Priced high'; }
-            verdict.textContent = v; note.textContent = n;
+            var lo = round5(avg * 0.8), hi = round5(avg * 1.3);
+            var type = String(data.itemType).toLowerCase();
+            var base = 'Similar ' + type + ' usually sell for around <b>₪' + avg + '</b> (₪' + lo + '–₪' + hi + ').';
+            var price = parseFloat(data.price), react = '';
+            if (price && price > 0) {
+                if (price < lo) react = 'Your price is on the low side — likely a quick sale.';
+                else if (price <= hi) react = 'Your price sits right in the typical range.';
+                else react = 'Your price is above the typical range for this kind of piece.';
+            }
+            recText.innerHTML = base + (react ? '<span class="pu-rec-react">' + react + '</span>' : '');
         }
         updateDeal();
 
