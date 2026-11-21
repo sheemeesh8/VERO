@@ -264,6 +264,7 @@ h3, h4, h5, h6, p,
                         <label class="pu-slot" data-photo="angle"><span class="pu-slot-plus">+</span><span class="pu-slot-lbl">Angle</span><input type="file" accept="image/*"></label>
                     </div>
                     <p class="pu-hint">The first image becomes a clean cut-out on the sand ground buyers see across the app.</p>
+                    <p class="pu-hint" id="coverNote" hidden style="color:#9a3b2f"></p>
                 </section>
 
                 <!-- 3 — MATERIAL & COLOUR -->
@@ -399,7 +400,11 @@ h3, h4, h5, h6, p,
     </script>
 
     <!-- Background-removal engine for the cover shot. -->
-    <script src="cutout.js?v=20261007"></script>
+    <script src="cutout.js?v=20261121a"></script>
+    <script>
+      // Fetch the cut-out engine while the seller fills in the first step.
+      (window.requestIdleCallback || function (f) { setTimeout(f, 1200); })(function () { if (typeof veroCutoutWarm === 'function') veroCutoutWarm(); });
+    </script>
     <script>
     (function productUpload() {
         var KEY = 'vero_upload_draft';
@@ -552,7 +557,9 @@ h3, h4, h5, h6, p,
                     var S = 900, c = document.createElement('canvas'); c.width = c.height = S;
                     var ctx = c.getContext('2d');
                     ctx.fillStyle = '#F0F0F0'; ctx.fillRect(0, 0, S, S);
-                    ctx.drawImage(img, 0, 0, S, S);
+                    var k = Math.min(S / img.naturalWidth, S / img.naturalHeight), dw = img.naturalWidth * k, dh = img.naturalHeight * k;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, (S - dw) / 2, (S - dh) / 2, dw, dh);   // contain: a fallback photo is never stretched
                     resolve(c.toDataURL('image/png'));
                 };
                 img.onerror = function () { resolve(cutUrl); };
@@ -572,13 +579,20 @@ h3, h4, h5, h6, p,
                     var raw = rd.result;
                     if (key === 'cover') {
                         slot.classList.add('working');
+                        var st = document.getElementById('coverStatus'); if (st) st.textContent = 'Preparing\u2026';
+                        var note = function (m) { var h = document.getElementById('coverNote'); if (h) { h.textContent = m; h.hidden = !m; } };
+                        note('');
                         var done = function (url) {
                             data.photos.cover = url; save();
                             slot.style.backgroundImage = 'url("' + url + '")'; slot.classList.add('filled'); slot.classList.remove('working');
+                            renderCard();   // the cut may finish after the seller has moved on to the preview
                         };
                         if (typeof veroCutout === 'function') {
                             veroCutout(raw, { onStatus: function (m) { var s = document.getElementById('coverStatus'); if (s) s.textContent = m; } })
-                                .then(composeOnGround).then(done)
+                                .then(function (res) {
+                                    if (!res.ok) note('Couldn\u2019t remove the background \u2014 using your photo as it is.');
+                                    return composeOnGround(res.image);
+                                }).then(done)
                                 .catch(function () { composeOnGround(raw).then(done); });
                         } else { composeOnGround(raw).then(done); }
                     } else {

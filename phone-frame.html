@@ -258,7 +258,10 @@ h3, h4, h5, h6, p,
                     sessionStorage.setItem('vero_healed_209', '1');
                     if (window.caches && caches.keys) {
                         caches.keys().then(function (keys) {
-                            if (keys && keys.length) {
+                            // The background-removal engine (vero-cutout-*) is versioned and
+                            // content-hashed — never stale — so it survives the purge.
+                            keys = (keys || []).filter(function (k) { return k.indexOf('vero-cutout-') !== 0; });
+                            if (keys.length) {
                                 Promise.all(keys.map(function (k) { return caches.delete(k); }))
                                     .then(function () { location.reload(); });
                             }

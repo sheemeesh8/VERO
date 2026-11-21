@@ -19,7 +19,9 @@
           if ('caches' in window && !sessionStorage.getItem(TAG)) {
             sessionStorage.setItem(TAG, '1');
             caches.keys().then(function (keys) {
-              return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+              // Keep the background-removal engine (vero-cutout-*): versioned, never stale.
+              return Promise.all(keys.filter(function (k) { return k.indexOf('vero-cutout-') !== 0; })
+                .map(function (k) { return caches.delete(k); }));
             }).then(function () {
               if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(function (regs) {

@@ -18,8 +18,11 @@ self.addEventListener('install', function () {
 self.addEventListener('activate', function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
-      // Delete EVERY cache, not just old versions — a full purge.
-      return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+      // Delete every cache — a full purge — except the background-removal engine
+      // (vero-cutout-*): it is versioned and content-hashed, so it is never stale,
+      // and re-downloading ~55MB on every deploy is what made cut-outs slow.
+      return Promise.all(keys.filter(function (k) { return k.indexOf('vero-cutout-') !== 0; })
+        .map(function (k) { return caches.delete(k); }));
     }).then(function () {
       // Control all open pages so the next navigation is network-fresh.
       return self.clients.claim();
