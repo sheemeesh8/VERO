@@ -28,7 +28,7 @@
    clear, the body of the piece to solid — before the piece is trimmed, so the
    trim hugs the product and nothing smudges the card's ground.
 
-   If the engine can't be reached — offline, blocked CDN — the original photo is
+   If the engine can't be loaded — offline, an old browser — the original photo is
    kept and used as-is. A listing never fails because a cut-out failed.
 
    Usage:
@@ -46,12 +46,15 @@ const VERO_CUTOUT_PAD = 0.06;
 /* Longest side of the photo handed to the model. */
 const VERO_CUTOUT_INPUT = 1280;
 
-// Library + model-data versions, pinned as a MATCHED pair. The library fetches its
-// WASM + ONNX model from `@imgly/background-removal-data/<library-version>/dist/`,
-// so the two must line up; 1.4.5 is a pair whose data is known to be served.
+// The engine is served from the site itself (vendor/bg-removal/<version>/): the
+// library, bundled into one file, plus exactly the files a cut-out uses — the
+// "small" model and the WASM runtime. Nothing depends on an outside CDN being
+// up, reachable or still serving this version, and the files are same-origin.
+// Rebuild: bundle @imgly/background-removal@<v> with esbuild and copy the
+// matching chunks from @imgly/background-removal-data@<v> (see resources.json).
 const VERO_CUTOUT_VERSION = '1.4.5';
 const VERO_CUTOUT_PUBLIC_PATH =
-    'https://staticimgly.com/@imgly/background-removal-data/' + VERO_CUTOUT_VERSION + '/dist/';
+    new URL('vendor/bg-removal/' + VERO_CUTOUT_VERSION + '/', document.baseURI).href;
 const VERO_CUTOUT_MODEL = 'small';
 
 /* Clocks. A blocked CDN hangs rather than fails, so nothing waits forever —
@@ -82,7 +85,7 @@ let veroCutoutLibPromise = null;
 // does not pay for it on pages where nobody lists anything.
 function veroCutoutLoad() {
     if (!veroCutoutLibPromise) {
-        veroCutoutLibPromise = import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@' + VERO_CUTOUT_VERSION + '/+esm')
+        veroCutoutLibPromise = import(VERO_CUTOUT_PUBLIC_PATH + 'background-removal.js')
             .catch(err => { veroCutoutLibPromise = null; throw err; });
     }
     return veroCutoutLibPromise;
@@ -94,7 +97,7 @@ function veroCutoutLoad() {
    when the phone's HTTP cache decides 45MB is too big to keep. The library
    asks for them with plain fetch(); a small shim answers those requests from
    the store (or fills it), so a file is never fetched twice. */
-const VERO_CUTOUT_CACHE = 'vero-cutout-' + VERO_CUTOUT_VERSION + '-' + VERO_CUTOUT_MODEL;
+const VERO_CUTOUT_CACHE = 'vero-cutout-' + VERO_CUTOUT_VERSION + '-' + VERO_CUTOUT_MODEL + '-local';
 const veroCutoutFiles = new Map();          // url → Promise<Blob>, shared by every caller
 
 function veroCutoutGet(url) {
