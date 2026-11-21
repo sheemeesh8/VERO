@@ -551,6 +551,8 @@ h3, h4, h5, h6, p,
 
                 listings[idx] = p;
                 save('vero_listings', listings);
+                // Saving it as Removed takes it off the feed: the same "deleted" page as everywhere else.
+                if (status === 'deleted' && prev !== 'deleted' && window.veroGoDeleted) { window.veroGoDeleted('removed', p.name || p.title, backHref); return; }
                 const n = document.getElementById('saveNote');
                 n.textContent = 'Saved ✓ — returning to your products…';
                 setTimeout(() => { location.href = backHref; }, 650);
@@ -591,8 +593,10 @@ h3, h4, h5, h6, p,
             // Permanent delete.
             document.getElementById('deleteBtn').addEventListener('click', () => {
                 if (!confirm('Delete this listing permanently? This cannot be undone.')) return;
+                const gone = listings[idx] || {};
                 listings.splice(idx, 1);
                 save('vero_listings', listings);
+                if (window.veroGoDeleted) { window.veroGoDeleted('listing', gone.name || gone.title, backHref); return; }
                 location.href = backHref;
             });
         }
@@ -601,5 +605,6 @@ h3, h4, h5, h6, p,
     <script src="vero-editor.js"></script>
     <script src="assets/didone-hairline.js"></script>
 <script src="assets/line-icons.js"></script>
+<script src="assets/go-deleted.js?v=1"></script>
 </body>
 </html>

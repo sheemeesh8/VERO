@@ -101,13 +101,28 @@
             // A bin — deleted.
             deleted: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M18 20h18 M23.5 20v-2.5h7V20 M20.5 20l1.3 16h10.4l1.3-16 M25 24.5v7.5 M29 24.5v7.5"/></svg>'
         };
-        var COPY = deleted ? {
-            eyebrow: 'Listing deleted',
-            title: 'Your listing was deleted',
-            text: 'Everything you entered for it — photos, details and price — has been removed. Nothing was published.',
-            primary: ['List another item', 'upload-start.html'],
-            secondary: ['Back to my store', 'seller-area.html']
-        } : draft ? {
+        // A deletion can come from anywhere a product is deleted (assets/go-deleted.js):
+        // what was deleted, its name, and the page to go back to.
+        var qp = new URLSearchParams(location.search);
+        var what = qp.get('what') || 'upload', pname = (qp.get('name') || '').trim();
+        var back = qp.get('back') || '';
+        if (!/^[\w-]+\.html(\?[^#<>"']*)?$/.test(back)) back = '';        // only a page of this site
+        var quoted = pname ? '\u201c' + pname + '\u201d' : 'Your listing';
+        var DELETED = {
+            upload:  { eyebrow: 'Listing deleted', title: 'Your listing was deleted',
+                       text: 'Everything you entered for it \u2014 photos, details and price \u2014 has been removed. Nothing was published.',
+                       primary: ['List another item', 'upload-start.html'], secondary: ['Back to my store', 'seller-area.html'] },
+            draft:   { eyebrow: 'Draft deleted', title: 'The draft was deleted',
+                       text: (pname ? quoted + ' was' : 'The draft was') + ' deleted from your drafts, with its photos and details.',
+                       primary: ['Back to my drafts', back || 'drafts.html'], secondary: ['List another item', 'upload-start.html'] },
+            listing: { eyebrow: 'Listing deleted', title: 'The listing was deleted',
+                       text: (pname ? quoted + ' was' : 'The listing was') + ' deleted for good \u2014 it\u2019s no longer on moravchick.',
+                       primary: ['Back to my listings', back || 'products.html?from=seller'], secondary: ['List another item', 'upload-start.html'] },
+            removed: { eyebrow: 'Listing removed', title: 'The listing was removed',
+                       text: (pname ? quoted + ' is' : 'It is') + ' off the feed now. You\u2019ll find it in your history, and you can relist it any time.',
+                       primary: ['Back to my listings', back || 'products.html?from=seller'], secondary: ['List another item', 'upload-start.html'] }
+        };
+        var COPY = deleted ? (DELETED[what] || DELETED.upload) : draft ? {
             eyebrow: 'Saved to drafts',
             title: 'Saved as a draft',
             text: 'Your listing is waiting in your drafts. Pick it up whenever you’re ready and publish it in one tap.',

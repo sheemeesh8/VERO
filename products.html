@@ -785,6 +785,7 @@ h3, h4, h5, h6, p,
             const act = btn.dataset.act;
             if (act === 'nego') { openNego(i); return; }
             if (!listings[i]) return;
+            const pname = listings[i].name || listings[i].title || '';
             if (act === 'sold')       { listings[i].status = 'sold';    listings[i].soldAt = Date.now();
                                         listings[i].sale = synthSale(listings[i]); }
             else if (act === 'remove'){ listings[i].status = 'deleted'; listings[i].deletedAt = Date.now(); }
@@ -792,6 +793,11 @@ h3, h4, h5, h6, p,
                                         delete listings[i].soldAt; delete listings[i].deletedAt; }
             else if (act === 'purge') { listings.splice(i, 1); }
             save('vero_listings', listings);
+            // Taking a listing off the feed, or deleting it for good, ends on the "deleted" page.
+            if ((act === 'remove' || act === 'purge') && window.veroGoDeleted) {
+                window.veroGoDeleted(act === 'purge' ? 'listing' : 'removed', pname);
+                return;
+            }
             render();
         });
 
@@ -955,5 +961,6 @@ h3, h4, h5, h6, p,
     <script src="assets/didone-hairline.js"></script>
     <script src="nav-icons.js" defer></script>
 <script src="assets/line-icons.js"></script>
+<script src="assets/go-deleted.js?v=1"></script>
 </body>
 </html>
