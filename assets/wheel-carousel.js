@@ -13,6 +13,11 @@
        circle — right for dates, where wrapping back to the start would mislead.
      • render(item, index) returns each item's HTML, so an item can be more than
        a label (the feed's calendar puts a date and an event dot in each).
+     • orientation: 'horizontal' lays the arc across the top instead — the top of
+       a wheel, its crown at the centre, reaching down to the left and right
+       edges. Items stay upright (no rotation) so numbers read straight; you drag
+       sideways, and the page still scrolls up and down over it. apexPx is then
+       the crown's distance from the top.
 
      var wheel = VeroWheelCarousel(el, {
        items: [...],                       // anything; render() draws each
@@ -47,6 +52,7 @@
         if (!host || !n) return null;
         var o = {
             loop: opts.loop !== false,
+            horizontal: opts.orientation === 'horizontal',
             radius: opts.radius != null ? opts.radius : 320,
             spacing: opts.spacing != null ? opts.spacing : 14,
             visibleItems: opts.visibleItems != null ? opts.visibleItems : 7,
@@ -73,6 +79,7 @@
 
         // ---- DOM ----
         host.classList.add('vwc');
+        if (o.horizontal) host.classList.add('vwc-h');
         host.innerHTML =
             '<div class="vwc-stage" role="listbox" tabindex="0" aria-label="' + o.label.replace(/"/g, '&quot;') + '">' +
                 '<div class="vwc-list"></div>' +
@@ -87,7 +94,8 @@
             var el = document.createElement('div');
             el.className = 'vwc-item'; el.id = id + '-item-' + i;
             el.setAttribute('role', 'option'); el.setAttribute('aria-selected', 'false');
-            el.style.left = o.apexPx != null ? o.apexPx + 'px' : o.apexInset + '%';
+            if (o.horizontal) { el.style.left = '50%'; el.style.top = (o.apexPx != null ? o.apexPx : 12) + 'px'; }
+            else el.style.left = o.apexPx != null ? o.apexPx + 'px' : o.apexInset + '%';
             el.innerHTML = o.render(it, i);
             list.appendChild(el);
             return el;
@@ -104,12 +112,18 @@
                 }
                 if (el.style.display === 'none') el.style.display = '';
                 var angle = off * o.spacing, rad = angle * Math.PI / 180;
-                var x = -o.radius * (1 - Math.cos(rad)), y = o.radius * Math.sin(rad);
                 var dist = Math.min(Math.abs(off) / o.visibleItems, 1);
                 var scale = 1 - Math.min(Math.abs(off) * 0.04, 0.45);
                 var sel = Math.abs(off) < 0.5;
                 el.style.opacity = Math.cos(dist * Math.PI / 2).toFixed(3);
-                el.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) translateY(-50%) rotate(' + angle.toFixed(2) + 'deg) scale(' + scale.toFixed(3) + ')';
+                if (o.horizontal) {
+                    // Crown of the wheel: x along the arc, dropping toward the sides; upright.
+                    var hx = o.radius * Math.sin(rad), hy = o.radius * (1 - Math.cos(rad));
+                    el.style.transform = 'translate(' + hx.toFixed(2) + 'px,' + hy.toFixed(2) + 'px) translateX(-50%) scale(' + scale.toFixed(3) + ')';
+                } else {
+                    var x = -o.radius * (1 - Math.cos(rad)), y = o.radius * Math.sin(rad);
+                    el.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) translateY(-50%) rotate(' + angle.toFixed(2) + 'deg) scale(' + scale.toFixed(3) + ')';
+                }
                 if (el.__sel !== sel) { el.__sel = sel; el.classList.toggle('is-selected', sel); el.setAttribute('aria-selected', sel); }
             }
             stage.setAttribute('aria-activedescendant', id + '-item-' + selected);
@@ -152,7 +166,9 @@
         // ---- Input ----
         function onWheel(e) {
             if (e.ctrlKey || e.metaKey) return;                               // pinch-zoom stays the browser's
-            var d = e.deltaY * o.scrollSpeed;
+            var raw = e.deltaY;
+            if (o.horizontal) { if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; raw = e.deltaX; }   // up/down scrolls the page
+            var d = raw * o.scrollSpeed;
             // A linear wheel at its end lets the page scroll on instead of trapping it.
             if (!o.loop && ((d < 0 && rotation <= 0) || (d > 0 && rotation >= n - 1))) return;
             e.preventDefault();
@@ -161,12 +177,12 @@
         function onDown(e) {
             if (!e.isPrimary || e.button !== 0) return;
             dragging = true; stage.classList.add('is-dragging'); velocity = 0;
-            dragY = e.clientY; dragR = rotation; prevDragR = rotation;
+            dragY = o.horizontal ? e.clientX : e.clientY; dragR = rotation; prevDragR = rotation;
             try { stage.setPointerCapture(e.pointerId); } catch (err) {}
         }
         function onMove(e) {
             if (!dragging) return;
-            var next = dragR - (e.clientY - dragY) * o.dragSpeed;
+            var next = dragR - ((o.horizontal ? e.clientX : e.clientY) - dragY) * o.dragSpeed;
             velocity = next - prevDragR; prevDragR = next;
             commit(next);
         }
@@ -186,12 +202,14 @@
         var downAt = null;
         stage.addEventListener('pointerdown', function (e) { downAt = { x: e.clientX, y: e.clientY }; });
         stage.addEventListener('click', function (e) {
-            if (!downAt || Math.abs(e.clientY - downAt.y) > 6) return;
+            if (!downAt || Math.abs(o.horizontal ? e.clientX - downAt.x : e.clientY - downAt.y) > 6) return;
             var hit = null, best = 1e9;
             nodes.forEach(function (el, i) {
                 if (el.style.display === 'none') return;
-                var r = el.getBoundingClientRect(), cy = r.top + r.height / 2, d = Math.abs(cy - e.clientY);
-                if (d < best && d < 26) { best = d; hit = i; }
+                var r = el.getBoundingClientRect(), d;
+                if (o.horizontal) { if (e.clientY < r.top - 10 || e.clientY > r.bottom + 10) return; d = Math.abs(r.left + r.width / 2 - e.clientX); }
+                else d = Math.abs(r.top + r.height / 2 - e.clientY);
+                if (d < best && d < (o.horizontal ? 34 : 26)) { best = d; hit = i; }
             });
             if (hit !== null && hit !== selected) { velocity = 0; commit(rotation + offsetOf(hit, rotation)); run(); }
             else if (hit !== null && hit === selected && opts.onSelectedClick) opts.onSelectedClick(items[hit], hit);
@@ -214,7 +232,7 @@
             destroy: function () {
                 if (frame !== null) cancelAnimationFrame(frame);
                 stage.removeEventListener('wheel', onWheel);
-                host.innerHTML = ''; host.classList.remove('vwc', 'vwc-appear', 'vwc-in');
+                host.innerHTML = ''; host.classList.remove('vwc', 'vwc-h', 'vwc-appear', 'vwc-in');
             }
         };
     };

@@ -57,6 +57,30 @@
   .next .btn { border-color: rgba(255,255,255,0.45); color: #fff; }
   .next .btn.solid { background: #fff; color: var(--ink); border-color: #fff; }
 
+  /* Day wheel — the top of a wheel across the page, edge to edge, above Next up.
+     The vanilla wheel (assets/wheel-carousel.js, orientation: 'horizontal'); dates
+     stay upright, a yellow dot marks a day with something on. */
+  .ewheel { height: 132px; margin: 24px -20px 0; }
+  .vwc { position: relative; display: flex; overflow: hidden; background: none; }
+  .vwc-stage { position: relative; display: flex; width: 100%; height: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; outline: none; }
+  .vwc-stage.is-dragging { cursor: grabbing; }
+  .vwc-list { position: relative; flex: 1; min-width: 0; height: 100%; overflow: hidden; }
+  .vwc-item { position: absolute; transform-origin: center top; white-space: nowrap; pointer-events: none; color: rgba(22,21,15,0.4); will-change: transform, opacity; transition: color 0.2s ease; }
+  .vwc-item.is-selected { color: var(--ink); }
+  .vwc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .vwc-appear .vwc-stage { opacity: 0; transform: translateY(14px); }
+  .vwc-appear.vwc-in .vwc-stage { opacity: 1; transform: none; transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+  .ew-d { width: 50px; display: flex; flex-direction: column; align-items: center; gap: 6px; line-height: 1; }
+  .ew-d small { font-size: 8px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; }
+  .ew-d b { font-size: 30px; font-weight: 200; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .ew-dot { width: 7px; height: 7px; background: #f2c200; border-radius: 50%; }
+  .ew-dot.none { visibility: hidden; }
+  .vwc-item.is-selected .ew-d b { font-weight: 300; }
+  .vwc-item.is-selected .ew-d::after { content: ''; width: 18px; height: 1.5px; margin-top: 2px; background: var(--ink); }
+  .vwc-stage:focus-visible .vwc-item.is-selected .ew-d::after { width: 34px; }
+  .ewheel + .next { margin-top: 6px; }
+  .next-empty { margin-top: 10px; font-size: 11px; font-weight: 300; color: rgba(255,255,255,0.72); }
+
   /* Type mark */
   .type { display: inline-flex; align-items: center; gap: 6px; }
   .type i { width: 7px; height: 7px; display: inline-block; background: currentColor; }
@@ -151,7 +175,7 @@
   @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   .rise { animation: rise 0.7s var(--ease) both; }
   .d1 { animation-delay: 0.08s; } .d2 { animation-delay: 0.16s; } .d3 { animation-delay: 0.24s; }
-  @media (prefers-reduced-motion: reduce) { .rise { animation: none; } .booth, .host-form { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .rise { animation: none; } .vwc-appear .vwc-stage { opacity: 1; transform: none; } .booth, .host-form { transition: none; } }
   html.is-embed .page-header { display: none; }
 </style>
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz){font-family:'Inter','Segoe UI',sans-serif !important;}</style>
@@ -173,6 +197,7 @@
     </section>
 
     <!-- The event coming soonest. -->
+    <div class="ewheel rise d1" id="eWheel"></div>
     <section class="next rise d1" id="next" hidden aria-labelledby="nextTitle"></section>
 
     <!-- Filter by kind of event: drives the calendar dots and the list. -->
@@ -218,6 +243,7 @@
   </main>
 
   <script src="assets/events-data.js?v=1"></script>
+  <script src="assets/wheel-carousel.js?v=4"></script>
   <script>
   (function eventsPage() {
     var E = window.veroEvents;
@@ -235,6 +261,7 @@
     var todayIso = E.iso(E.today());
     var view = new Date(E.today().getFullYear(), E.today().getMonth(), 1);
     var selected = null, kind = 'all', openBooth = null;
+    var wheelDay = todayIso;   // the day turned to on the wheel; Next up shows from it on
     var qd = (location.search.match(/[?&]date=(\d{4}-\d{2}-\d{2})/) || [])[1];
     if (qd) { selected = qd; view = new Date(+qd.slice(0, 4), +qd.slice(5, 7) - 1, 1); }
 
@@ -261,12 +288,18 @@
     // ---- Next up ----
     function renderNext() {
       var el = document.getElementById('next');
-      var e = E.upcoming().filter(function (x) { return kind === 'all' || x.type === kind; })[0];
-      if (!e) { el.hidden = true; return; }
-      var d = E.parse(e.date);
+      var e = E.upcoming().filter(function (x) { return x.date >= wheelDay && (kind === 'all' || x.type === kind); })[0];
       el.hidden = false;
+      if (!e) {
+        el.innerHTML = '<p class="k">' + esc(dayLabel(wheelDay)) + '</p><p class="next-empty">Nothing planned from this day on yet.</p>';
+        return;
+      }
+      var d = E.parse(e.date);
+      // On the day turned to: "Today" / "In 4 days". Otherwise say the day is free and what comes next.
+      var lead = e.date === wheelDay ? (relDay(e.date) || dayLabel(e.date))
+        : 'Nothing on ' + E.DOW[E.parse(wheelDay).getDay()] + ' ' + E.parse(wheelDay).getDate() + ' · next ' + (relDay(e.date) ? relDay(e.date).toLowerCase() : dayLabel(e.date));
       el.innerHTML =
-        '<p class="k">Next up · ' + esc(relDay(e.date) || dayLabel(e.date)) + '</p>' +
+        '<p class="k">' + (e.date === wheelDay ? 'Next up · ' : '') + esc(lead) + '</p>' +
         '<div class="next-top">' +
           '<div class="next-date"><b>' + d.getDate() + '</b><span>' + E.MON[d.getMonth()] + '</span></div>' +
           '<div><div class="ev-type">' + typeMark(e.type).replace('style="color:', 'style="color:#fff;--c:') + '</div>' +
@@ -430,6 +463,34 @@
         document.querySelector('.cal').scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
+
+    // ---- The day wheel above Next up ----
+    (function dayWheel() {
+      var hostEl = document.getElementById('eWheel');
+      if (!window.VeroWheelCarousel || !hostEl) return;
+      var has = {}; E.all().forEach(function (e) { has[e.date] = 1; });
+      var last = E.all().reduce(function (m, e) { return e.date > m ? e.date : m; }, todayIso);
+      var days = [], d = E.today();
+      for (var i = 0; i < 400 && (i < 90 || E.iso(d) <= last); i++) { days.push(E.iso(d)); d.setDate(d.getDate() + 1); }
+      var start = qd && days.indexOf(qd) > -1 ? days.indexOf(qd) : 0;
+      wheelDay = days[start];
+      VeroWheelCarousel(hostEl, {
+        items: days, loop: false, initialIndex: start, label: 'Choose a day',
+        orientation: 'horizontal', apexPx: 8, radius: 250, spacing: 12.5, visibleItems: 4.5, edgeFade: false, dragSpeed: 0.018,
+        render: function (ds) {
+          var x = E.parse(ds);
+          return '<div class="ew-d" aria-label="' + esc(dayLabel(ds)) + (has[ds] ? ', events' : '') + '">' +
+            '<small>' + (ds === todayIso ? 'Today' : E.DOW[x.getDay()]) + '</small><b>' + x.getDate() + '</b><small>' + E.MON[x.getMonth()] + '</small>' +
+            '<i class="ew-dot' + (has[ds] ? '' : ' none') + '"></i></div>';
+        },
+        onActiveChange: function (ds) { wheelDay = ds; renderNext(); },
+        // A tap on the chosen day opens it in the calendar and the list below.
+        onSelectedClick: function (ds) {
+          selected = ds; view = new Date(+ds.slice(0, 4), +ds.slice(5, 7) - 1, 1); refresh();
+          document.querySelector('.cal').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    })();
 
     refresh();
     if (qd) setTimeout(function () { document.querySelector('.cal').scrollIntoView({ block: 'start' }); }, 50);
