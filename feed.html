@@ -695,17 +695,25 @@
             dk.scrollLeft = left;
             dk.style.scrollBehavior = sb;
         }
-        // Once the row has settled on an outer copy, hop back to the same card in the middle copy.
-        // The copies are identical, so the hop is invisible and there is always room to swipe on.
+        // Keep the row endless without the chosen card ever changing. When it drifts
+        // towards either end, cards from the far end (well out of sight) are moved
+        // across to the near end and the scroll is shifted by the same amount — so
+        // the card in the middle is the very same element, and its veil, its slow
+        // zoom and its video carry on untouched. (Hopping to a look-alike copy
+        // instead restarted all three, which showed as a flash at every wrap.)
         function recentre(dk) {
             var cards = catCards(), n = modeCats().length;
             if (!curCard || cards.length < n * 3) return;
-            var copy = +curCard.dataset.copy; if (copy === 1) return;
-            var setW = cards[n].offsetLeft - cards[0].offsetLeft;
-            jumpTo(dk, dk.scrollLeft + (copy === 0 ? setW : -setW));
-            curCard = cards[cards.indexOf(curCard) + (copy === 0 ? n : -n)];
-            markActive(curCard); liveEl = curCard;
-            updateScales(); playCurrent();
+            var idx = cards.indexOf(curCard), moved = 0;
+            if (idx < 0) return;
+            while (idx < n)      { dk.insertBefore(dk.lastElementChild, dk.firstElementChild); idx++; moved++; }
+            while (idx >= 2 * n) { dk.appendChild(dk.firstElementChild); idx--; moved--; }
+            if (!moved) return;
+            // Put the chosen card back exactly in the middle. Absolute, not "+ the
+            // distance moved": a snapping row may already have followed the card on
+            // its own, and adding the distance again would land one card off.
+            jumpTo(dk, curCard.offsetLeft - (dk.clientWidth - curCard.offsetWidth) / 2);
+            updateScales();
         }
         function catCards() { return [].slice.call(catsEl.querySelectorAll('.hm-dk-card')); }
         // Only the card in view plays its video.
