@@ -400,7 +400,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261122e">
+    <link rel="stylesheet" href="assets/home.css?v=20261122f">
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
 <body>
@@ -544,7 +544,9 @@
             <section class="hm-wo" id="hmWhatsOn" aria-labelledby="hmWoTitle">
                 <div class="hm-wo-head"><h2 id="hmWoTitle">What&rsquo;s on</h2><a class="hm-wo-all" href="events.html">Full calendar</a></div>
                 <div class="hm-wo-month" id="hmWoMonth"></div>
-                <div class="hm-wo-days" id="hmWoDays" role="group" aria-label="Choose a day"></div>
+                <!-- The dates on a wheel (assets/wheel-carousel.js, the port of components/ui/
+                     wheel-carousel.tsx): drag or scroll to turn it; a yellow dot marks a day with events. -->
+                <div class="hm-wo-wheel" id="hmWoWheel"></div>
                 <div class="hm-wo-list" id="hmWoList" aria-live="polite"></div>
             </section>
 
@@ -567,6 +569,7 @@
     <!-- Product data layer (shared across the site). -->
     <script src="collections.js"></script>
     <script src="assets/events-data.js?v=1"></script>
+    <script src="assets/wheel-carousel.js?v=2"></script>
 
     <!-- Home assembly. -->
     <script>
@@ -1076,53 +1079,46 @@
             showResults(title, list, empty);
             var top = document.querySelector('.hm-search'); if (top) window.scrollTo({ top: top.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
         }
-        // ----- What's on: a two-week strip over the events calendar ----------
+        // ----- What's on: the coming weeks on a date wheel --------------------
         (function whatsOn() {
-            var E = window.veroEvents, days = document.getElementById('hmWoDays'), list = document.getElementById('hmWoList');
-            if (!E || !days) return;
-            var N = 14, start = E.today(), todayIso = E.iso(start), sel = null;
-            var strip = [];
-            for (var i = 0; i < N; i++) { var d = new Date(start); d.setDate(d.getDate() + i); strip.push(E.iso(d)); }
-            var byDay = {};
+            var E = window.veroEvents, host = document.getElementById('hmWoWheel'), list = document.getElementById('hmWoList');
+            if (!E || !host || !window.VeroWheelCarousel) return;
+            var DAYS = 61, start = E.today(), todayIso = E.iso(start), byDay = {}, strip = [];
             E.all().forEach(function (e) { (byDay[e.date] = byDay[e.date] || []).push(e); });
-            // Open on the first day with something on (or today).
-            sel = strip.filter(function (ds) { return byDay[ds]; })[0] || todayIso;
+            for (var i = 0; i < DAYS; i++) { var d = new Date(start); d.setDate(d.getDate() + i); strip.push(E.iso(d)); }
             function color(t) { return (E.TYPES[t] || {}).color || '#3d3a35'; }
-            function href(e) { return 'events.html?date=' + e.date; }
             function row(e) {
                 var t = E.TYPES[e.type] || {};
-                return '<a class="hm-wo-ev" href="' + href(e) + '">' +
+                return '<a class="hm-wo-ev" href="events.html?date=' + e.date + '">' +
                     '<span class="hm-wo-type" style="color:' + color(e.type) + '"><i style="background:' + color(e.type) + '"></i>' + esc(t.name || e.type) + '</span>' +
                     '<span class="hm-wo-name">' + esc(e.title) + '</span>' +
                     '<span class="hm-wo-meta">' + esc(e.time || 'All day') + (e.place ? ' \u00b7 ' + esc(e.place) : '') + '</span>' +
                     '<span class="hm-wo-go" aria-hidden="true">\u2192</span></a>';
             }
-            function render() {
-                var d0 = E.parse(sel);
+            function show(ds) {
+                var d0 = E.parse(ds);
                 document.getElementById('hmWoMonth').textContent = E.MONF[d0.getMonth()] + ' ' + d0.getFullYear();
-                days.innerHTML = strip.map(function (ds) {
-                    var d = E.parse(ds), evs = byDay[ds] || [];
-                    var label = E.DOWF[d.getDay()] + ', ' + E.MONF[d.getMonth()] + ' ' + d.getDate() + (evs.length ? ', ' + evs.length + (evs.length === 1 ? ' event' : ' events') : '');
-                    return '<button type="button" class="hm-wo-day' + (ds === sel ? ' on' : '') + (ds === todayIso ? ' today' : '') + (evs.length ? ' has' : '') + '" data-d="' + ds + '" aria-pressed="' + (ds === sel) + '" aria-label="' + esc(label) + '">' +
-                        '<span class="hm-wo-dow">' + (ds === todayIso ? 'Today' : E.DOW[d.getDay()]) + '</span><b>' + d.getDate() + '</b>' +
-                        '<span class="hm-wo-dots">' + evs.slice(0, 3).map(function (e) { return '<i style="background:' + color(e.type) + '"></i>'; }).join('') + '</span></button>';
-                }).join('');
-                var evs = byDay[sel] || [];
+                var evs = byDay[ds] || [];
                 if (evs.length) { list.innerHTML = evs.map(row).join(''); return; }
-                var next = E.upcoming().filter(function (e) { return e.date > sel; })[0];
-                list.innerHTML = '<p class="hm-wo-empty">Nothing on this day.' + (next ? ' Next up:' : '') + '</p>' + (next ? row(next).replace('class="hm-wo-ev"', 'class="hm-wo-ev hm-wo-next"') : '');
+                var next = E.upcoming().filter(function (e) { return e.date > ds; })[0];
+                list.innerHTML = '<p class="hm-wo-empty">Nothing on this day.' + (next ? ' Next up:' : '') + '</p>' + (next ? row(next) : '');
             }
-            days.addEventListener('click', function (e) {
-                var b = e.target.closest && e.target.closest('.hm-wo-day'); if (!b) return;
-                sel = b.getAttribute('data-d'); render();
+            // Open on the first day with something on.
+            var first = 0; for (var k = 0; k < strip.length; k++) if (byDay[strip[k]]) { first = k; break; }
+            VeroWheelCarousel(host, {
+                items: strip, loop: false, initialIndex: first, label: 'Choose a day',
+                radius: 300, spacing: 8.5, visibleItems: 5, apexInset: 20, edgeFadeSize: 24,
+                render: function (ds) {
+                    var d = E.parse(ds), evs = byDay[ds] || [];
+                    var name = ds === todayIso ? 'Today' : E.DOW[d.getDay()];
+                    return '<span class="hm-wd-dow">' + name + '</span>' +
+                        '<span class="hm-wd-num">' + d.getDate() + '</span>' +
+                        '<span class="hm-wd-mon">' + E.MON[d.getMonth()] + '</span>' +
+                        (evs.length ? '<i class="hm-wd-dot" aria-hidden="true"></i><span class="vwc-sr">' + evs.length + (evs.length === 1 ? ' event' : ' events') + '</span>' : '');
+                },
+                onActiveChange: function (ds) { show(ds); }
             });
-            render();
-            // The strip starts at today; scroll only if the chosen day would be out of view.
-            var on = days.querySelector('.hm-wo-day.on');
-            if (on) {
-                var r = on.getBoundingClientRect(), box = days.getBoundingClientRect();
-                if (r.right > box.right - 20) days.scrollLeft += r.right - box.right + 40;
-            }
+            show(strip[first]);
         })();
 
         // ----- Find me a good deal ------------------------------------------

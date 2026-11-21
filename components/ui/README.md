@@ -1,4 +1,4 @@
-# `components/ui` — Zoom Parallax
+# `components/ui` — reference React components (Zoom Parallax, Wheel Carousel)
 
 ## Important: this repo is **not** a shadcn / React / TypeScript project
 
@@ -45,3 +45,39 @@ npm install framer-motion @studio-freight/lenis clsx tailwind-merge
 
 Then set the `@/*` path alias in `tsconfig.json` so `@/components/ui/...` and
 `@/lib/utils` resolve.
+
+
+---
+
+## Wheel Carousel (`wheel-carousel.tsx`, `wheel-carousel-demo.tsx`)
+
+Kept here as the **reference** for the requested 21st.dev component, exactly as
+delivered. Like Zoom Parallax, it can't run in this repo as-is (no React, no
+Tailwind, no `@/lib/utils`, and `framer-motion` / `next-themes` have no
+`package.json` to be installed into). The demo is named `wheel-carousel-demo.tsx`
+because `demo.tsx` already belongs to Zoom Parallax.
+
+It ships as a **vanilla port**:
+
+- `assets/wheel-carousel.js` — `VeroWheelCarousel(el, options)`: the same arc
+  maths, drag / mouse-wheel / arrow-key input, momentum, snapping to the nearest
+  item, edge fade and `prefers-reduced-motion` handling. framer-motion is replaced
+  by a `requestAnimationFrame` loop; next-themes isn't needed (the site is light
+  only, using the component's light palette).
+- Two opt-in additions: `loop: false` runs the items in a line instead of round a
+  circle, and `render(item, index)` draws each item's HTML.
+- styles: the `.vwc*` rules in `assets/home.css`.
+
+**Where it's used:** the feed's *What's on* calendar (`feed.html`). It carries the
+coming 61 days as dates instead of words, with no photo panel, a yellow dot on a
+day with events (`assets/events-data.js`), and the chosen day's events below.
+
+To use the `.tsx` directly you'd need the React + TypeScript + Tailwind + shadcn
+setup described above, plus:
+
+```bash
+npm install framer-motion next-themes
+```
+
+and a `ThemeProvider` from `next-themes` around the app (the component calls
+`useTheme()`; with `mode="light"` / `"dark"` / `"custom"` the provider is optional).
