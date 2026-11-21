@@ -72,7 +72,7 @@
         .pu-field input, .pu-field textarea { width: 100%; border: none; border-bottom: 1px solid #efeae2;
             background: transparent; font-family: inherit; font-size: 16px; font-weight: 300; color: #1b1916; padding: 8px 0; transition: border-color 0.25s; }
         .pu-field input::placeholder, .pu-field textarea::placeholder { color: #514e48; font-weight: 300; }
-        .pu-field textarea { min-height: 74px; line-height: 1.6; resize: none; }
+        .pu-field textarea { min-height: 30px; line-height: 1.6; resize: none; overflow: hidden; }
         .pu-field input:focus, .pu-field textarea:focus { outline: none; border-bottom-color: #1b1916; }
 
         /* ---- Select (choose from a list), full width ---- */
@@ -197,7 +197,7 @@ h3, h4, h5, h6, p,
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Arimo', 'Inter', sans-serif !important;}</style>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <link rel="stylesheet" href="product-card.css?v=9">
-    <link rel="stylesheet" href="assets/upload-flow.css?v=20261121a">
+    <link rel="stylesheet" href="assets/upload-flow.css?v=20261121b">
     <script src="assets/page-header.js?v=20261117e"></script>
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
@@ -244,7 +244,16 @@ h3, h4, h5, h6, p,
                         </div>
                     </div>
                     <div class="pu-field"><label>Item name</label><input data-k="title" type="text" placeholder="e.g. Vintage wool blazer"></div>
-                    <div class="pu-field"><label>Description</label><textarea data-k="description" placeholder="Condition, story, anything a buyer should know"></textarea></div>
+                    <div class="pu-field"><label>Condition</label>
+                        <div class="pu-chips" data-single="condition">
+                            <button type="button" data-v="New with tags">New with tags</button>
+                            <button type="button" data-v="Like new">Like new</button>
+                            <button type="button" data-v="Excellent">Excellent</button>
+                            <button type="button" data-v="Good">Good</button>
+                            <button type="button" data-v="Fair">Fair</button>
+                        </div>
+                    </div>
+                    <div class="pu-field"><label>Description</label><textarea data-k="description" placeholder="Story, fit, anything a buyer should know"></textarea></div>
                 </section>
 
                 <!-- 2 — PHOTOS: 3 images; first is bg-removed + #F0F0F0 fill -->
@@ -466,10 +475,15 @@ h3, h4, h5, h6, p,
             var k = el.getAttribute('data-k');
             if (data[k] != null) el.value = data[k];
             var isSelect = el.tagName === 'SELECT';
+            var isArea = el.tagName === 'TEXTAREA';
             if (isSelect) el.classList.toggle('empty', !el.value);
+            // The description line follows the text: grow the box to fit what's typed.
+            var grow = function () { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
+            if (isArea) grow();
             var onChange = function () {
                 data[k] = el.value; save();
                 if (isSelect) el.classList.toggle('empty', !el.value);
+                if (isArea) grow();
                 if (k === 'price' || k === 'itemType') updateDeal();
             };
             el.addEventListener('input', onChange);
@@ -630,7 +644,7 @@ h3, h4, h5, h6, p,
                 title: data.title || 'Untitled item', brand: data.brand || '', itemType: data.itemType || '',
                 fabric: data.fabric || '', color: data.color || '', colorCombo: data.colorCombo || '',
                 gender: data.gender || '', season: data.season || '', collection: data.collection || '',
-                style: data.style || [], year: data.year || '',
+                style: data.style || [], year: data.year || '', condition: data.condition || '',
                 price: data.price || '', salePercent: data.salePercent || '', description: data.description || '',
                 cover: cover, photos: data.photos || {}, status: status, createdAt: Date.now()
             };
