@@ -400,7 +400,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261121b">
+    <link rel="stylesheet" href="assets/home.css?v=20261121c">
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
 <body>
@@ -644,13 +644,14 @@
         var catsEl = document.getElementById('hmCats');
         function buildCats() {
             var list = modeList();
-            // A deck: the chosen card in front, the next ones behind it under frosted glass.
-            catsEl.innerHTML = '<div class="hm-dk">' + modeCats().map(function (c) {
+            // A looping deck: the cards are laid out three times over and the row is kept on the
+            // middle copy, so you can swipe on past the last card back to the first (and the other way).
+            var one = modeCats().map(function (c) {
                 var n = list.filter(function (p) { return facetOf(p) === c.g; }).length || list.length;   // no gender data → the whole list
                 var media = c.img
                     ? '<img src="' + c.img + '" alt="" loading="lazy" decoding="async">'
                     : '<video src="' + c.media + '" poster="' + c.poster + '" muted loop playsinline preload="none" aria-hidden="true"></video>';
-                return '<div class="hm-dk-card" data-gender="' + c.g + '" role="button" tabindex="0" aria-label="' + c.name + '">' +
+                return '<div class="hm-dk-card" data-gender="' + c.g + '" data-copy="@" role="button" tabindex="0" aria-label="' + c.name + '">' +
                     '<span class="hm-dk-media">' + media + '</span>' +
                     '<span class="hm-dk-count"><b>' + num(n) + '</b><em>items on air</em></span>' +
                     '<span class="hm-dk-body">' +
@@ -658,29 +659,60 @@
                         '<span class="hm-dk-desc">' + esc(c.desc) + '</span>' +
                     '</span>' +
                     '</div>';
-            }).join('') + '</div>';
-            placeDeck(true);
+            }).join('');
+            catsEl.innerHTML = '<div class="hm-dk is-loop">' + [0, 1, 2].map(function (k) { return one.replace(/data-copy="@"/g, 'data-copy="' + k + '"'); }).join('') + '</div>';
+            curCard = null;
+            placeDeck(true, true);
             requestAnimationFrame(function () { measureDeck(); updateScales(); });   // set the opening sizes before any scroll
         }
         function catIndex() { var i = 0; modeCats().forEach(function (c, k) { if (c.g === state.gender) i = k; }); return i; }
         var dkEl = function () { return catsEl.querySelector('.hm-dk'); };
+        // The card element that is the chosen one (one of the three copies of its category).
+        var curCard = null;
+        // The copy of the chosen category to show: the given card, else the one nearest the middle of the row.
+        function pickCard(el) {
+            if (el && el.dataset.gender === state.gender) return el;
+            var dk = dkEl(), same = catCards().filter(function (c) { return c.dataset.gender === state.gender; });
+            if (!same.length) return null;
+            if (!dk || !curCard) return same[Math.floor(same.length / 2)];          // the middle copy
+            var mid = dk.scrollLeft + dk.clientWidth / 2, best = same[0], bd = Infinity;
+            same.forEach(function (c) { var d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = c; } });
+            return best;
+        }
         // Mark the chosen card and, unless the user is the one scrolling, slide it into view.
-        function placeDeck(scrollTo) {
-            var cur = catIndex(), cards = catCards();
-            cards.forEach(function (c, k) {
-                if (k === cur) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current');
-            });
-            if (scrollTo && cards[cur]) {
-                var dk = dkEl();
-                if (dk) dk.scrollTo({ left: cards[cur].offsetLeft - (dk.clientWidth - cards[cur].offsetWidth) / 2, behavior: 'smooth' });
+        function placeDeck(scrollTo, instant, el) {
+            curCard = pickCard(el);
+            markActive(curCard);
+            var dk = dkEl();
+            if (scrollTo && curCard && dk) {
+                var left = curCard.offsetLeft - (dk.clientWidth - curCard.offsetWidth) / 2;
+                if (instant) jumpTo(dk, left); else dk.scrollTo({ left: left, behavior: 'smooth' });
             }
+        }
+        // Move the row without animation (for the opening position and the loop's silent jump).
+        function jumpTo(dk, left) {
+            var sb = dk.style.scrollBehavior; dk.style.scrollBehavior = 'auto';
+            dk.scrollLeft = left;
+            dk.style.scrollBehavior = sb;
+        }
+        // Once the row has settled on an outer copy, hop back to the same card in the middle copy.
+        // The copies are identical, so the hop is invisible and there is always room to swipe on.
+        function recentre(dk) {
+            var cards = catCards(), n = modeCats().length;
+            if (!curCard || cards.length < n * 3) return;
+            var copy = +curCard.dataset.copy; if (copy === 1) return;
+            var setW = cards[n].offsetLeft - cards[0].offsetLeft;
+            jumpTo(dk, dk.scrollLeft + (copy === 0 ? setW : -setW));
+            curCard = cards[cards.indexOf(curCard) + (copy === 0 ? n : -n)];
+            markActive(curCard); liveEl = curCard;
+            updateScales(); playCurrent();
         }
         function catCards() { return [].slice.call(catsEl.querySelectorAll('.hm-dk-card')); }
         // Only the card in view plays its video.
         function playCurrent() {
             catCards().forEach(function (c) {
                 var v = c.querySelector('video'); if (!v) return;
-                if (c.dataset.gender === state.gender) { v.muted = true; var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
+                if (c === curCard) { v.muted = true; var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
                 else { try { v.pause(); } catch (e) {} }
             });
         }
@@ -697,11 +729,11 @@
                 if (k < 1) requestAnimationFrame(step);
             })(performance.now());
         }
-        function setGender(g, fromScroll) {
+        function setGender(g, fromScroll, el) {
             if (!g) return;
             var changed = g !== state.gender;
             state.gender = g; liveG = g;
-            placeDeck(!fromScroll);                             // a tap / link slides the card in; a user scroll does not
+            placeDeck(!fromScroll, false, el);                             // a tap / link slides the card in; a user scroll does not
             syncSubnav(); playCurrent();
             if (changed) {
                 var on = catsEl.querySelector('.hm-dk-card[aria-current="true"] .hm-dk-count b'); if (on) countUp(on);
@@ -714,7 +746,7 @@
         catsEl.addEventListener('click', function (e) {
             var card = e.target.closest ? e.target.closest('.hm-dk-card') : null;
             if (!card) return;
-            setGender(card.dataset.gender);
+            setGender(card.dataset.gender, false, card);
         });
         // The card nearest the middle of the row.
         function nearestCard(dk) {
@@ -724,9 +756,9 @@
             return best;
         }
         // Mark a card current straight away (no state change) so the glass/frame track the finger.
-        function markActive(g) {
+        function markActive(el) {
             catCards().forEach(function (c) {
-                if (c.dataset.gender === g) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current');
+                if (c === el) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current');
             });
         }
         // Scroll-linked size: a card keeps its small size until it is halfway to the middle, then grows
@@ -757,7 +789,7 @@
         }
         // A plain horizontal slider. While it scrolls, the card nearest the middle lights up at once;
         // the heavier work (counting up, swapping the pieces) waits until the scroll has settled.
-        var scrollTmr = null, rafPend = false, liveG = null;
+        var scrollTmr = null, rafPend = false, liveG = null, liveEl = null;
         catsEl.addEventListener('scroll', function (e) {
             var dk = e.target.closest && e.target.closest('.hm-dk'); if (!dk) return;
             if (!dk.classList.contains('is-scrolling')) dk.classList.add('is-scrolling');   // flat veil while moving
@@ -767,7 +799,7 @@
                     rafPend = false;
                     updateScales();                                 // grow / shrink in step with the scroll
                     var best = nearestCard(dk);
-                    if (best && best.dataset.gender !== liveG) { liveG = best.dataset.gender; markActive(liveG); }
+                    if (best && best !== liveEl) { liveEl = best; liveG = best.dataset.gender; markActive(best); }
                 });
             }
             if (scrollTmr) clearTimeout(scrollTmr);
@@ -775,7 +807,9 @@
                 dk.classList.remove('is-scrolling');                // settled: bring the real glass back
                 updateScales();
                 var best = nearestCard(dk);
-                if (best && best.dataset.gender !== state.gender) setGender(best.dataset.gender, true);
+                if (best && best.dataset.gender !== state.gender) setGender(best.dataset.gender, true, best);
+                else if (best) { curCard = best; markActive(best); playCurrent(); }
+                recentre(dk);
             }, 110);
         }, true);
         // Hooks kept for the sub-header and for links that name a gender.
