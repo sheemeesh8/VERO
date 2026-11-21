@@ -276,8 +276,12 @@ function veroCutoutCompose(img) {
     ctx.drawImage(scan, left, top, cw, ch,
         (VERO_CUTOUT_W - dw) / 2, (VERO_CUTOUT_H - dh) / 2, dw, dh);
 
-    // PNG, not JPEG — JPEG has no alpha and would fill the transparency black.
-    return out.toDataURL('image/png');
+    // Transparent, so never JPEG (it has no alpha and would fill it black).
+    // WebP keeps the alpha at a fraction of PNG's size — it matters, because the
+    // listing lives in the browser's ~5MB storage. Browsers that cannot encode
+    // WebP (Safari) hand back a PNG from the same call; that is used as it is.
+    const webp = out.toDataURL('image/webp', 0.9);
+    return webp.indexOf('data:image/webp') === 0 ? webp : out.toDataURL('image/png');
 }
 
 /* ---- The cut-out ---- */

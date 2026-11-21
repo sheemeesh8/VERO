@@ -400,7 +400,7 @@ h3, h4, h5, h6, p,
     </script>
 
     <!-- Background-removal engine for the cover shot. -->
-    <script src="cutout.js?v=20261121c"></script>
+    <script src="cutout.js?v=20261121d"></script>
     <script>
       // Fetch the cut-out engine while the seller fills in the first step.
       (window.requestIdleCallback || function (f) { setTimeout(f, 1200); })(function () { if (typeof veroCutoutWarm === 'function') veroCutoutWarm(); });
@@ -551,6 +551,28 @@ h3, h4, h5, h6, p,
 
         // ---- Compose a transparent cut-out onto the #F0F0F0 ground ----
 
+        // ---- Photos are stored small ----
+        // Everything is kept in this browser's storage, which holds ~5MB in all. A
+        // phone photo read as-is is 2–8MB, so one listing could fill it and the save
+        // failed silently. Every photo is scaled and re-encoded before it is kept.
+        function shrinkPhoto(src, maxSide, quality) {
+            return new Promise(function (resolve) {
+                var img = new Image();
+                img.onload = function () {
+                    var k = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+                    var c = document.createElement('canvas');
+                    c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+                    var ctx = c.getContext('2d');
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, c.width, c.height);
+                    resolve(c.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = function () { resolve(src); };
+                img.src = src;
+            });
+        }
+        var PHOTO_MAX = 1080, PHOTO_Q = 0.8;
+
         // ---- Photo slots ----
         document.querySelectorAll('.pu-slot').forEach(function (slot) {
             var key = slot.getAttribute('data-photo');
@@ -576,14 +598,17 @@ h3, h4, h5, h6, p,
                                 .then(function (res) {
                                     // The cut-out is already a transparent frame in the card's shape:
                                     // stored as it is, so the card paints its own ground behind it.
-                                    if (!res.ok) note('Couldn\u2019t remove the background \u2014 using your photo as it is.');
-                                    done(res.image);
+                                    if (res.ok) return done(res.image);
+                                    note('Couldn\u2019t remove the background \u2014 using your photo as it is.');
+                                    return shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done);
                                 })
-                                .catch(function () { done(raw); });
-                        } else { done(raw); }
+                                .catch(function () { shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done); });
+                        } else { shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done); }
                     } else {
-                        data.photos[key] = raw; save();
-                        slot.style.backgroundImage = 'url("' + raw + '")'; slot.classList.add('filled');
+                        shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(function (url) {
+                            data.photos[key] = url; save();
+                            slot.style.backgroundImage = 'url("' + url + '")'; slot.classList.add('filled');
+                        });
                     }
                 };
                 rd.readAsDataURL(f);
@@ -643,6 +668,12 @@ h3, h4, h5, h6, p,
         }
 
         // ---- Build the listing object from the form ----
+        // The seller's store name, as set in the store editor / profile.
+        function storeName() {
+            var read = function (k) { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { return {}; } };
+            var sc = read('vero_store_config'), pr = read('vero_seller_profile');
+            return sc.name || sc.storeName || pr.storeName || pr.name || '';
+        }
         function buildListing(status) {
             var cover = data.photos && (data.photos.cover || data.photos.detail || data.photos.label || data.photos.angle) || '';
             return {
@@ -652,29 +683,61 @@ h3, h4, h5, h6, p,
                 gender: data.gender || '', season: data.season || '', collection: data.collection || '',
                 style: data.style || [], year: data.year || '', condition: data.condition || '',
                 price: data.price || '', salePercent: data.salePercent || '', description: data.description || '',
-                cover: cover, photos: data.photos || {}, status: status, createdAt: Date.now()
+                cover: cover, photos: data.photos || {}, status: status, createdAt: Date.now(),
+                // The names the rest of the app reads a listing by (My products, Drafts,
+                // the product editor, the storefront). The picture is not repeated under
+                // other names — it is the biggest thing stored; readers take it from cover.
+                name: data.title || 'Untitled item',
+                seller: storeName() || data.brand || '', type: 'clothing'
             };
         }
 
-        // ---- Publish → vero_listings ----
-        document.getElementById('puPublish').addEventListener('click', function () {
-            var listings = [];
-            try { listings = JSON.parse(localStorage.getItem('vero_listings')) || []; } catch (e) { listings = []; }
-            listings.unshift(buildListing('active'));
-            try { localStorage.setItem('vero_listings', JSON.stringify(listings)); } catch (e) {}
-            try { localStorage.removeItem(KEY); } catch (e) {}
-            location.href = 'listing-done.html?state=live';
-        });
-
-        // ---- Save as draft → vero_drafts ----
-        document.getElementById('puDraft').addEventListener('click', function () {
-            var drafts = [];
-            try { drafts = JSON.parse(localStorage.getItem('vero_drafts')) || []; } catch (e) { drafts = []; }
-            drafts.unshift(buildListing('draft'));
-            try { localStorage.setItem('vero_drafts', JSON.stringify(drafts)); } catch (e) {}
-            try { localStorage.removeItem(KEY); } catch (e) {}
-            location.href = 'listing-done.html?state=draft';
-        });
+        // ---- Keep the listing: Publish → vero_listings, Save as draft → vero_drafts ----
+        // The listing is written and read back before the seller is told it worked.
+        // If the browser's storage is full: first drop the in-progress copy of this
+        // form (it holds the same photos a second time), then keep the extra photos
+        // smaller, and only as a last resort keep the cover alone. If even that does
+        // not fit, nothing is pretended: the seller is told and stays on this step.
+        function storeListing(listKey, item) {
+            var list = [];
+            try { list = JSON.parse(localStorage.getItem(listKey)) || []; } catch (e) { list = []; }
+            var tryWrite = function (it) {
+                try {
+                    localStorage.setItem(listKey, JSON.stringify([it].concat(list)));
+                    var back = JSON.parse(localStorage.getItem(listKey));
+                    return !!(back && back[0] && back[0].id === it.id);
+                } catch (e) { return false; }
+            };
+            var draftCopy = null;
+            if (tryWrite(item)) return Promise.resolve({ ok: true });
+            try { draftCopy = localStorage.getItem(KEY); localStorage.removeItem(KEY); } catch (e) {}
+            if (tryWrite(item)) return Promise.resolve({ ok: true });
+            var extras = Object.keys(item.photos || {}).filter(function (k) { return k !== 'cover' && item.photos[k]; });
+            return Promise.all(extras.map(function (k) { return shrinkPhoto(item.photos[k], 640, 0.68); })).then(function (small) {
+                var lighter = JSON.parse(JSON.stringify(item));
+                extras.forEach(function (k, i) { lighter.photos[k] = small[i]; });
+                if (tryWrite(lighter)) return { ok: true };
+                var coverOnly = JSON.parse(JSON.stringify(item));
+                coverOnly.photos = { cover: item.cover };
+                if (tryWrite(coverOnly)) return { ok: true, trimmed: true };
+                try { if (draftCopy) localStorage.setItem(KEY, draftCopy); } catch (e) {}
+                return { ok: false };
+            });
+        }
+        function keepListing(listKey, status, state, btn) {
+            btn.disabled = true;
+            storeListing(listKey, buildListing(status)).then(function (r) {
+                if (!r.ok) {
+                    btn.disabled = false;
+                    alert('There isn\u2019t enough space on this device to save this listing. Delete an older draft or listing and try again.');
+                    return;
+                }
+                try { localStorage.removeItem(KEY); } catch (e) {}
+                location.href = 'listing-done.html?state=' + state + (r.trimmed ? '&trimmed=1' : '');
+            });
+        }
+        document.getElementById('puPublish').addEventListener('click', function () { keepListing('vero_listings', 'active', 'live', this); });
+        document.getElementById('puDraft').addEventListener('click', function () { keepListing('vero_drafts', 'draft', 'draft', this); });
 
         render();
     })();

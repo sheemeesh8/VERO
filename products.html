@@ -511,8 +511,9 @@ h3, h4, h5, h6, p,
 
         // Best available image for a listing.
         function imgOf(p) {
-            return p.image || p.processed_cover || p.original_cover
-                || (Array.isArray(p.photos) ? p.photos.find(Boolean) : null) || null;
+            return p.image || p.processed_cover || p.original_cover || p.cover
+                || (Array.isArray(p.photos) ? p.photos.find(Boolean)
+                    : (p.photos && (p.photos.cover || p.photos.detail || p.photos.label || p.photos.angle))) || null;
         }
         // All distinct photos for a listing, for the in-card image slider.
         function imgsOf(p) {
@@ -668,13 +669,13 @@ h3, h4, h5, h6, p,
                         </div>
                         <div class="pc-right">
                             <div class="product-seller">${p.seller || p.brand || '—'}</div>
-                            <div class="product-name">${p.name || 'Untitled listing'}</div>
+                            <div class="product-name">${p.name || p.title || 'Untitled listing'}</div>
                             <div class="product-rating">${metaLine}</div>
                         </div>
                     </div>`;
             const cardEl = past
-                ? `<div class="product-card" title="${p.name || 'Untitled listing'}">${inner}</div>`
-                : `<a class="product-card" href="${editHref}"${EMBEDDED ? ' target="_parent"' : ''} title="${p.name || 'Untitled listing'}">${inner}</a>`;
+                ? `<div class="product-card" title="${p.name || p.title || 'Untitled listing'}">${inner}</div>`
+                : `<a class="product-card" href="${editHref}"${EMBEDDED ? ' target="_parent"' : ''} title="${p.name || p.title || 'Untitled listing'}">${inner}</a>`;
             // The discount and collection pickers sit under the card, not on its image.
             return `<div class="prod-cell ${past ? 'past' : ''}">${cardEl}${past ? '' : discountSelect(p, idx) + collectionSelect(p, idx)}</div>`;
         }
@@ -682,7 +683,7 @@ h3, h4, h5, h6, p,
         // ---- Draft card (inline preview, links into the drafts editor) ----
         function draftCard(d, i) {
             const src = imgOf(d);
-            const name = d.name || d.itemType || d.brand || 'Untitled draft';
+            const name = d.name || d.title || d.itemType || d.brand || 'Untitled draft';
             const draftsHref = isSeller ? 'drafts.html?from=seller' : 'drafts.html';
             const fig = src ? `<img src="${src}" alt="">` : (d.icon || '📝');
             // Same object as the feed card — clicking continues the draft.
