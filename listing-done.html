@@ -79,25 +79,35 @@
         <div class="ld-card anim d3" id="ldCard"></div>
         <div class="ld-actions anim d4">
             <a class="ld-btn ld-solid" id="ldPrimary" href="#"></a>
-            <a class="ld-btn ld-outline" href="upload-start.html">List another item</a>
+            <a class="ld-btn ld-outline" id="ldSecondary" href="upload-start.html">List another item</a>
         </div>
     </main>
 
     <script>
     (function () {
-        var draft = /[?&]state=draft\b/.test(location.search);
+        var state = (location.search.match(/[?&]state=(live|draft|deleted)\b/) || [])[1] || 'live';
+        var draft = state === 'draft', deleted = state === 'deleted';
 
-        // The item that was just saved: the newest entry in its list.
+        // The item that was just saved: the newest entry in its list. (A deleted one
+        // was never stored, so there is no card to show.)
         var item = null;
-        try { item = (JSON.parse(localStorage.getItem(draft ? 'vero_drafts' : 'vero_listings')) || [])[0] || null; } catch (e) {}
+        if (!deleted) try { item = (JSON.parse(localStorage.getItem(draft ? 'vero_drafts' : 'vero_listings')) || [])[0] || null; } catch (e) {}
 
         var MARKS = {
             // A tick inside a circle — live.
             live: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M17 27.5l7 7 13-14"/></svg>',
             // A folded page — kept as a draft.
-            draft: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M21 16h9l5 5v17H21z M30 16v5h5 M24.5 28h7 M24.5 32h5"/></svg>'
+            draft: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M21 16h9l5 5v17H21z M30 16v5h5 M24.5 28h7 M24.5 32h5"/></svg>',
+            // A bin — deleted.
+            deleted: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M18 20h18 M23.5 20v-2.5h7V20 M20.5 20l1.3 16h10.4l1.3-16 M25 24.5v7.5 M29 24.5v7.5"/></svg>'
         };
-        var COPY = draft ? {
+        var COPY = deleted ? {
+            eyebrow: 'Listing deleted',
+            title: 'Your listing was deleted',
+            text: 'Everything you entered for it — photos, details and price — has been removed. Nothing was published.',
+            primary: ['List another item', 'upload-start.html'],
+            secondary: ['Back to my store', 'seller-area.html']
+        } : draft ? {
             eyebrow: 'Saved to drafts',
             title: 'Saved as a draft',
             text: 'Your listing is waiting in your drafts. Pick it up whenever you’re ready and publish it in one tap.',
@@ -109,7 +119,7 @@
             primary: ['View my listings', 'products.html?from=seller']
         };
 
-        document.getElementById('ldMark').innerHTML = draft ? MARKS.draft : MARKS.live;
+        document.getElementById('ldMark').innerHTML = MARKS[state];
         document.getElementById('ldEyebrow').textContent = COPY.eyebrow;
         document.getElementById('ldTitle').textContent = COPY.title;
         document.getElementById('ldText').textContent = COPY.text +
@@ -117,6 +127,11 @@
         var primary = document.getElementById('ldPrimary');
         primary.textContent = COPY.primary[0];
         primary.href = COPY.primary[1];
+        if (COPY.secondary) {
+            var secondary = document.getElementById('ldSecondary');
+            secondary.textContent = COPY.secondary[0];
+            secondary.href = COPY.secondary[1];
+        }
         document.title = 'moravchick — ' + COPY.title;
 
         // The card buyers will see — the same feed card as everywhere else.

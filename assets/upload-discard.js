@@ -1,6 +1,7 @@
 /* ------------------------------------------------------------------
-   moravchick — in the list-an-item flow the header's arrow is an ✕ that
-   deletes the listing, after a confirmation sheet.
+   moravchick — in the list-an-item flow the header's arrow is an ✕. Leaving
+   asks what to do with what was entered: keep it as a draft (→ the "Saved as a
+   draft" page) or delete it (→ the "Listing deleted" page), or keep editing.
    (Styles in upload-flow.css.)
 ------------------------------------------------------------------ */
 (function () {
@@ -17,22 +18,27 @@
     sheet.hidden = true;
     sheet.innerHTML =
         '<div class="pu-confirm-box">' +
-            '<p class="pu-confirm-t" id="puConfirmT">Delete this listing?</p>' +
-            '<p class="pu-confirm-d">Everything you\'ve entered — photos, details and price — will be deleted. This can\'t be undone.</p>' +
-            '<button type="button" class="pu-confirm-yes">Delete listing</button>' +
-            '<button type="button" class="pu-confirm-no">Keep editing</button>' +
+            '<p class="pu-confirm-t" id="puConfirmT">Leave this listing?</p>' +
+            '<p class="pu-confirm-d">Save it as a draft to finish later, or delete everything you\'ve entered — photos, details and price.</p>' +
+            '<button type="button" class="pu-confirm-yes pu-confirm-save">Save as draft</button>' +
+            '<button type="button" class="pu-confirm-no pu-confirm-del">Delete listing</button>' +
+            '<button type="button" class="pu-confirm-keep">Keep editing</button>' +
         '</div>';
     document.body.appendChild(sheet);
-    function open() { sheet.hidden = false; requestAnimationFrame(function () { sheet.classList.add('on'); }); sheet.querySelector('.pu-confirm-no').focus(); }
+    function open() { sheet.hidden = false; requestAnimationFrame(function () { sheet.classList.add('on'); }); sheet.querySelector('.pu-confirm-keep').focus(); }
     function close() { sheet.classList.remove('on'); setTimeout(function () { sheet.hidden = true; }, 250); }
     sheet.addEventListener('click', function (e) { if (e.target === sheet) close(); });
-    sheet.querySelector('.pu-confirm-no').addEventListener('click', close);
+    sheet.querySelector('.pu-confirm-keep').addEventListener('click', close);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.hidden) close(); });
-    sheet.querySelector('.pu-confirm-yes').addEventListener('click', function () {
+    // Save as draft: the page's own save (window.veroSaveDraft, set by the upload
+    // page) — it writes the listing to the drafts and opens the "Saved as a draft" page.
+    sheet.querySelector('.pu-confirm-save').addEventListener('click', function () {
+        if (typeof window.veroSaveDraft === 'function') window.veroSaveDraft(this);
+    });
+    // Delete: drop everything entered and show the "Listing deleted" page.
+    sheet.querySelector('.pu-confirm-del').addEventListener('click', function () {
         try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
-        var seller = false;
-        try { seller = localStorage.getItem('vero_active_account') === 'seller'; } catch (e) {}
-        location.href = seller ? 'seller-area.html' : 'index.html';
+        location.href = 'listing-done.html?state=deleted';
     });
 
     // The trees film behind the last step: make sure it is actually playing
@@ -54,13 +60,12 @@
         kick();
     }
 
-    // The header's arrow becomes an ✕: leaving the flow deletes the listing,
-    // so it asks first.
+    // The header's arrow becomes an ✕: leaving the flow asks first.
     var hdr = document.querySelector('.page-header .ph-back');
     if (hdr) {
         hdr.innerHTML = X;
         hdr.classList.add('ph-x');
-        hdr.setAttribute('aria-label', 'Delete listing');
+        hdr.setAttribute('aria-label', 'Leave listing');
         hdr.addEventListener('click', function (e) {
             e.preventDefault(); e.stopImmediatePropagation();
             open();
