@@ -18,11 +18,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  # Two jobs, as in GitHub's own Pages template: the deploy step looks the
+  # uploaded site up through the API, and run in the same job straight after
+  # the upload it can look before GitHub has registered it ("No artifacts named
+  # github-pages were found"). Starting a second job gives it that time.
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,6 +33,14 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
