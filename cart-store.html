@@ -15,7 +15,7 @@
     <script src="pc-social.js?v=6"></script>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <!-- Page styles, shared by cart-store / cart / wishlist (single source: list-page.css). -->
-    <link rel="stylesheet" href="list-page.css?v=20261115a">
+    <link rel="stylesheet" href="list-page.css?v=20261122a">
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
@@ -396,17 +396,29 @@
             const d = new Date();
             const dateStr = ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + String(d.getFullYear()).slice(-2);
             const sheet = document.getElementById('coSheet');
-            sheet.innerHTML = '<div class="co-card">' +
+            // A long order shows its first five pieces, then "+ N more" opens the rest.
+            const SHOW = 5, n = items.reduce((s, it) => s + (it.qty || 1), 0);
+            const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            const line = (it, hide) => '<div class="co-rln"' + (hide ? ' hidden' : '') + '><span>' + esc(it.name || 'Item') + (it.seller ? '<small>' + esc(it.seller) + '</small>' : '') + '</span><span>' + money(priceNum(it.price) * (it.qty || 1)) + '</span></div>';
+            sheet.innerHTML =
+                '<button type="button" class="co-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
+                '<div class="co-card">' +
                 '<div class="co-tick"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></div>' +
                 '<div class="co-ptitle">Order placed</div>' +
-                '<div class="co-psub">moravchick \u00b7 ' + dateStr + '</div>' +
+                '<div class="co-psub">moravchick \u00b7 ' + dateStr + ' \u00b7 ' + n + (n === 1 ? ' piece' : ' pieces') + '</div>' +
                 '<div class="co-receipt">' +
-                    items.map(it => '<div class="co-rln"><span>' + (it.name || 'Item') + '</span><span>' + money(priceNum(it.price) * (it.qty || 1)) + '</span></div>').join('') +
+                    items.map((it, k) => line(it, k >= SHOW)).join('') +
+                    (items.length > SHOW ? '<button type="button" class="co-more">+ ' + (items.length - SHOW) + ' more \u2014 show all</button>' : '') +
                     '<div class="co-rln"><span>Shipping</span><span>Free</span></div>' +
                     '<div class="co-rln co-rt"><span>Total</span><span>' + money(total) + '</span></div>' +
                 '</div>' +
                 '<a class="co-go" href="chats.html">Go to chats &#8594;</a>' +
+                '<a class="co-shop" href="feed.html">Continue shopping</a>' +
             '</div>';
+            sheet.scrollTop = 0;
+            const more = sheet.querySelector('.co-more');
+            if (more) more.addEventListener('click', () => { sheet.querySelectorAll('.co-rln[hidden]').forEach(r => r.hidden = false); more.remove(); });
+            sheet.querySelector('.co-close').addEventListener('click', () => { sheet.classList.remove('show'); location.reload(); });
             requestAnimationFrame(() => sheet.classList.add('show'));
         }
         window.showOrderPlaced = showOrderPlaced;
