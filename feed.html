@@ -548,6 +548,9 @@
 
             <div class="hm-slot" data-slot="3"></div>   <!-- block 4 of the feed -->
 
+            <!-- A block of its own just before What's on: promoted pieces, then more pieces. -->
+            <div class="hm-pre-events" id="hmPreEvents"></div>
+
             <!-- What's on: the next two weeks of markets, fairs, meetups and pop-ups
                  (assets/events-data.js — the same events as the events page). Pick a
                  day to see what's on; each event opens the full calendar on that date. -->
@@ -1112,6 +1115,23 @@
                     block.appendChild(grid);
                 }
                 (slots[i] || host).appendChild(block);
+            }
+            // The block before What's on — always there: the six promoted pieces as a
+            // slider, then the next ten pieces (coming round again when they run out).
+            var pre = document.getElementById('hmPreEvents');
+            if (pre) {
+                pre.innerHTML = '';
+                var pb = document.createElement('div'); pb.className = 'hm-block';
+                var pp = promoted.slice(0, PROMO_PER_BLOCK);
+                if (pp.length) { var ps = promoRail(pp); pb.appendChild(ps); pb.appendChild(ps._dots); }
+                if (regular.length) {
+                    var start = (blocks * PIECES_PER_BLOCK) % regular.length, more = [];
+                    for (var m = 0; m < Math.min(PIECES_PER_BLOCK, regular.length); m++) more.push(regular[(start + m) % regular.length]);
+                    var pg = document.createElement('section'); pg.className = 'hm-four hm-block-grid'; pg.setAttribute('aria-label', 'More pieces');
+                    pg.innerHTML = more.map(card).join('');
+                    pb.appendChild(pg);
+                }
+                pre.appendChild(pb);
             }
             runPromoFacts(document.getElementById('feedStructured') || host);
         }
