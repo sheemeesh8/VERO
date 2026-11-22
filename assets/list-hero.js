@@ -34,7 +34,10 @@
         '<div class="lh-band"><p class="lh-rail-head">' + esc(C.rail) + '</p><div class="lh-rail" id="lhRail"></div></div>';
     wrap.parentNode.insertBefore(hero, wrap);
     document.documentElement.classList.add('has-lh');
-    // The page's search + filter row stays right under the hero (top of .wrap).
+    // As on the home page: the search + filter row right under the hero (top of
+    // .wrap), then the slider under it.
+    var band = hero.querySelector('.lh-band'), controls = wrap.querySelector('.list-controls');
+    if (controls && controls.nextSibling) wrap.insertBefore(band, controls.nextSibling); else wrap.insertBefore(band, wrap.firstChild);
     // The page header goes clear over the photo, solid once past it (page-header.js).
     var hdr = document.querySelector('.page-header');
     if (hdr) { hdr.classList.add('ph-overlay', 'ph-float'); hdr.setAttribute('data-hero', '#lhHero'); }
