@@ -405,7 +405,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261122v">
+    <link rel="stylesheet" href="assets/home.css?v=20261122x">
     <link rel="stylesheet" href="assets/lumina-hero.css?v=1">
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
@@ -979,7 +979,11 @@
                 });
             }, 2600);
         }
-        function promoSlide(p) {
+        // Layout D — Editor's pick: a numbered spread. The name large in Bodoni with
+        // the seller (rotating through the piece's facts), a line, the price and a
+        // link on the left; the seller's photos on the right; the cut-out on a white
+        // tile overlapping both. Without photos the cut-out fills the right side.
+        function promoSlide(p, i, all) {
             var d = VC.discountOf(p._raw), href = esc(hrefOf(p, d));
             var piece = p.cover ? '<img src="' + esc(p.cover) + '" alt="' + esc(p.name) + '" loading="lazy">'
                                 : '<span class="hm-promo-emoji" aria-hidden="true">' + esc(p.icon || '🛍️') + '</span>';
@@ -988,19 +992,20 @@
                 ? '<div class="hm-promo-shots">' + shots.map(function (src) { return '<a class="hm-promo-shot" href="' + href + '" tabindex="-1"><img src="' + esc(src) + '" alt="" loading="lazy"></a>'; }).join('') + '</div>' +
                   '<div class="hm-promo-bar" aria-hidden="true"><span style="width:' + (100 / shots.length) + '%"></span></div>'
                 : '<a class="hm-promo-shot hm-promo-shot--none" href="' + href + '" tabindex="-1">' + piece + '</a>';
-            var price = d.onSale ? '<s>' + num(d.original) + '₪</s> ' + num(d.price) + '₪' : num(VC.toNum(p.price)) + '₪';
-            return '<article class="hm-promo-slide">' +
-                '<div class="hm-promo-media">' +
-                    '<a class="hm-promo-piece" href="' + href + '" title="' + esc(p.name) + '">' + piece + '</a>' +
-                    '<div class="hm-promo-photos">' + photos + '</div>' +
-                '</div>' +
-                '<div class="hm-promo-info">' +
-                    '<div class="hm-promo-left">' +
-                        '<div class="hm-promo-name"><b>' + esc(p.name) + '</b><span class="hm-promo-rot" data-vals="' + esc(JSON.stringify(promoFacts(p))) + '">' + esc(p.seller) + '</span></div>' +
-                        '<div class="hm-promo-price">' + price + '</div>' +
-                        '<a class="hm-promo-more" href="' + href + '">Discover more</a>' +
+            var price = d.onSale ? '<s>' + num(d.original) + '₪</s> <b>' + num(d.price) + '₪</b>' : num(VC.toNum(p.price)) + '₪';
+            var n = (all && all.length) || 1, pad = function (k) { return (k < 10 ? '0' : '') + k; };
+            return '<article class="hm-promo-slide hm-ep">' +
+                '<div class="hm-ep-head"><span class="hm-ep-k">Editor’s pick</span><span class="hm-ep-n">' + pad((i || 0) + 1) + ' / ' + pad(n) + '</span></div>' +
+                '<div class="hm-ep-body">' +
+                    '<div class="hm-ep-text">' +
+                        '<a class="hm-ep-name" href="' + href + '">' + esc(p.name) + '</a>' +
+                        '<span class="hm-promo-rot hm-ep-by" data-vals="' + esc(JSON.stringify(promoFacts(p))) + '">' + esc(p.seller) + '</span>' +
+                        (p.description ? '<p class="hm-ep-desc">' + esc(p.description) + '</p>' : '') +
+                        '<div class="hm-ep-price">' + price + '</div>' +
+                        '<a class="hm-ep-more" href="' + href + '">See the piece <span aria-hidden="true">&rarr;</span></a>' +
                     '</div>' +
-                    (p.description ? '<p class="hm-promo-desc">' + esc(p.description) + '</p>' : '') +
+                    '<div class="hm-promo-photos hm-ep-photo' + (shots.length ? '' : ' is-piece') + '">' + photos + '</div>' +
+                    (shots.length ? '<a class="hm-ep-tile" href="' + href + '" tabindex="-1" aria-hidden="true">' + piece + '</a>' : '') +
                 '</div></article>';
         }
         // One promoted slider: its slides, the photo sliders' marks, and the marks under it.
