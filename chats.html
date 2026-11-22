@@ -599,7 +599,7 @@ h3, h4, h5, h6, p,
         /* ===== Conversation: photo first (design 6). The piece fills the top; the chat
                  is a white sheet that rides up over it. ===== */
         .chat-panel { background: #000; }
-        .cp-cover { position: relative; flex: 0 0 auto; height: min(42vh, 340px); overflow: hidden; color: #fff; }
+        .cp-cover { position: absolute; left: 0; right: 0; top: 0; height: min(46vh, 360px); overflow: hidden; color: #fff; }
         .cpc-img { position: absolute; inset: 0; }
         .cpc-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .cp-cover::after { content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -624,9 +624,20 @@ h3, h4, h5, h6, p,
         .cpc-pr { flex: none; text-align: right; }
         .cpc-pr b { display: block; font: 600 22px 'Poppins', sans-serif; }
         .cpc-pr s { font: 400 12px 'Poppins', sans-serif; opacity: 0.7; }
-        .cp-sheetbox { position: relative; z-index: 3; flex: 1; min-height: 0; margin-top: -26px; display: flex; flex-direction: column;
-            background: #fff; border-radius: 24px 24px 0 0; overflow: hidden; }
-        .cp-grip { flex: none; width: 38px; height: 4px; border-radius: 2px; background: #ddd8ce; margin: 10px auto 2px; }
+        /* The sheet opens full screen; drag its line down to see the piece behind it. */
+        .cp-sheetbox { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; top: 0; display: flex; flex-direction: column;
+            background: #fff; border-radius: 0; overflow: hidden; box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+            transition: top 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.4s ease; }
+        .cp-sheetbox.is-drag { transition: none; }
+        .cp-sheetbox.is-peek { top: calc(min(46vh, 360px) - 26px); border-radius: 24px 24px 0 0; }
+        .cp-grip { flex: none; display: block; width: 100%; height: 22px; border: 0; padding: 0; background: none; cursor: grab; touch-action: none;
+            margin-top: max(env(safe-area-inset-top, 0px), 24px); transition: margin-top 0.4s ease; }
+        .cp-grip::before { content: ''; display: block; width: 38px; height: 4px; border-radius: 2px; background: #cfc9bd; margin: 9px auto; }
+        .cp-sheetbox.is-peek .cp-grip { margin-top: 0; }
+        .cp-sheetbox .cp-head { touch-action: none; }
+        .cp-back2 { flex: none; width: 30px; height: 34px; margin-right: -4px; border: 0; background: none; color: #16150f; cursor: pointer; display: grid; place-items: center; }
+        .cp-back2 svg { width: 22px; height: 22px; }
+        .cp-sheetbox .cp-whobox { flex: 1; }
         .cp-sheetbox .cp-head { padding: 6px 18px 10px; background: #fff; border-bottom: 1px solid #f0ede7; gap: 10px; }
         .cp-sheetbox .cp-avatar { width: 34px; height: 34px; border: 0; background: #ece7dc; color: #4a4336; font: 600 11px 'Raleway', sans-serif; }
         .cp-sheetbox .cp-name { font: 600 13px 'Raleway', sans-serif; cursor: default; }
@@ -799,8 +810,9 @@ h3, h4, h5, h6, p,
         </div>
         <!-- The chat rides up over the photo as a sheet. -->
         <div class="cp-sheetbox">
-        <div class="cp-grip" aria-hidden="true"></div>
+        <button class="cp-grip" id="cpGrip" type="button" aria-label="Show the piece"></button>
         <header class="cp-head">
+            <button class="cp-back2" id="cpBack2" type="button" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"></polyline></svg></button>
             <div class="cp-whobox">
                 <div class="cp-avatar" id="cpAvatar">💬</div>
                 <div class="cp-who">
@@ -1414,8 +1426,51 @@ h3, h4, h5, h6, p,
             closeSheet();
             renderFeed();
             panel.classList.add('open');
+            sheetBox.classList.remove('is-peek'); sheetBox.style.top = '';   // opens full screen
             notifyParent('vero-chat-open');   // hide the profile nav bars while in a chat
         }
+
+        // ---- The sheet: full screen at first; drag the line (or the name row) down
+        // to see the piece behind it, up to cover it again. A tap on the line toggles.
+        const sheetBox = document.querySelector('.cp-sheetbox');
+        document.getElementById('cpBack2').addEventListener('click', () => closeChat());
+        (function sheetDrag() {
+            const grip = document.getElementById('cpGrip'), head = sheetBox.querySelector('.cp-head');
+            let y0 = 0, top0 = 0, moved = 0, dragging = false;
+            const peekTop = () => document.getElementById('cpCover').getBoundingClientRect().height - 26;
+            function down(e) {
+                if (e.button !== 0 || e.target.closest('button:not(#cpGrip), a, .cp-avatar')) return;
+                dragging = true; moved = 0; y0 = e.clientY; top0 = sheetBox.offsetTop;
+                sheetBox.classList.add('is-drag');
+                try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+            }
+            function move(e) {
+                if (!dragging) return;
+                const dy = e.clientY - y0; moved = Math.max(moved, Math.abs(dy));
+                const max = peekTop() + 60;
+                let t = Math.max(0, Math.min(max, top0 + dy));
+                sheetBox.style.top = t + 'px';
+                sheetBox.style.borderRadius = Math.min(24, t / 4) + 'px ' + Math.min(24, t / 4) + 'px 0 0';
+            }
+            function up() {
+                if (!dragging) return;
+                dragging = false;
+                sheetBox.classList.remove('is-drag');
+                const t = sheetBox.offsetTop, wasPeek = sheetBox.classList.contains('is-peek');
+                sheetBox.style.top = ''; sheetBox.style.borderRadius = '';
+                let peek;
+                if (moved < 6) peek = !wasPeek;                       // a tap toggles
+                else peek = wasPeek ? t > peekTop() - 70 : t > 70;    // a short pull snaps back
+                sheetBox.classList.toggle('is-peek', peek);
+                grip.setAttribute('aria-label', peek ? 'Cover the piece' : 'Show the piece');
+            }
+            [grip, head].forEach(el => {
+                el.addEventListener('pointerdown', down);
+                el.addEventListener('pointermove', move);
+                el.addEventListener('pointerup', up);
+                el.addEventListener('pointercancel', up);
+            });
+        })();
 
         function closeChat() {
             panel.classList.remove('open'); openSeller = null;
