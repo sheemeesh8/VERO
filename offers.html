@@ -175,7 +175,7 @@
   .ng-btn:first-child { flex: 1.6; }
   .ng-btn.dk { background: #111; color: #fff; }
   .ng-btn:disabled { opacity: 0.35; cursor: default; }
-  .ng-st { margin-top: 14px; font-family: 'Raleway', sans-serif; font-weight: 500; font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; color: #6b665c; }
+  .ng-st { margin-top: 10px; font-family: 'Raleway', sans-serif; font-weight: 500; font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; color: #6b665c; }
   .ng-st.accepted { color: #2f6b3a; }
 </style>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
@@ -314,11 +314,14 @@
           var pct = ask ? (bid - ask) / ask * 100 : 0;
           var pctTxt = ask && bid && Math.abs(pct) >= 0.01 ? (pct > 0 ? '+' : '') + pct.toFixed(2) + '%' : '';
           var pic = n.item.cover ? '<img src="' + esc(n.item.cover) + '" alt="">' : '<span class="ng-ic">' + esc(n.item.icon || '🛍️') + '</span>';
-          var acts;
-          if (st.open && mine) acts = '<div class="ng-acts"><button type="button" class="ng-btn" data-go="counter"' + (st.canCounter ? '' : ' disabled') + '>Negotiate</button>' +
-                                      '<button type="button" class="ng-btn dk" data-go="accept">Accept</button></div>';
-          else if (st.open) acts = '<div class="ng-st">Waiting for ' + them() + ' · ' + left(st.msLeft) + '</div>';
-          else acts = '<div class="ng-st ' + n.status + '">' + ({ accepted: 'Agreed ' + nis(n.agreed), declined: 'Declined', withdrawn: 'Withdrawn', expired: 'Expired' }[n.status] || n.status) + '</div>';
+          // Counter + Accept under every piece; they work on your move, and are faded
+          // (with where it stands under them) when the other side has the turn or it is closed.
+          var can = st.open && mine;
+          var acts = '<div class="ng-acts"><button type="button" class="ng-btn" data-go="counter"' + (can && st.canCounter ? '' : ' disabled') + '>Counter</button>' +
+                     '<button type="button" class="ng-btn dk" data-go="accept"' + (can ? '' : ' disabled') + '>Accept</button></div>';
+          if (!can) acts += st.open
+            ? '<div class="ng-st">Waiting for ' + them() + ' · ' + left(st.msLeft) + '</div>'
+            : '<div class="ng-st ' + n.status + '">' + ({ accepted: 'Agreed ' + nis(n.agreed), declined: 'Declined', withdrawn: 'Withdrawn', expired: 'Expired' }[n.status] || n.status) + '</div>';
           return '<article class="card ng' + (mine ? ' mine' : '') + '" data-id="' + n.id + '">' +
             '<div class="ng-pic">' + pic + '</div>' +
             '<div class="ng-r1"><span class="ng-name">' + esc(n.item.name) + '</span><span class="ng-ask">' + (ask ? nis(ask) : '') + '</span></div>' +
@@ -336,6 +339,7 @@
     $('list').addEventListener('click', function (e) {
       var card = e.target.closest('.card'); if (!card) return;
       var id = card.getAttribute('data-id'), go = e.target.closest('[data-go]');
+      if (go && go.disabled) return;
       if (go && go.getAttribute('data-go') === 'accept') { move(id, 'accept'); return; }
       openRoom(id, !!go);
     });
