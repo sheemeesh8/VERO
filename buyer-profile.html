@@ -1021,6 +1021,13 @@ h3, h4, h5, h6, p,
         <a class="sf-draftbar" id="sfDraftBar" href="store-editor.html" hidden>Draft preview · Back to the builder</a>
         <div id="sfSections" hidden></div>
 
+        <!-- PROMOTED — the pieces the member pushed (listing.promoted / pushed /
+             boosted), as a swipeable rail of product cards above the feed. -->
+        <section class="pfx-promo" id="pfxPromo" hidden>
+            <div class="pfx-promo-head"><span>Promoted</span><span class="pfx-promo-n" id="pfxPromoN"></span></div>
+            <div class="feat-slider pfx-promo-rail" id="pfxPromoRail"></div>
+        </section>
+
         <!-- FEED — just the products the buyer has uploaded. No categories or
              audiences; a promo banner drops in every five items if one is set. -->
         <div class="feed-head" id="feedHead">
@@ -1387,6 +1394,14 @@ h3, h4, h5, h6, p,
                 document.getElementById('feedHead').style.display = 'none';
                 return;
             }
+            // Promoted rail: the pushed pieces, newest push first as listed.
+            const promo = filtered.filter(p => p.promoted);
+            const promoHost = document.getElementById('pfxPromo');
+            if (promoHost) {
+                document.getElementById('pfxPromoRail').innerHTML = promo.map(card).join('');
+                document.getElementById('pfxPromoN').textContent = promo.length;
+                promoHost.hidden = !promo.length;
+            }
             const wantsBanner = BUYER.banner && BUYER.banner.enabled;
             let html = '';
             filtered.forEach((p, i) => {
@@ -1636,6 +1651,19 @@ h3, h4, h5, h6, p,
     #feedHead:not(#zz) { display: none !important; }
     #feed.feed:not(#zz) { max-width: 720px; margin: 0 auto; padding: 14px 6px 110px; gap: 24px 6px; }
     @media (min-width: 701px) { #feed.feed:not(#zz) { grid-template-columns: repeat(3, 1fr); } }
+    /* Promoted rail — swipeable, cards a touch narrower than half so the next one peeks. */
+    .pfx-promo:not(#zz) { max-width: 720px; margin: 0 auto; padding: 18px 0 18px; border-bottom: 1px solid #e2e2df; }
+    .pfx-promo[hidden] { display: none !important; }
+    .pfx-promo-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 22px 12px; }
+    .pfx-promo-head span:first-child { font-size: 15px; font-weight: 700; color: #111; }
+    .pfx-promo-n { font-size: 12.5px; color: #8a8a87; }
+    .pfx-promo-rail:not(#zz) {
+        gap: 8px; padding: 0 22px 4px; scroll-snap-type: x mandatory; scroll-padding: 0 22px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .pfx-promo-rail .product-card:not(#zz) { flex: none; width: 44%; scroll-snap-align: start; }
+    @media (min-width: 701px) { .pfx-promo-rail .product-card:not(#zz) { width: calc((100% - 16px) / 3.3); } }
+    body.pfx-on-events .pfx-promo { display: none !important; }
     /* The search popup stays a floating pill, hidden until the search button opens it. */
     #searchPop:not(.open):not(#zz) { display: none !important; }
     #searchPop.open:not(#zz) { position: fixed !important; top: auto !important; bottom: 28px; right: 28px; }
