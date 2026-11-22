@@ -405,7 +405,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261122s">
+    <link rel="stylesheet" href="assets/home.css?v=20261122t">
     <link rel="stylesheet" href="assets/lumina-hero.css?v=1">
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
@@ -476,6 +476,8 @@
             <!-- Under the hero: the current collection, two pieces to a slide. -->
             <section class="hm-rail" id="hmHeroRail" aria-label="The current collection"></section>
 
+            <div class="hm-slot" data-slot="0"></div>   <!-- block 1 of the feed -->
+
             <!-- Category deck: Women, Men, Unisex, Kids as a stack of cards, the chosen one in front. -->
             <section class="hm-cats" id="hmCats" aria-label="Shop by category"></section>
 
@@ -483,6 +485,8 @@
             <section class="hm-rail" id="hmGenderRail" aria-label="Pieces in this category"></section>
 
             <section class="hm-four" id="hmFour" aria-label="More to browse"></section>
+
+            <div class="hm-slot" data-slot="1"></div>   <!-- block 2 of the feed -->
 
             <figure class="hm-sale-pic" id="hmSalePic"><img src="sale-hero.jpg" alt="" loading="lazy"></figure>
             <section class="hm-sale" aria-labelledby="hmSaleTitle">
@@ -528,9 +532,13 @@
                 </div>
             </section>
 
+            <div class="hm-slot" data-slot="2"></div>   <!-- block 3 of the feed -->
+
 
             <!-- The latest pieces, as a slider (no heading). -->
             <section class="hm-rail" id="hmNewRail" aria-label="Newest pieces"></section>
+
+            <div class="hm-slot" data-slot="3"></div>   <!-- block 4 of the feed -->
 
             <!-- What's on: the next two weeks of markets, fairs, meetups and pop-ups
                  (assets/events-data.js — the same events as the events page). Pick a
@@ -544,6 +552,8 @@
                      runs off the page's left edge, unbounded top and bottom. -->
                 <div class="hm-wo-wheel" id="hmWoWheel"></div>
             </section>
+
+            <div class="hm-slot" data-slot="4"></div>   <!-- block 5 of the feed -->
 
             <!-- The feed carries on in blocks: a slider of five promoted pieces
                  (the cut-out on the card ground beside the piece's own photos),
@@ -1023,16 +1033,22 @@
         // A block = a slider of five promoted pieces, then ten regular pieces in
         // the grid. Blocks repeat until the regular pieces run out; when there are
         // fewer promoted pieces than the blocks need, they come round again.
+        // Each home section is followed by a block: block 1 goes in the first
+        // .hm-slot (after the slider under the hero), block 2 after the category
+        // deck, then after Sales, the newest pieces and What's on; any blocks
+        // left over carry on at the end (#hmBlocks).
         var PROMO_PER_BLOCK = 5, PIECES_PER_BLOCK = 10;
         function buildBlocks() {
             var host = document.getElementById('hmBlocks'); if (!host) return;
             clearInterval(promoTimer);
             host.innerHTML = '';
+            var slots = [].slice.call(document.querySelectorAll('#feedStructured .hm-slot'));
+            slots.forEach(function (sl) { sl.innerHTML = ''; });
             var all = modeList();
             var promoted = all.filter(function (p) { return p.promoted; });
             var regular = all.filter(function (p) { return !p.promoted; });
             var blocks = Math.ceil(regular.length / PIECES_PER_BLOCK) || (promoted.length ? 1 : 0);
-            host.hidden = !blocks;
+            host.hidden = blocks <= slots.length;
             for (var i = 0; i < blocks; i++) {
                 var block = document.createElement('div'); block.className = 'hm-block';
                 var promo = [];
@@ -1044,9 +1060,9 @@
                     grid.innerHTML = pieces.map(card).join('');
                     block.appendChild(grid);
                 }
-                host.appendChild(block);
+                (slots[i] || host).appendChild(block);
             }
-            runPromoFacts(host);
+            runPromoFacts(document.getElementById('feedStructured') || host);
         }
 
         function buildAll() { buildHero(); buildCats(); buildPieces(); buildSale(); buildBlocks(); syncSubnav(); playCurrent(); }
