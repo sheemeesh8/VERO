@@ -564,6 +564,9 @@
                 <div class="hm-wo-wheel" id="hmWoWheel"></div>
             </section>
 
+            <!-- And another block of its own right under What's on. -->
+            <div class="hm-pre-events" id="hmPostEvents"></div>
+
             <div class="hm-slot" data-slot="4"></div>   <!-- block 5 of the feed -->
 
             <!-- The feed carries on in blocks: a slider of six promoted pieces
@@ -1118,21 +1121,24 @@
             }
             // The block before What's on — always there: the six promoted pieces as a
             // slider, then the next ten pieces (coming round again when they run out).
-            var pre = document.getElementById('hmPreEvents');
-            if (pre) {
+            // The same again right under What's on, carrying on from where that one stopped.
+            [['hmPreEvents', 0], ['hmPostEvents', 1]].forEach(function (fx) {
+                var pre = document.getElementById(fx[0]);
+                if (!pre) return;
                 pre.innerHTML = '';
                 var pb = document.createElement('div'); pb.className = 'hm-block';
-                var pp = promoted.slice(0, PROMO_PER_BLOCK);
+                var pp = [];
+                for (var q = 0; q < Math.min(PROMO_PER_BLOCK, promoted.length); q++) pp.push(promoted[(fx[1] * PROMO_PER_BLOCK + q) % promoted.length]);
                 if (pp.length) { var ps = promoRail(pp); pb.appendChild(ps); pb.appendChild(ps._dots); }
                 if (regular.length) {
-                    var start = (blocks * PIECES_PER_BLOCK) % regular.length, more = [];
+                    var start = ((blocks + fx[1]) * PIECES_PER_BLOCK) % regular.length, more = [];
                     for (var m = 0; m < Math.min(PIECES_PER_BLOCK, regular.length); m++) more.push(regular[(start + m) % regular.length]);
                     var pg = document.createElement('section'); pg.className = 'hm-four hm-block-grid'; pg.setAttribute('aria-label', 'More pieces');
                     pg.innerHTML = more.map(card).join('');
                     pb.appendChild(pg);
                 }
                 pre.appendChild(pb);
-            }
+            });
             runPromoFacts(document.getElementById('feedStructured') || host);
         }
 
