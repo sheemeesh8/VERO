@@ -17,7 +17,8 @@
        a wheel, its crown at the centre, reaching down to the left and right
        edges. Items stay upright (no rotation) so numbers read straight; you drag
        sideways, and the page still scrolls up and down over it. apexPx is then
-       the crown's distance from the top.
+       the crown's distance from the top. arc: 'up' turns the curve over — the
+       chosen item lowest, the sides rising (the bottom of a wheel).
 
      var wheel = VeroWheelCarousel(el, {
        items: [...],                       // anything; render() draws each
@@ -53,6 +54,7 @@
         var o = {
             loop: opts.loop !== false,
             horizontal: opts.orientation === 'horizontal',
+            arcUp: opts.arc === 'up',
             radius: opts.radius != null ? opts.radius : 320,
             spacing: opts.spacing != null ? opts.spacing : 14,
             visibleItems: opts.visibleItems != null ? opts.visibleItems : 7,
@@ -118,7 +120,7 @@
                 el.style.opacity = Math.cos(dist * Math.PI / 2).toFixed(3);
                 if (o.horizontal) {
                     // Crown of the wheel: x along the arc, dropping toward the sides; upright.
-                    var hx = o.radius * Math.sin(rad), hy = o.radius * (1 - Math.cos(rad));
+                    var hx = o.radius * Math.sin(rad), hy = (o.arcUp ? -1 : 1) * o.radius * (1 - Math.cos(rad));
                     el.style.transform = 'translate(' + hx.toFixed(2) + 'px,' + hy.toFixed(2) + 'px) translateX(-50%) scale(' + scale.toFixed(3) + ')';
                 } else {
                     var x = -o.radius * (1 - Math.cos(rad)), y = o.radius * Math.sin(rad);
