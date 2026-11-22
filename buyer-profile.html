@@ -805,8 +805,8 @@
     <link rel="stylesheet" href="product-card.css?v=11">
     <script src="pc-social.js?v=6"></script>
     <link rel="stylesheet" href="store-templates.css">
-    <link rel="stylesheet" href="store-sections.css?v=1">
-    <script src="store-sections.js?v=1"></script>
+    <link rel="stylesheet" href="store-sections.css?v=2">
+    <script src="store-sections.js?v=2"></script>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
     <!-- Apply the seller's chosen storefront template as early as possible to
          avoid a flash of the default look. -->
@@ -1313,7 +1313,7 @@ h3, h4, h5, h6, p,
             if (!host || !window.VeroStore) return false;
             let cfg = {}; try { cfg = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
             const draft = /[?&]draft=1/.test(location.search);
-            const list = draft && Array.isArray(cfg.sectionsDraft) ? cfg.sectionsDraft : cfg.sections;
+            const list = draft && Array.isArray(cfg.sectionsDraft) ? cfg.sectionsDraft : currentSections(cfg);
             if (draft) {
                 const bar = document.getElementById('sfDraftBar');
                 bar.hidden = false;
@@ -1322,9 +1322,27 @@ h3, h4, h5, h6, p,
             }
             if (!Array.isArray(list) || !list.length) { host.hidden = true; return false; }
             host.hidden = false;
-            VeroStore.render(host, list, { products: filtered, card });
+            VeroStore.render(host, list, { products: filtered, card, storeName: BUYER.name });
             return list.some(s => s && !s.hidden && s.type === 'products');
         }
+        // Every store is its own website: until the seller publishes a design of
+        // their own, it opens with a starter site (menu, hero slider, highlights,
+        // products, a banner, the story and a footer) that they edit in place.
+        let starterSections = null;
+        function currentSections(cfg) {
+            cfg = cfg || (function () { try { return JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { return {}; } })();
+            if (Array.isArray(cfg.sections)) return cfg.sections;
+            if (!starterSections && window.VeroStore) starterSections = VeroStore.starter({ storeName: BUYER.name, cols: cfg.grid });
+            return starterSections || [];
+        }
+        // Hook for the in-place store editor (store-live-edit.js).
+        window.VeroStorefront = {
+            products: () => PRODUCTS.filter(p => searchTerm === '' || p.name.toLowerCase().includes(searchTerm)),
+            card: p => card(p),
+            storeName: () => BUYER.name,
+            currentSections: () => currentSections(),
+            rerender: () => renderFeed()
+        };
         function renderFeed() {
             const filtered = PRODUCTS.filter(p =>
                 searchTerm === '' || p.name.toLowerCase().includes(searchTerm));
@@ -1442,6 +1460,9 @@ h3, h4, h5, h6, p,
     </script>
 
     <!-- Manual edit mode (✎ button bottom-left, or Ctrl+Shift+E) with Copy CSS — same editor as the rest of the site. -->
+    <!-- Edit the store in place: "Edit store" button / ?edit=1 (store-live-edit.js). -->
+    <link rel="stylesheet" href="store-live-edit.css?v=1">
+    <script src="store-live-edit.js?v=1"></script>
     <script src="vero-editor.js"></script>
     <script src="assets/didone-hairline.js"></script>
     <script src="nav-icons.js" defer></script>

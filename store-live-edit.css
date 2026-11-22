@@ -1,0 +1,233 @@
+/* ============================================================================
+   store-live-edit.css — chrome for editing the store in place
+   (store-live-edit.js). Everything here is scoped to .le-* classes or to
+   html.le-on, so the store looks untouched until the seller hits "Edit store".
+   ========================================================================== */
+:root { --le-blue: #2f6bff; --le-ink: #16181d; --le-line: #e6e6e3; --le-soft: #f5f5f3; }
+
+.le-ui, .le-ui * { box-sizing: border-box; font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }
+.le-ui svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.le-ui button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.le-ui button:disabled { opacity: 0.35; cursor: default; }
+
+/* ---- "Edit store" entry button ---- */
+.le-fab {
+    position: fixed; left: 50%; bottom: 26px; z-index: 70; transform: translateX(-50%);
+    display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px;
+    border: 0; border-radius: 999px; background: var(--le-blue); color: #fff;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.3px;
+    box-shadow: 0 10px 28px rgba(47, 107, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s;
+}
+.le-fab:hover { transform: translateX(-50%) scale(1.04); }
+html.le-on .le-fab, html.le-on .search-fab, html.le-on .search-pop, html.le-on #vero-ed-toggle { display: none !important; }
+
+/* ---- Top bar ---- */
+.le-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9000; height: 52px;
+    display: flex; align-items: center; gap: 4px; padding: 0 8px;
+    background: rgba(255, 255, 255, 0.96); color: var(--le-ink);
+    border-bottom: 1px solid var(--le-line); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.le-bar-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; padding: 0 4px; }
+.le-bar-mid b { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.le-bar-mid span { font-size: 9.5px; color: #2e8b57; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.le-bar-mid span.is-draft { color: #c77700; }
+.le-ib { width: 34px; height: 34px; border: 0; border-radius: 10px; background: none; display: grid; place-items: center; flex: none; }
+.le-ib:hover:not(:disabled) { background: var(--le-soft); }
+.le-ib svg { width: 18px; height: 18px; }
+.le-pub {
+    border: 0; border-radius: 999px; background: var(--le-blue); color: #fff !important; flex: none;
+    padding: 9px 14px; font-size: 11px !important; font-weight: 600; margin-left: 2px;
+}
+html.le-on body { padding-top: 52px; }
+html.le-on .pf-topbar { display: none; }
+html.le-on .ss-nav.ss-sticky { top: 52px; }
+
+/* ---- Preview mode ---- */
+html.le-preview .le-bar { display: none; }
+html.le-preview body { padding-top: 0; }
+html.le-preview .ss-nav.ss-sticky { top: 0; }
+.le-back {
+    position: fixed; left: 50%; bottom: 26px; z-index: 9000; transform: translateX(-50%);
+    display: none; align-items: center; gap: 8px; padding: 12px 20px; border: 0; border-radius: 999px;
+    background: var(--le-ink); color: #fff; font-size: 12px; font-weight: 600; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+}
+html.le-preview .le-back { display: inline-flex; }
+
+/* ---- Sections while editing ---- */
+.ss-editing .le-sec { outline: 1px dashed rgba(47, 107, 255, 0.35); outline-offset: -1px; cursor: pointer; }
+.ss-editing .le-sec.le-sel { outline: 2px solid var(--le-blue); outline-offset: -2px; z-index: 3; }
+.ss-editing .ss-is-hidden { opacity: 0.38; }
+.ss-editing .ss-is-hidden.le-sel { opacity: 0.7; }
+.ss-editing .ss-nav.le-sec { z-index: 21; }
+
+.le-tools {
+    position: absolute; top: 8px; right: 8px; z-index: 30;
+    display: none; align-items: center; gap: 2px; padding: 3px;
+    background: #fff; color: var(--le-ink); border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+}
+.le-sel > .le-tools { display: flex; }
+.le-tag {
+    position: absolute; right: calc(100% + 6px); top: 50%; transform: translateY(-50%);
+    padding: 4px 8px; border-radius: 6px; background: var(--le-blue); color: #fff;
+    font-size: 9.5px; font-weight: 600; white-space: nowrap; letter-spacing: 0.3px;
+}
+.le-t { width: 30px; height: 30px; border: 0; border-radius: 9px; background: none; display: grid; place-items: center; }
+.le-t:hover:not(:disabled) { background: var(--le-soft); }
+.le-t-del { color: #d33; }
+/* Sections that don't clip: the toolbar straddles the top edge so it never covers the headline. */
+.ss-editing .ss-pad > .le-tools { top: -17px; }
+/* Short sections: the toolbar would cover them, so it sits just below instead. */
+.ss-editing .ss-nav > .le-tools, .ss-editing .ss-marquee > .le-tools, .ss-editing .ss-spacer > .le-tools { top: calc(100% + 4px); }
+.ss-editing .ss-marquee, .ss-editing .ss-spacer { overflow: visible; }
+
+/* ---- Insert buttons between sections ---- */
+.le-ins { position: relative; height: 0; z-index: 31; display: flex; justify-content: flex-start; }
+.le-ins button {
+    position: absolute; top: -13px; left: 12px; width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid #fff; background: var(--le-blue); color: #fff; display: grid; place-items: center;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25); opacity: 0.9; transition: transform 0.15s;
+}
+.le-ins button:hover { transform: scale(1.12); opacity: 1; }
+.le-ins button svg { width: 14px; height: 14px; stroke-width: 2.4; }
+.le-ins-big { height: auto; padding: 22px 14px 110px; }
+.le-ins-big button {
+    position: static; width: 100%; height: auto; border-radius: 14px; padding: 16px;
+    border: 2px dashed rgba(47, 107, 255, 0.5); background: rgba(47, 107, 255, 0.06); color: var(--le-blue);
+    display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: none;
+    font-size: 12px; font-weight: 600;
+}
+.le-ins-big button:hover { transform: none; background: rgba(47, 107, 255, 0.12); }
+
+/* ---- Editable texts ---- */
+.ss-editing .le-txt, .le-bio {
+    cursor: text; outline: none; border-radius: 4px; min-width: 2em;
+    transition: box-shadow 0.15s, background 0.15s; -webkit-user-select: text; user-select: text;
+}
+.ss-editing .le-txt:hover, .le-bio:hover { box-shadow: 0 0 0 1px rgba(47, 107, 255, 0.6); }
+.ss-editing .le-txt:focus, .le-bio:focus { box-shadow: 0 0 0 2px var(--le-blue); background: rgba(47, 107, 255, 0.08); }
+.ss-editing .ss-ph { opacity: 0.55; }
+.ss-editing .ss-ph::before, .le-bio:empty::before { content: attr(data-ph); font-style: italic; pointer-events: none; }
+.ss-editing .ss-cta.ss-ph { background: transparent; border: 1px dashed currentColor; color: inherit; }
+.ss-editing .ss-copy { pointer-events: none; }
+.ss-editing .ss-copy > * { pointer-events: auto; }
+.le-bio { display: block; min-height: 1.4em; }
+
+/* ---- Picture chips ---- */
+.le-img {
+    position: absolute; right: 8px; bottom: 8px; z-index: 6;
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px;
+    border: 0; border-radius: 999px; background: rgba(0, 0, 0, 0.62); color: #fff;
+    font-size: 10px; font-weight: 600; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.le-img:hover { background: rgba(0, 0, 0, 0.8); }
+.le-img svg { width: 14px; height: 14px; }
+.ss-slider .le-img { bottom: 28px; }
+.ss-cell .le-img { right: 6px; bottom: 6px; padding: 6px; }
+.ss-cell .le-img span { display: none; }
+.le-cover { top: 64px; bottom: auto; right: 12px; z-index: 50; }
+
+/* ---- Slider bar ---- */
+.le-slidebar {
+    position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 29;
+    display: none; align-items: center; gap: 2px; padding: 3px; border-radius: 12px;
+    background: rgba(0, 0, 0, 0.7); color: #fff; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.le-sel > .le-slidebar { display: flex; top: 48px; }
+.le-slidebar button { border: 0; background: none; color: #fff; display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: 9px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.le-slidebar button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.15); }
+.le-slidebar svg { width: 14px; height: 14px; }
+
+/* ---- Bottom sheet ---- */
+.le-scrim { position: fixed; inset: 0; z-index: 9100; background: rgba(0, 0, 0, 0.25); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.le-scrim.open { opacity: 1; pointer-events: auto; }
+.le-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 9200; max-height: 74vh; overflow-y: auto;
+    padding: 10px 16px calc(22px + env(safe-area-inset-bottom)); background: #fff; color: var(--le-ink);
+    border-radius: 20px 20px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+    transform: translateY(105%); transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    font-size: 11.5px; line-height: 1.45; overscroll-behavior: contain;
+}
+.le-sheet.open { transform: none; }
+.le-grab { width: 38px; height: 4px; border-radius: 4px; background: #d9d9d6; margin: 0 auto 10px; }
+.le-sh-x { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--le-soft); display: grid; place-items: center; }
+.le-sh-h { font-size: 15px; font-weight: 600; margin: 4px 0 4px; padding-right: 40px; }
+.le-sh-note { font-size: 10.5px; color: #6b6b66; margin: 0 0 12px; }
+.le-lbl { font-size: 9.5px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #8a8a84; margin: 16px 0 8px; }
+.le-f { display: block; margin: 0 0 14px; }
+.le-f > span { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 500; margin-bottom: 6px; }
+.le-f > span em { font-style: normal; color: var(--le-blue); font-weight: 600; }
+.le-f input[type=text], .le-f select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--le-line); border-radius: 10px;
+    background: #fff; font: inherit; font-size: 12px; color: inherit; outline: none;
+}
+.le-f input[type=text]:focus, .le-f select:focus { border-color: var(--le-blue); }
+.le-f input[type=range] { width: 100%; accent-color: var(--le-blue); }
+.le-seg { display: flex; gap: 4px; padding: 3px; background: var(--le-soft); border-radius: 11px; }
+.le-seg button { flex: 1; border: 0; background: none; padding: 8px 4px; border-radius: 8px; font-size: 10.5px; font-weight: 500; white-space: nowrap; }
+.le-seg button.on { background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); font-weight: 600; color: var(--le-blue); }
+.le-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.le-pos { display: grid; grid-template-columns: repeat(3, 34px); gap: 4px; padding: 4px; background: var(--le-soft); border-radius: 10px; width: max-content; }
+.le-pos button { width: 34px; height: 26px; border: 0; border-radius: 6px; background: #fff; display: grid; place-items: center; }
+.le-pos button i { width: 6px; height: 6px; border-radius: 50%; background: #c9c9c4; }
+.le-pos button.on { background: var(--le-blue); }
+.le-pos button.on i { background: #fff; }
+.le-sw { display: flex; flex-wrap: wrap; gap: 8px; }
+.le-swatch { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.12); padding: 0; font-size: 10px; font-weight: 600; color: #888; background: #fff; }
+.le-swatch.le-auto { background: repeating-linear-gradient(45deg, #f3f3f1 0 4px, #fff 4px 8px); }
+.le-swatch.on { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--le-blue); }
+.le-tg { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; font-size: 11px; font-weight: 500; cursor: pointer; }
+.le-tg input { position: absolute; opacity: 0; pointer-events: none; }
+.le-tg i { width: 40px; height: 24px; border-radius: 999px; background: #d6d6d2; position: relative; flex: none; transition: background 0.2s; }
+.le-tg i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); transition: transform 0.2s; }
+.le-tg input:checked + i { background: var(--le-blue); }
+.le-tg input:checked + i::after { transform: translateX(16px); }
+.le-sub { border: 1px solid var(--le-line); border-radius: 12px; padding: 10px 12px 2px; margin-bottom: 10px; }
+.le-sub-top { display: flex; align-items: center; gap: 4px; margin-bottom: 10px; }
+.le-sub-top b { flex: 1; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.le-mini { width: 28px; height: 28px; border: 0; border-radius: 8px; background: var(--le-soft); display: grid; place-items: center; }
+.le-mini svg { width: 14px; height: 14px; }
+.le-imgrow { display: flex; gap: 8px; }
+.le-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 14px; border: 1px solid var(--le-line); border-radius: 11px; background: #fff;
+    font-size: 11px !important; font-weight: 600;
+}
+.le-btn:hover { background: var(--le-soft); }
+.le-wide { width: 100%; margin-bottom: 8px; }
+.le-primary { background: var(--le-blue); border-color: var(--le-blue); color: #fff !important; }
+.le-primary:hover { background: #2559da; }
+.le-danger { color: #d33 !important; }
+.le-sh-foot { display: flex; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--le-line); }
+.le-sh-foot .le-btn { flex: 1; }
+
+/* Add-section picker */
+.le-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.le-type {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+    padding: 12px; border: 1px solid var(--le-line); border-radius: 14px; background: #fff;
+}
+.le-type:hover { border-color: var(--le-blue); background: rgba(47, 107, 255, 0.04); }
+.le-type i { font-style: normal; font-size: 18px; width: 34px; height: 34px; border-radius: 10px; background: var(--le-soft); display: grid; place-items: center; margin-bottom: 6px; color: var(--le-blue); }
+.le-type b { font-size: 11.5px; font-weight: 600; }
+.le-type small { font-size: 9.5px; color: #77776f; line-height: 1.35; }
+
+/* Theme picker */
+.le-tpls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.le-tpl { border: 0; background: none; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9.5px; }
+.le-tpl i { width: 100%; aspect-ratio: 1; border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.12); display: grid; place-items: center; }
+.le-tpl em { width: 40%; height: 40%; border-radius: 50%; }
+.le-tpl.on i { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--le-blue); }
+.le-tpl.on span { color: var(--le-blue); font-weight: 600; }
+
+/* Toast */
+.le-toast {
+    position: fixed; left: 50%; bottom: 90px; z-index: 9500; transform: translate(-50%, 20px);
+    padding: 10px 16px; border-radius: 12px; background: var(--le-ink); color: #fff;
+    font-size: 11px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
+    max-width: calc(100vw - 32px); text-align: center;
+}
+.le-toast.show { opacity: 1; transform: translate(-50%, 0); }
