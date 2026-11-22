@@ -18,7 +18,7 @@
      • Without WebGL, or with reduced motion, slides cross-fade instead.
 
      var hero = VeroLumina(el, {
-       slides: [{ title, description, media, href }],
+       slides: [{ title, description, media, href, label }],   // label: a shorter name for the nav
        interval: 5000, duration: 2.5, mono: true,
        onChange: function (slide, i) {},
        mount: bandEl                     // optional: where the counter / title / nav go
@@ -99,7 +99,7 @@
             '<div class="lu-content"><a class="lu-title" aria-live="polite"></a><p class="lu-desc"></p></div>' +
             '<nav class="lu-nav" aria-label="Slides">' + slides.map(function (s, i) {
                 return '<button type="button" class="lu-item' + (i === 0 ? ' active' : '') + '" data-i="' + i + '" aria-label="' + esc(s.title) + '">' +
-                    '<span class="lu-line"><span class="lu-fill"></span></span><span class="lu-name">' + esc(s.title) + '</span></button>';
+                    '<span class="lu-line"><span class="lu-fill"></span></span><span class="lu-name">' + esc(s.label || s.title) + '</span></button>';
             }).join('') + '</nav>';
         // mount: an element (e.g. the hero's text band) to hold the counter, title and
         // nav, so they sit in the page's own layout over the picture.

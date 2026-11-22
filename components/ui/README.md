@@ -102,9 +102,11 @@ It ships as a **vanilla port**, `assets/lumina-hero.js` —
   ~600 KB of libraries, and it draws only while a transition runs;
 - pauses off screen and in background tabs; cross-fades without WebGL or with
   `prefers-reduced-motion`; `mono: true` renders the photos black and white.
-- styles: the `.lu-*` rules in `events.html`.
+- styles: `assets/lumina-hero.css` (shared), placed per page in `assets/home.css` (`.hm-lu*`) and `events.html`.
 
-**Where it's used:** the events page's opening hero (`events.html`). The slides
+**Where it's used:** the home feed's hero (`feed.html` — welcome / the
+collection / new arrivals, replacing the old video slider) and the events
+page's opening hero (`events.html`). The slides
 are the next six events (title → the event's page, date · time · place as the
 description) over the site's own editorial photos in `assets/hero/` — no
 external images. The index.css tokens from the prompt (`--color-bg`,
