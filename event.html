@@ -48,6 +48,9 @@
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 0 16px; border: 1px solid var(--ink);
          background: var(--ink); color: #fff; text-decoration: none; cursor: pointer; font-size: 8.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; }
   .btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .btn.go-on { background: none; color: var(--ink); }
+  .going-n { margin-top: 16px; font-size: 11px; color: var(--muted); }
+  .going-n b { font-weight: 500; color: var(--ink); }
   .lnk { padding: 3px 0; background: none; border: 0; border-bottom: 1px solid var(--line-strong); cursor: pointer; text-decoration: none;
          font-size: 8.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 
@@ -61,7 +64,9 @@
   .place-l { font-size: 13px; font-weight: 300; }
   .place-l + .lnk { display: inline-block; margin-top: 12px; }
 
-  .more { display: flex; flex-direction: column; gap: 26px; }
+  .more { display: flex; flex-direction: column; }
+  .more a { padding: 22px 0; border-top: 1px solid var(--line-strong); }
+  .more a:last-child { border-bottom: 1px solid var(--line-strong); }
   .more a { display: block; text-decoration: none; }
   .more b { display: block; font-size: 24px; font-weight: 200; line-height: 1; }
   .more .mt { display: block; margin-top: 8px; font-size: 14px; font-weight: 400; }
@@ -88,12 +93,13 @@
   </header>
   <main class="wrap" id="main"></main>
 
-  <script src="assets/events-data.js?v=1"></script>
+  <script src="assets/events-data.js?v=2"></script>
   <script>
   (function eventPage() {
     var E = window.veroEvents, main = document.getElementById('main');
     if (/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('is-embed');
     var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); };
+    var TICK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
     var CAL = '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>';
     var isSeller = false;
     try { isSeller = localStorage.getItem('vero_active_account') === 'seller'; } catch (e) {}
@@ -121,8 +127,10 @@
         '<h1 class="title">' + esc(e.title) + '</h1>' +
         '<p class="meta">' + esc(e.time || 'All day') + (e.place ? '<br>' + esc(e.place) : '') + (e.own ? '<br>Hosted by you' : '') + '</p>' +
         (e.blurb ? '<p class="blurb">' + esc(e.blurb) + '</p>' : '') +
+        '<p class="going-n" id="goingN"></p>' +
         '<div class="acts">' +
-          '<button type="button" class="btn" id="ics">' + CAL + 'Add to calendar</button>' +
+          (n >= 0 && !e.own ? '<button type="button" class="btn" id="going"></button>' : '') +
+          '<button type="button" class="lnk" id="ics">Add to calendar</button>' +
           (e.place ? '<a class="lnk" href="' + esc(E.mapsUrl(e)) + '" target="_blank" rel="noopener">Directions</a>' : '') +
           (isSeller && n >= 0 ? '<a class="lnk" href="events.html?date=' + e.date + '">' + (booth ? 'Your booth' : 'Book a booth') + '</a>' : '') +
         '</div>' +
@@ -139,6 +147,15 @@
         '</div></section>' : '') +
       '<a class="lnk back" href="events.html?date=' + e.date + '">All events</a>';
 
+    // "I'm going" — and the count beside it.
+    function paintGoing() {
+      var on = E.isGoing(e.id), c = E.goingCount(e), b = document.getElementById('going');
+      document.getElementById('goingN').innerHTML = '<b>' + c + '</b> going' + (on ? ' · including you' : e.own ? ' · your event' : '');
+      if (b) { b.className = 'btn' + (on ? ' go-on' : ''); b.setAttribute('aria-pressed', on); b.innerHTML = on ? TICK + 'Going' : 'I’m going'; }
+    }
+    var gb = document.getElementById('going');
+    if (gb) gb.addEventListener('click', function () { E.setGoing(e.id, !E.isGoing(e.id)); paintGoing(); });
+    paintGoing();
     document.getElementById('ics').addEventListener('click', function () { E.downloadIcs(e); });
   })();
   </script>

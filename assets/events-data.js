@@ -12,6 +12,9 @@
      veroEvents.upcoming(n)      → the next n events from today
      veroEvents.attendees(e)     → sellers with a booth at e
      veroEvents.ics(e)           → an .ics file for "Add to calendar"
+     veroEvents.isGoing(id) / setGoing(id, on) → your "I'm going" (vero_event_going)
+     veroEvents.goingCount(e)    → how many people are going (you included)
+     veroEvents.mine()           → events you're going to or hosting
 ------------------------------------------------------------------ */
 (function () {
     'use strict';
@@ -111,6 +114,17 @@
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
     }
+    // "I'm going": the events you said you'd come to, { eventId: savedAt }.
+    function goingMap() { var g = read('vero_event_going', {}); return g && typeof g === 'object' ? g : {}; }
+    function isGoing(id) { return !!goingMap()[id]; }
+    function setGoing(id, on) { var g = goingMap(); if (on) g[id] = Date.now(); else delete g[id]; return write('vero_event_going', g); }
+    // A steady demo crowd per event (none yet for one you host), plus you.
+    function goingCount(e) {
+        var base = e.own ? 0 : 14 + (hash('going' + (e.id || e.title)) % 70);
+        return base + (isGoing(e.id) || e.own ? 1 : 0);
+    }
+    function mine() { return all().filter(function (e) { return e.own || isGoing(e.id); }); }
+
     function mapsUrl(e) { return 'https://maps.google.com/?q=' + encodeURIComponent(e.place || e.title); }
 
     window.veroEvents = {
@@ -119,6 +133,7 @@
         all: all, on: on, upcoming: upcoming, byId: byId,
         addHosted: addHosted, removeHosted: removeHosted,
         booths: booths, setBooth: setBooth, attendees: attendees,
-        ics: ics, downloadIcs: downloadIcs, mapsUrl: mapsUrl
+        ics: ics, downloadIcs: downloadIcs, mapsUrl: mapsUrl,
+        isGoing: isGoing, setGoing: setGoing, goingCount: goingCount, mine: mine
     };
 })();

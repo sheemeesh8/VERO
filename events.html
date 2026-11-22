@@ -167,8 +167,8 @@
   .next .acts { margin-top: 22px; gap: 18px; align-items: center; }
   /* Actions: one small solid button, the rest as underlined text. */
   .btn { min-height: 36px; padding: 0 16px; }
-  .btn:not(.solid):not(.navy):not(.quiet) { min-height: 0; padding: 3px 0; border: 0; border-bottom: 1px solid var(--line-strong); }
-  .btn:not(.solid):not(.navy):not(.quiet) svg { display: none; }
+  .btn:not(.solid):not(.navy):not(.quiet):not(.go-on) { min-height: 0; padding: 3px 0; border: 0; border-bottom: 1px solid var(--line-strong); }
+  .btn:not(.solid):not(.navy):not(.quiet):not(.go-on) svg { display: none; }
   .acts { justify-content: center; }
 
   /* Kinds: plain words with their colour dot, the chosen one underlined; they wrap, centred. */
@@ -242,6 +242,15 @@
   .wrap { padding-top: 48px; }   /* with the wheel's margin: the photo is past the header when the wheel is in place */
   @media (prefers-reduced-motion: reduce) { .ev-tabs { transition: none; } }
 
+  /* "I'm going" and the count */
+  .btn.go-on { min-height: 36px; padding: 0 14px; border: 1px solid var(--ink); background: none; color: var(--ink); }
+  .btn.go-on svg { display: inline; width: 12px; height: 12px; stroke-width: 1.8; }
+  .going-n { margin-top: 12px; font-size: 10.5px; color: var(--muted); }
+  .going-n b { font-weight: 500; color: var(--ink); }
+  /* A clear line between one event and the next, edge to edge of the column. */
+  .ev { max-width: none; border-top: 1px solid var(--line-strong); }
+  .ev:last-child { border-bottom: 1px solid var(--line-strong); }
+  .ev > div { max-width: 360px; margin: 0 auto; }
   /* Gentle entrance */
   @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   .rise { animation: rise 0.7s var(--ease) both; }
@@ -315,7 +324,7 @@
     </section>
   </main>
 
-  <script src="assets/events-data.js?v=1"></script>
+  <script src="assets/events-data.js?v=2"></script>
   <script src="assets/wheel-carousel.js?v=5"></script>
   <script>
   (function eventsPage() {
@@ -324,6 +333,7 @@
     var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); };
     var ICON = {
       cal: '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
+      tick: '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
       pin: '<svg viewBox="0 0 24 24"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>'
     };
 
@@ -352,6 +362,13 @@
       var n = Math.round((E.parse(ds) - E.today()) / 864e5);
       return n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : n > 1 ? 'In ' + n + ' days' : '';
     }
+    // "I'm going": a solid button until you say yes, then a quiet "Going" you can undo.
+    function goBtn(e) {
+      var on = E.isGoing(e.id);
+      if (e.own) return '';
+      return '<button type="button" class="btn ' + (on ? 'go-on' : 'solid') + '" data-going="' + esc(e.id) + '" aria-pressed="' + on + '">' + (on ? ICON.tick + 'Going' : 'I’m going') + '</button>';
+    }
+    function goingLine(e) { var n = E.goingCount(e); return '<p class="going-n"><b>' + n + '</b> going' + (E.isGoing(e.id) ? ' · including you' : e.own ? ' · your event' : '') + '</p>'; }
     function who(e) {
       var a = E.attendees(e);
       var names = a.slice(0, 3).map(function (s) { return '<b class="' + (s.you ? 'you' : '') + '">' + esc(s.you ? 'You' : s.name) + '</b>'; }).join(', ');
@@ -380,8 +397,8 @@
           '<div class="next-meta">' + esc(E.DOWF[d.getDay()]) + (e.time ? ' · ' + esc(e.time) : '') + (e.place ? '<br>' + esc(e.place) : '') + '</div></div>' +
         '</div>' +
         (e.blurb ? '<p class="next-blurb">' + esc(e.blurb) + '</p>' : '') +
-        who(e) +
-        '<div class="acts"><button type="button" class="btn solid" data-ics="' + esc(e.id) + '">' + ICON.cal + 'Add to calendar</button>' +
+        goingLine(e) + who(e) +
+        '<div class="acts">' + goBtn(e) + '<button type="button" class="btn" data-ics="' + esc(e.id) + '">' + ICON.cal + 'Add to calendar</button>' +
         (e.place ? '<a class="btn" href="' + esc(E.mapsUrl(e)) + '" target="_blank" rel="noopener">' + ICON.pin + 'Directions</a>' : '') + '</div>';
       // The type mark's swatch keeps the kind's colour; the label stays ink.
       var sw = el.querySelector('.type i'); if (sw) sw.style.background = color(e.type);
@@ -427,7 +444,8 @@
       var d = E.parse(e.date), past = e.date < todayIso, booth = E.booths()[e.id];
       var acts = '';
       if (!past) {
-        acts += '<button type="button" class="btn" data-ics="' + esc(e.id) + '">' + ICON.cal + 'Add to calendar</button>';
+        acts += goBtn(e);
+        acts += '<button type="button" class="btn" data-ics=""' + esc(e.id) + '">' + ICON.cal + 'Add to calendar</button>';
         if (e.place) acts += '<a class="btn" href="' + esc(E.mapsUrl(e)) + '" target="_blank" rel="noopener">' + ICON.pin + 'Directions</a>';
         if (isSeller) acts += '<button type="button" class="btn ' + (booth ? 'navy' : '') + '" data-booth="' + esc(e.id) + '" aria-expanded="' + (openBooth === e.id) + '">' +
           (booth ? 'Your booth · ' + (booth.products || []).length + ' pieces' : 'Book a booth') + '</button>';
@@ -453,7 +471,7 @@
           '<h3 class="ev-title"><a href="event.html?id=' + encodeURIComponent(e.id) + '">' + esc(e.title) + '</a></h3>' +
           '<div class="ev-meta">' + (e.time ? esc(e.time) : 'All day') + (e.place ? ' · ' + esc(e.place) : '') + (e.own ? ' · Hosted by you' : '') + '</div>' +
           (e.blurb ? '<p class="ev-blurb">' + esc(e.blurb) + '</p>' : '') +
-          who(e) +
+          (past ? '' : goingLine(e)) + who(e) +
           (acts ? '<div class="acts">' + acts + '</div>' : '') +
           panel +
         '</div>' +
@@ -495,6 +513,7 @@
     document.addEventListener('click', function (e) {
       var t;
       if ((t = e.target.closest('#clearDay'))) { selected = null; refresh(); return; }
+      if ((t = e.target.closest('[data-going]'))) { var gid = t.getAttribute('data-going'); E.setGoing(gid, !E.isGoing(gid)); refresh(); return; }
       if ((t = e.target.closest('[data-ics]'))) { var ev = E.byId(t.getAttribute('data-ics')); if (ev) E.downloadIcs(ev); return; }
       if ((t = e.target.closest('[data-booth]'))) {
         var id = t.getAttribute('data-booth'); openBooth = openBooth === id ? null : id;
