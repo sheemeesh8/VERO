@@ -151,6 +151,31 @@
   .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
   .sw:checked { background: var(--ink); }
   .sw:checked::after { transform: translateX(18px); }
+
+  /* ===== Negotiation cards — the Canva layout ===== */
+  .list:has(.card.ng) { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 10px; }
+  .card.ng { border: 0; border-radius: 0; padding: 0; background: none; box-shadow: none; display: flex; flex-direction: column; min-width: 0; }
+  .card.ng:hover { box-shadow: none; }
+  .ng-pic { position: relative; aspect-ratio: 0.72; background: #F2F2F2; overflow: hidden; }
+  .ng-pic img { position: absolute; inset: 10%; width: 80%; height: 80%; object-fit: contain; }
+  .ng-ic { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 46px; }
+  .ng-ic svg { width: 52px; height: 52px; }
+  .ng-r1 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 12px; }
+  .ng-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Raleway', sans-serif; font-weight: 300; font-size: 13.5px; letter-spacing: 0.2px; text-transform: uppercase; color: #111; }
+  .ng-ask { flex: none; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 11.5px; color: #111; }
+  .ng-who { margin-top: 3px; font-family: 'Raleway', sans-serif; font-weight: 500; font-size: 8.5px; letter-spacing: 1px; text-transform: uppercase; color: #333; }
+  .ng-bid { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; padding: 11px 0; border-top: 1px solid #111; border-bottom: 1px solid #111; }
+  .ng-bl { flex: 1; font-family: 'Raleway', sans-serif; font-weight: 400; font-size: 13px; text-transform: uppercase; color: #111; }
+  .ng-pct { font-family: 'Poppins', sans-serif; font-size: 11px; letter-spacing: 0.4px; color: #c62828; }
+  .ng-bp { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 11.5px; color: #111; }
+  .ng-acts { display: flex; gap: 8px; margin-top: 14px; }
+  .ng-btn { flex: 1; height: 32px; border-radius: 999px; border: 1px solid #111; background: #fff; color: #111; cursor: pointer; padding: 0 8px;
+    font-family: 'Raleway', sans-serif; font-weight: 500; font-size: 9px; letter-spacing: 0.6px; text-transform: uppercase; }
+  .ng-btn:first-child { flex: 1.6; }
+  .ng-btn.dk { background: #111; color: #fff; }
+  .ng-btn:disabled { opacity: 0.35; cursor: default; }
+  .ng-st { margin-top: 14px; font-family: 'Raleway', sans-serif; font-weight: 500; font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; color: #6b665c; }
+  .ng-st.accepted { color: #2f6b3a; }
 </style>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261117e"></script>
@@ -278,19 +303,26 @@
                     all: side === 'selling' ? 'No offers on your pieces yet.' : 'You have not made any offers yet. Tap "Make an offer" on any item.' }[filter];
         $('list').innerHTML = '<div class="empty">' + msg + '</div>';
       } else {
+        // Canva layout: two to a row — the piece on the card ground, NAME + asking price,
+        // who it is with, a hairline, BID with how far it is from the asking price,
+        // a hairline, then Negotiate / Accept (or where it stands).
         $('list').innerHTML = rows.map(function (n) {
-          var st = N.state(n), mine = st.turn === 'me';
-          var foot = st.open
-            ? '<span>Round ' + st.rounds + ' of ' + N.MAX_OFFERS + '</span><span class="' + (st.msLeft < 6 * 36e5 ? 'urgent' : '') + '">' + left(st.msLeft) + '</span>'
-            : '<span>' + st.rounds + ' offer' + (st.rounds === 1 ? '' : 's') + ' exchanged</span><span>' + ago(n.updatedAt) + '</span>';
-          var quick = mine
-            ? '<div class="quick"><button type="button" class="btn grow" data-go="counter"' + (st.canCounter ? '' : ' disabled') + '>Counter</button>' +
-              '<button type="button" class="btn ok grow" data-go="accept">Accept ' + nis(st.last.amount) + '</button></div>' : '';
-          return '<article class="card' + (mine ? ' mine' : '') + '" data-id="' + n.id + '">' +
-            '<div class="c-top">' + thumb(n.item) +
-              '<div style="min-width:0"><div class="c-name">' + esc(n.item.name) + '</div><div class="c-who">' + esc(n.party) + ' · ' + ago(n.updatedAt) + '</div>' + chip(n) + '</div>' +
-              '<div class="c-price"><b>' + nis(st.price) + '</b><s>' + nis(n.item.ask) + '</s></div></div>' +
-            track(n) + '<div class="c-foot">' + foot + '</div>' + quick + '</article>';
+          var st = N.state(n), mine = st.turn === 'me', ask = Number(n.item.ask) || 0;
+          var bid = (st.open && st.theirs ? st.theirs.amount : (n.status === 'accepted' ? n.agreed : st.price)) || 0;
+          var pct = ask ? (bid - ask) / ask * 100 : 0;
+          var pctTxt = ask && bid && Math.abs(pct) >= 0.01 ? (pct > 0 ? '+' : '') + pct.toFixed(2) + '%' : '';
+          var pic = n.item.cover ? '<img src="' + esc(n.item.cover) + '" alt="">' : '<span class="ng-ic">' + esc(n.item.icon || '🛍️') + '</span>';
+          var acts;
+          if (st.open && mine) acts = '<div class="ng-acts"><button type="button" class="ng-btn" data-go="counter"' + (st.canCounter ? '' : ' disabled') + '>Negotiate</button>' +
+                                      '<button type="button" class="ng-btn dk" data-go="accept">Accept</button></div>';
+          else if (st.open) acts = '<div class="ng-st">Waiting for ' + them() + ' · ' + left(st.msLeft) + '</div>';
+          else acts = '<div class="ng-st ' + n.status + '">' + ({ accepted: 'Agreed ' + nis(n.agreed), declined: 'Declined', withdrawn: 'Withdrawn', expired: 'Expired' }[n.status] || n.status) + '</div>';
+          return '<article class="card ng' + (mine ? ' mine' : '') + '" data-id="' + n.id + '">' +
+            '<div class="ng-pic">' + pic + '</div>' +
+            '<div class="ng-r1"><span class="ng-name">' + esc(n.item.name) + '</span><span class="ng-ask">' + (ask ? nis(ask) : '') + '</span></div>' +
+            '<div class="ng-who">' + esc(n.item.brand || n.party) + '</div>' +
+            '<div class="ng-bid"><span class="ng-bl">' + (side === 'selling' ? 'Bid' : 'Your bid') + '</span><span class="ng-pct">' + pctTxt + '</span><span class="ng-bp">' + (bid ? nis(bid) : '—') + '</span></div>' +
+            acts + '</article>';
         }).join('');
       }
       if (openId && !composing) paintRoom(false);   // never repaint over a counter being typed
