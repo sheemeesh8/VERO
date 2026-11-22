@@ -124,6 +124,14 @@
         return base + (isGoing(e.id) || e.own ? 1 : 0);
     }
     function mine() { return all().filter(function (e) { return e.own || isGoing(e.id); }); }
+    // A starter "going" list, once: the next two events, so My events never opens empty.
+    (function seedGoing() {
+        try {
+            if (localStorage.getItem('vero_event_going_seeded') || Object.keys(goingMap()).length) return;
+            var g = {}; upcoming(2).forEach(function (e) { g[e.id] = Date.now(); });
+            write('vero_event_going', g); localStorage.setItem('vero_event_going_seeded', '1');
+        } catch (e) {}
+    })();
 
     function mapsUrl(e) { return 'https://maps.google.com/?q=' + encodeURIComponent(e.place || e.title); }
 
