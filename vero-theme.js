@@ -40,14 +40,14 @@
         var st = document.createElement('style');
         st.id = 'veroThemeCSS';
         st.textContent = `
-            /* Site-wide: square corners everywhere — except the on/off switches
+            /* Site-wide: square corners everywhere — except the What's on band and the hero shortcuts (pills / round icons), the on/off switches
                (switch.css), the header's Clothing / Art switch, and the search's
                capsules (answers, Back / Next) and round profile pictures (search, product page), and the round
                choice marks on the "What are you listing?" page. The :not(#vq…) part
                only adds weight, so this beats every page's own radius. */
-            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .pu-swatch .sw, .hm-wd-dot, .ew-dot, .hdr-feed-only .badge, .co-tick, .day .dots i, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq),
-            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .pu-swatch .sw, .hm-wd-dot, .ew-dot, .hdr-feed-only .badge, .co-tick, .day .dots i, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::before,
-            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .pu-swatch .sw, .hm-wd-dot, .ew-dot, .hdr-feed-only .badge, .co-tick, .day .dots i, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::after {
+            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .pu-swatch .sw, .hm-wd-dot, .hm-wo-band, .hs-a .hm-sc-b, .hs-b .hm-sc-b svg, .ew-dot, .hdr-feed-only .badge, .co-tick, .day .dots i, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq),
+            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .pu-swatch .sw, .hm-wd-dot, .hm-wo-band, .hs-a .hm-sc-b, .hs-b .hm-sc-b svg, .ew-dot, .hdr-feed-only .badge, .co-tick, .day .dots i, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::before,
+            *:not(:is(.switch, .sw:has(input[type="checkbox"]), .ui-switch, .mode-switch, .vs-opt, .vs-nav, .vs-ava, .s-avatar, .us-opt-mark, .pu-swatch .sw, .hm-wd-dot, .hm-wo-band, .hs-a .hm-sc-b, .hs-b .hm-sc-b svg, .ew-dot, .hdr-feed-only .badge, .co-tick, .day .dots i, .toggle-category, .toggle-category *, .switch *, .sw:has(input[type="checkbox"]) *, .ui-switch *)):not(#vq#vq#vq#vq)::after {
                 border-radius: 0 !important;
             }
 

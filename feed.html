@@ -405,7 +405,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261122zi">
+    <link rel="stylesheet" href="assets/home.css?v=20261122zj">
     <link rel="stylesheet" href="assets/lumina-hero.css?v=1">
     <link rel="stylesheet" href="assets/site-font.css?v=3">
 </head>
@@ -441,7 +441,7 @@
          is re-set letter by letter, and progress lines at the foot show / pick the
          slide. The root keeps id="hmHeroCap" so the feed's data-act / data-mode
          click delegation still drives the caption's links and button. -->
-    <div id="feedHeroWrap">
+    <div id="feedHeroWrap" class="hs-a">
         <section class="hero-slider hm-lu" id="hmHeroCap" aria-roledescription="carousel" aria-label="Featured">
             <div class="hm-lu-pic" id="hmLumina"></div>
             <!-- Layout B — editorial: the words low on the left, the photo left open. -->
@@ -450,6 +450,13 @@
                 <div class="hm-lu-mount" id="hmLuMount"></div>
                 <a class="hm-lu-link" id="hmLuBtn" href="#" hidden></a>   <!-- the Welcome slide has no link; the others fill it in -->
             </div>
+            <!-- Three shortcuts on the hero: filter the pieces, the magazine, list a piece.
+                 The style (a–d) is set on #feedHeroWrap; ?hs=a|b|c|d previews the others. -->
+            <nav class="hm-sc" id="hmShortcuts" aria-label="Shortcuts">
+                <button type="button" class="hm-sc-b" data-sc="filter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span>Filter</span></button>
+                <button type="button" class="hm-sc-b" data-sc="magazine"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg><span>Magazine</span></button>
+                <button type="button" class="hm-sc-b" data-sc="upload"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg><span>Sell a piece</span></button>
+            </nav>
         </section>
     </div>
 
@@ -605,6 +612,8 @@
     <script src="collections.js"></script>
     <script src="assets/events-data.js?v=3"></script>
     <script src="assets/wheel-carousel.js?v=6"></script>
+    <!-- The magazine overlay (the hero's Magazine shortcut and the menu's Magazine link). -->
+    <script src="magazine.js" defer></script>
 
     <!-- Home assembly. -->
     <script>
@@ -927,6 +936,22 @@
             if (inCol.length < 2) inCol = modeList();
             fillRail('hmHeroRail', inCol.slice(0, 10));
         }
+        // Hero shortcuts: Filter opens the filter sheet, Magazine the magazine (magazine.js), Sell a piece the upload flow.
+        (function () {
+            var wrap = document.getElementById('feedHeroWrap'), sc = document.getElementById('hmShortcuts');
+            if (!wrap || !sc) return;
+            var hs = (new URLSearchParams(location.search).get('hs') || '').toLowerCase();
+            if (/^[a-d]$/.test(hs)) wrap.className = 'hs-' + hs;
+            sc.addEventListener('click', function (e) {
+                var b = e.target.closest('[data-sc]'); if (!b) return;
+                e.preventDefault(); e.stopPropagation();
+                var act = b.dataset.sc;
+                if (act === 'filter') { var f = document.getElementById('hmFilterBtn'); if (f) f.click(); }
+                else if (act === 'upload') { (window.openUploadProduct ? window.openUploadProduct() : (location.href = 'upload-start.html')); }
+                else if (act === 'magazine') { if (window.openMagazine) window.openMagazine(); }
+            });
+        })();
+
         // Hero nav: Fashion / Art switch the feed mode; Magazine / Add product / collection / sale act or scroll.
         (function () {
             var cap = document.getElementById('hmHeroCap'); if (!cap) return;
