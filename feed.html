@@ -405,7 +405,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261122x">
+    <link rel="stylesheet" href="assets/home.css?v=20261122z">
     <link rel="stylesheet" href="assets/lumina-hero.css?v=1">
     <link rel="stylesheet" href="assets/site-font.css?v=3">
 </head>
@@ -467,9 +467,17 @@
     </nav>
 
     <main class="hm">
-        <form class="hm-search" role="search" onsubmit="return false;">
-            <input type="search" id="feedSearchInput" data-usearch="off" placeholder="Search here" autocomplete="off" aria-label="Search the feed">
-        </form>
+        <!-- Search + filter, the same fine-line row as the collection, cart and wishlist pages. -->
+        <div class="hm-searchrow">
+            <form class="hm-search" role="search" onsubmit="return false;">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="search" id="feedSearchInput" data-usearch="off" placeholder="Search here" autocomplete="off" aria-label="Search the feed">
+            </form>
+            <button class="cc-filter" type="button" id="hmFilterBtn" aria-label="Filters" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"></path><path d="M12 12v8"></path><path d="M8 21h8"></path></svg>
+                <i class="cc-dot" id="hmFilterDot" hidden></i>
+            </button>
+        </div>
 
         <!-- The structured page (hidden while search / sale results are showing). -->
         <div id="feedStructured">
@@ -567,6 +575,25 @@
             <div class="hm-four hm-results" id="searchResults"></div>
         </div>
     </main>
+
+    <!-- Filters for the feed (as on the collection page): sort, item type, on sale only. -->
+    <div class="cc-overlay" id="hmFilters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
+        <div class="cc-sheet">
+            <div class="cc-grip"></div>
+            <h3 class="cc-h">Filters</h3>
+            <p class="cc-k">Sort</p>
+            <div class="cc-chips" data-group="sort">
+                <button type="button" class="cc-chip on" data-v="new">Newest</button>
+                <button type="button" class="cc-chip" data-v="low">Price: low to high</button>
+                <button type="button" class="cc-chip" data-v="high">Price: high to low</button>
+            </div>
+            <p class="cc-k">Item type</p>
+            <div class="cc-chips" data-group="type" id="hmFilterTypes"></div>
+            <p class="cc-k">Price</p>
+            <div class="cc-chips" data-group="sale"><button type="button" class="cc-chip" data-v="sale">On sale only</button></div>
+            <div class="cc-acts"><button type="button" class="cc-clear" id="hmFilterClear">Clear</button><button type="button" class="cc-go" id="hmFilterGo">Show pieces</button></div>
+        </div>
+    </div>
 
     <!-- Product data layer (shared across the site). -->
     <script src="collections.js"></script>
@@ -1237,6 +1264,58 @@
             window.addEventListener('pageshow', function () { if (wrap.classList.contains('is-deal')) { buildChips(); refresh(); showStep(step); } });
         })();
         document.getElementById('hmShopAll').addEventListener('click', function () { openList('Everything', modeList(), 'Nothing here yet.'); });
+
+        // ----- Filters (the funnel beside the search) ------------------------
+        (function feedFilters() {
+            var sheet = document.getElementById('hmFilters'), btn = document.getElementById('hmFilterBtn');
+            if (!sheet || !btn) return;
+            var flt = { sort: 'new', types: [], sale: false };
+            var priceOf = function (p) { var d = VC.discountOf(p._raw) || {}; return VC.toNum(d.onSale ? d.price : p.price) || 0; };
+            function matches() {
+                var list = modeList().filter(function (p) {
+                    if (flt.types.length && flt.types.indexOf(p.category || '') === -1) return false;
+                    if (flt.sale && !((VC.discountOf(p._raw) || {}).onSale)) return false;
+                    return true;
+                });
+                if (flt.sort === 'low') list.sort(function (a, b) { return priceOf(a) - priceOf(b); });
+                else if (flt.sort === 'high') list.sort(function (a, b) { return priceOf(b) - priceOf(a); });
+                else list.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+                return list;
+            }
+            function drawTypes() {
+                var seen = {}; modeList().forEach(function (p) { if (p.category) seen[p.category] = (seen[p.category] || 0) + 1; });
+                flt.types = flt.types.filter(function (t) { return seen[t]; });
+                document.getElementById('hmFilterTypes').innerHTML = Object.keys(seen).sort(function (a, b) { return seen[b] - seen[a]; }).map(function (k) {
+                    return '<button type="button" class="cc-chip' + (flt.types.indexOf(k) !== -1 ? ' on' : '') + '" data-v="' + esc(k) + '">' + esc(k) + '</button>';
+                }).join('');
+            }
+            function count() {
+                var n = matches().length;
+                document.getElementById('hmFilterGo').textContent = n ? 'Show ' + num(n) + (n === 1 ? ' piece' : ' pieces') : 'No matches';
+                document.getElementById('hmFilterDot').hidden = !(flt.types.length || flt.sale || flt.sort !== 'new');
+            }
+            btn.addEventListener('click', function () { drawTypes(); count(); sheet.hidden = false; });
+            sheet.addEventListener('click', function (e) {
+                if (e.target === sheet) { sheet.hidden = true; return; }
+                var c = e.target.closest('.cc-chip'); if (!c) return;
+                var g = c.parentNode.getAttribute('data-group'), v = c.getAttribute('data-v');
+                if (g === 'sort') { flt.sort = v; [].forEach.call(c.parentNode.children, function (x) { x.classList.toggle('on', x === c); }); }
+                else if (g === 'type') { var i = flt.types.indexOf(v); if (i === -1) flt.types.push(v); else flt.types.splice(i, 1); c.classList.toggle('on', i === -1); }
+                else if (g === 'sale') { flt.sale = !flt.sale; c.classList.toggle('on', flt.sale); }
+                count();
+            });
+            document.getElementById('hmFilterGo').addEventListener('click', function () {
+                sheet.hidden = true;
+                var label = flt.sale ? 'On sale' : flt.types.length === 1 ? flt.types[0] : 'Filtered';
+                openList(label, matches(), 'Nothing matches \u2014 clear a filter.');
+            });
+            document.getElementById('hmFilterClear').addEventListener('click', function () {
+                flt = { sort: 'new', types: [], sale: false };
+                [].forEach.call(sheet.querySelectorAll('.cc-chip'), function (x) { x.classList.toggle('on', x.getAttribute('data-v') === 'new'); });
+                count();
+            });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') sheet.hidden = true; });
+        })();
 
         // ----- Art / Fashion (the header's own toggle) -----------------------
         function currentMode() { return (localStorage.getItem('vero_category') === 'art') ? 'art' : 'fashion'; }
