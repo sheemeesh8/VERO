@@ -687,10 +687,19 @@ h3, h4, h5, h6, p,
     document.getElementById('detPrice').innerHTML  = heroPriceHTML;
 
     const escHTML = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const specs = [['Category', sCategory], ['Size', sSize], [isArt ? 'Material' : 'Fabric', sFabric], ['Colour', sColor],
+    // Everything the seller filled in on upload (product-upload.html / product-upload-art.html).
+    const listJoin = v => [].concat(v || []).filter(Boolean).join(', ');
+    const sBrand  = (product.brand || listing.brand || '').toString().trim();
+    const sCombo  = listJoin(product.colorCombo || listing.colorCombo);
+    const sYear   = (product.year || listing.year || '').toString().trim();
+    const sEdition = (product.edition || listing.edition || '').toString().trim();
+    const sSigned = capW((product.signed || listing.signed || '').toString().trim());
+    const specs = [[isArt ? 'Artist' : 'Brand', sBrand !== company ? sBrand : ''], ['Category', sCategory], ['Size', sSize],
+                   [isArt ? 'Material' : 'Fabric', sFabric], ['Colour', listJoin(sColor)], ['Colour combination', sCombo],
                    ['Style', styleList.join(', ')], ['Condition', sCondition], ['For', audience],
-                   // Filled in on upload (product-upload.html): the collection and the season, under For.
-                   ['Collection', sCollection], ['Season', sSeason]].filter(r => r[1]);
+                   // The collection and the season, under For.
+                   ['Collection', sCollection], ['Season', sSeason],
+                   ['Year', sYear], ['Edition', sEdition], ['Signed', sSigned]].filter(r => r[1]);
     const specTable = document.getElementById('specTable');
     specTable.innerHTML = specs.map(r => `<div class="spec-row"><span class="sk">${r[0]}</span><span class="sv">${escHTML(r[1])}</span></div>`).join('');
     specTable.hidden = !specs.length;
