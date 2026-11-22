@@ -406,7 +406,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261122zm">
+    <link rel="stylesheet" href="assets/home.css?v=20261122zn">
     <link rel="stylesheet" href="assets/lumina-hero.css?v=1">
     <link rel="stylesheet" href="assets/site-font.css?v=3">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
@@ -860,7 +860,7 @@
         }
         // Scroll-linked size: a card keeps its small size until it is halfway to the middle, then grows
         // to full as it reaches the centre. Tied to scroll position, so it tracks the movement exactly.
-        var DK_MIN = 0.6667;
+        var DK_MIN = 0.5, DK_FADE = 0.55;   // side cards: half size, faded (matches assets/home.css)
         // Card geometry is fixed while scrolling, so measure it once (per build / resize) instead of every frame.
         var dkCenters = [], dkStride = 0, dkCW = 0;
         function measureDeck() {
@@ -880,10 +880,12 @@
             var mid = dk.scrollLeft + dkCW / 2, half = dkStride / 2 || 1;
             for (var i = 0; i < cards.length; i++) {
                 var cc = dkCenters[i], d = Math.abs(cc - mid);
-                var t = d >= half ? 0 : (half - d) / half;          // 0 until the halfway point, 1 at the centre
+                var t = d >= 2 * half ? 0 : 1 - d / (2 * half);     // 0 a whole step away, 1 at the centre
+                t = t * t * (3 - 2 * t);                             // eased in and out
                 var c = cards[i];
                 c.style.transform = 'scale(' + (DK_MIN + t * (1 - DK_MIN)).toFixed(4) + ')';
-                var origin = d < 2 ? 'center bottom' : (cc < mid ? 'right bottom' : 'left bottom');
+                c.style.opacity = (DK_FADE + t * (1 - DK_FADE)).toFixed(3);
+                var origin = d < 2 ? 'center' : (cc < mid ? 'right center' : 'left center');
                 if (c.__o !== origin) { c.style.transformOrigin = origin; c.__o = origin; }   // write only when it flips
             }
         }

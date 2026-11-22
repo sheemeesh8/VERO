@@ -132,43 +132,47 @@
    next peeks in from the right; you swipe (or tap a card) to move through the categories.
    Each card carries its picture, the item count in the corner and the category name. */
 .hm-cats { display: block; overflow-x: clip; }   /* the slide-in entrance must not widen the page */
-.hm-dk { display: flex; align-items: flex-end; gap: 4px; height: clamp(380px, 112vw, 520px);
+.hm-dk { display: flex; align-items: center; gap: 4px; height: clamp(320px, 92vw, 420px);
          overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
          scrollbar-width: none; scroll-behavior: smooth; }
 .hm-dk::-webkit-scrollbar { display: none; }
 /* Leading / trailing room so the first and last cards can rest in the middle. */
-.hm-dk-card:first-child { margin-left: 7%; }
-.hm-dk-card:last-child { margin-right: 7%; }
+.hm-dk-card:first-child { margin-left: 13%; }
+.hm-dk-card:last-child { margin-right: 13%; }
 /* The looping deck never reaches its ends, so it needs no end room. */
 .hm-dk.is-loop .hm-dk-card:first-child, .hm-dk.is-loop .hm-dk-card:last-child { margin: 0; }
-.hm-dk-card { position: relative; flex: 0 0 86%; scroll-snap-align: center; height: 100%;
+.hm-dk-card { position: relative; flex: 0 0 74%; scroll-snap-align: center; height: 100%;
               background: #2b2924; color: #fff; border: 0; padding: 0; text-align: left; overflow: hidden;
               cursor: pointer; -webkit-tap-highlight-color: transparent; backface-visibility: hidden;
-              transform: scale(0.6667); transform-origin: center bottom; }   /* side cards shrink by ~1.5×; JS scales them up as they reach the middle */
+              transform: scale(0.5); transform-origin: center; opacity: 0.55; }   /* side cards at half size and faded; they grow and come into focus as they reach the middle */
 /* The two neighbours shrink toward the chosen card, so they stay tucked close to it. */
-.hm-dk-card:has(+ .hm-dk-card[aria-current="true"]) { transform-origin: right bottom; }
-.hm-dk-card[aria-current="true"] + .hm-dk-card { transform-origin: left bottom; }
-.hm-dk-card[aria-current="true"] { transform: none; }
+.hm-dk-card:has(+ .hm-dk-card[aria-current="true"]) { transform-origin: right center; }
+.hm-dk-card[aria-current="true"] + .hm-dk-card { transform-origin: left center; }
+.hm-dk-card[aria-current="true"] { transform: none; opacity: 1; }
 .hm-dk-card { will-change: transform; }   /* each card is its own layer for good: promoting them as a swipe starts cost a hitch */
 /* Where the browser can, the growing and shrinking is tied straight to the scroll
    (a view timeline): it runs with the scroll on the compositor instead of a frame
    behind it from JavaScript, which is what made the swipe stutter. Each card's
    timeline runs from entering on the right (0%) to leaving on the left (100%); it
-   is centred at 50%, and half a card-step either side is ~23.3% of that range (cards are 86% wide), so
+   is centred at 50%, and a card-step either side is ~43% of that range (cards are 74% wide), so
    a card keeps its small size until it is half way to the middle, grows to full
    size at the centre, and shrinks again on the way out. The pivot is the side
    facing the middle, so the side cards stay tucked against the chosen one. */
 @supports (animation-timeline: view()) {
-    .hm-dk.is-loop .hm-dk-card { animation: hmDkGrow linear both; animation-timeline: view(inline); will-change: transform; }
+    .hm-dk.is-loop .hm-dk-card { animation: hmDkGrow linear both; animation-timeline: view(inline); will-change: transform, opacity; }
 }
 @keyframes hmDkGrow {
-    0%     { transform: scale(0.6667); transform-origin: left bottom; }
-    26.7%  { transform: scale(0.6667); transform-origin: left bottom; }
-    49.9%  { transform-origin: left bottom; }
-    50%    { transform: scale(1);      transform-origin: center bottom; }
-    50.1%  { transform-origin: right bottom; }
-    73.3%  { transform: scale(0.6667); transform-origin: right bottom; }
-    100%   { transform: scale(0.6667); transform-origin: right bottom; }
+    /* A whole card-step either side of the middle (~43% of the timeline): the card
+       grows and comes into focus smoothly all the way in, then eases out again.
+       It pivots on the side facing the middle, vertically centred. */
+    0%     { transform: scale(0.5); opacity: 0.55; transform-origin: left center; }
+    6.9%   { transform: scale(0.5); opacity: 0.55; transform-origin: left center; animation-timing-function: ease-in-out; }
+    49.9%  { transform-origin: left center; }
+    50%    { transform: scale(1);   opacity: 1;    transform-origin: center; animation-timing-function: ease-in-out; }
+    50.1%  { transform-origin: right center; }
+    93.1%  { transform: scale(0.5); opacity: 0.55; transform-origin: right center; }
+    100%   { transform: scale(0.5); opacity: 0.55; transform-origin: right center; }
+}
 }
 /* Frosted glass veils a card until it is the chosen one. */
 /* A flat, milky veil — not a live blur. A backdrop blur on cards that move and scale
