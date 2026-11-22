@@ -20,7 +20,9 @@
     //
     // The order is fixed in code — there is NO stored/remembered previous order.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    const ICON_ORDER = ['search', 'add', 'account'];   // mode toggle removed — the feed's sub-header carries Art / Clothing now
+    // On the home feed (<html class="vero-feed-head">) the search and + give way to the
+    // wishlist heart and the cart — the + lives in the feed's sub-header there.
+    const ICON_ORDER = ['search', 'add', 'wish', 'cart', 'account'];   // mode toggle removed — the feed's sub-header carries Art / Clothing now
 
     // Purge any previously-saved icon order from the browser, so no old layout
     // memory can ever override the order defined above.
@@ -828,6 +830,14 @@
             font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         #siteHeader .badge.show { display: flex; }
+        /* Wishlist + cart show only on the home feed, in place of the search and the +. */
+        #siteHeader .hdr-feed-only { display: none; }
+        html.vero-feed-head #siteHeader .hdr-feed-only { display: flex; }
+        html.vero-feed-head #siteHeader [data-icon="search"],
+        html.vero-feed-head #siteHeader [data-icon="add"] { display: none !important; }
+        /* A small count on the heart / cart — clear of the icon, not over it. */
+        #siteHeader .hdr-feed-only .badge { top: 3px !important; right: -3px !important; left: auto !important; min-width: 13px !important; width: auto !important; height: 13px !important;
+            padding: 0 3px !important; border: 0 !important; box-shadow: none !important; font-size: 8px !important; line-height: 13px !important; border-radius: 50% !important; }
         /* Wishlist heart that drops out from beneath the cart icon on tap. */
         #siteHeader .hdr-cart { position: relative; }
         #siteHeader .hdr-cart-btn { background: none; border: none; cursor: pointer; padding: 0; color: inherit; }
@@ -1512,6 +1522,18 @@
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
+                </a>
+                <a class="icon-btn hdr-feed-only" onclick="veroPickWishlist(event)" aria-label="Wishlist" role="button" tabindex="0" data-icon="wish" title="Wishlist" style="position:relative">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.9 1.2-1.8 2.8-2.9 4.8-2.9 3.3 0 5.6 3.1 4.4 6.6-1.7 4.8-9.2 9.4-9.2 9.4z"></path>
+                    </svg>
+                    <span class="badge" id="wishlistBadge"></span>
+                </a>
+                <a class="icon-btn hdr-feed-only" onclick="veroPickCart(event)" aria-label="Shopping cart" role="button" tabindex="0" data-icon="cart" title="Cart" style="position:relative">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3z"></path><path d="M9 8V6.5a3 3 0 0 1 6 0V8"></path>
+                    </svg>
+                    <span class="badge" id="cartBadge"></span>
                 </a>
                 <span class="hdr-account" data-icon="account">
                     <button class="icon-btn hdr-account-btn" title="My Account (hold to switch profile)" aria-label="My Account">
