@@ -29,7 +29,11 @@
        initialIndex: 0, loop: false,
        radius: 320, spacing: 14, visibleItems: 7, apexInset: 34,
        scrollSpeed: 0.008, dragSpeed: 0.02, snap: true, momentum: true,
-       edgeFade: true, edgeFadeSize: 30, label: 'Wheel carousel'
+       edgeFade: true, edgeFadeSize: 30, label: 'Wheel carousel',
+       sticky: false,      // a release moves on one item at most (no long fling)
+       hitWidth: null,     // px from the left: only that strip turns the wheel;
+                           // outside it a touch scrolls the page (null = all of it)
+       onSettle: function (item, i) {}   // the wheel has come to rest on an item
      });
      wheel.setIndex(5);  wheel.destroy();
    Styles: .vwc* in assets/home.css.
@@ -66,6 +70,8 @@
             momentum: opts.momentum !== false,
             edgeFade: opts.edgeFade !== false,
             edgeFadeSize: opts.edgeFadeSize != null ? opts.edgeFadeSize : 30,
+            sticky: !!opts.sticky,
+            hitWidth: opts.hitWidth != null ? opts.hitWidth : null,
             render: opts.render || function (it) { return String(it && it.label != null ? it.label : it); },
             label: opts.label || 'Wheel carousel'
         };
@@ -77,7 +83,7 @@
 
         var start = indexOf(opts.initialIndex || 0);
         var rotation = start, selected = start, velocity = 0, frame = null;
-        var dragging = false, dragY = 0, dragR = 0, prevDragR = 0;
+        var dragging = false, dragY = 0, dragR = 0, prevDragR = 0, snapTo = null;
 
         // ---- DOM ----
         host.classList.add('vwc');
@@ -85,8 +91,11 @@
         host.innerHTML =
             '<div class="vwc-stage" role="listbox" tabindex="0" aria-label="' + o.label.replace(/"/g, '&quot;') + '">' +
                 '<div class="vwc-list"></div>' +
+                (o.hitWidth != null ? '<div class="vwc-hit" style="width:' + o.hitWidth + 'px"></div>' : '') +
             '</div>' +
             '<span class="vwc-sr" aria-live="polite"></span>';
+        if (o.hitWidth != null) host.classList.add('vwc-zoned');
+        var inZone = function (e) { return o.hitWidth == null || !!(e.target.closest && e.target.closest('.vwc-hit')); };
         var stage = host.querySelector('.vwc-stage'), list = host.querySelector('.vwc-list'), live = host.querySelector('.vwc-sr');
         if (o.edgeFade) {
             var mask = 'linear-gradient(to bottom, transparent 0%, black ' + o.edgeFadeSize + '%, black ' + (100 - o.edgeFadeSize) + '%, transparent 100%)';
@@ -155,11 +164,12 @@
                     more = true;
                 } else if (!dragging && o.snap) {
                     velocity = 0;
-                    var target = Math.round(rotation), d = target - rotation;
+                    var target = snapTo != null ? clampR(snapTo) : Math.round(rotation), d = target - rotation;
                     if (Math.abs(d) > 0.001 && !reduce) { commit(rotation + d * 0.22); more = true; }
-                    else commit(target);
+                    else { commit(target); snapTo = null; }
                 } else if (!dragging) velocity = 0;
                 frame = more ? requestAnimationFrame(tick) : null;
+                if (!more && !dragging && opts.onSettle) opts.onSettle(items[selected], selected);
             };
             frame = requestAnimationFrame(tick);
         }
@@ -168,6 +178,7 @@
         // ---- Input ----
         function onWheel(e) {
             if (e.ctrlKey || e.metaKey) return;                               // pinch-zoom stays the browser's
+            if (!inZone(e)) return;                                           // outside the strip: the page scrolls
             var raw = e.deltaY;
             if (o.horizontal) { if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; raw = e.deltaX; }   // up/down scrolls the page
             var d = raw * o.scrollSpeed;
@@ -178,6 +189,8 @@
         }
         function onDown(e) {
             if (!e.isPrimary || e.button !== 0) return;
+            if (!inZone(e)) return;
+            snapTo = null;
             dragging = true; stage.classList.add('is-dragging'); velocity = 0;
             dragY = o.horizontal ? e.clientX : e.clientY; dragR = rotation; prevDragR = rotation;
             try { stage.setPointerCapture(e.pointerId); } catch (err) {}
@@ -192,6 +205,13 @@
             if (!dragging) return;
             dragging = false; stage.classList.remove('is-dragging');
             try { if (stage.hasPointerCapture(e.pointerId)) stage.releasePointerCapture(e.pointerId); } catch (err) {}
+            // Sticky: no fling — settle on the nearest item, or the next one along
+            // when the finger was still moving as it let go.
+            if (o.sticky) {
+                var v = velocity; velocity = 0;
+                snapTo = Math.abs(v) > 0.015 ? (v > 0 ? Math.floor(rotation) + 1 : Math.ceil(rotation) - 1) : Math.round(rotation);
+                if (Math.abs(snapTo - rotation) > 1) snapTo = Math.round(rotation);
+            }
             run();
         }
         function onKey(e) {
