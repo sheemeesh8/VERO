@@ -525,7 +525,20 @@ h3, h4, h5, h6, p,
     const listing = Object.assign({}, (self && self._raw) || {});
     // A piece you listed yourself shows exactly what you entered; a demo piece (or one
     // not in the catalogue) gets a full set: its own details, else worked-out ones.
-    const ownListing = !!(self && self._raw && !self._raw.demo);
+    // Yours = in your listings or drafts (uploaded on product-upload), by id or name —
+    // then only what you filled in shows; nothing is added.
+    const ownListing = (() => {
+        if (self && self._raw && !self._raw.demo) return true;
+        if (/^l_/.test(String(product.id || listing.id || ''))) return true;
+        const read = k => { try { const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+        return read('vero_listings').concat(read('vero_drafts')).some(l => l && ((product.id && l.id === product.id) || (l.title || l.name) === product.name));
+    })();
+    // Your own piece: show its upload exactly (its listing, not the catalogue's fill-ins).
+    if (ownListing && !(self && self._raw && !self._raw.demo)) {
+        const read = k => { try { const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+        const mine = read('vero_listings').concat(read('vero_drafts')).find(l => l && ((product.id && l.id === product.id) || (l.title || l.name) === product.name));
+        if (mine) Object.keys(listing).forEach(k => delete listing[k]), Object.assign(listing, mine);
+    }
     const demoFill = ownListing ? {} : Object.assign({},
         window.veroDemoGen ? window.veroDemoGen({ name: product.name, seller: sellerName, type: product.type, category: product.category || listing.itemType || listing.category, collection: listing.collection,
             fabric: product.fabric || listing.fabric, material: listing.material, color: [].concat(product.color || listing.color || [])[0], size: product.size || listing.size, condition: product.condition || listing.condition }) : {},
