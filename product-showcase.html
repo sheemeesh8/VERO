@@ -186,6 +186,7 @@
             padding:15px 0;border-bottom:1px solid #f1eee9;
         }
         .spec-row:last-child{border-bottom:0;}
+        .spec-row.is-empty .sv{color:#9a958c;}
         .spec-row .sk{font-size: 7.65px;letter-spacing:2.6px;text-transform:uppercase;color:#44403b;}
         .spec-row .sv{font-size: 10.2px;letter-spacing:.6px;color:var(--ink);text-align:right;font-weight:300;}
 
@@ -539,10 +540,8 @@ h3, h4, h5, h6, p,
         const mine = read('vero_listings').concat(read('vero_drafts')).find(l => l && ((product.id && l.id === product.id) || (l.title || l.name) === product.name));
         if (mine) Object.keys(listing).forEach(k => delete listing[k]), Object.assign(listing, mine);
     }
-    const demoFill = ownListing ? {} : Object.assign({},
-        window.veroDemoGen ? window.veroDemoGen({ name: product.name, seller: sellerName, type: product.type, category: product.category || listing.itemType || listing.category, collection: listing.collection,
-            fabric: product.fabric || listing.fabric, material: listing.material, color: [].concat(product.color || listing.color || [])[0], size: product.size || listing.size, condition: product.condition || listing.condition }) : {},
-        (window.veroDemoDetails || {})[product.name] || {});
+    // No made-up values: only a demo piece's own details (assets/demo-details.js).
+    const demoFill = ownListing ? {} : ((window.veroDemoDetails || {})[product.name] || {});
     Object.keys(demoFill).forEach(k => { const v = listing[k]; if (v == null || v === '' || (Array.isArray(v) && !v.length)) listing[k] = demoFill[k]; });
     const desc = product.desc || product.description || listing.description || '';
     // A piece on sale shows its original price too.
@@ -719,15 +718,17 @@ h3, h4, h5, h6, p,
     const sYear   = (product.year || listing.year || '').toString().trim();
     const sEdition = (product.edition || listing.edition || '').toString().trim();
     const sSigned = capW((product.signed || listing.signed || '').toString().trim());
-    const specs = [[isArt ? 'Artist' : 'Brand', sBrand !== company ? sBrand : ''], ['Category', sCategory], ['Size', sSize],
+    const specs = [[isArt ? 'Artist' : 'Brand', sBrand], ['Category', sCategory], ['Size', sSize],
                    [isArt ? 'Material' : 'Fabric', sFabric], ['Colour', listJoin(sColor)], ['Colour combination', sCombo],
                    ['Style', styleList.join(', ')], ['Condition', sCondition], ['For', audience],
                    // The collection and the season, under For.
                    ['Collection', sCollection], ['Season', sSeason],
-                   ['Year', sYear], ['Edition', sEdition], ['Signed', sSigned]].filter(r => r[1]);
+                   ['Year', sYear]].concat(isArt ? [['Edition', sEdition], ['Signed', sSigned]] : [])
+                   .filter(r => !(isArt && (r[0] === 'For' || r[0] === 'Season')));
+    // All the details always show, as before; one that wasn't filled in reads "—".
     const specTable = document.getElementById('specTable');
-    specTable.innerHTML = specs.map(r => `<div class="spec-row"><span class="sk">${r[0]}</span><span class="sv">${escHTML(r[1])}</span></div>`).join('');
-    specTable.hidden = !specs.length;
+    specTable.innerHTML = specs.map(r => `<div class="spec-row${r[1] ? '' : ' is-empty'}"><span class="sk">${r[0]}</span><span class="sv">${r[1] ? escHTML(r[1]) : '\u2014'}</span></div>`).join('');
+    specTable.hidden = false;
 
     // seller row — the whole row opens the seller's pieces
     document.getElementById('sellerName').textContent = sellerName;
