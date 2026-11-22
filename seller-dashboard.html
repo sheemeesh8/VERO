@@ -479,7 +479,7 @@ h3, h4, h5, h6, p,
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261117e"></script>
     <!-- Every time-series graph: one edge-to-edge line chart (assets/line-chart.*). -->
-    <link rel="stylesheet" href="assets/line-chart.css?v=20261115b">
+    <link rel="stylesheet" href="assets/line-chart.css?v=20261122a">
     <script src="assets/line-chart.js?v=20261115b"></script>
     <style id="dash-rhythm">
         /* One even gap between every section of the dashboard, and no pager dots. */
@@ -535,7 +535,7 @@ h3, h4, h5, h6, p,
         .hc-range { font-size: 11.05px !important; letter-spacing: 2px !important; }
     </style>
     <!-- Ledger look shared by both statistics dashboards (assets/dash.css). -->
-    <link rel="stylesheet" href="assets/dash.css?v=20261115d">
+    <link rel="stylesheet" href="assets/dash.css?v=20261122e">
     <link rel="stylesheet" href="assets/area-motion.css?v=20261113m">
     <link rel="stylesheet" href="assets/site-font.css?v=3">
 </head>
@@ -1241,7 +1241,7 @@ h3, h4, h5, h6, p,
             // A rising line (oldest → newest, left → right) with a soft area fill.
             // Followers / views are levels: a grouped point shows the value at its end.
             const lineSVG = (vals, color, style, names) => veroLineChart(vals, { color: color, group: 'last', style: style, labels: names });
-            // Each range starts on its first day: Sunday, the 1st, 1 January — up to today.
+            // The week is the last 7 days; month and year start on the 1st / 1 January — up to today.
             const nFor = r => { const t = new Date(); return r === 'week' ? t.getDay() + 1 : r === 'year' ? t.getMonth() + 1 : t.getDate(); };
             const labelsFor = r => {
                 const now = new Date(), out = [];
@@ -1877,12 +1877,15 @@ h3, h4, h5, h6, p,
             function fineLine(vals, names) { return veroLineChart(vals, { format: nis, style: 'area', labels: names }); }
 
             // Build one daily bucket per day in the range (oldest → newest, today last).
-            // Week = Sunday → today, Month = the 1st → today, Year = 1 January → today.
+            // Week = the last 7 days, Month = the 1st → today, Year = 1 January → today.
+            // Never fewer than 7 days: on a Sunday, the 1st or 1 January the range was a
+            // single day — one point, a flat line and a lone axis letter.
             function build(kind) {
-                // Each range starts on its first day: Sunday, the 1st, 1 January — up to today.
-                var N = kind === 'Week' ? now.getDay() + 1
+                // The week is the last 7 days; month and year start on the 1st / 1 January — up to today.
+                var N = kind === 'Week' ? 7
                       : kind === 'Year' ? Math.round((sod(now) - new Date(now.getFullYear(), 0, 1).getTime()) / DAY) + 1
                       : now.getDate();
+                N = Math.max(N, 7);
                 var vals = [], i;
                 for (i = N - 1; i >= 0; i--) {
                     var day = sod(new Date(now.getTime() - i * DAY));
@@ -1913,7 +1916,7 @@ h3, h4, h5, h6, p,
                         return Math.round(180 + 220 * Math.abs(Math.sin(t * Math.PI * 3)) + 160 * seed(i + 1) + t * 120);
                     });
                 }
-                plot.innerHTML = fineLine(data.vals, kind === 'Week' ? data.vals.map(function (_, i) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i % 7]; }) : null);   // day names for the pie view
+                plot.innerHTML = fineLine(data.vals, kind === 'Week' ? data.vals.map(function (_, i) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(now.getTime() - (data.n - 1 - i) * DAY).getDay()]; }) : null);   // day names for the pie view
                 xEl.innerHTML = data.labels.map(function (l) { return '<span>' + l + '</span>'; }).join('');
                 rangeEl.textContent = kind;
                 totalEl.textContent = nis(data.vals.reduce(function (s, v) { return s + v; }, 0));
