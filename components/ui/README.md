@@ -81,3 +81,37 @@ npm install framer-motion next-themes
 
 and a `ThemeProvider` from `next-themes` around the app (the component calls
 `useTheme()`; with `mode="light"` / `"dark"` / `"custom"` the provider is optional).
+
+---
+
+## Lumina interactive list (`lumina-interactive-list.tsx`)
+
+Kept here as the **reference** for the requested 21st.dev component, exactly as
+delivered (demo: `lumina-interactive-list-demo.tsx`, since `demo.tsx` belongs to
+Zoom Parallax). It can't run in this repo as-is: no React / TypeScript / Tailwind
+build, and it loads GSAP and three.js r128 from cdnjs at runtime.
+
+It ships as a **vanilla port**, `assets/lumina-hero.js` —
+`VeroLumina(el, { slides, interval, duration, mono, mount, onChange })`:
+
+- the same "glass bubble" WebGL transition (the component's glass shader — its
+  other effects were only cross-fade stubs), the per-slide letter entrances
+  (six, as in the component), the counter and the progress-line navigation;
+- **no three.js or GSAP**: one full-screen quad on raw WebGL1, tweens on
+  `requestAnimationFrame`, letter entrances in CSS — about 12 KB instead of
+  ~600 KB of libraries, and it draws only while a transition runs;
+- pauses off screen and in background tabs; cross-fades without WebGL or with
+  `prefers-reduced-motion`; `mono: true` renders the photos black and white.
+- styles: the `.lu-*` rules in `events.html`.
+
+**Where it's used:** the events page's opening hero (`events.html`). The slides
+are the next six events (title → the event's page, date · time · place as the
+description) over the site's own editorial photos in `assets/hero/` — no
+external images. The index.css tokens from the prompt (`--color-bg`,
+`--color-accent`, PP Neue Montreal …) aren't added: the hero uses the site's
+own palette and type.
+
+To use the `.tsx` directly you'd need the React + TypeScript + Tailwind + shadcn
+setup described above, plus `npm install tw-animate-css` for the `@import` in
+the prompt's index.css, and the component's own CSS for `.slider-wrapper`,
+`.slide-*` and `.slides-navigation` (not included in the prompt).
