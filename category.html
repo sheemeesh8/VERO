@@ -9,7 +9,7 @@
     <script src="vero-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Arimo:wght@400;500;600;700&family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Arimo:wght@400;500;600;700&family=Poppins:wght@200;300;400;500;600&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="product-card.css?v=10">
     <style>
         * { box-sizing: border-box; }
@@ -81,6 +81,34 @@
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
         @media (min-width: 680px) { .cat-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
         .cat-empty { text-align: center; color: #3c3935; padding: 60px 0; font-size: 11.9px; letter-spacing: 0.4px; }
+        /* ===== Under the hero: search + filter (fine line, as on the cart / wishlist) ===== */
+        .cat-controls { display: flex; align-items: flex-end; gap: 16px; margin: 6px 0 18px; }
+        .cc-search { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 0 0 11px; border-bottom: 1px solid #1b1916; cursor: text; }
+        .cc-search svg, .cc-filter svg { flex: none; fill: none; stroke: #1b1916; stroke-linecap: round; stroke-linejoin: round; }
+        .cc-search svg { width: 16px; height: 16px; stroke-width: 1.3; }
+        .cc-search input { flex: 1 1 auto; min-width: 0; border: 0; outline: none; background: none; font-size: 11.05px; letter-spacing: 0.3px; color: #1b1916; -webkit-appearance: none; }
+        .cc-search input::placeholder { color: #413e39; }
+        .cc-filter { position: relative; flex: none; display: inline-flex; padding: 0; border: 0; background: none; cursor: pointer; transform: translateY(6px); transition: opacity .2s; }
+        .cc-filter svg { width: 30px; height: 30px; stroke-width: 1.2; }
+        .cc-filter:hover { opacity: .55; }
+        .cc-dot { position: absolute; top: 2px; right: 0; width: 7px; height: 7px; border-radius: 50%; background: #B3433B; }
+        .cc-dot[hidden] { display: none; }
+        .cc-overlay { position: fixed; inset: 0; z-index: 400; background: rgba(20,18,14,0.4); display: flex; align-items: flex-end; justify-content: center; }
+        .cc-overlay[hidden] { display: none; }
+        .cc-sheet { width: 100%; max-width: 560px; background: #fff; padding: 20px 22px calc(26px + env(safe-area-inset-bottom, 0px)); animation: ccRise .34s cubic-bezier(.2,.8,.2,1) both; }
+        @keyframes ccRise { from { transform: translateY(100%); } to { transform: none; } }
+        .cc-grip { width: 40px; height: 3px; background: #e6e1d8; margin: 0 auto 16px; }
+        .cc-h { margin: 0 0 6px; font-size: 11.9px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; }
+        .cc-k { margin: 18px 0 9px; font-size: 7.8px; letter-spacing: 2px; text-transform: uppercase; color: #45423d; }
+        .cc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cc-chip { padding: 9px 13px; border: 1px solid #d8d3ca; background: #fff; color: #16150f; cursor: pointer; font-size: 9.35px; letter-spacing: .4px; }
+        .cc-chip.on { background: #16150f; border-color: #16150f; color: #fff; }
+        .cc-acts { display: flex; gap: 10px; margin-top: 24px; }
+        .cc-clear, .cc-go { flex: 1; min-height: 46px; cursor: pointer; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+        .cc-clear { flex: 0 0 34%; background: #fff; border: 1px solid #16150f; color: #16150f; }
+        .cc-go { background: #16150f; border: 1px solid #16150f; color: #fff; }
+        /* The hero title in the site's Bodoni (above the universal Raleway rule in site-font.css). */
+        .cat-title:not(#bmz):not(#bmz):not(#bmz):not(#bmz):not(#bmz) { font-family: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif !important; font-weight: 400; }
     </style>
     <link rel="stylesheet" href="assets/site-font.css">
 </head>
@@ -99,18 +127,47 @@
             <p class="cat-sub" id="catSub"></p>
         </div>
         <section class="cat-intro">
-            <form class="cat-search" role="search" onsubmit="return false;">
-                <input type="search" id="catSearch" placeholder="Search&hellip;" autocomplete="off" aria-label="Search this category">
-            </form>
             <p class="cat-rail-head">Most liked</p>
             <div class="rail-trans" id="catRail"></div>
         </section>
     </section>
 
     <main class="cat-wrap" id="catWrap">
+        <!-- Under the hero: search + filter, the same fine-line row as the cart and wishlist. -->
+        <div class="cat-controls">
+            <label class="cc-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="search" id="catSearch" placeholder="Search&hellip;" autocomplete="off" aria-label="Search this collection">
+            </label>
+            <button class="cc-filter" type="button" id="catFilterBtn" aria-label="Filters" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"></path><path d="M12 12v8"></path><path d="M8 21h8"></path></svg>
+                <i class="cc-dot" id="catFilterDot" hidden></i>
+            </button>
+        </div>
         <p class="cat-count" id="catCount"></p>
         <div class="cat-grid" id="catGrid"></div>
     </main>
+
+    <!-- Filters: sort, item type, on sale only. -->
+    <div class="cc-overlay" id="catFilters" role="dialog" aria-modal="true" aria-label="Filters" hidden>
+        <div class="cc-sheet">
+            <div class="cc-grip"></div>
+            <h3 class="cc-h">Filters</h3>
+            <p class="cc-k">Sort</p>
+            <div class="cc-chips" data-group="sort">
+                <button type="button" class="cc-chip on" data-v="new">Newest</button>
+                <button type="button" class="cc-chip" data-v="low">Price: low to high</button>
+                <button type="button" class="cc-chip" data-v="high">Price: high to low</button>
+            </div>
+            <p class="cc-k">Item type</p>
+            <div class="cc-chips" data-group="type" id="catTypes"></div>
+            <p class="cc-k">Price</p>
+            <div class="cc-chips" data-group="sale">
+                <button type="button" class="cc-chip" data-v="sale">On sale only</button>
+            </div>
+            <div class="cc-acts"><button type="button" class="cc-clear" id="catFilterClear">Clear</button><button type="button" class="cc-go" id="catFilterGo">Show pieces</button></div>
+        </div>
+    </div>
 
     <div id="siteFooter"></div>
 
@@ -177,7 +234,7 @@
         document.getElementById('catSub').textContent = cfg.sub;
 
         var searchEl = document.getElementById('catSearch');
-        searchEl.placeholder = 'Search ' + cfg.title + '…';
+        searchEl.placeholder = 'Search ' + cfg.title + '\u2026';
 
         var allItems = null; // cached full list once collections.js is ready
         var railDrawn = false;
@@ -227,10 +284,17 @@
             }
             drawRail(vc);
             var q = (searchEl.value || '').trim().toLowerCase();
-            var items = !q ? allItems : allItems.filter(function (p) {
-                return ((p.name || '') + ' ' + (p.seller || '') + ' ' + (p.category || ''))
-                    .toLowerCase().indexOf(q) !== -1;
+            drawTypes();
+            var items = allItems.filter(function (p) {
+                if (q && ((p.name || '') + ' ' + (p.seller || '') + ' ' + (p.category || '')).toLowerCase().indexOf(q) === -1) return false;
+                if (flt.types.length && flt.types.indexOf(p.category || '') === -1) return false;
+                if (flt.sale && !((vc.discountOf(p._raw) || {}).onSale)) return false;
+                return true;
             });
+            var priceOf = function (p) { var d = vc.discountOf(p._raw) || {}; return vc.toNum(d.onSale ? d.price : (d.original != null ? d.original : p.price)) || 0; };
+            if (flt.sort === 'low') items = items.slice().sort(function (a, b) { return priceOf(a) - priceOf(b); });
+            else if (flt.sort === 'high') items = items.slice().sort(function (a, b) { return priceOf(b) - priceOf(a); });
+            document.getElementById('catFilterDot').hidden = !(flt.types.length || flt.sale || flt.sort !== 'new');
             var now = Date.now();
             if (!items.length) {
                 grid.innerHTML = '<div class="cat-empty">' +
@@ -245,6 +309,36 @@
         }
 
         searchEl.addEventListener('input', function () { if (allItems) draw(); });
+
+        // ---- Filters: sort, item type (from the pieces themselves), on sale only ----
+        var flt = { sort: 'new', types: [], sale: false }, typesDrawn = false;
+        function drawTypes() {
+            if (typesDrawn || !allItems) return;
+            var seen = {}; allItems.forEach(function (p) { if (p.category) seen[p.category] = (seen[p.category] || 0) + 1; });
+            var keys = Object.keys(seen).sort(function (a, b) { return seen[b] - seen[a]; });
+            var host = document.getElementById('catTypes');
+            host.innerHTML = keys.length ? keys.map(function (k) { return '<button type="button" class="cc-chip" data-v="' + esc(k) + '">' + esc(k) + '</button>'; }).join('') : '<span class="cc-k" style="margin:0">—</span>';
+            typesDrawn = true;
+        }
+        var sheet = document.getElementById('catFilters');
+        function openFilters(on) { sheet.hidden = !on; }
+        document.getElementById('catFilterBtn').addEventListener('click', function () { drawTypes(); openFilters(true); });
+        sheet.addEventListener('click', function (e) {
+            if (e.target === sheet) { openFilters(false); return; }
+            var c = e.target.closest('.cc-chip'); if (!c) return;
+            var g = c.parentNode.getAttribute('data-group'), v = c.getAttribute('data-v');
+            if (g === 'sort') { flt.sort = v; [].forEach.call(c.parentNode.children, function (x) { x.classList.toggle('on', x === c); }); }
+            else if (g === 'type') { var i = flt.types.indexOf(v); if (i === -1) flt.types.push(v); else flt.types.splice(i, 1); c.classList.toggle('on', i === -1); }
+            else if (g === 'sale') { flt.sale = !flt.sale; c.classList.toggle('on', flt.sale); }
+            if (allItems) draw();
+        });
+        document.getElementById('catFilterGo').addEventListener('click', function () { openFilters(false); document.getElementById('catWrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+        document.getElementById('catFilterClear').addEventListener('click', function () {
+            flt = { sort: 'new', types: [], sale: false };
+            [].forEach.call(sheet.querySelectorAll('.cc-chip'), function (x) { x.classList.toggle('on', x.getAttribute('data-v') === 'new'); });
+            if (allItems) draw();
+        });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') openFilters(false); });
 
         // collections.js may load a tick later; retry briefly until it's ready.
         if (!draw()) {
