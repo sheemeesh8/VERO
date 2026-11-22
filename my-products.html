@@ -210,17 +210,32 @@
                 + list.map(v => `<option value="${v}"${v === cur ? ' selected' : ''}>${v ? v + '% off' : 'No discount'}</option>`).join('')
                 + `</select></label>`;
         }
+        // The product page for one of your own pieces (listing or draft). The link carries
+        // the basics plus which entry it is; the page reads the photos from storage.
+        function ownProductUrl(p, k, i, name) {
+            const data = { _own: { k: k, i: i } };
+            ['id', 'price', 'icon', 'category', 'seller', 'type', 'brand', 'itemType', 'fabric', 'material', 'color',
+             'size', 'condition', 'style', 'gender', 'audience', 'description']
+                .forEach(f => { if (p[f] != null && p[f] !== '' && typeof p[f] !== 'object') data[f] = p[f]; });
+            data.name = name || p.name || p.title || 'Untitled';
+            if (!data.seller) data.seller = p.brand || 'You';
+            if (p.category === 'art') data.type = 'art';
+            const d = discOf(p), price = Number(p.price) || 0;
+            if (d && price) { data.price = Math.round(price * (1 - d / 100)); data.onSale = true; data.originalPrice = price; }
+            return 'product-showcase.html?product=' + encodeURIComponent(JSON.stringify(data));
+        }
         function productCard(p, idx) {
             const src = imgOf(p);
             const fig = src ? `<img class="pc-photo" src="${esc(src)}" alt="${esc(p.name || '')}" draggable="false">` : esc(p.icon || '🛍️');
             const href = `product-edit.html?i=${idx}${FROM}`;
+            const pageHref = ownProductUrl(p, 'vero_listings', idx);
             const disc = discOf(p), price = Number(p.price) || 0, live = p.status !== 'sold';
             const priceHtml = disc && price
                 ? `<span class="vprice-wrap"><span class="vprice-was">${nis(price)}</span><span class="vprice vprice-sale">${nis(Math.round(price * (1 - disc / 100)))}</span></span>`
                 : `<span class="vprice">${nis(p.price)}</span>`;
             return `
                 <div class="mp-cell">
-                <a class="product-card" href="${href}"${EMBEDDED ? ' target="_parent"' : ''} title="Edit ${esc(p.name || 'product')}">
+                <a class="product-card" href="${esc(pageHref)}"${EMBEDDED ? ' target="_parent"' : ''} title="${esc(p.name || 'product')}">
                     <div class="product-image">${fig}</div>${p.status === 'sold' ? '<span class="mp-sold-chip">Sold</span>' : ''}
                     <div class="product-info">
                         <div class="pc-left">
@@ -242,7 +257,7 @@
             const cat = p.category === 'art' ? 'Art' : p.category === 'clothing' ? 'Clothing' : '—';
             return `
                 <div class="draft-cell">
-                    <div class="product-card draft-card" data-i="${i}" role="button" tabindex="0" title="Continue this draft">
+                    <div class="product-card draft-card" data-i="${i}" data-page="${esc(ownProductUrl(p, 'vero_drafts', i, titleOf(p)))}" role="button" tabindex="0" title="${esc(titleOf(p))}">
                         <div class="product-image">${fig}
                             <span class="draft-badge">Draft</span>
                             <span class="pe-edit" data-act="edit" data-i="${i}" title="Edit draft" aria-label="Edit draft">
@@ -345,11 +360,12 @@
                 drafts.splice(i, 1); save('vero_drafts', drafts);
                 render(); return;
             }
-            // Anywhere else on the card (incl. the pencil) → continue the draft.
-            const card = e.target.closest('.product-card'); if (!card) return;
+            const card = e.target.closest('.product-card'); if (!card || card.dataset.i == null) return;
             const i = Number(card.dataset.i); if (!drafts[i]) return;
-            save('vero_resume_draft', drafts[i]);
-            (EMBEDDED ? window.parent : window).location.href = 'index.html';
+            const nav = (EMBEDDED ? window.parent : window).location;
+            // The pencil → continue the draft; anywhere else on the card → its product page.
+            if (e.target.closest('[data-act="edit"]')) { save('vero_resume_draft', drafts[i]); nav.href = 'index.html'; return; }
+            nav.href = card.dataset.page;
         });
 
         render();

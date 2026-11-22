@@ -528,7 +528,13 @@ h3, h4, h5, h6, p,
     // not in the catalogue) gets a full set: its own details, else worked-out ones.
     // Yours = in your listings or drafts (uploaded on product-upload), by id or name —
     // then only what you filled in shows; nothing is added.
+    // Opened from My products: _own names the exact entry (vero_listings / vero_drafts + index).
+    const ownRef = (() => {
+        const o = product._own; if (!o || !/^vero_(listings|drafts)$/.test(o.k)) return null;
+        try { const v = JSON.parse(localStorage.getItem(o.k)); return Array.isArray(v) && v[o.i] ? v[o.i] : null; } catch (e) { return null; }
+    })();
     const ownListing = (() => {
+        if (ownRef) return true;
         if (self && self._raw && !self._raw.demo) return true;
         if (/^l_/.test(String(product.id || listing.id || ''))) return true;
         const read = k => { try { const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
@@ -537,7 +543,7 @@ h3, h4, h5, h6, p,
     // Your own piece: show its upload exactly (its listing, not the catalogue's fill-ins).
     if (ownListing && !(self && self._raw && !self._raw.demo)) {
         const read = k => { try { const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
-        const mine = read('vero_listings').concat(read('vero_drafts')).find(l => l && ((product.id && l.id === product.id) || (l.title || l.name) === product.name));
+        const mine = ownRef || read('vero_listings').concat(read('vero_drafts')).find(l => l && ((product.id && l.id === product.id) || (l.title || l.name) === product.name));
         if (mine) Object.keys(listing).forEach(k => delete listing[k]), Object.assign(listing, mine);
     }
     // No made-up values: only a demo piece's own details (assets/demo-details.js).
@@ -591,10 +597,15 @@ h3, h4, h5, h6, p,
             "font-size='42' font-weight='400' fill='#eceae6'>" + ch + "</text></svg>";
         return 'data:image/svg+xml,' + encodeURIComponent(svg);
     }
-    const photoObj = product.photos || {};
+    // Your own piece's photos stay in storage (too big for the link): read them from its listing.
+    const ownPhotos = ownListing ? listing : {};
+    const rawPhotos = product.photos || ownPhotos.photos || {};
+    const photoObj = Array.isArray(rawPhotos) ? { cover: rawPhotos[0], detail: rawPhotos[1], label: rawPhotos[2], angle: rawPhotos[3] } : rawPhotos;
     const uploaded = ['cover', 'detail', 'label', 'angle'].map(k => photoObj[k]).filter(Boolean);
     const cover = product.processed_cover || product.image || product.cover
-        || product.original_cover || product.img || product.imageUrl || product.photo || photoObj.cover || null;
+        || product.original_cover || product.img || product.imageUrl || product.photo
+        || ownPhotos.processed_cover || ownPhotos.image || ownPhotos.cover || ownPhotos.original_cover
+        || photoObj.cover || null;
     const extra = (product.images && product.images.length) ? product.images : [];
     // Slide 1 = the product on the #F0F0F0 ground (the cover cut-out, or the
     // placeholder icon). The remaining slides are the other uploaded shots,

@@ -654,6 +654,13 @@ h3, h4, h5, h6, p,
             // history items so the timeline reads on the card itself.
             const metaLine = past ? dateLine : (p.category || dateLine);
             const editHref = `product-edit.html?i=${idx}${isSeller ? '&from=seller' : ''}`;
+            // The card opens the piece's product page (the link carries which listing it
+            // is; the page reads its photos from storage). The pencil opens the editor.
+            const pageData = { _own: { k: 'vero_listings', i: idx }, name: p.name || p.title || 'Untitled listing', seller: p.seller || p.brand || 'You' };
+            ['id', 'icon', 'category', 'type', 'brand', 'itemType', 'fabric', 'material', 'color', 'size', 'condition', 'style', 'gender', 'audience', 'description']
+                .forEach(f => { if (p[f] != null && p[f] !== '' && typeof p[f] !== 'object') pageData[f] = p[f]; });
+            pageData.price = finalPrice; if (hasDisc) { pageData.onSale = true; pageData.originalPrice = price; }
+            const pageHref = 'product-showcase.html?product=' + encodeURIComponent(JSON.stringify(pageData));
             const fig = figHTML(p);
             // Live listings open the editor (whole card is the link + a pencil).
             // History items are read-only — no edit link, no pencil.
@@ -661,7 +668,7 @@ h3, h4, h5, h6, p,
                     <div class="product-image">${fig}
                         <span class="status-badge ${status}">${badgeText}</span>
                         ${hasDisc ? `<span class="disc-badge">-${disc}%</span>` : ''}
-                        ${past ? '' : `<span class="pe-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg></span>`}
+                        ${past ? '' : `<span class="pe-edit" data-edit="${editHref}" role="link" aria-label="Edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg></span>`}
                     </div>
                     <div class="product-info">
                         <div class="pc-left">
@@ -675,7 +682,7 @@ h3, h4, h5, h6, p,
                     </div>`;
             const cardEl = past
                 ? `<div class="product-card" title="${p.name || p.title || 'Untitled listing'}">${inner}</div>`
-                : `<a class="product-card" href="${editHref}"${EMBEDDED ? ' target="_parent"' : ''} title="${p.name || p.title || 'Untitled listing'}">${inner}</a>`;
+                : `<a class="product-card" href="${pageHref.replace(/"/g, '&quot;')}"${EMBEDDED ? ' target="_parent"' : ''} title="${p.name || p.title || 'Untitled listing'}">${inner}</a>`;
             // The discount and collection pickers sit under the card, not on its image.
             return `<div class="prod-cell ${past ? 'past' : ''}">${cardEl}${past ? '' : discountSelect(p, idx) + collectionSelect(p, idx)}</div>`;
         }
@@ -776,6 +783,14 @@ h3, h4, h5, h6, p,
         }
         function closeNego() { document.getElementById('negoPop').classList.remove('open'); }
         document.getElementById('negoPop').addEventListener('click', (e) => { if (e.target.id === 'negoPop') closeNego(); });
+
+        // The pencil on a card opens the editor (the card itself opens the product page).
+        document.querySelector('.wrap').addEventListener('click', (e) => {
+            const pen = e.target.closest('.pe-edit[data-edit]');
+            if (!pen) return;
+            e.preventDefault(); e.stopPropagation();
+            (EMBEDDED ? window.parent : window).location.href = pen.dataset.edit;
+        }, true);
 
         // Status actions.
         document.querySelector('.wrap').addEventListener('click', (e) => {

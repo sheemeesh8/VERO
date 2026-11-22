@@ -233,6 +233,15 @@ h3, h4, h5, h6, p,
             return p.name || p.title || [p.brand, p.itemType].filter(Boolean).join(' ') || 'Untitled draft';
         }
 
+        // A draft's product page: the link carries the basics and which draft it is;
+        // the product page reads the photos from storage.
+        function pageOf(p, i) {
+            const data = { _own: { k: 'vero_drafts', i: i }, name: titleOf(p), seller: p.brand || 'You' };
+            ['price', 'icon', 'brand', 'itemType', 'fabric', 'material', 'color', 'size', 'condition', 'style', 'gender', 'audience', 'description']
+                .forEach(f => { if (p[f] != null && p[f] !== '' && typeof p[f] !== 'object') data[f] = p[f]; });
+            if (p.category === 'art') data.type = 'art';
+            return 'product-showcase.html?product=' + encodeURIComponent(JSON.stringify(data));
+        }
         function card(p, i) {
             const src = imgOf(p);
             const cat = p.category === 'art' ? 'Art' : p.category === 'clothing' ? 'Clothing' : '—';
@@ -242,7 +251,7 @@ h3, h4, h5, h6, p,
             // trash to delete, and a Publish button beneath to send it to the feed.
             return `
                 <div class="draft-cell">
-                    <div class="product-card draft-card" data-i="${i}" role="button" tabindex="0" title="Continue this draft">
+                    <div class="product-card draft-card" data-i="${i}" role="button" tabindex="0" title="${titleOf(p).replace(/"/g, '&quot;')}">
                         <div class="product-image">${fig}
                             <span class="draft-badge">Draft</span>
                             <span class="pe-edit" data-act="edit" data-i="${i}" title="Edit draft" aria-label="Edit draft">
@@ -323,13 +332,16 @@ h3, h4, h5, h6, p,
                 publishDraft(Number(pub.dataset.i));
                 return;
             }
-            // Click anywhere else on the card (incl. the edit pencil) → continue it.
+            // The pencil → continue the draft; anywhere else on the card → its product page.
             const card = e.target.closest('.product-card');
             if (!card) return;
             const i = Number(card.dataset.i);
             if (!drafts[i]) return;
-            save('vero_resume_draft', drafts[i]);
-            window.location.href = 'index.html';
+            if (e.target.closest('[data-act="edit"]')) { save('vero_resume_draft', drafts[i]); window.location.href = 'index.html'; return; }
+            // Opened in the drafts panel on My products: the product page takes the whole screen.
+            let nav = window;
+            try { if (window.parent !== window && window.parent.document.getElementById('draftSlideFrame')) nav = window.parent; } catch (err) {}
+            nav.location.href = pageOf(drafts[i], i);
         });
 
         render();
