@@ -311,6 +311,11 @@
 
             /* header */
             case 'cover': pickCover(); break;
+
+            case 'reset-layout':
+                sections = V.starter({ storeName: SF.storeName(), cols: readCfg().grid }); selId = null;
+                closeSheet(); commit(); paint(); window.scrollTo({ top: 0, behavior: 'smooth' });
+                toast('Recommended layout loaded · Undo to go back'); break;
         }
     }
 
@@ -578,7 +583,9 @@
             '<div class="le-lbl">Accent colour</div><div class="le-sw">' + ACCENTS.map(function (c) {
                 return '<button type="button" class="le-swatch' + ((theme.accent || '') === c ? ' on' : '') + (c ? '' : ' le-auto') + '" data-act="accent" data-v="' + c + '"' +
                     (c ? ' style="background:' + c + '"' : '') + ' aria-label="' + (c || 'Template colour') + '">' + (c ? '' : 'A') + '</button>';
-            }).join('') + '</div><p class="le-sh-note">Theme changes go live when you publish.</p>');
+            }).join('') + '</div><p class="le-sh-note">Theme changes go live when you publish.</p>' +
+            '<div class="le-lbl">Layout</div><button type="button" class="le-btn le-wide" data-act="reset-layout">Use the recommended layout</button>' +
+            '<p class="le-sh-note">Hero slider by gender → pushed items slider → banner → all items. Replaces the current sections (Undo brings them back).</p>');
     }
     function applyTheme(t) {
         if (!t) return;
@@ -671,16 +678,26 @@
                     '<div class="le-lbl">Slides</div>';
                 (s.slides || []).forEach(function (sl, i) {
                     h += '<div class="le-sub">' + listHead(s, 'slides', i, s.slides.length, 'Slide ' + (i + 1) + (sl.title ? ' · ' + esc(sl.title) : '')) +
-                        imgRow(s, 'slides.' + i + '.image', 'Picture') + '</div>';
+                        imgRow(s, 'slides.' + i + '.image', 'Picture') +
+                        select(s, 'slides.' + i + '.gender', 'Its button opens', V.GENDERS.map(function (g) { return [g[0], g[0] ? g[1] + '\'s items' : 'The items (no filter)']; })) + '</div>';
                 });
                 h += '<button type="button" class="le-btn le-wide" data-act="list-add" data-list="slides">' + svg('plus') + 'Add slide</button>' +
                     '<p class="le-sh-note">Tip: type on the slide itself to change its texts.</p>';
                 break;
             case 'products':
-                h += seg(s, 'layout', 'Layout', [['grid', 'Grid'], ['feature', 'Featured'], ['carousel', 'Carousel'], ['list', 'List']]) +
+                h += seg(s, 'filter', 'Which items', [['all', 'All'], ['promoted', 'Pushed'], ['women', 'Women'], ['men', 'Men'], ['kids', 'Kids']]) +
+                    toggle(s, 'bare', 'No background behind the cards') +
+                    seg(s, 'layout', 'Layout', [['grid', 'Grid'], ['feature', 'Featured'], ['carousel', 'Carousel'], ['list', 'List']]) +
                     (s.layout === 'grid' || s.layout === 'carousel' || !s.layout ? seg(s, 'cols', s.layout === 'carousel' ? 'Cards in view' : 'Columns', [[1, '1'], [2, '2'], [3, '3'], [4, '4']], true) : '') +
                     seg(s, 'sort', 'Order', [['default', 'Newest'], ['low', 'Price ↑'], ['high', 'Price ↓']]) +
                     seg(s, 'limit', 'How many', [[0, 'All'], [4, '4'], [6, '6'], [8, '8'], [12, '12']], true);
+                if (s.filter === 'promoted') {
+                    var mine = SF.products();
+                    h += '<div class="le-lbl">Pushed items</div>' + (mine.length ? mine.map(function (pr, k) {
+                        return '<label class="le-tg"><span>' + esc(pr.name) + ' · ' + V.nis(pr.price) + '</span><input type="checkbox" data-push="' + k + '"' +
+                            (pr.promoted || pr.pushed ? ' checked' : '') + '><i></i></label>';
+                    }).join('') + '<p class="le-sh-note">Pushing an item is saved right away.</p>' : '<p class="le-sh-note">Upload items first, then push the ones to feature here.</p>');
+                }
                 break;
             case 'features':
                 h += seg(s, 'style', 'Style', [['plain', 'Plain'], ['boxed', 'Boxed']]) + '<div class="le-lbl">Highlights</div>';
@@ -764,8 +781,24 @@
             setPath(s, path, el.value); paint();
         }
     });
+    // Push / un-push one of the seller's items (written straight to vero_listings).
     document.addEventListener('change', function (e) {
         var el = e.target;
+        if (!active || !el.hasAttribute || !el.hasAttribute('data-push')) return;
+        var pr = SF.products()[Number(el.getAttribute('data-push'))]; if (!pr) return;
+        pr.promoted = el.checked;
+        if (pr.lid != null) {
+            try {
+                var L = JSON.parse(localStorage.getItem('vero_listings')) || [];
+                if (L[pr.lid]) { L[pr.lid].promoted = el.checked; localStorage.setItem('vero_listings', JSON.stringify(L)); }
+            } catch (err) {}
+        }
+        paint();
+        toast(el.checked ? pr.name + ' is pushed' : pr.name + ' is no longer pushed');
+    });
+    document.addEventListener('change', function (e) {
+        var el = e.target;
+        if (el.hasAttribute && el.hasAttribute('data-push')) return;
         if (!active || !ui.sheet || !ui.sheet.contains(el) || !el.hasAttribute('data-path')) return;
         var s = byId(ui.sheet.dataset.sid); if (!s) return;
         var path = el.getAttribute('data-path');

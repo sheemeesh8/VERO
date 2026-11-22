@@ -65,7 +65,7 @@
                     { id: uid(), image: '', kicker: '', title: 'Second slide', text: '', cta: '' }
                 ] });
             case 'products': return Object.assign(base, {
-                title: 'Items for sale', layout: 'grid', cols: 2, limit: 0, sort: 'default' });
+                title: 'Items for sale', filter: 'all', layout: 'grid', cols: 2, limit: 0, sort: 'default', bare: false });
             case 'features': return Object.assign(base, {
                 title: '', style: 'plain',
                 items: [
@@ -94,35 +94,24 @@
         return base;
     }
 
-    /* A whole website for a store that never designed one: menu, hero slider,
-       announcement, highlights, products, a banner, the story and a footer. */
+    /* A whole website for a store that never designed one: a hero slider by
+       gender (each slide's button opens that gender's items), the pushed items
+       as a slider with no background, a banner, then all the items. */
+    var GENDERS = [['', 'None'], ['women', 'Women'], ['men', 'Men'], ['kids', 'Kids']];
     function starter(opts) {
         opts = opts || {};
-        var name = opts.storeName || 'My shop';
-        var nav = defaults('nav'), slider = defaults('slider'), marquee = defaults('marquee'),
-            feat = defaults('features'), prod = defaults('products'), banner = defaults('banner'),
-            split = defaults('split'), foot = defaults('footer');
-        nav.brand = name;
-        slider.slides = [
-            { id: uid(), image: 'women-hero.jpg', kicker: 'New season', title: 'Fresh pieces just landed', text: 'Hand-picked and ready for a second life.', cta: 'Shop now' },
-            { id: uid(), image: 'clothing-hero.jpg', kicker: 'Wardrobe', title: 'Everyday favourites', text: 'Quality basics at a fair price.', cta: 'See all items' },
-            { id: uid(), image: 'gallery-hero.jpg', kicker: 'One of a kind', title: 'Pieces you will not find twice', text: '', cta: 'Discover' }
+        var hero = defaults('slider'), promo = defaults('products'), banner = defaults('banner'), all = defaults('products');
+        hero.height = 'xl'; hero.pos = 'bc';
+        hero.slides = [
+            { id: uid(), image: 'women-hero.jpg', gender: 'women', kicker: 'Women', title: 'For her', text: '', cta: 'Shop women' },
+            { id: uid(), image: 'men-hero.jpg', gender: 'men', kicker: 'Men', title: 'For him', text: '', cta: 'Shop men' },
+            { id: uid(), image: 'clothing-hero.jpg', gender: 'kids', kicker: 'Kids', title: 'For the little ones', text: '', cta: 'Shop kids' }
         ];
-        marquee.text = 'Welcome to ' + name + ' · New pieces every week · Pickup by appointment';
-        prod.title = 'Shop the collection';
-        prod.cols = Math.min(3, Math.max(2, Number(opts.cols) || 2));
+        promo.title = 'Pushed pieces'; promo.filter = 'promoted'; promo.layout = 'carousel'; promo.bare = true; promo.cols = 2;
         banner.image = 'sale-hero.jpg'; banner.kicker = 'Limited time'; banner.title = 'The sale corner';
-        banner.text = 'Make an offer on selected pieces.'; banner.cta = 'Browse'; banner.pos = 'cc'; banner.height = 'm';
-        split.image = 'men-hero.jpg'; split.title = 'About ' + name;
-        split.text = 'Tell buyers who you are, where your pieces come from and what makes your shop special.';
-        foot.title = name;
-        nav.links = [
-            { id: uid(), label: 'Shop', to: prod.id },
-            { id: uid(), label: 'Sale', to: banner.id },
-            { id: uid(), label: 'About', to: split.id },
-            { id: uid(), label: 'Contact', to: foot.id }
-        ];
-        return [nav, slider, marquee, feat, prod, banner, split, foot];
+        banner.text = 'Make an offer on selected pieces.'; banner.cta = 'Browse'; banner.pos = 'cc';
+        all.title = 'All items'; all.filter = 'all'; all.cols = Math.min(3, Math.max(2, Number(opts.cols) || 2));
+        return [hero, promo, banner, all];
     }
 
     /* ------------------------------ Media ------------------------------ */
@@ -162,7 +151,7 @@
             F(ctx, 'div', 'ss-kicker', pre + 'kicker', o.kicker, 'Small line') +
             F(ctx, 'div', 'ss-hl', pre + 'title', o.title, 'Headline') +
             F(ctx, 'p', 'ss-text', pre + 'text', o.text, 'A line of text') +
-            F(ctx, 'a', 'ss-cta', pre + 'cta', o.cta, 'Button', CTA_ATTRS) +
+            F(ctx, 'a', 'ss-cta', pre + 'cta', o.cta, 'Button', CTA_ATTRS + (o.gender ? ' data-ss-gender="' + esc(o.gender) + '"' : '')) +
             '</div>';
     }
     var ov = function (s) { return '--ss-ov:' + (clamp(s.overlay == null ? 30 : s.overlay, 0, 80) / 100); };
@@ -213,19 +202,37 @@
     }
 
     function products(s, ctx) {
-        var list = (ctx.products || []).slice();
+        var filter = oneOf(s.filter, ['all', 'promoted', 'women', 'men', 'kids'], 'all');
+        var list = (ctx.products || []).filter(function (p) { return matches(p, filter); });
+        // A pushed-items slider with nothing pushed stays out of the buyer's way.
+        if (!list.length && filter !== 'all' && !ctx.editing) return '';
         if (s.sort === 'low')  list.sort(function (a, b) { return a.price - b.price; });
         if (s.sort === 'high') list.sort(function (a, b) { return b.price - a.price; });
         var limit = clamp(s.limit || 0, 0, 60);
         if (limit) list = list.slice(0, limit);
         var layout = oneOf(s.layout, ['grid', 'carousel', 'list', 'feature'], 'grid');
         var card = layout === 'list' ? rowCard : (ctx.card || defaultCard);
-        var inner = list.length ? list.map(card).join('')
-            : '<div class="ss-empty">' + (ctx.editing ? 'Your items will appear here once you upload them.' : 'No items here yet.') + '</div>';
-        return '<section class="ss ss-products ss-pad">' +
+        var empty = filter === 'promoted' ? 'Push items to show them here — Settings ⚙ → choose items.'
+            : filter === 'all' ? 'Your items will appear here once you upload them.' : 'No ' + filter + '\'s items yet.';
+        var inner = list.length ? list.map(function (p) {
+                return card(p).replace(/^\s*<([a-z]+)/i, '<$1 data-g="' + esc(genderOf(p)) + '"');
+            }).join('')
+            : '<div class="ss-empty">' + (ctx.editing ? empty : 'No items here yet.') + '</div>';
+        return '<section class="ss ss-products ss-pad' + (s.bare ? ' ss-bare' : '') + '" data-pf="' + filter + '">' +
             '<div class="ss-head">' + F(ctx, 'h3', 'ss-ptitle', 'title', s.title, 'Section title') +
             '<span>' + list.length + ' item' + (list.length === 1 ? '' : 's') + '</span></div>' +
             '<div class="ss-pgrid ss-l-' + layout + '" style="--ss-cols:' + clamp(s.cols || 2, 1, 4) + '">' + inner + '</div></section>';
+    }
+
+    function genderOf(p) {
+        var g = String(p.gender || p.audience || '').toLowerCase();
+        return /wom|female|her/.test(g) ? 'women' : /^m|male|him/.test(g) ? 'men' : /kid|child|boy|girl|baby/.test(g) ? 'kids' : g ? 'unisex' : '';
+    }
+    function matches(p, filter) {
+        if (filter === 'all') return true;
+        if (filter === 'promoted') return !!(p.promoted || p.pushed);
+        var g = genderOf(p);
+        return g === filter || ((filter === 'women' || filter === 'men') && g === 'unisex');
     }
 
     function features(s, ctx) {
@@ -375,6 +382,8 @@
                 if (root.classList.contains('ss-editing')) return;   // the editor owns clicks
                 var go = e.target.closest('[data-ss-go]'), top = e.target.closest('[data-ss-top]');
                 if (top) { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+                var gb = e.target.closest('[data-ss-gender], [data-ss-gclear]');
+                if (gb) { e.preventDefault(); showGender(root, gb.getAttribute('data-ss-gender') || ''); return; }
                 if (go) {
                     e.preventDefault();
                     var to = go.getAttribute('data-ss-go');
@@ -390,6 +399,26 @@
         }
     }
 
+    // Narrow the "all items" grid to one gender (or back to everything) and go there.
+    var GNAME = { women: 'Women', men: 'Men', kids: 'Kids' };
+    function showGender(root, g) {
+        var sec = root.querySelector('.ss-products[data-pf="all"]') || root.querySelector('.ss-products');
+        if (!sec) return;
+        var shown = 0;
+        sec.querySelectorAll('[data-g]').forEach(function (c) {
+            var cg = c.getAttribute('data-g');
+            var on = !g || cg === g || ((g === 'women' || g === 'men') && cg === 'unisex');
+            c.style.display = on ? '' : 'none'; if (on) shown++;
+        });
+        var head = sec.querySelector('.ss-head'), chip = sec.querySelector('.ss-gchip'), note = sec.querySelector('.ss-gnone');
+        if (chip) chip.remove(); if (note) note.remove();
+        if (g && head) {
+            head.insertAdjacentHTML('beforeend', '<button type="button" class="ss-gchip" data-ss-gclear>' + (GNAME[g] || g) + ' ✕</button>');
+            if (!shown) sec.querySelector('.ss-pgrid').insertAdjacentHTML('beforeend', '<div class="ss-empty ss-gnone">No ' + esc((GNAME[g] || g).toLowerCase()) + '\'s items yet.</div>');
+        }
+        if (g) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     function render(root, sections, ctx) {
         ctx = ctx || {};
         var list = (Array.isArray(sections) ? sections : []).filter(function (s) { return s && (ctx.editing || !s.hidden); });
@@ -400,7 +429,7 @@
     }
 
     window.VeroStore = {
-        TYPES: TYPES, defaults: defaults, starter: starter, sectionHTML: sectionHTML, render: render, hydrate: hydrate,
+        TYPES: TYPES, GENDERS: GENDERS, defaults: defaults, starter: starter, sectionHTML: sectionHTML, render: render, hydrate: hydrate,
         setMedia: setMedia, resolveMedia: resolveMedia, uid: uid, esc: esc, nis: nis
     };
 })();
