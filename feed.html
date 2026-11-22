@@ -1035,6 +1035,24 @@
                     (shots.length ? '<a class="hm-ep-tile" href="' + href + '" tabindex="-1" aria-hidden="true">' + piece + '</a>' : '') +
                 '</div></article>';
         }
+        // The promoted pieces as the same slider as under the hero: two cards to a
+        // slide (railCard), the marks under it.
+        function promoRail(list) {
+            var el = document.createElement('section');
+            el.className = 'hm-rail hm-promo-rail'; el.setAttribute('aria-label', 'Promoted pieces');
+            var pages = [];
+            for (var i = 0; i < list.length; i += 2) pages.push('<div class="hm-page">' + railCard(list[i]) + (list[i + 1] ? railCard(list[i + 1]) : '') + '</div>');
+            el.innerHTML = pages.join('');
+            var dots = el._dots = document.createElement('div'); dots.className = 'hm-dots'; dots.setAttribute('aria-hidden', 'true');
+            var raf = 0;
+            el.addEventListener('scroll', function () { cancelAnimationFrame(raf); raf = requestAnimationFrame(function () { markDot(el); }); }, { passive: true });
+            dots.addEventListener('click', function (e) {
+                var k = [].indexOf.call(dots.children, e.target); if (k >= 0) el.scrollTo({ left: k * el.clientWidth, behavior: 'smooth' });
+            });
+            dots.innerHTML = pages.length > 1 ? pages.map(function () { return '<i></i>'; }).join('') : '';
+            setTimeout(function () { markDot(el); }, 0);
+            return el;
+        }
         // One promoted slider: its slides, the photo sliders' marks, and the marks under it.
         function promoSlider(list) {
             var el = document.createElement('section');
@@ -1085,7 +1103,7 @@
                 var block = document.createElement('div'); block.className = 'hm-block';
                 var promo = [];
                 for (var k = 0; k < Math.min(PROMO_PER_BLOCK, promoted.length); k++) promo.push(promoted[(i * PROMO_PER_BLOCK + k) % promoted.length]);
-                if (promo.length) { var sl = promoSlider(promo); block.appendChild(sl); block.appendChild(sl._dots); }
+                if (promo.length) { var sl = promoRail(promo); block.appendChild(sl); block.appendChild(sl._dots); }
                 var pieces = regular.slice(i * PIECES_PER_BLOCK, (i + 1) * PIECES_PER_BLOCK);
                 if (pieces.length) {
                     var grid = document.createElement('section'); grid.className = 'hm-four hm-block-grid'; grid.setAttribute('aria-label', 'More pieces');
