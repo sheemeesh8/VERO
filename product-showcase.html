@@ -617,6 +617,7 @@ h3, h4, h5, h6, p,
     const firstImg = cover || TEMP_ICON;
     const rest = [];
     [...uploaded, ...extra, ...((self && self.gallery) || [])].forEach(s => { if (s && s !== cover && !rest.includes(s)) rest.push(s); });
+    const onlyPlaceholders = !rest.length;
     if (!rest.length) {
         rest.push(placeholderSlide(product.seller || 'moravchick', 1),
                   placeholderSlide(product.category || 'Detail', 2));
@@ -680,6 +681,39 @@ h3, h4, h5, h6, p,
         heroOverlay.classList.toggle('faded', idx!==0);
     }
     renderStack();
+    // The first slide shows only a cut-out (the piece with its background removed),
+    // centred. If the first picture is an ordinary photo (no transparent edges), it
+    // joins the full-screen slides instead and the centred slide shows the piece's icon.
+    (function firstIsCutout(){
+        const img0 = stSlides[0] && stSlides[0].querySelector('img');
+        if (!img0 || firstImg === TEMP_ICON || /^data:image\/svg|\.svg(\?|$)/i.test(firstImg)) return;
+        const isCutout = () => {
+            try {
+                const c = document.createElement('canvas'), w = c.width = 40, h = c.height = 40, x = c.getContext('2d');
+                x.drawImage(img0, 0, 0, w, h);
+                const d = x.getImageData(0, 0, w, h).data, a = (i, j) => d[(j * w + i) * 4 + 3];
+                let clear = 0;
+                for (let i = 0; i < w; i++) { if (a(i, 0) < 200) clear++; if (a(i, h - 1) < 200) clear++; }
+                for (let j = 0; j < h; j++) { if (a(0, j) < 200) clear++; if (a(w - 1, j) < 200) clear++; }
+                return clear > 8;
+            } catch (e) { return true; }               // can't tell — leave it as it is
+        };
+        const settle = () => {
+            if (isCutout()) return;
+            img0.src = TEMP_ICON;
+            // The sample stand-ins are only for pieces with no photos at all.
+            if (onlyPlaceholders) { stSlides.splice(1).forEach(el => el.remove()); images.splice(1); heroScroll.innerHTML = '<div class="snap-cell"></div>'; }
+            const sl = document.createElement('div'); sl.className = 'st-slide';
+            const im = document.createElement('img'); im.src = firstImg; im.alt = ''; sl.appendChild(im);
+            heroStack.insertBefore(sl, stSlides[1] || null);
+            stSlides.splice(1, 0, sl); images.splice(1, 0, firstImg);
+            stSlides.forEach((el, i) => { el.style.zIndex = i; });
+            heroScroll.insertAdjacentHTML('beforeend', '<div class="snap-cell"></div>');
+            heroMark.style.width = (100 / images.length) + '%';
+            renderStack(); placeInfo();
+        };
+        if (img0.complete && img0.naturalWidth) settle(); else img0.addEventListener('load', settle, { once: true });
+    })();
     // The title sits in the middle of the top quarter (below the header bar).
     function placeInfo(){
         const info = document.getElementById('heroInfo');
