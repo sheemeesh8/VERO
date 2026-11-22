@@ -20,9 +20,10 @@
     //
     // The order is fixed in code — there is NO stored/remembered previous order.
     // 'mode' is the switch and the + together — they ship as one unit (.hdr-mode-pair).
-    // On the home feed (<html class="vero-feed-head">) the search and + give way to the
-    // wishlist heart and the cart — the + lives in the feed's sub-header there.
-    const ICON_ORDER = ['search', 'add', 'wish', 'cart', 'account'];   // mode toggle removed — the feed's sub-header carries Art / Clothing now
+    // On the home feed (<html class="vero-feed-head">) the + gives way to the cart (the +
+    // lives in the feed's sub-header there). Tapping the cart turns the search into the
+    // wishlist heart; a second tap on the cart opens the cart.
+    const ICON_ORDER = ['search', 'wish', 'add', 'cart', 'account'];   // mode toggle removed — the feed's sub-header carries Art / Clothing now
 
     // Purge any previously-saved icon order from the browser, so no old layout
     // memory can ever override the order defined above.
@@ -832,9 +833,12 @@
         #siteHeader .badge.show { display: flex; }
         /* Wishlist + cart show only on the home feed, in place of the search and the +. */
         #siteHeader .hdr-feed-only { display: none; }
-        html.vero-feed-head #siteHeader .hdr-feed-only { display: flex; }
-        html.vero-feed-head #siteHeader [data-icon="search"],
+        html.vero-feed-head #siteHeader [data-icon="cart"] { display: flex; }
         html.vero-feed-head #siteHeader [data-icon="add"] { display: none !important; }
+        /* The cart tapped once: the heart takes the search's place. */
+        html.vero-feed-head #siteHeader.wish-on [data-icon="search"] { display: none !important; }
+        html.vero-feed-head #siteHeader.wish-on [data-icon="wish"] { display: flex; animation: hdrWishIn 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes hdrWishIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
         /* A small count on the heart / cart — clear of the icon, not over it. */
         #siteHeader .hdr-feed-only .badge { top: 3px !important; right: -3px !important; left: auto !important; min-width: 13px !important; width: auto !important; height: 13px !important;
             padding: 0 3px !important; border: 0 !important; box-shadow: none !important; font-size: 8px !important; line-height: 13px !important; border-radius: 50% !important; }
@@ -1529,7 +1533,7 @@
                     </svg>
                     <span class="badge" id="wishlistBadge"></span>
                 </a>
-                <a class="icon-btn hdr-feed-only" onclick="veroPickCart(event)" aria-label="Shopping cart" role="button" tabindex="0" data-icon="cart" title="Cart" style="position:relative">
+                <a class="icon-btn hdr-feed-only" onclick="veroFeedCart(event)" aria-label="Shopping cart" role="button" tabindex="0" data-icon="cart" title="Cart" style="position:relative">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3z"></path><path d="M9 8V6.5a3 3 0 0 1 6 0V8"></path>
                     </svg>
@@ -2835,6 +2839,18 @@
         if (window.veroSlideToCart) window.veroSlideToCart('cart-store.html');
         else window.location.href = 'cart-store.html';
     };
+    // Feed header cart: the first tap swaps the search for the heart, the second opens the cart.
+    window.veroFeedCart = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        const hdr = document.getElementById('siteHeader');
+        if (hdr && !hdr.classList.contains('wish-on')) { try { updateBadgesFromStorage(); } catch (_) {} hdr.classList.add('wish-on'); return; }
+        if (hdr) hdr.classList.remove('wish-on');
+        window.veroPickCart(e);
+    };
+    document.addEventListener('click', function (e) {
+        const hdr = document.getElementById('siteHeader');
+        if (hdr && hdr.classList.contains('wish-on') && !e.target.closest('[data-icon="cart"], [data-icon="wish"]')) hdr.classList.remove('wish-on');
+    });
     window.veroPickWishlist = function (e) {
         if (e) e.preventDefault();
         window.veroCloseCartMenu();
