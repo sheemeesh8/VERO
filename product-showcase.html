@@ -313,7 +313,7 @@
     <link rel="stylesheet" href="product-card.css?v=10">
     <script src="product-overrides.js"></script>
     <script src="collections.js"></script>
-    <script src="assets/demo-details.js?v=1"></script>
+    <script src="assets/demo-details.js?v=3"></script>
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
 <style id="vero-global-type">
@@ -523,7 +523,13 @@ h3, h4, h5, h6, p,
     // details by name (assets/demo-details.js), so the cart / wishlist's demo pieces
     // show a full spec table too. A real listing's own values always win.
     const listing = Object.assign({}, (self && self._raw) || {});
-    const demoFill = (window.veroDemoDetails || {})[product.name] || {};
+    // A piece you listed yourself shows exactly what you entered; a demo piece (or one
+    // not in the catalogue) gets a full set: its own details, else worked-out ones.
+    const ownListing = !!(self && self._raw && !self._raw.demo);
+    const demoFill = ownListing ? {} : Object.assign({},
+        window.veroDemoGen ? window.veroDemoGen({ name: product.name, seller: sellerName, type: product.type, category: product.category || listing.itemType || listing.category, collection: listing.collection,
+            fabric: product.fabric || listing.fabric, material: listing.material, color: [].concat(product.color || listing.color || [])[0], size: product.size || listing.size, condition: product.condition || listing.condition }) : {},
+        (window.veroDemoDetails || {})[product.name] || {});
     Object.keys(demoFill).forEach(k => { const v = listing[k]; if (v == null || v === '' || (Array.isArray(v) && !v.length)) listing[k] = demoFill[k]; });
     const desc = product.desc || product.description || listing.description || '';
     // A piece on sale shows its original price too.
