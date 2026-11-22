@@ -476,7 +476,6 @@
         .sf-ev-meta .d { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
         .sf-ev-prods { font-size: 9.35px; opacity: 0.55; margin-top: 5px; }
         .sf-ev-time { font-family: 'Bodoni Moda', serif; font-size: 11.9px; white-space: nowrap; }
-        #sfSections { padding-bottom: 96px; }
         .sf-draftbar {
             position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 90;
             background: #111; color: #fff; font-size: 10.2px; font-weight: 600; text-decoration: none;
@@ -806,24 +805,7 @@
     </style>
     <link rel="stylesheet" href="product-card.css?v=noguides1">
     <script src="pc-social.js?v=6"></script>
-    <link rel="stylesheet" href="store-templates.css">
-    <link rel="stylesheet" href="store-sections.css?v=noguides1">
-    <script src="store-sections.js?v=3"></script>
     <link rel="stylesheet" href="assets/fonts/aharoni.css">
-    <!-- Apply the seller's chosen storefront template as early as possible to
-         avoid a flash of the default look. -->
-    <script>
-      (function () {
-        try {
-          var s = JSON.parse(localStorage.getItem('vero_store_config')) || {};
-          if (s.template) document.documentElement.setAttribute('data-store-template', s.template);
-          if (s.layout) document.documentElement.setAttribute('data-store-layout', s.layout);
-          if (s.namePos) document.documentElement.setAttribute('data-store-namepos', s.namePos);
-          if (s.grid) document.documentElement.setAttribute('data-store-grid', String(s.grid));
-          if (s.accent) document.documentElement.style.setProperty('--sf-accent', s.accent);
-        } catch (e) {}
-      })();
-    </script>
     <!-- League Spartan for the profilefront name + Follow button. Loaded AFTER
          aharoni.css and boosted with :not(#zz) so it beats the site-wide
          Aharoni !important override. -->
@@ -1015,11 +997,6 @@ h3, h4, h5, h6, p,
         </section>
         <div class="feed-empty pfx-ev-empty" id="pfxEvEmpty">No upcoming events.</div>
 
-        <!-- Seller-built storefront sections (store-editor.html → vero_store_config.sections),
-             rendered by store-sections.js. When the design has a Products section it
-             replaces the plain feed below. ?draft=1 previews the unpublished draft. -->
-        <a class="sf-draftbar" id="sfDraftBar" href="store-editor.html" hidden>Draft preview · Back to the builder</a>
-        <div id="sfSections" hidden></div>
 
         <!-- PROMOTED — the pieces the member pushed (listing.promoted / pushed /
              boosted), as a swipeable rail of product cards above the feed. -->
@@ -1343,57 +1320,11 @@ h3, h4, h5, h6, p,
         // Feed = 5 across. If the buyer set a banner, it drops in after every five
         // items (one row of five).
         const AD_EVERY = 5;
-        // Returns true when the seller's sections include a visible Products block
-        // (so the default feed should step aside).
-        function renderBuiltSections(filtered) {
-            const host = document.getElementById('sfSections');
-            if (!host || !window.VeroStore) return false;
-            let cfg = {}; try { cfg = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
-            const draft = /[?&]draft=1/.test(location.search);
-            const list = draft && Array.isArray(cfg.sectionsDraft) ? cfg.sectionsDraft : currentSections(cfg);
-            if (draft) {
-                const bar = document.getElementById('sfDraftBar');
-                bar.hidden = false;
-                if (bar.parentNode !== document.body) document.body.appendChild(bar);   // outside .wrap so it stays pinned
-                bar.onclick = (e) => { if (history.length > 1) { e.preventDefault(); history.back(); } };
-            }
-            if (!Array.isArray(list) || !list.length) { host.hidden = true; return false; }
-            host.hidden = false;
-            VeroStore.render(host, list, { products: filtered, card, storeName: BUYER.name });
-            return list.some(s => s && !s.hidden && s.type === 'products');
-        }
-        // Every store is its own website: until the seller publishes a design of
-        // their own, it opens with a starter site (menu, hero slider, highlights,
-        // products, a banner, the story and a footer) that they edit in place.
-        let starterSections = null;
-        function currentSections(cfg) {
-            cfg = cfg || (function () { try { return JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { return {}; } })();
-            if (Array.isArray(cfg.sections)) return cfg.sections;
-            if (!starterSections && window.VeroStore) starterSections = VeroStore.starter({ storeName: BUYER.name, cols: cfg.grid });
-            return starterSections || [];
-        }
-        // Hook for the in-place store editor (store-live-edit.js).
-        window.VeroStorefront = {
-            products: () => PRODUCTS.filter(p => searchTerm === '' || p.name.toLowerCase().includes(searchTerm)),
-            card: p => card(p),
-            storeName: () => BUYER.name,
-            currentSections: () => currentSections(),
-            rerender: () => renderFeed()
-        };
         function renderFeed() {
             const filtered = PRODUCTS.filter(p =>
                 searchTerm === '' || p.name.toLowerCase().includes(searchTerm));
             const feed = document.getElementById('feed');
             const empty = document.getElementById('feedEmpty');
-            // The profilefront shows the products straight under the bio, so the
-            // store-builder sections (starter slideshow etc.) stay off this page.
-            const sectionsHost = document.getElementById('sfSections');
-            if (sectionsHost) { sectionsHost.hidden = true; sectionsHost.innerHTML = ''; }
-            if (false && renderBuiltSections(filtered)) {
-                feed.style.display = 'none'; empty.style.display = 'none';
-                document.getElementById('feedHead').style.display = 'none';
-                return;
-            }
             // Promoted rail: the pushed pieces, newest push first as listed.
             const promo = filtered.filter(p => p.promoted);
             const promoHost = document.getElementById('pfxPromo');
@@ -1508,9 +1439,6 @@ h3, h4, h5, h6, p,
     </script>
 
     <!-- Manual edit mode (✎ button bottom-left, or Ctrl+Shift+E) with Copy CSS — same editor as the rest of the site. -->
-    <!-- Edit the store in place: "Edit store" button / ?edit=1 (store-live-edit.js). -->
-    <link rel="stylesheet" href="store-live-edit.css?v=1">
-    <script src="store-live-edit.js?v=2"></script>
     <script src="vero-editor.js"></script>
     <script src="assets/didone-hairline.js"></script>
     <script src="nav-icons.js" defer></script>
@@ -1636,8 +1564,8 @@ h3, h4, h5, h6, p,
 
     /* Tab panes: Items (the feed + sections) vs Events. */
     body.pfx-on-items .sf-events, body.pfx-on-items .pfx-ev-empty { display: none !important; }
-    body.pfx-on-events #feedHead, body.pfx-on-events #feed, body.pfx-on-events #feedEmpty,
-    body.pfx-on-events #sfSections, body.pfx-on-events #sfDraftBar { display: none !important; }
+    body.pfx-on-events #feedHead, body.pfx-on-events #feed, body.pfx-on-events #feedEmpty { display: none !important; }
+
     body.pfx-on-events .sf-events:not([hidden]) ~ .pfx-ev-empty { display: none !important; }
     body.pfx-on-events .sf-events .feed-head { display: none; }
     /* The site squares every corner by default; this layout keeps its rounded
