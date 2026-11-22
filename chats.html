@@ -595,6 +595,39 @@ h3, h4, h5, h6, p,
         .chat-acc b { font-size: 8.5px; letter-spacing: 2px; color: var(--muted); }
         .chat-empty { font-size: 10.2px; color: var(--faint); padding: 72px 24px; }
     </style>
+    <style id="chat-inbox">
+        /* ===== Inbox (design 3): tabs with an unread count, chats grouped by day,
+                 a round monogram with the piece's picture on its corner, unread rows
+                 tinted and bold with a count. ===== */
+        .chat-tabs { gap: 22px; padding: 0 22px; border-bottom: 1px solid #ebe8e2; }
+        .chat-tab { padding: 14px 0 11px; font-family: 'Raleway', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; color: #8a857b; }
+        .chat-tab.active { color: #16150f; }
+        .chat-tab.active::after { height: 2px; background: #16150f; }
+        .chat-tab em { font-style: normal; display: inline-block; margin-left: 5px; padding: 1px 6px; border-radius: 10px; background: #16150f; color: #fff; font-size: 10px; font-weight: 600; line-height: 1.4; vertical-align: 1px; }
+        .chat-controls { padding: 8px 22px 0; }
+        .chat-search { font-size: 12.5px; }
+        .ci-grp { margin: 18px 22px 4px; font-family: 'Arimo', sans-serif; font-weight: 700; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #8a857b; }
+        .chat-row.ci { gap: 13px; padding: 0 22px; align-items: center; }
+        .chat-row.ci.is-unread { background: #faf8f3; }
+        .ci-av-wrap { position: relative; flex: none; width: 50px; height: 50px; }
+        .ci-av { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: #ece7dc; color: #4a4336;
+            font-family: 'Raleway', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+        .chat-row.ci .chat-avatar.ci-th { position: absolute; right: -4px; bottom: -4px; width: 24px; height: 24px; border-radius: 7px; border: 2px solid #fff;
+            background: #f3f1ec; font-size: 12px; overflow: hidden; display: grid; place-items: center; }
+        .chat-row.ci.is-unread .chat-avatar.ci-th { border-color: #faf8f3; }
+        .chat-row.ci .ci-th img { width: 100%; height: 100%; object-fit: cover; }
+        .chat-row.ci .ci-th svg { width: 13px; height: 13px; }
+        .chat-row.ci .chat-online { right: auto; left: 36px; top: 0; }
+        .chat-row.ci .chat-body { padding: 13px 0; border-bottom: 0; }
+        .chat-row.ci .chat-name { font-size: 14px; font-weight: 500; color: #16150f; }
+        .chat-row.ci .ci-prod { font-weight: inherit; }
+        .chat-row.ci .chat-time { font-size: 11px; color: #8a857b; }
+        .chat-row.ci .chat-preview { font-size: 12.5px; color: #6b665c; margin-top: 3px; }
+        .chat-row.ci.is-unread .chat-name, .chat-row.ci.is-unread .chat-preview { font-weight: 700; color: #16150f; }
+        .chat-row.ci.is-unread .chat-time { color: #16150f; font-weight: 600; }
+        .ci-n { flex: none; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #16150f; color: #fff;
+            font: 700 10px/18px 'Poppins', sans-serif; text-align: center; margin-left: 10px; }
+    </style>
     <link rel="stylesheet" href="assets/site-font.css?v=3">
 </head>
 <body>
@@ -629,6 +662,7 @@ h3, h4, h5, h6, p,
         <!-- Tabs: every chat / chats as a buyer / as a seller / offer threads -->
         <div class="chat-tabs" id="chatTabs" role="tablist">
             <button class="chat-tab active" data-tab="all" type="button" role="tab">All</button>
+            <button class="chat-tab" data-tab="unread" type="button" role="tab">Unread</button>
             <button class="chat-tab" data-tab="buying" type="button" role="tab">Buying</button>
             <button class="chat-tab" data-tab="selling" type="button" role="tab">Selling</button>
             <button class="chat-tab" data-tab="offers" type="button" role="tab">Offers</button>
@@ -636,7 +670,7 @@ h3, h4, h5, h6, p,
 
         <!-- Search, with the time filter on its right -->
         <div class="chat-controls">
-            <input class="chat-search" id="chatSearch" type="text" placeholder="Search sellers…" autocomplete="off">
+            <input class="chat-search" id="chatSearch" type="text" placeholder="Search chats or pieces…" autocomplete="off">
             <button class="ct-funnel" onclick="openFilters()" aria-label="Filters" type="button">
                 <svg viewBox="0 0 24 24"><path d="M4 3h16l-8 9-8-9z"/><path d="M12 12v8"/><path d="M8 21h8"/></svg>
             </button>
@@ -917,14 +951,15 @@ h3, h4, h5, h6, p,
         }
         // Active tab — the seller area opens straight on Selling.
         let chatTab = VIEW_ROLE === 'seller' ? 'selling' : 'all';
-        const inTab = t => chatTab === 'all' || (chatTab === 'offers' ? t.offer : t.role === chatTab);
+        const inTab = t => chatTab === 'all' || (chatTab === 'unread' ? isUnread(t) : chatTab === 'offers' ? t.offer : t.role === chatTab);
         function renderTabs() {
             document.querySelectorAll('#chatTabs .chat-tab').forEach(b => {
                 const k = b.dataset.tab;
-                const n = list.filter(t => (k === 'all' || (k === 'offers' ? t.offer : t.role === k)) && isUnread(t)).length;
+                const n = list.filter(t => (k === 'all' || k === 'unread' || (k === 'offers' ? t.offer : t.role === k)) && isUnread(t)).length;
                 b.classList.toggle('active', k === chatTab);
                 b.setAttribute('aria-selected', k === chatTab);
-                b.innerHTML = b.dataset.label + (n && k !== 'all' ? '<sup>' + n + '</sup>' : '');
+                // The Unread tab carries its count as a small black pill.
+                b.innerHTML = b.dataset.label + (n && k === 'unread' ? '<em>' + n + '</em>' : '');
             });
         }
         document.querySelectorAll('#chatTabs .chat-tab').forEach(b => { b.dataset.label = b.textContent; });
@@ -961,7 +996,7 @@ h3, h4, h5, h6, p,
             const q = chatQuery.trim().toLowerCase();
             const rows = list
                 .map((t, i) => ({ t, i }))
-                .filter(({ t }) => (!q || t.seller.toLowerCase().includes(q)) && inRange(t.at) && inTab(t));
+                .filter(({ t }) => (!q || t.seller.toLowerCase().includes(q) || productName(t.seller).toLowerCase().includes(q)) && inRange(t.at) && inTab(t));
             renderTabs();
             if (!list.length) {
                 el.innerHTML = '<div class="chat-empty">No conversations yet — start one from any product page.</div>';
@@ -974,30 +1009,51 @@ h3, h4, h5, h6, p,
                 el.innerHTML = `<div class="chat-empty">${why}</div>`;
                 return;
             }
+            // Inbox row: the person as a round monogram with the piece's picture on its
+            // corner; "Who · Piece" and the time; the last line and an unread count.
+            const initials = n => String(n || '?').replace(/[^\p{L}\s]/gu, ' ').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+            const unreadCount = t => {
+                const msgs = chatStore[t.seller];
+                const since = seen[t.seller] || 0;
+                const n = Array.isArray(msgs) ? msgs.filter(m => (m.at || 0) > since && m.sender !== 'buyer' && m.sender !== 'system').length : 0;
+                return Math.max(1, n);
+            };
             const rowHtml = ({ t, i }) => {
                 const prod = productName(t.seller);
-                const title = prod || t.seller;          // product leads; seller sits under it
                 const photo = productPhoto(t.seller);
-                const avatarInner = photo ? `<img src="${photo}" alt="${title}">` : t.icon;
+                const thumb = photo ? `<img src="${photo}" alt="">` : t.icon;
                 const unread = isUnread(t);
                 const cls = ((focusOffers && t.available) ? ' is-offer' : '') + (unread ? ' is-unread' : '');
                 return `
-                    <div class="chat-row${cls}" data-i="${i}">
-                        <div class="chat-av">
-                            <div class="chat-avatar" data-avatar>${avatarInner}</div>
+                    <div class="chat-row ci${cls}" data-i="${i}">
+                        <div class="chat-av ci-av-wrap">
+                            <div class="ci-av" aria-hidden="true">${initials(t.seller)}</div>
+                            <div class="chat-avatar ci-th" data-avatar>${thumb}</div>
                             ${t.available ? '<span class="chat-online" title="Available now"></span>' : ''}
                         </div>
                         <div class="chat-body">
                             <div class="chat-topline">
-                                <span class="chat-name">${title}</span>
+                                <span class="chat-name">${t.seller}${prod ? `<span class="ci-prod"> · ${prod}</span>` : ''}</span>
                                 <span class="chat-time" title="${fullWhen(t.at)}">${shortWhen(t.at)}</span>
                             </div>
                             <div class="chat-topline">
-                                <div class="chat-preview">${prod ? `<span class="chat-who">${t.seller}</span>` : ''}${shortPreview(t.preview)}</div>
-                                ${unread ? '<span class="chat-unread" aria-label="Unread"></span>' : ''}
+                                <div class="chat-preview">${shortPreview(t.preview)}</div>
+                                ${unread ? `<span class="ci-n" aria-label="Unread">${unreadCount(t)}</span>` : ''}
                             </div>
                         </div>
                     </div>`;
+            };
+            // Grouped by day: Today / Yesterday / This week / Earlier.
+            const dayStart = x => { const d = new Date(x); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+            const groupOf = at => {
+                if (!at) return 'Earlier';
+                const diff = Math.round((dayStart(Date.now()) - dayStart(at)) / 864e5);
+                return diff <= 0 ? 'Today' : diff === 1 ? 'Yesterday' : diff < 7 ? 'This week' : 'Earlier';
+            };
+            const grouped = rs => {
+                let last = '', out = '';
+                rs.forEach(r => { const g = groupOf(r.t.at); if (g !== last) { out += `<div class="ci-grp">${g}</div>`; last = g; } out += rowHtml(r); });
+                return out;
             };
             // After checkout: offer threads shown first with a green accent; the rest
             // collapse under an "Other chats" accordion that opens on tap.
@@ -1012,7 +1068,7 @@ h3, h4, h5, h6, p,
                         + '<div class="chat-others">' + otherRows.map(rowHtml).join('') + '</div>'
                     : '');
             } else {
-                inner = rows.map(rowHtml).join('');
+                inner = grouped(rows);
             }
             el.innerHTML = '<div class="chat-track' + (focusOffers ? ' has-offers' : '') + '">' + inner + '</div>';
         }
