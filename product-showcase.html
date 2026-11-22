@@ -313,6 +313,7 @@
     <link rel="stylesheet" href="product-card.css?v=10">
     <script src="product-overrides.js"></script>
     <script src="collections.js"></script>
+    <script src="assets/demo-details.js?v=1"></script>
     <script src="assets/back-button.js"></script>
     <script src="assets/footer.js"></script>
 <style id="vero-global-type">
@@ -518,7 +519,12 @@ h3, h4, h5, h6, p,
     let catalogue = [];
     try { catalogue = VC ? VC.allProducts() : []; } catch (e) {}
     const self = catalogue.find(p => p.name === product.name && p.seller === sellerName) || null;
-    const listing = (self && self._raw) || {};
+    // The listing behind this piece; any field it lacks is filled from the demo
+    // details by name (assets/demo-details.js), so the cart / wishlist's demo pieces
+    // show a full spec table too. A real listing's own values always win.
+    const listing = Object.assign({}, (self && self._raw) || {});
+    const demoFill = (window.veroDemoDetails || {})[product.name] || {};
+    Object.keys(demoFill).forEach(k => { const v = listing[k]; if (v == null || v === '' || (Array.isArray(v) && !v.length)) listing[k] = demoFill[k]; });
     const desc = product.desc || product.description || listing.description || '';
     // A piece on sale shows its original price too.
     if (self && !product.onSale) {
