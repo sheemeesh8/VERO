@@ -4,7 +4,7 @@
    Every part of a dashboard (the headline chart, each titled group, each
    chart card) becomes its own <section class="dsec">, shown as one row — its
    name, its trend chip and a chevron — that opens when tapped. The first row
-   starts open. So a dashboard opens as a short list of categories instead of
+   starts open, and only one row is open at a time (opening one closes the other). So a dashboard opens as a short list of categories instead of
    a long wall of charts.
 
    A folded part keeps its width (it is clipped, not removed), so its chart is
@@ -102,7 +102,23 @@
                 try { window.dispatchEvent(new Event('resize')); } catch (e) {}
             };
         }
-        head.addEventListener('click', function () { toggle(!sec.classList.contains('is-open')); });
+        sec.__toggle = toggle;
+        head.addEventListener('click', function () {
+            var on = !sec.classList.contains('is-open');
+            if (on) {
+                // Only one part open at a time: opening this one closes the others.
+                var y0 = head.getBoundingClientRect().top;
+                Array.prototype.forEach.call(document.querySelectorAll('.dsec.dsec--fold.is-open'), function (o) {
+                    if (o !== sec && o.__toggle) o.__toggle(false);
+                });
+                // A part closing above makes this one ride up; keep its row where it was tapped.
+                setTimeout(function () {
+                    var y1 = head.getBoundingClientRect().top;
+                    if (Math.abs(y1 - y0) > 4) window.scrollBy({ top: y1 - y0, behavior: REDUCE ? 'auto' : 'smooth' });
+                }, REDUCE ? 0 : 640);
+            }
+            toggle(on);
+        });
     }
 
     function init() {
