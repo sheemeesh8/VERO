@@ -157,22 +157,12 @@
 
   /* Seller: host an event */
   .host { margin-top: 36px; }
-  .host-form { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s var(--ease); }
-  .host-form.open { grid-template-rows: 1fr; }
-  .host-form > div { overflow: hidden; min-height: 0; }
-  .host-in { padding: 18px 0 4px; display: grid; gap: 18px; }
-  .fld label { display: block; font-size: 8.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-  .fld input, .fld select, .fld textarea { width: 100%; padding: 8px 2px 10px; border: 0; border-bottom: 1px solid var(--line-strong); background: none;
-         font: inherit; font-size: 13px; font-weight: 300; color: var(--ink); outline: none; border-radius: 0; }
-  .fld textarea { resize: none; min-height: 60px; }
-  .fld input:focus, .fld select:focus, .fld textarea:focus { border-bottom-color: var(--ink); }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
   /* Gentle entrance */
   @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   .rise { animation: rise 0.7s var(--ease) both; }
   .d1 { animation-delay: 0.08s; } .d2 { animation-delay: 0.16s; } .d3 { animation-delay: 0.24s; }
-  @media (prefers-reduced-motion: reduce) { .rise { animation: none; } .vwc-appear .vwc-stage { opacity: 1; transform: none; } .booth, .host-form { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .rise { animation: none; } .vwc-appear .vwc-stage { opacity: 1; transform: none; } .booth { transition: none; } }
   html.is-embed .page-header { display: none; }
 </style>
 <style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz){font-family:'Inter','Segoe UI',sans-serif !important;}</style>
@@ -220,22 +210,7 @@
 
     <!-- Sellers can host an event of their own. -->
     <section class="host" id="host" hidden>
-      <button type="button" class="btn solid" id="hostToggle" aria-expanded="false" aria-controls="hostForm">Host an event</button>
-      <div class="host-form" id="hostForm"><div>
-        <div class="host-in">
-          <div class="fld"><label for="fTitle">Event name</label><input id="fTitle" type="text" placeholder="e.g. Neighbourhood Flea Market"></div>
-          <div class="row2">
-            <div class="fld"><label for="fDate">Date</label><input id="fDate" type="date"></div>
-            <div class="fld"><label for="fTime">Time</label><input id="fTime" type="text" placeholder="10:00–18:00"></div>
-          </div>
-          <div class="row2">
-            <div class="fld"><label for="fType">Kind</label><select id="fType"></select></div>
-            <div class="fld"><label for="fPlace">Where</label><input id="fPlace" type="text" placeholder="e.g. Dizengoff Sq, Tel Aviv"></div>
-          </div>
-          <div class="fld"><label for="fBlurb">About it (optional)</label><textarea id="fBlurb" placeholder="What buyers will find there"></textarea></div>
-          <div class="acts"><button type="button" class="btn solid" id="fSave">Create event</button><button type="button" class="btn" id="fCancel">Cancel</button></div>
-        </div>
-      </div></div>
+      <a class="btn solid" id="hostToggle" href="event-host.html">Host an event</a>
     </section>
   </main>
 
@@ -439,25 +414,11 @@
 
     // ---- Seller: host an event ----
     if (isSeller) {
-      var host = document.getElementById('host'), form = document.getElementById('hostForm'), toggle = document.getElementById('hostToggle');
-      host.hidden = false;
-      document.getElementById('fType').innerHTML = Object.keys(E.TYPES).map(function (k) { return '<option value="' + k + '">' + E.TYPES[k].name + '</option>'; }).join('');
-      var setOpen = function (o) {
-        form.classList.toggle('open', o); toggle.setAttribute('aria-expanded', o);
-        if (o) { document.getElementById('fDate').value = selected || todayIso; setTimeout(function () { document.getElementById('fTitle').focus(); }, 300); }
-      };
-      toggle.addEventListener('click', function () { setOpen(!form.classList.contains('open')); });
-      document.getElementById('fCancel').addEventListener('click', function () { setOpen(false); });
-      document.getElementById('fSave').addEventListener('click', function () {
-        var title = document.getElementById('fTitle').value.trim(), date = document.getElementById('fDate').value;
-        if (!title || !date) { alert('Add a name and a date for the event.'); return; }
-        E.addHosted({ id: 'u' + Date.now(), title: title, date: date, type: document.getElementById('fType').value,
-          time: document.getElementById('fTime').value.trim() || 'All day', place: document.getElementById('fPlace').value.trim() || undefined,
-          blurb: document.getElementById('fBlurb').value.trim() || undefined, own: true });
-        ['fTitle', 'fTime', 'fPlace', 'fBlurb'].forEach(function (id) { document.getElementById(id).value = ''; });
-        setOpen(false);
-        view = new Date(+date.slice(0, 4), +date.slice(5, 7) - 1, 1); selected = date; refresh();
-        document.querySelector('.cal').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Hosting is its own step-by-step page (event-host.html), like listing an item;
+      // a day chosen on the calendar comes along.
+      document.getElementById('host').hidden = false;
+      document.getElementById('hostToggle').addEventListener('click', function () {
+        if (selected && selected >= todayIso) this.href = 'event-host.html?date=' + selected;
       });
     }
 

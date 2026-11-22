@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <script>
+      if (window.self === window.top) {
+        var pf = location.pathname.split('/').pop() || 'index';
+        if (!/\.html$/.test(pf)) pf += '.html';
+        location.replace('phone-frame.html#page=' + encodeURIComponent(pf + location.search));
+      }
+    </script>
+    <meta name="description" content="Host a market, fair, meetup or pop-up on the moravchick calendar.">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
+    <title>moravchick — Host an event</title>
+    <script src="vero-theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Arimo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/fonts/aharoni.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1b1916; background: #fff; overflow: hidden;
+        }
+        .pu { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+
+        /* ---- Top: close + progress ---- */
+        .pu-top { flex: none; padding: calc(env(safe-area-inset-top, 0px) + 12px) 22px 16px;
+            display: flex; flex-direction: column; gap: 16px; background: #fff; z-index: 5; }
+        .pu-toprow { display: flex; align-items: center; justify-content: space-between; }
+        .pu-close { width: 34px; height: 34px; border: none; background: none; cursor: pointer; color: #1b1916;
+            display: flex; align-items: center; justify-content: center; }
+        .pu-close svg { width: 22px; height: 22px; }
+        .pu-step-lbl { display: none; }
+        .pu-bar { display: none; }
+        .pu-bar-fill { height: 100%; width: 0; background: #1b1916; border-radius: 999px; transition: width 0.4s cubic-bezier(0.22,1,0.36,1); }
+
+        /* ---- Slides — cross-fade between steps ---- */
+        .pu-viewport { flex: 1 1 auto; overflow: hidden; position: relative; background: #fff; }
+        .pu-track { position: relative; height: 100%; }
+        .pu-slide { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: #fff;
+            transition: opacity 0.19s ease; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 22px 28px 30px;
+            display: flex; flex-direction: column; }
+        .pu-slide.active { opacity: 1; pointer-events: auto; }
+        .pu-slide::-webkit-scrollbar { display: none; }
+        /* Everything below the heading fills the page, spreading down to the buttons. */
+        .pu-fill { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: space-between; gap: 26px; }
+        .pu-h { flex: none; font-family: 'Arimo', 'Inter', sans-serif; font-size: 30px; font-weight: 400;
+            letter-spacing: 1px; text-transform: uppercase; color: #1b1916; margin-bottom: 10px; line-height: 1.05; }
+        .pu-sub { flex: none; font-size: 10.5px; color: #413e39; margin-bottom: 32px; line-height: 1.85;
+            font-weight: 300; letter-spacing: 0.5px; max-width: 90%; }
+
+        /* ---- Fields — spacing handled by the .pu-fill space-between ---- */
+        .pu-field { margin-bottom: 0; }
+        .pu-field > label { display: block; font-size: 9px; letter-spacing: 2.6px; text-transform: uppercase;
+            color: #111; font-weight: 600; margin-bottom: 13px; }
+        .pu-field input, .pu-field textarea { width: 100%; border: none; border-bottom: 1px solid #efeae2;
+            background: transparent; font-family: inherit; font-size: 16px; font-weight: 300; color: #1b1916; padding: 8px 0; transition: border-color 0.25s; }
+        .pu-field input::placeholder, .pu-field textarea::placeholder { color: #514e48; font-weight: 300; }
+        .pu-field textarea { min-height: 30px; line-height: 1.6; resize: none; overflow: hidden; }
+        .pu-field input:focus, .pu-field textarea:focus { outline: none; border-bottom-color: #1b1916; }
+
+        /* ---- Select (choose from a list), full width ---- */
+        .pu-select-wrap { position: relative; }
+        .pu-select { width: 100%; border: none; border-bottom: 1px solid #efeae2; background: transparent;
+            font-family: inherit; font-size: 16px; font-weight: 300; color: #1b1916; padding: 8px 26px 8px 0;
+            -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; transition: border-color 0.25s; }
+        .pu-select:focus { outline: none; border-bottom-color: #1b1916; }
+        .pu-select.empty { color: #514e48; }
+        .pu-select-wrap::after { content: ''; position: absolute; right: 3px; top: 44%; width: 8px; height: 8px;
+            border-right: 1.5px solid #b0a99c; border-bottom: 1.5px solid #b0a99c;
+            transform: translateY(-50%) rotate(45deg); pointer-events: none; }
+
+        /* ---- Colour swatches (single or multi), synced palette ---- */
+        .pu-swatches { display: flex; flex-wrap: wrap; gap: 15px 14px; }
+        .pu-swatch { display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; width: 44px; }
+        .pu-swatch .sw { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(30,25,20,0.18);
+            transition: box-shadow 0.2s, transform 0.15s; }
+        .pu-swatch:active .sw { transform: scale(0.92); }
+        .pu-swatch.on .sw { box-shadow: 0 0 0 2px #fff, 0 0 0 3px #1b1916; }
+        .pu-swatch .nm { font-size: 8px; letter-spacing: 0.5px; text-transform: uppercase; color: #48443e; font-weight: 600; text-align: center; }
+        .pu-swatch.on .nm { color: #1b1916; }
+
+        /* ---- Chips — quiet outline, solid when chosen ---- */
+        .pu-chips { display: flex; flex-wrap: wrap; gap: 9px; }
+        .pu-chips button { padding: 10px 17px; border: 1px solid #efeae2; background: #fff; border-radius: 999px;
+            font-family: inherit; font-size: 12px; font-weight: 300; color: #3c3933; cursor: pointer; transition: all 0.2s; }
+        .pu-chips button.on { background: #1b1916; border-color: #1b1916; color: #fff; }
+        .pu-chips.gold button.on { background: #9a7d52; border-color: #9a7d52; }
+        /* Larger Style chips. */
+        .pu-chips[data-multi="style"] { gap: 11px !important; }
+        .pu-chips[data-multi="style"] button { font-size: 13.2px !important; padding: 15px 22px !important; }
+
+        /* ---- Photo slots — modern soft cards, round + chip, no dashed lines ---- */
+        .pu-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .pu-slot { position: relative; aspect-ratio: 3/4; border: none; border-radius: 20px;
+            background: #f6f4f1 center / cover no-repeat; cursor: pointer; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+            transition: background 0.25s, transform 0.15s; }
+        .pu-slot:active { transform: scale(0.98); }
+        .pu-slot.cover { grid-column: 1 / -1; aspect-ratio: 16/10; }
+        .pu-slot.cover.filled { background-color: #F2F2F2; background-size: contain; }   /* the card's ground */
+        .pu-slot.filled { background-color: #f2f0ef; }
+        .pu-slot .pu-slot-plus { width: 40px; height: 40px; border-radius: 50%; background: #fff;
+            box-shadow: 0 3px 12px rgba(30,25,20,0.08); display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: 300; color: #1b1916; line-height: 1; }
+        .pu-slot .pu-slot-lbl { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #44403b; font-weight: 600; }
+        .pu-slot.filled .pu-slot-plus, .pu-slot.filled .pu-slot-lbl { display: none; }
+        .pu-slot input { display: none; }
+        .pu-slot-status { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+            background: rgba(242,240,239,0.92); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #3c3933; }
+        .pu-slot.working .pu-slot-status { display: flex; }
+        .pu-hint { margin-top: 14px; font-size: 11px; color: #48443e; line-height: 1.6; font-weight: 300; }
+
+        /* ---- Big centred price ---- */
+        .pu-price-big { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin: 26px 0 22px; }
+        .pu-price-big .cur { font-family: 'Arimo', 'Inter', sans-serif; font-size: 30px; font-weight: 400; color: #48443e; }
+        .pu-price-big input { font-family: 'Arimo', 'Inter', sans-serif; font-size: 58px; font-weight: 400;
+            text-align: center; border: none; background: transparent; color: #1b1916; width: 180px; padding: 0; }
+        .pu-price-big input:focus { outline: none; }
+        .pu-price-big input::placeholder { color: #57544e; }
+
+        /* ---- Price recommendation note (frameless, minimal) ---- */
+        .pu-rec { margin-top: 4px; padding: 0; border: none; background: none; text-align: center; }
+        .pu-rec-label { display: block; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #9a958c; font-weight: 600; }
+        .pu-rec-text { margin: 11px auto 0; max-width: 300px; font-family: 'Arimo', 'Inter', sans-serif; font-size: 12.5px; line-height: 1.65; color: #3c3933; font-weight: 300; }
+        .pu-rec-text b { font-weight: 600; color: #1b1916; }
+        .pu-rec-react { display: block; margin-top: 9px; font-size: 11px; color: #8a857c; }
+
+        /* ---- Result card preview (last slide): a regular product card on white ---- */
+        .pu-result { display: flex; flex-direction: column; align-items: center; }
+        .pu-preview { width: 188px; max-width: 54%; margin: 0 auto; background: #fff; }
+        .pu-preview .product-card { width: 100%; }
+        .pu-result-actions { display: flex; gap: 12px; width: 100%; margin-top: 34px; }
+
+        /* ---- Bottom navigation bar ---- */
+        .pu-nav { flex: none; display: flex; gap: 12px; padding: 16px 22px calc(22px + env(safe-area-inset-bottom, 0px));
+            background: #fff; z-index: 6; box-shadow: 0 -8px 24px rgba(30,25,20,0.06); }
+        .pu-btn { flex: 1; padding: 15px; border-radius: 999px; font-family: inherit; font-size: 11px;
+            letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        .pu-back { flex: 0 0 auto; padding: 15px 24px; background: #fff; border: 1.4px solid #1b1916; color: #1b1916; }
+        .pu-back:disabled { opacity: 0.3; cursor: default; }
+        .pu-next { background: #1b1916; border: 1.4px solid #1b1916; color: #fff; }
+        .pu-outline { background: #fff; border: 1.4px solid #1b1916; color: #1b1916; }
+        .pu-solid { background: #1b1916; border: 1.4px solid #1b1916; color: #fff; }
+        .pu-btn:active { opacity: 0.7; }
+    </style>
+
+
+
+    <style id="nav-font-override">
+      /* All navigation bars use the hero collection title font. */
+      .area-tab:not(#zzzz):not(#zzzz):not(#zzzz), .area-tabs:not(#zzzz):not(#zzzz):not(#zzzz), .cal-nav:not(#zzzz):not(#zzzz):not(#zzzz), .cart-tab:not(#zzzz):not(#zzzz):not(#zzzz), .cart-tabs:not(#zzzz):not(#zzzz):not(#zzzz), .cart-topbar:not(#zzzz):not(#zzzz):not(#zzzz), .cat-topbar:not(#zzzz):not(#zzzz):not(#zzzz), .category-nav:not(#zzzz):not(#zzzz):not(#zzzz), .chat-nav:not(#zzzz):not(#zzzz):not(#zzzz), .chat-topbar:not(#zzzz):not(#zzzz):not(#zzzz), .clo-nav:not(#zzzz):not(#zzzz):not(#zzzz), .cp-nav:not(#zzzz):not(#zzzz):not(#zzzz), .cp-navlink:not(#zzzz):not(#zzzz):not(#zzzz), .feed-nav:not(#zzzz):not(#zzzz):not(#zzzz), .feed-nav-more:not(#zzzz):not(#zzzz):not(#zzzz), .feed-nav-pop:not(#zzzz):not(#zzzz):not(#zzzz), .feed-nav-tab:not(#zzzz):not(#zzzz):not(#zzzz), .hero-sidenav:not(#zzzz):not(#zzzz):not(#zzzz), .pf-tab:not(#zzzz):not(#zzzz):not(#zzzz), .pf-tabs:not(#zzzz):not(#zzzz):not(#zzzz), .pf-topbar:not(#zzzz):not(#zzzz):not(#zzzz), .pu-nav:not(#zzzz):not(#zzzz):not(#zzzz), .sa-nav:not(#zzzz):not(#zzzz):not(#zzzz), .sa-tab:not(#zzzz):not(#zzzz):not(#zzzz), .sec-nav:not(#zzzz):not(#zzzz):not(#zzzz), .sec-tab:not(#zzzz):not(#zzzz):not(#zzzz), .set-nav:not(#zzzz):not(#zzzz):not(#zzzz), .set-nav-btn:not(#zzzz):not(#zzzz):not(#zzzz), .spend-nav:not(#zzzz):not(#zzzz):not(#zzzz), .stats-subnav:not(#zzzz):not(#zzzz):not(#zzzz), .stats-subtab:not(#zzzz):not(#zzzz):not(#zzzz), .stf-tab:not(#zzzz):not(#zzzz):not(#zzzz), .stf-tabs:not(#zzzz):not(#zzzz):not(#zzzz), .vf-navbox:not(#zzzz):not(#zzzz):not(#zzzz), .vf-navbox-item:not(#zzzz):not(#zzzz):not(#zzzz), .vf-navbox-mag:not(#zzzz):not(#zzzz):not(#zzzz), .vinbox-tab:not(#zzzz):not(#zzzz):not(#zzzz), .vinbox-tabs:not(#zzzz):not(#zzzz):not(#zzzz), .nav:not(#zzzz):not(#zzzz):not(#zzzz), .nav-bar:not(#zzzz):not(#zzzz):not(#zzzz), .nav-zone:not(#zzzz):not(#zzzz):not(#zzzz), .topbar:not(#zzzz):not(#zzzz):not(#zzzz), .area-tab *:not(#zzzz):not(#zzzz):not(#zzzz), .area-tabs *:not(#zzzz):not(#zzzz):not(#zzzz), .cal-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .cart-tab *:not(#zzzz):not(#zzzz):not(#zzzz), .cart-tabs *:not(#zzzz):not(#zzzz):not(#zzzz), .cart-topbar *:not(#zzzz):not(#zzzz):not(#zzzz), .cat-topbar *:not(#zzzz):not(#zzzz):not(#zzzz), .category-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .chat-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .chat-topbar *:not(#zzzz):not(#zzzz):not(#zzzz), .clo-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .cp-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .cp-navlink *:not(#zzzz):not(#zzzz):not(#zzzz), .feed-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .feed-nav-more *:not(#zzzz):not(#zzzz):not(#zzzz), .feed-nav-pop *:not(#zzzz):not(#zzzz):not(#zzzz), .feed-nav-tab *:not(#zzzz):not(#zzzz):not(#zzzz), .hero-sidenav *:not(#zzzz):not(#zzzz):not(#zzzz), .pf-tab *:not(#zzzz):not(#zzzz):not(#zzzz), .pf-tabs *:not(#zzzz):not(#zzzz):not(#zzzz), .pf-topbar *:not(#zzzz):not(#zzzz):not(#zzzz), .pu-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .sa-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .sa-tab *:not(#zzzz):not(#zzzz):not(#zzzz), .sec-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .sec-tab *:not(#zzzz):not(#zzzz):not(#zzzz), .set-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .set-nav-btn *:not(#zzzz):not(#zzzz):not(#zzzz), .spend-nav *:not(#zzzz):not(#zzzz):not(#zzzz), .stats-subnav *:not(#zzzz):not(#zzzz):not(#zzzz), .stats-subtab *:not(#zzzz):not(#zzzz):not(#zzzz), .stf-tab *:not(#zzzz):not(#zzzz):not(#zzzz), .stf-tabs *:not(#zzzz):not(#zzzz):not(#zzzz), .vf-navbox *:not(#zzzz):not(#zzzz):not(#zzzz), .vf-navbox-item *:not(#zzzz):not(#zzzz):not(#zzzz), .vf-navbox-mag *:not(#zzzz):not(#zzzz):not(#zzzz), .vinbox-tab *:not(#zzzz):not(#zzzz):not(#zzzz), .vinbox-tabs *:not(#zzzz):not(#zzzz):not(#zzzz), .nav *:not(#zzzz):not(#zzzz):not(#zzzz), .nav-bar *:not(#zzzz):not(#zzzz):not(#zzzz), .nav-zone *:not(#zzzz):not(#zzzz):not(#zzzz), .topbar *:not(#zzzz):not(#zzzz):not(#zzzz) { font-family: 'Arimo', 'Segoe UI', Arial, sans-serif !important; text-transform: uppercase !important; }
+    </style>
+
+    <style id="heading-font-override">
+      /* All headings / titles use the hero collection title font. */
+      h1:not(#zzzz):not(#zzzz):not(#zzzz), h2:not(#zzzz):not(#zzzz):not(#zzzz), h3:not(#zzzz):not(#zzzz):not(#zzzz), h4:not(#zzzz):not(#zzzz):not(#zzzz), h5:not(#zzzz):not(#zzzz):not(#zzzz), h6:not(#zzzz):not(#zzzz):not(#zzzz), [class*="title"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="Title"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="heading"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="Heading"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="headline"]:not(#zzzz):not(#zzzz):not(#zzzz), [class*="Headline"]:not(#zzzz):not(#zzzz):not(#zzzz) { font-family: 'Archivo', 'Poppins', sans-serif !important; }
+    </style>
+<style id="vero-global-type">
+/* VERO global typography: main titles in Bodoni, sub-headings + descriptions in serif.
+   Buttons/nav keep their own fonts. */
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+h1, h2, [class*="-title"], [class*="Title"], .title {
+  font-family: 'Archivo', 'Poppins', sans-serif !important;
+}
+h3, h4, h5, h6, p,
+[class*="-desc"], [class*="Desc"], [class*="-sub"], [class*="subtitle"], [class*="Subtitle"] {
+  font-family: 'Archivo', 'Poppins', sans-serif !important;
+}
+</style>
+<style id="aharoni-headings">h1:not(#zz):not(#zz):not(#zz),h2:not(#zz):not(#zz):not(#zz),h3:not(#zz):not(#zz):not(#zz),h4:not(#zz):not(#zz):not(#zz),h5:not(#zz):not(#zz):not(#zz),h6:not(#zz):not(#zz):not(#zz),[class*="title"]:not(#zz):not(#zz):not(#zz),[class*="Title"]:not(#zz):not(#zz):not(#zz),[class*="heading"]:not(#zz):not(#zz):not(#zz),[class*="Heading"]:not(#zz):not(#zz):not(#zz),[class*="headline"]:not(#zz):not(#zz):not(#zz),[class*="Headline"]:not(#zz):not(#zz):not(#zz){font-family:'Arimo', 'Inter', sans-serif !important;}</style>
+    <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
+    <link rel="stylesheet" href="product-card.css?v=10">
+    <link rel="stylesheet" href="assets/upload-flow.css?v=20261122a">
+    <script src="assets/page-header.js?v=20261117e"></script>
+    <link rel="stylesheet" href="assets/site-font.css">
+    <style>
+        /* Host an event — the same step-by-step flow as listing an item. */
+        .eh-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .pu-field input[type="date"], .pu-field input[type="time"] { -webkit-appearance: none; appearance: none; min-height: 40px; }
+        .eh-kinds button i { display: inline-block; width: 7px; height: 7px; margin-right: 8px; vertical-align: 1px; background: var(--c); }
+        .eh-kinds button.on i { box-shadow: 0 0 0 1px #fff; }
+        .eh-err { min-height: 18px; margin-top: 4px; font-size: 11px; color: #9a3b2f; font-weight: 400; }
+        /* The review: the event as the calendar will show it. */
+        .eh-review { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 6px 0 0; }
+        .eh-date { width: 72px; padding: 10px 0 9px; border: 1px solid rgba(27,25,22,0.32); }
+        .eh-date b { display: block; font-family: 'Arimo', 'Inter', sans-serif; font-size: 32px; font-weight: 300; line-height: 1; }
+        .eh-date span { display: block; margin-top: 6px; font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: #48443e; }
+        .eh-type { margin-top: 18px; font-size: 9px; letter-spacing: 2.4px; text-transform: uppercase; font-weight: 600; }
+        .eh-type i { display: inline-block; width: 7px; height: 7px; margin-right: 8px; vertical-align: 1px; }
+        .eh-name { margin-top: 10px; font-family: 'Arimo', 'Inter', sans-serif; font-size: 22px; font-weight: 400; line-height: 1.2; color: #1b1916; }
+        .eh-meta { margin-top: 8px; font-size: 12px; font-weight: 300; line-height: 1.6; color: #48443e; }
+        .eh-blurb { margin-top: 14px; max-width: 300px; font-size: 12px; font-weight: 300; line-height: 1.7; color: #3c3933; }
+        .eh-edit { margin-top: 14px; background: none; border: 0; border-bottom: 1px solid #1b1916; padding: 2px 0; cursor: pointer; font: inherit; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; color: #1b1916; }
+    </style>
+</head>
+<body>
+    <!-- Shared page header (assets/page-header.css): title left, back arrow right. -->
+    <header class="page-header">
+        <div class="ph-name" role="heading" aria-level="1">Host an event</div>
+        <a class="ph-back" href="events.html" aria-label="Back" data-back-target="#puClose"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    </header>
+    <div class="pu">
+        <div class="pu-top">
+            <div class="pu-toprow">
+                <span style="width:34px"></span>
+                <span class="pu-step-lbl" id="puStepLbl">Step 1 / 5</span>
+                <button class="pu-close" type="button" id="puClose" aria-label="Exit" style="visibility:hidden">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+                </button>
+            </div>
+            <div class="pu-bar"><div class="pu-bar-fill" id="puBarFill"></div></div>
+        </div>
+
+        <div class="pu-viewport">
+            <div class="pu-track" id="puTrack">
+
+                <!-- 1 — THE EVENT: its name and kind -->
+                <section class="pu-slide active">
+                    <h2 class="pu-h">The event</h2>
+                    <p class="pu-sub">What you’re hosting, and what to call it.</p>
+                    <div class="pu-fill">
+                        <div class="pu-field"><label for="ehTitle">Event name</label><input id="ehTitle" type="text" maxlength="60" placeholder="e.g. Neighbourhood Flea Market"></div>
+                        <div class="pu-field"><label>Kind of event</label><div class="pu-chips eh-kinds" id="ehKinds"></div></div>
+                        <p class="eh-err" data-err="0"></p>
+                    </div>
+                </section>
+
+                <!-- 2 — WHEN -->
+                <section class="pu-slide">
+                    <h2 class="pu-h">When</h2>
+                    <p class="pu-sub">The day, and the hours it’s open.</p>
+                    <div class="pu-fill">
+                        <div class="pu-field"><label for="ehDate">Date</label><input id="ehDate" type="date"></div>
+                        <div class="eh-row2">
+                            <div class="pu-field"><label for="ehFrom">Opens</label><input id="ehFrom" type="time" value="10:00"></div>
+                            <div class="pu-field"><label for="ehTo">Closes</label><input id="ehTo" type="time" value="18:00"></div>
+                        </div>
+                        <p class="eh-err" data-err="1"></p>
+                    </div>
+                </section>
+
+                <!-- 3 — WHERE -->
+                <section class="pu-slide">
+                    <h2 class="pu-h">Where</h2>
+                    <p class="pu-sub">Where people will find you — a square, a street, a venue.</p>
+                    <div class="pu-fill">
+                        <div class="pu-field"><label for="ehPlace">Place</label><input id="ehPlace" type="text" maxlength="80" placeholder="e.g. Dizengoff Sq, Tel Aviv"></div>
+                        <p class="pu-hint">We’ll link it to the map, so guests can get directions in one tap.</p>
+                        <p class="eh-err" data-err="2"></p>
+                    </div>
+                </section>
+
+                <!-- 4 — ABOUT -->
+                <section class="pu-slide">
+                    <h2 class="pu-h">About it</h2>
+                    <p class="pu-sub">A line or two on what people will find there. Optional.</p>
+                    <div class="pu-fill">
+                        <div class="pu-field"><label for="ehBlurb">Description</label><textarea id="ehBlurb" rows="3" maxlength="280" placeholder="e.g. Twenty stalls of vintage, records and homeware"></textarea></div>
+                        <span></span>
+                    </div>
+                </section>
+
+                <!-- 5 — REVIEW: the event as it will appear, then publish -->
+                <section class="pu-slide">
+                    <h2 class="pu-h">Ready</h2>
+                    <p class="pu-sub">This is how it will appear on the calendar.</p>
+                    <div class="pu-fill">
+                        <div class="eh-review" id="ehReview"></div>
+                        <div class="pu-result-actions">
+                            <button class="pu-btn pu-outline" type="button" id="ehBack">Edit</button>
+                            <button class="pu-btn pu-solid" type="button" id="ehPublish">Publish event</button>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+
+        <div class="pu-nav">
+            <button class="pu-btn pu-back" type="button" id="puBack" disabled>Back</button>
+            <button class="pu-btn pu-next" type="button" id="puNext">Next</button>
+        </div>
+    </div>
+
+    <script src="assets/events-data.js?v=1"></script>
+    <script>
+    (function hostEvent() {
+        var E = window.veroEvents;
+        var $ = function (id) { return document.getElementById(id); };
+        var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); };
+        var slides = [].slice.call(document.querySelectorAll('.pu-slide')), total = slides.length, step = 0, kind = '';
+        var todayIso = E.iso(E.today());
+
+        // Kind chips, each with its calendar colour.
+        $('ehKinds').innerHTML = Object.keys(E.TYPES).map(function (k) {
+            return '<button type="button" data-kind="' + k + '" aria-pressed="false" style="--c:' + E.TYPES[k].color + '"><i></i>' + E.TYPES[k].name + '</button>';
+        }).join('');
+        $('ehKinds').addEventListener('click', function (e) {
+            var b = e.target.closest('[data-kind]'); if (!b) return;
+            kind = b.getAttribute('data-kind');
+            [].forEach.call(this.children, function (c) { var on = c === b; c.classList.toggle('on', on); c.setAttribute('aria-pressed', on); });
+            err(0, '');
+        });
+        // A day picked on the calendar comes along (?date=); never a past one.
+        var qd = (location.search.match(/[?&]date=(\d{4}-\d{2}-\d{2})/) || [])[1];
+        $('ehDate').min = todayIso;
+        $('ehDate').value = qd && qd >= todayIso ? qd : '';
+
+        function err(i, msg) { var el = document.querySelector('[data-err="' + i + '"]'); if (el) el.textContent = msg; }
+        function val(id) { return $(id).value.trim(); }
+        function hours() { var f = val('ehFrom'), t = val('ehTo'); return f && t ? f + '–' + t : (f || 'All day'); }
+
+        // What each step needs before moving on.
+        function check(i) {
+            if (i === 0) {
+                if (!val('ehTitle')) { err(0, 'Give the event a name.'); $('ehTitle').focus(); return false; }
+                if (!kind) { err(0, 'Choose what kind of event it is.'); return false; }
+            }
+            if (i === 1) {
+                var d = val('ehDate');
+                if (!d) { err(1, 'Pick the day it happens.'); $('ehDate').focus(); return false; }
+                if (d < todayIso) { err(1, 'That day has passed — pick today or later.'); return false; }
+                if (val('ehFrom') && val('ehTo') && val('ehTo') <= val('ehFrom')) { err(1, 'It should close after it opens.'); return false; }
+            }
+            if (i === 2 && !val('ehPlace')) { err(2, 'Say where it takes place.'); $('ehPlace').focus(); return false; }
+            err(i, ''); return true;
+        }
+
+        function renderReview() {
+            var d = E.parse(val('ehDate')), T = E.TYPES[kind] || {}, b = val('ehBlurb');
+            $('ehReview').innerHTML =
+                '<div class="eh-date"><b>' + d.getDate() + '</b><span>' + E.MON[d.getMonth()] + '</span></div>' +
+                '<div class="eh-type"><i style="background:' + T.color + '"></i>' + esc(T.name) + '</div>' +
+                '<div class="eh-name">' + esc(val('ehTitle')) + '</div>' +
+                '<div class="eh-meta">' + E.DOWF[d.getDay()] + ', ' + E.MONF[d.getMonth()] + ' ' + d.getDate() + ' · ' + esc(hours()) + '<br>' + esc(val('ehPlace')) + '</div>' +
+                (b ? '<p class="eh-blurb">' + esc(b) + '</p>' : '');
+        }
+
+        function show() {
+            slides.forEach(function (s, i) { s.classList.toggle('active', i === step); });
+            $('puBarFill').style.width = ((step + 1) / total * 100) + '%';
+            $('puStepLbl').textContent = 'Step ' + (step + 1) + ' / ' + total;
+            $('puBack').disabled = step === 0;
+            $('puNext').style.display = step === total - 1 ? 'none' : '';
+            if (step === total - 1) renderReview();
+            slides[step].scrollTop = 0;
+        }
+        function goTo(t) {
+            if (t < 0 || t > total - 1 || t === step) return;
+            if (t > step) for (var i = step; i < t; i++) if (!check(i)) { step = i; show(); return; }
+            step = t; show();
+        }
+        $('puBack').addEventListener('click', function () { goTo(step - 1); });
+        $('puNext').addEventListener('click', function () { goTo(step + 1); });
+        $('ehBack').addEventListener('click', function () { goTo(0); });
+        ['ehTitle', 'ehPlace'].forEach(function (id) { $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); goTo(step + 1); } }); });
+
+        // Leaving half-way asks first, so nothing typed is lost by accident.
+        $('puClose').addEventListener('click', function () {
+            var started = val('ehTitle') || kind || val('ehPlace') || val('ehBlurb');
+            if (started && !confirm('Leave without publishing? What you entered will be lost.')) return;
+            location.href = 'events.html';
+        });
+
+        $('ehPublish').addEventListener('click', function () {
+            for (var i = 0; i < 3; i++) if (!check(i)) { step = i; show(); return; }
+            var id = 'u' + Date.now(), date = val('ehDate');
+            var ok = E.addHosted({ id: id, title: val('ehTitle'), date: date, type: kind, time: hours(),
+                place: val('ehPlace'), blurb: val('ehBlurb') || undefined, own: true });
+            if (!ok) { alert('This device is out of space, so the event could not be saved.'); return; }
+            location.href = 'listing-done.html?state=event&id=' + encodeURIComponent(id);
+        });
+
+        show();
+    })();
+    </script>
+    <script src="assets/line-icons.js"></script>
+</body>
+</html>

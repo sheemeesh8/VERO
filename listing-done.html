@@ -83,6 +83,15 @@
         .ld-card .pc-sold { position: absolute; z-index: 5; top: 10px; left: 10px; padding: 5px 8px; background: var(--ink); color: #fff;
                             font-size: 7.5px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; }
         @media (prefers-reduced-motion: reduce) { .ld-confetti { display: none; } }
+        /* ---- Event hosted: the event as the calendar shows it ---- */
+        .ld-ev { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .ld-ev-date { width: 64px; padding: 9px 0 8px; border: 1px solid rgba(27,25,22,0.32); }
+        .ld-ev-date b { display: block; font-size: 28px; font-weight: 300; line-height: 1; }
+        .ld-ev-date span { display: block; margin-top: 5px; font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: #48443e; }
+        .ld-ev-type { margin-top: 14px; font-size: 8.5px; letter-spacing: 2.2px; text-transform: uppercase; font-weight: 600; }
+        .ld-ev-type i { display: inline-block; width: 7px; height: 7px; margin-right: 7px; vertical-align: 1px; }
+        .ld-ev-name { margin-top: 8px; font-size: 17px; line-height: 1.25; }
+        .ld-ev-meta { margin-top: 6px; font-size: 11px; font-weight: 300; line-height: 1.6; color: #48443e; }
     </style>
     <link rel="stylesheet" href="assets/page-header.css?v=20261003e">
     <script src="assets/page-header.js?v=20261117e"></script>
@@ -109,8 +118,8 @@
 
     <script>
     (function () {
-        var state = (location.search.match(/[?&]state=(live|draft|deleted|sold)\b/) || [])[1] || 'live';
-        var draft = state === 'draft', deleted = state === 'deleted', sold = state === 'sold';
+        var state = (location.search.match(/[?&]state=(live|draft|deleted|sold|event)\b/) || [])[1] || 'live';
+        var draft = state === 'draft', deleted = state === 'deleted', sold = state === 'sold', hosted = state === 'event';
 
         // The item that was just saved: the newest entry in its list. (A deleted one
         // was never stored, so there is no card to show.)
@@ -121,6 +130,10 @@
             try { item = (JSON.parse(localStorage.getItem('vero_listings')) || []).filter(function (p) {
                 return (sid && p.id === sid) || (!sid && sname && (p.name === sname || p.title === sname));
             })[0] || null; } catch (e) {}
+        } else if (hosted) {
+            // The event just hosted (event-host.html), by its id in vero_events.
+            var hid = new URLSearchParams(location.search).get('id');
+            try { item = (JSON.parse(localStorage.getItem('vero_events')) || []).filter(function (e) { return e.id === hid; })[0] || null; } catch (e) {}
         } else if (!deleted) try { item = (JSON.parse(localStorage.getItem(draft ? 'vero_drafts' : 'vero_listings')) || [])[0] || null; } catch (e) {}
 
         var MARKS = {
@@ -130,6 +143,8 @@
             draft: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M21 16h9l5 5v17H21z M30 16v5h5 M24.5 28h7 M24.5 32h5"/></svg>',
             // A price tag — sold.
             sold: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M17.5 27.5l10-10h9v9l-10 10z M31.5 22.5h.01 M22 29l4 4"/></svg>',
+            // A calendar — an event hosted.
+            event: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M18 19h18v17H18z M18 24h18 M22.5 16.5v4.5 M31.5 16.5v4.5 M23 30l3 3 5.5-5.5"/></svg>',
             // A bin — deleted.
             deleted: '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25.5"/><path class="draw" d="M18 20h18 M23.5 20v-2.5h7V20 M20.5 20l1.3 16h10.4l1.3-16 M25 24.5v7.5 M29 24.5v7.5"/></svg>'
         };
@@ -164,7 +179,16 @@
             primary: ['View my sales', 'products.html?from=seller'],
             secondary: back ? ['Back', back] : ['List another item', 'upload-start.html']
         };
-        var COPY = sold ? SOLD : deleted ? (DELETED[what] || DELETED.upload) : draft ? {
+        var MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var evName = item && hosted ? '\u201c' + item.title + '\u201d' : 'Your event';
+        var HOSTED = {
+            eyebrow: 'Event published',
+            title: 'Your event is on!',
+            text: evName + ' is on the moravchick calendar. Buyers can add it to their calendar and sellers can book a booth.',
+            primary: ['View on the calendar', 'events.html' + (item && item.date ? '?date=' + item.date : '')],
+            secondary: ['Host another event', 'event-host.html']
+        };
+        var COPY = hosted ? HOSTED : sold ? SOLD : deleted ? (DELETED[what] || DELETED.upload) : draft ? {
             eyebrow: 'Saved to drafts',
             title: 'Saved as a draft',
             text: 'Your listing is waiting in your drafts. Pick it up whenever you’re ready and publish it in one tap.',
@@ -177,9 +201,22 @@
         };
 
         document.getElementById('ldMark').innerHTML = MARKS[state];
+        if (hosted) {
+            confetti();
+            if (item) {
+                var TY = { market: ['Market', '#9a7d52'], fair: ['Fair', '#2b6d9a'], meetup: ['Meetup', '#1f8f4e'], popup: ['Pop-up', '#b23b3b'] }[item.type] || ['Event', '#48443e'];
+                var p = String(item.date).split('-'), dd = new Date(+p[0], +p[1] - 1, +p[2]);
+                var e2 = function (x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+                document.getElementById('ldCard').innerHTML = '<div class="ld-ev">' +
+                    '<div class="ld-ev-date"><b>' + dd.getDate() + '</b><span>' + MONS[dd.getMonth()] + '</span></div>' +
+                    '<div class="ld-ev-type"><i style="background:' + TY[1] + '"></i>' + TY[0] + '</div>' +
+                    '<div class="ld-ev-name">' + e2(item.title) + '</div>' +
+                    '<div class="ld-ev-meta">' + e2(item.time || '') + (item.place ? '<br>' + e2(item.place) : '') + '</div></div>';
+            }
+        }
         // The header names where the seller is: the upload flow, a sale, or their products.
         var phName = document.querySelector('.page-header .ph-name');
-        if (phName) phName.textContent = sold ? 'Sold' : (deleted && what !== 'upload') ? 'My products' : 'List an item';
+        if (phName) phName.textContent = hosted ? 'Host an event' : sold ? 'Sold' : (deleted && what !== 'upload') ? 'My products' : 'List an item';
         if (sold) {
             document.body.classList.add('is-sold');
             var priceEl = document.getElementById('ldPrice');
@@ -225,6 +262,7 @@
 
         // The card buyers will see — the same feed card as everywhere else.
         if (!item) { document.getElementById('ldCard').remove(); return; }
+        if (hosted) return;
         var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
         var nis = function (n) { return '₪' + Math.round(n); };
         var pr = parseFloat(item.price) || 0, off = parseFloat(item.salePercent) || 0, sale = off > 0 && pr > 0;
