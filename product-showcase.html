@@ -589,6 +589,10 @@ h3, h4, h5, h6, p,
     const styleList  = [].concat(product.style || listing.style || []).filter(Boolean);
     const sSize      = product.size || listing.size || '';
     const sCondition = product.condition || listing.condition || '';
+    const capW = t => String(t || '').replace(/(^|[\s-])([a-z])/g, (m, p, c) => p + c.toUpperCase());
+    const rawCol = (product.collection || listing.collection || '').toString().trim();
+    const sCollection = rawCol ? capW(rawCol) + (/collection$/i.test(rawCol) ? '' : ' Collection') : '';
+    const sSeason = capW((product.season || listing.season || '').toString().trim());
     const sFabric    = product.fabric || product.material || listing.fabric || listing.material || '';
     const sColor     = product.color || listing.color || '';
     const sCategory  = (product.category && !/^(clothing|art)$/i.test(product.category)) ? product.category : (listing.itemType || '');
@@ -684,7 +688,9 @@ h3, h4, h5, h6, p,
 
     const escHTML = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const specs = [['Category', sCategory], ['Size', sSize], [isArt ? 'Material' : 'Fabric', sFabric], ['Colour', sColor],
-                   ['Style', styleList.join(', ')], ['Condition', sCondition], ['For', audience]].filter(r => r[1]);
+                   ['Style', styleList.join(', ')], ['Condition', sCondition], ['For', audience],
+                   // Filled in on upload (product-upload.html): the collection and the season, under For.
+                   ['Collection', sCollection], ['Season', sSeason]].filter(r => r[1]);
     const specTable = document.getElementById('specTable');
     specTable.innerHTML = specs.map(r => `<div class="spec-row"><span class="sk">${r[0]}</span><span class="sv">${escHTML(r[1])}</span></div>`).join('');
     specTable.hidden = !specs.length;
