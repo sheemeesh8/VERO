@@ -630,11 +630,13 @@
         if (urlMode === 'art' || urlMode === 'fashion') {
             try { localStorage.setItem('vero_category', urlMode === 'art' ? 'art' : 'clothing'); } catch (e) {}
         }
+        // The feed always opens on Clothing with Men chosen in the gender deck
+        // (unless a link asks for something else with ?mode= / ?gender=).
         var state = {
-            mode: ((urlMode === 'art' || urlMode === 'fashion') ? urlMode
-                   : (localStorage.getItem('vero_category') === 'art' ? 'art' : 'fashion')),
-            gender: params.get('gender') || 'women'
+            mode: (urlMode === 'art' || urlMode === 'fashion') ? urlMode : 'fashion',
+            gender: params.get('gender') || 'men'
         };
+        if (!urlMode) { try { localStorage.setItem('vero_category', 'clothing'); } catch (e) {} }
 
         // ----- Helpers -----------------------------------------------------
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
@@ -720,6 +722,11 @@
             { g: 'Sculpture', name: 'Sculpture', img: 'magazine-hero.jpg',                    desc: 'One-of-a-kind objects, hand-made and signed' }
         ];
         function modeCats() { return (state.mode === 'art') ? CATS_ART : CATS; }
+        // The deck's starting card: Men in Clothing, the first category in Art.
+        function defaultFacet() { return state.mode === 'art' ? CATS_ART[0].g : 'men'; }
+        // A facet the current mode doesn't have (e.g. 'men' in Art) left the deck with
+        // no card in front — fall back to the mode's default.
+        if (!modeCats().some(function (c) { return c.g === state.gender; })) state.gender = defaultFacet();
         // What a piece says for the deck's facet: its gender in Fashion, its category in Art.
         function facetOf(p) { return (state.mode === 'art') ? String((p.category || (p._raw && p._raw.category)) || '') : genderOf(p); }
         var catsEl = document.getElementById('hmCats');
@@ -1405,7 +1412,7 @@
         function currentMode() { return (localStorage.getItem('vero_category') === 'art') ? 'art' : 'fashion'; }
         window.addEventListener('pageshow', function () {
             var m = currentMode();
-            if (m !== state.mode) { state.mode = m; buildAll(); if (input && input.value.trim()) runSearch(input.value); }
+            if (m !== state.mode) { state.mode = m; state.gender = defaultFacet(); buildAll(); if (input && input.value.trim()) runSearch(input.value); }
         });
         // Quick fade "page" with the mode name, shown while the feed re-renders.
         function showModeFade(mode) {
@@ -1426,7 +1433,7 @@
             try { document.body.setAttribute('data-mode', mode); } catch (e) {}
             showModeFade(mode);
             state.mode = mode;
-            state.gender = modeCats()[0].g;    // the new mode's facets differ (genders vs art categories) — start on the first
+            state.gender = defaultFacet();    // the new mode's facets differ (genders vs art categories) — Men / the first art category
             buildAll();                // rebuilds the feed and re-marks the active sub-header tab (via syncSubnav)
             if (input && input.value.trim()) runSearch(input.value);
         }
