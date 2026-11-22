@@ -1011,10 +1011,34 @@ h3, h4, h5, h6, p,
             <div class="feed-title">Items for sale</div>
             <div class="feed-note" id="feedNote">—</div>
         </div>
+        <!-- GENDER — swipeable tiles; choosing one filters every product grid below. -->
+        <section class="pfx-sec pfx-gender" id="pfxGender" hidden>
+            <div class="pfx-sec-head"><span>Shop by gender</span></div>
+            <div class="pfx-rail pfx-gender-rail" id="pfxGenderRail"></div>
+        </section>
+
+        <!-- The first six products. -->
         <div class="feed" id="feed"></div>
         <div class="feed-empty" id="feedEmpty" style="display:none;">
             No items yet. Upload your first piece from My Profile.
         </div>
+
+        <!-- CATEGORIES — the item types this member lists; filters the grids too. -->
+        <section class="pfx-sec pfx-cats" id="pfxCats" hidden>
+            <div class="pfx-sec-head"><span>Categories</span></div>
+            <div class="pfx-rail pfx-cats-rail" id="pfxCatsRail"></div>
+        </section>
+
+        <!-- BANNER — the member's own promo banner if set, else a sale / new-in one. -->
+        <a class="pfx-banner" id="pfxBanner" href="#feedMore" hidden>
+            <div class="pfx-banner-copy">
+                <span class="pfx-banner-kicker" id="pfxBannerKicker"></span>
+                <span class="pfx-banner-title" id="pfxBannerTitle"></span>
+            </div>
+        </a>
+
+        <!-- The rest of the products. -->
+        <div class="feed" id="feedMore"></div>
     </div>
 
     <!-- SOCIALS popup — opened by the "Our Socials" button in the hero; lists the
@@ -1136,6 +1160,28 @@ h3, h4, h5, h6, p,
             BUYER.socials = s;
         })();
 
+        // ===================== SELLER STOREFRONT =====================
+        // ?for=seller — the same page, same structure, but the business account's
+        // identity: vero_seller_profile (name, bio, picture) + vero_store_config.
+        const PFX_SELLER = /[?&]for=seller\b/.test(location.search);
+        if (PFX_SELLER) (function applySellerProfile() {
+            let sell = {}, store = {};
+            try { sell  = JSON.parse(localStorage.getItem('vero_seller_profile')) || {}; } catch (e) {}
+            try { store = JSON.parse(localStorage.getItem('vero_store_config'))   || {}; } catch (e) {}
+            const name = [sell.name, sell.lastName].filter(v => v && String(v).trim()).join(' ').trim()
+                || store.name || store.storeName || sell.storeName || 'My Store';
+            BUYER.name = name;
+            BUYER.tag = (sell.bio && sell.bio.trim()) || store.tag || store.tagline || '';
+            BUYER.avatar = sell.avatarImg || sell.avatar || store.avatar || '';
+            BUYER.hero = store.hero || sell.hero || BUYER.hero;
+            if (store.heroVideo) BUYER.heroVideo = store.heroVideo;
+            if (typeof store.followers === 'number') BUYER.followers = store.followers;
+            const so = Object.assign({}, sell.socials || {});
+            ['instagram', 'tiktok', 'twitter', 'facebook', 'website'].forEach(k => { if (sell[k]) so[k] = sell[k]; });
+            BUYER.socials = so;
+            document.documentElement.classList.add('pfx-seller');
+        })();
+
         // ===================== RENDER =====================
         const nis = n => '₪' + (Number(n)||0).toLocaleString('en-US');
         let searchTerm = '';
@@ -1229,7 +1275,7 @@ h3, h4, h5, h6, p,
                 // Mirror the crop the buyer set in profile settings (profile.avatarPos).
                 try {
                     const prof = JSON.parse(localStorage.getItem('vero_profile')) || {};
-                    const p = prof.avatarPos;
+                    const p = PFX_SELLER ? null : prof.avatarPos;
                     if (p && typeof p === 'object') {
                         // avatarPos was set against the 288px card; scale the offset to this frame.
                         const k = (card.parentElement.clientWidth || 288) / 288;
@@ -1333,20 +1379,96 @@ h3, h4, h5, h6, p,
                 document.getElementById('pfxPromoN').textContent = promo.length;
                 promoHost.hidden = !promo.length;
             }
-            const wantsBanner = BUYER.banner && BUYER.banner.enabled;
-            let html = '';
-            filtered.forEach((p, i) => {
-                html += card(p);
-                // After every full block of five items, insert the banner — but not
-                // when that block is also the very last item (no trailing banner).
-                if (wantsBanner && (i + 1) % AD_EVERY === 0 && i + 1 < filtered.length) html += adBand();
-            });
-            feed.innerHTML = html;
-            feed.style.display = filtered.length ? 'grid' : 'none';
-            empty.style.display = filtered.length ? 'none' : 'block';
+            // Gender + category filters (set by the two sliders), on top of search.
+            const shown = filtered.filter(p =>
+                (pfxGenderSel === 'all' || genderOf(p) === pfxGenderSel) &&
+                (pfxCatSel === 'all' || catOf(p) === pfxCatSel));
+            const first = shown.slice(0, 6), rest = shown.slice(6);
+            feed.innerHTML = first.map(card).join('');
+            feed.style.display = first.length ? 'grid' : 'none';
+            const more = document.getElementById('feedMore');
+            more.innerHTML = rest.map(card).join('');
+            more.style.display = rest.length ? 'grid' : 'none';
+            empty.textContent = PRODUCTS.length
+                ? 'Nothing here yet for this choice.'
+                : 'No items yet. Upload your first piece from My Profile.';
+            empty.style.display = shown.length ? 'none' : 'block';
             document.getElementById('feedNote').textContent =
-                `${filtered.length} item${filtered.length===1?'':'s'}`;
+                `${shown.length} item${shown.length===1?'':'s'}`;
+            renderGenderRail(filtered);
+            renderCatsRail(filtered.filter(p => pfxGenderSel === 'all' || genderOf(p) === pfxGenderSel));
+            renderBanner(filtered);
         }
+
+        // ---- Gender slider ----
+        let pfxGenderSel = 'all', pfxCatSel = 'all';
+        const GENDERS = [
+            { id: 'all',    label: 'All',    img: 'clothing-hero.jpg' },
+            { id: 'women',  label: 'Women',  img: 'women-hero.jpg' },
+            { id: 'men',    label: 'Men',    img: 'men-hero.jpg' },
+            { id: 'unisex', label: 'Unisex', img: 'gallery-hero.jpg' },
+            { id: 'kids',   label: 'Kids',   img: 'sale-hero.jpg' },
+        ];
+        function genderOf(p) { return String(p.gender || (p.raw && (p.raw.gender || p.raw.audience)) || '').trim().toLowerCase(); }
+        function catOf(p) {
+            const r = p.raw || {};
+            const v = r.itemType || r.type || (r.category && !/^(clothing|art)$/i.test(r.category) ? r.category : '') || '';
+            return String(v).trim();
+        }
+        function escAttr(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+        function renderGenderRail(list) {
+            const host = document.getElementById('pfxGender'), rail = document.getElementById('pfxGenderRail');
+            if (!host) return;
+            host.hidden = !PRODUCTS.length;
+            rail.innerHTML = GENDERS.map(g => {
+                const mine = g.id === 'all' ? list : list.filter(p => genderOf(p) === g.id);
+                const pic = (mine.find(p => p.cover) || {}).cover || g.img;
+                return `<button type="button" class="pfx-gtile${g.id === pfxGenderSel ? ' is-on' : ''}" data-g="${g.id}"
+                            style="background-image:url('${escAttr(pic)}')">
+                            <span class="pfx-gname">${g.label}</span><span class="pfx-gcount">${mine.length}</span>
+                        </button>`;
+            }).join('');
+        }
+        // ---- Category slider ----
+        function renderCatsRail(list) {
+            const host = document.getElementById('pfxCats'), rail = document.getElementById('pfxCatsRail');
+            if (!host) return;
+            const cats = [];
+            list.forEach(p => { const c = catOf(p); if (c && !cats.some(x => x.name === c)) cats.push({ name: c, cover: p.cover }); });
+            if (pfxCatSel !== 'all' && !cats.some(c => c.name === pfxCatSel)) pfxCatSel = 'all';
+            host.hidden = !cats.length;
+            const all = { name: 'all', label: 'All', cover: (list.find(p => p.cover) || {}).cover || '' };
+            rail.innerHTML = [all].concat(cats).map(c => `
+                <button type="button" class="pfx-ctile${c.name === pfxCatSel ? ' is-on' : ''}" data-c="${escAttr(c.name)}">
+                    <span class="pfx-cimg"${c.cover ? ` style="background-image:url('${escAttr(c.cover)}')"` : ''}></span>
+                    <span class="pfx-cname">${escAttr(c.label || c.name)}</span>
+                </button>`).join('');
+        }
+        // ---- Banner ----
+        function renderBanner(list) {
+            const el = document.getElementById('pfxBanner');
+            if (!el) return;
+            let img, kicker, title;
+            if (BUYER.banner && BUYER.banner.enabled) {
+                img = BUYER.banner.image; kicker = BUYER.banner.kicker || ''; title = BUYER.banner.title || '';
+            } else {
+                const off = list.map(p => Number((p.raw || {}).discount) || Number((p.raw || {}).salePercent) || 0).filter(d => d > 0 && d < 100);
+                if (off.length) { kicker = 'Sale'; title = 'Up to ' + Math.max.apply(null, off) + '% off'; img = (list.find(p => p.cover && ((p.raw||{}).discount || (p.raw||{}).salePercent)) || {}).cover || 'sale-hero.jpg'; }
+                else { kicker = 'New in'; title = 'Fresh pieces from ' + (BUYER.name || 'this closet'); img = (list.find(p => p.cover) || {}).cover || 'clothing-hero.jpg'; }
+            }
+            el.style.backgroundImage = `url('${String(img).replace(/'/g, '%27')}')`;
+            document.getElementById('pfxBannerKicker').textContent = kicker;
+            document.getElementById('pfxBannerTitle').textContent = title;
+            el.hidden = !list.length;
+        }
+        document.addEventListener('click', function (e) {
+            const g = e.target.closest('.pfx-gtile');
+            if (g) { pfxGenderSel = g.dataset.g; pfxCatSel = 'all'; renderFeed(); return; }
+            const c = e.target.closest('.pfx-ctile');
+            if (c) { pfxCatSel = c.dataset.c; renderFeed(); return; }
+            const b = e.target.closest('#pfxBanner');
+            if (b) { e.preventDefault(); const t = document.getElementById('feedMore'); (t.style.display !== 'none' ? t : document.getElementById('feed')).scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        });
         renderFeed();
 
         // Socials — render only the links the buyer filled in (My Profile). Icons are
@@ -1592,6 +1714,39 @@ h3, h4, h5, h6, p,
     .pfx-promo-rail .product-card:not(#zz) { flex: none; width: 44%; scroll-snap-align: start; }
     @media (min-width: 701px) { .pfx-promo-rail .product-card:not(#zz) { width: calc((100% - 16px) / 3.3); } }
     body.pfx-on-events .pfx-promo { display: none !important; }
+    /* ---- Section order: promoted → gender → 6 products → categories → banner → the rest ---- */
+    .pfx-sec:not(#zz) { max-width: 720px; margin: 0 auto; padding: 20px 0 6px; }
+    .pfx-sec[hidden], .pfx-banner[hidden] { display: none !important; }
+    .pfx-sec-head { padding: 0 22px 12px; font-size: 15px; font-weight: 700; color: #111; }
+    .pfx-rail { display: flex; gap: 8px; overflow-x: auto; padding: 0 22px 4px; scroll-snap-type: x mandatory;
+        scroll-padding: 0 22px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .pfx-rail::-webkit-scrollbar { display: none; }
+    .pfx-gtile { flex: none; position: relative; width: 38%; aspect-ratio: 3 / 4; border: 0; padding: 0; cursor: pointer;
+        scroll-snap-align: start; overflow: hidden; background: #ddd center / cover no-repeat; color: #fff; text-align: left; }
+    .pfx-gtile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.6) 100%); }
+    .pfx-gtile.is-on { outline: 2px solid #111; outline-offset: -2px; }
+    .pfx-gtile.is-on::before { content: ""; position: absolute; left: 12px; right: 12px; bottom: 8px; height: 2px; background: #fff; z-index: 2; }
+    .pfx-gname { position: absolute; left: 12px; bottom: 30px; z-index: 1; font-size: 17px; font-weight: 700; }
+    .pfx-gcount { position: absolute; left: 12px; bottom: 15px; z-index: 1; font-size: 11px; opacity: 0.85; }
+    @media (min-width: 701px) { .pfx-gtile { width: 22%; } }
+    .pfx-ctile { flex: none; display: flex; flex-direction: column; align-items: center; gap: 7px; width: 74px;
+        border: 0; padding: 0; background: none; cursor: pointer; scroll-snap-align: start; color: #555; }
+    .pfx-cimg { width: 66px; height: 66px; background: #e4e4e1 center / cover no-repeat; border: 2px solid transparent; }
+    .pfx-ctile.is-on .pfx-cimg { border-color: #111; }
+    .pfx-ctile.is-on { color: #111; font-weight: 700; }
+    .pfx-cname { font-size: 12px; max-width: 74px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pfx-banner:not(#zz) { position: relative; display: block; max-width: 720px; margin: 18px auto 4px; height: 190px;
+        background: #2b2b2b center / cover no-repeat; color: #fff; text-decoration: none; overflow: hidden; }
+    @media (min-width: 721px) { .pfx-banner:not(#zz) { height: 240px; } }
+    .pfx-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 70%); }
+    .pfx-banner-copy { position: absolute; left: 22px; bottom: 22px; right: 22px; z-index: 1; display: flex; flex-direction: column; gap: 6px; }
+    .pfx-banner-kicker { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
+    .pfx-banner-title { font-size: 24px; font-weight: 700; line-height: 1.15; }
+    #feedMore.feed:not(#zz) { max-width: 720px; margin: 0 auto; padding: 14px 6px 110px; gap: 24px 6px; }
+    #feed.feed:not(#zz) { padding-bottom: 8px; }
+    #feedEmpty:not(#zz) { max-width: 720px; margin: 0 auto; padding: 30px 22px; text-align: center; color: #8a8a87; }
+    @media (min-width: 701px) { #feedMore.feed:not(#zz) { grid-template-columns: repeat(3, 1fr); } }
+    body.pfx-on-events .pfx-sec, body.pfx-on-events .pfx-banner, body.pfx-on-events #feedMore { display: none !important; }
     /* The search popup stays a floating pill, hidden until the search button opens it. */
     #searchPop:not(.open):not(#zz) { display: none !important; }
     #searchPop.open:not(#zz) { position: fixed !important; top: auto !important; bottom: 28px; right: 28px; }
