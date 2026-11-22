@@ -946,53 +946,59 @@ h3, h4, h5, h6, p,
     <div class="wrap">
         <!-- HERO — mirrors the storefront, but a buyer's page carries a round
              profile picture on the right of the hero. -->
-        <div class="hero" id="hero">
-            <!-- Top bar over the photo: Back (left) and Share (right). -->
-            <div class="pf-topbar">
-                <button class="tb-ico" type="button" id="shareBtn" aria-label="Share">
-                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        <!-- PROFILEFRONT — social-profile layout: a cover photo that fades into
+             the page, a rounded-square profile picture overlapping it, the name
+             and @handle with Message + Follow on the right, the Following /
+             Followers line, the bio, then tabs over the feed. Reuses the old
+             hero IDs so the populate + follow scripts keep working. -->
+        <div class="pfx" id="hero">
+            <div class="pfx-cover dn-bg" id="dnBg">
+                <a class="pfx-round pfx-back" href="javascript:history.length>1?history.back():location.href='index.html'" aria-label="Back">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+                </a>
+                <button class="pfx-round pfx-share" type="button" id="shareBtn" aria-label="Share">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
                 </button>
             </div>
             <!-- Hidden stubs kept so existing scripts still find their elements. -->
             <span id="verifiedCheck" hidden></span>
             <span id="heroAvatar" hidden></span>
             <button id="socialsBtn" hidden></button>
-            <!-- Content overlaid on the bottom of the hero image: an action row
-                 (online status left, follow + right), the centred name, the
-                 3-column stats, and the bio. -->
-            <!-- Blurred backdrop of the same portrait (set from JS). -->
-            <div class="dn-bg" id="dnBg"></div>
-            <div class="pf-overlay daniel dn-artist">
-                <div class="dn-names">
-                    <!-- First and last name on one line, the badge after them. -->
-                    <div class="dn-namerow">
-                        <span class="pf-first" id="storeName">Your Name</span>
-                        <span class="pf-last" id="storeLast"></span>
-                        <span class="dn-vbadge" aria-label="Verified">V</span>
+            <span id="storeStatus" class="is-closed" hidden>Offline</span>
+
+            <div class="pfx-body">
+                <div class="pfx-avatar dn-card"><img id="pfCardImg" alt=""></div>
+                <div class="pfx-headrow">
+                    <div class="pfx-names">
+                        <div class="pfx-name">
+                            <span id="storeName">Your Name</span>
+                            <span id="storeLast"></span>
+                        </div>
+                        <span class="pfx-handle" id="dnUsername" hidden></span>
+                    </div>
+                    <div class="pfx-actions">
+                        <button class="pfx-msg" type="button" aria-label="Message"
+                            onclick="var m=document.getElementById('messageBtn');if(m)m.click();">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3z" fill="currentColor" stroke="none"/><path d="M3 5l9 7 9-7" stroke="#fff"/></svg>
+                        </button>
+                        <button class="pfx-follow" id="pfPlus" type="button" aria-label="Follow"
+                            onclick="var fb=document.getElementById('followBtn');if(fb){fb.click();var on=fb.classList.contains('following');this.classList.toggle('is-following',on);this.querySelector('.dn-follow-label').textContent=on?'Following':'Follow';}">
+                            <span class="dn-follow-label">Follow</span>
+                        </button>
                     </div>
                 </div>
-                <p class="pf-bio" id="storeBio"></p>
-                <!-- Profile picture + handle, Follow on the right. -->
-                <div class="dn-who">
-                    <div class="dn-card">
-                        <img id="pfCardImg" alt="">
-                    </div>
-                    <span class="dn-username" id="dnUsername" hidden></span>
-                    <button class="dn-follow" id="pfPlus" type="button" aria-label="Follow"
-                        onclick="var fb=document.getElementById('followBtn');if(fb){fb.click();var on=fb.classList.contains('following');this.classList.toggle('is-following',on);this.querySelector('.dn-follow-label').textContent=on?'Following':'Follow';}">
-                        <span class="dn-follow-label">Follow</span>
-                    </button>
+                <div class="pfx-stats">
+                    <a href="follows.html#following"><b id="following">0</b> Following</a>
+                    <a href="follows.html#followers"><b id="followers">0</b> Followers</a>
+                    <a href="#feed"><b id="itemCount">0</b> Items</a>
                 </div>
-                <!-- Followers / items / following, where the bio used to sit. -->
-                <div class="dn-stats">
-                    <a class="dn-fnum" href="follows.html#followers"><b id="followers">0</b><span>Followers</span></a>
-                    <a class="dn-fnum" href="#feed"><b id="itemCount">0</b><span>Items</span></a>
-                    <a class="dn-fnum" href="follows.html#following"><b id="following">0</b><span>Following</span></a>
-                </div>
-                <span class="dn-swipe">Swipe for more</span>
-                <!-- Hidden stubs kept so existing scripts still find their elements. -->
-                <span id="storeStatus" class="is-closed" hidden>Offline</span>
+                <p class="pfx-bio" id="storeBio"></p>
             </div>
+
+            <nav class="pfx-tabs" id="pfxTabs" role="tablist">
+                <button type="button" role="tab" class="is-active" data-tab="items">Items</button>
+                <button type="button" role="tab" data-tab="events">Events</button>
+            </nav>
         </div>
 
         <!-- Sticky bottom action bar (hidden) — kept so the follow logic still runs
@@ -1007,6 +1013,7 @@ h3, h4, h5, h6, p,
             <div class="feed-head"><div class="feed-title">Upcoming events</div></div>
             <div class="sf-ev-list" id="sfEvList"></div>
         </section>
+        <div class="feed-empty pfx-ev-empty" id="pfxEvEmpty">No upcoming events.</div>
 
         <!-- Seller-built storefront sections (store-editor.html → vero_store_config.sections),
              rendered by store-sections.js. When the design has a Products section it
@@ -1509,5 +1516,125 @@ h3, h4, h5, h6, p,
     })();
     </script>
 <script src="assets/line-icons.js"></script>
+<!-- Profilefront social layout (see #hero.pfx). Last in the page so it wins
+     over the older hero / artist-page rules above. -->
+<style id="pfx-profile">
+    body { background: #f4f4f2; }
+    .page-header[data-hero="#hero"] { display: none !important; }
+    #hero.pfx:not(#zz) {
+        display: block !important; position: relative; height: auto !important; min-height: 0 !important;
+        aspect-ratio: auto !important; overflow: visible; border: 0;
+        background: #f4f4f2 !important; background-image: none !important; color: #111; direction: ltr;
+    }
+    #hero.pfx::after { display: none !important; }
+    #hero.pfx > video.hero-video { height: 52vh; max-height: 460px; inset: 0 0 auto 0; }
+    #hero.pfx.has-video .pfx-cover { background-image: none !important; background-color: transparent; }
+    .pfx .pfx-cover {
+        position: relative; inset: auto; z-index: 0; width: 100%; height: 52vh; min-height: 300px; max-height: 460px;
+        background: #2b2b2b center 30% / cover no-repeat; filter: grayscale(0);
+    }
+    .pfx .pfx-cover::after {
+        content: ""; position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0) 26%, rgba(244,244,242,0) 52%, rgba(244,244,242,0.75) 82%, #f4f4f2 100%) !important;
+    }
+    .pfx-round {
+        position: absolute; top: calc(18px + env(safe-area-inset-top,0px)); z-index: 3;
+        width: 42px; height: 42px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(40,40,40,0.55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+        color: #fff; text-decoration: none;
+    }
+    .pfx-round svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .pfx-back { left: 18px; }
+    .pfx-share { right: 18px; }
+
+    .pfx-body { position: relative; z-index: 2; max-width: 720px; margin: -118px auto 0; padding: 0 22px; }
+    .pfx .pfx-avatar:not(#zz) {
+        margin: 0; width: 104px; height: 104px; aspect-ratio: 1; max-width: none; flex: none;
+        border-radius: 26px; border: 4px solid #fff; overflow: hidden; background: #d9d9d6;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+    }
+    .pfx .pfx-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; transform: none; }
+    .pfx .pfx-avatar img:not([src]), .pfx .pfx-avatar img[src=""] { opacity: 0; }
+
+    .pfx-headrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+    .pfx-names { min-width: 0; }
+    .pfx-name { display: flex; gap: 0 7px; min-width: 0; font-size: 22px; font-weight: 700; line-height: 1.15; color: #111; }
+    .pfx-name #storeName, .pfx-name #storeLast { white-space: nowrap; }
+    .pfx-name #storeLast { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .pfx-name #storeLast:empty { display: none; }
+    .pfx-handle { display: block; margin-top: 4px; font-size: 13.5px; color: #8a8a87; }
+    .pfx-handle[hidden] { display: none; }
+    .pfx-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+    .pfx-msg, .pfx-follow {
+        border: 0; cursor: pointer; background: #fff; color: #111;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08); transition: background .2s, color .2s;
+    }
+    .pfx-msg { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .pfx-msg svg { width: 18px; height: 18px; fill: none; stroke-width: 1.6; stroke-linejoin: round; }
+    .pfx-follow { height: 40px; padding: 0 24px; border-radius: 999px; font-size: 14px; font-weight: 700; }
+    .pfx-follow.is-following { background: #111; color: #fff; }
+
+    .pfx-stats { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 16px; font-size: 13.5px; color: #555; }
+    .pfx-stats a { color: inherit; text-decoration: none; }
+    .pfx-stats b { color: #111; font-weight: 700; }
+    .pfx-bio:not(#zz) {
+        margin: 12px 0 0; font-family: inherit !important; font-size: 14px; line-height: 1.5; color: #333;
+        text-align: left; max-width: 520px;
+    }
+    .pfx-bio:empty { display: none; }
+
+    .pfx-tabs:not(#zz) {
+        display: flex; max-width: 720px; margin: 22px auto 0; padding: 0 22px;
+        border-bottom: 1px solid #e2e2df; text-transform: none !important;
+    }
+    .pfx-tabs button {
+        flex: 1; position: relative; border: 0; background: none; cursor: pointer;
+        padding: 12px 0 14px; font-size: 14.5px; font-weight: 700; color: #9a9a97;
+        text-transform: none !important; letter-spacing: 0;
+    }
+    .pfx-tabs button.is-active { color: #111; }
+    .pfx-tabs button.is-active::after {
+        content: ""; position: absolute; left: 50%; bottom: -1px; transform: translateX(-50%);
+        width: 40px; height: 3px; border-radius: 2px; background: #111;
+    }
+
+    /* Tab panes: Items (the feed + sections) vs Events. */
+    body.pfx-on-items .sf-events, body.pfx-on-items .pfx-ev-empty { display: none !important; }
+    body.pfx-on-events #feedHead, body.pfx-on-events #feed, body.pfx-on-events #feedEmpty,
+    body.pfx-on-events #sfSections, body.pfx-on-events #sfDraftBar { display: none !important; }
+    body.pfx-on-events .sf-events:not([hidden]) ~ .pfx-ev-empty { display: none !important; }
+    body.pfx-on-events .sf-events .feed-head { display: none; }
+    /* The site squares every corner by default; this layout keeps its rounded
+       avatar, buttons and pills like the reference. */
+    .pfx .pfx-avatar:not(#zz):not(#zz):not(#zz):not(#zz) { border-radius: 26px !important; }
+    .pfx .pfx-round:not(#zz):not(#zz):not(#zz):not(#zz),
+    .pfx .pfx-msg:not(#zz):not(#zz):not(#zz):not(#zz) { border-radius: 50% !important; }
+    .pfx .pfx-follow:not(#zz):not(#zz):not(#zz):not(#zz) { border-radius: 999px !important; }
+    .pfx-tabs button.is-active:not(#zz):not(#zz):not(#zz):not(#zz)::after { border-radius: 2px !important; }
+    /* The search popup stays a floating pill, hidden until the search button opens it. */
+    #searchPop:not(.open):not(#zz) { display: none !important; }
+    #searchPop.open:not(#zz) { position: fixed !important; top: auto !important; bottom: 28px; right: 28px; }
+</style>
+<script>
+(function pfxTabs() {
+    var tabs = document.getElementById('pfxTabs');
+    if (!tabs) return;
+    function show(name) {
+        document.body.classList.toggle('pfx-on-items', name === 'items');
+        document.body.classList.toggle('pfx-on-events', name === 'events');
+        tabs.querySelectorAll('button').forEach(function (b) {
+            var on = b.dataset.tab === name;
+            b.classList.toggle('is-active', on);
+            b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+    }
+    tabs.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-tab]');
+        if (b) show(b.dataset.tab);
+    });
+    show('items');
+})();
+</script>
 </body>
 </html>
