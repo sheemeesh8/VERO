@@ -948,13 +948,6 @@ h3, h4, h5, h6, p,
                 <button class="pfx-round pfx-share" type="button" id="shareBtn" aria-label="Share">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
                 </button>
-                <!-- Followers / following / items, one at a time, cross-fading. -->
-                <div class="pfx-statfade" id="pfxStatFade" aria-live="off">
-                    <a class="pfx-stat is-on" href="follows.html#followers"><b id="followers">0</b><span>Followers</span></a>
-                    <a class="pfx-stat" href="follows.html#following"><b id="following">0</b><span>Following</span></a>
-                    <a class="pfx-stat" href="#feed"><b id="itemCount">0</b><span>Items</span></a>
-                </div>
-                <div class="pfx-avatar dn-card"><img id="pfCardImg" alt=""></div>
             </div>
             <!-- Hidden stubs kept so existing scripts still find their elements. -->
             <span id="verifiedCheck" hidden></span>
@@ -962,17 +955,35 @@ h3, h4, h5, h6, p,
             <button id="socialsBtn" hidden></button>
             <span id="storeStatus" class="is-closed" hidden>Offline</span>
 
-            <!-- White half: name, Follow, the description with the social links. -->
+            <!-- Under the cover: the round picture on the left overlapping it, the
+                 name + handle with Message / Follow on the right, the Following /
+                 Followers line, then the description and the social links. -->
             <div class="pfx-body">
-                <div class="pfx-name">
-                    <span id="storeName">Your Name</span>
-                    <span id="storeLast"></span>
+                <div class="pfx-avatar dn-card"><img id="pfCardImg" alt=""></div>
+                <div class="pfx-headrow">
+                    <div class="pfx-names">
+                        <div class="pfx-name">
+                            <span id="storeName">Your Name</span>
+                            <span id="storeLast"></span>
+                        </div>
+                        <span class="pfx-handle" id="dnUsername" hidden></span>
+                    </div>
+                    <div class="pfx-actions">
+                        <button class="pfx-msg" type="button" aria-label="Message"
+                            onclick="var m=document.getElementById('messageBtn');if(m)m.click();">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3z" fill="currentColor" stroke="none"/><path d="M3 5l9 7 9-7" stroke="#fff"/></svg>
+                        </button>
+                        <button class="pfx-follow" id="pfPlus" type="button" aria-label="Follow"
+                            onclick="var fb=document.getElementById('followBtn');if(fb){fb.click();var on=fb.classList.contains('following');this.classList.toggle('is-following',on);this.querySelector('.dn-follow-label').textContent=on?'Following':'Follow';}">
+                            <span class="dn-follow-label">Follow</span>
+                        </button>
+                    </div>
                 </div>
-                <span class="pfx-handle" id="dnUsername" hidden></span>
-                <button class="pfx-follow" id="pfPlus" type="button" aria-label="Follow"
-                    onclick="var fb=document.getElementById('followBtn');if(fb){fb.click();var on=fb.classList.contains('following');this.classList.toggle('is-following',on);this.querySelector('.dn-follow-label').textContent=on?'Following':'Follow';}">
-                    <span class="dn-follow-label">Follow</span>
-                </button>
+                <div class="pfx-stats">
+                    <a href="follows.html#following"><b id="following">0</b> Following</a>
+                    <a href="follows.html#followers"><b id="followers">0</b> Followers</a>
+                    <a href="#feed"><b id="itemCount">0</b> Items</a>
+                </div>
                 <p class="pfx-bio" id="storeBio"></p>
                 <div class="pfx-socials" id="pfxSocials" hidden></div>
             </div>
@@ -1502,18 +1513,6 @@ h3, h4, h5, h6, p,
             document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
         })();
 
-        // Stats on the cover: Followers → Following → Items, cross-fading.
-        (function statFade() {
-            const items = document.querySelectorAll('#pfxStatFade .pfx-stat');
-            if (items.length < 2) return;
-            let i = 0;
-            setInterval(function () {
-                items[i].classList.remove('is-on');
-                i = (i + 1) % items.length;
-                items[i].classList.add('is-on');
-            }, 3200);
-        })();
-
         // Sticky search popup — opens the search pill, filters the feed live.
         (function(){
             const fab = document.getElementById('searchFab');
@@ -1617,12 +1616,12 @@ h3, h4, h5, h6, p,
 <!-- Profilefront social layout (see #hero.pfx). Last in the page so it wins
      over the older hero / artist-page rules above. -->
 <style id="pfx-profile">
-    body { background: #f4f4f2; }
+    body { background: #fff; }
     .page-header[data-hero="#hero"] { display: none !important; }
     #hero.pfx:not(#zz) {
         display: block !important; position: relative; height: auto !important; min-height: 0 !important;
         aspect-ratio: auto !important; overflow: visible; border: 0;
-        background: #f4f4f2 !important; background-image: none !important; color: #111; direction: ltr;
+        background: #fff !important; background-image: none !important; color: #111; direction: ltr;
     }
     #hero.pfx::after { display: none !important; }
     #hero.pfx > video.hero-video { height: 52vh; max-height: 460px; inset: 0 0 auto 0; }
@@ -1648,45 +1647,52 @@ h3, h4, h5, h6, p,
     .pfx-back { left: 18px; }
     .pfx-share { right: 18px; }
 
-    /* Stats on the photo: one figure at a time, cross-fading. */
-    .pfx-statfade { position: absolute; left: 0; right: 0; bottom: 92px; z-index: 2; height: 56px; }
-    .pfx-stat {
-        position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-        color: #fff; text-decoration: none; opacity: 0; transition: opacity 0.9s ease; pointer-events: none;
-        text-shadow: 0 2px 16px rgba(0,0,0,0.35);
+    /* Cover fades into the white, like the reference. */
+    .pfx .pfx-cover::after {
+        background: linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0) 26%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.75) 80%, #fff 100%) !important;
     }
-    .pfx-stat.is-on { opacity: 1; pointer-events: auto; }
-    .pfx-stat b { font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: 0.5px; }
-    .pfx-stat span { margin-top: 6px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
+    .pfx .pfx-cover:not(#zz) { z-index: 0; }
 
-    /* The round profile picture, centred on the line between photo and white. */
+    .pfx-body { position: relative; z-index: 2; max-width: 720px; margin: -118px auto 0; padding: 0 22px 8px; text-align: left; }
+    body { background: #fff !important; }
+
+    /* Round profile picture on the left, overlapping the cover. */
     .pfx .pfx-avatar:not(#zz) {
-        position: absolute; left: 50%; bottom: 0; z-index: 3; transform: translate(-50%, 50%);
-        margin: 0; width: 116px; height: 116px; aspect-ratio: 1; max-width: none;
+        position: relative; left: auto; bottom: auto; transform: none;
+        margin: 0; width: 104px; height: 104px; aspect-ratio: 1; max-width: none; flex: none;
         border: 4px solid #fff; overflow: hidden; background: #d9d9d6;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.16);
     }
     .pfx .pfx-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; transform: none; }
     .pfx .pfx-avatar img:not([src]), .pfx .pfx-avatar img[src=""] { opacity: 0; }
 
-    .pfx-body { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 72px 22px 8px;
-        display: flex; flex-direction: column; align-items: center; text-align: center; background: #fff; }
-    body { background: #fff !important; }
-    .pfx-name { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 7px; font-size: 22px; font-weight: 700; line-height: 1.15; color: #111; }
+    .pfx-headrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+    .pfx-names { min-width: 0; }
+    .pfx-name { display: flex; gap: 0 7px; min-width: 0; font-size: 22px; font-weight: 700; line-height: 1.15; color: #111; }
+    .pfx-name #storeName, .pfx-name #storeLast { white-space: nowrap; }
+    .pfx-name #storeLast { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
     .pfx-name #storeLast:empty { display: none; }
     .pfx-handle { display: block; margin-top: 4px; font-size: 13.5px; color: #8a8a87; }
     .pfx-handle[hidden] { display: none; }
-    .pfx-follow {
-        margin-top: 16px; height: 42px; min-width: 150px; padding: 0 30px; border: 1.5px solid #111; cursor: pointer;
-        background: #111; color: #fff; font-size: 14px; font-weight: 700; transition: background .2s, color .2s;
+    .pfx-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+    .pfx-msg, .pfx-follow {
+        border: 0; cursor: pointer; background: #fff; color: #111;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.1); transition: background .2s, color .2s;
     }
-    .pfx-follow.is-following { background: #fff; color: #111; }
+    .pfx-msg { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .pfx-msg svg { width: 18px; height: 18px; fill: none; stroke-width: 1.6; stroke-linejoin: round; }
+    .pfx-follow { height: 40px; padding: 0 24px; font-size: 14px; font-weight: 700; }
+    .pfx-follow.is-following { background: #111; color: #fff; }
+
+    .pfx-stats { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 16px; font-size: 13.5px; color: #555; }
+    .pfx-stats a { color: inherit; text-decoration: none; }
+    .pfx-stats b { color: #111; font-weight: 700; }
     .pfx-bio:not(#zz) {
-        margin: 16px 0 0; font-family: inherit !important; font-size: 14px; line-height: 1.55; color: #333;
-        text-align: center; max-width: 460px;
+        margin: 12px 0 0; font-family: inherit !important; font-size: 14px; line-height: 1.5; color: #333;
+        text-align: left; max-width: 520px;
     }
     .pfx-bio:empty { display: none; }
-    .pfx-socials { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .pfx-socials { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
     .pfx-socials[hidden] { display: none; }
     .pfx-soc { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
         border: 1px solid #e2e2df; color: #111; text-decoration: none; transition: background .2s; }
@@ -1761,7 +1767,7 @@ h3, h4, h5, h6, p,
     html.pfx-embed .search-fab, html.pfx-embed .search-pop, html.pfx-embed .soc-overlay,
     html.pfx-embed .pfx-round, html.pfx-embed #vero-ed-toggle, html.pfx-embed #vero-ed-panel,
     html.pfx-embed .page-header, html.pfx-embed footer, html.pfx-embed .site-footer { display: none !important; }
-    html.pfx-embed .pfx-follow { display: none !important; }   /* no Follow on your own preview */
+    html.pfx-embed .pfx-follow, html.pfx-embed .pfx-msg { display: none !important; }   /* no Follow / Message on your own preview */
     html.pfx-embed .wrap { animation: none !important; }
     html.pfx-embed, html.pfx-embed body { overflow: hidden !important; height: auto !important; min-height: 0 !important; padding: 0 !important; }
     html.pfx-embed .pfx .pfx-cover, html.pfx-embed #hero.pfx > video.hero-video { height: 300px !important; min-height: 0 !important; }
