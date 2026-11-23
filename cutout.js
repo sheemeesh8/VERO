@@ -47,8 +47,9 @@ const VERO_CUTOUT_W = 1020;
 const VERO_CUTOUT_H = 1500;
 /* The piece fills this share of the frame, centred, with even air around it. */
 const VERO_CUTOUT_FILL = 0.84;
-/* A watch is zoomed to its head: the case spans this share of the frame's width. */
-const VERO_CUTOUT_WATCH_HEAD = 0.62;
+/* A watch is zoomed to its head: the case spans this share of the frame's width
+   (medium: more strap shows, and the photo is enlarged less than a full close-up). */
+const VERO_CUTOUT_WATCH_HEAD = 0.42;
 /* Longest side of the photo whose pixels are kept. The model works on a
    smaller copy (below); its matte is scaled up and laid over this one, so the
    piece keeps the camera's detail instead of the model's thumbnail. */
