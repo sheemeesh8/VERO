@@ -43,12 +43,16 @@
    (product-card.css: aspect-ratio 0.68, filled with object-fit: cover). A cut-out
    in exactly that shape is never cropped by the card, and being transparent it
    sits on the card's own ground instead of a square of a slightly different grey. */
-const VERO_CUTOUT_W = 680;
-const VERO_CUTOUT_H = 1000;
+const VERO_CUTOUT_W = 1020;
+const VERO_CUTOUT_H = 1500;
 /* The piece fills this share of the frame, centred, with even air around it. */
 const VERO_CUTOUT_FILL = 0.84;
 /* A watch is zoomed to its head: the case spans this share of the frame's width. */
 const VERO_CUTOUT_WATCH_HEAD = 0.62;
+/* Longest side of the photo whose pixels are kept. The model works on a
+   smaller copy (below); its matte is scaled up and laid over this one, so the
+   piece keeps the camera's detail instead of the model's thumbnail. */
+const VERO_CUTOUT_FULL = 2048;
 /* Longest side of the photo handed to the model. */
 const VERO_CUTOUT_INPUT = 1280;
 
@@ -203,6 +207,33 @@ async function veroCutoutShrink(blob) {
     return new Promise(resolve => c.toBlob(b => resolve(b || blob), 'image/jpeg', 0.92));
 }
 
+/* The photo at full working size, upright, on a canvas. */
+async function veroCutoutFullCanvas(blob) {
+    let src;
+    try { src = await createImageBitmap(blob, { imageOrientation: 'from-image' }); }
+    catch (e) { src = await veroCutoutLoadImage(blob); }
+    const w = src.width || src.naturalWidth, h = src.height || src.naturalHeight;
+    const k = Math.min(1, VERO_CUTOUT_FULL / Math.max(w, h));
+    const c = document.createElement('canvas');
+    c.width = Math.round(w * k); c.height = Math.round(h * k);
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(src, 0, 0, c.width, c.height);
+    if (src.close) src.close();
+    return c;
+}
+
+/* Lay the model's matte (made on the small copy) over the full-size photo. */
+function veroCutoutApplyMatte(full, cut) {
+    const ctx = full.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(cut, 0, 0, full.width, full.height);
+    ctx.globalCompositeOperation = 'source-over';
+    return full;
+}
+
 /* Clean the matte, trim to the piece, and centre it in a transparent square.
    Without the clean-up the model's faint haze keeps a ghost of the background
    and stretches the trim; without the trim a piece shot from far away stays a
@@ -213,6 +244,29 @@ async function veroCutoutShrink(blob) {
    and the rotation that lays the strap from top-left to bottom-right at 45°,
    with 12 o'clock towards the top-left. A piece with no clear long axis (a
    strap curled round, a bare case) is taken as shot upright. */
+/* The angle of a case's sides (no strap to go by): the turn at which the
+   piece's bounding box is smallest, as the angle of its "vertical" side. */
+function veroCutoutCaseAngle(data, w, h) {
+    const step = Math.max(1, Math.round(Math.max(w, h) / 400));
+    const xs = [], ys = [];
+    for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step) {
+        if (data[(y * w + x) * 4 + 3] > 127) { xs.push(x); ys.push(y); }
+    }
+    let best = 0, bestArea = Infinity;
+    for (let d = 0; d < 90; d++) {
+        const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+        let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+        for (let i = 0; i < xs.length; i++) {
+            const u = xs[i] * c + ys[i] * s, v = -xs[i] * s + ys[i] * c;
+            if (u < u0) u0 = u; if (u > u1) u1 = u;
+            if (v < v0) v0 = v; if (v > v1) v1 = v;
+        }
+        const area = (u1 - u0) * (v1 - v0);
+        if (area < bestArea - 1e-6) { bestArea = area; best = a; }
+    }
+    return best + Math.PI / 2;
+}
+
 function veroCutoutWatchPose(data, w, h) {
     let n = 0, sx = 0, sy = 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -231,7 +285,7 @@ function veroCutoutWatchPose(data, w, h) {
     const disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
     const l1 = tr / 2 + disc, l2 = Math.max(1e-6, tr / 2 - disc);
     const elongated = Math.sqrt(l1 / l2) >= 1.6;
-    let theta = elongated ? 0.5 * Math.atan2(2 * cxy, cxx - cyy) : Math.PI / 2;
+    let theta = elongated ? 0.5 * Math.atan2(2 * cxy, cxx - cyy) : veroCutoutCaseAngle(data, w, h);
 
     // Profile along the axis: how much of the piece sits in each slice.
     const cos = Math.cos(theta), sin = Math.sin(theta);
@@ -269,14 +323,17 @@ function veroCutoutWatchPose(data, w, h) {
     const size = elongated ? Math.max(width[peak], (z - a + 1) * bw) : Math.sqrt(l1) * 4;
 
     // Lay the axis at 45° (screen y runs down), turning it the short way round.
+    // A bare case is square-ish, so any of its sides will do: a quarter turn
+    // is the most it ever needs.
+    const period = elongated ? Math.PI : Math.PI / 2;
     let rot = Math.PI / 4 - theta;
-    while (rot > Math.PI / 2) rot -= Math.PI;
-    while (rot < -Math.PI / 2) rot += Math.PI;
+    while (rot > period / 2 + 1e-6) rot -= period;
+    while (rot <= -period / 2 - 1e-6) rot += period;
     return { cx, cy, size, rotate: rot };
 }
 
 function veroCutoutCompose(img, opts) {
-    const w = img.naturalWidth, h = img.naturalHeight;
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
     const scan = document.createElement('canvas');
     scan.width = w; scan.height = h;
     const sctx = scan.getContext('2d', { willReadFrequently: true });
@@ -382,7 +439,8 @@ async function veroCutout(src, opts = {}) {
     const original = src instanceof Blob ? await veroCutoutBlobToDataUrl(src) : src;
     try {
         say('Preparing…');
-        const blob = await veroCutoutShrink(await veroCutoutToBlob(src));
+        const photo = await veroCutoutToBlob(src);
+        const blob = await veroCutoutShrink(photo);
         const lib = await veroCutoutDeadline(veroCutoutLoad(), VERO_CUTOUT_LIB_TIMEOUT, 'library');
 
         // The download is watched, not timed: it fails only if it stops moving.
@@ -418,7 +476,10 @@ async function veroCutout(src, opts = {}) {
         } finally { clearTimeout(stall); }
 
         const img = await veroCutoutLoadImage(cut);
-        const composed = veroCutoutCompose(img, { pose: opts.pose });
+        let source = img;
+        try { source = veroCutoutApplyMatte(await veroCutoutFullCanvas(photo), img); }
+        catch (e) { console.warn('[cutout] full-size matte failed, using the model\'s copy:', e); }
+        const composed = veroCutoutCompose(source, { pose: opts.pose });
         URL.revokeObjectURL(img.src);
         if (!composed) throw new Error('empty cut-out');
         say('');
