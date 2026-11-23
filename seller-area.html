@@ -362,6 +362,9 @@ h3, h4, h5, h6, p,
             background: #111; color: #fff; text-decoration: none; border: 0; cursor: pointer;
             font-size: 14px; font-weight: 700; letter-spacing: 0.3px; text-transform: none;
         }
+        /* Live preview of the public profile's top (cover → description), then
+           the button to the full page. The frame reports its own height. */
+        .front-preview { display: block; width: 100%; height: 560px; border: 0; margin: 0 0 14px; background: #fff; }
         .view-front svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
         .view-front-wrap { width: 100%; max-width: 560px; margin: 0 auto 8px; padding: 0; box-sizing: border-box; flex: none; }
         .view-front-wrap .view-front:not(#zz):not(#zz):not(#zz) { display: flex !important; width: 100% !important; margin: 0 0 6px !important; }
@@ -410,7 +413,7 @@ h3, h4, h5, h6, p,
 
         <!-- ==================== SECTION 2 — SETTINGS ("My Shop") ==================== -->
         <section class="sa-section sa-settings" id="saSettings">
-            <div class="view-front-wrap"><a class="view-front" href="buyer-profile.html?for=seller">View my store<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+            <div class="view-front-wrap"><iframe class="front-preview" id="frontPreview" src="buyer-profile.html?for=seller&embed=hero" title="Your store" scrolling="no" loading="eager"></iframe><a class="view-front" href="buyer-profile.html?for=seller">Show my full website<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
             <div class="sss-inner" id="sssInner"></div>
         </section>
 
@@ -951,5 +954,22 @@ h3, h4, h5, h6, p,
     <script src="nav-icons.js" defer></script>
     <script src="nav-unify.js" defer></script>
 <script src="assets/line-icons.js"></script>
+    <script>
+    /* Size the profile preview frame to the height it reports, and refresh it
+       when the settings are saved or the tab comes back into view. */
+    (function frontPreview() {
+        var fr = document.getElementById('frontPreview');
+        if (!fr) return;
+        window.addEventListener('message', function (e) {
+            if (e.source === fr.contentWindow && e.data && e.data.type === 'pfx-embed-height') fr.style.height = e.data.height + 'px';
+        });
+        var base = fr.getAttribute('src');
+        var t = null;
+        function refresh() { clearTimeout(t); t = setTimeout(function () { fr.src = base + '&_ts=' + Date.now(); }, 700); }
+        window.addEventListener('storage', refresh);
+        document.addEventListener('change', function (e) { if (!fr.contains(e.target)) refresh(); }, true);
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+    })();
+    </script>
 </body>
 </html>

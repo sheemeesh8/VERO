@@ -17,6 +17,11 @@
     <meta name="description" content="moravchick — straight fashion. A curated marketplace for pre-loved fashion and art. Discover unique pieces, chat with sellers and complete every sale safely in person.">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
     <title>moravchick — Profile</title>
+    <script>
+      /* ?embed=hero — only the top of the profile (cover → description + socials),
+         shown as a live preview at the top of My Profile / My Store. */
+      if (/[?&]embed=hero\b/.test(location.search)) document.documentElement.classList.add('pfx-embed');
+    </script>
     <script src="vero-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1751,5 +1756,37 @@ h3, h4, h5, h6, p,
     #searchPop:not(.open):not(#zz) { display: none !important; }
     #searchPop.open:not(#zz) { position: fixed !important; top: auto !important; bottom: 28px; right: 28px; }
 </style>
+<style id="pfx-embed-css">
+    html.pfx-embed .wrap > *:not(#hero),
+    html.pfx-embed .search-fab, html.pfx-embed .search-pop, html.pfx-embed .soc-overlay,
+    html.pfx-embed .pfx-round, html.pfx-embed #vero-ed-toggle, html.pfx-embed #vero-ed-panel,
+    html.pfx-embed .page-header, html.pfx-embed footer, html.pfx-embed .site-footer { display: none !important; }
+    html.pfx-embed .wrap { animation: none !important; }
+    html.pfx-embed, html.pfx-embed body { overflow: hidden !important; height: auto !important; min-height: 0 !important; padding: 0 !important; }
+    html.pfx-embed .pfx .pfx-cover, html.pfx-embed #hero.pfx > video.hero-video { height: 300px !important; min-height: 0 !important; }
+    html.pfx-embed .pfx-body { padding-bottom: 22px; }
+</style>
+<script>
+(function pfxEmbed() {
+    if (!document.documentElement.classList.contains('pfx-embed')) return;
+    // Links inside the preview open in the area page, not inside the little frame.
+    document.addEventListener('click', function (e) {
+        var a = e.target.closest('a[href]');
+        if (!a || a.getAttribute('href').charAt(0) === '#') return;
+        e.preventDefault();
+        try { window.parent.location.href = a.href; } catch (x) { location.href = a.href; }
+    }, true);
+    // Tell the parent how tall the preview is, so its frame fits exactly.
+    function report() {
+        var h = document.getElementById('hero');
+        var px = h ? Math.ceil(h.getBoundingClientRect().height) : document.documentElement.scrollHeight;
+        try { window.parent.postMessage({ type: 'pfx-embed-height', height: px }, '*'); } catch (x) {}
+    }
+    window.addEventListener('load', report);
+    window.addEventListener('resize', report);
+    if (window.ResizeObserver) { var h = document.getElementById('hero'); if (h) new ResizeObserver(report).observe(h); }
+    setTimeout(report, 300); setTimeout(report, 1200);
+})();
+</script>
 </body>
 </html>
