@@ -414,31 +414,51 @@
 <link rel="stylesheet" href="assets/old-money.css?v=5">
 </head>
 <body>
-    <!-- Home intro (assets/home-intro.js): the name on white, then "Welcome to
-         moravchick" over the hero's video, then the hero's regular design. -->
+    <!-- Home intro (assets/home-intro.js) — a spy-film opening: black screen, white
+         dots slide across, the last stops in the centre and opens as a lens iris onto
+         the hero's video; the iris widens to the full screen, then the name and the
+         welcome ("Welcome to moravchick", or "Welcome, <first name>" when signed in). -->
     <style>
-        .hi { position: fixed; inset: 0; z-index: 2147483000; display: flex; align-items: center; justify-content: center;
-              background: #fff; transition: background-color 1.1s ease, opacity 0.6s ease; cursor: pointer; }
-        .hi[data-stage="2"], .hi[data-stage="3"] { background-color: rgba(255,255,255,0); }
-        .hi[data-stage="4"] { opacity: 0; pointer-events: none; }
-        .hi-words { text-align: center; padding: 0 24px; transition: opacity 0.8s ease, transform 0.8s ease; }
-        .hi-welcome { display: block; height: 0; overflow: visible; font-family: 'Arimo','Inter',sans-serif; font-size: 10px;
-              letter-spacing: 4px; text-transform: uppercase; color: #fff; opacity: 0; transform: translateY(14px);
-              transition: opacity 0.9s ease 0.5s, transform 0.9s ease 0.5s; position: relative; top: -22px; }
+        .hi { position: fixed; inset: 0; z-index: 2147483000; overflow: hidden; cursor: pointer;
+              transition: opacity 0.6s ease; }
+        .hi[data-stage="done"] { opacity: 0; pointer-events: none; }
+        /* The dark field with a round hole (the iris) cut through it to the video below. */
+        .hi-shade { position: absolute; inset: 0; background: #000; }
+        .hi-lens { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none; opacity: 0;
+              transition: opacity 0.5s ease;
+              background: repeating-radial-gradient(circle, rgba(255,255,255,0) 0 52%, rgba(255,255,255,0.05) 52.4% 53%, rgba(255,255,255,0) 53.4% 58%);
+              box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28); }
+        .hi[data-stage="iris"] .hi-lens, .hi[data-stage="open"] .hi-lens { opacity: 1; }
+        /* The dots: three white discs crossing left to right; the last stops centred. */
+        .hi-dot { position: absolute; top: 50%; left: 0; width: var(--hi-d, 44px); height: var(--hi-d, 44px);
+              margin-top: calc(var(--hi-d, 44px) / -2); border-radius: 50%; background: #fff; opacity: 0;
+              transform: translateX(-12vw); }
+        .hi[data-stage="dots"] .hi-dot { animation: hiCross 1.05s cubic-bezier(.5,0,.5,1) forwards; }
+        .hi[data-stage="dots"] .hi-dot:nth-child(2) { animation-delay: 0.32s; }
+        .hi[data-stage="dots"] .hi-dot.hi-last { animation: hiStop 1.0s cubic-bezier(.3,0,.25,1) 0.64s forwards; }
+        @keyframes hiCross { 0% { opacity: 1; transform: translateX(-12vw); } 100% { opacity: 1; transform: translateX(112vw); } }
+        @keyframes hiStop  { 0% { opacity: 1; transform: translateX(-12vw); } 100% { opacity: 1; transform: translateX(calc(50vw - var(--hi-d, 44px) / 2)); } }
+        .hi-dot.hi-last.hi-held { animation: none; opacity: 1; transform: translateX(calc(50vw - var(--hi-d, 44px) / 2)); }
+        .hi:not([data-stage="dots"]) .hi-dots { display: none; }   /* the last dot is now the iris */
+        /* Round, whatever the site's square-corner rule says. */
+        .hi .hi-dot:not(#z):not(#z):not(#z):not(#z):not(#z), .hi .hi-lens:not(#z):not(#z):not(#z):not(#z):not(#z) { border-radius: 50% !important; }
+        /* The words, over the open video. */
+        .hi-words { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+              text-align: center; padding: 0 24px; transition: opacity 0.8s ease, transform 0.8s ease; }
+        .hi-welcome { display: block; height: 0; overflow: visible; font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+              color: #fff; opacity: 0; transform: translateY(14px); position: relative; top: -22px;
+              transition: opacity 0.9s ease, transform 0.9s ease; }
         .hi .hi-name:not(#z):not(#z):not(#z):not(#z):not(#z), .hi .hi-name span:not(#z):not(#z):not(#z):not(#z):not(#z) { font-family: 'Pinyon Script', cursive !important; font-weight: 400 !important; letter-spacing: 0 !important; text-transform: none !important; }
-        .hi-name { display: block; line-height: 1.1;
-              font-size: clamp(54px, 16vw, 104px); color: var(--oak, #2A331B); white-space: nowrap;
-              opacity: 0; transform: translateY(10px); transition: opacity 1s ease, transform 1s ease, color 1.1s ease; }
-        .hi[data-stage="1"] .hi-name, .hi[data-stage="2"] .hi-name, .hi[data-stage="3"] .hi-name { opacity: 1; transform: none; }
-        .hi[data-stage="2"] .hi-name, .hi[data-stage="3"] .hi-name { color: #fff; text-shadow: 0 2px 24px rgba(0,0,0,0.25); }
-        .hi[data-stage="2"] .hi-welcome, .hi[data-stage="3"] .hi-welcome { opacity: 1; transform: none; }
-        .hi[data-stage="3"] .hi-words { opacity: 0; transform: translateY(-10px); }
-        /* Signed in: the name gives way to the member's first name ("Welcome, Daniel"). */
-        .hi-name { position: relative; }
+        .hi-name { display: block; position: relative; line-height: 1.1; font-size: clamp(54px, 16vw, 104px); color: #fff;
+              white-space: nowrap; text-shadow: 0 2px 24px rgba(0,0,0,0.3); opacity: 0; transform: translateY(10px);
+              transition: opacity 1s ease, transform 1s ease; }
         .hi-brand, .hi-first { display: block; transition: opacity 0.7s ease; }
         .hi-first { position: absolute; left: 50%; top: 0; transform: translateX(-50%); opacity: 0; }
-        .hi.hi-has-first[data-stage="2"] .hi-brand, .hi.hi-has-first[data-stage="3"] .hi-brand { opacity: 0; }
-        .hi.hi-has-first[data-stage="2"] .hi-first, .hi.hi-has-first[data-stage="3"] .hi-first { opacity: 1; transition-delay: 0.35s; }
+        .hi[data-stage="name"] .hi-name, .hi[data-stage="welcome"] .hi-name { opacity: 1; transform: none; }
+        .hi[data-stage="welcome"] .hi-welcome { opacity: 1; transform: none; }
+        .hi.hi-has-first[data-stage="welcome"] .hi-brand { opacity: 0; }
+        .hi.hi-has-first[data-stage="welcome"] .hi-first { opacity: 1; transition-delay: 0.3s; }
+        .hi[data-stage="out"] .hi-words { opacity: 0; transform: translateY(-10px); }
         html.hi-on, html.hi-on body { overflow: hidden !important; overscroll-behavior: none; }
         /* The header waits for the hand-over, then fades in. */
         #siteHeader { transition: opacity 0.6s ease; }
@@ -446,13 +466,16 @@
         @media (prefers-reduced-motion: reduce) { .hi { display: none; } }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" rel="stylesheet">
-    <div class="hi" id="homeIntro" aria-hidden="true">
+    <div class="hi" id="homeIntro" data-stage="" aria-hidden="true">
+        <div class="hi-shade" id="hiShade"></div>
+        <div class="hi-lens" id="hiLens"></div>
+        <div class="hi-dots"><i class="hi-dot"></i><i class="hi-dot"></i><i class="hi-dot hi-last" id="hiLast"></i></div>
         <div class="hi-words">
             <span class="hi-welcome">Welcome to</span>
             <span class="hi-name"><span class="hi-brand">moravchick</span><span class="hi-first" id="hiFirst"></span></span>
         </div>
     </div>
-    <script src="assets/home-intro.js?v=2"></script>
+    <script src="assets/home-intro.js?v=3"></script>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
     <script>
         // Transparent (white icons) while the home hero is in view; goes solid
