@@ -27,8 +27,18 @@
         var lbl = field && field.querySelector('label');
         title.textContent = lbl ? lbl.textContent : '';
         list.innerHTML = '';
+        var group = null;
         Array.prototype.forEach.call(sel.options, function (o) {
             if (!o.value) return;   // the placeholder row
+            // An <optgroup> becomes a small heading above its rows.
+            var g = o.parentNode && o.parentNode.tagName === 'OPTGROUP' ? o.parentNode : null;
+            if (g && g !== group) {
+                var h = document.createElement('p');
+                h.className = 'pu-pick-g';
+                h.textContent = g.label;
+                list.appendChild(h);
+            }
+            group = g;
             var b = document.createElement('button');
             b.type = 'button';
             b.className = 'pu-pick-row' + (o.value === sel.value ? ' on' : '');
