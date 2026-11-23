@@ -8,26 +8,22 @@
    4. name     moravchick, in the script wordmark, over the video.
    5. welcome  "Welcome to moravchick" — or, for a signed-in member with a
                first name, "Welcome, <first name>".
-   6. out      The words fade, the layer goes, the hero carries on.
+   6. done     The layer goes; the words stay where they are (the hero holds
+               the same ones) and the hero's own parts — the collection link
+               and the shortcuts — fade in around them.
 
    A tap / key / wheel skips ahead. Scrolling is held until the hand-over.
    Skipped for prefers-reduced-motion, or when the page opens on a #hash.
    ========================================================================== */
 (function () {
     'use strict';
-    var el = document.getElementById('homeIntro');
-    if (!el) return;
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce || location.hash) { el.parentNode.removeChild(el); return; }
-
     var root = document.documentElement;
-    root.classList.add('hi-on');                       // holds the page's scroll
-
-    var shade = document.getElementById('hiShade'), lens = document.getElementById('hiLens'),
-        last = document.getElementById('hiLast');
+    var el = document.getElementById('homeIntro');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // The member's first name (signed in only): vero_profile.name holds the
     // first name (the surname is kept apart in lastName); take its first word.
+    // Written into the intro and into the hero, which keeps the same words.
     (function personalise() {
         var first = '';
         try {
@@ -36,12 +32,33 @@
                 first = String(prof.name || '').trim().split(/\s+/)[0] || '';
             }
         } catch (e) {}
-        var slot = document.getElementById('hiFirst'), lead = el.querySelector('.hi-welcome');
-        if (!first || !slot) return;
-        slot.textContent = first.charAt(0).toUpperCase() + first.slice(1);
-        if (lead) lead.textContent = 'Welcome,';
-        el.classList.add('hi-has-first');
+        if (!first) return;
+        first = first.charAt(0).toUpperCase() + first.slice(1);
+        function fill(box) {
+            if (!box) return;
+            var slot = box.querySelector('.hi-first'), lead = box.querySelector('.hi-welcome');
+            if (!slot) return;
+            slot.textContent = first;
+            if (lead) lead.textContent = 'Welcome,';
+            box.classList.add('hi-has-first');
+        }
+        fill(el);
+        // The hero is further down the page than this script: fill it once it is there.
+        var hero = function () { fill(document.getElementById('hmWelcome')); };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hero); else hero();
     })();
+
+    // The hero's own parts (link, shortcuts) join the words once the intro is over.
+    function heroIn() { root.classList.add('hm-hero-in'); }
+
+    if (!el) { heroIn(); return; }
+    if (reduce || location.hash) { el.parentNode.removeChild(el); heroIn(); return; }
+
+    root.classList.add('hi-on');                       // holds the page's scroll
+
+    var shade = document.getElementById('hiShade'), lens = document.getElementById('hiLens'),
+        last = document.getElementById('hiLast');
+
 
     // ----- The iris: a round hole in the dark field, drawn with a mask -------
     function size() { return { W: el.clientWidth || innerWidth, H: el.clientHeight || innerHeight }; }
@@ -103,12 +120,13 @@
         } else if (name === 'name') {
             later(function () { go('welcome'); }, 1300);
         } else if (name === 'welcome') {
-            later(function () { go('out'); }, 2600);
+            later(function () { go('done'); }, 2200);    // the words stay: the hero holds the same ones
         } else if (name === 'out') {
             later(function () { go('done'); }, 900);
         } else if (name === 'done') {
             clear();
             root.classList.remove('hi-on');
+            heroIn();
             try { window.dispatchEvent(new Event('scroll')); } catch (e) {}
             setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 700);
         }
@@ -139,7 +157,7 @@
             shade.style.display = 'none'; lens.style.opacity = '0';
             go('name');
         } else if (cur === 'name') { go('welcome'); }
-        else if (cur === 'welcome') { go('out'); }
+        else if (cur === 'welcome') { go('done'); }
         else { go('done'); }
     }
     el.addEventListener('click', skip);
