@@ -982,6 +982,8 @@ h3, h4, h5, h6, p,
                         </button>
                     </div>
                 </div>
+                <!-- Storefront only: open / closed (from the opening hours) and the location. -->
+                <div class="pfx-store-line" id="pfxStoreLine" hidden></div>
                 <div class="pfx-stats">
                     <a href="#feed"><b id="itemCount">0</b> <span>Items</span></a>
                     <a href="follows.html#followers"><b id="followers">0</b> <span>Followers</span></a>
@@ -1177,6 +1179,46 @@ h3, h4, h5, h6, p,
             ['instagram', 'tiktok', 'twitter', 'facebook', 'website'].forEach(k => { if (sell[k]) so[k] = sell[k]; });
             BUYER.socials = so;
             document.documentElement.classList.add('pfx-seller');
+        })();
+
+
+        // Storefront: OPEN / CLOSED from vero_store_config.hours (day 0 = Sunday →
+        // {open, close} or null), "On a break" when vacation mode is on, plus the
+        // location when the seller shows it.
+        if (PFX_SELLER) (function renderStoreLine() {
+            const host = document.getElementById('pfxStoreLine');
+            if (!host) return;
+            let sell = {}, store = {};
+            try { sell  = JSON.parse(localStorage.getItem('vero_seller_profile')) || {}; } catch (e) {}
+            try { store = JSON.parse(localStorage.getItem('vero_store_config'))   || {}; } catch (e) {}
+            const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+            const parts = [];
+            const hours = store.hours || {};
+            const hasHours = Object.keys(hours).some(d => hours[d]);
+            if (sell.vacation) {
+                parts.push('<span class="psl-status is-closed">On a break</span>');
+            } else if (hasHours) {
+                const now = new Date(), d = now.getDay();
+                const mins = now.getHours() * 60 + now.getMinutes();
+                const toMin = t => { const m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+                const h = hours[d];
+                const o = h && toMin(h.open), c = h && toMin(h.close);
+                if (h && o != null && c != null && mins >= o && mins < c) {
+                    parts.push('<span class="psl-status">Open</span><span class="psl-dim">until ' + esc(h.close) + '</span>');
+                } else {
+                    let next = '';
+                    if (h && o != null && mins < o) next = 'opens ' + esc(h.open);
+                    else for (let k = 1; k <= 7; k++) {
+                        const n = hours[(d + k) % 7];
+                        if (n) { next = 'opens ' + (k === 1 ? 'tomorrow ' : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][(d + k) % 7] + ' ') + esc(n.open); break; }
+                    }
+                    parts.push('<span class="psl-status is-closed">Closed</span>' + (next ? '<span class="psl-dim">' + next + '</span>' : ''));
+                }
+            }
+            const showLoc = !(sell.show && sell.show.location === false);
+            if (sell.location && showLoc) parts.push('<span class="psl-loc">' + esc(sell.location) + '</span>');
+            host.innerHTML = parts.join('');
+            host.hidden = !parts.length;
         })();
 
         // ===================== RENDER =====================
@@ -1794,6 +1836,27 @@ h3, h4, h5, h6, p,
     html.vero-night .pfx .pfx-follow:not(#zz) { background: #fff; color: #111; }
     html.vero-night .pfx .pfx-msg:not(#zz) { background: transparent; color: #fff; border-color: #fff; }
     .pfx .pfx-socials:not(#zz) { justify-content: center; }
+
+    /* ===== Storefront (?for=seller): the hero takes three quarters of the screen,
+       and the store's details sit in the white sheet under it. ===== */
+    html.pfx-seller .pfx .pfx-cover:not(#zz),
+    html.pfx-seller #hero.pfx > video.hero-video { height: 75vh; height: 75svh; min-height: 440px; max-height: 860px; }
+    .pfx-store-line { order: 1; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px;
+        margin-top: 8px; font-size: 12.5px; color: #555; }
+    .pfx-store-line[hidden] { display: none !important; }
+    .psl-status { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #1d8f55; }
+    .psl-status::before { content: ""; width: 7px; height: 7px; clip-path: circle(50%); background: currentColor; }
+    .psl-status.is-closed { color: #9a9a96; }
+    .psl-dim { color: #8a8a87; margin-left: -4px; }
+    .psl-loc { display: inline-flex; align-items: center; gap: 5px; }
+    .psl-loc::before { content: ""; width: 10px; height: 12px; background: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12zm0-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'/%3E%3C/svg%3E") center / contain no-repeat;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12zm0-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'/%3E%3C/svg%3E") center / contain no-repeat; }
+    .psl-status + .psl-dim + .psl-loc, .psl-status + .psl-loc { padding-left: 10px; border-left: 1px solid #deded9; }
+    html.vero-night .pfx-store-line { color: #b5b5b0; }
+    html.vero-night .psl-status + .psl-dim + .psl-loc, html.vero-night .psl-status + .psl-loc { border-left-color: #333; }
+    /* Keep the order: name → store line → stats → bio → buttons → socials. */
+    .pfx .pfx-stats:not(#zz) { order: 2; }
     /* Products straight under the bio + tabs: no extra heading, same side gutter. */
     #feedHead:not(#zz) { display: none !important; }
     #feed.feed:not(#zz) { max-width: 720px; margin: 0 auto; padding: 14px 6px 110px; gap: 24px 6px; }
