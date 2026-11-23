@@ -365,6 +365,17 @@ function veroCutoutCompose(img, opts) {
     return webp.indexOf('data:image/webp') === 0 ? webp : out.toDataURL('image/png');
 }
 
+/* Re-pose a cut-out that is already stored (transparent, background gone):
+   used when a photo was cut before the item was marked as a watch. */
+async function veroCutoutRepose(src, opts = {}) {
+    try {
+        const img = await veroCutoutLoadImage(await veroCutoutToBlob(src));
+        const out = veroCutoutCompose(img, { pose: opts.pose });
+        URL.revokeObjectURL(img.src);
+        return out || src;
+    } catch (e) { return src; }
+}
+
 /* ---- The cut-out ---- */
 async function veroCutout(src, opts = {}) {
     const say = opts.onStatus || (() => {});

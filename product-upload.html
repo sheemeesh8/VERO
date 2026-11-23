@@ -492,7 +492,7 @@ h3, h4, h5, h6, p,
     </script>
 
     <!-- Background-removal engine for the cover shot. -->
-    <script src="cutout.js?v=20261123w"></script>
+    <script src="cutout.js?v=20261123x"></script>
     <script>
       // Fetch the cut-out engine while the seller fills in the first step.
       (window.requestIdleCallback || function (f) { setTimeout(f, 1200); })(function () { if (typeof veroCutoutWarm === 'function') veroCutoutWarm(); });
@@ -691,24 +691,40 @@ h3, h4, h5, h6, p,
             if (key !== 'cover') return;
             // A watch is posed differently (zoomed to the head, turned 45°), so a
             // change of item type to or from Watches cuts the same photo again.
-            recutCover = function () { if (lastCoverRaw) cutCover(lastCoverRaw); };
+            recutCover = function () {
+                if (lastCoverRaw) return cutCover(lastCoverRaw);
+                // No original in memory (the page was reopened): a stored cut-out
+                // can still be turned into the watch pose, just not back out of it.
+                if (data.itemType === 'Watches') poseStoredCover();
+            };
+            function poseStoredCover() {
+                var isCut = data.coverCut || /^data:image\/(webp|png)/.test(data.photos.cover || '');
+                if (!isCut || data.coverPose === 'watch' || !data.photos.cover || typeof veroCutoutRepose !== 'function') return;
+                veroCutoutRepose(data.photos.cover, { pose: 'watch' }).then(function (url) {
+                    data.photos.cover = url; data.coverPose = 'watch'; save();
+                    slot.style.backgroundImage = 'url("' + url + '")';
+                    renderCard();
+                });
+            }
+            if (data.itemType === 'Watches') poseStoredCover();
             function cutCover(raw) {
                     slot.classList.add('working');
                     var st = document.getElementById('coverStatus'); if (st) st.textContent = 'Preparing\u2026';
                     var note = function (m) { var h = document.getElementById('coverNote'); if (h) { h.textContent = m; h.hidden = !m; } };
                     note('');
-                    var done = function (url) {
-                        data.photos.cover = url; save();
+                    var pose = data.itemType === 'Watches' ? 'watch' : '';
+                    var done = function (url, cut) {
+                        data.photos.cover = url; data.coverCut = !!cut; data.coverPose = cut ? pose : ''; save();
                         slot.style.backgroundImage = 'url("' + url + '")'; slot.classList.add('filled'); slot.classList.remove('working');
                         renderCard();   // the cut may finish after the seller has moved on to the preview
                     };
                     if (typeof veroCutout === 'function') {
                         lastCoverRaw = raw;
-                        veroCutout(raw, { pose: data.itemType === 'Watches' ? 'watch' : '', onStatus: function (m) { var s = document.getElementById('coverStatus'); if (s) s.textContent = m; } })
+                        veroCutout(raw, { pose: pose, onStatus: function (m) { var s = document.getElementById('coverStatus'); if (s) s.textContent = m; } })
                             .then(function (res) {
                                 // The cut-out is already a transparent frame in the card's shape:
                                 // stored as it is, so the card paints its own ground behind it.
-                                if (res.ok) return done(res.image);
+                                if (res.ok) return done(res.image, true);
                                 note('Couldn\u2019t remove the background \u2014 using your photo as it is.');
                                 return shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done);
                             })
