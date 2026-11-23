@@ -28,6 +28,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Archivo:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { min-height: 100%; }
@@ -1005,47 +1006,35 @@ h3, h4, h5, h6, p,
         <div class="feed-empty pfx-ev-empty" id="pfxEvEmpty">No upcoming events.</div>
 
 
-        <!-- PROMOTED — the pieces the member pushed (listing.promoted / pushed /
-             boosted), as a swipeable rail of product cards above the feed. -->
-        <section class="pfx-promo" id="pfxPromo" hidden>
-            <div class="pfx-promo-head"><span>Promoted</span><span class="pfx-promo-n" id="pfxPromoN"></span></div>
-            <div class="feat-slider pfx-promo-rail" id="pfxPromoRail"></div>
+        <!-- FILTER CHIPS — All + the item types this member lists. Stays at the top
+             of the screen while the products scroll under it. -->
+        <div class="pfx-chips" id="pfxChips" hidden></div>
+
+        <!-- PROMOTED — the pieces the member pushed (else the newest), two to a
+             slide with marks under it, like the slider under the home page hero. -->
+        <section class="pfx-duo-sec" id="pfxPromo" hidden>
+            <div class="pfx-sec-head"><span id="pfxPromoTitle">Promoted</span><span class="pfx-promo-n" id="pfxPromoN"></span></div>
+            <div class="pfx-duo" id="pfxPromoRail"></div>
+            <div class="pfx-duo-dots" id="pfxPromoDots" aria-hidden="true"></div>
         </section>
 
-        <!-- FEED — just the products the buyer has uploaded. No categories or
-             audiences; a promo banner drops in every five items if one is set. -->
-        <div class="feed-head" id="feedHead">
-            <div class="feed-title">Items for sale</div>
-            <div class="feed-note" id="feedNote">—</div>
-        </div>
-        <!-- GENDER — swipeable tiles; choosing one filters every product grid below. -->
+        <!-- GENDER — photo tiles; choosing one filters the products below. -->
         <section class="pfx-sec pfx-gender" id="pfxGender" hidden>
             <div class="pfx-sec-head"><span>Shop by gender</span></div>
             <div class="pfx-rail pfx-gender-rail" id="pfxGenderRail"></div>
         </section>
 
-        <!-- The first six products. -->
+        <!-- FEED — every product in one grid, with a banner after every six. -->
+        <div class="feed-head" id="feedHead">
+            <div class="feed-title">Items for sale</div>
+            <div class="feed-note" id="feedNote">—</div>
+        </div>
         <div class="feed" id="feed"></div>
         <div class="feed-empty" id="feedEmpty" style="display:none;">
             No items yet. Upload your first piece from My Profile.
         </div>
-
-        <!-- CATEGORIES — the item types this member lists; filters the grids too. -->
-        <section class="pfx-sec pfx-cats" id="pfxCats" hidden>
-            <div class="pfx-sec-head"><span>Categories</span></div>
-            <div class="pfx-rail pfx-cats-rail" id="pfxCatsRail"></div>
-        </section>
-
-        <!-- BANNER — the member's own promo banner if set, else a sale / new-in one. -->
-        <a class="pfx-banner" id="pfxBanner" href="#feedMore" hidden>
-            <div class="pfx-banner-copy">
-                <span class="pfx-banner-kicker" id="pfxBannerKicker"></span>
-                <span class="pfx-banner-title" id="pfxBannerTitle"></span>
-            </div>
-        </a>
-
-        <!-- The rest of the products. -->
-        <div class="feed" id="feedMore"></div>
+        <!-- Kept empty so older scripts that look for it still find it. -->
+        <div class="feed" id="feedMore" style="display:none"></div>
     </div>
 
     <!-- SOCIALS popup — opened by the "Our Socials" button in the hero; lists the
@@ -1378,24 +1367,20 @@ h3, h4, h5, h6, p,
                 searchTerm === '' || p.name.toLowerCase().includes(searchTerm));
             const feed = document.getElementById('feed');
             const empty = document.getElementById('feedEmpty');
-            // Promoted rail: the pushed pieces, newest push first as listed.
-            const promo = filtered.filter(p => p.promoted);
-            const promoHost = document.getElementById('pfxPromo');
-            if (promoHost) {
-                document.getElementById('pfxPromoRail').innerHTML = promo.map(card).join('');
-                document.getElementById('pfxPromoN').textContent = promo.length;
-                promoHost.hidden = !promo.length;
-            }
-            // Gender + category filters (set by the two sliders), on top of search.
-            const shown = filtered.filter(p =>
-                (pfxGenderSel === 'all' || genderOf(p) === pfxGenderSel) &&
-                (pfxCatSel === 'all' || catOf(p) === pfxCatSel));
-            const first = shown.slice(0, 6), rest = shown.slice(6);
-            feed.innerHTML = first.map(card).join('');
-            feed.style.display = first.length ? 'grid' : 'none';
-            const more = document.getElementById('feedMore');
-            more.innerHTML = rest.map(card).join('');
-            more.style.display = rest.length ? 'grid' : 'none';
+            renderPromo(filtered);
+            // Gender (photo slider) + item type (chips), on top of search.
+            const byGender = filtered.filter(p => pfxGenderSel === 'all' || genderOf(p) === pfxGenderSel);
+            renderChips(byGender);
+            const shown = byGender.filter(p => pfxCatSel === 'all' || catOf(p) === pfxCatSel);
+            // One grid; a banner row after every six pieces (when more follow).
+            const ban = bannerData(filtered);
+            let html = '';
+            shown.forEach((p, i) => {
+                html += card(p);
+                if ((i + 1) % 6 === 0 && i + 1 < shown.length && ban) html += bannerRow(ban, i);
+            });
+            feed.innerHTML = html;
+            feed.style.display = shown.length ? 'grid' : 'none';
             empty.textContent = PRODUCTS.length
                 ? 'Nothing here yet for this choice.'
                 : 'No items yet. Upload your first piece from My Profile.';
@@ -1403,18 +1388,62 @@ h3, h4, h5, h6, p,
             document.getElementById('feedNote').textContent =
                 `${shown.length} item${shown.length===1?'':'s'}`;
             renderGenderRail(filtered);
-            renderCatsRail(filtered.filter(p => pfxGenderSel === 'all' || genderOf(p) === pfxGenderSel));
-            renderBanner(filtered);
         }
 
-        // ---- Gender slider ----
+        // ---- Promoted slider: two pieces to a slide, marks under it ----
+        function duoCard(p) {
+            const a = document.createElement('div'); a.innerHTML = card(p);
+            const src = a.firstElementChild;   // reuse the card's link + data so wishlist / flip keep working
+            const raw = p.raw || {};
+            const disc = Number(raw.discount) || Number(raw.salePercent) || 0;
+            const price = Number(p.price) || 0;
+            const onSale = disc > 0 && disc < 100 && price > 0;
+            const priceHtml = onSale ? `<s>${nis(price)}</s>${nis(Math.round(price * (1 - disc / 100)))}` : nis(price);
+            const fig = p.cover ? `<img src="${escAttr(p.cover)}" alt="${escAttr(p.name)}" loading="lazy" draggable="false">` : `<span class="pfx-duo-emoji">${escAttr(p.icon || '🛍️')}</span>`;
+            return `<a class="pfx-duo-card" href="${escAttr(src.getAttribute('href'))}" title="${escAttr(p.name)}">` +
+                `<div class="pfx-duo-img">${fig}</div>` +
+                `<div class="pfx-duo-name">${escAttr(p.name)}</div>` +
+                `<div class="pfx-duo-brand">${escAttr(src.dataset.seller || '')}</div>` +
+                `<div class="pfx-duo-price">${priceHtml}</div></a>`;
+        }
+        function renderPromo(list) {
+            const host = document.getElementById('pfxPromo');
+            if (!host) return;
+            let items = list.filter(p => p.promoted), title = 'Promoted';
+            if (!items.length) { items = list.slice(0, 8); title = 'New in'; }
+            const rail = document.getElementById('pfxPromoRail'), dots = document.getElementById('pfxPromoDots');
+            const pages = [];
+            for (let i = 0; i < items.length; i += 2) pages.push('<div class="pfx-duo-page">' + duoCard(items[i]) + (items[i + 1] ? duoCard(items[i + 1]) : '') + '</div>');
+            rail.innerHTML = pages.join('');
+            rail.scrollLeft = 0;
+            dots.innerHTML = pages.length > 1 ? pages.map(() => '<i></i>').join('') : '';
+            document.getElementById('pfxPromoTitle').textContent = title;
+            document.getElementById('pfxPromoN').textContent = items.length;
+            host.hidden = !items.length;
+            markDuo();
+        }
+        function markDuo() {
+            const rail = document.getElementById('pfxPromoRail'), dots = document.getElementById('pfxPromoDots');
+            if (!rail || !dots) return;
+            const k = Math.round(rail.scrollLeft / (rail.clientWidth || 1));
+            [].forEach.call(dots.children, (d, i) => d.classList.toggle('on', i === k));
+        }
+        (function () {
+            const rail = document.getElementById('pfxPromoRail'), dots = document.getElementById('pfxPromoDots');
+            if (!rail) return;
+            let raf = 0;
+            rail.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(markDuo); }, { passive: true });
+            dots.addEventListener('click', e => { const k = [].indexOf.call(dots.children, e.target); if (k >= 0) rail.scrollTo({ left: k * rail.clientWidth, behavior: 'smooth' }); });
+        })();
+
+        // ---- Gender slider: photo tiles ----
         let pfxGenderSel = 'all', pfxCatSel = 'all';
         const GENDERS = [
-            { id: 'all',    label: 'All',    img: 'clothing-hero.jpg' },
-            { id: 'women',  label: 'Women',  img: 'women-hero.jpg' },
-            { id: 'men',    label: 'Men',    img: 'men-hero.jpg' },
-            { id: 'unisex', label: 'Unisex', img: 'gallery-hero.jpg' },
-            { id: 'kids',   label: 'Kids',   img: 'sale-hero.jpg' },
+            { id: 'all',    label: 'All',    img: 'assets/hero/women-editorial.jpg' },
+            { id: 'women',  label: 'Women',  img: 'assets/hero/women-dress.jpg?v=2' },
+            { id: 'men',    label: 'Men',    img: 'assets/hero/men-blazer.jpg?v=2' },
+            { id: 'unisex', label: 'Unisex', img: 'assets/hero/unisex-tee.jpg?v=3' },
+            { id: 'kids',   label: 'Kids',   img: 'assets/hero/kids-sweater.jpg?v=2' },
         ];
         function genderOf(p) { return String(p.gender || (p.raw && (p.raw.gender || p.raw.audience)) || '').trim().toLowerCase(); }
         function catOf(p) {
@@ -1429,52 +1458,46 @@ h3, h4, h5, h6, p,
             host.hidden = !PRODUCTS.length;
             rail.innerHTML = GENDERS.map(g => {
                 const mine = g.id === 'all' ? list : list.filter(p => genderOf(p) === g.id);
-                const pic = (mine.find(p => p.cover) || {}).cover || g.img;
                 return `<button type="button" class="pfx-gtile${g.id === pfxGenderSel ? ' is-on' : ''}" data-g="${g.id}"
-                            style="background-image:url('${escAttr(pic)}')">
-                            <span class="pfx-gname">${g.label}</span><span class="pfx-gcount">${mine.length}</span>
+                            style="background-image:url('${escAttr(g.img)}')">
+                            <span class="pfx-gname">${g.label}</span><span class="pfx-gcount">${mine.length} item${mine.length === 1 ? '' : 's'}</span>
                         </button>`;
             }).join('');
         }
-        // ---- Category slider ----
-        function renderCatsRail(list) {
-            const host = document.getElementById('pfxCats'), rail = document.getElementById('pfxCatsRail');
+        // ---- Item-type chips ----
+        function renderChips(list) {
+            const host = document.getElementById('pfxChips');
             if (!host) return;
             const cats = [];
-            list.forEach(p => { const c = catOf(p); if (c && !cats.some(x => x.name === c)) cats.push({ name: c, cover: p.cover }); });
-            if (pfxCatSel !== 'all' && !cats.some(c => c.name === pfxCatSel)) pfxCatSel = 'all';
-            host.hidden = !cats.length;
-            const all = { name: 'all', label: 'All', cover: (list.find(p => p.cover) || {}).cover || '' };
-            rail.innerHTML = [all].concat(cats).map(c => `
-                <button type="button" class="pfx-ctile${c.name === pfxCatSel ? ' is-on' : ''}" data-c="${escAttr(c.name)}">
-                    <span class="pfx-cimg"${c.cover ? ` style="background-image:url('${escAttr(c.cover)}')"` : ''}></span>
-                    <span class="pfx-cname">${escAttr(c.label || c.name)}</span>
-                </button>`).join('');
+            list.forEach(p => { const c = catOf(p); if (c && !cats.includes(c)) cats.push(c); });
+            if (pfxCatSel !== 'all' && !cats.includes(pfxCatSel)) pfxCatSel = 'all';
+            host.hidden = !PRODUCTS.length;
+            host.innerHTML = ['all'].concat(cats).map(c =>
+                `<button type="button" class="pfx-chip${c === pfxCatSel ? ' is-on' : ''}" data-c="${escAttr(c)}">${c === 'all' ? 'All' : escAttr(c)}</button>`).join('');
         }
-        // ---- Banner ----
-        function renderBanner(list) {
-            const el = document.getElementById('pfxBanner');
-            if (!el) return;
-            let img, kicker, title;
-            if (BUYER.banner && BUYER.banner.enabled) {
-                img = BUYER.banner.image; kicker = BUYER.banner.kicker || ''; title = BUYER.banner.title || '';
-            } else {
-                const off = list.map(p => Number((p.raw || {}).discount) || Number((p.raw || {}).salePercent) || 0).filter(d => d > 0 && d < 100);
-                if (off.length) { kicker = 'Sale'; title = 'Up to ' + Math.max.apply(null, off) + '% off'; img = (list.find(p => p.cover && ((p.raw||{}).discount || (p.raw||{}).salePercent)) || {}).cover || 'sale-hero.jpg'; }
-                else { kicker = 'New in'; title = 'Fresh pieces from ' + (BUYER.name || 'this closet'); img = (list.find(p => p.cover) || {}).cover || 'clothing-hero.jpg'; }
-            }
-            el.style.backgroundImage = `url('${String(img).replace(/'/g, '%27')}')`;
-            document.getElementById('pfxBannerKicker').textContent = kicker;
-            document.getElementById('pfxBannerTitle').textContent = title;
-            el.hidden = !list.length;
+        // ---- Banner (dropped into the grid after every six pieces) ----
+        function bannerData(list) {
+            if (!list.length) return null;
+            if (BUYER.banner && BUYER.banner.enabled) return [{ img: BUYER.banner.image, kicker: BUYER.banner.kicker || '', title: BUYER.banner.title || '' }];
+            const out = [];
+            const off = list.map(p => Number((p.raw || {}).discount) || Number((p.raw || {}).salePercent) || 0).filter(d => d > 0 && d < 100);
+            if (off.length) out.push({ kicker: 'Sale', title: 'Up to ' + Math.max.apply(null, off) + '% off', img: (list.find(p => p.cover && ((p.raw||{}).discount || (p.raw||{}).salePercent)) || {}).cover || 'sale-hero.jpg' });
+            out.push({ kicker: 'New in', title: 'Fresh pieces from ' + (BUYER.name || 'this closet'), img: 'clothing-hero.jpg' });
+            return out;
+        }
+        function bannerRow(ban, i) {
+            const b = ban[Math.floor(i / 6) % ban.length];
+            return `<a class="pfx-banner pfx-banner-row" href="#feed" style="background-image:url('${String(b.img).replace(/'/g, '%27')}')">
+                        <div class="pfx-banner-copy"><span class="pfx-banner-kicker">${escAttr(b.kicker)}</span><span class="pfx-banner-title">${escAttr(b.title)}</span></div>
+                    </a>`;
         }
         document.addEventListener('click', function (e) {
             const g = e.target.closest('.pfx-gtile');
             if (g) { pfxGenderSel = g.dataset.g; pfxCatSel = 'all'; renderFeed(); return; }
-            const c = e.target.closest('.pfx-ctile');
+            const c = e.target.closest('.pfx-chip');
             if (c) { pfxCatSel = c.dataset.c; renderFeed(); return; }
-            const b = e.target.closest('#pfxBanner');
-            if (b) { e.preventDefault(); const t = document.getElementById('feedMore'); (t.style.display !== 'none' ? t : document.getElementById('feed')).scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+            const b = e.target.closest('.pfx-banner-row');
+            if (b) { e.preventDefault(); }
         });
         renderFeed();
 
@@ -1763,13 +1786,51 @@ h3, h4, h5, h6, p,
     .pfx-banner-kicker { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
     .pfx-banner-title { font-size: 24px; font-weight: 700; line-height: 1.15; }
     #feedMore.feed:not(#zz) { max-width: 720px; margin: 0 auto; padding: 14px 6px 110px; gap: 24px 6px; }
-    #feed.feed:not(#zz) { padding-bottom: 8px; }
     #feedEmpty:not(#zz) { max-width: 720px; margin: 0 auto; padding: 30px 22px; text-align: center; color: #8a8a87; }
     @media (min-width: 701px) { #feedMore.feed:not(#zz) { grid-template-columns: repeat(3, 1fr); } }
-    body.pfx-on-events .pfx-sec, body.pfx-on-events .pfx-banner, body.pfx-on-events #feedMore { display: none !important; }
+    body.pfx-on-events .pfx-sec, body.pfx-on-events .pfx-banner, body.pfx-on-events #feedMore,
+    body.pfx-on-events .pfx-duo-sec, body.pfx-on-events .pfx-chips { display: none !important; }
     /* The search popup stays a floating pill, hidden until the search button opens it. */
     #searchPop:not(.open):not(#zz) { display: none !important; }
     #searchPop.open:not(#zz) { position: fixed !important; top: auto !important; bottom: 28px; right: 28px; }
+    /* ---- Layout: sticky chips → Promoted (2 per slide) → gender photos → one grid ---- */
+    .pfx-chips:not(#zz) { position: sticky; top: 0; z-index: 30; display: flex; gap: 6px; overflow-x: auto;
+        max-width: 720px; margin: 8px auto 0; padding: 10px 22px; background: #fff; scrollbar-width: none;
+        border-bottom: 1px solid #ececea; }
+    .pfx-chips[hidden] { display: none !important; }
+    .pfx-chips::-webkit-scrollbar { display: none; }
+    .pfx-chip { flex: none; font: inherit; font-size: 12.5px; color: #111; background: #fff; border: 1px solid #d9d9d6;
+        border-radius: 999px !important; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
+    .pfx-chip.is-on { background: #111; color: #fff; border-color: #111; }
+    .pfx-sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+    .pfx-duo-sec:not(#zz) { max-width: 720px; margin: 0 auto; padding: 20px 0 8px; }
+    .pfx-duo-sec[hidden] { display: none !important; }
+    .pfx-duo { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .pfx-duo::-webkit-scrollbar { display: none; }
+    .pfx-duo-page { flex: 0 0 100%; box-sizing: border-box; padding: 0 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+        scroll-snap-align: start; scroll-snap-stop: always; }
+    .pfx-duo-card { min-width: 0; text-align: center; text-decoration: none; color: #16150f; }
+    .pfx-duo-img { aspect-ratio: 3 / 4; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .pfx-duo-img img { width: 100%; height: 100%; object-fit: contain; transition: transform .5s cubic-bezier(.22,1,.36,1); }
+    .pfx-duo-card:active .pfx-duo-img img { transform: scale(1.05); }
+    .pfx-duo-emoji { font-size: 60px; }
+    .pfx-duo-name { margin-top: 12px; font-family: 'Syncopate', 'Archivo', sans-serif; font-weight: 700; font-size: 8.07px; letter-spacing: .8px;
+        text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pfx-duo-brand { margin-top: 7px; font-family: 'Poppins', sans-serif; font-weight: 300; font-size: 8.07px; letter-spacing: 1px;
+        text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pfx-duo-price { margin-top: 9px; font-family: 'Syncopate', 'Archivo', sans-serif; font-weight: 700; font-size: 8.07px; letter-spacing: .6px;
+        font-variant-numeric: tabular-nums; }
+    .pfx-duo-price s { margin-right: 7px; font-weight: 400; color: #3d3a35; }
+    .pfx-duo-dots { display: flex; justify-content: center; gap: 6px; margin-top: 22px; min-height: 2px; }
+    .pfx-duo-dots i { width: 14px; height: 2px; background: #d6d2c8; cursor: pointer; transition: width .3s cubic-bezier(.22,1,.36,1), background .3s ease; }
+    .pfx-duo-dots i.on { width: 30px; background: #16150f; }
+    .pfx-duo-dots:empty { display: none; }
+    /* Gender tiles: real photos, a little over two in view. */
+    .pfx-gender .pfx-gtile { width: 42%; background-position: center 25%; }
+    @media (min-width: 701px) { .pfx-gender .pfx-gtile { width: 24%; } }
+    /* The banner as a full-width row inside the product grid. */
+    #feed .pfx-banner-row:not(#zz) { grid-column: 1 / -1; display: block; margin: 6px -6px; max-width: none; height: 190px; }
+    #feedHead:not(#zz) { display: none !important; }
 </style>
 <style id="pfx-embed-css">
     html.pfx-embed .wrap > *:not(#hero),
