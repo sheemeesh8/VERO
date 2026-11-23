@@ -41,7 +41,6 @@
         tile.style.width  = (w0 + (t.w - w0) * e).toFixed(1) + 'px';
         tile.style.height = (h0 + (t.h - h0) * e).toFixed(1) + 'px';
         el.style.setProperty('--zpi-cue', String(1 - Math.min(1, p * 4)));
-        el.style.setProperty('--zpi-dim', String(e));   // the slider's scrim, faded in
     }
     size(0);
     window.addEventListener('resize', function () { if (!started) size(0); });
