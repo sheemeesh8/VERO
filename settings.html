@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script src="assets/motion.js?v=3"></script>
+<script src="assets/motion.js?v=4"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>
   if (window.self === window.top && !/[?&]embed=1/.test(location.search)) {
@@ -30,7 +30,19 @@
   .wrap { max-width: 520px; margin: 0 auto; padding: 26px 24px calc(110px + env(safe-area-inset-bottom, 0px)); }
   .intro { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
 
-  .grp { margin-top: 30px; }
+  /* Tabs, like the seller area: one group at a time. */
+  .st-tabs { position: sticky; top: 0; z-index: 5; display: flex; gap: 26px; overflow-x: auto; scrollbar-width: none;
+             background: #fff; border-bottom: 1px solid var(--line); padding: 0 24px; margin: 0 -24px; }
+  .st-tabs::-webkit-scrollbar { display: none; }
+  .st-tab { flex: none; padding: 16px 0 13px; border: none; border-bottom: 2px solid transparent; background: none; cursor: pointer;
+            font-size: 13px; font-weight: 500; color: rgba(17,17,17,0.55); white-space: nowrap; }
+  .st-tab.on { color: var(--ink); border-bottom-color: var(--ink); }
+  .grp { margin-top: 26px; }
+  .grp[hidden] { display: none; }
+  .grp-cap { font-size: 11px; color: var(--muted); margin: 8px 0 2px; }
+  .blocked-empty { padding: 16px 0; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .blocked-row { display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-bottom: 1px solid var(--line); }
+  .blocked-row button { border: 1px solid rgba(17,17,17,0.3); background: #fff; padding: 7px 12px; font-size: 11px; cursor: pointer; }
   .grp-h { font-size: 9.5px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding-bottom: 10px;
            border-bottom: 1px solid var(--ink); }
   .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 58px; padding: 12px 0;
@@ -80,9 +92,15 @@
   </header>
 
   <main class="wrap">
-    <p class="intro">App settings for this account. Changes save as you make them.</p>
+    <nav class="st-tabs" id="stTabs" aria-label="Settings sections">
+      <button type="button" class="st-tab" data-tab="general">General</button>
+      <button type="button" class="st-tab" data-tab="notifications">Notifications</button>
+      <button type="button" class="st-tab" data-tab="privacy">Privacy</button>
+      <button type="button" class="st-tab" data-tab="display">Display</button>
+      <button type="button" class="st-tab" data-tab="account">Account</button>
+    </nav>
 
-    <section class="grp">
+    <section class="grp" data-tab="general">
       <h2 class="grp-h">Language &amp; region</h2>
       <div class="row"><div class="row-t"><b>Language</b><span>The app's language</span></div>
         <div class="seg" data-seg="language"><button type="button" data-v="en">English</button><button type="button" data-v="he">עברית</button></div></div>
@@ -92,7 +110,7 @@
         <div class="seg" data-seg="sizeSystem"><button type="button" data-v="EU">EU</button><button type="button" data-v="US">US</button><button type="button" data-v="UK">UK</button></div></div>
     </section>
 
-    <section class="grp">
+    <section class="grp" data-tab="notifications">
       <h2 class="grp-h">Notifications</h2>
       <div class="row"><div class="row-t"><b>Messages</b><span>When someone writes to you</span></div><label class="sw"><input type="checkbox" data-k="notifMessages"><i></i></label></div>
       <div class="row"><div class="row-t"><b>Offers</b><span>New offers and counter-offers</span></div><label class="sw"><input type="checkbox" data-k="notifOffers"><i></i></label></div>
@@ -103,22 +121,43 @@
       <div class="row"><div class="row-t"><b>Email newsletter</b><span>New collections and stories</span></div><label class="sw"><input type="checkbox" data-k="notifEmail"><i></i></label></div>
     </section>
 
-    <section class="grp">
-      <h2 class="grp-h">Privacy</h2>
+    <section class="grp" data-tab="privacy">
+      <h2 class="grp-h">Profile</h2>
       <div class="row"><div class="row-t"><b>Private profile</b><span>Only people you approve see your activity</span></div><label class="sw"><input type="checkbox" data-k="privateProfile"><i></i></label></div>
-      <div class="row"><div class="row-t"><b>Show when I'm online</b><span>In chats</span></div><label class="sw"><input type="checkbox" data-k="showOnline"><i></i></label></div>
-      <div class="row"><div class="row-t"><b>Read receipts</b><span>Let others see you read their message</span></div><label class="sw"><input type="checkbox" data-k="readReceipts"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Show followers &amp; following</b><span>The lists on your profile</span></div><label class="sw"><input type="checkbox" data-k="showFollowLists"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Show pieces I liked</b><span>On your public profile</span></div><label class="sw"><input type="checkbox" data-k="showLikes"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Who sees my sizes</b><span>From My Sizes</span></div>
+        <div class="seg" data-seg="sizesVisibility"><button type="button" data-v="everyone">All</button><button type="button" data-v="following">Following</button><button type="button" data-v="me">Only me</button></div></div>
+      <div class="row"><div class="row-t"><b>Appear in search</b><span>Let people find you by name or username</span></div><label class="sw"><input type="checkbox" data-k="searchable"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Find me by phone or email</b><span>For people who have your details</span></div><label class="sw"><input type="checkbox" data-k="findByContact"><i></i></label></div>
+    </section>
+    <section class="grp" data-tab="privacy">
+      <h2 class="grp-h">Messages</h2>
       <div class="row"><div class="row-t"><b>Messages from</b><span>Who can start a chat with you</span></div>
         <div class="seg" data-seg="messagesFrom"><button type="button" data-v="everyone">Everyone</button><button type="button" data-v="following">Following</button></div></div>
+      <div class="row"><div class="row-t"><b>Show when I'm online</b><span>In chats</span></div><label class="sw"><input type="checkbox" data-k="showOnline"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Read receipts</b><span>Let others see you read their message</span></div><label class="sw"><input type="checkbox" data-k="readReceipts"><i></i></label></div>
+    </section>
+    <section class="grp" data-tab="privacy">
+      <h2 class="grp-h">Data</h2>
+      <div class="row"><div class="row-t"><b>Personalised picks</b><span>Use what you view and like to suggest pieces</span></div><label class="sw"><input type="checkbox" data-k="personalised"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Share my location for events</b><span>To show markets and fairs near you</span></div><label class="sw"><input type="checkbox" data-k="shareLocation"><i></i></label></div>
+    </section>
+    <section class="grp" data-tab="privacy">
+      <h2 class="grp-h">Blocked accounts</h2>
+      <div id="blockedList"></div>
     </section>
 
-    <section class="grp">
+    <section class="grp" data-tab="display">
       <h2 class="grp-h">Display</h2>
+      <div class="row"><div class="row-t"><b>Night mode</b><span>Dark colours, easier on the eyes at night</span></div>
+        <div class="seg" data-seg="theme"><button type="button" data-v="light">Off</button><button type="button" data-v="dark">On</button><button type="button" data-v="system">Auto</button></div></div>
+      <p class="grp-cap">Auto follows your phone's light or dark setting.</p>
       <div class="row"><div class="row-t"><b>Reduce animations</b><span>Fewer fades, slides and confetti</span></div><label class="sw"><input type="checkbox" data-k="reduceMotion"><i></i></label></div>
       <div class="row"><div class="row-t"><b>Sound effects</b><span>Small sounds on send and sale</span></div><label class="sw"><input type="checkbox" data-k="sounds"><i></i></label></div>
     </section>
 
-    <section class="grp">
+    <section class="grp" data-tab="account">
       <h2 class="grp-h">Account</h2>
       <button type="button" class="act" id="actExport">Download my data<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
       <button type="button" class="act" id="actClear">Clear search history<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
@@ -146,6 +185,8 @@
       notifMessages: true, notifOffers: true, notifSales: true, notifPriceDrops: true,
       notifFollowing: true, notifEvents: false, notifEmail: false,
       privateProfile: false, showOnline: true, readReceipts: true, messagesFrom: 'everyone',
+      showFollowLists: true, showLikes: false, sizesVisibility: 'me', searchable: true, findByContact: true,
+      personalised: true, shareLocation: false, theme: 'light',
       reduceMotion: false, sounds: true
     };
     var data; try { data = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { data = {}; }
@@ -174,6 +215,42 @@
       seg.querySelectorAll('button').forEach(function (b) {
         b.addEventListener('click', function () { data[k] = b.dataset.v; paint(); save(); });
       });
+    });
+
+    // ---- Tabs ----
+    var tabs = document.querySelectorAll('.st-tab'), groups = document.querySelectorAll('.grp[data-tab]');
+    var TKEY = 'vero_settings_tab';
+    function showTab(id) {
+      tabs.forEach(function (t) { t.classList.toggle('on', t.dataset.tab === id); });
+      groups.forEach(function (g) { g.hidden = g.dataset.tab !== id; });
+      try { sessionStorage.setItem(TKEY, id); } catch (e) {}
+      var on = document.querySelector('.st-tab.on');
+      if (on) on.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+    }
+    tabs.forEach(function (t) { t.addEventListener('click', function () { showTab(t.dataset.tab); window.scrollTo(0, 0); }); });
+    var startTab = (location.hash.match(/^#(general|notifications|privacy|display|account)$/) || [])[1];
+    try { startTab = startTab || sessionStorage.getItem(TKEY); } catch (e) {}
+    showTab(startTab || 'general');
+
+    // ---- Blocked accounts (vero_blocked: [{ id, name }]) ----
+    function renderBlocked() {
+      var host = document.getElementById('blockedList'), list;
+      try { list = JSON.parse(localStorage.getItem('vero_blocked')) || []; } catch (e) { list = []; }
+      if (!list.length) { host.innerHTML = '<p class="blocked-empty">You haven\u2019t blocked anyone.</p>'; return; }
+      host.innerHTML = '';
+      list.forEach(function (u, i) {
+        var row = document.createElement('div'); row.className = 'blocked-row';
+        var nm = document.createElement('span'); nm.textContent = u.name || u.id || 'Account';
+        var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Unblock';
+        b.addEventListener('click', function () { list.splice(i, 1); localStorage.setItem('vero_blocked', JSON.stringify(list)); renderBlocked(); toast('Unblocked'); });
+        row.appendChild(nm); row.appendChild(b); host.appendChild(row);
+      });
+    }
+    renderBlocked();
+
+    // Night mode applies at once, here and on every open page (motion.js listens).
+    document.querySelectorAll('[data-seg="theme"] button').forEach(function (b) {
+      b.addEventListener('click', function () { if (window.veroApplyNight) window.veroApplyNight(); });
     });
 
     // ---- Account ----

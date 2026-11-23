@@ -20,6 +20,58 @@
    • Uses the Web Animations API, so the elements' own CSS transitions (hover,
      press) keep working. Replaces reveal.js.
    ========================================================================== */
+/* ---- Night mode (Settings → Display → Night mode: off / on / auto) ----------
+   The whole page is turned to its negative and hue-rotated back, so whites go
+   near-black and inks go light while colours keep their hue; photos, video and
+   embedded pages are turned back so they look as they are. Lives here because
+   this file loads in the <head> of every page, before the first paint. */
+(function () {
+    'use strict';
+    if (window.veroApplyNight) return;
+    var root = document.documentElement;
+    var css = document.createElement('style');
+    css.id = 'vero-night-css';
+    // Media are turned back once; anything inside something already turned back
+    // is left alone (two turns would make it a negative again).
+    var M = 'img,video,canvas,iframe,.vn-bg';
+    css.textContent =
+        'html.vero-night{filter:invert(1) hue-rotate(180deg);background:#fff}' +
+        M.split(',').map(function (m) { return 'html.vero-night ' + m; }).join(',') + '{filter:invert(1) hue-rotate(180deg)}' +
+        M.split(',').map(function (m) { return 'html.vero-night .vn-bg ' + m; }).join(',') + '{filter:none}';
+    (document.head || root).appendChild(css);
+    var mq = null;
+    try { mq = window.matchMedia('(prefers-color-scheme: dark)'); } catch (e) {}
+    function wanted() {
+        var t = 'light';
+        try { t = (JSON.parse(localStorage.getItem('vero_settings')) || {}).theme || 'light'; } catch (e) {}
+        return t === 'dark' || (t === 'system' && !!(mq && mq.matches));
+    }
+    // Photos set as a CSS background (covers, avatars) are found by their
+    // computed style — a url(), not a gradient — and marked to be turned back.
+    function tag(scope) {
+        var els = (scope || document).querySelectorAll('*');
+        for (var i = 0; i < els.length; i++) {
+            var el = els[i];
+            if (/^(IMG|VIDEO|CANVAS|IFRAME|SCRIPT|STYLE|SVG|PATH)$/i.test(el.tagName)) continue;
+            var bg = getComputedStyle(el).backgroundImage;
+            el.classList.toggle('vn-bg', !!bg && bg.indexOf('url(') !== -1);
+        }
+    }
+    var obs = null, tagT = null;
+    function watch(on) {
+        if (on && !obs && window.MutationObserver) {
+            obs = new MutationObserver(function () { clearTimeout(tagT); tagT = setTimeout(function () { tag(); }, 300); });
+            var start = function () { tag(); obs.observe(document.body || root, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] }); };
+            if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+        } else if (!on && obs) { obs.disconnect(); obs = null; }
+    }
+    function apply() { var on = wanted(); root.classList.toggle('vero-night', on); watch(on); }
+    window.veroApplyNight = apply;
+    apply();
+    window.addEventListener('storage', function (e) { if (!e.key || e.key === 'vero_settings') apply(); });
+    if (mq && mq.addEventListener) mq.addEventListener('change', apply);
+})();
+
 (function () {
     'use strict';
     if (window.__veroMotion) return;
