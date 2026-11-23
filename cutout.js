@@ -47,6 +47,8 @@ const VERO_CUTOUT_W = 680;
 const VERO_CUTOUT_H = 1000;
 /* The piece fills this share of the frame, centred, with even air around it. */
 const VERO_CUTOUT_FILL = 0.84;
+/* A watch is zoomed to its head: the case spans this share of the frame's width. */
+const VERO_CUTOUT_WATCH_HEAD = 0.62;
 /* Longest side of the photo handed to the model. */
 const VERO_CUTOUT_INPUT = 1280;
 
@@ -205,7 +207,75 @@ async function veroCutoutShrink(blob) {
    Without the clean-up the model's faint haze keeps a ghost of the background
    and stretches the trim; without the trim a piece shot from far away stays a
    speck in the middle of its card. */
-function veroCutoutCompose(img) {
+/* Where the watch head is, and how to turn it. The strap is the long axis of
+   the piece (principal axis of the matte); the head is where the piece is
+   widest across that axis. Returns the head's centre and size in source pixels
+   and the rotation that lays the strap from top-left to bottom-right at 45°,
+   with 12 o'clock towards the top-left. A piece with no clear long axis (a
+   strap curled round, a bare case) is taken as shot upright. */
+function veroCutoutWatchPose(data, w, h) {
+    let n = 0, sx = 0, sy = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > 127) { n++; sx += x; sy += y; }
+    }
+    if (n < 50) return null;
+    const mx = sx / n, my = sy / n;
+    let cxx = 0, cyy = 0, cxy = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] <= 127) continue;
+        const dx = x - mx, dy = y - my;
+        cxx += dx * dx; cyy += dy * dy; cxy += dx * dy;
+    }
+    cxx /= n; cyy /= n; cxy /= n;
+    const tr = cxx + cyy, det = cxx * cyy - cxy * cxy;
+    const disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
+    const l1 = tr / 2 + disc, l2 = Math.max(1e-6, tr / 2 - disc);
+    const elongated = Math.sqrt(l1 / l2) >= 1.6;
+    let theta = elongated ? 0.5 * Math.atan2(2 * cxy, cxx - cyy) : Math.PI / 2;
+
+    // Profile along the axis: how much of the piece sits in each slice.
+    const cos = Math.cos(theta), sin = Math.sin(theta);
+    let umin = Infinity, umax = -Infinity;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] <= 127) continue;
+        const u = (x - mx) * cos + (y - my) * sin;
+        if (u < umin) umin = u;
+        if (u > umax) umax = u;
+    }
+    const BINS = 120, len = Math.max(1, umax - umin), bw = len / BINS;
+    const count = new Float64Array(BINS), sumV = new Float64Array(BINS);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] <= 127) continue;
+        const dx = x - mx, dy = y - my;
+        const b = Math.min(BINS - 1, Math.floor((dx * cos + dy * sin - umin) / bw));
+        count[b]++; sumV[b] += -dx * sin + dy * cos;
+    }
+    // Smooth, so a lug or a buckle doesn't pass for the head.
+    const width = new Float64Array(BINS), R = 3;
+    for (let b = 0; b < BINS; b++) {
+        let s = 0, k = 0;
+        for (let j = Math.max(0, b - R); j <= Math.min(BINS - 1, b + R); j++) { s += count[j]; k++; }
+        width[b] = s / k / bw;
+    }
+    let peak = 0;
+    for (let b = 1; b < BINS; b++) if (width[b] > width[peak]) peak = b;
+    let a = peak, z = peak;
+    while (a > 0 && width[a - 1] >= width[peak] * 0.75) a--;
+    while (z < BINS - 1 && width[z + 1] >= width[peak] * 0.75) z++;
+    let c = 0, v = 0;
+    for (let b = a; b <= z; b++) { c += count[b]; v += sumV[b]; }
+    const u0 = umin + (a + z + 1) / 2 * bw, v0 = c ? v / c : 0;
+    const cx = mx + u0 * cos - v0 * sin, cy = my + u0 * sin + v0 * cos;
+    const size = elongated ? Math.max(width[peak], (z - a + 1) * bw) : Math.sqrt(l1) * 4;
+
+    // Lay the axis at 45° (screen y runs down), turning it the short way round.
+    let rot = Math.PI / 4 - theta;
+    while (rot > Math.PI / 2) rot -= Math.PI;
+    while (rot < -Math.PI / 2) rot += Math.PI;
+    return { cx, cy, size, rotate: rot };
+}
+
+function veroCutoutCompose(img, opts) {
     const w = img.naturalWidth, h = img.naturalHeight;
     const scan = document.createElement('canvas');
     scan.width = w; scan.height = h;
@@ -271,10 +341,21 @@ function veroCutoutCompose(img) {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     // No fill: the frame stays transparent and the card paints the ground.
-    const scale = Math.min(VERO_CUTOUT_W * VERO_CUTOUT_FILL / cw, VERO_CUTOUT_H * VERO_CUTOUT_FILL / ch);
-    const dw = cw * scale, dh = ch * scale;
-    ctx.drawImage(scan, left, top, cw, ch,
-        (VERO_CUTOUT_W - dw) / 2, (VERO_CUTOUT_H - dh) / 2, dw, dh);
+    const pose = opts && opts.pose === 'watch' ? veroCutoutWatchPose(data, w, h) : null;
+    if (pose) {
+        // The head goes to the middle of the frame, the strap runs corner to
+        // corner at 45° and bleeds off the edges, like a watch shot on a table.
+        const s = Math.min(VERO_CUTOUT_W, VERO_CUTOUT_H) * VERO_CUTOUT_WATCH_HEAD / pose.size;
+        ctx.translate(VERO_CUTOUT_W / 2, VERO_CUTOUT_H / 2);
+        ctx.rotate(pose.rotate);
+        ctx.scale(s, s);
+        ctx.drawImage(scan, -pose.cx, -pose.cy);
+    } else {
+        const scale = Math.min(VERO_CUTOUT_W * VERO_CUTOUT_FILL / cw, VERO_CUTOUT_H * VERO_CUTOUT_FILL / ch);
+        const dw = cw * scale, dh = ch * scale;
+        ctx.drawImage(scan, left, top, cw, ch,
+            (VERO_CUTOUT_W - dw) / 2, (VERO_CUTOUT_H - dh) / 2, dw, dh);
+    }
 
     // Transparent, so never JPEG (it has no alpha and would fill it black).
     // WebP keeps the alpha at a fraction of PNG's size — it matters, because the
@@ -326,7 +407,7 @@ async function veroCutout(src, opts = {}) {
         } finally { clearTimeout(stall); }
 
         const img = await veroCutoutLoadImage(cut);
-        const composed = veroCutoutCompose(img);
+        const composed = veroCutoutCompose(img, { pose: opts.pose });
         URL.revokeObjectURL(img.src);
         if (!composed) throw new Error('empty cut-out');
         say('');

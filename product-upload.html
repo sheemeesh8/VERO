@@ -191,6 +191,16 @@ h3, h4, h5, h6, p,
     <link rel="stylesheet" href="assets/upload-flow.css?v=20261122a">
     <script src="assets/page-header.js?v=20261117e"></script>
     <link rel="stylesheet" href="assets/site-font.css?v=3">
+    <style id="pu-all-black">
+        /* This page: every caption, label and placeholder in solid black. */
+        :root { --uf-muted: #111; }
+        .pu-sub, .pu-field > label, .pu-hint, .pu-swatch .nm, .pu-slot .pu-slot-lbl, .pu-rec-label,
+        .pu-rec-text, .pu-rec-react, .pu-price-big .cur, .pu-chips button:not(.on), .pu-deal-note,
+        .pu-back, .pu-step-lbl, .pu-select, .pu-select.empty { color: #111 !important; }
+        .pu-field input::placeholder, .pu-field textarea::placeholder,
+        .pu-price-big input::placeholder { color: #111 !important; opacity: 1; }
+        .pu-select-wrap::after { border-color: #111 !important; }
+    </style>
 </head>
 <body>
     <!-- Shared page header (assets/page-header.css): title left, back arrow right. -->
@@ -217,7 +227,6 @@ h3, h4, h5, h6, p,
                 <section class="pu-slide">
                     <h2 class="pu-h">The item</h2>
                     <p class="pu-sub">What it is, who made it.</p>
-                    <div class="pu-field"><label>Brand / designer</label><input data-k="brand" type="text" placeholder="e.g. Ralph Lauren"></div>
                     <div class="pu-field"><label>Category &amp; item type</label>
                         <div class="pu-select-wrap">
                             <select class="pu-select" data-k="itemType">
@@ -247,6 +256,7 @@ h3, h4, h5, h6, p,
                             </select>
                         </div>
                     </div>
+                    <div class="pu-field"><label>Brand / designer</label><input data-k="brand" type="text" placeholder="e.g. Ralph Lauren"></div>
                     <div class="pu-field"><label>Item name</label><input data-k="title" type="text" placeholder="e.g. Vintage wool blazer"></div>
                     <div class="pu-field"><label>Condition</label>
                         <div class="pu-select-wrap">
@@ -414,7 +424,7 @@ h3, h4, h5, h6, p,
     </script>
 
     <!-- Background-removal engine for the cover shot. -->
-    <script src="cutout.js?v=20261121d"></script>
+    <script src="cutout.js?v=20261123w"></script>
     <script>
       // Fetch the cut-out engine while the seller fills in the first step.
       (window.requestIdleCallback || function (f) { setTimeout(f, 1200); })(function () { if (typeof veroCutoutWarm === 'function') veroCutoutWarm(); });
@@ -485,7 +495,9 @@ h3, h4, h5, h6, p,
             var grow = function () { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
             if (isArea) grow();
             var onChange = function () {
+                var wasWatch = data[k] === 'Watches';
                 data[k] = el.value; save();
+                if (k === 'itemType' && wasWatch !== (el.value === 'Watches')) recutCover();
                 if (isSelect) el.classList.toggle('empty', !el.value);
                 if (isArea) grow();
                 if (k === 'price' || k === 'itemType') updateDeal();
@@ -588,6 +600,7 @@ h3, h4, h5, h6, p,
         var PHOTO_MAX = 1080, PHOTO_Q = 0.8;
 
         // ---- Photo slots ----
+        var lastCoverRaw = null, recutCover = function () {};
         document.querySelectorAll('.pu-slot').forEach(function (slot) {
             var key = slot.getAttribute('data-photo');
             var input = slot.querySelector('input');
@@ -597,28 +610,8 @@ h3, h4, h5, h6, p,
                 var rd = new FileReader();
                 rd.onload = function () {
                     var raw = rd.result;
-                    if (key === 'cover') {
-                        slot.classList.add('working');
-                        var st = document.getElementById('coverStatus'); if (st) st.textContent = 'Preparing\u2026';
-                        var note = function (m) { var h = document.getElementById('coverNote'); if (h) { h.textContent = m; h.hidden = !m; } };
-                        note('');
-                        var done = function (url) {
-                            data.photos.cover = url; save();
-                            slot.style.backgroundImage = 'url("' + url + '")'; slot.classList.add('filled'); slot.classList.remove('working');
-                            renderCard();   // the cut may finish after the seller has moved on to the preview
-                        };
-                        if (typeof veroCutout === 'function') {
-                            veroCutout(raw, { onStatus: function (m) { var s = document.getElementById('coverStatus'); if (s) s.textContent = m; } })
-                                .then(function (res) {
-                                    // The cut-out is already a transparent frame in the card's shape:
-                                    // stored as it is, so the card paints its own ground behind it.
-                                    if (res.ok) return done(res.image);
-                                    note('Couldn\u2019t remove the background \u2014 using your photo as it is.');
-                                    return shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done);
-                                })
-                                .catch(function () { shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done); });
-                        } else { shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done); }
-                    } else {
+                    if (key === 'cover') cutCover(raw);
+                    else {
                         shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(function (url) {
                             data.photos[key] = url; save();
                             slot.style.backgroundImage = 'url("' + url + '")'; slot.classList.add('filled');
@@ -627,6 +620,33 @@ h3, h4, h5, h6, p,
                 };
                 rd.readAsDataURL(f);
             });
+            if (key !== 'cover') return;
+            // A watch is posed differently (zoomed to the head, turned 45°), so a
+            // change of item type to or from Watches cuts the same photo again.
+            recutCover = function () { if (lastCoverRaw) cutCover(lastCoverRaw); };
+            function cutCover(raw) {
+                    slot.classList.add('working');
+                    var st = document.getElementById('coverStatus'); if (st) st.textContent = 'Preparing\u2026';
+                    var note = function (m) { var h = document.getElementById('coverNote'); if (h) { h.textContent = m; h.hidden = !m; } };
+                    note('');
+                    var done = function (url) {
+                        data.photos.cover = url; save();
+                        slot.style.backgroundImage = 'url("' + url + '")'; slot.classList.add('filled'); slot.classList.remove('working');
+                        renderCard();   // the cut may finish after the seller has moved on to the preview
+                    };
+                    if (typeof veroCutout === 'function') {
+                        lastCoverRaw = raw;
+                        veroCutout(raw, { pose: data.itemType === 'Watches' ? 'watch' : '', onStatus: function (m) { var s = document.getElementById('coverStatus'); if (s) s.textContent = m; } })
+                            .then(function (res) {
+                                // The cut-out is already a transparent frame in the card's shape:
+                                // stored as it is, so the card paints its own ground behind it.
+                                if (res.ok) return done(res.image);
+                                note('Couldn\u2019t remove the background \u2014 using your photo as it is.');
+                                return shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done);
+                            })
+                            .catch(function () { shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done); });
+                    } else { shrinkPhoto(raw, PHOTO_MAX, PHOTO_Q).then(done); }
+            }
         });
 
         // ---- Price recommendation ----
