@@ -224,15 +224,83 @@ async function veroCutoutFullCanvas(blob) {
     return c;
 }
 
-/* Lay the model's matte (made on the small copy) over the full-size photo. */
+/* Lay the model's matte (made on the small copy) over the full-size photo,
+   then sharpen it against the backdrop. */
 function veroCutoutApplyMatte(full, cut) {
-    const ctx = full.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.globalCompositeOperation = 'destination-in';
-    ctx.drawImage(cut, 0, 0, full.width, full.height);
-    ctx.globalCompositeOperation = 'source-over';
+    const w = full.width, h = full.height;
+    const ctx = full.getContext('2d', { willReadFrequently: true });
+    const m = document.createElement('canvas');
+    m.width = w; m.height = h;
+    const mctx = m.getContext('2d', { willReadFrequently: true });
+    mctx.imageSmoothingEnabled = true;
+    mctx.imageSmoothingQuality = 'high';
+    mctx.drawImage(cut, 0, 0, w, h);
+    const photo = ctx.getImageData(0, 0, w, h), px = photo.data;
+    const matte = mctx.getImageData(0, 0, w, h).data;
+    const alpha = new Uint8ClampedArray(w * h);
+    for (let p = 0; p < w * h; p++) alpha[p] = matte[p * 4 + 3];
+    veroCutoutRefine(px, alpha, w, h);
+    for (let p = 0; p < w * h; p++) px[p * 4 + 3] = alpha[p];
+    ctx.putImageData(photo, 0, 0);
     return full;
+}
+
+/* The model works at about 1024px and paints its matte in soft blobs: thin
+   things (a chain, a strap's buckle hole, the gap between two legs) come back
+   with the backdrop still inside them. On a plain backdrop — a table, a wall,
+   a sheet — that backdrop has one colour, so it can be followed in from the
+   outside: every pixel that has the backdrop's colour and touches the
+   backdrop goes clear, as far in as a chain's gaps go. A busy backdrop
+   (a floor, a room) has no one colour, and then the model's matte is kept. */
+function veroCutoutRefine(px, alpha, w, h) {
+    const n = w * h;
+    // The backdrop's colour: what the model is sure is background.
+    const stride = Math.max(1, Math.round(Math.sqrt(n / 60000)));
+    let cnt = 0, sr = 0, sg = 0, sb = 0, qr = 0, qg = 0, qb = 0;
+    for (let y = 0; y < h; y += stride) for (let x = 0; x < w; x += stride) {
+        const p = y * w + x;
+        if (alpha[p] > 6) continue;
+        const r = px[p * 4], g = px[p * 4 + 1], b = px[p * 4 + 2];
+        cnt++; sr += r; sg += g; sb += b; qr += r * r; qg += g * g; qb += b * b;
+    }
+    if (cnt < 200) return;
+    const mr = sr / cnt, mg = sg / cnt, mb = sb / cnt;
+    const sd = Math.sqrt(Math.max(0, (qr / cnt - mr * mr + qg / cnt - mg * mg + qb / cnt - mb * mb) / 3));
+    if (sd > 20) return;                                   // busy backdrop: trust the model
+    const tol = Math.max(12, 2.6 * sd), tol2 = tol * tol * 3;
+    const near = (p) => {
+        const dr = px[p * 4] - mr, dg = px[p * 4 + 1] - mg, db = px[p * 4 + 2] - mb;
+        return dr * dr + dg * dg + db * db <= tol2;
+    };
+    // Follow the backdrop in from the outside, but only so far: a white shirt
+    // on a white sheet is backdrop-coloured too, and must not be eaten whole.
+    const reach = Math.max(8, Math.round(Math.min(w, h) * 0.07));
+    const depth = new Uint16Array(n), queue = new Int32Array(n);
+    let qh = 0, qt = 0;
+    for (let p = 0; p < n; p++) if (alpha[p] <= 6) { depth[p] = 1; queue[qt++] = p; }
+    while (qh < qt) {
+        const p = queue[qh++], d = depth[p];
+        if (d > reach) continue;
+        const x = p % w;
+        const nb = [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w];
+        for (let k = 0; k < 4; k++) {
+            const q = nb[k];
+            if (q < 0 || q >= n || depth[q]) continue;
+            if (!near(q)) continue;
+            depth[q] = d + 1; alpha[q] = 0; queue[qt++] = q;
+        }
+    }
+    // Soften the new edge: a pixel next to cleared backdrop and close to its
+    // colour is partly backdrop (anti-aliasing), so it is made partly clear.
+    const soft2 = tol2 * 4;
+    for (let p = 0; p < n; p++) {
+        if (!alpha[p] || depth[p]) continue;
+        const x = p % w;
+        if (!((x > 0 && depth[p - 1]) || (x < w - 1 && depth[p + 1]) || (p >= w && depth[p - w]) || (p + w < n && depth[p + w]))) continue;
+        const dr = px[p * 4] - mr, dg = px[p * 4 + 1] - mg, db = px[p * 4 + 2] - mb;
+        const d2 = dr * dr + dg * dg + db * db;
+        if (d2 < soft2) alpha[p] = Math.min(alpha[p], Math.round(255 * (Math.sqrt(d2) - Math.sqrt(tol2)) / (Math.sqrt(soft2) - Math.sqrt(tol2))));
+    }
 }
 
 /* Clean the matte, trim to the piece, and centre it in a transparent square.

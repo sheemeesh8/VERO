@@ -42,7 +42,7 @@
         .ld-eyebrow { margin-top: 18px; font-size: 9.35px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
         .ld-title { margin-top: 10px; font-family: var(--f-sans) !important; font-weight: 200; font-size: clamp(23.8px, 7vw, 28.9px); letter-spacing: 0.01em; color: var(--ink); }
         .ld-text { margin-top: 10px; max-width: 300px; font-size: 11.05px; font-weight: 300; line-height: 1.65; color: var(--muted); }
-        .ld-card { width: 132px; max-width: 40%; margin: 22px auto 0; }
+        .ld-card { width: 132px; max-width: 62%; margin: 22px auto 0; }
         .ld-card .product-card { width: 100%; cursor: default; }
         .ld-card .product-card:hover { transform: none; }
         .ld-actions { width: 100%; margin-top: auto; padding-top: 24px; display: flex; flex-direction: column; gap: 12px; }
@@ -282,6 +282,33 @@
                     '</div>' +
                 '</div>' +
             '</div>';
+
+        // The card grows into whatever height is spare above the buttons — as
+        // large as the screen allows, with both buttons still in view.
+        function fitCard() {
+            var card = document.getElementById('ldCard'), acts = document.querySelector('.ld-actions'), ld = document.querySelector('.ld');
+            if (!card || !acts || !ld) return;
+            card.style.width = ''; card.style.maxWidth = '';
+            var r = card.getBoundingClientRect();
+            var spare = acts.getBoundingClientRect().top - r.bottom - 8;
+            if (!r.height) return;
+            if (spare > 0) {
+                var w = Math.min(r.width + spare * r.width / r.height, ld.clientWidth - 40, 400);
+                if (w > r.width) { card.style.maxWidth = 'none'; card.style.width = Math.floor(w) + 'px'; }
+            }
+            // Never push the buttons off the screen: give back whatever overflows.
+            for (var i = 0; i < 4; i++) {
+                var over = ld.scrollHeight - ld.clientHeight;
+                if (over <= 0) break;
+                var c = card.getBoundingClientRect();
+                card.style.maxWidth = 'none';
+                card.style.width = Math.max(120, Math.floor(c.width - (over + 2) * c.width / c.height)) + 'px';
+            }
+        }
+        var imgEl = document.querySelector('#ldCard img');
+        if (imgEl && !imgEl.complete) imgEl.addEventListener('load', fitCard);
+        requestAnimationFrame(fitCard);
+        window.addEventListener('resize', fitCard);
     })();
     </script>
     <script src="assets/line-icons.js"></script>
