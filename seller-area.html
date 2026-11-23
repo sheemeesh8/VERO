@@ -364,7 +364,7 @@ h3, h4, h5, h6, p,
         }
         /* Live preview of the public profile's top (cover → description), then
            the button to the full page. The frame reports its own height. */
-        .front-preview { display: block; width: 100%; height: 560px; border: 0; margin: 0 0 14px; background: #fff; }
+        .front-preview { display: block; width: 100%; max-width: none; height: 560px; border: 0; margin: 0 0 14px; background: #fff; }
         .view-front svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
         .view-front-wrap { width: 100%; max-width: 560px; margin: 0 auto 8px; padding: 0; box-sizing: border-box; flex: none; }
         .view-front-wrap .view-front:not(#zz):not(#zz):not(#zz) { display: flex !important; width: 100% !important; margin: 0 0 6px !important; }
@@ -961,8 +961,23 @@ h3, h4, h5, h6, p,
         var fr = document.getElementById('frontPreview');
         if (!fr) return;
         window.addEventListener('message', function (e) {
-            if (e.source === fr.contentWindow && e.data && e.data.type === 'pfx-embed-height') fr.style.height = e.data.height + 'px';
+            if (e.source === fr.contentWindow && e.data && e.data.type === 'pfx-embed-height') { fr.style.height = e.data.height + 'px'; if (typeof fit === 'function') fit(); }
         });
+        // Full screen width, its top edge right on the secondary header (tab bar).
+        function fit() {
+            fr.style.marginTop = ''; fr.style.marginLeft = ''; fr.style.width = '';
+            var bar = document.querySelector('#saNav');
+            var r = fr.getBoundingClientRect();
+            var top = r.top + (window.scrollY || 0);
+            var barBottom = bar ? bar.getBoundingClientRect().bottom : top;
+            fr.style.width = document.documentElement.clientWidth + 'px';
+            fr.style.marginLeft = (-r.left) + 'px';
+            if (bar && top > barBottom) fr.style.marginTop = (barBottom - top) + 'px';
+        }
+        fit();
+        window.addEventListener('load', fit);
+        window.addEventListener('resize', fit);
+        setTimeout(fit, 400); setTimeout(fit, 1500);
         var base = fr.getAttribute('src');
         var t = null;
         function refresh() { clearTimeout(t); t = setTimeout(function () { fr.src = base + '&_ts=' + Date.now(); }, 700); }
