@@ -30,13 +30,24 @@
   .wrap { max-width: 520px; margin: 0 auto; padding: 26px 24px calc(110px + env(safe-area-inset-bottom, 0px)); }
   .intro { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
 
-  /* Tabs, like the seller area: one group at a time. */
-  .st-tabs { position: sticky; top: 0; z-index: 5; display: flex; gap: 26px; overflow-x: auto; scrollbar-width: none;
-             background: #fff; border-bottom: 1px solid var(--line); padding: 0 24px; margin: 0 -24px; }
-  .st-tabs::-webkit-scrollbar { display: none; }
-  .st-tab { flex: none; padding: 16px 0 13px; border: none; border-bottom: 2px solid transparent; background: none; cursor: pointer;
-            font-size: 13px; font-weight: 500; color: rgba(17,17,17,0.55); white-space: nowrap; }
-  .st-tab.on { color: var(--ink); border-bottom-color: var(--ink); }
+  /* Sections as rows, like Statistics: a name and a chevron; tapping opens it,
+     and only one is open at a time. */
+  .acc { border-top: 1px solid var(--line); }
+  .acc:first-of-type { border-top: 0; }
+  .acc:last-of-type { border-bottom: 1px solid var(--line); }
+  .acc-h { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 66px; padding: 0; border: 0; background: none;
+           color: var(--ink); text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity .15s; }
+  .acc-h:active { opacity: .55; }
+  .acc-h:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .acc-t { flex: 1; min-width: 0; font-size: 15px; font-weight: 300; letter-spacing: 0.1px; }
+  .acc.is-open .acc-t { font-weight: 600; }
+  .acc-chev { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+              transition: transform .35s cubic-bezier(.22,1,.36,1); }
+  .acc.is-open .acc-chev { transform: rotate(180deg); }
+  .acc-b { height: 0; overflow: hidden; transition: height .35s cubic-bezier(.4,0,.2,1); }
+  .acc.is-open .acc-b { height: auto; }
+  .acc-bi { padding-bottom: 26px; }
+  .acc-bi > .grp:first-child { margin-top: 4px; }
   .grp { margin-top: 26px; }
   .grp[hidden] { display: none; }
   .grp-cap { font-size: 11px; color: var(--muted); margin: 8px 0 2px; }
@@ -92,13 +103,6 @@
   </header>
 
   <main class="wrap">
-    <nav class="st-tabs" id="stTabs" aria-label="Settings sections">
-      <button type="button" class="st-tab" data-tab="general">General</button>
-      <button type="button" class="st-tab" data-tab="notifications">Notifications</button>
-      <button type="button" class="st-tab" data-tab="privacy">Privacy</button>
-      <button type="button" class="st-tab" data-tab="display">Display</button>
-      <button type="button" class="st-tab" data-tab="account">Account</button>
-    </nav>
 
     <section class="grp" data-tab="general">
       <h2 class="grp-h">Language &amp; region</h2>
@@ -217,20 +221,50 @@
       });
     });
 
-    // ---- Tabs ----
-    var tabs = document.querySelectorAll('.st-tab'), groups = document.querySelectorAll('.grp[data-tab]');
+    // ---- Sections: one row per area, opened in place (one at a time) ----
+    var AREAS = [['general', 'General'], ['notifications', 'Notifications'], ['privacy', 'Privacy'], ['display', 'Display'], ['account', 'Account']];
+    var main = document.querySelector('.wrap'), firstGrp = main.querySelector('.grp[data-tab]');
     var TKEY = 'vero_settings_tab';
-    function showTab(id) {
-      tabs.forEach(function (t) { t.classList.toggle('on', t.dataset.tab === id); });
-      groups.forEach(function (g) { g.hidden = g.dataset.tab !== id; });
-      try { sessionStorage.setItem(TKEY, id); } catch (e) {}
-      var on = document.querySelector('.st-tab.on');
-      if (on) on.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+    var CHEV = '<svg class="acc-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    var accs = AREAS.map(function (a) {
+      var sec = document.createElement('section'); sec.className = 'acc'; sec.dataset.area = a[0];
+      var h = document.createElement('button'); h.type = 'button'; h.className = 'acc-h';
+      h.setAttribute('aria-expanded', 'false'); h.innerHTML = '<span class="acc-t"></span>' + CHEV;
+      h.firstChild.textContent = a[1];
+      var b = document.createElement('div'); b.className = 'acc-b'; b.setAttribute('role', 'region');
+      var bi = document.createElement('div'); bi.className = 'acc-bi'; b.appendChild(bi);
+      main.querySelectorAll('.grp[data-tab="' + a[0] + '"]').forEach(function (g) {
+        bi.appendChild(g);
+        // Inside its own row the group's heading repeats the row's name: drop it then.
+        var gh = g.querySelector('.grp-h'); if (gh && gh.textContent.trim() === a[1]) gh.remove();
+      });
+      sec.appendChild(h); sec.appendChild(b);
+      main.insertBefore(sec, firstGrp && firstGrp.parentNode === main ? firstGrp : main.querySelector('.ver'));
+      h.addEventListener('click', function () { toggle(sec); });
+      return sec;
+    });
+    function setOpen(sec, open, animate) {
+      var b = sec.querySelector('.acc-b'), h = sec.querySelector('.acc-h');
+      if (sec.classList.contains('is-open') === open) return;
+      h.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (!animate) { sec.classList.toggle('is-open', open); b.style.height = ''; return; }
+      var from = b.offsetHeight;
+      sec.classList.toggle('is-open', open);
+      b.style.height = 'auto'; var to = open ? b.scrollHeight : 0;
+      b.style.height = from + 'px'; void b.offsetHeight; b.style.height = to + 'px';
+      var done = function () { b.removeEventListener('transitionend', done); if (sec.classList.contains('is-open') === open) b.style.height = ''; };
+      b.addEventListener('transitionend', done);
     }
-    tabs.forEach(function (t) { t.addEventListener('click', function () { showTab(t.dataset.tab); window.scrollTo(0, 0); }); });
-    var startTab = (location.hash.match(/^#(general|notifications|privacy|display|account)$/) || [])[1];
-    try { startTab = startTab || sessionStorage.getItem(TKEY); } catch (e) {}
-    showTab(startTab || 'general');
+    function toggle(sec) {
+      var open = !sec.classList.contains('is-open');
+      accs.forEach(function (o) { if (o !== sec) setOpen(o, false, true); });
+      setOpen(sec, open, true);
+      try { sessionStorage.setItem(TKEY, open ? sec.dataset.area : ''); } catch (e) {}
+    }
+    var startArea = (location.hash.match(/^#(general|notifications|privacy|display|account)$/) || [])[1];
+    try { if (!startArea) startArea = sessionStorage.getItem(TKEY); } catch (e) {}
+    if (startArea === null || startArea === undefined) startArea = 'general';   // like Statistics: the first row opens on arrival
+    accs.forEach(function (sec) { if (sec.dataset.area === startArea) setOpen(sec, true, false); });
 
     // ---- Blocked accounts (vero_blocked: [{ id, name }]) ----
     function renderBlocked() {
