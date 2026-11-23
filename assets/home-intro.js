@@ -3,7 +3,8 @@
 
    1. White screen: the name, moravchick, in the script wordmark.
    2. The white lifts off the hero's video (the hero itself, under this layer)
-      and the name, now white, reads "Welcome to moravchick" over it.
+      and the name, now white, reads "Welcome to moravchick" over it — or, for
+      a signed-in member with a first name, "Welcome, <first name>".
    3. The words fade, the layer goes, and the hero carries on in its regular
       design.
 
@@ -20,6 +21,23 @@
 
     var root = document.documentElement;
     root.classList.add('hi-on');                       // holds the page's scroll
+
+    // The member's first name (signed in only): vero_profile.name holds the
+    // first name (the surname is kept apart in lastName); take its first word.
+    (function personalise() {
+        var first = '';
+        try {
+            if (localStorage.getItem('vero_session')) {
+                var prof = JSON.parse(localStorage.getItem('vero_profile') || '{}') || {};
+                first = String(prof.name || '').trim().split(/\s+/)[0] || '';
+            }
+        } catch (e) {}
+        var slot = document.getElementById('hiFirst'), lead = el.querySelector('.hi-welcome');
+        if (!first || !slot) return;
+        slot.textContent = first.charAt(0).toUpperCase() + first.slice(1);
+        if (lead) lead.textContent = 'Welcome,';
+        el.classList.add('hi-has-first');
+    })();
 
     var stage = 0, timers = [], lastSkip = 0;
     function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
