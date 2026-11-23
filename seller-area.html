@@ -202,6 +202,12 @@
             padding-top: calc(64px + 24px);   /* below the fixed page header */
         }
         .sss-inner { width: 100%; max-width: 560px; margin: 0 auto; }
+        /* Personal details under the Show / Edit buttons. */
+        .sa-personal { margin-top: 30px; }
+        .sap-genders { display: flex; gap: 10px; }
+        .sap-genders button { flex: 1 1 0; padding: 13px 0; border: 1px solid rgba(17,17,17,0.3); background: #fff; color: #111;
+            font-family: inherit; font-size: 11.9px; letter-spacing: 0.06em; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+        .sap-genders button.on { background: #111; border-color: #111; color: #fff; }
 
         /* ---- Completion meter ---- */
         .sss-meter { margin: 0 2px 30px; }
@@ -427,6 +433,32 @@ h3, h4, h5, h6, p,
         <!-- ==================== SECTION 2 — SETTINGS ("My Shop") ==================== -->
         <section class="sa-section sa-settings" id="saSettings">
             <div class="view-front-wrap"><iframe class="front-preview" id="frontPreview" src="buyer-profile.html?for=seller&embed=hero" title="Your store" scrolling="no" loading="eager"></iframe><div class="front-actions"><a class="view-front" href="buyer-profile.html?for=seller">Show my full website<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><button type="button" class="edit-front" id="editFront" aria-expanded="false" aria-controls="sssInner"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3Z"/><path d="M13.5 6.5l4 4"/></svg><span>Edit</span></button></div><div class="edit-media" id="editMedia" hidden><button type="button" onclick="var i=document.getElementById('saHeroFile');i.value='';i.click();">Change cover</button></div></div>
+            <!-- Personal details — always open under the buttons. The same record as the
+                 personal area (vero_profile), so a change here shows there too. -->
+            <div class="sss-inner sa-personal" id="saPersonal">
+                <div class="sss-group">
+                    <div class="sss-head"><h2 class="sss-title">Personal details</h2></div>
+                    <div class="sss-body">
+                        <p class="sss-cap">Private — not shown on your storefront</p>
+                        <div class="sss-field"><label>Gender</label>
+                            <div class="sap-genders" id="sapGenders">
+                                <button type="button" data-gender="female">Female</button>
+                                <button type="button" data-gender="male">Male</button>
+                                <button type="button" data-gender="outer">Other</button>
+                            </div>
+                        </div>
+                        <div class="sss-row">
+                            <div class="sss-field"><label>First name</label><input data-p="name" type="text" autocomplete="given-name" placeholder="First name"></div>
+                            <div class="sss-field"><label>Last name</label><input data-p="lastName" type="text" autocomplete="family-name" placeholder="Last name"></div>
+                        </div>
+                        <div class="sss-field"><label>Date of birth</label><input data-p="birthday" type="date" autocomplete="bday"></div>
+                        <div class="sss-field"><label>Personal email</label><input data-p="email" type="email" autocomplete="email" placeholder="you@example.com"></div>
+                        <div class="sss-field"><label>Personal phone</label><input data-p="phone" type="tel" autocomplete="tel" placeholder="05x-xxxxxxx"></div>
+                        <div class="sss-field"><label>Home address</label><input data-p="address" type="text" autocomplete="street-address" placeholder="Street, city"></div>
+                        <p class="sss-note" id="sapNote"></p>
+                    </div>
+                </div>
+            </div>
             <div class="sss-inner" id="sssInner"></div>
         </section>
 
@@ -997,6 +1029,34 @@ h3, h4, h5, h6, p,
         window.addEventListener('storage', refresh);
         document.addEventListener('change', function (e) { if (!fr.contains(e.target)) refresh(); }, true);
         document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+    })();
+    </script>
+    <script>
+    /* Personal details: read and write the personal record (vero_profile), the
+       one the buyer's personal area uses — gender, name, birthday, contact. */
+    (function personalDetails() {
+        var box = document.getElementById('saPersonal');
+        if (!box) return;
+        var PK = 'vero_profile';
+        var data; try { data = JSON.parse(localStorage.getItem(PK)) || {}; } catch (e) { data = {}; }
+        var note = document.getElementById('sapNote'), noteT;
+        var save = function () {
+            try { localStorage.setItem(PK, JSON.stringify(data)); } catch (e) {}
+            if (note) { note.textContent = 'Saved'; clearTimeout(noteT); noteT = setTimeout(function () { note.textContent = ''; }, 1400); }
+        };
+        box.querySelectorAll('input[data-p]').forEach(function (el) {
+            var k = el.getAttribute('data-p');
+            if (data[k] != null) el.value = data[k];
+            el.addEventListener('input', function () { data[k] = el.value; save(); });
+        });
+        var g = document.getElementById('sapGenders');
+        if (g) g.querySelectorAll('button').forEach(function (b) {
+            b.classList.toggle('on', data.gender === b.dataset.gender);
+            b.addEventListener('click', function () {
+                data.gender = b.dataset.gender; save();
+                g.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+            });
+        });
     })();
     </script>
     <script>
