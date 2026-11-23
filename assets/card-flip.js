@@ -66,7 +66,7 @@
         var p = {};
         try { if (card.dataset.product) p = JSON.parse(card.dataset.product); } catch (e) {}
         if (!p.name) {
-            try { var href = card.getAttribute('href') || ''; var raw = new URL(href, location.href).searchParams.get('product'); if (raw) p = JSON.parse(raw); } catch (e) {}
+            try { var href = card.getAttribute('href') || ''; var sp = new URL(href, location.href).searchParams; var raw = window.veroReadProductParam ? window.veroReadProductParam(sp) : sp.get('product'); if (raw) p = JSON.parse(raw); } catch (e) {}
         }
         var name = card.dataset.name || p.name || text(card, '.product-name') || card.getAttribute('title') || 'Item';
         var price = num(card.dataset.price) || num(p.price) || num(text(card, '.vprice')) || num(text(card, '.product-price'));
