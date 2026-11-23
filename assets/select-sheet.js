@@ -21,44 +21,97 @@
     var list = sheet.querySelector('.pu-pick-list');
     var current = null;
 
+    var CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+    var BACK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+
+    function pick(sel, value) {
+        if (sel.value !== value) {
+            sel.value = value;
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        close();
+    }
+    function optionRow(sel, o) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pu-pick-row' + (o.value === sel.value ? ' on' : '');
+        b.setAttribute('role', 'option');
+        b.setAttribute('aria-selected', o.value === sel.value ? 'true' : 'false');
+        b.innerHTML = '<span></span>' + TICK;
+        b.firstChild.textContent = o.textContent;
+        b.addEventListener('click', function () { pick(sel, o.value); });
+        return b;
+    }
+    function slideIn(dir) {
+        list.classList.remove('in-l', 'in-r');
+        void list.offsetWidth;
+        list.classList.add(dir === 'back' ? 'in-l' : 'in-r');
+        list.scrollTop = 0;
+    }
+    function focusOn() {
+        var on = list.querySelector('.on') || list.querySelector('.pu-pick-row');
+        if (on) { on.scrollIntoView({ block: 'nearest' }); on.focus({ preventScroll: true }); }
+    }
+
+    // Grouped selects open like My Sizes in the personal area: first a row per
+    // category (with a chevron and what's chosen in it), then — slid in — that
+    // category's own options, with a back arrow to the categories.
+    function showGroups(sel, dir) {
+        list.innerHTML = '';
+        Array.prototype.forEach.call(sel.querySelectorAll('optgroup'), function (g) {
+            var opts = Array.prototype.filter.call(g.querySelectorAll('option'), function (o) { return o.value; });
+            if (!opts.length) return;
+            var chosen = opts.filter(function (o) { return o.value === sel.value; })[0];
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'pu-pick-row pu-pick-cat' + (chosen ? ' on' : '');
+            b.innerHTML = '<span class="pu-pick-cat-main"><span class="pu-pick-cat-name"></span><span class="pu-pick-cat-val"></span></span>' + CHEV;
+            b.querySelector('.pu-pick-cat-name').textContent = g.label;
+            b.querySelector('.pu-pick-cat-val').textContent = chosen ? chosen.textContent
+                : opts.slice(0, 3).map(function (o) { return o.textContent; }).join(', ') + (opts.length > 3 ? '…' : '');
+            b.addEventListener('click', function () {
+                if (opts.length === 1) return pick(sel, opts[0].value);   // nothing to choose between
+                showGroup(sel, g);
+            });
+            list.appendChild(b);
+        });
+        if (dir) slideIn(dir);
+        focusOn();
+    }
+    function showGroup(sel, g) {
+        list.innerHTML = '';
+        var head = document.createElement('button');
+        head.type = 'button';
+        head.className = 'pu-pick-back';
+        head.innerHTML = BACK + '<span></span>';
+        head.lastChild.textContent = g.label;
+        head.setAttribute('aria-label', 'Back to all categories');
+        head.addEventListener('click', function () { showGroups(sel, 'back'); });
+        list.appendChild(head);
+        Array.prototype.forEach.call(g.querySelectorAll('option'), function (o) {
+            if (o.value) list.appendChild(optionRow(sel, o));
+        });
+        slideIn('fwd');
+        focusOn();
+    }
+
     function open(sel) {
         current = sel;
         var field = sel.closest('.pu-field');
         var lbl = field && field.querySelector('label');
         title.textContent = lbl ? lbl.textContent : '';
-        list.innerHTML = '';
-        var group = null;
-        Array.prototype.forEach.call(sel.options, function (o) {
-            if (!o.value) return;   // the placeholder row
-            // An <optgroup> becomes a small heading above its rows.
-            var g = o.parentNode && o.parentNode.tagName === 'OPTGROUP' ? o.parentNode : null;
-            if (g && g !== group) {
-                var h = document.createElement('p');
-                h.className = 'pu-pick-g';
-                h.textContent = g.label;
-                list.appendChild(h);
-            }
-            group = g;
-            var b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'pu-pick-row' + (o.value === sel.value ? ' on' : '');
-            b.setAttribute('role', 'option');
-            b.setAttribute('aria-selected', o.value === sel.value ? 'true' : 'false');
-            b.innerHTML = '<span></span>' + TICK;
-            b.firstChild.textContent = o.textContent;
-            b.addEventListener('click', function () {
-                if (sel.value !== o.value) {
-                    sel.value = o.value;
-                    sel.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-                close();
+        list.classList.remove('in-l', 'in-r');
+        if (sel.querySelector('optgroup')) {
+            showGroups(sel);
+        } else {
+            list.innerHTML = '';
+            Array.prototype.forEach.call(sel.options, function (o) {
+                if (o.value) list.appendChild(optionRow(sel, o));   // skip the placeholder row
             });
-            list.appendChild(b);
-        });
+        }
         sheet.hidden = false;
         requestAnimationFrame(function () { sheet.classList.add('on'); });
-        var on = list.querySelector('.on') || list.firstChild;
-        if (on) { on.scrollIntoView({ block: 'nearest' }); on.focus({ preventScroll: true }); }
+        focusOn();
     }
     function close() {
         sheet.classList.remove('on');
