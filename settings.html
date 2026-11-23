@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script src="assets/motion.js?v=3"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>
+  if (window.self === window.top && !/[?&]embed=1/.test(location.search)) {
+    var pf = location.pathname.split('/').pop() || 'index';
+    if (!/\.html$/.test(pf)) pf += '.html';
+    location.replace('phone-frame.html#page=' + encodeURIComponent(pf + location.search));
+  }
+</script>
+<meta name="description" content="App settings: language, notifications, privacy, display and your account.">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
+<title>moravchick — Settings</title>
+<script src="vero-theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/fonts/aharoni.css">
+<style>
+  /* ---- Settings: the app's own settings (not the profile). One quiet column of
+     groups; every row saves the moment it changes, to vero_settings. ---- */
+  :root { --ink: #111; --muted: rgba(17,17,17,0.6); --line: rgba(17,17,17,0.12); --green: #1f8f4e; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; background: #fff; color: var(--ink);
+         font-size: 13px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  button, select { font: inherit; color: inherit; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 26px 24px calc(110px + env(safe-area-inset-bottom, 0px)); }
+  .intro { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+
+  .grp { margin-top: 30px; }
+  .grp-h { font-size: 9.5px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding-bottom: 10px;
+           border-bottom: 1px solid var(--ink); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 58px; padding: 12px 0;
+         border-bottom: 1px solid var(--line); }
+  .row-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .row-t b { font-weight: 400; font-size: 13.5px; }
+  .row-t span { font-size: 11px; color: var(--muted); }
+
+  /* Switch */
+  .sw { position: relative; flex: none; width: 44px; height: 26px; }
+  .sw input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+  .sw i { position: absolute; inset: 0; border-radius: 999px; background: #dcd9d4; transition: background .2s; }
+  .sw i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff;
+                 box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s cubic-bezier(.22,1,.36,1); }
+  .sw input:checked + i { background: var(--ink); }
+  .sw input:checked + i::after { transform: translateX(18px); }
+  .sw input:focus-visible + i { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* Segmented choice */
+  .seg { display: flex; flex: none; border: 1px solid rgba(17,17,17,0.3); }
+  .seg button { border: none; background: #fff; padding: 9px 12px; font-size: 11.5px; cursor: pointer; min-width: 44px; }
+  .seg button + button { border-left: 1px solid rgba(17,17,17,0.3); }
+  .seg button.on { background: var(--ink); color: #fff; }
+
+  /* Account actions */
+  .act { width: 100%; display: flex; align-items: center; justify-content: space-between; min-height: 56px; padding: 12px 0;
+         background: none; border: none; border-bottom: 1px solid var(--line); cursor: pointer; text-align: left; font-size: 13.5px; }
+  .act svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .act.danger { color: #9a2f2f; }
+  .ver { margin-top: 34px; text-align: center; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+  .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0;
+           background: var(--ink); color: #fff; padding: 10px 16px; font-size: 11.5px; letter-spacing: 0.04em; pointer-events: none;
+           transition: opacity .2s, transform .25s cubic-bezier(.22,1,.36,1); z-index: 20; display: flex; align-items: center; gap: 8px; }
+  .toast svg { width: 14px; height: 14px; fill: none; stroke: #4fd08a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  html.is-embed .page-header { display: none; }
+</style>
+<link rel="stylesheet" href="assets/page-header.css?v=20261003e">
+<script src="assets/page-header.js?v=20261117e"></script>
+<link rel="stylesheet" href="assets/site-font.css?v=3">
+</head>
+<body>
+  <header class="page-header">
+    <div class="ph-name" role="heading" aria-level="1">Settings</div>
+    <a class="ph-back" href="profile.html" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+  </header>
+
+  <main class="wrap">
+    <p class="intro">App settings for this account. Changes save as you make them.</p>
+
+    <section class="grp">
+      <h2 class="grp-h">Language &amp; region</h2>
+      <div class="row"><div class="row-t"><b>Language</b><span>The app's language</span></div>
+        <div class="seg" data-seg="language"><button type="button" data-v="en">English</button><button type="button" data-v="he">עברית</button></div></div>
+      <div class="row"><div class="row-t"><b>Currency</b><span>How prices are shown to you</span></div>
+        <div class="seg" data-seg="currency"><button type="button" data-v="ILS">₪</button><button type="button" data-v="USD">$</button><button type="button" data-v="EUR">€</button></div></div>
+      <div class="row"><div class="row-t"><b>Size system</b><span>For clothing and shoe sizes</span></div>
+        <div class="seg" data-seg="sizeSystem"><button type="button" data-v="EU">EU</button><button type="button" data-v="US">US</button><button type="button" data-v="UK">UK</button></div></div>
+    </section>
+
+    <section class="grp">
+      <h2 class="grp-h">Notifications</h2>
+      <div class="row"><div class="row-t"><b>Messages</b><span>When someone writes to you</span></div><label class="sw"><input type="checkbox" data-k="notifMessages"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Offers</b><span>New offers and counter-offers</span></div><label class="sw"><input type="checkbox" data-k="notifOffers"><i></i></label></div>
+      <div class="row seller-only"><div class="row-t"><b>Sales</b><span>When one of your pieces sells</span></div><label class="sw"><input type="checkbox" data-k="notifSales"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Price drops</b><span>On pieces you liked</span></div><label class="sw"><input type="checkbox" data-k="notifPriceDrops"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>New from stores I follow</b><span>When they list something new</span></div><label class="sw"><input type="checkbox" data-k="notifFollowing"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Events near me</b><span>Markets, fairs and pop-ups</span></div><label class="sw"><input type="checkbox" data-k="notifEvents"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Email newsletter</b><span>New collections and stories</span></div><label class="sw"><input type="checkbox" data-k="notifEmail"><i></i></label></div>
+    </section>
+
+    <section class="grp">
+      <h2 class="grp-h">Privacy</h2>
+      <div class="row"><div class="row-t"><b>Private profile</b><span>Only people you approve see your activity</span></div><label class="sw"><input type="checkbox" data-k="privateProfile"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Show when I'm online</b><span>In chats</span></div><label class="sw"><input type="checkbox" data-k="showOnline"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Read receipts</b><span>Let others see you read their message</span></div><label class="sw"><input type="checkbox" data-k="readReceipts"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Messages from</b><span>Who can start a chat with you</span></div>
+        <div class="seg" data-seg="messagesFrom"><button type="button" data-v="everyone">Everyone</button><button type="button" data-v="following">Following</button></div></div>
+    </section>
+
+    <section class="grp">
+      <h2 class="grp-h">Display</h2>
+      <div class="row"><div class="row-t"><b>Reduce animations</b><span>Fewer fades, slides and confetti</span></div><label class="sw"><input type="checkbox" data-k="reduceMotion"><i></i></label></div>
+      <div class="row"><div class="row-t"><b>Sound effects</b><span>Small sounds on send and sale</span></div><label class="sw"><input type="checkbox" data-k="sounds"><i></i></label></div>
+    </section>
+
+    <section class="grp">
+      <h2 class="grp-h">Account</h2>
+      <button type="button" class="act" id="actExport">Download my data<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
+      <button type="button" class="act" id="actClear">Clear search history<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+      <button type="button" class="act" id="actLogout">Log out<svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg></button>
+      <button type="button" class="act danger" id="actWipe">Remove my data from this device<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </section>
+
+    <p class="ver">moravchick</p>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span></span></div>
+
+  <script src="auth.js"></script>
+  <script>
+  (function settings() {
+    var qs = location.search;
+    if (/[?&]embed=1/.test(qs)) document.documentElement.classList.add('is-embed');
+    var seller = /[?&]from=seller\b/.test(qs);
+    if (!seller) document.querySelectorAll('.seller-only').forEach(function (r) { r.remove(); });
+    var back = document.querySelector('.ph-back'); if (back && seller) back.href = 'seller-area.html';
+
+    var KEY = 'vero_settings';
+    var DEFAULTS = {
+      language: 'en', currency: 'ILS', sizeSystem: 'EU',
+      notifMessages: true, notifOffers: true, notifSales: true, notifPriceDrops: true,
+      notifFollowing: true, notifEvents: false, notifEmail: false,
+      privateProfile: false, showOnline: true, readReceipts: true, messagesFrom: 'everyone',
+      reduceMotion: false, sounds: true
+    };
+    var data; try { data = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { data = {}; }
+    Object.keys(DEFAULTS).forEach(function (k) { if (data[k] === undefined) data[k] = DEFAULTS[k]; });
+
+    var toastEl = document.getElementById('toast'), toastT;
+    function toast(msg) {
+      toastEl.querySelector('span').textContent = msg;
+      toastEl.classList.add('on'); clearTimeout(toastT);
+      toastT = setTimeout(function () { toastEl.classList.remove('on'); }, 1600);
+    }
+    function save(msg) {
+      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+      toast(msg || 'Saved');
+    }
+
+    document.querySelectorAll('input[data-k]').forEach(function (el) {
+      var k = el.getAttribute('data-k');
+      el.checked = !!data[k];
+      el.addEventListener('change', function () { data[k] = el.checked; save(); });
+    });
+    document.querySelectorAll('[data-seg]').forEach(function (seg) {
+      var k = seg.getAttribute('data-seg');
+      var paint = function () { seg.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === data[k]); }); };
+      paint();
+      seg.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () { data[k] = b.dataset.v; paint(); save(); });
+      });
+    });
+
+    // ---- Account ----
+    document.getElementById('actExport').addEventListener('click', function () {
+      var out = {};
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!/^vero_/.test(k) || k === 'vero_session') continue;    // never the login token
+        var v = localStorage.getItem(k);
+        try { out[k] = JSON.parse(v); } catch (e) { out[k] = v; }
+      }
+      var blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'moravchick-my-data.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+      toast('Your data is downloading');
+    });
+    document.getElementById('actClear').addEventListener('click', function () {
+      var gone = 0;
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var k = localStorage.key(i);
+        if (/^vero_.*(search|recent)/i.test(k)) { localStorage.removeItem(k); gone++; }
+      }
+      toast(gone ? 'Search history cleared' : 'No search history');
+    });
+    function goLogin() {
+      try { if (window.VeroAuth) VeroAuth.logout(); else localStorage.removeItem('vero_session'); } catch (e) {}
+      try { window.top.location.href = 'login.html'; } catch (e) { location.href = 'login.html'; }
+    }
+    document.getElementById('actLogout').addEventListener('click', function () {
+      if (confirm('Log out of moravchick on this device?')) goLogin();
+    });
+    document.getElementById('actWipe').addEventListener('click', function () {
+      if (!confirm('Remove all your moravchick data from this device? Your listings, drafts, chats and settings saved here will be deleted. This cannot be undone.')) return;
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var k = localStorage.key(i);
+        if (/^vero_/.test(k) && k !== 'vero_saved_accounts') localStorage.removeItem(k);
+      }
+      goLogin();
+    });
+  })();
+  </script>
+  <script src="assets/line-icons.js"></script>
+</body>
+</html>

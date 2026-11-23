@@ -27,6 +27,8 @@
 
     var reduce = false;
     try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    // Settings → Display → Reduce animations (vero_settings.reduceMotion).
+    try { if ((JSON.parse(localStorage.getItem('vero_settings')) || {}).reduceMotion) reduce = true; } catch (e) {}
     if (reduce) return;
 
     var root = document.documentElement;
