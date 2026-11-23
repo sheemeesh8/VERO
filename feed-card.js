@@ -52,7 +52,7 @@
         if (!Array.isArray(wish)) wish = [];
         var it = itemFrom(card);
         var idx = wish.findIndex(function (w) { return w && w.name === it.name && w.seller === it.seller; });
-        if (idx === -1) { wish.push(it); btn.classList.add('wish-on'); toast('Added to wishlist'); }
+        if (idx === -1) { wish.push(it); btn.classList.add('wish-on'); toast('Added to wishlist'); if (window.veroSound) veroSound('like'); }
         else { wish.splice(idx, 1); btn.classList.remove('wish-on'); toast('Removed from wishlist'); }
         writeJSON('vero_wishlist', wish);
     }

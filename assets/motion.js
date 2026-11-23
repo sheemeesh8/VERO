@@ -72,6 +72,17 @@
     if (mq && mq.addEventListener) mq.addEventListener('change', apply);
 })();
 
+/* ---- Sound effects: loads assets/sounds.js; until it is in, calls queue. ---- */
+(function () {
+    if (window.veroSound) return;
+    window.__veroSoundQ = [];
+    window.veroSound = function (name) { window.__veroSoundQ.push(name); };
+    var src = (document.currentScript && document.currentScript.src || '').replace(/motion\.js(\?.*)?$/, 'sounds.js?v=1');
+    if (!src) return;
+    var sc = document.createElement('script'); sc.src = src; sc.async = true;
+    (document.head || document.documentElement).appendChild(sc);
+})();
+
 (function () {
     'use strict';
     if (window.__veroMotion) return;

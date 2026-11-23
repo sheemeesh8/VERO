@@ -105,7 +105,7 @@
         if (i >= 0) { wl.splice(i, 1); writeJSON('vero_wishlist', wl); badges(); toast('Removed from wishlist'); return false; }
         wl.push({ id: it.id, name: it.name, price: it.price, seller: it.seller, icon: it.icon, cover: it.cover,
             category: it.category, type: it.type, rating: it.rating, addedAt: Date.now() });
-        writeJSON('vero_wishlist', wl); badges(); toast('Added to wishlist'); return true;
+        writeJSON('vero_wishlist', wl); badges(); toast('Added to wishlist'); if (window.veroSound) veroSound('like'); return true;
     }
 
     /* ---- the back ---- */
