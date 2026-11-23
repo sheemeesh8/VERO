@@ -414,26 +414,39 @@
 <link rel="stylesheet" href="assets/old-money.css?v=5">
 </head>
 <body>
-    <!-- Zoom-parallax entrance (assets/zoom-intro.js): the first slide's picture as a
-         narrow rectangle on white, growing to full screen on the first scroll, then
-         handing over to the Lumina slider below. -->
+    <!-- Home intro (assets/home-intro.js): the name on white, then "Welcome to
+         moravchick" over the hero's video, then the hero's regular design. -->
     <style>
-        .zpi { position: fixed; inset: 0; z-index: 2147483000; background: #fff;
-               display: flex; align-items: center; justify-content: center;
-               transition: opacity 0.3s ease; cursor: pointer; }
-        .zpi.zpi-done { opacity: 0; pointer-events: none; }
-        .zpi-tile { position: absolute; overflow: hidden; left: 20vw; top: 15vh; width: 60vw; height: 70vh; }
-        .zpi-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-        .zpi-cue { position: absolute; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px));
-                   transform: translateX(-50%); font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
-                   color: #111; opacity: var(--zpi-cue, 1); white-space: nowrap; }
-        html.zpi-on, html.zpi-on body { overflow: hidden !important; overscroll-behavior: none; }
+        .hi { position: fixed; inset: 0; z-index: 2147483000; display: flex; align-items: center; justify-content: center;
+              background: #fff; transition: background-color 1.1s ease, opacity 0.6s ease; cursor: pointer; }
+        .hi[data-stage="2"], .hi[data-stage="3"] { background-color: rgba(255,255,255,0); }
+        .hi[data-stage="4"] { opacity: 0; pointer-events: none; }
+        .hi-words { text-align: center; padding: 0 24px; transition: opacity 0.8s ease, transform 0.8s ease; }
+        .hi-welcome { display: block; height: 0; overflow: visible; font-family: 'Arimo','Inter',sans-serif; font-size: 10px;
+              letter-spacing: 4px; text-transform: uppercase; color: #fff; opacity: 0; transform: translateY(14px);
+              transition: opacity 0.9s ease 0.5s, transform 0.9s ease 0.5s; position: relative; top: -22px; }
+        .hi .hi-name:not(#z):not(#z):not(#z):not(#z):not(#z) { font-family: 'Pinyon Script', cursive !important; font-weight: 400 !important; letter-spacing: 0 !important; text-transform: none !important; }
+        .hi-name { display: block; line-height: 1.1;
+              font-size: clamp(54px, 16vw, 104px); color: var(--oak, #2A331B); white-space: nowrap;
+              opacity: 0; transform: translateY(10px); transition: opacity 1s ease, transform 1s ease, color 1.1s ease; }
+        .hi[data-stage="1"] .hi-name, .hi[data-stage="2"] .hi-name, .hi[data-stage="3"] .hi-name { opacity: 1; transform: none; }
+        .hi[data-stage="2"] .hi-name, .hi[data-stage="3"] .hi-name { color: #fff; text-shadow: 0 2px 24px rgba(0,0,0,0.25); }
+        .hi[data-stage="2"] .hi-welcome, .hi[data-stage="3"] .hi-welcome { opacity: 1; transform: none; }
+        .hi[data-stage="3"] .hi-words { opacity: 0; transform: translateY(-10px); }
+        html.hi-on, html.hi-on body { overflow: hidden !important; overscroll-behavior: none; }
+        /* The header waits for the hand-over, then fades in. */
+        #siteHeader { transition: opacity 0.6s ease; }
+        html.hi-on #siteHeader { opacity: 0 !important; pointer-events: none !important; }
+        @media (prefers-reduced-motion: reduce) { .hi { display: none; } }
     </style>
-    <div class="zpi" id="zpIntro" aria-hidden="true">
-        <div class="zpi-tile"><img src="assets/hero/autumn-hero.jpg?v=2" alt="" fetchpriority="high"></div>
-        <span class="zpi-cue">Scroll</span>
+    <link href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" rel="stylesheet">
+    <div class="hi" id="homeIntro" aria-hidden="true">
+        <div class="hi-words">
+            <span class="hi-welcome">Welcome to</span>
+            <span class="hi-name">moravchick</span>
+        </div>
     </div>
-    <script src="assets/zoom-intro.js?v=5"></script>
+    <script src="assets/home-intro.js?v=1"></script>
     <!-- Keep the header transparent over the hero, solid once the feed rises in. -->
     <script>
         // Transparent (white icons) while the home hero is in view; goes solid
@@ -467,7 +480,10 @@
          click delegation still drives the caption's links and button. -->
     <div id="feedHeroWrap" class="hs-om">
         <section class="hero-slider hm-lu" id="hmHeroCap" aria-roledescription="carousel" aria-label="Featured">
-            <div class="hm-lu-pic" id="hmLumina"></div>
+            <!-- The hero's video (also the stage the intro opens onto). -->
+            <video class="hm-hero-video" id="hmHeroVideo" src="assets/hero/intro.mp4?v=1" poster="assets/hero/intro-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+            <!-- The regular hero design (not built yet) goes here, over the video. -->
+            <div class="hm-lu-pic" id="hmLumina" hidden></div>
             <!-- Layout B — editorial: the words low on the left, the photo left open. -->
             <div class="hm-hero-cap hm-lu-cap">
                 <div class="rl-eyebrow" id="hmLuEyebrow">Welcome to</div>
@@ -1518,7 +1534,7 @@
     <script>
     (function heroLumina() {
         var host = document.getElementById('hmLumina');
-        if (!host || !window.VeroLumina) return;
+        if (!host || host.hidden || !window.VeroLumina) return;   // the hero shows its video for now
         // Each slide: the photo, its eyebrow / title / line, and what its button does.
         var S = [
             { eyebrow: 'The Autumn Collection', title: 'The Collection', description: 'This season\u2019s edit \u2014 warm layers, soft wools and earthy tones.', media: 'assets/hero/autumn-hero.jpg?v=2', btn: 'Discover the collection', act: 'collection-page', href: 'category.html?cat=autumn', nav: 'The collection' },
@@ -1560,6 +1576,7 @@
     /* No search line under the hero (search stays in the header); the
        collection slider comes straight after the hero. */
     html:not(#om0):not(#om1):not(#om2):not(#om3):not(#om4):not(#om5):not(#om6) .hm-searchrow { display: none !important; }
+    #hmHeroVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; display: block; }
     /* The home hero fills the whole screen (was 80%); the feed starts below the fold. */
     html:not(#om0):not(#om1):not(#om2):not(#om3):not(#om4):not(#om5):not(#om6) #feedHeroWrap .hero-slider.hm-lu { height: 100vh !important; height: 100svh !important; }
 </style>
