@@ -1704,9 +1704,35 @@
     html:not(#om0):not(#om1):not(#om2):not(#om3):not(#om4):not(#om5):not(#om6) #siteHeader:not(.scrolled) .header-left > a,
     html:not(#om0):not(#om1):not(#om2):not(#om3):not(#om4):not(#om5):not(#om6) #siteHeader:not(.scrolled) .icon-btn { color: #1b1916 !important; }
     html:not(#om0):not(#om1):not(#om2):not(#om3):not(#om4):not(#om5):not(#om6) #siteHeader:not(.scrolled) .icon-btn svg { stroke: #1b1916 !important; }
+    /* Entering the app: the garments rise up from behind the band one after another,
+       back to front, swinging into their angles with a small overshoot. Once per
+       session (the script below adds .is-enter). */
+    @keyframes hmGsIn {
+        0%   { transform: translateY(115%) rotate(calc(var(--r, 0deg) * -2)); opacity: 0; }
+        12%  { opacity: 1; }
+        70%  { transform: translateY(-6%) rotate(calc(var(--r, 0deg) * 1.15)); }
+        100% { transform: translateY(0) rotate(var(--r, 0deg)); opacity: 1; }
+    }
+    .hm-gstrip.is-enter button { animation: hmGsIn 1s cubic-bezier(.22,.9,.3,1) both; }
+    .hm-gstrip.is-enter [data-g="unisex"] { animation-delay: .15s; }
+    .hm-gstrip.is-enter [data-g="men"]    { animation-delay: .3s; }
+    .hm-gstrip.is-enter [data-g="kids"]   { animation-delay: .45s; }
+    .hm-gstrip.is-enter [data-g="women"]  { animation-delay: .6s; }
+    @media (prefers-reduced-motion: reduce) { .hm-gstrip.is-enter button { animation: none; } }
     /* On the light ground the garments need only a light shadow. */
     .hm-gstrip img { filter: drop-shadow(0 6px 10px rgba(0,0,0,0.16)) !important; }
 </style>
+<script>
+(function garmentsEnter() {
+    var el = document.getElementById('hmGStrip'); if (!el) return;
+    var seen = false;
+    try { seen = sessionStorage.getItem('vero_gs_in') === '1'; sessionStorage.setItem('vero_gs_in', '1'); } catch (e) {}
+    if (seen) return;
+    el.classList.add('is-enter');
+    // Drop the class once the last one lands so hover / press work as before.
+    setTimeout(function () { el.classList.remove('is-enter'); }, 1800);
+})();
+</script>
 <style id="hm-band-css">
     /* The band at the foot of the hero: white, still, three options to a view
        (a plain swipe slider if more are ever added). */
