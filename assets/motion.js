@@ -97,39 +97,81 @@
     var root = document.documentElement;
     var EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
-    // ---- 1. Page in ---------------------------------------------------------
+    // ---- 1 + 2. Page transitions --------------------------------------------
+    // Where the browser has cross-page View Transitions (Chrome / Edge, Safari 18.2+),
+    // every navigation — a link, a form, a script setting location — is animated by
+    // the browser itself: the page you leave drifts left and fades, the new one slides
+    // in from the right; going Back runs it the other way. The header is its own
+    // layer, so it holds still (and morphs if it differs) while the pages change
+    // under it. Elsewhere, a lighter version in script: the page slides out on a
+    // link tap and slides in on arrival.
+    var VT = !!(window.CSS && CSS.supports && document.startViewTransition && ('onpagereveal' in window));
     var css = document.createElement('style');
     css.id = 'vero-motion-css';
-    css.textContent =
-        'html.mo-enter body{animation:moPageIn .55s ease both}' +
-        '@keyframes moPageIn{from{opacity:0}to{opacity:1}}' +
-        'html.mo-leave body{opacity:0;transition:opacity .22s ease}' +
-        'html .mo-h{opacity:0 !important}';
+    css.textContent = VT ? (
+        '@view-transition{navigation:auto}' +
+        '#siteHeader{view-transition-name:vero-header}' +
+        '::view-transition-group(vero-header){animation-duration:.4s;animation-timing-function:' + EASE + ';z-index:2}' +
+        '::view-transition-old(root){animation:moVtOut .34s cubic-bezier(.4,0,1,1) both}' +
+        '::view-transition-new(root){animation:moVtIn .56s ' + EASE + ' .06s both}' +
+        ':active-view-transition-type(back)::view-transition-old(root){animation-name:moVtOutBack}' +
+        ':active-view-transition-type(back)::view-transition-new(root){animation-name:moVtInBack}' +
+        '@keyframes moVtOut{to{opacity:0;transform:translateX(-7%) scale(.985)}}' +
+        '@keyframes moVtIn{from{opacity:0;transform:translateX(9%)}}' +
+        '@keyframes moVtOutBack{to{opacity:0;transform:translateX(7%) scale(.985)}}' +
+        '@keyframes moVtInBack{from{opacity:0;transform:translateX(-9%)}}' +
+        'html .mo-h{opacity:0 !important}'
+    ) : (
+        'html.mo-enter body{animation:moPageIn .55s ' + EASE + ' both}' +
+        '@keyframes moPageIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}' +
+        'html.mo-leave body{opacity:0;transform:translateX(-14px);transition:opacity .22s ease,transform .22s ease}' +
+        'html .mo-h{opacity:0 !important}'
+    );
     (document.head || root).appendChild(css);
-    root.classList.add('mo-enter');
-    setTimeout(function () { root.classList.remove('mo-enter'); }, 700);
-    // Back / forward from the page cache: show the page again.
-    window.addEventListener('pageshow', function (e) { if (e.persisted) root.classList.remove('mo-leave'); });
 
-    // ---- 2. Page out --------------------------------------------------------
-    document.addEventListener('click', function (e) {
-        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        var a = e.target.closest && e.target.closest('a[href]');
-        if (!a || a.hasAttribute('download') || a.hasAttribute('data-no-motion')) return;
-        var t = (a.getAttribute('target') || '').toLowerCase();
-        if (t && t !== '_self') return;
-        var raw = a.getAttribute('href') || '';
-        if (!raw || raw.charAt(0) === '#' || /^(javascript|mailto|tel|sms|whatsapp):/i.test(raw)) return;
-        var url;
-        try { url = new URL(a.href, location.href); } catch (err) { return; }
-        if (url.origin !== location.origin) return;
-        if (url.pathname === location.pathname && url.search === location.search && url.hash) return;   // same page, other anchor
-        e.preventDefault();
-        root.classList.add('mo-leave');
-        setTimeout(function () { location.href = url.href; }, 200);
-        // If the navigation is cancelled, never leave the page blank.
-        setTimeout(function () { root.classList.remove('mo-leave'); }, 2500);
-    });
+    if (VT) {
+        // Back / forward through history plays the transition the other way.
+        function isBack() {
+            try {
+                var a = window.navigation && navigation.activation;
+                return !!(a && a.navigationType === 'traverse' && a.from && a.entry && a.from.index > a.entry.index);
+            } catch (e) { return false; }
+        }
+        window.addEventListener('pagereveal', function (e) {
+            if (e.viewTransition && isBack()) { try { e.viewTransition.types.add('back'); } catch (err) {} }
+        });
+        window.addEventListener('pageswap', function (e) {
+            if (!e.viewTransition || !e.activation) return;
+            try {
+                var a = e.activation;
+                if (a.navigationType === 'traverse' && a.from && a.entry && a.from.index > a.entry.index) e.viewTransition.types.add('back');
+            } catch (err) {}
+        });
+    } else {
+        root.classList.add('mo-enter');
+        setTimeout(function () { root.classList.remove('mo-enter'); }, 700);
+        // Back / forward from the page cache: show the page again.
+        window.addEventListener('pageshow', function (e) { if (e.persisted) root.classList.remove('mo-leave'); });
+
+        document.addEventListener('click', function (e) {
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            var a = e.target.closest && e.target.closest('a[href]');
+            if (!a || a.hasAttribute('download') || a.hasAttribute('data-no-motion')) return;
+            var t = (a.getAttribute('target') || '').toLowerCase();
+            if (t && t !== '_self') return;
+            var raw = a.getAttribute('href') || '';
+            if (!raw || raw.charAt(0) === '#' || /^(javascript|mailto|tel|sms|whatsapp):/i.test(raw)) return;
+            var url;
+            try { url = new URL(a.href, location.href); } catch (err) { return; }
+            if (url.origin !== location.origin) return;
+            if (url.pathname === location.pathname && url.search === location.search && url.hash) return;   // same page, other anchor
+            e.preventDefault();
+            root.classList.add('mo-leave');
+            setTimeout(function () { location.href = url.href; }, 200);
+            // If the navigation is cancelled, never leave the page blank.
+            setTimeout(function () { root.classList.remove('mo-leave'); }, 2500);
+        });
+    }
 
     // ---- 3. Content in / out ------------------------------------------------
     if (typeof IntersectionObserver === 'undefined' || !Element.prototype.animate) return;
