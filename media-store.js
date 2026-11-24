@@ -75,4 +75,26 @@
         if (value === IDB_FLAG) return await window.veroMediaURL(key);
         return value || null;
     };
+
+    // The personal (buyer) profile and the seller's store each keep their own cover:
+    // the store's under vero_store_config.hero / IndexedDB 'hero', the buyer's under
+    // vero_buyer_config.hero / IndexedDB 'buyerHero'. They used to share the store's;
+    // the first time this runs the buyer gets a copy of whatever was there, so nothing
+    // changes on screen, and from then on each one changes on its own.
+    window.VERO_BUYER_HERO_KEY = 'buyerHero';
+    window.veroBuyerCoverSplit = async function () {
+        try { if (localStorage.getItem('vero_buyer_cover_split')) return; } catch (e) { return; }
+        try {
+            const rd = (k) => { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { return {}; } };
+            const buyer = rd('vero_buyer_config'), store = rd('vero_store_config');
+            if (!buyer.hero && store.hero) {
+                if (store.hero === IDB_FLAG) {
+                    const blob = await window.veroMediaGet('hero');
+                    if (blob) { await window.veroMediaSet('buyerHero', blob); buyer.hero = IDB_FLAG; }
+                } else buyer.hero = store.hero;
+                if (buyer.hero) localStorage.setItem('vero_buyer_config', JSON.stringify(buyer));
+            }
+            localStorage.setItem('vero_buyer_cover_split', '1');
+        } catch (e) {}
+    };
 })();

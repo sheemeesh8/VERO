@@ -3313,15 +3313,19 @@ h3, h4, h5, h6, p,
         // Member-since: set once on first visit, then remembered (kept for stats).
         if (!profile.since) { profile.since = Date.now(); localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }
 
-        // ---- Store background image / video → saved on vero_store_config.hero
-        //      (image data URL) or vero_store_config.heroVideo (video data URL);
-        //      the storefront and buyer-profile pages read both to paint the hero. ----
+        // ---- Cover image / video. The seller's store cover is saved on
+        //      vero_store_config.hero (IndexedDB 'hero') or .heroVideo; the buyer's
+        //      personal profile has its own, on vero_buyer_config.hero (IndexedDB
+        //      'buyerHero'), so changing one never changes the other. ----
         (function storeBackground() {
             const preview = document.getElementById('storeBgPreview');
             const btn = document.getElementById('changeBg');
             const input = document.getElementById('storeBgInput');
             if (!preview || !input) return;   // #changeBg is optional; the input is what matters
-            const readCfg = () => { try { return JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) { return {}; } };
+            const BUYER_SIDE = typeof isSeller !== 'undefined' && !isSeller;
+            const CFG_KEY = BUYER_SIDE ? 'vero_buyer_config' : 'vero_store_config';
+            const HERO_KEY = BUYER_SIDE ? 'buyerHero' : 'hero';
+            const readCfg = () => { try { return JSON.parse(localStorage.getItem(CFG_KEY)) || {}; } catch (e) { return {}; } };
             function getVideoEl() {
                 let v = preview.querySelector('video.hero-video');
                 if (!v) {
@@ -3382,12 +3386,13 @@ h3, h4, h5, h6, p,
             }
             // Paint whatever is configured, resolving IndexedDB-backed media.
             (async function initHero() {
+                if (BUYER_SIDE && window.veroBuyerCoverSplit) await window.veroBuyerCoverSplit();
                 const cfg = readCfg();
-                if (cfg.heroVideo) {
+                if (cfg.heroVideo && !BUYER_SIDE) {
                     const url = await veroResolveMedia(cfg.heroVideo, 'heroVideo');
                     if (url) return paintVideo(url);
                 }
-                let url = await veroResolveMedia(cfg.hero, 'hero');
+                let url = await veroResolveMedia(cfg.hero, HERO_KEY);
                 // Buyer settings show a default cover when nothing is set yet.
                 if (!url && typeof isSeller !== 'undefined' && !isSeller) url = 'women-hero.jpg';
                 paint(url);
@@ -3398,12 +3403,15 @@ h3, h4, h5, h6, p,
                 if (!file) { return; }
                 try {
                     const blob = await downscaleImageBlob(file, 1600, 0.85);
-                    await veroMediaSet('hero', blob);
-                    await veroMediaDelete('heroVideo');
+                    await veroMediaSet(HERO_KEY, blob);
+                    if (!BUYER_SIDE) await veroMediaDelete('heroVideo');
                     const cfg = readCfg();
                     cfg.hero = VERO_IDB_FLAG;
                     delete cfg.heroVideo;
-                    localStorage.setItem('vero_store_config', JSON.stringify(cfg));
+                    localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+                    // Refresh the profile preview under the tabs so it shows the new cover.
+                    const fr = document.getElementById('frontPreview');
+                    if (fr) try { fr.contentWindow.location.reload(); } catch (x) { fr.src = fr.src; }
                     paint(URL.createObjectURL(blob));
                 } catch (err) {
                     alert('We couldn\'t save the image. Try again or a different photo.');
@@ -3454,9 +3462,10 @@ h3, h4, h5, h6, p,
                 if (ci) {
                     (async () => {
                         let cfg = {};
-                        try { cfg = JSON.parse(localStorage.getItem('vero_store_config')) || {}; } catch (e) {}
+                        const buyerSide = typeof isSeller !== 'undefined' && !isSeller;
+                        try { cfg = JSON.parse(localStorage.getItem(buyerSide ? 'vero_buyer_config' : 'vero_store_config')) || {}; } catch (e) {}
                         const avatar = await veroResolveMedia(profile.avatarImg, 'avatar');
-                        const cover = await veroResolveMedia(cfg.hero, 'hero');
+                        const cover = await veroResolveMedia(cfg.hero, buyerSide ? 'buyerHero' : 'hero');
                         ci.src = avatar || cover || 'women-hero.jpg';
                     })();
                 }

@@ -1146,8 +1146,8 @@ h3, h4, h5, h6, p,
             if (full) BUYER.name = full;
             if (prof.bio  && prof.bio.trim())  BUYER.tag  = prof.bio.trim();
             if (prof.avatarImg) BUYER.avatar = prof.avatarImg;
-            if (store.hero)      BUYER.hero      = store.hero;
-            if (store.heroVideo) BUYER.heroVideo = store.heroVideo;
+            // The cover is the buyer's own (vero_buyer_config.hero, set above), not the
+            // store's: the two profiles keep separate covers.
             // Socials: the buyer settings slide (.ps-social inputs) stores each link
             // as a FLAT field (prof.instagram / prof.tiktok / prof.facebook), while an
             // older path nested them under prof.socials. Read both so links set in
@@ -1172,7 +1172,7 @@ h3, h4, h5, h6, p,
             BUYER.name = name;
             BUYER.tag = (sell.bio && sell.bio.trim()) || store.tag || store.tagline || '';
             BUYER.avatar = sell.avatarImg || sell.avatar || store.avatar || '';
-            BUYER.hero = store.hero || sell.hero || BUYER.hero;
+            BUYER.hero = store.hero || sell.hero || 'women-hero.jpg';   // the store's own cover, never the buyer's
             if (store.heroVideo) BUYER.heroVideo = store.heroVideo;
             if (typeof store.followers === 'number') BUYER.followers = store.followers;
             const so = Object.assign({}, sell.socials || {});
@@ -1290,8 +1290,14 @@ h3, h4, h5, h6, p,
             // Media may live in IndexedDB (value === 'idb'); resolve to real URLs.
             const resolve = (v, k) => (typeof window.veroResolveMedia === 'function'
                 ? window.veroResolveMedia(v, k) : Promise.resolve(v));
-            const avatarSrc = (await resolve(BUYER.avatar, 'avatar')) || (await resolve(BUYER.hero, 'hero'));
-            const coverSrc  = (await resolve(BUYER.hero, 'hero')) || (await resolve(BUYER.avatar, 'avatar'));
+            // Each profile's cover sits under its own key: the store's 'hero', the buyer's 'buyerHero'.
+            if (!PFX_SELLER && window.veroBuyerCoverSplit) {
+                await window.veroBuyerCoverSplit();
+                try { const bc = JSON.parse(localStorage.getItem('vero_buyer_config')) || {}; if (bc.hero) BUYER.hero = bc.hero; } catch (e) {}
+            }
+            const HERO_KEY = PFX_SELLER ? 'hero' : 'buyerHero';
+            const avatarSrc = (await resolve(BUYER.avatar, 'avatar')) || (await resolve(BUYER.hero, HERO_KEY));
+            const coverSrc  = (await resolve(BUYER.hero, HERO_KEY)) || (await resolve(BUYER.avatar, 'avatar'));
             const videoSrc  = BUYER.heroVideo ? await resolve(BUYER.heroVideo, 'heroVideo') : null;
             const heroEl = document.getElementById('hero');
             if (videoSrc) {
