@@ -533,6 +533,12 @@
                 <button type="button" class="hm-sc-b" data-sc="magazine"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg><span>Magazine</span></button>
                 <button type="button" class="hm-sc-b" data-sc="upload"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg><span>Sell a piece</span></button>
             </nav>
+            <!-- Glass band across the foot of the hero: the hero's options
+                 (Filter / Magazine / Sell a piece) on a looping slider. A tap fires
+                 the matching shortcut above (kept hidden), so each does exactly what it did. -->
+            <div class="hm-band" id="hmBand" aria-label="Shortcuts">
+                <div class="hm-band-track" id="hmBandTrack"></div>
+            </div>
         </section>
     </div>
 
@@ -1646,6 +1652,56 @@
         html:not(#om0):not(#om1):not(#om2):not(#om3):not(#om4):not(#om5):not(#om6) #feedHeroWrap .hero-slider.hm-lu,
         html.hm-hero-in main.hm { transition: none !important; }
     }
+    /* The hero is just the video now: no welcome, name, link or shortcut row on it
+       (the intro still plays its words, then fades away onto the video). */
+    html:not(#om0):not(#om1):not(#om2):not(#om3):not(#om4):not(#om5):not(#om6) #hmWelcome,
+    html:not(#om0):not(#om1):not(#om2):not(#om3):not(#om4):not(#om5):not(#om6) #hmShortcuts { display: none !important; }
 </style>
+<style id="hm-band-css">
+    /* The band at the foot of the hero, in frosted glass over the video. */
+    .hm-band { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; height: 34px; overflow: hidden; display: flex; align-items: center;
+               background: rgba(255,255,255,0.16); -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
+               border-top: 1px solid rgba(255,255,255,0.38); box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); }
+    .hm-band-track { display: flex; align-items: center; flex: none; white-space: nowrap; will-change: transform;
+                     animation: hmBandLoop 16s linear infinite; }
+    .hm-band:hover .hm-band-track, .hm-band.is-held .hm-band-track { animation-play-state: paused; }
+    @keyframes hmBandLoop { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    html:not(#om0):not(#om1):not(#om2):not(#om3):not(#om4):not(#om5):not(#om6) .hm-band-item {
+        display: inline-flex; align-items: center; height: 34px; padding: 0 18px; border: 0; background: none;
+        color: #fff !important; cursor: pointer; font-family: 'Cormorant Garamond', 'Bodoni Moda', Georgia, serif !important;
+        font-size: 10.5px; font-weight: 500; letter-spacing: 2.4px; text-transform: uppercase !important; text-shadow: 0 1px 6px rgba(0,0,0,0.25); }
+    .hm-band-item svg { display: none !important; }   /* text only */
+    .hm-band-dot { flex: none; width: 3px; height: 3px; background: rgba(255,255,255,0.85); transform: rotate(45deg); }
+    @media (prefers-reduced-motion: reduce) { .hm-band-track { animation: none; } }
+</style>
+<script>
+(function heroBand() {
+    var sc = document.getElementById('hmShortcuts'), band = document.getElementById('hmBand'), track = document.getElementById('hmBandTrack');
+    if (!sc || !band || !track) return;
+    var btns = [].slice.call(sc.querySelectorAll('[data-sc]'));
+    if (!btns.length) return;
+    // One run of the options, repeated so the strip is always wider than the
+    // screen; the whole run is then doubled for a seamless loop (-50%).
+    var one = btns.map(function (b) {
+        return '<button type="button" class="hm-band-item" data-band="' + b.dataset.sc + '">' + b.innerHTML + '</button><span class="hm-band-dot" aria-hidden="true"></span>';
+    }).join('');
+    var run = one;
+    track.innerHTML = run;
+    var guard = 0;
+    while (track.scrollWidth < band.clientWidth * 1.2 && guard++ < 8) { run += one; track.innerHTML = run; }
+    track.innerHTML = run + run;
+    track.style.animationDuration = Math.max(10, Math.round(track.scrollWidth / 2 / 40)) + 's';   // ~40px/s
+    track.addEventListener('click', function (e) {
+        var it = e.target.closest('[data-band]'); if (!it) return;
+        e.preventDefault(); e.stopPropagation();
+        var b = sc.querySelector('[data-sc="' + it.dataset.band + '"]');
+        if (b) b.click();
+    });
+    // Hold the slider while a finger is on it.
+    band.addEventListener('touchstart', function () { band.classList.add('is-held'); }, { passive: true });
+    band.addEventListener('touchend', function () { band.classList.remove('is-held'); });
+    band.addEventListener('touchcancel', function () { band.classList.remove('is-held'); });
+})();
+</script>
 </body>
 </html>
