@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------
    moravchick — List hero for the cart and the wishlist (styles: assets/list-hero.css).
-   Opens the page like a collection page: a full-screen photo with the title and
-   how many pieces are in the list, a white band with the page's own search
-   (moved in) and a "You may also like" slider, then the list itself.
+   Opens the page like the home page's hero: a light-grey ground with the list's
+   own pieces scattered in layers at its foot and the title and count centred
+   above, then the page's own search, a "You may also like" slider and the list.
 
      <body data-list="cart">  or  data-list="wishlist"
      <script src="assets/list-hero.js"></script>   (end of body)
@@ -26,14 +26,27 @@
 
     var wrap = document.querySelector('.wrap');
     if (!wrap) return;
+    // As on the home page: the list's own pieces (their cut-outs) scattered in layers
+    // at the foot of a light-grey hero, the words centred above them. Up to four
+    // pieces; with none to show, the home page's four garments stand in.
+    var seen = {}, pics = [];
+    items.forEach(function (i) {
+        if (!i || !i.cover || seen[i.cover] || pics.length >= 4) return;
+        seen[i.cover] = 1; pics.push({ src: i.cover, name: i.name || '' });
+    });
+    var stand = !pics.length;
+    if (stand) pics = ['unisex', 'men', 'kids', 'women'].map(function (g) { return { src: 'assets/hero/layer-' + g + '.webp?v=2', name: '' }; });
+    var pile = pics.map(function (p, k) {
+        return '<span class="lh-pc" style="--k:' + k + '"><img src="' + esc(p.src) + '" alt="' + esc(p.name) + '" decoding="async"></span>';
+    }).join('');
     var hero = document.createElement('section');
-    hero.className = 'lh-hero'; hero.id = 'lhHero';
+    hero.className = 'lh-hero lh-light'; hero.id = 'lhHero';
     hero.innerHTML =
-        '<img class="lh-img" src="' + C.img + '" alt="">' +
         '<div class="lh-copy"><div class="lh-eyebrow">' + esc(C.eyebrow) + '</div><h1 class="lh-title">' + esc(C.title) + '</h1><p class="lh-sub">' + esc(sub) + '</p></div>' +
+        '<div class="lh-pile' + (stand ? ' is-garments' : '') + '" data-n="' + pics.length + '"><div class="lh-pile-in">' + pile + '</div></div>' +
         '<div class="lh-band"><p class="lh-rail-head">' + esc(C.rail) + '</p><div class="lh-rail" id="lhRail"></div></div>';
     wrap.parentNode.insertBefore(hero, wrap);
-    document.documentElement.classList.add('has-lh');
+    document.documentElement.classList.add('has-lh', 'has-lh-light');
     // As on the home page: the search + filter row right under the hero (top of
     // .wrap), then the slider under it.
     var band = hero.querySelector('.lh-band'), controls = wrap.querySelector('.list-controls');
