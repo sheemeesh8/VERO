@@ -1027,17 +1027,21 @@ h3, h4, h5, h6, p,
         window.addEventListener('message', function (e) {
             if (e.source === fr.contentWindow && e.data && e.data.type === 'pfx-embed-height') { fr.style.height = e.data.height + 'px'; if (typeof fit === 'function') fit(); }   // square cover + the details under it
         });
-        // Full screen width, its top edge right on the secondary header (tab bar).
+        // Full screen width, running right up to the top of the screen: the header and
+        // the tab bar sit over the cover, and the cover inside grows by their height so
+        // none of the picture is hidden behind them.
         function fit() {
             fr.style.marginTop = ''; fr.style.marginLeft = ''; fr.style.width = '';
             var bar = document.querySelector('#saNav');
             var r = fr.getBoundingClientRect();
             var top = r.top + (window.scrollY || 0);
-            var barBottom = bar ? bar.getBoundingClientRect().bottom : top;
+            var under = bar ? Math.round(bar.getBoundingClientRect().bottom) : 0;   // how much the headers cover
             fr.style.width = document.documentElement.clientWidth + 'px';
             fr.style.marginLeft = (-r.left) + 'px';
-            if (bar && top > barBottom) fr.style.marginTop = (barBottom - top) + 'px';
+            if (top > 0) fr.style.marginTop = (-top) + 'px';
+            try { fr.contentWindow.postMessage({ type: 'pfx-embed-top', px: under }, '*'); } catch (x) {}
         }
+        fr.addEventListener('load', fit);
         fit();
         window.addEventListener('load', fit);
         window.addEventListener('resize', fit);

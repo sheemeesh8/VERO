@@ -2025,12 +2025,25 @@ h3, h4, h5, h6, p,
     // The storefront preview (seller area): the cover picture is square (1:1),
     // as tall as it is wide; the store's details sit under it.
     var root = document.documentElement;
+    // The area page runs the preview up under its header + tab bar and says how
+    // tall they are; the cover grows by that much so the picture shows in full below them.
+    var under = 0;
+    window.addEventListener('message', function (e) {
+        if (e.source !== window.parent || !e.data || e.data.type !== 'pfx-embed-top') return;
+        var px = Math.max(0, Math.round(+e.data.px || 0));
+        if (px === under) return;
+        under = px; square(); report();
+    });
     function square() {
-        if (!root.classList.contains('pfx-seller')) return;
         var cover = document.querySelector('.pfx .pfx-cover');
         var vid = document.querySelector('#hero.pfx > video.hero-video');
         if (!cover) return;
-        var h = Math.round(cover.getBoundingClientRect().width || window.innerWidth);
+        if (!root.classList.contains('pfx-seller')) {   // the personal area: 300px of picture below the headers
+            cover.style.setProperty('height', (300 + under) + 'px', 'important');
+            if (vid) vid.style.setProperty('height', (300 + under) + 'px', 'important');
+            return;
+        }
+        var h = Math.round(cover.getBoundingClientRect().width || window.innerWidth) + under;
         cover.style.setProperty('height', h + 'px', 'important');
         if (vid) vid.style.setProperty('height', h + 'px', 'important');
     }
