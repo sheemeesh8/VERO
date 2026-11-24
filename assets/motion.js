@@ -173,6 +173,91 @@
         });
     }
 
+    // ---- 4. Touch, hover, pictures, dialogs -----------------------------------
+    // Run with the Web Animations API on the separate `scale` / `translate` /
+    // `opacity` channels, so no element's own CSS transform or transitions are
+    // overwritten.
+    if (Element.prototype.animate) (function () {
+        var PRESS = 'button, [role="button"], .icon-btn, .btn, [class*="-btn"], .hm-band-item, .hm-dk-card, ' +
+                    '.product-card, .rt-card, .card, .mp-cell, .prod-cell, .draft-cell, .cart-item, a[class]';
+        var NO = 'input, select, textarea, [data-no-motion], [contenteditable="true"], .hi, .mag-root';
+        var held = null;
+        function press(el) {
+            var w = el.getBoundingClientRect().width;
+            var s = w > 300 ? 0.985 : (w > 120 ? 0.97 : 0.93);   // big things move less
+            if (el.__moP) { try { el.__moP.cancel(); } catch (e) {} }
+            el.__moP = el.animate([{ scale: '1' }, { scale: String(s) }], { duration: 140, easing: 'ease-out', fill: 'forwards' });
+            held = el;
+        }
+        function release() {
+            var el = held; held = null;
+            if (!el || !el.__moP) return;
+            var a = el.__moP;
+            el.__moP = el.animate([{ scale: getComputedStyle(el).scale === 'none' ? '1' : getComputedStyle(el).scale }, { scale: '1' }],
+                                  { duration: 380, easing: 'cubic-bezier(.3,1.6,.5,1)' });   // a small spring back
+            try { a.cancel(); } catch (e) {}
+        }
+        document.addEventListener('pointerdown', function (e) {
+            if (e.button !== 0) return;
+            var el = e.target.closest && e.target.closest(PRESS);
+            if (!el || el.closest(NO) || el.disabled) return;
+            press(el);
+        }, { passive: true, capture: true });
+        ['pointerup', 'pointercancel', 'dragstart'].forEach(function (t) { document.addEventListener(t, release, { passive: true, capture: true }); });
+        window.addEventListener('scroll', function () { if (held) release(); }, { passive: true, capture: true });   // a swipe, not a tap
+
+        // Desktop: cards lift a little under the mouse.
+        var LIFT = '.product-card, .rt-card, .card, .mp-cell, .prod-cell, .draft-cell, .hm-dk-card';
+        var canHover = false;
+        try { canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches; } catch (e) {}
+        if (canHover) {
+            document.addEventListener('pointerover', function (e) {
+                var el = e.target.closest && e.target.closest(LIFT);
+                if (!el || el.__moL || el.closest(NO)) return;
+                el.__moL = el.animate([{ translate: '0 0' }, { translate: '0 -4px' }], { duration: 320, easing: EASE, fill: 'forwards' });
+                var out = function (ev) {
+                    if (ev.relatedTarget && el.contains(ev.relatedTarget)) return;
+                    el.removeEventListener('pointerout', out);
+                    var a = el.__moL; el.__moL = null;
+                    var b = el.animate([{ translate: '0 -4px' }, { translate: '0 0' }], { duration: 320, easing: EASE });
+                    try { a.cancel(); } catch (err) {}
+                    void b;
+                };
+                el.addEventListener('pointerout', out);
+            }, { passive: true });
+        }
+
+        // Pictures that are still loading fade in when they arrive, instead of popping in.
+        function fadeImg(img) {
+            if (img.__moI || img.complete || img.closest(NO)) return;
+            img.__moI = true;
+            img.addEventListener('load', function () {
+                img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 520, easing: 'ease-out' });
+            }, { once: true });
+        }
+        function scanImgs(scope) { var l = (scope || document).querySelectorAll('img'); for (var i = 0; i < l.length; i++) fadeImg(l[i]); }
+
+        // Native dialogs open with a soft rise.
+        function watchDialog(d) {
+            if (d.__moD) return; d.__moD = true;
+            new MutationObserver(function () {
+                if (d.open) d.animate([{ opacity: 0, translate: '0 18px', scale: '0.98' }, { opacity: 1, translate: '0 0', scale: '1' }],
+                                      { duration: 380, easing: EASE });
+            }).observe(d, { attributes: true, attributeFilter: ['open'] });
+        }
+        function scanDialogs() { var l = document.querySelectorAll('dialog'); for (var i = 0; i < l.length; i++) watchDialog(l[i]); }
+
+        function go() {
+            scanImgs(); scanDialogs();
+            var t = null;
+            new MutationObserver(function () {
+                if (t) return;
+                t = setTimeout(function () { t = null; scanImgs(); scanDialogs(); }, 120);
+            }).observe(document.body, { childList: true, subtree: true });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+    })();
+
     // ---- 3. Content in / out ------------------------------------------------
     if (typeof IntersectionObserver === 'undefined' || !Element.prototype.animate) return;
 
