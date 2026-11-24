@@ -1,8 +1,7 @@
 /* ------------------------------------------------------------------
    moravchick — List hero for the cart and the wishlist (styles: assets/list-hero.css).
-   Opens the page like the home page's hero: a light-grey ground with the list's
-   own pieces scattered in layers at its foot and the title and count centred
-   above, then the page's own search, a "You may also like" slider and the list.
+   Opens the page like the home page's hero: a light-grey ground with the last
+   piece added to the list at its foot and the title and count centred above, then the page's own search, a "You may also like" slider and the list.
 
      <body data-list="cart">  or  data-list="wishlist"
      <script src="assets/list-hero.js"></script>   (end of body)
@@ -26,14 +25,14 @@
 
     var wrap = document.querySelector('.wrap');
     if (!wrap) return;
-    // As on the home page: the list's own pieces (their cut-outs) scattered in layers
-    // at the foot of a light-grey hero, the words centred above them. Up to four
-    // pieces; with none to show, the home page's four garments stand in.
-    var seen = {}, pics = [];
-    items.forEach(function (i) {
-        if (!i || !i.cover || seen[i.cover] || pics.length >= 4) return;
-        seen[i.cover] = 1; pics.push({ src: i.cover, name: i.name || '' });
-    });
+    // As on the home page: a light-grey hero with the words centred above a piece at
+    // its foot: the last piece added to the list (new ones are added at the end)
+    // that has a photo, as its cut-out. With none to show, the home page's four
+    // garments stand in.
+    var pics = [];
+    for (var j = items.length - 1; j >= 0; j--) {
+        if (items[j] && items[j].cover) { pics.push({ src: items[j].cover, name: items[j].name || '' }); break; }
+    }
     var stand = !pics.length;
     if (stand) pics = ['unisex', 'men', 'kids', 'women'].map(function (g) { return { src: 'assets/hero/layer-' + g + '.webp?v=2', name: '' }; });
     var pile = pics.map(function (p, k) {
