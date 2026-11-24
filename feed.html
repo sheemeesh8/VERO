@@ -553,10 +553,10 @@
                  over the hero picture, resting on the band. A tap picks that gender below. -->
             <div class="hm-gstrip" id="hmGStrip" aria-label="Shop by gender">
                 <div class="hm-gs-in">
-                    <button type="button" data-g="unisex" aria-label="Unisex"><img src="assets/hero/layer-unisex.webp?v=1" alt="" decoding="async"></button>
-                    <button type="button" data-g="men" aria-label="Men"><img src="assets/hero/layer-men.webp?v=1" alt="" decoding="async"></button>
-                    <button type="button" data-g="kids" aria-label="Kids"><img src="assets/hero/layer-kids.webp?v=1" alt="" decoding="async"></button>
-                    <button type="button" data-g="women" aria-label="Women"><img src="assets/hero/layer-women.webp?v=1" alt="" decoding="async"></button>
+                    <button type="button" data-g="unisex" aria-label="Unisex"><img src="assets/hero/layer-unisex.webp?v=2" alt="" decoding="async"></button>
+                    <button type="button" data-g="men" aria-label="Men"><img src="assets/hero/layer-men.webp?v=2" alt="" decoding="async"></button>
+                    <button type="button" data-g="kids" aria-label="Kids"><img src="assets/hero/layer-kids.webp?v=2" alt="" decoding="async"></button>
+                    <button type="button" data-g="women" aria-label="Women"><img src="assets/hero/layer-women.webp?v=2" alt="" decoding="async"></button>
                 </div>
             </div>
             <div class="hm-band" id="hmBand" aria-label="Shortcuts">
@@ -949,10 +949,13 @@
         if (gStrip) gStrip.addEventListener('click', function (e) {
             var b = e.target.closest ? e.target.closest('[data-g]') : null;
             if (!b) return;
+            // The tapped piece turns white with a glow (the others go back to navy).
+            [].slice.call(gStrip.querySelectorAll('[data-g]')).forEach(function (x) { x.classList.toggle('is-on', x === b); });
             if (state.mode === 'art') setFeedMode('fashion');
             setGender(b.dataset.g);
+            // A beat to see it light up, then on to the cards.
             var t = document.getElementById('hmCats');
-            if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' });
+            if (t) setTimeout(function () { window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' }); }, 650);
         });
         // Tapping a card chooses that category; the pieces below follow.
         catsEl.addEventListener('click', function (e) {
@@ -1737,10 +1740,25 @@
             rgba(0,0,0,0) 0, rgba(0,0,0,0) var(--b),
             rgba(0,0,0,0.78) var(--b), rgba(0,0,0,0.5) calc(var(--b) + 14px),
             rgba(0,0,0,0.22) calc(var(--b) + 34px), rgba(0,0,0,0.06) calc(var(--b) + 56px), rgba(0,0,0,0) calc(var(--b) + 76px)); }
-    .hm-gstrip [data-g="unisex"] { --m: url(assets/hero/layer-unisex.webp?v=1); --b: 33px; }
-    .hm-gstrip [data-g="men"]    { --m: url(assets/hero/layer-men.webp?v=1);    --b: 91px; }
-    .hm-gstrip [data-g="kids"]   { --m: url(assets/hero/layer-kids.webp?v=1);   --b: 102px; }
-    .hm-gstrip [data-g="women"]  { --m: url(assets/hero/layer-women.webp?v=1);  --b: 69px; }
+    .hm-gstrip [data-g="unisex"] { --m: url(assets/hero/layer-unisex.webp?v=2); --b: 33px; }
+    .hm-gstrip [data-g="men"]    { --m: url(assets/hero/layer-men.webp?v=2);    --b: 91px; }
+    .hm-gstrip [data-g="kids"]   { --m: url(assets/hero/layer-kids.webp?v=2);   --b: 102px; }
+    .hm-gstrip [data-g="women"]  { --m: url(assets/hero/layer-women.webp?v=2);  --b: 69px; }
+    /* The tapped garment: turned white (its own folds and knit kept, just inverted to
+       light) with a soft white glow around it, which breathes gently. */
+    .hm-gstrip img { transition: filter .45s ease; }
+    .hm-gstrip button.is-on { z-index: 5 !important; }
+    .hm-gstrip button.is-on img {
+        filter: invert(1) grayscale(1) brightness(1.18) contrast(0.92)
+                drop-shadow(0 0 10px rgba(255,255,255,1)) drop-shadow(0 0 26px rgba(255,255,255,0.95))
+                drop-shadow(0 12px 26px rgba(0,0,0,0.16)) !important;
+        animation: hmGsGlow 2.4s ease-in-out .45s infinite; }
+    @keyframes hmGsGlow {
+        50% { filter: invert(1) grayscale(1) brightness(1.18) contrast(0.92)
+                drop-shadow(0 0 16px rgba(255,255,255,1)) drop-shadow(0 0 40px rgba(255,255,255,1))
+                drop-shadow(0 12px 26px rgba(0,0,0,0.16)); } }
+    .hm-gstrip button.is-on::after { opacity: 0.35; }   /* the seam shade, lighter on white */
+    @media (prefers-reduced-motion: reduce) { .hm-gstrip button.is-on img { animation: none; } }
     /* Hero captions, centred, in the site's own faces: Raleway for the small lines and
        the link, Bodoni Moda (the cards' headline face) for the headline. */
     .hm-hcap { position: absolute; z-index: 7; left: 24px; right: 24px;
