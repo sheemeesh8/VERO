@@ -31,7 +31,7 @@
 
         /* ===== Gender category sub-header — a small bar under the main header ===== */
         /* Not in flow under the slider — a fixed second header, shown only once
-           the page starts to scroll (toggled via .is-hero below). */
+           always shown, docked right under it. */
         .feed-subnav {
             position: fixed; top: 64px; left: 0; right: 0; z-index: 98;
             display: flex; justify-content: space-between; gap: 30px; align-items: flex-end;
@@ -572,7 +572,7 @@
     </div>
 
     <!-- Gender sub-header — a fixed second header, shown once the hero is crossed. -->
-    <nav class="feed-subnav is-hero" id="feedSubnav" aria-label="Art or clothing">
+    <nav class="feed-subnav" id="feedSubnav" aria-label="Art or clothing">
         <!-- Left: the + (add a product), moved here from the main header on the feed. -->
         <button type="button" class="fsn-add" onclick="openUploadProduct()" aria-label="Add product" title="Add product">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -957,9 +957,18 @@
             syncSubnav(); playCurrent();
             if (changed) {
                 var on = catsEl.querySelector('.hm-dk-card[aria-current="true"] .hm-dk-count b'); if (on) countUp(on);
+                // As in the hero: the pieces sink out one after another, then the new
+                // category's rise in.
                 var rail = document.getElementById('hmGenderRail');
-                if (rail) { rail.classList.remove('is-swap'); void rail.offsetWidth; rail.classList.add('is-swap'); }   // the pieces slide in again
-                buildPieces();
+                if (rail && rail.querySelector('.hm-rcard') && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+                    clearTimeout(rail.__swapT);
+                    rail.classList.remove('is-swap', 'is-rise'); rail.classList.add('is-sink');
+                    rail.__swapT = setTimeout(function () {
+                        buildPieces();
+                        rail.classList.remove('is-sink'); void rail.offsetWidth; rail.classList.add('is-rise');
+                        rail.__swapT = setTimeout(function () { rail.classList.remove('is-rise'); }, 1300);
+                    }, 380);
+                } else buildPieces();
             }
         }
         // The hero's garments strip: pick that gender (in Clothing) and go to the cards.
@@ -1650,8 +1659,7 @@
         var pt = 0; (function settleSub() { placeSubnav(); if (++pt < 30) setTimeout(settleSub, 120); })();
         function updateSubnavDock() {
             if (!subnav) return;
-            // Shown from the start of the scroll, not only once the hero is crossed.
-            subnav.classList.toggle('is-hero', (window.scrollY || document.documentElement.scrollTop || 0) < 4);
+            subnav.classList.remove('is-hero');   // always shown, whatever the scroll
         }
         window.addEventListener('scroll', updateSubnavDock, { passive: true });
         window.addEventListener('resize', updateSubnavDock);
@@ -1873,6 +1881,19 @@
     @media (prefers-reduced-motion: reduce) {
         .hm-gstrip.is-mode-out button, .hm-gstrip.is-mode-in button, .hm-cats .hm-dk-card { animation: none !important; }
     }
+    /* The two bars read as one: no line or shadow between the main header and the
+       sub-header docked under it. */
+    #siteHeader.scrolled { border-bottom-color: transparent !important; box-shadow: none !important; }
+    /* Slider pieces leave and come in like the hero's: each sinks down and fades,
+       swinging a little, front first; the new ones rise in with a small overshoot. */
+    @keyframes hmRcOut { to { transform: translateY(46px) rotate(-4deg); opacity: 0; } }
+    @keyframes hmRcIn { 0% { transform: translateY(70px) rotate(6deg); opacity: 0; } 15% { opacity: 1; }
+        70% { transform: translateY(-6px) rotate(-1deg); } 100% { transform: none; opacity: 1; } }
+    .hm-rail.is-sink .hm-rcard { animation: hmRcOut .34s cubic-bezier(.55,0,.8,.3) both !important; }
+    .hm-rail.is-sink .hm-page .hm-rcard:nth-child(2) { animation-delay: .05s !important; }
+    .hm-rail.is-rise .hm-rcard { animation: hmRcIn .85s cubic-bezier(.22,.9,.3,1) both !important; }
+    .hm-rail.is-rise .hm-page .hm-rcard:nth-child(2) { animation-delay: .12s !important; }
+    @media (prefers-reduced-motion: reduce) { .hm-rail.is-sink .hm-rcard, .hm-rail.is-rise .hm-rcard { animation: none !important; } }
     /* Hero captions, centred, in the site's own faces: Raleway for the small lines and
        the link, Bodoni Moda (the cards' headline face) for the headline. */
     .hm-hcap { position: absolute; z-index: 7; left: 24px; right: 24px;
