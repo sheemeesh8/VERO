@@ -407,7 +407,7 @@
         .feed-subnav.is-hero { opacity: 0; pointer-events: none; }
     </style>
     <!-- The home core: hero, search line, pieces, category index, sale (assets/home.css). -->
-    <link rel="stylesheet" href="assets/home.css?v=20261124d">
+    <link rel="stylesheet" href="assets/home.css?v=20261125a">
     <link rel="stylesheet" href="assets/lumina-hero.css?v=noguides1">
     <link rel="stylesheet" href="assets/site-font.css?v=3">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
@@ -818,7 +818,17 @@
                 });
             }
             dots.innerHTML = pages.length > 1 ? pages.map(function () { return '<i></i>'; }).join('') : '';
+            if (!el._hint) { el._hint = slideHint(); dots.parentNode.insertBefore(el._hint, dots.nextSibling); }
+            el._hint.hidden = pages.length < 2;
             markDot(el);
+        }
+        // "Slide for more" under a slider, with a small arrow pointing the way the slides go.
+        function slideHint() {
+            var h = document.createElement('div'); h.className = 'hm-slide-hint'; h.setAttribute('aria-hidden', 'true');
+            var rtl = (document.documentElement.getAttribute('dir') || '').toLowerCase() === 'rtl';
+            h.innerHTML = '<span>Slide for more</span><svg viewBox="0 0 16 10" width="14" height="9" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"' +
+                (rtl ? ' style="transform:scaleX(-1)"' : '') + '><path d="M1 5h13M10 1l4 4-4 4"/></svg>';
+            return h;
         }
         function markDot(el) {
             var dots = el._dots; if (!dots) return;
@@ -1255,6 +1265,7 @@
                 var k = [].indexOf.call(dots.children, e.target); if (k >= 0) el.scrollTo({ left: k * el.clientWidth, behavior: 'smooth' });
             });
             dots.innerHTML = pages.length > 1 ? pages.map(function () { return '<i></i>'; }).join('') : '';
+            el._hint = slideHint(); el._hint.hidden = pages.length < 2;
             setTimeout(function () { markDot(el); }, 0);
             return el;
         }
@@ -1309,7 +1320,7 @@
                 var promo = [];
                 // The first block has no promoted slider (it sat right under the category slider).
                 if (i > 0) for (var k = 0; k < Math.min(PROMO_PER_BLOCK, promoted.length); k++) promo.push(promoted[((i - 1) * PROMO_PER_BLOCK + k) % promoted.length]);
-                if (promo.length) { var sl = promoRail(promo); block.appendChild(sl); block.appendChild(sl._dots); }
+                if (promo.length) { var sl = promoRail(promo); block.appendChild(sl); block.appendChild(sl._dots); block.appendChild(sl._hint); }
                 var pieces = regular.slice(i * PIECES_PER_BLOCK, (i + 1) * PIECES_PER_BLOCK);
                 if (pieces.length) {
                     var grid = document.createElement('section'); grid.className = 'hm-four hm-block-grid'; grid.setAttribute('aria-label', 'More pieces');
@@ -1328,7 +1339,7 @@
                 var pb = document.createElement('div'); pb.className = 'hm-block';
                 var pp = [];
                 for (var q = 0; q < Math.min(PROMO_PER_BLOCK, promoted.length); q++) pp.push(promoted[(fx[1] * PROMO_PER_BLOCK + q) % promoted.length]);
-                if (pp.length) { var ps = promoRail(pp); pb.appendChild(ps); pb.appendChild(ps._dots); }
+                if (pp.length) { var ps = promoRail(pp); pb.appendChild(ps); pb.appendChild(ps._dots); pb.appendChild(ps._hint); }
                 if (regular.length) {
                     var start = ((blocks + fx[1]) * PIECES_PER_BLOCK) % regular.length, more = [];
                     for (var m = 0; m < Math.min(PIECES_PER_BLOCK, regular.length); m++) more.push(regular[(start + m) % regular.length]);
