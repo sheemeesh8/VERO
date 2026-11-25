@@ -966,7 +966,7 @@
             var b = e.target.closest ? e.target.closest('[data-g]') : null;
             if (!b) return;
             var want = b.classList.contains('is-art') ? 'art' : 'fashion';
-            if (state.mode !== want) setFeedMode(want);
+            if (state.mode !== want) { setFeedMode(want, function () { setGender(b.dataset.g); }); return; }
             setGender(b.dataset.g);
             // A beat to see it light up, then on to the cards.
             var t = document.getElementById('hmCats');
@@ -1570,16 +1570,40 @@
         }
         // Switch to a given mode (Art / Clothing) in place — no reload. Driven by the
         // sub-header's Art / Clothing tabs (and kept for any toggleSwitch callers).
-        function setFeedMode(mode) {
+        // The switch plays on the page itself, with no full-screen card between: the
+        // hero's pieces sink out behind the band and the new mode's rise in, the gender /
+        // category cards leave and come back, and the rest of the grid fades out and in.
+        var modeT1 = 0, modeT2 = 0;
+        function setFeedMode(mode, cb) {
             mode = (mode === 'art') ? 'art' : 'fashion';
-            if (mode === state.mode) return;
+            if (mode === state.mode) { if (cb) cb(); return; }
             try { localStorage.setItem('vero_category', mode === 'art' ? 'art' : 'clothing'); } catch (e) {}
-            try { document.body.setAttribute('data-mode', mode); } catch (e) {}
-            showModeFade(mode);
-            state.mode = mode;
-            state.gender = defaultFacet();    // the new mode's facets differ (genders vs art categories) — Men / the first art category
-            buildAll();                // rebuilds the feed and re-marks the active sub-header tab (via syncSubnav)
-            if (input && input.value.trim()) runSearch(input.value);
+            var strip = document.getElementById('hmGStrip'), grid = document.getElementById('feedStructured');
+            var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var apply = function () {
+                try { document.body.setAttribute('data-mode', mode); } catch (e) {}
+                state.mode = mode;
+                state.gender = defaultFacet();    // the new mode's facets differ (genders vs art categories) — the first one of the mode
+                buildAll();                // rebuilds the feed and re-marks the active sub-header tab (via syncSubnav)
+                if (input && input.value.trim()) runSearch(input.value);
+                if (cb) cb();
+            };
+            if (still) return apply();
+            clearTimeout(modeT1); clearTimeout(modeT2);
+            syncSubnavTo(mode);                   // the pill moves at once
+            if (strip) { strip.classList.remove('is-enter', 'is-mode-in'); strip.classList.add('is-mode-out'); }
+            catsEl.classList.remove('hm-mode-in'); catsEl.classList.add('hm-mode-out');
+            if (grid) grid.classList.add('hm-mode-fade');
+            modeT1 = setTimeout(function () {
+                apply();
+                if (strip) { strip.classList.remove('is-mode-out'); void strip.offsetWidth; strip.classList.add('is-mode-in'); }
+                catsEl.classList.remove('hm-mode-out'); void catsEl.offsetWidth; catsEl.classList.add('hm-mode-in');
+                if (grid) requestAnimationFrame(function () { grid.classList.remove('hm-mode-fade'); });
+                modeT2 = setTimeout(function () {
+                    if (strip) strip.classList.remove('is-mode-in');
+                    catsEl.classList.remove('hm-mode-in');
+                }, 1500);
+            }, 480);
         }
         window.toggleSwitch = function () { setFeedMode(state.mode === 'art' ? 'fashion' : 'art'); };
 
@@ -1588,6 +1612,11 @@
         function syncSubnav() {
             if (!subnav) return;
             [].slice.call(subnav.querySelectorAll('.fsn-item')).forEach(function (b) { b.classList.toggle('on', b.dataset.mode === state.mode); });
+            moveSubnavInd();
+        }
+        function syncSubnavTo(mode) {
+            if (!subnav) return;
+            [].slice.call(subnav.querySelectorAll('.fsn-item')).forEach(function (b) { b.classList.toggle('on', b.dataset.mode === mode); });
             moveSubnavInd();
         }
         // Slide the black pill under the active label.
@@ -1806,6 +1835,34 @@
     .hm-gstrip .is-art .gs-lit { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .5s ease; }
     .hm-gstrip button.is-art.is-on img { filter: drop-shadow(0 6px 10px rgba(0,0,0,0.16)) !important; }
     .hm-gstrip button.is-art.is-on .gs-lit { opacity: 1; }
+    /* Switching Clothing / Art, in place: the hero's pieces sink out behind the band
+       (front first) and the new ones rise in; the cards leave and come back one after
+       another; the rest of the grid fades. */
+    @keyframes hmGsOut { to { transform: translateY(120%) rotate(calc(var(--r, 0deg) * -1.6)); opacity: 0; } }
+    .hm-gstrip.is-mode-out button { animation: hmGsOut .45s cubic-bezier(.55,0,.8,.3) both; }
+    .hm-gstrip.is-mode-out button:nth-child(4), .hm-gstrip.is-mode-out button:nth-child(7) { animation-delay: 0s; }
+    .hm-gstrip.is-mode-out button:nth-child(3), .hm-gstrip.is-mode-out button:nth-child(6) { animation-delay: .04s; }
+    .hm-gstrip.is-mode-out button:nth-child(2), .hm-gstrip.is-mode-out button:nth-child(5) { animation-delay: .08s; }
+    .hm-gstrip.is-mode-in button { animation: hmGsIn .95s cubic-bezier(.22,.9,.3,1) both; }
+    .hm-gstrip.is-mode-in button:nth-child(1), .hm-gstrip.is-mode-in button:nth-child(5) { animation-delay: 0s; }
+    .hm-gstrip.is-mode-in button:nth-child(2), .hm-gstrip.is-mode-in button:nth-child(6) { animation-delay: .1s; }
+    .hm-gstrip.is-mode-in button:nth-child(3), .hm-gstrip.is-mode-in button:nth-child(7) { animation-delay: .2s; }
+    .hm-gstrip.is-mode-in button:nth-child(4) { animation-delay: .3s; }
+    /* the cards: 'translate' composes with their own transform, so their sizes stay */
+    /* (home.css pins the cards' transform and opacity, so they move by 'translate' and
+       fade by filter: opacity(), which it leaves free) */
+    @keyframes hmDkOut { to { translate: 0 28px; filter: opacity(0); } }
+    @keyframes hmDkIn { from { translate: 0 34px; filter: opacity(0); } to { translate: 0 0; filter: opacity(1); } }
+    .hm-cats.hm-mode-out .hm-dk-card { animation: hmDkOut .4s cubic-bezier(.55,0,.8,.3) both !important; }
+    .hm-cats.hm-mode-in .hm-dk-card { animation: hmDkIn .7s cubic-bezier(.22,1,.36,1) both !important; }
+    .hm-cats.hm-mode-in .hm-dk-card:nth-child(2) { animation-delay: .08s !important; }
+    .hm-cats.hm-mode-in .hm-dk-card:nth-child(3) { animation-delay: .16s !important; }
+    .hm-cats.hm-mode-in .hm-dk-card:nth-child(4) { animation-delay: .24s !important; }
+    #feedStructured > :not(#hmCats) { transition: opacity .45s ease; }
+    #feedStructured.hm-mode-fade > :not(#hmCats) { opacity: 0; transition-duration: .35s; }
+    @media (prefers-reduced-motion: reduce) {
+        .hm-gstrip.is-mode-out button, .hm-gstrip.is-mode-in button, .hm-cats .hm-dk-card { animation: none !important; }
+    }
     /* Hero captions, centred, in the site's own faces: Raleway for the small lines and
        the link, Bodoni Moda (the cards' headline face) for the headline. */
     .hm-hcap { position: absolute; z-index: 7; left: 24px; right: 24px;
