@@ -31,7 +31,7 @@
 
         /* ===== Gender category sub-header — a small bar under the main header ===== */
         /* Not in flow under the slider — a fixed second header, shown only once
-           the hero is crossed (toggled via .is-hero below). */
+           the page starts to scroll (toggled via .is-hero below). */
         .feed-subnav {
             position: fixed; top: 64px; left: 0; right: 0; z-index: 98;
             display: flex; justify-content: space-between; gap: 30px; align-items: flex-end;
@@ -494,7 +494,9 @@
             if (document.body.classList.contains('zp-head-out')) return false;   // the picture is still opening
             return feed.getBoundingClientRect().top <= (head ? head.offsetHeight : 0) + 4;
         };
-        window.veroHeaderScrolled = function () { return window.veroHeroPassed(); };
+        // Solid from the first bit of scroll, together with the sub-header under it, so
+        // the hero's words never show through the two bars.
+        window.veroHeaderScrolled = function () { return (window.scrollY || document.documentElement.scrollTop || 0) >= 4; };
         // The hero is a slider (no zoom-parallax entrance), so the header follows
         // the normal rule: transparent over the hero, solid once the feed rises in.
     </script>
@@ -1648,8 +1650,8 @@
         var pt = 0; (function settleSub() { placeSubnav(); if (++pt < 30) setTimeout(settleSub, 120); })();
         function updateSubnavDock() {
             if (!subnav) return;
-            var passed = (typeof window.veroHeroPassed === 'function') ? window.veroHeroPassed() : (window.scrollY > 80);
-            subnav.classList.toggle('is-hero', !passed);
+            // Shown from the start of the scroll, not only once the hero is crossed.
+            subnav.classList.toggle('is-hero', (window.scrollY || document.documentElement.scrollTop || 0) < 4);
         }
         window.addEventListener('scroll', updateSubnavDock, { passive: true });
         window.addEventListener('resize', updateSubnavDock);
