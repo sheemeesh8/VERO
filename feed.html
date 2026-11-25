@@ -557,6 +557,10 @@
                     <button type="button" data-g="men" aria-label="Men"><img src="assets/hero/layer-men.webp?v=2" alt="" decoding="async"></button>
                     <button type="button" data-g="kids" aria-label="Kids"><img src="assets/hero/layer-kids.webp?v=2" alt="" decoding="async"></button>
                     <button type="button" data-g="women" aria-label="Women"><img src="assets/hero/layer-women.webp?v=2" alt="" decoding="async"></button>
+                    <!-- Art: a canvas, a sculpture and a piece for the home, in the same navy. -->
+                    <button type="button" class="is-art" data-g="home" aria-label="Home Design"><img src="assets/hero/layer-home.webp?v=1" alt="" decoding="async"><img class="gs-lit" src="assets/hero/layer-home-light.webp?v=1" alt="" decoding="async"></button>
+                    <button type="button" class="is-art" data-g="canvas" aria-label="Canvas"><img src="assets/hero/layer-canvas.webp?v=1" alt="" decoding="async"><img class="gs-lit" src="assets/hero/layer-canvas-light.webp?v=1" alt="" decoding="async"></button>
+                    <button type="button" class="is-art" data-g="sculpture" aria-label="Sculpture"><img src="assets/hero/layer-sculpture.webp?v=1" alt="" decoding="async"><img class="gs-lit" src="assets/hero/layer-sculpture-light.webp?v=1" alt="" decoding="async"></button>
                 </div>
             </div>
             <div class="hm-band" id="hmBand" aria-label="Shortcuts">
@@ -820,9 +824,9 @@
         ];
         // In Art mode the deck shows the art categories instead of the genders.
         var CATS_ART = [
-            { g: 'canvas',    name: 'Canvas',      img: 'art-hero.jpg',      desc: 'Paintings, works on paper and photographs: everything that hangs as a picture' },
-            { g: 'sculpture', name: 'Sculpture',   img: 'magazine-hero.jpg', desc: 'Sculptures, carvings and every piece of art that isn\u2019t a picture' },
-            { g: 'home',      name: 'Home Design', img: 'gallery-hero.jpg',  desc: 'Pieces made for the home, picked on interior designers\u2019 recommendations' }
+            { g: 'canvas',    name: 'Canvas',      img: 'assets/hero/art-canvas.jpg?v=1',    lit: 'assets/hero/art-canvas-light.jpg?v=1',    desc: 'Paintings, works on paper and photographs: everything that hangs as a picture' },
+            { g: 'sculpture', name: 'Sculpture',   img: 'assets/hero/art-sculpture.jpg?v=1', lit: 'assets/hero/art-sculpture-light.jpg?v=1', desc: 'Sculptures, carvings and every piece of art that isn\u2019t a picture' },
+            { g: 'home',      name: 'Home Design', img: 'assets/hero/art-home.jpg?v=1',      lit: 'assets/hero/art-home-light.jpg?v=1',      desc: 'Pieces made for the home, picked on interior designers\u2019 recommendations' }
         ];
         function modeCats() { return (state.mode === 'art') ? CATS_ART : CATS; }
         // The deck's starting card: Men in Clothing, the first category in Art.
@@ -961,7 +965,8 @@
         if (gStrip) gStrip.addEventListener('click', function (e) {
             var b = e.target.closest ? e.target.closest('[data-g]') : null;
             if (!b) return;
-            if (state.mode === 'art') setFeedMode('fashion');
+            var want = b.classList.contains('is-art') ? 'art' : 'fashion';
+            if (state.mode !== want) setFeedMode(want);
             setGender(b.dataset.g);
             // A beat to see it light up, then on to the cards.
             var t = document.getElementById('hmCats');
@@ -991,7 +996,7 @@
         // the lighter blue up there too, whichever side the choice was made on.
         function syncHeroPiece(g) {
             var strip = document.getElementById('hmGStrip'); if (!strip) return;
-            if (state.mode === 'art') g = null;
+            strip.setAttribute('data-mode', state.mode);   // Clothing shows the garments, Art the art pieces
             [].slice.call(strip.querySelectorAll('[data-g]')).forEach(function (x) { x.classList.toggle('is-on', x.dataset.g === g); });
         }
         // Scroll-linked size: a card keeps its small size until it is halfway to the middle, then grows
@@ -1784,6 +1789,23 @@
        garment in the hero (a lit copy of the photo fades in over it). */
     .hm-dk-media .hm-dk-lit { position: absolute; inset: 0; opacity: 0; transition: opacity .5s ease; }
     .hm-dk-card[aria-current="true"] .hm-dk-lit { opacity: 1; }
+    /* Art mode: the hero's pile is the three art pieces instead of the garments. */
+    .hm-gstrip .is-art { display: none; }
+    .hm-gstrip[data-mode="art"] .is-art { display: block; }
+    .hm-gstrip[data-mode="art"] button:not(.is-art) { display: none; }
+    .hm-gstrip [data-g="home"]      { left: 66%; width: 30%; bottom: -40px; --r: 8deg;  z-index: 1;
+        --m: url(assets/hero/layer-home.webp?v=1); --b: 46px; }
+    .hm-gstrip [data-g="canvas"]    { left: 0%;  width: 50%; bottom: -70px; --r: -9deg; z-index: 2;
+        --m: url(assets/hero/layer-canvas.webp?v=1); --b: 76px; }
+    .hm-gstrip [data-g="sculpture"] { left: 34%; width: 48%; bottom: -60px; --r: 3deg;  z-index: 3;
+        --m: url(assets/hero/layer-sculpture.webp?v=1); --b: 66px; }
+    .hm-gstrip.is-enter [data-g="home"]      { animation-delay: .15s; }
+    .hm-gstrip.is-enter [data-g="canvas"]    { animation-delay: .3s; }
+    .hm-gstrip.is-enter [data-g="sculpture"] { animation-delay: .45s; }
+    /* The chosen art piece: its lit copy (only the navy lifted, the rest as it is) fades in. */
+    .hm-gstrip .is-art .gs-lit { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .5s ease; }
+    .hm-gstrip button.is-art.is-on img { filter: drop-shadow(0 6px 10px rgba(0,0,0,0.16)) !important; }
+    .hm-gstrip button.is-art.is-on .gs-lit { opacity: 1; }
     /* Hero captions, centred, in the site's own faces: Raleway for the small lines and
        the link, Bodoni Moda (the cards' headline face) for the headline. */
     .hm-hcap { position: absolute; z-index: 7; left: 24px; right: 24px;
