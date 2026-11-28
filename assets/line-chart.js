@@ -2,7 +2,7 @@
    moravchick — the site's line chart (styles in line-chart.css).
 
      el.innerHTML = veroLineChart(values, {
-         color:  (ignored)          // charts are drawn in dark blue
+         color:  (ignored)          // charts are drawn in ink
          format: v => '₪' + v,      // how a value reads (dots + tooltip)
          group:  'sum' | 'last',    // how a long series is grouped (default 'sum')
          labels: ['Jan', …],        // optional: point names for the tooltip
@@ -15,7 +15,7 @@
      area      a smooth line over a fill that fades down
      step      a right-angled line (levels that jump: totals, counts)
      dots      one dot per point with a dashed trend line through them
-     baseline  dark blue above the first point's level, light blue below it
+     baseline  ink above the first point's level, light grey below it
      delta     a bar per point for its change from the one before (up / down)
      line      a straight line from point to point with a marker on each
      lollipop  a thin stem and a marker per point
@@ -67,9 +67,10 @@
         }
         return '<p class="vsay">' + t + '</p>';
     }
-    // Charts are drawn in dark blue. Where a chart shows two directions, "more / above" is the
-    // dark blue and "less / below" the light blue (the key under the chart says which is which).
-    var POS = '#163876', NEG = '#99baee';
+    // Charts are drawn in ink (the site's one colour). Where a chart shows two directions,
+    // "more / above" is the ink and "less / below" a light warm grey (the key under the chart
+    // says which is which).
+    var POS = '#16150f', NEG = '#b5b1a9';
     var UP = '<i class="vkey-sw" style="background:' + POS + '"></i>', DOWN = '<i class="vkey-sw" style="background:' + NEG + '"></i>', INK = '<i class="vkey-sw" style="background:' + POS + '"></i>';
     var KEYS = {
         hairline: 'Left is the oldest, right is the newest. Higher means more.',
@@ -142,7 +143,7 @@
     // The chart's colour follows its overall trend: a least-squares line through
     // every point, as a share of the series' typical size. Rising ≥ 10% over the
     // period → green; falling ≥ 10% → red; anything between (sideways) → blue.
-    var TREND = { up: POS, flat: POS, down: POS };   // one dark blue whatever the trend; the trend chip says the direction
+    var TREND = { up: POS, flat: POS, down: POS };   // one ink whatever the trend; the trend chip says the direction
     function trendOf(v) {
         var n = v.length; if (n < 2) return 'flat';
         var mx = (n - 1) / 2, my = v.reduce(function (s, x) { return s + x; }, 0) / n, num = 0, den = 0;
@@ -162,7 +163,7 @@
         var n = v.length;
         if (!n) return '<div class="vlc"></div>';
         var trend = trendOf(v);
-        color = TREND[trend];   // always the chart blue
+        color = TREND[trend];   // always the chart ink
         // Calm set: a trend over time is always the same filled line; only "change
         // against the period before" keeps its up / down bars. The older variants
         // (hairlines, dots, lollipop, heat, step, baseline, marker line) all read as that line.
@@ -362,7 +363,7 @@
 ------------------------------------------------------------------ */
 (function () {
     'use strict';
-    var PALETTE = ['#071530', '#163876', '#2b60b6', '#5d8edc', '#99baee', '#d6e3fa'];   // dark → light blue
+    var PALETTE = ['#16150f', '#3d3a35', '#5f5b54', '#8a857c', '#b5b1a9', '#dcd9d3'];   // ink → light warm grey
     function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
     function num(x) { return Math.round(x).toLocaleString('en-US'); }
 
@@ -403,7 +404,7 @@
     };
 
     // ---- The other share styles. One ink ramp, largest part darkest; same legend. ----
-    var RAMP = ['#071530', '#163876', '#2b60b6', '#5d8edc', '#99baee', '#d6e3fa'];      // dark → light blue, largest part darkest
+    var RAMP = ['#16150f', '#3d3a35', '#5f5b54', '#8a857c', '#b5b1a9', '#dcd9d3'];      // ink → light warm grey, largest part darkest
     function share(style, items, total, fmt, opts) {
         var col = function (i) { return RAMP[i % RAMP.length]; };
         var pctOf = function (it) { return Math.round(Number(it.value) / total * 100); };
@@ -497,7 +498,7 @@
                        '<span class="vhb-t"><i style="width:' + Math.max(1, x / max * 100).toFixed(1) + '%;animation-delay:' + (i * 0.05).toFixed(2) + 's"></i></span><span class="vhb-v">' + esc(fmt(x)) + '</span></div>';
             }).join('') + '</div>' + (W ? W.key('hbars', opts) : '');
         }
-        var tone = window.veroTrendColor ? window.veroTrendColor(v) : '#163876';
+        var tone = window.veroTrendColor ? window.veroTrendColor(v) : '#16150f';
         var cols = v.map(function (x, i) {
             // The dark column is the newest one, or the tallest with { mark: 'max' } (e.g. weekdays).
             var h = Math.max(2, x / max * 100), last = opts.mark === 'max' ? i === v.indexOf(max) : i === v.length - 1;

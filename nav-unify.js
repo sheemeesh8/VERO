@@ -2,7 +2,7 @@
    nav-unify.js — one canonical look and motion for every navigation bar.
 
    The site had two kinds of nav bar:
-     • a dark rounded bar with a sliding white pill and a red active label
+     • a dark bar with a sliding white marker and a red active label
        (feed nav, buyer area, seller area, dashboard, stats sub-nav), and
      • flat rows of individually-filled pills (settings nav, store-filter tabs,
        inbox tabs).
@@ -28,10 +28,10 @@
     var INDS = '.feed-nav-ind,.sec-ind,.stats-subind,.set-ind,.stf-ind,.vinbox-ind';
 
     var css = [
-        BARS + '{background:rgba(17,17,17,0.97)!important;border-color:transparent!important;border-radius:26px!important;}',
-        TABS + '{padding:9px 16px!important;font-size:10px!important;min-height:38px!important;border-radius:999px!important;'
+        BARS + '{background:rgba(17,17,17,0.97)!important;border-color:transparent!important;border-radius:0!important;}',
+        TABS + '{padding:9px 16px!important;font-size:10px!important;min-height:38px!important;border-radius:0!important;'
              + 'display:inline-flex!important;align-items:center;justify-content:center;}',
-        INDS + '{background:#fff!important;box-shadow:none!important;border:none!important;border-radius:999px!important;'
+        INDS + '{background:#fff!important;box-shadow:none!important;border:none!important;border-radius:0!important;'
              + 'transition:transform .4s cubic-bezier(0.22,1,0.36,1),width .4s cubic-bezier(0.22,1,0.36,1)!important;}',
 
         /* Bars that used to be flat rows of pills → a single dark rounded pill bar. */
