@@ -35,7 +35,7 @@
     }
     // The cart: the hero is the last piece added, whatever it is: under the title,
     // the piece itself, then its details laid out as the home feed's promoted
-    // slider (Editor's pick): the name, its facts, the description, the price,
+    // slider (Editor's pick): the name, its facts, the price,
     // its likes and the link to it.
     var last = null;
     for (var q = items.length - 1; q >= 0; q--) { if (items[q] && items[q].name) { last = items[q]; break; } }
@@ -137,7 +137,6 @@
                 '<div class="lh-last-text">' +
                     '<a class="hm-ep-name" href="' + href + '">' + esc(it.name) + '</a>' +
                     '<span class="hm-ep-by lh-last-rot" data-vals="' + esc(JSON.stringify(factsOf(it))) + '">' + esc(it.seller || 'Vero Store') + '</span>' +
-                    '<p class="hm-ep-desc lh-last-desc"' + (it.description ? '' : ' hidden') + '>' + esc(it.description || '') + '</p>' +
                     '<div class="lh-last-row">' +
                         '<div class="hm-ep-price">' + price + '</div>' +
                         '<div class="lh-last-likes" aria-label="' + likes + ' likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></svg>' +
@@ -167,7 +166,7 @@
         }
         spin();
 
-        // The slider, and the piece's fuller listing (description, size, style…) from
+        // The slider, and the piece's fuller listing (size, style, fabric…) from
         // the catalogue when the cart line carries less.
         loadCollections(function () {
             var vc = window.veroCollections; if (!vc) return false;
@@ -177,8 +176,6 @@
                 Object.keys(r).forEach(function (k) { merged[k] = r[k]; });
                 Object.keys(it).forEach(function (k) { if (it[k] != null && it[k] !== '') merged[k] = it[k]; });
                 if (!merged.seller) merged.seller = full.seller;
-                var desc = hero.querySelector('.lh-last-desc');
-                if (merged.description && desc.hidden) { desc.textContent = merged.description; desc.hidden = false; }
                 rot.setAttribute('data-vals', JSON.stringify(factsOf(merged)));
                 spin();
             }
