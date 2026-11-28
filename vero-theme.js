@@ -53,21 +53,21 @@
 
             :root[data-vero-tier="free"] {
                 --vero-accent: #1b1916;
-                --vero-accent-soft: #e7e3dc;
+                --vero-accent-soft: #e2e2e2;
                 --vero-wash: transparent;
             }
             :root[data-vero-tier="premium"] {
-                --vero-accent: #9a7d52;            /* champagne gold */
-                --vero-accent-soft: #efe7d8;
-                --vero-wash: rgba(154,125,82,.06);
-                --accent-gold: #c8a24a;
-                --accent-gold-dark: #9a7d52;
+                --vero-accent: #3d3a35;            /* graphite */
+                --vero-accent-soft: #F2F2F2;
+                --vero-wash: rgba(22,21,15,.03);
+                --accent-gold: #8a857c;
+                --accent-gold-dark: #3d3a35;
             }
             :root[data-vero-tier="luxury"] {
                 --vero-accent: #141210;            /* noir */
-                --vero-accent-soft: #e8dcc2;
+                --vero-accent-soft: #F2F2F2;
                 --vero-wash: rgba(20,18,16,.05);
-                --accent-gold: #caa94e;            /* brighter gold on noir */
+                --accent-gold: #b5b1a9;            /* light grey on noir */
                 --accent-gold-dark: #8c6d2f;
             }
             /* The yellow DME dot shows on any paid tier, hidden on the base. */
@@ -80,7 +80,7 @@
                 background:var(--vero-accent,#1b1916);color:#fff;
                 font-family:'Jost','Inter','Segoe UI',sans-serif;
                 font-size:11px;letter-spacing:1px;box-shadow:0 -6px 20px rgba(0,0,0,.18);}
-            #veroPreviewBar .vpb-dot{width:7px;height:7px;border-radius:50%;background:#f5c518;}
+            #veroPreviewBar .vpb-dot{width:7px;height:7px;border-radius:50%;background:#16150f;}
             #veroPreviewBar .vpb-lbl{text-transform:uppercase;font-weight:500;}
             #veroPreviewBar .vpb-tier{color:#f1e4c4;}
             #veroPreviewBar a,#veroPreviewBar button{color:#fff;background:none;border:none;

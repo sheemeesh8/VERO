@@ -19,10 +19,10 @@
 (function () {
     'use strict';
     var TYPES = {
-        market: { name: 'Market',  plural: 'Markets', color: '#9a7d52' },
-        fair:   { name: 'Fair',    plural: 'Fairs',   color: '#2b6d9a' },
-        meetup: { name: 'Meetup',  plural: 'Meetups', color: '#1f8f4e' },
-        popup:  { name: 'Pop-up',  plural: 'Pop-ups', color: '#b23b3b' }
+        market: { name: 'Market',  plural: 'Markets', color: '#16150f' },
+        fair:   { name: 'Fair',    plural: 'Fairs',   color: '#5f5b54' },
+        meetup: { name: 'Meetup',  plural: 'Meetups', color: '#8a857c' },
+        popup:  { name: 'Pop-up',  plural: 'Pop-ups', color: '#B3433B' }
     };
     var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var MONF = ['January','February','March','April','May','June','July','August','September','October','November','December'];

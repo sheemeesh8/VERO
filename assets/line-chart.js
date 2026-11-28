@@ -451,7 +451,7 @@
             var top = Math.max.apply(null, items.map(function (it) { return Number(it.value); })) || 1, step = Math.min(7, 40 / items.length), rg = '';
             items.forEach(function (it, i) {
                 var r1 = 48 - i * step, r0 = r1 - step * 0.66;
-                rg += '<path d="' + slice(r1, r0, TOP, TOP + FULL * 0.75) + '" fill="#ecebe6"/>' +
+                rg += '<path d="' + slice(r1, r0, TOP, TOP + FULL * 0.75) + '" fill="#eaeaea"/>' +
                       '<path class="vdn-p vdn-arc" data-i="' + i + '" d="' + slice(r1, r0, TOP, TOP + Number(it.value) / top * FULL * 0.75) + '" fill="' + col(i) + '" style="animation-delay:' + (i * 0.07).toFixed(2) + 's"/>';
             });
             fig = '<div class="vdn-fig">' + svg(rg) + '</div>';

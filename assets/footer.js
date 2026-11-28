@@ -40,7 +40,7 @@
         '.vero-footer .vf-links a:hover{color:#fff;}' +
         '.vero-footer .vf-socials{display:flex;gap:14px;}' +
         '.vero-footer .vf-socials a{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.22);' +
-        ' display:grid;place-items:center;color:#e6e6e2;transition:background .2s,color .2s,border-color .2s;}' +
+        ' display:grid;place-items:center;color:#e5e5e5;transition:background .2s,color .2s,border-color .2s;}' +
         '.vero-footer .vf-socials a:hover{background:#fff;color:#0a0a0a;border-color:#fff;}' +
         '.vero-footer .vf-socials svg{width:17px;height:17px;}' +
         '.vero-footer .vf-copy{font-size:9px;letter-spacing:2px;color:#5f5f5b;}';

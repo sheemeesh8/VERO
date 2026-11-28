@@ -8,7 +8,7 @@
     'use strict';
 
     var KEY = 'vero_wishlist';
-    var COLORS = ['#f48ea7', '#cc8ef5', '#8ce8c3', '#91d2fa', '#f5a524', '#e5484d', '#9fc7fa'];
+    var COLORS = ['#16150f', '#B3433B', '#8a857c', '#3d3a35', '#c9c5bd', '#B3433B', '#5f5b54'];
     var HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>';
 
     function readJSON(k, fb) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } }

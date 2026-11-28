@@ -135,7 +135,7 @@
         }
         .pg-head .ic {
             width: 34px; height: 34px; flex: 0 0 auto;
-            border-radius: 50%; background: #f2f1ee;
+            border-radius: 50%; background: #f0f0f0;
             display: grid; place-items: center; font-size: 14.17px;
         }
         .pg-head .tt { flex: 1; min-width: 0; }

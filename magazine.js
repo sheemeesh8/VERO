@@ -169,7 +169,7 @@
     /* Theme page treatments from the reference deck: light-grey content pages,
        plain-white title/divider pages, and the occasional full dark page. */
     .mag-l.pg-white { background: #ffffff; }
-    .mag-l.pg-dark  { background: #191919; color: #e8e6e1; }
+    .mag-l.pg-dark  { background: #191919; color: #e5e5e5; }
     .mag-l.pg-dark .mag-l-kicker, .mag-l.pg-dark .mag-l-title { color: #ffffff; }
     .mag-l.pg-dark .mag-l-body { color: #c9c6c0; }
     .mag-l.pg-dark .mag-l-foot { color: #6a6a6a; border-top-color: #333; }

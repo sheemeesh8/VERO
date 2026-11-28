@@ -112,7 +112,7 @@
             background: rgba(255, 255, 255, 0.86);
             -webkit-backdrop-filter: saturate(180%) blur(14px);
             backdrop-filter: saturate(180%) blur(14px);
-            border-bottom: 1px solid #ece8e1;
+            border-bottom: 1px solid #e7e7e7;
             box-shadow: 0 2px 14px rgba(0, 0, 0, 0.05);
         }
         #siteHeader.scrolled .header-left > a,
@@ -343,7 +343,7 @@
         }
         #siteHeader .hdr-preview-img {
             display: flex; align-items: center; justify-content: center;
-            background: #efece4; border-radius: 4px;
+            background: #F2F2F2; border-radius: 4px;
             aspect-ratio: 4 / 5; max-height: 420px; align-self: stretch;
             font-size: 125.00px; color: rgba(0,0,0,0.85);
             text-decoration: none;
@@ -558,7 +558,7 @@
             width: 14px; height: 14px; border-radius: 50%; background: #111; z-index: 0;
             /* Only the slide animates. The knob's colour is mode-driven, same as the
                track's border, and must switch instantly rather than fade. */
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
         }
         #siteHeader .toggle-category:has(#segFashion.active)::before { transform: translateX(16px); }
         /* labels kept in the markup for state/a11y, but not shown */
@@ -581,7 +581,7 @@
         #siteHeader .hdr-avatar-btn { width: 34px; height: 34px; }
         #siteHeader .hdr-avatar {
             width: 20px; height: 20px; border-radius: 50%; overflow: hidden;
-            border: 1.5px solid currentColor; background: #e6e4df center / cover no-repeat;
+            border: 1.5px solid currentColor; background: #e3e3e3 center / cover no-repeat;
             display: grid; place-items: center; font-size: 10.50px; font-weight: 500;
             color: currentColor; text-transform: uppercase; line-height: 1;
         }
@@ -620,7 +620,7 @@
         .vero-acct-switcher:not(.vas-on-hero) .vas-name { color: #111; text-shadow: none; }
         .vero-acct-switcher .vas-av {
             width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto;
-            background: #e6e4df center / cover no-repeat; display: grid; place-items: center;
+            background: #e3e3e3 center / cover no-repeat; display: grid; place-items: center;
             font-size: 16px; font-weight: 600; color: #333; text-transform: uppercase;
             border: 1.5px solid rgba(0,0,0,0.12);
         }
@@ -900,7 +900,7 @@
         .vero-drawer-overlay.open { opacity: 1; visibility: visible; }
         .vero-drawer {
             position: fixed; top: 0; left: 0; height: 100%; width: 320px; max-width: 72vw;
-            background: #faf9f6; color: #1b1916; z-index: 201; transform: translateX(-100%);
+            background: #f8f8f8; color: #1b1916; z-index: 201; transform: translateX(-100%);
             transition: transform 0.55s cubic-bezier(0.16,1,0.3,1), box-shadow 0.55s ease;
             /* Shadow only while open — closed, it spilled a gray band onto the page's left edge. */
             box-shadow: none;
@@ -1052,7 +1052,7 @@
             background: #EB2323; color: #fff; font-size: 9.17px; font-weight: 700;
             min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; display: none;
             align-items: center; justify-content: center; line-height: 1;
-            border: 2px solid #f7f4ee;
+            border: 2px solid #f3f3f3;
             font-family: 'Inter', 'Segoe UI', sans-serif;
         }
         .vero-drawer-social .badge.show { display: flex; }
@@ -1064,7 +1064,7 @@
             transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
         }
         .vero-drawer-social .vero-drawer-add:hover {
-            background: #1b1916; border-color: #1b1916; color: #faf9f6;
+            background: #1b1916; border-color: #1b1916; color: #f8f8f8;
         }
         .vero-drawer-social .vero-drawer-add svg { width: 18px; height: 18px; }
 
@@ -1220,7 +1220,7 @@
         }
         .vsp-overlay.has-q .vs-clear { display: block; }
         .vs-clear:hover { color: #111; }
-        .vs-tabs { display: flex; gap: 26px; margin-top: 16px; border-bottom: 1px solid #e6e3dd; }
+        .vs-tabs { display: flex; gap: 26px; margin-top: 16px; border-bottom: 1px solid #e2e2e2; }
         .vs-tab {
             position: relative; padding: 12px 0 13px;
             font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #9a968d;
@@ -1250,11 +1250,11 @@
         .vs-row {
             display: flex; align-items: center; gap: 14px; width: 100%; box-sizing: border-box;
             padding: 12px 8px; margin: 0 -8px; width: calc(100% + 16px);
-            border: 0; border-bottom: 1px solid #eeebe6; background: none;
+            border: 0; border-bottom: 1px solid #eaeaea; background: none;
             text-align: left; text-decoration: none; color: #111; cursor: pointer;
             font-size: 14px; transition: background 0.15s ease;
         }
-        .vs-row:hover, .vs-row.hi { background: #f6f5f1; }
+        .vs-row:hover, .vs-row.hi { background: #f4f4f4; }
         .vs-row-ico { flex: none; width: 18px; height: 18px; stroke: #8a877f; stroke-width: 1.5; fill: none; }
         .vs-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
         .vs-row-main b { font-weight: 400; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1273,7 +1273,7 @@
         .vs-x { flex: none; width: 30px; height: 30px; margin: -6px -6px -6px 0; color: #a09c94; font-size: 17px; line-height: 1; }
         .vs-x:hover { color: #111; }
         .vs-thumb {
-            flex: none; width: 52px; height: 64px; background: #f4f3ef; overflow: hidden;
+            flex: none; width: 52px; height: 64px; background: #f2f2f2; overflow: hidden;
             display: grid; place-items: center; font-size: 25px;
         }
         .vs-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }

@@ -194,7 +194,7 @@
             if (!el || !el.__moP) return;
             var a = el.__moP;
             el.__moP = el.animate([{ scale: getComputedStyle(el).scale === 'none' ? '1' : getComputedStyle(el).scale }, { scale: '1' }],
-                                  { duration: 380, easing: 'cubic-bezier(.3,1.6,.5,1)' });   // a small spring back
+                                  { duration: 320, easing: EASE });   // a calm return, no spring
             try { a.cancel(); } catch (e) {}
         }
         document.addEventListener('pointerdown', function (e) {

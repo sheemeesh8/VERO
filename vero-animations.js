@@ -188,7 +188,7 @@
                 content: ''; position: absolute; z-index: 4;
                 top: 8px; inset-inline-start: 8px;
                 width: 8px; height: 8px; border-radius: 50%;
-                background: #f5c518; box-shadow: 0 0 0 2px rgba(255,255,255,.9);
+                background: #16150f; box-shadow: 0 0 0 2px rgba(255,255,255,.9);
                 pointer-events: none;
             }
             @media (prefers-reduced-motion: reduce) {
