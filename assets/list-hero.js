@@ -128,15 +128,16 @@
         var price = it.onSale && it.originalPrice ? '<s>' + num(it.originalPrice) + '₪</s> <b>' + num(it.price) + '₪</b>' : num(it.price) + '₪';
         var likes = likesOf(it);
         var hero = document.createElement('section');
-        hero.className = 'lh-hero lh-light lh-last'; hero.id = 'lhHero';
+        hero.className = 'lh-hero lh-light lh-last lh-split'; hero.id = 'lhHero';
         hero.innerHTML =
             '<div class="lh-copy"><div class="lh-eyebrow">' + esc(C.eyebrow) + '</div><h1 class="lh-title">' + esc(C.title) + '</h1><p class="lh-sub">' + esc(sub) + '</p></div>' +
-            '<a class="lh-last-piece" href="' + href + '" aria-label="' + esc(it.name) + '">' + piece + '</a>' +
+            '<a class="lh-last-piece' + (it.cover ? '' : ' is-emoji') + '" href="' + href + '" aria-label="' + esc(it.name) + '">' + piece + '</a>' +
             '<article class="lh-last-info hm-ep">' +
                 '<div class="hm-ep-head"><span class="hm-ep-k">' + (kind === 'wishlist' ? 'Last saved' : 'Last added') + '</span><span class="hm-ep-n">' + (n < 10 ? '0' : '') + n + '</span></div>' +
                 '<div class="lh-last-text">' +
                     '<a class="hm-ep-name" href="' + href + '">' + esc(it.name) + '</a>' +
                     '<span class="hm-ep-by lh-last-rot" data-vals="' + esc(JSON.stringify(factsOf(it))) + '">' + esc(it.seller || 'Vero Store') + '</span>' +
+                    '<i class="lh-last-ln" aria-hidden="true"></i>' +
                     '<div class="lh-last-row">' +
                         '<div class="hm-ep-price">' + price + '</div>' +
                         '<div class="lh-last-likes" aria-label="' + likes + ' likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></svg>' +
