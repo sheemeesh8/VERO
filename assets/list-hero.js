@@ -38,7 +38,7 @@
     // slider (Editor's pick): the name, its facts, the description, the price,
     // its likes and the link to it.
     var last = null;
-    if (kind === 'cart') for (var q = items.length - 1; q >= 0; q--) { if (items[q] && items[q].name) { last = items[q]; break; } }
+    for (var q = items.length - 1; q >= 0; q--) { if (items[q] && items[q].name) { last = items[q]; break; } }
     if (last) return lastHero(last);
     var stand = !pics.length;
     if (stand) pics = ['unisex', 'men', 'kids', 'women'].map(function (g) { return { src: 'assets/hero/layer-' + g + '.webp?v=2', name: '' }; });
@@ -133,7 +133,7 @@
             '<div class="lh-copy"><div class="lh-eyebrow">' + esc(C.eyebrow) + '</div><h1 class="lh-title">' + esc(C.title) + '</h1><p class="lh-sub">' + esc(sub) + '</p></div>' +
             '<a class="lh-last-piece" href="' + href + '" aria-label="' + esc(it.name) + '">' + piece + '</a>' +
             '<article class="lh-last-info hm-ep">' +
-                '<div class="hm-ep-head"><span class="hm-ep-k">Last added</span><span class="hm-ep-n">' + (n < 10 ? '0' : '') + n + '</span></div>' +
+                '<div class="hm-ep-head"><span class="hm-ep-k">' + (kind === 'wishlist' ? 'Last saved' : 'Last added') + '</span><span class="hm-ep-n">' + (n < 10 ? '0' : '') + n + '</span></div>' +
                 '<div class="lh-last-text">' +
                     '<a class="hm-ep-name" href="' + href + '">' + esc(it.name) + '</a>' +
                     '<span class="hm-ep-by lh-last-rot" data-vals="' + esc(JSON.stringify(factsOf(it))) + '">' + esc(it.seller || 'Vero Store') + '</span>' +
